@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn, Button, Card, CardContent, Input, Label } from '../../components/ui';
+import { cn, Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../components/ui';
+import { LexicalEditor } from '../../components/LexicalEditor';
 import { mockCategories } from '../../mockData';
 
 export default function ProductCreatePage() {
@@ -58,10 +59,7 @@ export default function ProductCreatePage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Mô tả chi tiết</Label>
-                    <textarea 
-                      className="w-full min-h-[200px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Nhập mô tả sản phẩm..."
-                    />
+                    <LexicalEditor />
                   </div>
                 </CardContent>
               </Card>
@@ -110,22 +108,27 @@ export default function ProductCreatePage() {
         
         <div className="space-y-6">
           <Card>
-            <CardContent className="p-6 space-y-4">
+            <CardHeader><CardTitle className="text-base">Phân loại</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Trạng thái</Label>
                 <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
-                  <option value="Draft">Bản nháp</option>
                   <option value="Active">Đang bán</option>
-                  <option value="Archived">Lưu trữ</option>
+                  <option value="Draft">Bản nháp</option>
+                  <option value="Archived">Ngừng kinh doanh</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <Label>Danh mục</Label>
+                <Label>Danh mục sản phẩm</Label>
                 <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
                   {mockCategories.map(cat => (
                     <option key={cat.id} value={cat.name}>{cat.name}</option>
                   ))}
                 </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Tags</Label>
+                <Input placeholder="Nhập tag và nhấn Enter" />
               </div>
             </CardContent>
           </Card>

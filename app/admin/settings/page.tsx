@@ -1,192 +1,228 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Save } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../components/ui';
 
+const hexToHSL = (hex: string): { h: number; s: number; l: number } => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) return { h: 0, s: 0, l: 0 };
+  let r = parseInt(result[1], 16) / 255;
+  let g = parseInt(result[2], 16) / 255;
+  let b = parseInt(result[3], 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+};
+
+const hslToHex = (h: number, s: number, l: number): string => {
+  s /= 100; l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+};
+
+const generateTintsShades = (hex: string): string[] => {
+  const { h, s } = hexToHSL(hex);
+  const lightnesses = [95, 85, 75, 65, 55, 45, 35, 25, 15, 5];
+  return lightnesses.map(newL => hslToHex(h, s, newL));
+};
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
+  const [brandColor, setBrandColor] = useState('#3b82f6');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success('Đã lưu cài đặt');
-  };
+  useEffect(() => {
+    const saved = localStorage.getItem('brandColor');
+    if (saved) setBrandColor(saved);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('brandColor', brandColor);
+  }, [brandColor]);
+
+  const tabs = [
+    { id: 'general', label: 'Chung' },
+    { id: 'contact', label: 'Liên hệ' },
+    { id: 'seo', label: 'SEO' },
+  ];
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto space-y-8 pb-20">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Cài đặt hệ thống</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý cấu hình website và ứng dụng</p>
+        <p className="text-slate-500">Quản lý các cấu hình chung cho website của bạn.</p>
       </div>
 
-      <div className="flex gap-6">
-        <div className="w-48 shrink-0">
-          <nav className="space-y-1">
-            {[
-              { key: 'general', label: 'Thông tin chung' },
-              { key: 'seo', label: 'SEO' },
-              { key: 'social', label: 'Mạng xã hội' },
-              { key: 'email', label: 'Email' },
-              { key: 'payment', label: 'Thanh toán' },
-            ].map(item => (
+      <div className="flex flex-col md:flex-row gap-8">
+        <div className="w-full md:w-64 flex-shrink-0">
+          <div className="flex flex-col space-y-1">
+            {tabs.map(tab => (
               <button
-                key={item.key}
-                onClick={() => setActiveTab(item.key)}
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "w-full text-left px-4 py-2 rounded-md text-sm font-medium transition-colors",
-                  activeTab === item.key 
-                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" 
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  "text-left px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                  activeTab === tab.id ? "bg-white dark:bg-slate-800 shadow-sm text-blue-600" : "text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50"
                 )}
               >
-                {item.label}
+                {tab.label}
               </button>
             ))}
-          </nav>
+          </div>
         </div>
 
-        <div className="flex-1">
-          <form onSubmit={handleSubmit}>
-            {activeTab === 'general' && (
+        <div className="flex-1 space-y-6">
+          {activeTab === 'general' && (
+            <>
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Thông tin chung</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle>Thông tin chung</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Tên website</Label>
-                    <Input defaultValue="VietAdmin" placeholder="Tên hiển thị của website" />
+                    <Label>Tên Website</Label>
+                    <Input defaultValue="VietAdmin Shop" />
                   </div>
                   <div className="space-y-2">
                     <Label>Mô tả ngắn</Label>
-                    <textarea 
-                      className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      defaultValue="Hệ thống quản trị website chuyên nghiệp"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Email liên hệ</Label>
-                      <Input type="email" defaultValue="contact@vietadmin.com" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Số điện thoại</Label>
-                      <Input defaultValue="1900 1234" />
-                    </div>
+                    <Input defaultValue="Hệ thống bán hàng trực tuyến hàng đầu" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Địa chỉ</Label>
-                    <Input defaultValue="123 Nguyễn Huệ, Quận 1, TP.HCM" />
+                    <Label>Múi giờ</Label>
+                    <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
+                      <option>GMT+07:00 Bangkok, Hanoi, Jakarta</option>
+                    </select>
                   </div>
                 </CardContent>
               </Card>
-            )}
 
-            {activeTab === 'seo' && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Cài đặt SEO</CardTitle>
+                  <CardTitle>Màu sắc thương hiệu</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Meta Title mặc định</Label>
-                    <Input defaultValue="VietAdmin - Hệ thống quản trị chuyên nghiệp" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Meta Description mặc định</Label>
-                    <textarea 
-                      className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      defaultValue="VietAdmin cung cấp giải pháp quản trị website toàn diện cho doanh nghiệp Việt Nam"
+                <CardContent>
+                  <div className="flex items-center gap-3 mb-3">
+                    <input
+                      type="color"
+                      value={brandColor}
+                      onChange={(e) => setBrandColor(e.target.value)}
+                      className="w-10 h-10 rounded-lg cursor-pointer border border-slate-200 dark:border-slate-700"
                     />
+                    <Input 
+                      value={brandColor.toUpperCase()} 
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/^#[0-9A-Fa-f]{6}$/.test(val)) setBrandColor(val);
+                      }}
+                      className="w-24 font-mono text-sm uppercase"
+                      maxLength={7}
+                    />
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Màu chủ đạo</span>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Google Analytics ID</Label>
-                    <Input placeholder="UA-XXXXXXXXX-X hoặc G-XXXXXXXXXX" />
+                  <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                    {generateTintsShades(brandColor).map((shade, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setBrandColor(shade)}
+                        className="flex-1 h-9 transition-all hover:scale-y-125 hover:z-10 relative group"
+                        style={{ backgroundColor: shade }}
+                        title={shade.toUpperCase()}
+                      >
+                        <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 text-[9px] font-mono font-bold"
+                          style={{ color: idx < 5 ? '#000' : '#fff' }}>
+                          {shade.toUpperCase().slice(1)}
+                        </span>
+                      </button>
+                    ))}
                   </div>
+                  <p className="text-xs text-slate-400 mt-2">Click vào shade để chọn</p>
                 </CardContent>
               </Card>
-            )}
-
-            {activeTab === 'social' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Liên kết mạng xã hội</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+            </>
+          )}
+          
+          {activeTab === 'contact' && (
+            <Card>
+              <CardHeader><CardTitle>Thông tin liên hệ</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Email liên hệ</Label>
+                  <Input defaultValue="contact@vietadmin.com" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hotline</Label>
+                  <Input defaultValue="1900 1234" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Địa chỉ</Label>
+                  <Input defaultValue="123 Nguyễn Huệ, Quận 1, TP.HCM" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Facebook</Label>
-                    <Input placeholder="https://facebook.com/..." />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Youtube</Label>
-                    <Input placeholder="https://youtube.com/..." />
+                    <Input defaultValue="https://facebook.com/vietadmin" placeholder="URL Facebook" />
                   </div>
                   <div className="space-y-2">
                     <Label>Zalo</Label>
-                    <Input placeholder="https://zalo.me/..." />
+                    <Input defaultValue="0901234567" placeholder="Số Zalo" />
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                </div>
+                <div className="space-y-2">
+                  <Label>Google Maps Embed</Label>
+                  <Input defaultValue="https://maps.google.com/..." placeholder="URL nhúng Google Maps" />
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-            {activeTab === 'email' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Cấu hình Email (SMTP)</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>SMTP Host</Label>
-                      <Input placeholder="smtp.gmail.com" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>SMTP Port</Label>
-                      <Input placeholder="587" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>SMTP Username</Label>
-                      <Input placeholder="your-email@gmail.com" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>SMTP Password</Label>
-                      <Input type="password" placeholder="********" />
-                    </div>
+          {activeTab === 'seo' && (
+            <Card>
+              <CardHeader><CardTitle>Cài đặt SEO</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Meta Title mặc định</Label>
+                  <Input defaultValue="VietAdmin - Hệ thống bán hàng trực tuyến" />
+                  <p className="text-xs text-slate-500">Tối đa 60 ký tự</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Meta Description mặc định</Label>
+                  <textarea className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" defaultValue="VietAdmin cung cấp giải pháp bán hàng online chuyên nghiệp với hàng ngàn sản phẩm chất lượng cao." />
+                  <p className="text-xs text-slate-500">Tối đa 160 ký tự</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Meta Keywords</Label>
+                  <Input defaultValue="bán hàng online, shop online, vietadmin" placeholder="từ khóa 1, từ khóa 2, ..." />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hình ảnh OG mặc định</Label>
+                  <div className="flex gap-2">
+                    <Input defaultValue="/og-image.jpg" placeholder="URL hình ảnh" className="flex-1" />
+                    <Button variant="outline" type="button"><Upload size={14} /></Button>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-            {activeTab === 'payment' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Cổng thanh toán</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>VNPay - Terminal ID</Label>
-                    <Input placeholder="Nhập Terminal ID" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>VNPay - Secret Key</Label>
-                    <Input type="password" placeholder="********" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Momo - Partner Code</Label>
-                    <Input placeholder="Nhập Partner Code" />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="mt-6 flex justify-end">
-              <Button type="submit" variant="accent" className="gap-2">
-                <Save size={16} />
-                Lưu cài đặt
-              </Button>
-            </div>
-          </form>
+          <div className="flex justify-end">
+            <Button variant="accent" onClick={() => toast.success("Đã lưu cài đặt")}>
+              <Save size={16} className="mr-2"/> Lưu thay đổi
+            </Button>
+          </div>
         </div>
       </div>
     </div>
