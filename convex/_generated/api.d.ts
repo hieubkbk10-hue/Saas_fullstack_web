@@ -23,6 +23,7 @@ import type * as posts from "../posts.js";
 import type * as productCategories from "../productCategories.js";
 import type * as products from "../products.js";
 import type * as roles from "../roles.js";
+import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
 import type * as users from "../users.js";
 import type * as visitors from "../visitors.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   productCategories: typeof productCategories;
   products: typeof products;
   roles: typeof roles;
+  seed: typeof seed;
   settings: typeof settings;
   users: typeof users;
   visitors: typeof visitors;

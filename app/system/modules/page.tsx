@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { 
   Search, 
   Settings, 
@@ -26,81 +29,12 @@ import {
   ChevronDown,
   FileCode,
   Download,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
-import { AdminModule } from '@/types';
 
-interface PresetConfig {
-  id: string;
-  name: string;
-  description: string;
-  modules: string[];
-}
-
-const PRESET_CONFIGS: PresetConfig[] = [
-  {
-    id: 'blog',
-    name: 'Blog / News',
-    description: 'Blog with posts and comments',
-    modules: ['MOD-POSTS', 'MOD-COMMENTS', 'MOD-MEDIA', 'MOD-CUSTOMERS', 'MOD-USERS', 'MOD-ROLES', 'MOD-SETTINGS', 'MOD-MENUS', 'MOD-HOMEPAGE', 'MOD-ANALYTICS']
-  },
-  {
-    id: 'landing',
-    name: 'Landing Page',
-    description: 'Simple portfolio or landing page',
-    modules: ['MOD-POSTS', 'MOD-MEDIA', 'MOD-USERS', 'MOD-ROLES', 'MOD-SETTINGS', 'MOD-MENUS', 'MOD-HOMEPAGE']
-  },
-  {
-    id: 'catalog',
-    name: 'Catalog',
-    description: 'Product showcase without cart',
-    modules: ['MOD-PRODUCTS', 'MOD-MEDIA', 'MOD-CUSTOMERS', 'MOD-USERS', 'MOD-ROLES', 'MOD-SETTINGS', 'MOD-MENUS', 'MOD-HOMEPAGE', 'MOD-NOTIFICATIONS', 'MOD-ANALYTICS']
-  },
-  {
-    id: 'ecommerce-basic',
-    name: 'eCommerce Basic',
-    description: 'Simple shop with cart',
-    modules: ['MOD-PRODUCTS', 'MOD-ORDERS', 'MOD-CART', 'MOD-MEDIA', 'MOD-CUSTOMERS', 'MOD-USERS', 'MOD-ROLES', 'MOD-SETTINGS', 'MOD-MENUS', 'MOD-HOMEPAGE', 'MOD-NOTIFICATIONS', 'MOD-ANALYTICS']
-  },
-  {
-    id: 'ecommerce-full',
-    name: 'eCommerce Full',
-    description: 'Full shop: cart, wishlist, promotions',
-    modules: ['MOD-POSTS', 'MOD-COMMENTS', 'MOD-MEDIA', 'MOD-PRODUCTS', 'MOD-ORDERS', 'MOD-CART', 'MOD-WISHLIST', 'MOD-CUSTOMERS', 'MOD-USERS', 'MOD-ROLES', 'MOD-SETTINGS', 'MOD-MENUS', 'MOD-HOMEPAGE', 'MOD-NOTIFICATIONS', 'MOD-PROMOTIONS', 'MOD-ANALYTICS']
-  },
-  {
-    id: 'custom',
-    name: 'Custom',
-    description: 'Manual configuration',
-    modules: []
-  }
-];
-
-const mockModules: AdminModule[] = [
-  { id: 'MOD-POSTS', key: 'posts', name: 'Bài viết & Danh mục', description: 'Quản lý bài viết, tin tức, blog và danh mục bài viết', icon: 'FileText', category: 'content', enabled: true, isCore: false, permissions: ['view', 'create', 'edit', 'delete'], order: 1, updatedAt: '2 giờ trước', updatedBy: 'admin' },
-  { id: 'MOD-COMMENTS', key: 'comments', name: 'Bình luận', description: 'Bình luận cho bài viết và đánh giá sản phẩm', icon: 'MessageSquare', category: 'content', enabled: true, isCore: false, dependencies: ['MOD-POSTS', 'MOD-PRODUCTS'], dependencyType: 'any', permissions: ['view', 'edit', 'delete'], order: 2, updatedAt: '1 giờ trước', updatedBy: 'admin' },
-  { id: 'MOD-MEDIA', key: 'media', name: 'Thư viện Media', description: 'Quản lý hình ảnh, video, tài liệu', icon: 'Image', category: 'content', enabled: true, isCore: false, permissions: ['view', 'create', 'delete'], order: 3, updatedAt: '1 ngày trước', updatedBy: 'admin' },
-  
-  { id: 'MOD-PRODUCTS', key: 'products', name: 'Sản phẩm & Danh mục', description: 'Quản lý sản phẩm, danh mục sản phẩm, kho hàng', icon: 'Package', category: 'commerce', enabled: true, isCore: false, permissions: ['view', 'create', 'edit', 'delete', 'import', 'export'], order: 4, updatedAt: '30 phút trước', updatedBy: 'editor' },
-  { id: 'MOD-ORDERS', key: 'orders', name: 'Đơn hàng', description: 'Quản lý đơn hàng, vận chuyển', icon: 'ShoppingBag', category: 'commerce', enabled: true, isCore: false, dependencies: ['MOD-PRODUCTS', 'MOD-CUSTOMERS'], permissions: ['view', 'create', 'edit', 'delete', 'export'], order: 5, updatedAt: '15 phút trước', updatedBy: 'admin' },
-  { id: 'MOD-CART', key: 'cart', name: 'Giỏ hàng', description: 'Chức năng giỏ hàng cho khách', icon: 'ShoppingCart', category: 'commerce', enabled: true, isCore: false, dependencies: ['MOD-PRODUCTS'], permissions: ['view'], order: 6, updatedAt: '2 ngày trước', updatedBy: 'admin' },
-  { id: 'MOD-WISHLIST', key: 'wishlist', name: 'Sản phẩm yêu thích', description: 'Danh sách sản phẩm yêu thích của khách', icon: 'Heart', category: 'commerce', enabled: false, isCore: false, dependencies: ['MOD-PRODUCTS'], permissions: ['view'], order: 7, updatedAt: '1 tuần trước', updatedBy: 'admin' },
-  
-  { id: 'MOD-CUSTOMERS', key: 'customers', name: 'Khách hàng', description: 'Quản lý thông tin khách hàng', icon: 'Users', category: 'user', enabled: true, isCore: true, permissions: ['view', 'create', 'edit', 'delete', 'export'], order: 9, updatedAt: '1 giờ trước', updatedBy: 'admin' },
-  { id: 'MOD-USERS', key: 'users', name: 'Người dùng Admin', description: 'Quản lý tài khoản admin', icon: 'UserCog', category: 'user', enabled: true, isCore: true, permissions: ['view', 'create', 'edit', 'delete'], order: 10, updatedAt: '5 ngày trước', updatedBy: 'superadmin' },
-  { id: 'MOD-ROLES', key: 'roles', name: 'Vai trò & Quyền', description: 'Phân quyền và quản lý vai trò', icon: 'Shield', category: 'user', enabled: true, isCore: true, permissions: ['view', 'create', 'edit', 'delete'], order: 11, updatedAt: '1 tuần trước', updatedBy: 'superadmin' },
-  
-  { id: 'MOD-SETTINGS', key: 'settings', name: 'Cài đặt hệ thống', description: 'Cấu hình website và hệ thống', icon: 'Settings', category: 'system', enabled: true, isCore: true, permissions: ['view', 'edit'], order: 12, updatedAt: '3 ngày trước', updatedBy: 'admin' },
-  { id: 'MOD-MENUS', key: 'menus', name: 'Menu điều hướng', description: 'Quản lý menu header, footer', icon: 'Menu', category: 'system', enabled: true, isCore: false, permissions: ['view', 'create', 'edit', 'delete'], order: 13, updatedAt: '2 tuần trước', updatedBy: 'admin' },
-  { id: 'MOD-HOMEPAGE', key: 'homepage', name: 'Trang chủ', description: 'Cấu hình components trang chủ', icon: 'LayoutGrid', category: 'system', enabled: true, isCore: false, permissions: ['view', 'edit'], order: 14, updatedAt: '4 ngày trước', updatedBy: 'editor' },
-  
-  { id: 'MOD-NOTIFICATIONS', key: 'notifications', name: 'Thông báo', description: 'Gửi thông báo cho người dùng', icon: 'Bell', category: 'marketing', enabled: true, isCore: false, permissions: ['view', 'create', 'delete'], order: 15, updatedAt: '6 giờ trước', updatedBy: 'marketing' },
-  { id: 'MOD-PROMOTIONS', key: 'promotions', name: 'Khuyến mãi', description: 'Quản lý mã giảm giá, voucher', icon: 'Megaphone', category: 'marketing', enabled: false, isCore: false, dependencies: ['MOD-PRODUCTS', 'MOD-ORDERS'], permissions: ['view', 'create', 'edit', 'delete'], order: 16, updatedAt: '1 tháng trước', updatedBy: 'admin' },
-  { id: 'MOD-ANALYTICS', key: 'analytics', name: 'Thống kê', description: 'Báo cáo và phân tích dữ liệu', icon: 'BarChart3', category: 'marketing', enabled: true, isCore: false, permissions: ['view', 'export'], order: 17, updatedAt: '12 giờ trước', updatedBy: 'admin' },
-];
-
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FileText, Image, MessageSquare, Package, ShoppingCart, ShoppingBag, Heart, 
   Users, UserCog, Shield, Settings, Menu, LayoutGrid, Bell, Megaphone, BarChart3
 };
@@ -122,28 +56,50 @@ const categoryLabelsEn: Record<string, string> = {
 };
 
 const moduleConfigRoutes: Record<string, string> = {
-  'MOD-POSTS': '/system/modules/posts',
-  'MOD-COMMENTS': '/system/modules/comments',
-  'MOD-MEDIA': '/system/modules/media',
-  'MOD-PRODUCTS': '/system/modules/products',
-  'MOD-CART': '/system/modules/cart',
-  'MOD-WISHLIST': '/system/modules/wishlist',
-  'MOD-ORDERS': '/system/modules/orders',
-  'MOD-CUSTOMERS': '/system/modules/customers',
-  'MOD-USERS': '/system/modules/users',
-  'MOD-ROLES': '/system/modules/roles',
-  'MOD-SETTINGS': '/system/modules/settings',
-  'MOD-MENUS': '/system/modules/menus',
-  'MOD-HOMEPAGE': '/system/modules/homepage',
-  'MOD-NOTIFICATIONS': '/system/modules/notifications',
-  'MOD-PROMOTIONS': '/system/modules/promotions',
-  'MOD-ANALYTICS': '/system/modules/analytics',
+  posts: '/system/modules/posts',
+  comments: '/system/modules/comments',
+  media: '/system/modules/media',
+  products: '/system/modules/products',
+  cart: '/system/modules/cart',
+  wishlist: '/system/modules/wishlist',
+  orders: '/system/modules/orders',
+  customers: '/system/modules/customers',
+  users: '/system/modules/users',
+  roles: '/system/modules/roles',
+  settings: '/system/modules/settings',
+  menus: '/system/modules/menus',
+  homepage: '/system/modules/homepage',
+  notifications: '/system/modules/notifications',
+  promotions: '/system/modules/promotions',
+  analytics: '/system/modules/analytics',
 };
 
-const generateConfigMarkdown = (modules: AdminModule[], presetId?: string): string => {
+type AdminModule = {
+  _id: Id<"adminModules">;
+  key: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: "content" | "commerce" | "user" | "system" | "marketing";
+  enabled: boolean;
+  isCore: boolean;
+  dependencies?: string[];
+  dependencyType?: "all" | "any";
+  order: number;
+};
+
+type SystemPreset = {
+  _id: Id<"systemPresets">;
+  key: string;
+  name: string;
+  description: string;
+  enabledModules: string[];
+  isDefault?: boolean;
+};
+
+const generateConfigMarkdown = (modules: AdminModule[], preset?: SystemPreset): string => {
   const enabledModules = modules.filter(m => m.enabled);
   const disabledModules = modules.filter(m => !m.enabled);
-  const preset = PRESET_CONFIGS.find(p => p.id === presetId);
   const now = new Date().toISOString().slice(0, 16).replace('T', ' ');
 
   return `# Admin Module Configuration
@@ -158,10 +114,10 @@ const generateConfigMarkdown = (modules: AdminModule[], presetId?: string): stri
 
 ## Enabled Modules
 
-| Module | Category | Core | Permissions |
-|--------|----------|------|-------------|
+| Module | Category | Core |
+|--------|----------|------|
 ${enabledModules.map(m => 
-  `| ${m.key} | ${categoryLabelsEn[m.category]} | ${m.isCore ? 'Yes' : 'No'} | ${m.permissions.join(', ')} |`
+  `| ${m.key} | ${categoryLabelsEn[m.category]} | ${m.isCore ? 'Yes' : 'No'} |`
 ).join('\n')}
 
 ## Disabled Modules
@@ -174,7 +130,7 @@ ${disabledModules.length > 0
 
 \`\`\`json
 {
-  "preset": "${presetId || 'custom'}",
+  "preset": "${preset?.key || 'custom'}",
   "modules": {
 ${modules.map(m => `    "${m.key}": ${m.enabled}`).join(',\n')}
   }
@@ -184,19 +140,23 @@ ${modules.map(m => `    "${m.key}": ${m.enabled}`).join(',\n')}
 };
 
 const PresetDropdown: React.FC<{
+  presets: SystemPreset[];
   selectedPreset: string;
-  onSelect: (presetId: string) => void;
-}> = ({ selectedPreset, onSelect }) => {
+  onSelect: (presetKey: string) => void;
+  loading?: boolean;
+}> = ({ presets, selectedPreset, onSelect, loading }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const selected = PRESET_CONFIGS.find(p => p.id === selectedPreset) || PRESET_CONFIGS[5];
+  const selected = presets.find(p => p.key === selectedPreset);
 
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium rounded-lg transition-colors"
+        disabled={loading}
+        className="flex items-center gap-2 px-3 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
       >
-        <span>{selected.name}</span>
+        {loading && <Loader2 size={14} className="animate-spin" />}
+        <span>{selected?.name || 'Custom'}</span>
         <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       
@@ -205,15 +165,15 @@ const PresetDropdown: React.FC<{
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
           <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-20 overflow-hidden">
             <div className="p-2 border-b border-slate-100 dark:border-slate-800">
-              <p className="text-[10px] text-slate-500 uppercase font-semibold px-2">Select preset</p>
+              <p className="text-[10px] text-slate-500 uppercase font-semibold px-2">Chọn preset</p>
             </div>
             <div className="max-h-72 overflow-y-auto">
-              {PRESET_CONFIGS.map(preset => (
+              {presets.map(preset => (
                 <button
-                  key={preset.id}
-                  onClick={() => { onSelect(preset.id); setIsOpen(false); }}
+                  key={preset.key}
+                  onClick={() => { onSelect(preset.key); setIsOpen(false); }}
                   className={`w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${
-                    selectedPreset === preset.id ? 'bg-slate-50 dark:bg-slate-800' : ''
+                    selectedPreset === preset.key ? 'bg-slate-50 dark:bg-slate-800' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -221,15 +181,29 @@ const PresetDropdown: React.FC<{
                       <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{preset.name}</span>
                       <p className="text-xs text-slate-500">{preset.description}</p>
                     </div>
-                    {selectedPreset === preset.id && (
+                    {selectedPreset === preset.key && (
                       <Check size={14} className="text-cyan-500 shrink-0" />
                     )}
                   </div>
-                  {preset.id !== 'custom' && (
-                    <p className="text-[10px] text-slate-400 mt-1">{preset.modules.length} modules</p>
-                  )}
+                  <p className="text-[10px] text-slate-400 mt-1">{preset.enabledModules.length} modules</p>
                 </button>
               ))}
+              <button
+                onClick={() => { onSelect('custom'); setIsOpen(false); }}
+                className={`w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${
+                  selectedPreset === 'custom' ? 'bg-slate-50 dark:bg-slate-800' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-medium text-slate-800 dark:text-slate-200">Custom</span>
+                    <p className="text-xs text-slate-500">Cấu hình thủ công</p>
+                  </div>
+                  {selectedPreset === 'custom' && (
+                    <Check size={14} className="text-cyan-500 shrink-0" />
+                  )}
+                </div>
+              </button>
             </div>
           </div>
         </>
@@ -240,17 +214,17 @@ const PresetDropdown: React.FC<{
 
 const ConfigActions: React.FC<{
   modules: AdminModule[];
-  presetId: string;
-}> = ({ modules, presetId }) => {
+  preset?: SystemPreset;
+}> = ({ modules, preset }) => {
   const [showMarkdown, setShowMarkdown] = useState(false);
-  const markdown = useMemo(() => generateConfigMarkdown(modules, presetId), [modules, presetId]);
+  const markdown = useMemo(() => generateConfigMarkdown(modules, preset), [modules, preset]);
 
   const handleDownload = () => {
     const blob = new Blob([markdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `admin-config-${presetId || 'custom'}-${Date.now()}.md`;
+    a.download = `admin-config-${preset?.key || 'custom'}-${Date.now()}.md`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -324,15 +298,16 @@ const ConfigActions: React.FC<{
 
 const ModuleCard: React.FC<{ 
   module: AdminModule; 
-  onToggle: (id: string) => void;
+  onToggle: (key: string, enabled: boolean) => void;
   canToggle: boolean;
   allModules: AdminModule[];
-}> = ({ module, onToggle, canToggle, allModules }) => {
+  isToggling?: boolean;
+}> = ({ module, onToggle, canToggle, allModules, isToggling }) => {
   const Icon = iconMap[module.icon] || Package;
   const category = categoryLabels[module.category];
-  const configRoute = moduleConfigRoutes[module.id];
-  const isDisabled = module.isCore || !canToggle;
-  const hasDependents = allModules.some(m => m.dependencies?.includes(module.id) && m.enabled);
+  const configRoute = moduleConfigRoutes[module.key];
+  const isDisabled = module.isCore || !canToggle || isToggling;
+  const hasDependents = allModules.some(m => m.dependencies?.includes(module.key) && m.enabled);
   
   return (
     <div className={`bg-white dark:bg-slate-900 border rounded-lg p-4 transition-all ${
@@ -366,17 +341,15 @@ const ModuleCard: React.FC<{
             <p className="text-xs text-slate-500 line-clamp-2">{module.description}</p>
             <div className="flex items-center gap-2 mt-2">
               <span className={`text-[10px] font-medium ${category.color}`}>{category.label}</span>
-              <span className="w-1 h-1 rounded-full bg-slate-400 dark:bg-slate-600"></span>
-              <span className="text-[10px] text-slate-500">{module.permissions.length} quyền</span>
             </div>
           </div>
         </div>
         
         <div className="flex flex-col items-end gap-2">
           <button 
-            onClick={() => !isDisabled && onToggle(module.id)}
+            onClick={() => !isDisabled && onToggle(module.key, !module.enabled)}
             disabled={isDisabled}
-            title={!canToggle && !module.isCore ? 'Bat module phu thuoc truoc' : undefined}
+            title={!canToggle && !module.isCore ? 'Bật module phụ thuộc trước' : undefined}
             className={`relative w-11 h-6 rounded-full transition-colors ${
               isDisabled 
                 ? 'bg-slate-200 dark:bg-slate-700 cursor-not-allowed' 
@@ -385,9 +358,13 @@ const ModuleCard: React.FC<{
                   : 'bg-slate-300 dark:bg-slate-700 cursor-pointer'
             }`}
           >
-            <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
-              module.enabled ? 'left-6' : 'left-1'
-            }`}></div>
+            {isToggling ? (
+              <Loader2 size={14} className="absolute top-1 left-1/2 -translate-x-1/2 animate-spin text-white" />
+            ) : (
+              <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                module.enabled ? 'left-6' : 'left-1'
+              }`}></div>
+            )}
           </button>
           {module.isCore && (
             <Lock size={12} className="text-slate-400" />
@@ -402,7 +379,7 @@ const ModuleCard: React.FC<{
         {module.dependencies && module.dependencies.length > 0 ? (
           <div className="flex items-center gap-1 text-[10px] text-slate-500">
             <Layers size={10} />
-            <span>Phụ thuộc: {module.dependencies.map(d => mockModules.find(m => m.id === d)?.name).join(', ')}</span>
+            <span>Phụ thuộc: {module.dependencies.map(d => allModules.find(m => m.key === d)?.name || d).join(', ')}</span>
           </div>
         ) : (
           <div></div>
@@ -422,52 +399,48 @@ const ModuleCard: React.FC<{
 };
 
 export default function ModuleManagementPage() {
-  const [modules, setModules] = useState(mockModules);
+  const modulesData = useQuery(api.admin.modules.listModules);
+  const presetsData = useQuery(api.admin.presets.listPresets);
+  const toggleModule = useMutation(api.admin.modules.toggleModule);
+  const applyPreset = useMutation(api.admin.presets.applyPreset);
+  const seedAll = useMutation(api.seed.seedAll);
+  
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPreset, setSelectedPreset] = useState<string>('custom');
+  const [togglingKey, setTogglingKey] = useState<string | null>(null);
+  const [applyingPreset, setApplyingPreset] = useState(false);
 
-  const handlePresetSelect = (presetId: string) => {
-    setSelectedPreset(presetId);
-    const preset = PRESET_CONFIGS.find(p => p.id === presetId);
-    if (!preset || presetId === 'custom') return;
+  const modules = modulesData || [];
+  const presets = presetsData || [];
+
+  // Seed data if empty
+  React.useEffect(() => {
+    if (modulesData !== undefined && modulesData.length === 0) {
+      seedAll();
+    }
+  }, [modulesData, seedAll]);
+
+  const handlePresetSelect = async (presetKey: string) => {
+    setSelectedPreset(presetKey);
+    if (presetKey === 'custom') return;
     
-    setModules(prev => prev.map(m => ({
-      ...m,
-      enabled: m.isCore || preset.modules.includes(m.id)
-    })));
+    setApplyingPreset(true);
+    try {
+      await applyPreset({ key: presetKey });
+    } finally {
+      setApplyingPreset(false);
+    }
   };
   
-  const handleToggleModule = (id: string) => {
+  const handleToggleModule = async (key: string, enabled: boolean) => {
     setSelectedPreset('custom');
-    setModules(prev => {
-      const targetModule = prev.find(m => m.id === id);
-      if (!targetModule) return prev;
-      
-      const newEnabled = !targetModule.enabled;
-      
-      return prev.map(m => {
-        if (m.id === id) {
-          return { ...m, enabled: newEnabled };
-        }
-        
-        if (!newEnabled && m.dependencies?.includes(id)) {
-          if (m.dependencyType === 'any') {
-            const otherParentsEnabled = m.dependencies
-              .filter(depId => depId !== id)
-              .some(depId => prev.find(pm => pm.id === depId)?.enabled);
-            
-            if (!otherParentsEnabled) {
-              return { ...m, enabled: false };
-            }
-          } else {
-            return { ...m, enabled: false };
-          }
-        }
-        
-        return m;
-      });
-    });
+    setTogglingKey(key);
+    try {
+      await toggleModule({ key, enabled });
+    } finally {
+      setTogglingKey(null);
+    }
   };
   
   const canToggleModule = (module: AdminModule): boolean => {
@@ -475,12 +448,12 @@ export default function ModuleManagementPage() {
     if (!module.dependencies || module.dependencies.length === 0) return true;
     
     if (module.dependencyType === 'any') {
-      return module.dependencies.some(depId => 
-        modules.find(m => m.id === depId)?.enabled
+      return module.dependencies.some(depKey => 
+        modules.find(m => m.key === depKey)?.enabled
       );
     } else {
-      return module.dependencies.every(depId => 
-        modules.find(m => m.id === depId)?.enabled
+      return module.dependencies.every(depKey => 
+        modules.find(m => m.key === depKey)?.enabled
       );
     }
   };
@@ -500,6 +473,15 @@ export default function ModuleManagementPage() {
   
   const enabledCount = modules.filter(m => m.enabled).length;
   const disabledCount = modules.filter(m => !m.enabled).length;
+  const currentPreset = presets.find(p => p.key === selectedPreset);
+
+  if (modulesData === undefined) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-cyan-500" />
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -523,8 +505,13 @@ export default function ModuleManagementPage() {
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
-          <PresetDropdown selectedPreset={selectedPreset} onSelect={handlePresetSelect} />
-          <ConfigActions modules={modules} presetId={selectedPreset} />
+          <PresetDropdown 
+            presets={presets} 
+            selectedPreset={selectedPreset} 
+            onSelect={handlePresetSelect}
+            loading={applyingPreset}
+          />
+          <ConfigActions modules={modules} preset={currentPreset} />
         </div>
       </div>
       
@@ -567,11 +554,12 @@ export default function ModuleManagementPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {(mods as AdminModule[]).map(module => (
                 <ModuleCard 
-                  key={module.id} 
+                  key={module._id} 
                   module={module} 
                   onToggle={handleToggleModule}
                   canToggle={canToggleModule(module)}
                   allModules={modules}
+                  isToggling={togglingKey === module.key}
                 />
               ))}
             </div>
