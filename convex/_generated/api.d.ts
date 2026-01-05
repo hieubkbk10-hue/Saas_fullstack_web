@@ -12,6 +12,7 @@ import type * as activityLogs from "../activityLogs.js";
 import type * as admin_modules from "../admin/modules.js";
 import type * as admin_presets from "../admin/presets.js";
 import type * as comments from "../comments.js";
+import type * as convexDashboard from "../convexDashboard.js";
 import type * as customers from "../customers.js";
 import type * as homeComponents from "../homeComponents.js";
 import type * as images from "../images.js";
@@ -26,7 +27,6 @@ import type * as roles from "../roles.js";
 import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
 import type * as users from "../users.js";
-import type * as visitors from "../visitors.js";
 
 import type {
   ApiFromModules,
@@ -39,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   "admin/modules": typeof admin_modules;
   "admin/presets": typeof admin_presets;
   comments: typeof comments;
+  convexDashboard: typeof convexDashboard;
   customers: typeof customers;
   homeComponents: typeof homeComponents;
   images: typeof images;
@@ -53,7 +54,6 @@ declare const fullApi: ApiFromModules<{
   seed: typeof seed;
   settings: typeof settings;
   users: typeof users;
-  visitors: typeof visitors;
 }>;
 
 /**

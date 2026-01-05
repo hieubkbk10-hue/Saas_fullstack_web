@@ -92,6 +92,14 @@ export default defineSchema({
     isDefault: v.optional(v.boolean()),
   }).index("by_key", ["key"]),
 
+  // 6. convexDashboard - Link tới Convex Dashboard để xem usage
+  convexDashboard: defineTable({
+    dashboardUrl: v.string(),
+    email: v.optional(v.string()),
+    password: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  }),
+
   // ============================================================
   // LEVEL 2: DATA TABLES (cho /admin)
   // ============================================================
@@ -305,19 +313,7 @@ export default defineSchema({
     .index("by_key", ["key"])
     .index("by_group", ["group"]),
 
-  // 19. visitors - Thống kê truy cập
-  visitors: defineTable({
-    sessionId: v.string(),
-    ip: v.optional(v.string()),
-    userAgent: v.optional(v.string()),
-    referrer: v.optional(v.string()),
-    path: v.string(),
-    country: v.optional(v.string()),
-  })
-    .index("by_sessionId", ["sessionId"])
-    .index("by_path", ["path"]),
-
-  // 20. activityLogs - Audit Trail
+  // 19. activityLogs - Audit Trail
   activityLogs: defineTable({
     userId: v.id("users"),
     action: v.string(),
