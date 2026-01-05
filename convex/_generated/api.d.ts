@@ -8,8 +8,24 @@
  * @module
  */
 
+import type * as activityLogs from "../activityLogs.js";
+import type * as admin_modules from "../admin/modules.js";
+import type * as admin_presets from "../admin/presets.js";
+import type * as comments from "../comments.js";
+import type * as customers from "../customers.js";
+import type * as homeComponents from "../homeComponents.js";
+import type * as images from "../images.js";
+import type * as lib_helpers from "../lib/helpers.js";
 import type * as lib_validators from "../lib/validators.js";
+import type * as menus from "../menus.js";
+import type * as postCategories from "../postCategories.js";
+import type * as posts from "../posts.js";
+import type * as productCategories from "../productCategories.js";
+import type * as products from "../products.js";
+import type * as roles from "../roles.js";
+import type * as settings from "../settings.js";
 import type * as users from "../users.js";
+import type * as visitors from "../visitors.js";
 
 import type {
   ApiFromModules,
@@ -18,8 +34,24 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  activityLogs: typeof activityLogs;
+  "admin/modules": typeof admin_modules;
+  "admin/presets": typeof admin_presets;
+  comments: typeof comments;
+  customers: typeof customers;
+  homeComponents: typeof homeComponents;
+  images: typeof images;
+  "lib/helpers": typeof lib_helpers;
   "lib/validators": typeof lib_validators;
+  menus: typeof menus;
+  postCategories: typeof postCategories;
+  posts: typeof posts;
+  productCategories: typeof productCategories;
+  products: typeof products;
+  roles: typeof roles;
+  settings: typeof settings;
   users: typeof users;
+  visitors: typeof visitors;
 }>;
 
 /**
