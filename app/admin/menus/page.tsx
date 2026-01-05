@@ -36,7 +36,7 @@ const MenuPreview = ({
   
   const [config, setConfig] = useState({
     brandName: 'YourBrand',
-    cta: { show: true, text: 'Lien he', url: '/contact' },
+    cta: { show: true, text: 'Liên hệ', url: '/contact' },
     topbar: {
       show: true,
       hotline: '1900 1234',
@@ -44,13 +44,13 @@ const MenuPreview = ({
       showTrackOrder: true,
       showStoreSystem: true,
     },
-    search: { show: true, placeholder: 'Tim kiem...' },
+    search: { show: true, placeholder: 'Tìm kiếm...' },
     cart: { show: true },
     wishlist: { show: true },
     hero: {
-      title: 'Chao mung den voi',
-      subtitle: 'Kham pha san pham tuyet voi',
-      buttonText: 'Kham pha ngay',
+      title: 'Chào mừng đến với',
+      subtitle: 'Khám phá sản phẩm tuyệt vời',
+      buttonText: 'Khám phá ngay',
       buttonUrl: '#',
     }
   });
@@ -246,15 +246,15 @@ const MenuPreview = ({
             <div className="flex items-center gap-3">
               {device !== 'mobile' && (
                 <>
-                  {config.topbar.showTrackOrder && <a href="#" className="hover:underline">Theo doi don hang</a>}
+                  {config.topbar.showTrackOrder && <a href="#" className="hover:underline">Theo dõi đơn hàng</a>}
                   {config.topbar.showTrackOrder && config.topbar.showStoreSystem && <span>|</span>}
-                  {config.topbar.showStoreSystem && <a href="#" className="hover:underline">He thong cua hang</a>}
+                  {config.topbar.showStoreSystem && <a href="#" className="hover:underline">Hệ thống cửa hàng</a>}
                   {(config.topbar.showTrackOrder || config.topbar.showStoreSystem) && <span>|</span>}
                 </>
               )}
               <a href="#" className="hover:underline flex items-center gap-1">
                 <User size={12} />
-                Dang nhap
+                Đăng nhập
               </a>
             </div>
           </div>
@@ -644,7 +644,7 @@ const MenuPreview = ({
                     onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, show: e.target.checked } })}
                     className="w-3.5 h-3.5 rounded"
                   />
-                  Hien thi Topbar
+                  Hiển thị Topbar
                 </label>
                 <label className="flex items-center gap-2 text-xs">
                   <input
@@ -653,7 +653,7 @@ const MenuPreview = ({
                     onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, showTrackOrder: e.target.checked } })}
                     className="w-3.5 h-3.5 rounded"
                   />
-                  Theo doi don
+                  Theo dõi đơn
                 </label>
                 <label className="flex items-center gap-2 text-xs">
                   <input
@@ -662,7 +662,7 @@ const MenuPreview = ({
                     onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, showStoreSystem: e.target.checked } })}
                     className="w-3.5 h-3.5 rounded"
                   />
-                  He thong cua hang
+                  Hệ thống cửa hàng
                 </label>
                 <label className="flex items-center gap-2 text-xs">
                   <input
@@ -789,7 +789,7 @@ const MenuPreview = ({
             {device === 'tablet' && '768px'}
             {device === 'mobile' && '375px'}
           </span>
-          <span>{items.filter(i => i.depth === 0).length} muc goc - {items.length} tong</span>
+          <span>{items.filter(i => i.depth === 0).length} mục gốc - {items.length} tổng</span>
         </div>
 
         <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
@@ -799,23 +799,23 @@ const MenuPreview = ({
           <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
             {previewStyle === 'classic' && (
               <>
-                <li>- Layout pho bien nhat - Logo trai, menu phai, CTA button</li>
-                <li>- Giu toi da 5-7 muc menu de de doc</li>
-                <li>- Hamburger menu cho mobile voi animation muot</li>
+                <li>- Layout phổ biến nhất - Logo trái, menu phải, CTA button</li>
+                <li>- Giữ tối đa 5-7 mục menu để dễ đọc</li>
+                <li>- Hamburger menu cho mobile với animation mượt</li>
               </>
             )}
             {previewStyle === 'topbar' && (
               <>
-                <li>- Utility bar tang conversion (hotline, tracking, login)</li>
-                <li>- Search bar noi bat giup user tim kiem nhanh</li>
-                <li>- Phu hop cho e-commerce, corporate websites</li>
+                <li>- Utility bar tăng conversion (hotline, tracking, login)</li>
+                <li>- Search bar nổi bật giúp user tìm kiếm nhanh</li>
+                <li>- Phù hợp cho e-commerce, corporate websites</li>
               </>
             )}
             {previewStyle === 'transparent' && (
               <>
-                <li>- Overlay tren hero section - tao cam giac hien dai</li>
-                <li>- Chuyen tu transparent sang solid khi scroll (sticky)</li>
-                <li>- Dropdown voi hieu ung glass/blur tang tinh tham my</li>
+                <li>- Overlay trên hero section - tạo cảm giác hiện đại</li>
+                <li>- Chuyển từ transparent sang solid khi scroll (sticky)</li>
+                <li>- Dropdown với hiệu ứng glass/blur tăng tính thẩm mỹ</li>
               </>
             )}
           </ul>
@@ -883,7 +883,7 @@ export default function MenuBuilderPage() {
   };
 
   const handleDelete = (index: number) => {
-    if(confirm('Xoa lien ket nay?')) {
+    if(confirm('Xóa liên kết này?')) {
       const newItems = items.filter((_, i) => i !== index);
       setItems(newItems);
     }
@@ -893,7 +893,7 @@ export default function MenuBuilderPage() {
     const newItem: MenuItem = {
       id: `NEW-${Date.now()}`,
       menuId: MENU_ID,
-      label: 'Lien ket moi',
+      label: 'Liên kết mới',
       url: '/',
       order: items.length + 1,
       depth: 0
@@ -916,10 +916,10 @@ export default function MenuBuilderPage() {
       <div className="flex justify-between items-center">
         <div>
            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Header Menu</h1>
-           <p className="text-sm text-slate-500 dark:text-slate-400">Quan ly cac lien ket hien thi tren thanh dieu huong chinh (Header)</p>
+           <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý các liên kết hiển thị trên thanh điều hướng chính (Header)</p>
         </div>
-        <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => toast.success("Da luu menu thanh cong")}>
-            <Save size={16}/> Luu thay doi
+        <Button className="gap-2 bg-blue-600 hover:bg-blue-700" onClick={() => toast.success("Đã lưu menu thành công")}>
+            <Save size={16}/> Lưu thay đổi
         </Button>
       </div>
 
@@ -939,7 +939,7 @@ export default function MenuBuilderPage() {
                 draggedIndex === index ? "opacity-50 border-dashed border-slate-400" : ""
               )}
             >
-              <div className="flex flex-col gap-1 text-slate-300 cursor-move" title="Keo de sap xep">
+              <div className="flex flex-col gap-1 text-slate-300 cursor-move" title="Kéo để sắp xếp">
                 <button type="button" onClick={() => handleMove(index, 'up')} className="hover:text-blue-600 disabled:opacity-30" disabled={index === 0}><ArrowUp size={14}/></button>
                 <GripVertical size={14} />
                 <button type="button" onClick={() => handleMove(index, 'down')} className="hover:text-blue-600 disabled:opacity-30" disabled={index === items.length - 1}><ArrowDown size={14}/></button>
@@ -947,43 +947,43 @@ export default function MenuBuilderPage() {
               
               <div className="flex-1 grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label className="text-xs text-slate-500">Nhan hien thi</Label>
+                  <Label className="text-xs text-slate-500">Nhãn hiển thị</Label>
                   <Input value={item.label} onChange={(e) => updateItem(index, 'label', e.target.value)} className="h-8 text-sm" />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-slate-500">Duong dan (URL)</Label>
+                  <Label className="text-xs text-slate-500">Đường dẫn (URL)</Label>
                   <Input value={item.url} onChange={(e) => updateItem(index, 'url', e.target.value)} className="h-8 text-sm font-mono text-xs" />
                 </div>
               </div>
 
               <div className="flex items-center gap-1 border-l border-slate-100 pl-3">
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleIndent(index, 'out')} disabled={item.depth === 0} title="Thut le trai"><ChevronRight size={14} className="rotate-180"/></Button>
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleIndent(index, 'in')} disabled={item.depth >= 2} title="Thut le phai"><ChevronRight size={14}/></Button>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleIndent(index, 'out')} disabled={item.depth === 0} title="Thụt lề trái"><ChevronRight size={14} className="rotate-180"/></Button>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleIndent(index, 'in')} disabled={item.depth >= 2} title="Thụt lề phải"><ChevronRight size={14}/></Button>
                 <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-50" onClick={() => handleDelete(index)}><Trash2 size={14}/></Button>
               </div>
             </div>
           ))}
 
           <Button variant="outline" className="w-full border-dashed" onClick={handleAdd}>
-            <Plus size={16} className="mr-2"/> Them lien ket moi
+            <Plus size={16} className="mr-2"/> Thêm liên kết mới
           </Button>
         </div>
 
         <div className="space-y-6">
           <Card>
-            <CardHeader><CardTitle className="text-base">Huong dan cau truc</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Hướng dẫn cấu trúc</CardTitle></CardHeader>
             <CardContent className="text-sm text-slate-500 space-y-4">
               <div className="p-3 bg-slate-50 rounded border border-slate-100">
-                 <p className="font-medium text-slate-900 mb-1">Cap 1 (Root)</p>
-                 <p>Hien thi truc tiep tren thanh menu ngang.</p>
+                 <p className="font-medium text-slate-900 mb-1">Cấp 1 (Root)</p>
+                 <p>Hiển thị trực tiếp trên thanh menu ngang.</p>
               </div>
               <div className="p-3 bg-slate-50 rounded border border-slate-100 ml-4">
-                 <p className="font-medium text-slate-900 mb-1">Cap 2 (Dropdown)</p>
-                 <p>Hien thi khi di chuot vao muc cap 1.</p>
+                 <p className="font-medium text-slate-900 mb-1">Cấp 2 (Dropdown)</p>
+                 <p>Hiển thị khi di chuột vào mục cấp 1.</p>
               </div>
               <div className="p-3 bg-slate-50 rounded border border-slate-100 ml-8">
-                 <p className="font-medium text-slate-900 mb-1">Cap 3 (Sub-menu)</p>
-                 <p>Hien thi khi di chuot vao muc cap 2.</p>
+                 <p className="font-medium text-slate-900 mb-1">Cấp 3 (Sub-menu)</p>
+                 <p>Hiển thị khi di chuột vào mục cấp 2.</p>
               </div>
             </CardContent>
           </Card>
