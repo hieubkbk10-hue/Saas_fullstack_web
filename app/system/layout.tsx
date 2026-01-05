@@ -12,10 +12,13 @@ import {
   ChevronRight,
   Terminal,
   Globe,
-  BarChart3
+  BarChart3,
+  Languages
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { I18nProvider, useI18n } from './i18n/context';
+import { Locale } from './i18n/translations';
 
 const SidebarItem = ({ href, icon: Icon, label, collapsed }: { href: string, icon: any, label: string, collapsed: boolean }) => {
   const pathname = usePathname();
@@ -43,7 +46,53 @@ const SidebarGroup = ({ label, collapsed }: { label: string, collapsed: boolean 
   </div>
 );
 
-export default function SystemLayout({ children }: { children: React.ReactNode }) {
+const LanguageSwitcher = () => {
+  const { locale, setLocale } = useI18n();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const languages: { code: Locale; label: string; flag: string }[] = [
+    { code: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
+    { code: 'en', label: 'English', flag: '🇺🇸' },
+  ];
+
+  const currentLang = languages.find(l => l.code === locale) || languages[0];
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1.5 p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
+        title={locale === 'vi' ? 'Chuyển ngôn ngữ' : 'Change language'}
+      >
+        <Languages size={18} />
+        <span className="text-xs font-medium hidden sm:inline">{currentLang.flag}</span>
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-full right-0 mt-1 w-40 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-20 overflow-hidden">
+            {languages.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => { setLocale(lang.code); setIsOpen(false); }}
+                className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${
+                  locale === lang.code ? 'bg-slate-50 dark:bg-slate-800 text-cyan-600 dark:text-cyan-400' : 'text-slate-700 dark:text-slate-300'
+                }`}
+              >
+                <span>{lang.flag}</span>
+                <span>{lang.label}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+function SystemLayoutContent({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
@@ -66,10 +115,10 @@ export default function SystemLayout({ children }: { children: React.ReactNode }
   }, [darkMode]);
 
   const getPageName = () => {
-    if (pathname === '/system') return 'Dashboard';
-    if (pathname.includes('modules')) return 'Quản lý Module';
-    if (pathname.includes('integrations')) return 'Analytics Integrations';
-    if (pathname.includes('seo')) return 'SEO Configuration';
+    if (pathname === '/system') return t.pages.dashboard;
+    if (pathname.includes('modules')) return t.pages.moduleManagement;
+    if (pathname.includes('integrations')) return t.pages.analyticsIntegrations;
+    if (pathname.includes('seo')) return t.pages.seoConfiguration;
     return 'System';
   };
 
@@ -95,13 +144,13 @@ export default function SystemLayout({ children }: { children: React.ReactNode }
         </div>
 
         <nav className="flex-1 p-3 overflow-y-auto custom-scrollbar">
-          <SidebarGroup label="Platform" collapsed={collapsed} />
-          <SidebarItem href="/system" icon={LayoutDashboard} label="Overview" collapsed={collapsed} />
+          <SidebarGroup label={t.sidebar.platform} collapsed={collapsed} />
+          <SidebarItem href="/system" icon={LayoutDashboard} label={t.sidebar.overview} collapsed={collapsed} />
           
-          <SidebarGroup label="Control" collapsed={collapsed} />
-          <SidebarItem href="/system/modules" icon={Blocks} label="Quản lý Module" collapsed={collapsed} />
-          <SidebarItem href="/system/integrations" icon={BarChart3} label="Analytics" collapsed={collapsed} />
-          <SidebarItem href="/system/seo" icon={Globe} label="SEO & Discovery" collapsed={collapsed} />
+          <SidebarGroup label={t.sidebar.control} collapsed={collapsed} />
+          <SidebarItem href="/system/modules" icon={Blocks} label={t.sidebar.modules} collapsed={collapsed} />
+          <SidebarItem href="/system/integrations" icon={BarChart3} label={t.sidebar.analytics} collapsed={collapsed} />
+          <SidebarItem href="/system/seo" icon={Globe} label={t.sidebar.seo} collapsed={collapsed} />
         </nav>
 
         {/* Sidebar Footer */}
@@ -110,7 +159,7 @@ export default function SystemLayout({ children }: { children: React.ReactNode }
             onClick={() => setCollapsed(!collapsed)}
             className="w-full flex justify-center items-center p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition-colors hidden md:flex"
           >
-            {collapsed ? <ChevronRight size={16} /> : <span className="text-xs">Collapse</span>}
+            {collapsed ? <ChevronRight size={16} /> : <span className="text-xs">{t.sidebar.collapse}</span>}
           </button>
         </div>
       </aside>
@@ -139,7 +188,7 @@ export default function SystemLayout({ children }: { children: React.ReactNode }
               <Search size={14} className="text-slate-400 dark:text-slate-500 mr-2" />
               <input 
                 type="text" 
-                placeholder="Search..." 
+                placeholder={t.header.search}
                 className="bg-transparent border-none outline-none text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 w-48"
               />
               <span className="text-[10px] text-slate-500 dark:text-slate-600 bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-800 ml-2">Ctrl+K</span>
@@ -153,10 +202,12 @@ export default function SystemLayout({ children }: { children: React.ReactNode }
               </span>
             </div>
 
+            <LanguageSwitcher />
+
             <button 
               onClick={() => setDarkMode(!darkMode)}
               className="relative p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
-              title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              title={darkMode ? t.header.lightMode : t.header.darkMode}
             >
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
@@ -179,7 +230,7 @@ export default function SystemLayout({ children }: { children: React.ReactNode }
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-slate-600 dark:text-slate-300">System: Healthy</span>
+              <span className="text-slate-600 dark:text-slate-300">{t.footer.systemHealthy}</span>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -196,5 +247,13 @@ export default function SystemLayout({ children }: { children: React.ReactNode }
         />
       )}
     </div>
+  );
+}
+
+export default function SystemLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <I18nProvider>
+      <SystemLayoutContent>{children}</SystemLayoutContent>
+    </I18nProvider>
   );
 }

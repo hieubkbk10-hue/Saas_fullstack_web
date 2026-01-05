@@ -19,18 +19,9 @@ import {
   TrendingDown,
   Calendar
 } from 'lucide-react';
+import { useI18n } from './i18n/context';
 
 type TimeRange = '1h' | '12h' | '24h' | '7d' | '1m' | '3m' | '1y';
-
-const timeRangeLabels: Record<TimeRange, string> = {
-  '1h': '1 giờ',
-  '12h': '12 giờ',
-  '24h': '24 giờ',
-  '7d': '7 ngày',
-  '1m': '1 tháng',
-  '3m': '3 tháng',
-  '1y': '1 năm',
-};
 
 const generateMockData = (range: TimeRange) => {
   const now = new Date();
@@ -203,7 +194,7 @@ const usageDetails: Record<UsageType, UsageDetail> = {
   },
 };
 
-const UsageCard = ({ title, used, total, unit, percent, color, icon: Icon, onViewDetails }: any) => {
+const UsageCard = ({ title, used, total, unit, percent, color, icon: Icon, onViewDetails, viewDetailsText }: any) => {
   const colorMap: Record<string, { text: string; bg: string }> = {
     cyan: { text: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-500' },
     emerald: { text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500' },
@@ -241,14 +232,14 @@ const UsageCard = ({ title, used, total, unit, percent, color, icon: Icon, onVie
           onClick={onViewDetails}
           className={`text-xs flex items-center gap-1 hover:underline ${theme.text}`}
         >
-          View Details <ArrowRight size={10} />
+          {viewDetailsText} <ArrowRight size={10} />
         </button>
       </div>
     </div>
   );
 };
 
-const DetailModal = ({ detail, onClose }: { detail: UsageDetail; onClose: () => void }) => {
+const DetailModal = ({ detail, onClose, t }: { detail: UsageDetail; onClose: () => void; t: any }) => {
   const colorMap: Record<string, { text: string; bg: string; border: string }> = {
     cyan: { text: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-500', border: 'border-cyan-500/30' },
     emerald: { text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500', border: 'border-emerald-500/30' },
@@ -290,14 +281,14 @@ const DetailModal = ({ detail, onClose }: { detail: UsageDetail; onClose: () => 
                 : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
             }`}>
               {detail.trend >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-              {detail.trend >= 0 ? '+' : ''}{detail.trend}% so với tháng trước
+              {detail.trend >= 0 ? '+' : ''}{detail.trend}% {t.overview.modal.vsLastMonth}
             </div>
           </div>
 
           {/* Progress bar */}
           <div>
             <div className="flex justify-between text-xs text-slate-500 mb-1">
-              <span>Đã sử dụng</span>
+              <span>{t.overview.modal.used}</span>
               <span>{detail.percent}%</span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-800 h-3 rounded-full overflow-hidden">
@@ -311,7 +302,7 @@ const DetailModal = ({ detail, onClose }: { detail: UsageDetail; onClose: () => 
           {/* History Chart */}
           <div>
             <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
-              <Calendar size={14} /> Lịch sử sử dụng (30 ngày)
+              <Calendar size={14} /> {t.overview.modal.usageHistory}
             </h4>
             <div className="h-40">
               <ResponsiveContainer width="100%" height="100%">
@@ -338,13 +329,13 @@ const DetailModal = ({ detail, onClose }: { detail: UsageDetail; onClose: () => 
           {/* Breakdown */}
           <div>
             <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
-              Chi tiết phân bổ
+              {t.overview.modal.breakdown}
             </h4>
             <div className="space-y-3">
               {detail.breakdown.map((item, idx) => (
                 <div key={idx}>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-slate-600 dark:text-slate-300">{item.label}</span>
+                    <span className="text-slate-600 dark:text-slate-300">{t.overview.modal.breakdownLabels[item.label] || item.label}</span>
                     <span className="text-slate-500 font-mono">{item.value} ({item.percent}%)</span>
                   </div>
                   <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
@@ -364,10 +355,19 @@ const DetailModal = ({ detail, onClose }: { detail: UsageDetail; onClose: () => 
 };
 
 export default function OverviewPage() {
+  const { t } = useI18n();
   const [selectedRange, setSelectedRange] = useState<TimeRange>('24h');
   const [selectedDetail, setSelectedDetail] = useState<UsageType | null>(null);
   const chartData = useMemo(() => generateMockData(selectedRange), [selectedRange]);
   const timeRanges: TimeRange[] = ['1h', '12h', '24h', '7d', '1m', '3m', '1y'];
+
+  const getUsageDetailWithTranslation = (type: UsageType): UsageDetail => {
+    const detail = usageDetails[type];
+    return {
+      ...detail,
+      description: t.overview.modal.descriptions[type],
+    };
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -375,15 +375,15 @@ export default function OverviewPage() {
       {/* Introduction */}
       <div className="flex justify-between items-end">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Storage & Bandwidth</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Real-time resource usage monitoring</p>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t.overview.title}</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t.overview.subtitle}</p>
         </div>
       </div>
 
       {/* Storage Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <UsageCard 
-          title="Database Storage" 
+          title={t.overview.dbStorage}
           icon={Database}
           used="2.4" 
           total="10" 
@@ -391,9 +391,10 @@ export default function OverviewPage() {
           percent={24} 
           color="cyan"
           onViewDetails={() => setSelectedDetail('db-storage')}
+          viewDetailsText={t.overview.viewDetails}
         />
         <UsageCard 
-          title="File Storage (S3)" 
+          title={t.overview.fileStorage}
           icon={FileText}
           used="8.7" 
           total="50" 
@@ -401,9 +402,10 @@ export default function OverviewPage() {
           percent={17} 
           color="emerald"
           onViewDetails={() => setSelectedDetail('file-storage')}
+          viewDetailsText={t.overview.viewDetails}
         />
          <UsageCard 
-          title="Database Bandwidth" 
+          title={t.overview.dbBandwidth}
           icon={Database}
           used="125" 
           total="1000" 
@@ -411,9 +413,10 @@ export default function OverviewPage() {
           percent={12} 
           color="amber"
           onViewDetails={() => setSelectedDetail('db-bandwidth')}
+          viewDetailsText={t.overview.viewDetails}
         />
         <UsageCard 
-          title="File Bandwidth" 
+          title={t.overview.fileBandwidth}
           icon={FileText}
           used="342" 
           total="1000" 
@@ -421,14 +424,16 @@ export default function OverviewPage() {
           percent={34} 
           color="rose"
           onViewDetails={() => setSelectedDetail('file-bandwidth')}
+          viewDetailsText={t.overview.viewDetails}
         />
       </div>
 
       {/* Detail Modal */}
       {selectedDetail && (
         <DetailModal 
-          detail={usageDetails[selectedDetail]} 
-          onClose={() => setSelectedDetail(null)} 
+          detail={getUsageDetailWithTranslation(selectedDetail)} 
+          onClose={() => setSelectedDetail(null)}
+          t={t}
         />
       )}
 
@@ -437,9 +442,9 @@ export default function OverviewPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <h3 className="text-slate-700 dark:text-slate-200 font-semibold flex items-center gap-2">
-              Traffic Trend
+              {t.overview.trafficTrend}
             </h3>
-            <p className="text-xs text-slate-500 mt-1">Bandwidth usage in GB ({timeRangeLabels[selectedRange]})</p>
+            <p className="text-xs text-slate-500 mt-1">{t.overview.bandwidthUsage} ({t.overview.timeRanges[selectedRange]})</p>
           </div>
           <div className="flex gap-1 flex-wrap">
             {timeRanges.map((range) => (
@@ -452,7 +457,7 @@ export default function OverviewPage() {
                     : 'border-slate-300 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-400 dark:hover:border-slate-700'
                 }`}
               >
-                {timeRangeLabels[range]}
+                {t.overview.timeRanges[range]}
               </button>
             ))}
           </div>

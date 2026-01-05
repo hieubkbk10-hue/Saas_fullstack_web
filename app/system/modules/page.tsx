@@ -33,18 +33,19 @@ import {
   Loader2
 } from 'lucide-react';
 import Link from 'next/link';
+import { useI18n } from '../i18n/context';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FileText, Image, MessageSquare, Package, ShoppingCart, ShoppingBag, Heart, 
   Users, UserCog, Shield, Settings, Menu, LayoutGrid, Bell, Megaphone, BarChart3
 };
 
-const categoryLabels: Record<string, { label: string; color: string }> = {
-  content: { label: 'Nội dung', color: 'text-blue-400' },
-  commerce: { label: 'Thương mại', color: 'text-emerald-400' },
-  user: { label: 'Người dùng', color: 'text-purple-400' },
-  system: { label: 'Hệ thống', color: 'text-orange-400' },
-  marketing: { label: 'Marketing', color: 'text-pink-400' },
+const categoryColors: Record<string, string> = {
+  content: 'text-blue-400',
+  commerce: 'text-emerald-400',
+  user: 'text-purple-400',
+  system: 'text-orange-400',
+  marketing: 'text-pink-400',
 };
 
 const categoryLabelsEn: Record<string, string> = {
@@ -302,9 +303,11 @@ const ModuleCard: React.FC<{
   canToggle: boolean;
   allModules: AdminModule[];
   isToggling?: boolean;
-}> = ({ module, onToggle, canToggle, allModules, isToggling }) => {
+  t: any;
+}> = ({ module, onToggle, canToggle, allModules, isToggling, t }) => {
   const Icon = iconMap[module.icon] || Package;
-  const category = categoryLabels[module.category];
+  const categoryColor = categoryColors[module.category];
+  const categoryLabel = t.modules.categories[module.category];
   const configRoute = moduleConfigRoutes[module.key];
   const isDisabled = module.isCore || !canToggle || isToggling;
   const hasDependents = allModules.some(m => m.dependencies?.includes(module.key) && m.enabled);
@@ -340,7 +343,7 @@ const ModuleCard: React.FC<{
             </div>
             <p className="text-xs text-slate-500 line-clamp-2">{module.description}</p>
             <div className="flex items-center gap-2 mt-2">
-              <span className={`text-[10px] font-medium ${category.color}`}>{category.label}</span>
+              <span className={`text-[10px] font-medium ${categoryColor}`}>{categoryLabel}</span>
             </div>
           </div>
         </div>
@@ -349,7 +352,7 @@ const ModuleCard: React.FC<{
           <button 
             onClick={() => !isDisabled && onToggle(module.key, !module.enabled)}
             disabled={isDisabled}
-            title={!canToggle && !module.isCore ? 'Bật module phụ thuộc trước' : undefined}
+            title={!canToggle && !module.isCore ? t.modules.needParent : undefined}
             className={`relative w-11 h-6 rounded-full transition-colors ${
               isDisabled 
                 ? 'bg-slate-200 dark:bg-slate-700 cursor-not-allowed' 
@@ -370,7 +373,7 @@ const ModuleCard: React.FC<{
             <Lock size={12} className="text-slate-400" />
           )}
           {!canToggle && !module.isCore && (
-            <span className="text-[9px] text-rose-500">Cần bật parent</span>
+            <span className="text-[9px] text-rose-500">{t.modules.needParent}</span>
           )}
         </div>
       </div>
@@ -379,7 +382,7 @@ const ModuleCard: React.FC<{
         {module.dependencies && module.dependencies.length > 0 ? (
           <div className="flex items-center gap-1 text-[10px] text-slate-500">
             <Layers size={10} />
-            <span>Phụ thuộc: {module.dependencies.map(d => allModules.find(m => m.key === d)?.name || d).join(', ')}</span>
+            <span>{t.modules.dependsOn}: {module.dependencies.map(d => allModules.find(m => m.key === d)?.name || d).join(', ')}</span>
           </div>
         ) : (
           <div></div>
@@ -390,7 +393,7 @@ const ModuleCard: React.FC<{
             href={configRoute}
             className="flex items-center gap-1 text-[11px] text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 font-medium"
           >
-            <Settings size={12} /> Cấu hình
+            <Settings size={12} /> {t.modules.configure}
           </Link>
         )}
       </div>
@@ -399,6 +402,7 @@ const ModuleCard: React.FC<{
 };
 
 export default function ModuleManagementPage() {
+  const { t } = useI18n();
   const modulesData = useQuery(api.admin.modules.listModules);
   const presetsData = useQuery(api.admin.presets.listPresets);
   const toggleModule = useMutation(api.admin.modules.toggleModule);
@@ -488,18 +492,18 @@ export default function ModuleManagementPage() {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Quản lý Module</h2>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t.modules.title}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Bật/tắt các chức năng cho Admin Dashboard
+              {t.modules.subtitle}
             </p>
           </div>
           
           <div className="flex items-center gap-2 text-xs">
             <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              <Check size={12} /> {enabledCount} bật
+              <Check size={12} /> {enabledCount} {t.modules.enabled}
             </span>
             <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
-              <X size={12} /> {disabledCount} tắt
+              <X size={12} /> {disabledCount} {t.modules.disabled}
             </span>
           </div>
         </div>
@@ -522,13 +526,13 @@ export default function ModuleManagementPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm kiếm module..." 
+            placeholder={t.modules.searchModule}
             className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-2 pl-9 pr-4 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:border-cyan-500/50 outline-none"
           />
         </div>
         
         <div className="flex gap-2 flex-wrap">
-          {['all', ...Object.keys(categoryLabels)].map((cat) => (
+          {['all', ...Object.keys(categoryColors)].map((cat) => (
             <button 
               key={cat}
               onClick={() => setFilterCategory(cat)}
@@ -538,7 +542,7 @@ export default function ModuleManagementPage() {
                   : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
-              {cat === 'all' ? 'Tất cả' : categoryLabels[cat].label}
+              {cat === 'all' ? t.modules.all : t.modules.categories[cat]}
             </button>
           ))}
         </div>
@@ -547,8 +551,8 @@ export default function ModuleManagementPage() {
       <div className="space-y-6">
         {Object.entries(groupedModules).map(([category, mods]) => (
           <div key={category}>
-            <h3 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${categoryLabels[category].color}`}>
-              {categoryLabels[category].label}
+            <h3 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${categoryColors[category]}`}>
+              {t.modules.categories[category]}
               <span className="text-xs font-normal text-slate-500">({(mods as AdminModule[]).length})</span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -560,6 +564,7 @@ export default function ModuleManagementPage() {
                   canToggle={canToggleModule(module)}
                   allModules={modules}
                   isToggling={togglingKey === module.key}
+                  t={t}
                 />
               ))}
             </div>
@@ -570,7 +575,7 @@ export default function ModuleManagementPage() {
       {filteredModules.length === 0 && (
         <div className="text-center py-12 text-slate-500">
           <Package size={48} className="mx-auto mb-3 opacity-50" />
-          <p>Không tìm thấy module nào</p>
+          <p>{t.modules.noModuleFound}</p>
         </div>
       )}
     </div>
