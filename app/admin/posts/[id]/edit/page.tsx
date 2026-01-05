@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Upload, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../../components/ui';
+import { LexicalEditor } from '../../../components/LexicalEditor';
 import { mockPostCategories, mockPosts } from '../../../mockData';
 
 export default function PostEditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -44,12 +45,7 @@ export default function PostEditPage({ params }: { params: Promise<{ id: string 
               
               <div className="space-y-2">
                 <Label>Nội dung</Label>
-                <textarea 
-                  className="w-full min-h-[300px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nhập nội dung bài viết..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                />
+                <LexicalEditor onChange={setContent} />
               </div>
             </CardContent>
           </Card>
