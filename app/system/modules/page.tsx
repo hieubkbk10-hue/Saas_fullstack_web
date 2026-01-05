@@ -542,7 +542,7 @@ export default function ModuleManagementPage() {
                   : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
-              {cat === 'all' ? t.modules.all : t.modules.categories[cat]}
+              {cat === 'all' ? t.modules.all : t.modules.categories[cat as keyof typeof t.modules.categories]}
             </button>
           ))}
         </div>
@@ -552,7 +552,7 @@ export default function ModuleManagementPage() {
         {Object.entries(groupedModules).map(([category, mods]) => (
           <div key={category}>
             <h3 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${categoryColors[category]}`}>
-              {t.modules.categories[category]}
+              {t.modules.categories[category as keyof typeof t.modules.categories]}
               <span className="text-xs font-normal text-slate-500">({(mods as AdminModule[]).length})</span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

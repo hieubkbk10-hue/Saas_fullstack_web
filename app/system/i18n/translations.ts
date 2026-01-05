@@ -1,7 +1,6 @@
 export type Locale = 'vi' | 'en';
 
-export const translations = {
-  vi: {
+const vi = {
     // Layout
     sidebar: {
       platform: 'Nền tảng',
@@ -132,9 +131,9 @@ export const translations = {
       add: 'Thêm',
       usage: 'Sử dụng',
     },
-  },
+};
 
-  en: {
+const en: typeof vi = {
     // Layout
     sidebar: {
       platform: 'Platform',
@@ -265,7 +264,8 @@ export const translations = {
       add: 'Add',
       usage: 'Usage',
     },
-  },
-} as const;
+};
 
-export type TranslationKeys = typeof translations.vi;
+export const translations: Record<Locale, typeof vi> = { vi, en };
+
+export type TranslationKeys = typeof vi;
