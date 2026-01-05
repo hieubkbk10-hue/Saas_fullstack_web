@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   AreaChart, 
   Area, 
@@ -16,15 +16,74 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-const mockChartData = [
-  { time: '00:00', value: 4.2 },
-  { time: '04:00', value: 3.8 },
-  { time: '08:00', value: 5.5 },
-  { time: '12:00', value: 8.2 },
-  { time: '16:00', value: 7.1 },
-  { time: '20:00', value: 6.5 },
-  { time: '23:59', value: 5.0 },
-];
+type TimeRange = '1h' | '12h' | '24h' | '7d' | '1m' | '3m' | '1y';
+
+const timeRangeLabels: Record<TimeRange, string> = {
+  '1h': '1 giờ',
+  '12h': '12 giờ',
+  '24h': '24 giờ',
+  '7d': '7 ngày',
+  '1m': '1 tháng',
+  '3m': '3 tháng',
+  '1y': '1 năm',
+};
+
+const generateMockData = (range: TimeRange) => {
+  const now = new Date();
+  const data: { time: string; value: number }[] = [];
+  
+  const configs: Record<TimeRange, { points: number; format: (d: Date) => string; subtractMs: number }> = {
+    '1h': { 
+      points: 12, 
+      format: (d) => `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`,
+      subtractMs: 5 * 60 * 1000 
+    },
+    '12h': { 
+      points: 12, 
+      format: (d) => `${d.getHours()}:00`,
+      subtractMs: 60 * 60 * 1000 
+    },
+    '24h': { 
+      points: 12, 
+      format: (d) => `${d.getHours()}:00`,
+      subtractMs: 2 * 60 * 60 * 1000 
+    },
+    '7d': { 
+      points: 7, 
+      format: (d) => `${d.getDate()}/${d.getMonth() + 1}`,
+      subtractMs: 24 * 60 * 60 * 1000 
+    },
+    '1m': { 
+      points: 10, 
+      format: (d) => `${d.getDate()}/${d.getMonth() + 1}`,
+      subtractMs: 3 * 24 * 60 * 60 * 1000 
+    },
+    '3m': { 
+      points: 12, 
+      format: (d) => `${d.getDate()}/${d.getMonth() + 1}`,
+      subtractMs: 7 * 24 * 60 * 60 * 1000 
+    },
+    '1y': { 
+      points: 12, 
+      format: (d) => `T${d.getMonth() + 1}`,
+      subtractMs: 30 * 24 * 60 * 60 * 1000 
+    },
+  };
+
+  const config = configs[range];
+  
+  for (let i = config.points - 1; i >= 0; i--) {
+    const date = new Date(now.getTime() - i * config.subtractMs);
+    const baseValue = 3 + Math.random() * 5;
+    const variation = Math.sin(i * 0.5) * 2;
+    data.push({
+      time: config.format(date),
+      value: Math.round((baseValue + variation) * 10) / 10,
+    });
+  }
+  
+  return data;
+};
 
 const UsageCard = ({ title, used, total, unit, percent, color, icon: Icon }: any) => {
   const colorMap: Record<string, { text: string; bg: string }> = {
@@ -69,6 +128,10 @@ const UsageCard = ({ title, used, total, unit, percent, color, icon: Icon }: any
 };
 
 export default function OverviewPage() {
+  const [selectedRange, setSelectedRange] = useState<TimeRange>('24h');
+  const chartData = useMemo(() => generateMockData(selectedRange), [selectedRange]);
+  const timeRanges: TimeRange[] = ['1h', '12h', '24h', '7d', '1m', '3m', '1y'];
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       
@@ -122,17 +185,25 @@ export default function OverviewPage() {
 
       {/* Main Bandwidth Chart */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <h3 className="text-slate-700 dark:text-slate-200 font-semibold flex items-center gap-2">
-              Daily Traffic Trend
+              Traffic Trend
             </h3>
-            <p className="text-xs text-slate-500 mt-1">Bandwidth usage in GB (Last 24h)</p>
+            <p className="text-xs text-slate-500 mt-1">Bandwidth usage in GB ({timeRangeLabels[selectedRange]})</p>
           </div>
-          <div className="flex gap-2">
-            {['7 Days', '24 Hours', '1 Hour'].map((t) => (
-              <button key={t} className={`text-xs px-2 py-1 rounded border ${t === '24 Hours' ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-600 dark:text-cyan-400' : 'border-slate-300 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}>
-                {t}
+          <div className="flex gap-1 flex-wrap">
+            {timeRanges.map((range) => (
+              <button 
+                key={range} 
+                onClick={() => setSelectedRange(range)}
+                className={`text-xs px-2.5 py-1.5 rounded border transition-all ${
+                  selectedRange === range 
+                    ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-600 dark:text-cyan-400' 
+                    : 'border-slate-300 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:border-slate-400 dark:hover:border-slate-700'
+                }`}
+              >
+                {timeRangeLabels[range]}
               </button>
             ))}
           </div>
@@ -140,7 +211,7 @@ export default function OverviewPage() {
         
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={mockChartData}>
+            <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.2}/>
