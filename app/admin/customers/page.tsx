@@ -6,9 +6,18 @@ import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { ModuleGuard } from '../components/ModuleGuard';
 import { mockCustomers } from '../mockData';
 
 export default function CustomersListPage() {
+  return (
+    <ModuleGuard moduleKey="customers">
+      <CustomersContent />
+    </ModuleGuard>
+  );
+}
+
+function CustomersContent() {
   const [customers, setCustomers] = useState(mockCustomers);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');

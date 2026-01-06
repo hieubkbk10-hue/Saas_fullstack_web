@@ -1,25 +1,32 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, FileText, ShoppingCart, Image as ImageIcon, 
   Users, Globe, Settings, ChevronRight, X, LogOut,
-  ChevronsLeft, ChevronsRight
+  ChevronsLeft, ChevronsRight, Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Loader2
 } from 'lucide-react';
 import { cn, Button } from './ui';
+import { useAdminModules } from '../context/AdminModulesContext';
+
+const iconMap: Record<string, React.ElementType> = {
+  LayoutDashboard, FileText, ShoppingCart, ImageIcon, Users, Globe, Settings,
+  Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Image: ImageIcon
+};
 
 interface SidebarItemProps {
   icon: React.ElementType;
   label: string;
   href: string;
   active: boolean;
-  subItems?: { label: string, href: string }[];
+  subItems?: { label: string, href: string, moduleKey?: string }[];
   isCollapsed: boolean;
   isExpanded: boolean;
   onToggle: () => void;
   pathname: string;
+  isModuleEnabled: (key: string) => boolean;
 }
 
 const SidebarItem: React.FC<SidebarItemProps> = ({ 
@@ -31,9 +38,15 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   isCollapsed, 
   isExpanded, 
   onToggle,
-  pathname
+  pathname,
+  isModuleEnabled
 }) => {
-  const hasSub = subItems && subItems.length > 0;
+  const filteredSubItems = useMemo(() => {
+    if (!subItems) return [];
+    return subItems.filter(sub => !sub.moduleKey || isModuleEnabled(sub.moduleKey));
+  }, [subItems, isModuleEnabled]);
+
+  const hasSub = filteredSubItems.length > 0;
 
   const handleClick = (e: React.MouseEvent) => {
     if (hasSub) {
@@ -41,6 +54,10 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
       onToggle();
     }
   };
+
+  if (subItems && filteredSubItems.length === 0) {
+    return null;
+  }
 
   return (
     <div className="mb-1 group relative">
@@ -87,7 +104,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
           isExpanded && !isCollapsed ? "max-h-[500px] opacity-100 mt-1" : "max-h-0 opacity-0"
         )}>
           <div className="ml-4 border-l-2 border-slate-100 dark:border-slate-800 pl-3 space-y-1 my-1">
-            {subItems.map((sub) => (
+            {filteredSubItems.map((sub) => (
               <Link 
                 key={sub.href} 
                 href={sub.href}
@@ -117,6 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const pathname = usePathname();
+  const { isModuleEnabled, isLoading } = useAdminModules();
 
   const isActive = (route: string) => pathname.startsWith(route);
 
@@ -140,6 +158,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
       setExpandedMenu(expandedMenu === label ? null : label);
     }
   };
+
+  const showAnalyticsSection = isModuleEnabled('analytics');
+  const showPostsSection = isModuleEnabled('posts') || isModuleEnabled('comments');
+  const showCommerceSection = isModuleEnabled('products') || isModuleEnabled('customers');
+  const showMediaSection = isModuleEnabled('media');
+  const showUsersSection = isModuleEnabled('users') || isModuleEnabled('roles');
+  const showWebsiteSection = isModuleEnabled('menus') || isModuleEnabled('homepage');
+  const showSettingsSection = isModuleEnabled('settings');
 
   return (
     <>
@@ -169,116 +195,153 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
           </button>
         </div>
 
-        <div className="flex-1 py-6 px-3 space-y-6 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
-          
-          <div className="space-y-1">
-            {!isSidebarCollapsed && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng quan</div>}
-            <SidebarItem 
-              icon={LayoutDashboard} 
-              label="Dashboard" 
-              href="/admin/dashboard" 
-              active={pathname === '/admin/dashboard' || pathname === '/admin'} 
-              isCollapsed={isSidebarCollapsed}
-              isExpanded={false}
-              onToggle={() => {}}
-              pathname={pathname}
-            />
+        {isLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <Loader2 size={24} className="animate-spin text-slate-400" />
           </div>
+        ) : (
+          <div className="flex-1 py-6 px-3 space-y-6 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+            
+            {/* Dashboard/Analytics */}
+            {showAnalyticsSection && (
+              <div className="space-y-1">
+                {!isSidebarCollapsed && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng quan</div>}
+                <SidebarItem 
+                  icon={LayoutDashboard} 
+                  label="Dashboard" 
+                  href="/admin/dashboard" 
+                  active={pathname === '/admin/dashboard' || pathname === '/admin'} 
+                  isCollapsed={isSidebarCollapsed}
+                  isExpanded={false}
+                  onToggle={() => {}}
+                  pathname={pathname}
+                  isModuleEnabled={isModuleEnabled}
+                />
+              </div>
+            )}
 
-          <div className="space-y-1">
-            {!isSidebarCollapsed && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Nội dung</div>}
-            <SidebarItem 
-              icon={FileText} 
-              label="Quản lý bài viết" 
-              href="/admin/posts" 
-              active={isActive('/admin/posts') || isActive('/admin/post-categories') || isActive('/admin/comments')}
-              isCollapsed={isSidebarCollapsed}
-              isExpanded={expandedMenu === 'Quản lý bài viết'}
-              onToggle={() => handleMenuToggle('Quản lý bài viết')}
-              pathname={pathname}
-              subItems={[
-                { label: 'Tất cả bài viết', href: '/admin/posts' },
-                { label: 'Danh mục bài viết', href: '/admin/post-categories' },
-                { label: 'Bình luận', href: '/admin/comments' },
-              ]}
-            />
-          </div>
+            {/* Posts Section */}
+            {showPostsSection && (
+              <div className="space-y-1">
+                {!isSidebarCollapsed && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Nội dung</div>}
+                <SidebarItem 
+                  icon={FileText} 
+                  label="Quản lý bài viết" 
+                  href="/admin/posts" 
+                  active={isActive('/admin/posts') || isActive('/admin/post-categories') || isActive('/admin/comments')}
+                  isCollapsed={isSidebarCollapsed}
+                  isExpanded={expandedMenu === 'Quản lý bài viết'}
+                  onToggle={() => handleMenuToggle('Quản lý bài viết')}
+                  pathname={pathname}
+                  isModuleEnabled={isModuleEnabled}
+                  subItems={[
+                    { label: 'Tất cả bài viết', href: '/admin/posts', moduleKey: 'posts' },
+                    { label: 'Danh mục bài viết', href: '/admin/post-categories', moduleKey: 'posts' },
+                    { label: 'Bình luận', href: '/admin/comments', moduleKey: 'comments' },
+                  ]}
+                />
+              </div>
+            )}
 
-          <div className="space-y-1">
-            {!isSidebarCollapsed && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Bán hàng</div>}
-            <SidebarItem 
-              icon={ShoppingCart} 
-              label="E-Commerce" 
-              href="/admin/products"
-              active={isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers')}
-              isCollapsed={isSidebarCollapsed}
-              isExpanded={expandedMenu === 'E-Commerce'}
-              onToggle={() => handleMenuToggle('E-Commerce')}
-              pathname={pathname}
-              subItems={[
-                { label: 'Sản phẩm', href: '/admin/products' },
-                { label: 'Danh mục sản phẩm', href: '/admin/categories' },
-                { label: 'Khách hàng', href: '/admin/customers' },
-              ]}
-            />
-          </div>
+            {/* Commerce Section */}
+            {showCommerceSection && (
+              <div className="space-y-1">
+                {!isSidebarCollapsed && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Bán hàng</div>}
+                <SidebarItem 
+                  icon={ShoppingCart} 
+                  label="E-Commerce" 
+                  href="/admin/products"
+                  active={isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers')}
+                  isCollapsed={isSidebarCollapsed}
+                  isExpanded={expandedMenu === 'E-Commerce'}
+                  onToggle={() => handleMenuToggle('E-Commerce')}
+                  pathname={pathname}
+                  isModuleEnabled={isModuleEnabled}
+                  subItems={[
+                    { label: 'Sản phẩm', href: '/admin/products', moduleKey: 'products' },
+                    { label: 'Danh mục sản phẩm', href: '/admin/categories', moduleKey: 'products' },
+                    { label: 'Khách hàng', href: '/admin/customers', moduleKey: 'customers' },
+                  ]}
+                />
+              </div>
+            )}
 
-          <div className="space-y-1">
-            {!isSidebarCollapsed && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Media</div>}
-            <SidebarItem 
-              icon={ImageIcon} 
-              label="Thư viện ảnh" 
-              href="/admin/images" 
-              active={isActive('/admin/images')} 
-              isCollapsed={isSidebarCollapsed}
-              isExpanded={false}
-              onToggle={() => {}}
-              pathname={pathname}
-            />
-          </div>
+            {/* Media Section */}
+            {showMediaSection && (
+              <div className="space-y-1">
+                {!isSidebarCollapsed && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Media</div>}
+                <SidebarItem 
+                  icon={ImageIcon} 
+                  label="Thư viện ảnh" 
+                  href="/admin/images" 
+                  active={isActive('/admin/images')} 
+                  isCollapsed={isSidebarCollapsed}
+                  isExpanded={false}
+                  onToggle={() => {}}
+                  pathname={pathname}
+                  isModuleEnabled={isModuleEnabled}
+                />
+              </div>
+            )}
 
-          <div className="space-y-1">
-            {!isSidebarCollapsed && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Hệ thống</div>}
-            <SidebarItem 
-              icon={Users} 
-              label="Người dùng" 
-              href="/admin/users"
-              active={isActive('/admin/users') || isActive('/admin/roles')}
-              isCollapsed={isSidebarCollapsed}
-              isExpanded={expandedMenu === 'Người dùng'}
-              onToggle={() => handleMenuToggle('Người dùng')}
-              pathname={pathname}
-              subItems={[
-                { label: 'Danh sách User', href: '/admin/users' },
-                { label: 'Phân quyền', href: '/admin/roles' },
-              ]}
-            />
-            <SidebarItem 
-              icon={Globe} 
-              label="Website" 
-              href="/admin/menus"
-              active={isActive('/admin/menus') || isActive('/admin/home-components')}
-              isCollapsed={isSidebarCollapsed}
-              isExpanded={expandedMenu === 'Website'}
-              onToggle={() => handleMenuToggle('Website')}
-              pathname={pathname}
-              subItems={[
-                { label: 'Menu', href: '/admin/menus' },
-                { label: 'Giao diện trang chủ', href: '/admin/home-components' },
-              ]}
-            />
-            <SidebarItem 
-              icon={Settings} 
-              label="Cài đặt" 
-              href="/admin/settings" 
-              active={isActive('/admin/settings')} 
-              isCollapsed={isSidebarCollapsed}
-              isExpanded={false}
-              onToggle={() => {}}
-              pathname={pathname}
-            />
+            {/* System Section */}
+            {(showUsersSection || showWebsiteSection || showSettingsSection) && (
+              <div className="space-y-1">
+                {!isSidebarCollapsed && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Hệ thống</div>}
+                
+                {showUsersSection && (
+                  <SidebarItem 
+                    icon={Users} 
+                    label="Người dùng" 
+                    href="/admin/users"
+                    active={isActive('/admin/users') || isActive('/admin/roles')}
+                    isCollapsed={isSidebarCollapsed}
+                    isExpanded={expandedMenu === 'Người dùng'}
+                    onToggle={() => handleMenuToggle('Người dùng')}
+                    pathname={pathname}
+                    isModuleEnabled={isModuleEnabled}
+                    subItems={[
+                      { label: 'Danh sách User', href: '/admin/users', moduleKey: 'users' },
+                      { label: 'Phân quyền', href: '/admin/roles', moduleKey: 'roles' },
+                    ]}
+                  />
+                )}
+                
+                {showWebsiteSection && (
+                  <SidebarItem 
+                    icon={Globe} 
+                    label="Website" 
+                    href="/admin/menus"
+                    active={isActive('/admin/menus') || isActive('/admin/home-components')}
+                    isCollapsed={isSidebarCollapsed}
+                    isExpanded={expandedMenu === 'Website'}
+                    onToggle={() => handleMenuToggle('Website')}
+                    pathname={pathname}
+                    isModuleEnabled={isModuleEnabled}
+                    subItems={[
+                      { label: 'Menu', href: '/admin/menus', moduleKey: 'menus' },
+                      { label: 'Giao diện trang chủ', href: '/admin/home-components', moduleKey: 'homepage' },
+                    ]}
+                  />
+                )}
+                
+                {showSettingsSection && (
+                  <SidebarItem 
+                    icon={Settings} 
+                    label="Cài đặt" 
+                    href="/admin/settings" 
+                    active={isActive('/admin/settings')} 
+                    isCollapsed={isSidebarCollapsed}
+                    isExpanded={false}
+                    onToggle={() => {}}
+                    pathname={pathname}
+                    isModuleEnabled={isModuleEnabled}
+                  />
+                )}
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
           <button 

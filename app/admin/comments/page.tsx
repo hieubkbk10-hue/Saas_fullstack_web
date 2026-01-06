@@ -1,33 +1,111 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Trash2, FileText } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { Trash2, FileText, Loader2, RefreshCw, Check, Ban } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
+import { Button, Card, Badge, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { BulkActionBar, SelectCheckbox } from '../components/TableUtilities';
-import { mockComments } from '../mockData';
+import { ModuleGuard } from '../components/ModuleGuard';
 
 export default function CommentsListPage() {
-  const [comments, setComments] = useState(mockComments);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  return (
+    <ModuleGuard moduleKey="comments">
+      <CommentsContent />
+    </ModuleGuard>
+  );
+}
+
+function CommentsContent() {
+  const commentsData = useQuery(api.comments.listAll);
+  const postsData = useQuery(api.posts.listAll);
+  const deleteComment = useMutation(api.comments.remove);
+  const approveComment = useMutation(api.comments.approve);
+  const markAsSpam = useMutation(api.comments.markAsSpam);
+  const seedComments = useMutation(api.seed.seedComments);
+  const clearComments = useMutation(api.seed.clearComments);
+  const seedPostsModule = useMutation(api.seed.seedPostsModule);
+
+  const [selectedIds, setSelectedIds] = useState<Id<"comments">[]>([]);
+
+  const isLoading = commentsData === undefined;
+
+  // Map post IDs to titles
+  const postMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    postsData?.forEach(post => {
+      map[post._id] = post.title;
+    });
+    return map;
+  }, [postsData]);
+
+  const comments = useMemo(() => {
+    return commentsData?.map(c => ({
+      ...c,
+      id: c._id,
+      author: c.authorName,
+      target: c.targetType === 'post' ? (postMap[c.targetId] || 'Bài viết không tồn tại') : c.targetId,
+      created: c._creationTime,
+    })) || [];
+  }, [commentsData, postMap]);
 
   const toggleSelectAll = () => setSelectedIds(selectedIds.length === comments.length ? [] : comments.map(c => c.id));
-  const toggleSelectItem = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectItem = (id: Id<"comments">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: Id<"comments">) => {
     if(confirm('Xóa vĩnh viễn bình luận này?')) {
-      setComments(prev => prev.filter(c => c.id !== id));
-      toast.success('Đã xóa bình luận');
+      try {
+        await deleteComment({ id });
+        toast.success('Đã xóa bình luận');
+      } catch {
+        toast.error('Không thể xóa bình luận');
+      }
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} bình luận đã chọn?`)) {
-      setComments(prev => prev.filter(c => !selectedIds.includes(c.id)));
-      setSelectedIds([]);
-      toast.success(`Đã xóa ${selectedIds.length} bình luận`);
+      try {
+        for (const id of selectedIds) {
+          await deleteComment({ id });
+        }
+        setSelectedIds([]);
+        toast.success(`Đã xóa ${selectedIds.length} bình luận`);
+      } catch {
+        toast.error('Không thể xóa bình luận');
+      }
     }
   };
+
+  const handleApprove = async (id: Id<"comments">) => {
+    await approveComment({ id });
+    toast.success('Đã duyệt bình luận');
+  };
+
+  const handleSpam = async (id: Id<"comments">) => {
+    await markAsSpam({ id });
+    toast.success('Đã đánh dấu spam');
+  };
+
+  const handleReset = async () => {
+    if (confirm('Reset dữ liệu bình luận?')) {
+      await clearComments();
+      await seedPostsModule();
+      await seedComments();
+      setSelectedIds([]);
+      toast.success('Đã reset dữ liệu bình luận');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -36,6 +114,7 @@ export default function CommentsListPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Quản lý bình luận</h1>
           <p className="text-sm text-slate-500">Xem danh sách bình luận mới nhất</p>
         </div>
+        <Button variant="outline" onClick={handleReset} className="gap-2"><RefreshCw size={16}/> Reset</Button>
       </div>
 
       <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
@@ -48,8 +127,9 @@ export default function CommentsListPage() {
               <TableHead className="w-[200px]">Người dùng</TableHead>
               <TableHead>Nội dung</TableHead>
               <TableHead className="w-[180px]">Bài viết / Sản phẩm</TableHead>
+              <TableHead className="w-[100px]">Trạng thái</TableHead>
               <TableHead className="w-[120px]">Thời gian</TableHead>
-              <TableHead className="text-right w-[80px]">Xóa</TableHead>
+              <TableHead className="text-right w-[120px]">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -58,23 +138,36 @@ export default function CommentsListPage() {
                 <TableCell><SelectCheckbox checked={selectedIds.includes(comment.id)} onChange={() => toggleSelectItem(comment.id)} /></TableCell>
                 <TableCell>
                   <div className="font-medium">{comment.author}</div>
-                  <div className="text-xs text-slate-400">IP: 192.168.1.1</div>
+                  <div className="text-xs text-slate-400">IP: {comment.authorIp || 'N/A'}</div>
                 </TableCell>
-                <TableCell><p className="text-sm text-slate-700 dark:text-slate-300">{comment.content}</p></TableCell>
+                <TableCell><p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2">{comment.content}</p></TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1.5 text-xs text-slate-500 truncate max-w-[180px]">
                     <FileText size={12} /> {comment.target}
                   </div>
                 </TableCell>
+                <TableCell>
+                  <Badge variant={comment.status === 'Approved' ? 'default' : comment.status === 'Pending' ? 'secondary' : 'destructive'}>
+                    {comment.status === 'Approved' ? 'Đã duyệt' : comment.status === 'Pending' ? 'Chờ duyệt' : 'Spam'}
+                  </Badge>
+                </TableCell>
                 <TableCell className="text-xs text-slate-500">{new Date(comment.created).toLocaleString('vi-VN')}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50" title="Xóa" onClick={() => handleDelete(comment.id)}><Trash2 size={16}/></Button>
+                  <div className="flex justify-end gap-1">
+                    {comment.status !== 'Approved' && (
+                      <Button variant="ghost" size="icon" className="text-green-500 hover:text-green-600" title="Duyệt" onClick={() => handleApprove(comment.id)}><Check size={16}/></Button>
+                    )}
+                    {comment.status !== 'Spam' && (
+                      <Button variant="ghost" size="icon" className="text-orange-500 hover:text-orange-600" title="Đánh dấu spam" onClick={() => handleSpam(comment.id)}><Ban size={16}/></Button>
+                    )}
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" title="Xóa" onClick={() => handleDelete(comment.id)}><Trash2 size={16}/></Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
             {comments.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-slate-500">Không có bình luận nào.</TableCell>
+                <TableCell colSpan={7} className="h-24 text-center text-slate-500">Không có bình luận nào.</TableCell>
               </TableRow>
             )}
           </TableBody>

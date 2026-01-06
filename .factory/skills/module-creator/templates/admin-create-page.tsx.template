@@ -1,3 +1,6 @@
+// Template: app/admin/{{module-slug}}/create/page.tsx
+// Replace: {{moduleName}}, {{ModuleName}}, {{module-slug}}, {{displayName}}
+
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -9,16 +12,18 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, Input, Label } from '../../components/ui';
 
-const MODULE_KEY = 'postCategories';
+const MODULE_KEY = '{{moduleName}}';
 
-export default function PostCategoryCreatePage() {
+export default function {{ModuleName}}CreatePage() {
   const router = useRouter();
-  const createCategory = useMutation(api.postCategories.create);
+  const createItem = useMutation(api.{{moduleName}}.create);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
 
+  // Form state
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
+  const [status, setStatus] = useState<'Active' | 'Inactive'>('Active');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check which fields are enabled
@@ -28,6 +33,7 @@ export default function PostCategoryCreatePage() {
     return fields;
   }, [fieldsData]);
 
+  // Auto-generate slug from name
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setName(val);
@@ -45,16 +51,16 @@ export default function PostCategoryCreatePage() {
 
     setIsSubmitting(true);
     try {
-      await createCategory({
+      await createItem({
         name: name.trim(),
         slug: slug.trim(),
         description: description.trim() || undefined,
-        active: true,
+        status,
       });
-      toast.success("Đã tạo danh mục mới");
-      router.push('/admin/post-categories');
+      toast.success('Tạo thành công');
+      router.push('/admin/{{module-slug}}');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Không thể tạo danh mục");
+      toast.error(error instanceof Error ? error.message : 'Không thể tạo');
     } finally {
       setIsSubmitting(false);
     }
@@ -62,40 +68,81 @@ export default function PostCategoryCreatePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Thêm danh mục mới</h1>
-          <Link href="/admin/post-categories" className="text-sm text-blue-600 hover:underline">Quay lại danh sách</Link>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Thêm {{displayName}} mới</h1>
+          <Link href="/admin/{{module-slug}}" className="text-sm text-blue-600 hover:underline">
+            Quay lại danh sách
+          </Link>
         </div>
       </div>
 
+      {/* Form */}
       <Card className="max-w-md mx-auto md:mx-0">
         <form onSubmit={handleSubmit}>
           <CardContent className="p-6 space-y-4">
-            {/* name - always shown (system field) */}
+            {/* Name - system field, always shown */}
             <div className="space-y-2">
-              <Label>Tên danh mục <span className="text-red-500">*</span></Label>
-              <Input value={name} onChange={handleNameChange} required placeholder="Ví dụ: Công nghệ, Đời sống..." autoFocus />
+              <Label>Tên <span className="text-red-500">*</span></Label>
+              <Input 
+                value={name} 
+                onChange={handleNameChange} 
+                required 
+                placeholder="Nhập tên..." 
+                autoFocus 
+              />
             </div>
-            {/* slug - always shown (system field) */}
+
+            {/* Slug - system field, always shown */}
             <div className="space-y-2">
               <Label>Slug</Label>
-              <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="tu-dong-tao-tu-ten" className="font-mono text-sm" />
+              <Input 
+                value={slug} 
+                onChange={(e) => setSlug(e.target.value)} 
+                placeholder="tu-dong-tao-tu-ten" 
+                className="font-mono text-sm" 
+              />
             </div>
-            {/* description - conditional */}
+
+            {/* Description - conditional field */}
             {enabledFields.has('description') && (
               <div className="space-y-2">
                 <Label>Mô tả</Label>
-                <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Mô tả ngắn về danh mục..." />
+                <Input 
+                  value={description} 
+                  onChange={(e) => setDescription(e.target.value)} 
+                  placeholder="Mô tả ngắn..." 
+                />
               </div>
             )}
+
+            {/* Status */}
+            <div className="space-y-2">
+              <Label>Trạng thái</Label>
+              <select 
+                value={status}
+                onChange={(e) => setStatus(e.target.value as 'Active' | 'Inactive')}
+                className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              >
+                <option value="Active">Hoạt động</option>
+                <option value="Inactive">Ẩn</option>
+              </select>
+            </div>
           </CardContent>
           
+          {/* Actions */}
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
-            <Button type="button" variant="ghost" onClick={() => router.push('/admin/post-categories')}>Hủy bỏ</Button>
+            <Button 
+              type="button" 
+              variant="ghost" 
+              onClick={() => router.push('/admin/{{module-slug}}')}
+            >
+              Hủy bỏ
+            </Button>
             <Button type="submit" variant="accent" disabled={isSubmitting}>
               {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
-              Tạo danh mục
+              Tạo mới
             </Button>
           </div>
         </form>

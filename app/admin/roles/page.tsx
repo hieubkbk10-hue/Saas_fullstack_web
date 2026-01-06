@@ -6,9 +6,18 @@ import { Plus, Edit, Trash2, Shield, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { ModuleGuard } from '../components/ModuleGuard';
 import { mockRoles } from '../mockData';
 
 export default function RolesListPage() {
+  return (
+    <ModuleGuard moduleKey="roles">
+      <RolesContent />
+    </ModuleGuard>
+  );
+}
+
+function RolesContent() {
   const [roles, setRoles] = useState(mockRoles);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');

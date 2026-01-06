@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Save, Upload } from 'lucide-react';
+import { Save, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../components/ui';
+import { ModuleGuard } from '../components/ModuleGuard';
 
 const hexToHSL = (hex: string): { h: number; s: number; l: number } => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -42,24 +45,119 @@ const generateTintsShades = (hex: string): string[] => {
   return lightnesses.map(newL => hslToHex(h, s, newL));
 };
 
+type SettingsForm = {
+  // General
+  siteName: string;
+  siteDescription: string;
+  timezone: string;
+  brandColor: string;
+  // Contact
+  email: string;
+  hotline: string;
+  address: string;
+  facebook: string;
+  zalo: string;
+  googleMapsEmbed: string;
+  // SEO
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+  ogImage: string;
+};
+
+const defaultSettings: SettingsForm = {
+  siteName: '',
+  siteDescription: '',
+  timezone: 'GMT+07:00',
+  brandColor: '#3b82f6',
+  email: '',
+  hotline: '',
+  address: '',
+  facebook: '',
+  zalo: '',
+  googleMapsEmbed: '',
+  metaTitle: '',
+  metaDescription: '',
+  metaKeywords: '',
+  ogImage: '',
+};
+
+const settingsKeys = Object.keys(defaultSettings) as (keyof SettingsForm)[];
+
 export default function SettingsPage() {
+  return (
+    <ModuleGuard moduleKey="settings">
+      <SettingsContent />
+    </ModuleGuard>
+  );
+}
+
+function SettingsContent() {
   const [activeTab, setActiveTab] = useState('general');
-  const [brandColor, setBrandColor] = useState('#3b82f6');
+  const [form, setForm] = useState<SettingsForm>(defaultSettings);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const settingsData = useQuery(api.settings.getMultiple, { keys: settingsKeys });
+  const setMultiple = useMutation(api.settings.setMultiple);
+
+  const isLoading = settingsData === undefined;
 
   useEffect(() => {
-    const saved = localStorage.getItem('brandColor');
-    if (saved) setBrandColor(saved);
-  }, []);
+    if (settingsData) {
+      setForm(prev => {
+        const newForm = { ...prev };
+        for (const key of settingsKeys) {
+          if (settingsData[key] !== null && settingsData[key] !== undefined) {
+            newForm[key] = settingsData[key] as string;
+          }
+        }
+        return newForm;
+      });
+      setHasChanges(false);
+    }
+  }, [settingsData]);
 
-  useEffect(() => {
-    localStorage.setItem('brandColor', brandColor);
-  }, [brandColor]);
+  const updateField = <K extends keyof SettingsForm>(key: K, value: SettingsForm[K]) => {
+    setForm(prev => ({ ...prev, [key]: value }));
+    setHasChanges(true);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const settingsToSave = settingsKeys.map(key => {
+        let group = 'general';
+        if (['email', 'hotline', 'address', 'facebook', 'zalo', 'googleMapsEmbed'].includes(key)) {
+          group = 'contact';
+        } else if (['metaTitle', 'metaDescription', 'metaKeywords', 'ogImage'].includes(key)) {
+          group = 'seo';
+        }
+        return { key, value: form[key], group };
+      });
+      await setMultiple({ settings: settingsToSave });
+      setHasChanges(false);
+      toast.success('Đã lưu cài đặt thành công!');
+    } catch {
+      toast.error('Lỗi khi lưu cài đặt');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const tabs = [
     { id: 'general', label: 'Chung' },
     { id: 'contact', label: 'Liên hệ' },
     { id: 'seo', label: 'SEO' },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
@@ -94,16 +192,31 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>Tên Website</Label>
-                    <Input defaultValue="VietAdmin Shop" />
+                    <Input 
+                      value={form.siteName} 
+                      onChange={(e) => updateField('siteName', e.target.value)}
+                      placeholder="VietAdmin Shop"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Mô tả ngắn</Label>
-                    <Input defaultValue="Hệ thống bán hàng trực tuyến hàng đầu" />
+                    <Input 
+                      value={form.siteDescription} 
+                      onChange={(e) => updateField('siteDescription', e.target.value)}
+                      placeholder="Hệ thống bán hàng trực tuyến hàng đầu"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Múi giờ</Label>
-                    <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
-                      <option>GMT+07:00 Bangkok, Hanoi, Jakarta</option>
+                    <select 
+                      value={form.timezone}
+                      onChange={(e) => updateField('timezone', e.target.value)}
+                      className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                    >
+                      <option value="GMT+07:00">GMT+07:00 Bangkok, Hanoi, Jakarta</option>
+                      <option value="GMT+08:00">GMT+08:00 Singapore, Hong Kong</option>
+                      <option value="GMT+09:00">GMT+09:00 Tokyo, Seoul</option>
+                      <option value="GMT+00:00">GMT+00:00 London, Dublin</option>
                     </select>
                   </div>
                 </CardContent>
@@ -117,15 +230,15 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-3 mb-3">
                     <input
                       type="color"
-                      value={brandColor}
-                      onChange={(e) => setBrandColor(e.target.value)}
+                      value={form.brandColor}
+                      onChange={(e) => updateField('brandColor', e.target.value)}
                       className="w-10 h-10 rounded-lg cursor-pointer border border-slate-200 dark:border-slate-700"
                     />
                     <Input 
-                      value={brandColor.toUpperCase()} 
+                      value={form.brandColor.toUpperCase()} 
                       onChange={(e) => {
                         const val = e.target.value;
-                        if (/^#[0-9A-Fa-f]{6}$/.test(val)) setBrandColor(val);
+                        if (/^#[0-9A-Fa-f]{6}$/.test(val)) updateField('brandColor', val);
                       }}
                       className="w-24 font-mono text-sm uppercase"
                       maxLength={7}
@@ -133,11 +246,11 @@ export default function SettingsPage() {
                     <span className="text-xs text-slate-500 dark:text-slate-400">Màu chủ đạo</span>
                   </div>
                   <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-                    {generateTintsShades(brandColor).map((shade, idx) => (
+                    {generateTintsShades(form.brandColor).map((shade, idx) => (
                       <button
                         key={idx}
                         type="button"
-                        onClick={() => setBrandColor(shade)}
+                        onClick={() => updateField('brandColor', shade)}
                         className="flex-1 h-9 transition-all hover:scale-y-125 hover:z-10 relative group"
                         style={{ backgroundColor: shade }}
                         title={shade.toUpperCase()}
@@ -161,29 +274,53 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Email liên hệ</Label>
-                  <Input defaultValue="contact@vietadmin.com" />
+                  <Input 
+                    value={form.email} 
+                    onChange={(e) => updateField('email', e.target.value)}
+                    placeholder="contact@vietadmin.com"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Hotline</Label>
-                  <Input defaultValue="1900 1234" />
+                  <Input 
+                    value={form.hotline} 
+                    onChange={(e) => updateField('hotline', e.target.value)}
+                    placeholder="1900 1234"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Địa chỉ</Label>
-                  <Input defaultValue="123 Nguyễn Huệ, Quận 1, TP.HCM" />
+                  <Input 
+                    value={form.address} 
+                    onChange={(e) => updateField('address', e.target.value)}
+                    placeholder="123 Nguyễn Huệ, Quận 1, TP.HCM"
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Facebook</Label>
-                    <Input defaultValue="https://facebook.com/vietadmin" placeholder="URL Facebook" />
+                    <Input 
+                      value={form.facebook} 
+                      onChange={(e) => updateField('facebook', e.target.value)}
+                      placeholder="https://facebook.com/vietadmin"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Zalo</Label>
-                    <Input defaultValue="0901234567" placeholder="Số Zalo" />
+                    <Input 
+                      value={form.zalo} 
+                      onChange={(e) => updateField('zalo', e.target.value)}
+                      placeholder="0901234567"
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Google Maps Embed</Label>
-                  <Input defaultValue="https://maps.google.com/..." placeholder="URL nhúng Google Maps" />
+                  <Input 
+                    value={form.googleMapsEmbed} 
+                    onChange={(e) => updateField('googleMapsEmbed', e.target.value)}
+                    placeholder="URL nhúng Google Maps"
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -195,32 +332,60 @@ export default function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Meta Title mặc định</Label>
-                  <Input defaultValue="VietAdmin - Hệ thống bán hàng trực tuyến" />
+                  <Input 
+                    value={form.metaTitle} 
+                    onChange={(e) => updateField('metaTitle', e.target.value)}
+                    placeholder="VietAdmin - Hệ thống bán hàng trực tuyến"
+                  />
                   <p className="text-xs text-slate-500">Tối đa 60 ký tự</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Meta Description mặc định</Label>
-                  <textarea className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" defaultValue="VietAdmin cung cấp giải pháp bán hàng online chuyên nghiệp với hàng ngàn sản phẩm chất lượng cao." />
+                  <textarea 
+                    value={form.metaDescription}
+                    onChange={(e) => updateField('metaDescription', e.target.value)}
+                    className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
+                    placeholder="VietAdmin cung cấp giải pháp bán hàng online chuyên nghiệp..."
+                  />
                   <p className="text-xs text-slate-500">Tối đa 160 ký tự</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Meta Keywords</Label>
-                  <Input defaultValue="bán hàng online, shop online, vietadmin" placeholder="từ khóa 1, từ khóa 2, ..." />
+                  <Input 
+                    value={form.metaKeywords} 
+                    onChange={(e) => updateField('metaKeywords', e.target.value)}
+                    placeholder="từ khóa 1, từ khóa 2, ..."
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Hình ảnh OG mặc định</Label>
-                  <div className="flex gap-2">
-                    <Input defaultValue="/og-image.jpg" placeholder="URL hình ảnh" className="flex-1" />
-                    <Button variant="outline" type="button"><Upload size={14} /></Button>
-                  </div>
+                  <Input 
+                    value={form.ogImage} 
+                    onChange={(e) => updateField('ogImage', e.target.value)}
+                    placeholder="/og-image.jpg"
+                  />
                 </div>
               </CardContent>
             </Card>
           )}
 
-          <div className="flex justify-end">
-            <Button variant="accent" onClick={() => toast.success("Đã lưu cài đặt")}>
-              <Save size={16} className="mr-2"/> Lưu thay đổi
+          <div className="flex justify-end gap-3">
+            {hasChanges && (
+              <span className="text-sm text-amber-600 dark:text-amber-400 self-center">
+                Có thay đổi chưa lưu
+              </span>
+            )}
+            <Button 
+              variant="accent" 
+              onClick={handleSave}
+              disabled={isSaving || !hasChanges}
+            >
+              {isSaving ? (
+                <Loader2 size={16} className="mr-2 animate-spin"/>
+              ) : (
+                <Save size={16} className="mr-2"/>
+              )}
+              Lưu thay đổi
             </Button>
           </div>
         </div>

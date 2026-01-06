@@ -2,24 +2,60 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, ExternalLink, Search } from 'lucide-react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
-import { mockPostCategories } from '../mockData';
+import { ModuleGuard } from '../components/ModuleGuard';
 
 export default function PostCategoriesListPage() {
-  const [categories, setCategories] = useState(mockPostCategories);
+  return (
+    <ModuleGuard moduleKey="posts">
+      <PostCategoriesContent />
+    </ModuleGuard>
+  );
+}
+
+function PostCategoriesContent() {
+  const categoriesData = useQuery(api.postCategories.listAll);
+  const postsData = useQuery(api.posts.listAll);
+  const deleteCategory = useMutation(api.postCategories.remove);
+  const seedPostsModule = useMutation(api.seed.seedPostsModule);
+  const clearPostsData = useMutation(api.seed.clearPostsData);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
-  const [visibleColumns, setVisibleColumns] = useState(['select', 'name', 'slug', 'count', 'actions']);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [visibleColumns, setVisibleColumns] = useState(['select', 'name', 'slug', 'count', 'status', 'actions']);
+  const [selectedIds, setSelectedIds] = useState<Id<"postCategories">[]>([]);
+
+  const isLoading = categoriesData === undefined || postsData === undefined;
+
+  // Count posts per category
+  const postCountMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    postsData?.forEach(post => {
+      map[post.categoryId] = (map[post.categoryId] || 0) + 1;
+    });
+    return map;
+  }, [postsData]);
+
+  const categories = useMemo(() => {
+    return categoriesData?.map(cat => ({
+      ...cat,
+      id: cat._id,
+      count: postCountMap[cat._id] || 0,
+    })) || [];
+  }, [categoriesData, postCountMap]);
 
   const columns = [
     { key: 'select', label: 'Chọn' },
     { key: 'name', label: 'Tên danh mục', required: true },
     { key: 'slug', label: 'Slug' },
     { key: 'count', label: 'Số bài viết' },
+    { key: 'status', label: 'Trạng thái' },
     { key: 'actions', label: 'Hành động', required: true }
   ];
 
@@ -41,27 +77,54 @@ export default function PostCategoriesListPage() {
 
   const sortedData = useSortableData(filteredData, sortConfig);
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(item => item.id));
-  const toggleSelectItem = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(item => item.id as Id<"postCategories">));
+  const toggleSelectItem = (id: Id<"postCategories">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: Id<"postCategories">) => {
     if (confirm('Xóa danh mục này?')) {
-      setCategories(prev => prev.filter(c => c.id !== id));
-      toast.success('Đã xóa danh mục thành công');
+      try {
+        await deleteCategory({ id });
+        toast.success('Đã xóa danh mục thành công');
+      } catch {
+        toast.error('Không thể xóa danh mục');
+      }
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} danh mục đã chọn?`)) {
-      setCategories(prev => prev.filter(c => !selectedIds.includes(c.id)));
+      try {
+        for (const id of selectedIds) {
+          await deleteCategory({ id });
+        }
+        setSelectedIds([]);
+        toast.success(`Đã xóa ${selectedIds.length} danh mục`);
+      } catch {
+        toast.error('Không thể xóa danh mục');
+      }
+    }
+  };
+
+  const handleReset = async () => {
+    if (confirm('Reset dữ liệu danh mục? Tất cả dữ liệu cũ sẽ bị xóa.')) {
+      await clearPostsData();
+      await seedPostsModule();
       setSelectedIds([]);
-      toast.success(`Đã xóa ${selectedIds.length} danh mục`);
+      toast.success('Đã reset dữ liệu danh mục');
     }
   };
 
   const openFrontend = (slug: string) => {
     window.open(`https://example.com/category/${slug}`, '_blank');
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -70,7 +133,10 @@ export default function PostCategoriesListPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Danh mục bài viết</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý phân loại nội dung cho website</p>
         </div>
-        <Link href="/admin/post-categories/create"><Button className="gap-2"><Plus size={16}/> Thêm danh mục</Button></Link>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleReset} className="gap-2"><RefreshCw size={16}/> Reset</Button>
+          <Link href="/admin/post-categories/create"><Button className="gap-2"><Plus size={16}/> Thêm danh mục</Button></Link>
+        </div>
       </div>
 
       <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
@@ -96,6 +162,7 @@ export default function PostCategoriesListPage() {
               {visibleColumns.includes('name') && <SortableHeader label="Tên danh mục" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('slug') && <SortableHeader label="Slug" sortKey="slug" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('count') && <SortableHeader label="Số bài viết" sortKey="count" sortConfig={sortConfig} onSort={handleSort} className="text-center" />}
+              {visibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('actions') && <TableHead className="text-right">Hành động</TableHead>}
             </TableRow>
           </TableHeader>
@@ -108,12 +175,17 @@ export default function PostCategoriesListPage() {
                 {visibleColumns.includes('name') && <TableCell className="font-medium">{cat.name}</TableCell>}
                 {visibleColumns.includes('slug') && <TableCell className="text-slate-500 font-mono text-sm">{cat.slug}</TableCell>}
                 {visibleColumns.includes('count') && <TableCell className="text-center"><Badge variant="secondary">{cat.count}</Badge></TableCell>}
+                {visibleColumns.includes('status') && (
+                  <TableCell>
+                    <Badge variant={cat.active ? 'default' : 'secondary'}>{cat.active ? 'Hoạt động' : 'Ẩn'}</Badge>
+                  </TableCell>
+                )}
                 {visibleColumns.includes('actions') && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem trên web" onClick={() => openFrontend(cat.slug)}><ExternalLink size={16}/></Button>
                       <Link href={`/admin/post-categories/${cat.id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(cat.id)}><Trash2 size={16}/></Button>
+                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(cat.id as Id<"postCategories">)}><Trash2 size={16}/></Button>
                     </div>
                   </TableCell>
                 )}

@@ -14,6 +14,7 @@ import type * as admin_presets from "../admin/presets.js";
 import type * as comments from "../comments.js";
 import type * as convexDashboard from "../convexDashboard.js";
 import type * as customers from "../customers.js";
+import type * as dataManager from "../dataManager.js";
 import type * as homeComponents from "../homeComponents.js";
 import type * as images from "../images.js";
 import type * as lib_helpers from "../lib/helpers.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   comments: typeof comments;
   convexDashboard: typeof convexDashboard;
   customers: typeof customers;
+  dataManager: typeof dataManager;
   homeComponents: typeof homeComponents;
   images: typeof images;
   "lib/helpers": typeof lib_helpers;

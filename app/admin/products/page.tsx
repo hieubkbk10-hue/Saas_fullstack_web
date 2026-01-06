@@ -6,9 +6,18 @@ import { Plus, Edit, Trash2, ExternalLink, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { ModuleGuard } from '../components/ModuleGuard';
 import { mockProducts, mockCategories } from '../mockData';
 
 export default function ProductsListPage() {
+  return (
+    <ModuleGuard moduleKey="products">
+      <ProductsContent />
+    </ModuleGuard>
+  );
+}
+
+function ProductsContent() {
   const [products, setProducts] = useState(mockProducts);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');

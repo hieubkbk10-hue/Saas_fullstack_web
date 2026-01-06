@@ -4,9 +4,18 @@ import React, { useState } from 'react';
 import { Upload, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Input } from '../components/ui';
+import { ModuleGuard } from '../components/ModuleGuard';
 import { mockImages } from '../mockData';
 
 export default function ImagesPage() {
+  return (
+    <ModuleGuard moduleKey="media">
+      <ImagesContent />
+    </ModuleGuard>
+  );
+}
+
+function ImagesContent() {
   const [images, setImages] = useState(mockImages);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);

@@ -2,18 +2,51 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, ExternalLink, Search } from 'lucide-react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
-import { mockPosts } from '../mockData';
+import { ModuleGuard } from '../components/ModuleGuard';
 
 export default function PostsListPage() {
-  const [posts, setPosts] = useState(mockPosts);
+  return (
+    <ModuleGuard moduleKey="posts">
+      <PostsContent />
+    </ModuleGuard>
+  );
+}
+
+function PostsContent() {
+  const postsData = useQuery(api.posts.listAll);
+  const categoriesData = useQuery(api.postCategories.listAll);
+  const deletePost = useMutation(api.posts.remove);
+  const seedPostsModule = useMutation(api.seed.seedPostsModule);
+  const clearPostsData = useMutation(api.seed.clearPostsData);
+  
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Id<"posts">[]>([]);
+
+  const isLoading = postsData === undefined || categoriesData === undefined;
+
+  // Map category ID to name
+  const categoryMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    categoriesData?.forEach(cat => { map[cat._id] = cat.name; });
+    return map;
+  }, [categoriesData]);
+
+  const posts = useMemo(() => {
+    return postsData?.map(post => ({
+      ...post,
+      id: post._id,
+      category: categoryMap[post.categoryId] || 'Không có',
+    })) || [];
+  }, [postsData, categoryMap]);
 
   const filteredPosts = useMemo(() => {
     let data = [...posts];
@@ -32,33 +65,68 @@ export default function PostsListPage() {
     setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
   };
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedPosts.length ? [] : sortedPosts.map(p => p.id));
-  const toggleSelectItem = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedPosts.length ? [] : sortedPosts.map(p => p._id));
+  const toggleSelectItem = (id: Id<"posts">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: Id<"posts">) => {
     if (confirm('Xóa bài viết này?')) {
-      setPosts(prev => prev.filter(p => p.id !== id));
-      toast.success('Đã xóa bài viết');
+      try {
+        await deletePost({ id });
+        toast.success('Đã xóa bài viết');
+      } catch {
+        toast.error('Có lỗi khi xóa bài viết');
+      }
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} bài viết đã chọn?`)) {
-      setPosts(prev => prev.filter(p => !selectedIds.includes(p.id)));
-      setSelectedIds([]);
-      toast.success(`Đã xóa ${selectedIds.length} bài viết`);
+      try {
+        for (const id of selectedIds) {
+          await deletePost({ id });
+        }
+        setSelectedIds([]);
+        toast.success(`Đã xóa ${selectedIds.length} bài viết`);
+      } catch {
+        toast.error('Có lỗi khi xóa bài viết');
+      }
     }
   };
 
-  const openFrontend = (id: string) => {
-    window.open(`https://example.com/post/${id}`, '_blank');
+  const handleReseed = async () => {
+    if (confirm('Xóa tất cả bài viết và seed lại dữ liệu mẫu?')) {
+      try {
+        await clearPostsData();
+        await seedPostsModule();
+        toast.success('Đã reset dữ liệu bài viết');
+      } catch {
+        toast.error('Có lỗi khi reset dữ liệu');
+      }
+    }
   };
+
+  const openFrontend = (slug: string) => {
+    window.open(`/post/${slug}`, '_blank');
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Quản lý bài viết</h1>
-        <Link href="/admin/posts/create"><Button className="gap-2"><Plus size={16}/> Thêm mới</Button></Link>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleReseed} title="Reset dữ liệu mẫu">
+            <RefreshCw size={16}/> Reset
+          </Button>
+          <Link href="/admin/posts/create"><Button className="gap-2"><Plus size={16}/> Thêm mới</Button></Link>
+        </div>
       </div>
 
       <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
@@ -83,34 +151,42 @@ export default function PostsListPage() {
               <TableHead className="w-[80px]">Thumbnail</TableHead>
               <SortableHeader label="Tiêu đề" sortKey="title" sortConfig={sortConfig} onSort={handleSort} />
               <SortableHeader label="Danh mục" sortKey="category" sortConfig={sortConfig} onSort={handleSort} />
+              <SortableHeader label="Lượt xem" sortKey="views" sortConfig={sortConfig} onSort={handleSort} />
               <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
               <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedPosts.map(post => (
-              <TableRow key={post.id} className={selectedIds.includes(post.id) ? 'bg-blue-500/5' : ''}>
-                <TableCell><SelectCheckbox checked={selectedIds.includes(post.id)} onChange={() => toggleSelectItem(post.id)} /></TableCell>
-                <TableCell><img src={post.thumbnail} className="w-12 h-8 object-cover rounded" alt="" /></TableCell>
+              <TableRow key={post._id} className={selectedIds.includes(post._id) ? 'bg-blue-500/5' : ''}>
+                <TableCell><SelectCheckbox checked={selectedIds.includes(post._id)} onChange={() => toggleSelectItem(post._id)} /></TableCell>
+                <TableCell>
+                  {post.thumbnail ? (
+                    <img src={post.thumbnail} className="w-12 h-8 object-cover rounded" alt="" />
+                  ) : (
+                    <div className="w-12 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-slate-400">No img</div>
+                  )}
+                </TableCell>
                 <TableCell className="font-medium max-w-[300px] truncate">{post.title}</TableCell>
                 <TableCell>{post.category}</TableCell>
+                <TableCell className="text-slate-500">{post.views.toLocaleString()}</TableCell>
                 <TableCell>
-                  <Badge variant={post.status === 'Published' ? 'success' : 'secondary'}>
+                  <Badge variant={post.status === 'Published' ? 'success' : post.status === 'Draft' ? 'secondary' : 'warning'}>
                     {post.status === 'Published' ? 'Đã xuất bản' : post.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ'}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem bài viết" onClick={() => openFrontend(post.id)}><ExternalLink size={16}/></Button>
-                    <Link href={`/admin/posts/${post.id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(post.id)}><Trash2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem bài viết" onClick={() => openFrontend(post.slug)}><ExternalLink size={16}/></Button>
+                    <Link href={`/admin/posts/${post._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(post._id)}><Trash2 size={16}/></Button>
                   </div>
                 </TableCell>
               </TableRow>
             ))}
             {sortedPosts.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={7} className="text-center py-8 text-slate-500">
                   {searchTerm || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có bài viết nào'}
                 </TableCell>
               </TableRow>

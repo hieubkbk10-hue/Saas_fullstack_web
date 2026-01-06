@@ -13,10 +13,12 @@ import {
   Terminal,
   Globe,
   BarChart3,
-  Languages
+  Languages,
+  Database
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Toaster } from 'sonner';
 import { I18nProvider, useI18n } from './i18n/context';
 import { Locale } from './i18n/translations';
 
@@ -117,6 +119,7 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
   const getPageName = () => {
     if (pathname === '/system') return t.pages.dashboard;
     if (pathname.includes('modules')) return t.pages.moduleManagement;
+    if (pathname.includes('data')) return 'Data Manager';
     if (pathname.includes('integrations')) return t.pages.analyticsIntegrations;
     if (pathname.includes('seo')) return t.pages.seoConfiguration;
     return 'System';
@@ -149,6 +152,7 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
           
           <SidebarGroup label={t.sidebar.control} collapsed={collapsed} />
           <SidebarItem href="/system/modules" icon={Blocks} label={t.sidebar.modules} collapsed={collapsed} />
+          <SidebarItem href="/system/data" icon={Database} label="Data Manager" collapsed={collapsed} />
           <SidebarItem href="/system/integrations" icon={BarChart3} label={t.sidebar.analytics} collapsed={collapsed} />
           <SidebarItem href="/system/seo" icon={Globe} label={t.sidebar.seo} collapsed={collapsed} />
         </nav>
@@ -254,6 +258,7 @@ export default function SystemLayout({ children }: { children: React.ReactNode }
   return (
     <I18nProvider>
       <SystemLayoutContent>{children}</SystemLayoutContent>
+      <Toaster position="top-right" richColors />
     </I18nProvider>
   );
 }

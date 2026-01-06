@@ -5,8 +5,17 @@ import { toast } from 'sonner';
 import { 
   Button, Card, CardHeader, CardTitle, CardContent, Input, Label, cn 
 } from '../components/ui';
+import { ModuleGuard } from '../components/ModuleGuard';
 import { mockMenuItems } from '../mockData';
 import { MenuItem } from '../types';
+
+export default function MenuBuilderPageWrapper() {
+  return (
+    <ModuleGuard moduleKey="menus">
+      <MenuBuilderPage />
+    </ModuleGuard>
+  );
+}
 import { 
   Plus, Trash2, Save, ArrowUp, ArrowDown, GripVertical, ChevronRight, Eye,
   Phone, Mail, User, Heart, ShoppingCart, Search, Settings, Monitor, Tablet, Smartphone,
@@ -825,7 +834,7 @@ const MenuPreview = ({
   );
 };
 
-export default function MenuBuilderPage() {
+function MenuBuilderPage() {
   const MENU_ID = 'M1'; 
   
   const [items, setItems] = useState<MenuItem[]>(mockMenuItems.filter(mi => mi.menuId === MENU_ID).sort((a,b) => a.order - b.order));

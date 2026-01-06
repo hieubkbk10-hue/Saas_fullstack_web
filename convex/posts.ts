@@ -31,6 +31,30 @@ export const list = query({
   },
 });
 
+export const listAll = query({
+  args: {},
+  returns: v.array(postDoc),
+  handler: async (ctx) => {
+    return await ctx.db.query("posts").collect();
+  },
+});
+
+export const count = query({
+  args: { status: v.optional(contentStatus) },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    if (args.status) {
+      const posts = await ctx.db
+        .query("posts")
+        .withIndex("by_status_publishedAt", (q) => q.eq("status", args.status!))
+        .collect();
+      return posts.length;
+    }
+    const posts = await ctx.db.query("posts").collect();
+    return posts.length;
+  },
+});
+
 export const getById = query({
   args: { id: v.id("posts") },
   returns: v.union(postDoc, v.null()),

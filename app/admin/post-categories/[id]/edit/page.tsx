@@ -1,32 +1,83 @@
 'use client';
 
-import React, { useState, use } from 'react';
+import React, { useState, use, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ExternalLink } from 'lucide-react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, Input, Label, Badge, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, cn } from '../../../components/ui';
-import { mockPostCategories, mockPosts } from '../../../mockData';
+
+const MODULE_KEY = 'postCategories';
 
 export default function PostCategoryEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const currentCategory = mockPostCategories.find(c => c.id === id);
+  
+  const categoryData = useQuery(api.postCategories.getById, { id: id as Id<"postCategories"> });
+  const postsData = useQuery(api.posts.listAll);
+  const updateCategory = useMutation(api.postCategories.update);
+  const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   
   const [activeTab, setActiveTab] = useState('info');
-  const [name, setName] = useState(currentCategory?.name || '');
-  const [slug] = useState(currentCategory?.slug || '');
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [description, setDescription] = useState('');
+  const [active, setActive] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!currentCategory) {
+  useEffect(() => {
+    if (categoryData) {
+      setName(categoryData.name);
+      setSlug(categoryData.slug);
+      setDescription(categoryData.description || '');
+      setActive(categoryData.active);
+    }
+  }, [categoryData]);
+
+  if (categoryData === undefined) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (categoryData === null) {
     return <div className="text-center py-8 text-slate-500">Không tìm thấy danh mục</div>;
   }
 
-  const relatedPosts = mockPosts.filter(p => p.category === currentCategory.name);
+  const relatedPosts = postsData?.filter(p => p.categoryId === id) || [];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Check which fields are enabled
+  const enabledFields = useMemo(() => {
+    const fields = new Set<string>();
+    fieldsData?.forEach(f => fields.add(f.fieldKey));
+    return fields;
+  }, [fieldsData]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Đã cập nhật danh mục");
-    router.push('/admin/post-categories');
+    if (!name.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      await updateCategory({
+        id: id as Id<"postCategories">,
+        name: name.trim(),
+        slug: slug.trim(),
+        description: description.trim() || undefined,
+        active,
+      });
+      toast.success("Đã cập nhật danh mục");
+      router.push('/admin/post-categories');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể cập nhật danh mục");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -66,15 +117,36 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
         <Card className="max-w-md mx-auto md:mx-0">
           <form onSubmit={handleSubmit}>
             <CardContent className="p-6 space-y-4">
+              {/* name - always shown (system field) */}
               <div className="space-y-2">
                 <Label>Tên danh mục <span className="text-red-500">*</span></Label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Ví dụ: Công nghệ, Đời sống..." autoFocus />
+              </div>
+              {/* slug - always shown (system field) */}
+              <div className="space-y-2">
+                <Label>Slug</Label>
+                <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="slug-cua-danh-muc" className="font-mono text-sm" />
+              </div>
+              {/* description - conditional */}
+              {enabledFields.has('description') && (
+                <div className="space-y-2">
+                  <Label>Mô tả</Label>
+                  <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Mô tả ngắn về danh mục..." />
+                </div>
+              )}
+              {/* active - always shown (system field) */}
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="active" checked={active} onChange={(e) => setActive(e.target.checked)} className="w-4 h-4" />
+                <Label htmlFor="active">Hiển thị danh mục</Label>
               </div>
             </CardContent>
             
             <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
               <Button type="button" variant="ghost" onClick={() => router.push('/admin/post-categories')}>Hủy bỏ</Button>
-              <Button type="submit" variant="accent">Lưu thay đổi</Button>
+              <Button type="submit" variant="accent" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
+                Lưu thay đổi
+              </Button>
             </div>
           </form>
         </Card>
@@ -91,12 +163,12 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
             </TableHeader>
             <TableBody>
               {relatedPosts.map(post => (
-                <TableRow key={post.id}>
-                  <TableCell><img src={post.thumbnail} className="w-10 h-8 object-cover rounded" alt="" /></TableCell>
+                <TableRow key={post._id}>
+                  <TableCell>{post.thumbnail ? <img src={post.thumbnail} className="w-10 h-8 object-cover rounded" alt="" /> : <div className="w-10 h-8 bg-slate-200 rounded" />}</TableCell>
                   <TableCell className="font-medium">{post.title}</TableCell>
-                  <TableCell className="text-slate-500 text-xs">{new Date(post.created).toLocaleDateString('vi-VN')}</TableCell>
+                  <TableCell className="text-slate-500 text-xs">{new Date(post._creationTime).toLocaleDateString('vi-VN')}</TableCell>
                   <TableCell className="text-right">
-                    <Link href={`/admin/posts/${post.id}/edit`}>
+                    <Link href={`/admin/posts/${post._id}/edit`}>
                       <Button variant="ghost" size="sm" className="h-8">Sửa</Button>
                     </Link>
                   </TableCell>

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface ModuleHeaderProps {
@@ -11,6 +11,9 @@ interface ModuleHeaderProps {
   iconBgClass: string;
   iconTextClass: string;
   buttonClass: string;
+  onSave?: () => void;
+  hasChanges?: boolean;
+  isSaving?: boolean;
 }
 
 export const ModuleHeader: React.FC<ModuleHeaderProps> = ({
@@ -20,6 +23,9 @@ export const ModuleHeader: React.FC<ModuleHeaderProps> = ({
   iconBgClass,
   iconTextClass,
   buttonClass,
+  onSave,
+  hasChanges = false,
+  isSaving = false,
 }) => {
   const router = useRouter();
   
@@ -43,8 +49,17 @@ export const ModuleHeader: React.FC<ModuleHeaderProps> = ({
         </div>
       </div>
       
-      <button className={`flex items-center gap-2 px-4 py-2 ${buttonClass} text-white text-sm font-medium rounded-lg transition-colors`}>
-        <Save size={16} /> Lưu thay đổi
+      <button 
+        onClick={onSave}
+        disabled={!hasChanges || isSaving}
+        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+          hasChanges 
+            ? `${buttonClass} text-white` 
+            : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+        }`}
+      >
+        {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+        {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
       </button>
     </div>
   );

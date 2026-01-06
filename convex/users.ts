@@ -27,6 +27,14 @@ export const list = query({
   },
 });
 
+export const listAll = query({
+  args: {},
+  returns: v.array(userDoc),
+  handler: async (ctx) => {
+    return await ctx.db.query("users").collect();
+  },
+});
+
 export const getById = query({
   args: { id: v.id("users") },
   returns: v.union(userDoc, v.null()),

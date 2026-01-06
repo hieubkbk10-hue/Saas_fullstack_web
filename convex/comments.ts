@@ -29,6 +29,14 @@ export const list = query({
   },
 });
 
+export const listAll = query({
+  args: {},
+  returns: v.array(commentDoc),
+  handler: async (ctx) => {
+    return await ctx.db.query("comments").collect();
+  },
+});
+
 export const getById = query({
   args: { id: v.id("comments") },
   returns: v.union(commentDoc, v.null()),

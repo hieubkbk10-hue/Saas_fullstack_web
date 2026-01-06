@@ -10,7 +10,16 @@ import {
 import { toast } from 'sonner';
 import { cn, Button, Card, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { BulkActionBar, SelectCheckbox } from '../components/TableUtilities';
+import { ModuleGuard } from '../components/ModuleGuard';
 import { mockHomeComponents } from '../mockData';
+
+export default function HomeComponentsPageWrapper() {
+  return (
+    <ModuleGuard moduleKey="homepage">
+      <HomeComponentsPage />
+    </ModuleGuard>
+  );
+}
 
 const COMPONENT_TYPES = [
   { value: 'Hero', label: 'Hero Banner', icon: LayoutTemplate, description: 'Banner chính đầu trang' },
@@ -38,7 +47,7 @@ const COMPONENT_TYPES = [
   { value: 'Banner', label: 'Banner', icon: LayoutTemplate, description: 'Banner slider' },
 ];
 
-export default function HomeComponentsPage() {
+function HomeComponentsPage() {
   const [components, setComponents] = useState(mockHomeComponents);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   

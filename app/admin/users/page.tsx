@@ -6,9 +6,18 @@ import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { BulkActionBar, SelectCheckbox } from '../components/TableUtilities';
+import { ModuleGuard } from '../components/ModuleGuard';
 import { mockUsers, mockRoles } from '../mockData';
 
 export default function UsersListPage() {
+  return (
+    <ModuleGuard moduleKey="users">
+      <UsersContent />
+    </ModuleGuard>
+  );
+}
+
+function UsersContent() {
   const [users, setUsers] = useState(mockUsers);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('');
