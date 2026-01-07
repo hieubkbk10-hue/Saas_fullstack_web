@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Trash2, Search, Loader2, RefreshCw, Heart, User, Package } from 'lucide-react';
+import { Trash2, Search, Loader2, RefreshCw, Heart, User, Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
@@ -25,6 +25,7 @@ function WishlistContent() {
   const customersData = useQuery(api.customers.listAll);
   const productsData = useQuery(api.products.listAll);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const removeItem = useMutation(api.wishlist.remove);
   const seedWishlistModule = useMutation(api.seed.seedWishlistModule);
   const clearWishlistData = useMutation(api.seed.clearWishlistData);
@@ -34,8 +35,15 @@ function WishlistContent() {
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Id<"wishlist">[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const isLoading = wishlistData === undefined || customersData === undefined || productsData === undefined || fieldsData === undefined;
+
+  // Lấy setting itemsPerPage từ module settings
+  const itemsPerPage = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'itemsPerPage');
+    return (setting?.value as number) || 20;
+  }, [settingsData]);
 
   const enabledFields = useMemo(() => {
     const fields = new Set<string>();
@@ -120,7 +128,19 @@ function WishlistContent() {
 
   const sortedData = useSortableData(filteredData, sortConfig);
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(item => item._id));
+  // Pagination
+  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return sortedData.slice(start, start + itemsPerPage);
+  }, [sortedData, currentPage, itemsPerPage]);
+
+  // Reset page khi filter/sort thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterCustomer, sortConfig]);
+
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(item => item._id));
   const toggleSelectItem = (id: Id<"wishlist">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
   const handleDelete = async (id: Id<"wishlist">) => {
@@ -271,7 +291,7 @@ function WishlistContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === sortedData.length && sortedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedData.length} /></TableHead>}
+              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedData.length && paginatedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedData.length} /></TableHead>}
               {visibleColumns.includes('customer') && <SortableHeader label="Khách hàng" sortKey="customerName" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('product') && <SortableHeader label="Sản phẩm" sortKey="productName" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('price') && <SortableHeader label="Giá" sortKey="productPrice" sortConfig={sortConfig} onSort={handleSort} />}
@@ -281,7 +301,7 @@ function WishlistContent() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedData.map(item => (
+            {paginatedData.map(item => (
               <TableRow key={item._id} className={selectedIds.includes(item._id) ? 'bg-pink-500/5' : ''}>
                 {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(item._id)} onChange={() => toggleSelectItem(item._id)} /></TableCell>}
                 {visibleColumns.includes('customer') && (
@@ -329,7 +349,7 @@ function WishlistContent() {
                 )}
               </TableRow>
             ))}
-            {sortedData.length === 0 && (
+            {paginatedData.length === 0 && (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center py-8 text-slate-500">
                   {searchTerm || filterCustomer ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có sản phẩm yêu thích nào. Nhấn Reset để tạo dữ liệu mẫu.'}
@@ -339,8 +359,33 @@ function WishlistContent() {
           </TableBody>
         </Table>
         {sortedData.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">
-            Hiển thị {sortedData.length} / {wishlistItems.length} mục
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-sm text-slate-500">
+              Hiển thị {Math.min((currentPage - 1) * itemsPerPage + 1, sortedData.length)} - {Math.min(currentPage * itemsPerPage, sortedData.length)} / {sortedData.length} mục
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Trang {currentPage} / {totalPages}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </Card>
