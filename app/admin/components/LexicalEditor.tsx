@@ -25,20 +25,10 @@ import {
   SELECTION_CHANGE_COMMAND,
   COMMAND_PRIORITY_CRITICAL,
   $getRoot,
-  $insertNodes,
-  DecoratorNode,
-  DOMConversionMap,
-  DOMConversionOutput,
-  DOMExportOutput,
-  EditorConfig,
   LexicalNode,
-  NodeKey,
-  SerializedLexicalNode,
-  Spread,
   $isElementNode,
   $isDecoratorNode,
   $isTextNode,
-  $applyNodeReplacement
 } from 'lexical';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
 import { $setBlocksType, $patchStyleText, $getSelectionStyleValueForProperty } from '@lexical/selection';
@@ -49,6 +39,7 @@ import {
 } from 'lucide-react';
 import { cn } from './ui';
 import { toast } from 'sonner';
+import ImagesPlugin, { ImageNode, INSERT_IMAGE_COMMAND } from './nodes/ImageNode';
 
 // Image compression utility
 function slugifyFilename(filename: string): string {
@@ -94,114 +85,7 @@ async function compressImage(file: File, quality: number = 0.85): Promise<Blob> 
   });
 }
 
-// Simple ImageNode for Lexical
-export type SerializedImageNode = Spread<
-  { src: string; altText: string; width?: number; height?: number },
-  SerializedLexicalNode
->;
 
-function $convertImageElement(domNode: Node): DOMConversionOutput | null {
-  const img = domNode as HTMLImageElement;
-  const src = img.getAttribute('src');
-  if (!src || src.startsWith('file:///')) return null;
-  const { alt: altText, width, height } = img;
-  const node = $createImageNode({ src, altText: altText || '', width: width || undefined, height: height || undefined });
-  return { node };
-}
-
-export class ImageNode extends DecoratorNode<React.ReactElement> {
-  __src: string;
-  __altText: string;
-  __width: number | undefined;
-  __height: number | undefined;
-
-  static getType(): string {
-    return 'image';
-  }
-
-  static clone(node: ImageNode): ImageNode {
-    return new ImageNode(node.__src, node.__altText, node.__width, node.__height, node.__key);
-  }
-
-  static importJSON(serializedNode: SerializedImageNode): ImageNode {
-    const { src, altText, width, height } = serializedNode;
-    return $createImageNode({ src, altText, width, height });
-  }
-
-  static importDOM(): DOMConversionMap | null {
-    return {
-      img: () => ({
-        conversion: $convertImageElement,
-        priority: 0,
-      }),
-    };
-  }
-
-  constructor(src: string, altText: string, width?: number, height?: number, key?: NodeKey) {
-    super(key);
-    this.__src = src;
-    this.__altText = altText;
-    this.__width = width;
-    this.__height = height;
-  }
-
-  exportJSON(): SerializedImageNode {
-    return {
-      ...super.exportJSON(),
-      src: this.__src,
-      altText: this.__altText,
-      width: this.__width,
-      height: this.__height,
-      type: 'image',
-      version: 1,
-    };
-  }
-
-  exportDOM(): DOMExportOutput {
-    const element = document.createElement('img');
-    element.setAttribute('src', this.__src);
-    element.setAttribute('alt', this.__altText);
-    if (this.__width) element.setAttribute('width', String(this.__width));
-    if (this.__height) element.setAttribute('height', String(this.__height));
-    element.style.maxWidth = '100%';
-    element.style.height = 'auto';
-    element.style.display = 'block';
-    element.style.margin = '8px 0';
-    element.style.borderRadius = '4px';
-    return { element };
-  }
-
-  createDOM(_config: EditorConfig): HTMLElement {
-    const span = document.createElement('span');
-    span.style.display = 'block';
-    return span;
-  }
-
-  updateDOM(): false {
-    return false;
-  }
-
-  decorate(): React.ReactElement {
-    return (
-      <img
-        src={this.__src}
-        alt={this.__altText}
-        width={this.__width}
-        height={this.__height}
-        style={{ maxWidth: '100%', height: 'auto', display: 'block', margin: '8px 0', borderRadius: '4px' }}
-        draggable={false}
-      />
-    );
-  }
-}
-
-export function $createImageNode({ src, altText, width, height }: { src: string; altText: string; width?: number; height?: number }): ImageNode {
-  return $applyNodeReplacement(new ImageNode(src, altText, width, height));
-}
-
-export function $isImageNode(node: LexicalNode | null | undefined): node is ImageNode {
-  return node instanceof ImageNode;
-}
 
 const theme = {
   paragraph: 'editor-paragraph',
@@ -221,7 +105,6 @@ const theme = {
     underline: 'editor-text-underline',
     strikethrough: 'editor-text-strikethrough',
   },
-  image: 'editor-image',
 };
 
 const FONT_FAMILY_OPTIONS = [
@@ -365,11 +248,8 @@ const ToolbarPlugin: React.FC<ToolbarPluginProps> = ({ onImageUpload }) => {
         try {
           const url = await onImageUpload(file);
           if (url) {
-            // Insert ImageNode properly
-            editor.update(() => {
-              const imageNode = $createImageNode({ src: url, altText: '' });
-              $insertNodes([imageNode]);
-            });
+            // Use command pattern for image insertion
+            editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src: url, altText: '' });
             toast.success('Đã chèn ảnh vào nội dung');
           }
         } catch (error) {
@@ -540,11 +420,8 @@ const PasteImagePlugin: React.FC<PasteImagePluginProps> = ({ onImageUpload }) =>
             try {
               const url = await onImageUpload(file);
               if (url) {
-                // Insert ImageNode properly
-                editor.update(() => {
-                  const imageNode = $createImageNode({ src: url, altText: '' });
-                  $insertNodes([imageNode]);
-                });
+                // Use command pattern for image insertion
+                editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src: url, altText: '' });
                 toast.success('Đã paste và upload ảnh');
               }
             } catch (error) {
@@ -691,6 +568,7 @@ export const LexicalEditor: React.FC<LexicalEditorProps> = ({ onChange, initialC
           <HistoryPlugin />
           <ListPlugin />
           <LinkPlugin />
+          <ImagesPlugin />
           <PasteImagePlugin onImageUpload={handleImageUpload} />
           <InitialContentPlugin initialContent={initialContent} />
           <OnChangePlugin onChange={(editorState, editor) => {
