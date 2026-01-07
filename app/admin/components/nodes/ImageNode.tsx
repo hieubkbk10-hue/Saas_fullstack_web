@@ -3,31 +3,39 @@
 import {
   $applyNodeReplacement,
   $createNodeSelection,
+  $getNodeByKey,
   $getSelection,
   $getRoot,
   $isNodeSelection,
   $isParagraphNode,
   $isRangeSelection,
   $setSelection,
+  CLICK_COMMAND,
   COMMAND_PRIORITY_EDITOR,
+  COMMAND_PRIORITY_LOW,
   DOMConversionMap,
   DOMConversionOutput,
   DecoratorNode,
+  KEY_BACKSPACE_COMMAND,
+  KEY_DELETE_COMMAND,
   LexicalCommand,
+  LexicalEditor,
   LexicalNode,
   NodeKey,
   SerializedLexicalNode,
   createCommand,
 } from 'lexical';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { useEffect } from 'react';
+import { useLexicalNodeSelection } from '@lexical/react/useLexicalNodeSelection';
+import { mergeRegister } from '@lexical/utils';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { JSX } from 'react';
 
 export type InsertImagePayload = {
   src: string;
   altText?: string;
-  width?: number | string;
-  height?: number | string;
+  width?: number;
+  height?: number;
 };
 
 export const INSERT_IMAGE_COMMAND: LexicalCommand<InsertImagePayload> =
@@ -36,16 +44,21 @@ export const INSERT_IMAGE_COMMAND: LexicalCommand<InsertImagePayload> =
 type SerializedImageNode = {
   src: string;
   altText: string;
-  width?: number | string;
-  height?: number | string;
+  width?: number;
+  height?: number;
   type: 'image';
   version: 1;
 } & SerializedLexicalNode;
 
 function convertImageElement(domNode: HTMLElement): DOMConversionOutput | null {
   if (domNode instanceof HTMLImageElement) {
-    const { src, alt } = domNode;
-    const node = $createImageNode({ src, altText: alt });
+    const { src, alt, width, height } = domNode;
+    const node = $createImageNode({ 
+      src, 
+      altText: alt,
+      width: width || undefined,
+      height: height || undefined,
+    });
     return { node };
   }
   return null;
@@ -54,8 +67,8 @@ function convertImageElement(domNode: HTMLElement): DOMConversionOutput | null {
 export class ImageNode extends DecoratorNode<JSX.Element> {
   __src: string;
   __altText: string;
-  __width?: number | string;
-  __height?: number | string;
+  __width?: number;
+  __height?: number;
 
   static getType(): string {
     return 'image';
@@ -99,8 +112,8 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   constructor(
     src: string,
     altText: string,
-    width?: number | string,
-    height?: number | string,
+    width?: number,
+    height?: number,
     key?: NodeKey,
   ) {
     super(key);
@@ -110,9 +123,15 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
     this.__height = height;
   }
 
+  setWidthAndHeight(width: number, height: number): void {
+    const writable = this.getWritable();
+    writable.__width = width;
+    writable.__height = height;
+  }
+
   createDOM(): HTMLElement {
     const span = document.createElement('span');
-    span.style.display = 'block';
+    span.style.display = 'inline-block';
     return span;
   }
 
@@ -122,17 +141,12 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
 
   decorate(): JSX.Element {
     return (
-      <img
+      <ImageComponent
         src={this.__src}
-        alt={this.__altText}
-        style={{
-          maxWidth: '100%',
-          height: this.__height ?? 'auto',
-          width: this.__width ?? 'auto',
-          borderRadius: '4px',
-          display: 'block',
-          margin: '8px 0',
-        }}
+        altText={this.__altText}
+        width={this.__width}
+        height={this.__height}
+        nodeKey={this.getKey()}
       />
     );
   }
@@ -151,6 +165,257 @@ export function $isImageNode(node?: LexicalNode | null): node is ImageNode {
   return node instanceof ImageNode;
 }
 
+// ImageComponent with resize functionality
+function ImageComponent({
+  src,
+  altText,
+  width,
+  height,
+  nodeKey,
+}: {
+  src: string;
+  altText: string;
+  width?: number;
+  height?: number;
+  nodeKey: NodeKey;
+}): JSX.Element {
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [editor] = useLexicalComposerContext();
+  const [isSelected, setSelected, clearSelection] = useLexicalNodeSelection(nodeKey);
+  const [isResizing, setIsResizing] = useState(false);
+
+  const onDelete = useCallback(
+    (event: KeyboardEvent) => {
+      if (isSelected && $isNodeSelection($getSelection())) {
+        event.preventDefault();
+        const node = $getNodeByKey(nodeKey);
+        if ($isImageNode(node)) {
+          node.remove();
+        }
+      }
+      return false;
+    },
+    [isSelected, nodeKey],
+  );
+
+  const onClick = useCallback(
+    (event: MouseEvent) => {
+      if (isResizing) return true;
+      if (event.target === imageRef.current) {
+        if (event.shiftKey) {
+          setSelected(!isSelected);
+        } else {
+          clearSelection();
+          setSelected(true);
+        }
+        return true;
+      }
+      return false;
+    },
+    [isResizing, isSelected, setSelected, clearSelection],
+  );
+
+  useEffect(() => {
+    return mergeRegister(
+      editor.registerCommand(CLICK_COMMAND, onClick, COMMAND_PRIORITY_LOW),
+      editor.registerCommand(KEY_DELETE_COMMAND, onDelete, COMMAND_PRIORITY_LOW),
+      editor.registerCommand(KEY_BACKSPACE_COMMAND, onDelete, COMMAND_PRIORITY_LOW),
+    );
+  }, [editor, onClick, onDelete]);
+
+  const onResizeEnd = (nextWidth: number, nextHeight: number) => {
+    setTimeout(() => setIsResizing(false), 200);
+    editor.update(() => {
+      const node = $getNodeByKey(nodeKey);
+      if ($isImageNode(node)) {
+        node.setWidthAndHeight(nextWidth, nextHeight);
+      }
+    });
+  };
+
+  const onResizeStart = () => {
+    setIsResizing(true);
+  };
+
+  const isFocused = isSelected || isResizing;
+
+  return (
+    <div 
+      className={`image-wrapper ${isFocused ? 'focused' : ''}`}
+      style={{ display: 'inline-block', position: 'relative' }}
+    >
+      <img
+        ref={imageRef}
+        src={src}
+        alt={altText}
+        style={{
+          width: width ? `${width}px` : 'auto',
+          height: height ? `${height}px` : 'auto',
+          maxWidth: '100%',
+          borderRadius: '4px',
+          display: 'block',
+          cursor: 'default',
+          outline: isFocused ? '2px solid #3b82f6' : 'none',
+        }}
+        draggable={false}
+      />
+      {isFocused && (
+        <ImageResizer
+          imageRef={imageRef}
+          onResizeStart={onResizeStart}
+          onResizeEnd={onResizeEnd}
+          editor={editor}
+        />
+      )}
+    </div>
+  );
+}
+
+// ImageResizer component
+function ImageResizer({
+  imageRef,
+  onResizeStart,
+  onResizeEnd,
+  editor,
+}: {
+  imageRef: React.RefObject<HTMLImageElement | null>;
+  onResizeStart: () => void;
+  onResizeEnd: (width: number, height: number) => void;
+  editor: LexicalEditor;
+}): JSX.Element {
+  const positioningRef = useRef({
+    currentWidth: 0,
+    currentHeight: 0,
+    ratio: 1,
+    startWidth: 0,
+    startHeight: 0,
+    startX: 0,
+    startY: 0,
+    isResizing: false,
+  });
+
+  const editorRoot = editor.getRootElement();
+  const maxWidth = editorRoot ? editorRoot.getBoundingClientRect().width - 40 : 800;
+  const minWidth = 50;
+  const minHeight = 50;
+
+  const handlePointerDown = (event: React.PointerEvent, corner: string) => {
+    if (!editor.isEditable()) return;
+    const image = imageRef.current;
+    if (!image) return;
+
+    event.preventDefault();
+    const { width, height } = image.getBoundingClientRect();
+    const pos = positioningRef.current;
+    pos.startWidth = width;
+    pos.startHeight = height;
+    pos.ratio = width / height;
+    pos.currentWidth = width;
+    pos.currentHeight = height;
+    pos.startX = event.clientX;
+    pos.startY = event.clientY;
+    pos.isResizing = true;
+
+    onResizeStart();
+    document.body.style.cursor = `${corner}-resize`;
+    document.body.style.userSelect = 'none';
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      if (!pos.isResizing || !image) return;
+      
+      const diffX = moveEvent.clientX - pos.startX;
+      const diffY = moveEvent.clientY - pos.startY;
+      
+      // Calculate new dimensions based on corner
+      let newWidth = pos.startWidth;
+      let newHeight = pos.startHeight;
+
+      if (corner.includes('e')) newWidth = pos.startWidth + diffX;
+      if (corner.includes('w')) newWidth = pos.startWidth - diffX;
+      if (corner.includes('s')) newHeight = pos.startHeight + diffY;
+      if (corner.includes('n')) newHeight = pos.startHeight - diffY;
+
+      // Maintain aspect ratio for corner resizes
+      if (corner.length === 2) {
+        newHeight = newWidth / pos.ratio;
+      }
+
+      // Clamp values
+      newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+      newHeight = Math.max(minHeight, newWidth / pos.ratio);
+
+      pos.currentWidth = newWidth;
+      pos.currentHeight = newHeight;
+      
+      image.style.width = `${newWidth}px`;
+      image.style.height = `${newHeight}px`;
+    };
+
+    const handlePointerUp = () => {
+      if (pos.isResizing) {
+        pos.isResizing = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        onResizeEnd(Math.round(pos.currentWidth), Math.round(pos.currentHeight));
+      }
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+    };
+
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+  };
+
+  const handleStyle = {
+    position: 'absolute' as const,
+    width: '10px',
+    height: '10px',
+    backgroundColor: '#3b82f6',
+    border: '1px solid white',
+    borderRadius: '2px',
+  };
+
+  return (
+    <>
+      {/* Corner handles */}
+      <div
+        style={{ ...handleStyle, top: -5, left: -5, cursor: 'nw-resize' }}
+        onPointerDown={(e) => handlePointerDown(e, 'nw')}
+      />
+      <div
+        style={{ ...handleStyle, top: -5, right: -5, cursor: 'ne-resize' }}
+        onPointerDown={(e) => handlePointerDown(e, 'ne')}
+      />
+      <div
+        style={{ ...handleStyle, bottom: -5, left: -5, cursor: 'sw-resize' }}
+        onPointerDown={(e) => handlePointerDown(e, 'sw')}
+      />
+      <div
+        style={{ ...handleStyle, bottom: -5, right: -5, cursor: 'se-resize' }}
+        onPointerDown={(e) => handlePointerDown(e, 'se')}
+      />
+      {/* Edge handles */}
+      <div
+        style={{ ...handleStyle, top: -5, left: '50%', transform: 'translateX(-50%)', cursor: 'n-resize' }}
+        onPointerDown={(e) => handlePointerDown(e, 'n')}
+      />
+      <div
+        style={{ ...handleStyle, bottom: -5, left: '50%', transform: 'translateX(-50%)', cursor: 's-resize' }}
+        onPointerDown={(e) => handlePointerDown(e, 's')}
+      />
+      <div
+        style={{ ...handleStyle, top: '50%', left: -5, transform: 'translateY(-50%)', cursor: 'w-resize' }}
+        onPointerDown={(e) => handlePointerDown(e, 'w')}
+      />
+      <div
+        style={{ ...handleStyle, top: '50%', right: -5, transform: 'translateY(-50%)', cursor: 'e-resize' }}
+        onPointerDown={(e) => handlePointerDown(e, 'e')}
+      />
+    </>
+  );
+}
+
+// ImagesPlugin - handles INSERT_IMAGE_COMMAND
 const ImagesPlugin = () => {
   const [editor] = useLexicalComposerContext();
 
