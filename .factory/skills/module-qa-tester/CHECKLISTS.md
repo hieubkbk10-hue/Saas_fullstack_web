@@ -355,9 +355,46 @@
 □ Ảnh paste được compress 85% trước khi upload
 □ KHÔNG lưu base64 vào DB (dùng storage URL)
 □ InitialContentPlugin filter valid nodes (ElementNode/DecoratorNode)
-□ Wrap <img> trong <p> khi insert
 □ handleImageUpload compress + upload + return URL
 □ Images được lưu vào folder riêng (e.g., posts-content, products-content)
+```
+
+### 7.6 LexicalEditor Custom ImageNode ⚠️ CRITICAL
+```
+□ File ImageNode.tsx tồn tại tại: app/admin/components/nodes/ImageNode.tsx
+□ ImageNode extends DecoratorNode<JSX.Element>
+□ static getType() return 'image'
+□ static clone() copy đúng properties
+□ static importJSON() / exportJSON() cho serialization
+□ static importDOM() parse <img> tag từ HTML
+□ exportDOM() tạo <img> tag với src, alt, width, height ⚠️ QUAN TRỌNG
+□ setWidthAndHeight() method cho resize functionality
+□ decorate() return <ImageComponent /> với nodeKey
+□ ImageNode đăng ký trong initialConfig.nodes array
+□ ImagesPlugin có mặt và đăng ký INSERT_IMAGE_COMMAND
+```
+
+### 7.7 ImageComponent Selection & Resize ⚠️
+```
+□ useLexicalNodeSelection hook cho selection state
+□ Click vào ảnh → setSelected(true)
+□ Viền xanh (#3b82f6) khi ảnh được chọn (isFocused)
+□ Delete/Backspace key → xóa ảnh đã chọn
+□ ImageResizer hiển thị khi isFocused
+□ 8 resize handles (4 góc + 4 cạnh)
+□ Pointer events: pointerdown → pointermove → pointerup
+□ Maintain aspect ratio khi kéo góc
+□ onResizeEnd gọi node.setWidthAndHeight()
+□ Width/height persist sau khi save và reload
+```
+
+### 7.8 Image Persistence Flow
+```
+□ Save: $generateHtmlFromNodes → exportDOM() → <img width="X" height="Y">
+□ Load: $generateNodesFromDOM → importDOM() → ImageNode với width/height
+□ Width/height lưu vào cả attributes và inline styles
+□ convertImageElement parse width/height từ attributes VÀ styles
+□ Test: Upload → Resize → Save → Reload → Kiểm tra kích thước giữ nguyên
 ```
 
 ### 7.5 Maintainability

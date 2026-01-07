@@ -605,6 +605,253 @@ convex/{module}.ts
     }
     ```
 
+13. **⚠️ LexicalEditor Custom ImageNode - Resizable & Persistent (CRITICAL)**
+    
+    **Vấn đề:** Dùng `$generateNodesFromDOM` với `<img>` không tạo được node đúng vì Lexical mặc định không có ImageNode.
+    
+    **Giải pháp:** Tạo custom ImageNode extends DecoratorNode với đầy đủ methods.
+    
+    ```tsx
+    // File: app/admin/components/nodes/ImageNode.tsx
+    
+    // 1. ImageNode class - PHẢI có exportDOM để save HTML
+    export class ImageNode extends DecoratorNode<JSX.Element> {
+      __src: string;
+      __altText: string;
+      __width?: number;
+      __height?: number;
+
+      static getType(): string { return 'image'; }
+      
+      static clone(node: ImageNode): ImageNode {
+        return new ImageNode(node.__src, node.__altText, node.__width, node.__height, node.__key);
+      }
+
+      // ⚠️ CRITICAL: exportDOM để $generateHtmlFromNodes tạo được <img> tag
+      exportDOM(): DOMExportOutput {
+        const element = document.createElement('img');
+        element.setAttribute('src', this.__src);
+        element.setAttribute('alt', this.__altText);
+        if (this.__width) {
+          element.setAttribute('width', String(this.__width));
+          element.style.width = `${this.__width}px`;
+        }
+        if (this.__height) {
+          element.setAttribute('height', String(this.__height));
+          element.style.height = `${this.__height}px`;
+        }
+        return { element };
+      }
+
+      // importDOM để load lại từ HTML
+      static importDOM(): DOMConversionMap | null {
+        return {
+          img: () => ({
+            conversion: (domNode: HTMLElement) => {
+              if (domNode instanceof HTMLImageElement) {
+                const { src, alt } = domNode;
+                let width = domNode.getAttribute('width');
+                let height = domNode.getAttribute('height');
+                // Also check inline style
+                if (!width && domNode.style.width) {
+                  width = domNode.style.width.replace('px', '');
+                }
+                if (!height && domNode.style.height) {
+                  height = domNode.style.height.replace('px', '');
+                }
+                return { 
+                  node: $createImageNode({ 
+                    src, 
+                    altText: alt || '',
+                    width: width ? parseInt(width, 10) : undefined,
+                    height: height ? parseInt(height, 10) : undefined,
+                  }) 
+                };
+              }
+              return null;
+            },
+            priority: 0,
+          }),
+        };
+      }
+
+      // setWidthAndHeight cho resize functionality
+      setWidthAndHeight(width: number, height: number): void {
+        const writable = this.getWritable();
+        writable.__width = width;
+        writable.__height = height;
+      }
+
+      // decorate render ImageComponent với resize handles
+      decorate(): JSX.Element {
+        return (
+          <ImageComponent
+            src={this.__src}
+            altText={this.__altText}
+            width={this.__width}
+            height={this.__height}
+            nodeKey={this.getKey()}
+          />
+        );
+      }
+    }
+    
+    // 2. ImageComponent với selection và resize handles
+    function ImageComponent({ src, altText, width, height, nodeKey }) {
+      const imageRef = useRef<HTMLImageElement>(null);
+      const [editor] = useLexicalComposerContext();
+      const [isSelected, setSelected, clearSelection] = useLexicalNodeSelection(nodeKey);
+      const [isResizing, setIsResizing] = useState(false);
+
+      // Click to select
+      const onClick = useCallback((event: MouseEvent) => {
+        if (event.target === imageRef.current) {
+          clearSelection();
+          setSelected(true);
+          return true;
+        }
+        return false;
+      }, [setSelected, clearSelection]);
+
+      // Delete/Backspace to remove
+      const onDelete = useCallback((event: KeyboardEvent) => {
+        if (isSelected && $isNodeSelection($getSelection())) {
+          event.preventDefault();
+          const node = $getNodeByKey(nodeKey);
+          if ($isImageNode(node)) node.remove();
+        }
+        return false;
+      }, [isSelected, nodeKey]);
+
+      // onResizeEnd updates node
+      const onResizeEnd = (nextWidth: number, nextHeight: number) => {
+        editor.update(() => {
+          const node = $getNodeByKey(nodeKey);
+          if ($isImageNode(node)) {
+            node.setWidthAndHeight(nextWidth, nextHeight);
+          }
+        });
+      };
+
+      const isFocused = isSelected || isResizing;
+
+      return (
+        <div style={{ display: 'inline-block', position: 'relative' }}>
+          <img
+            ref={imageRef}
+            src={src}
+            alt={altText}
+            style={{
+              width: width ? `${width}px` : 'auto',
+              height: height ? `${height}px` : 'auto',
+              outline: isFocused ? '2px solid #3b82f6' : 'none',
+            }}
+          />
+          {isFocused && (
+            <ImageResizer
+              imageRef={imageRef}
+              onResizeEnd={onResizeEnd}
+              editor={editor}
+            />
+          )}
+        </div>
+      );
+    }
+    
+    // 3. ImageResizer với 8 handles (4 góc + 4 cạnh)
+    function ImageResizer({ imageRef, onResizeStart, onResizeEnd, editor }) {
+      const handlePointerDown = (event, corner) => {
+        const image = imageRef.current;
+        const { width, height } = image.getBoundingClientRect();
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const ratio = width / height;
+        
+        const handlePointerMove = (moveEvent) => {
+          const diffX = moveEvent.clientX - startX;
+          let newWidth = width + diffX;
+          let newHeight = newWidth / ratio; // Maintain aspect ratio
+          image.style.width = `${newWidth}px`;
+          image.style.height = `${newHeight}px`;
+        };
+        
+        const handlePointerUp = () => {
+          onResizeEnd(image.clientWidth, image.clientHeight);
+          document.removeEventListener('pointermove', handlePointerMove);
+          document.removeEventListener('pointerup', handlePointerUp);
+        };
+        
+        document.addEventListener('pointermove', handlePointerMove);
+        document.addEventListener('pointerup', handlePointerUp);
+      };
+      
+      return (
+        <>
+          {/* 8 resize handles: nw, n, ne, e, se, s, sw, w */}
+          <div style={{ position: 'absolute', top: -5, left: -5, cursor: 'nw-resize' }}
+               onPointerDown={(e) => handlePointerDown(e, 'nw')} />
+          {/* ... other 7 handles ... */}
+        </>
+      );
+    }
+    
+    // 4. ImagesPlugin - đăng ký INSERT_IMAGE_COMMAND
+    const ImagesPlugin = () => {
+      const [editor] = useLexicalComposerContext();
+      
+      useEffect(() => {
+        return editor.registerCommand(
+          INSERT_IMAGE_COMMAND,
+          (payload) => {
+            const imageNode = $createImageNode(payload);
+            // Insert logic...
+            return true;
+          },
+          COMMAND_PRIORITY_EDITOR,
+        );
+      }, [editor]);
+      
+      return null;
+    };
+    ```
+    
+    **Đăng ký ImageNode trong LexicalEditor:**
+    ```tsx
+    // LexicalEditor.tsx
+    import ImagesPlugin, { ImageNode, INSERT_IMAGE_COMMAND } from './nodes/ImageNode';
+    
+    const initialConfig = {
+      namespace: 'MyEditor',
+      nodes: [
+        HeadingNode, QuoteNode, ListNode, ListItemNode, 
+        AutoLinkNode, LinkNode,
+        ImageNode  // ⚠️ PHẢI đăng ký ImageNode
+      ],
+    };
+    
+    // Sử dụng command để insert image
+    const handleImageUpload = async () => {
+      const url = await uploadImage(file);
+      editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src: url, altText: '' });
+    };
+    
+    // Trong LexicalComposer
+    <LexicalComposer initialConfig={initialConfig}>
+      <ImagesPlugin />  {/* ⚠️ PHẢI có plugin này */}
+      {/* ... other plugins */}
+    </LexicalComposer>
+    ```
+    
+    **Checklist ImageNode:**
+    - [ ] ImageNode extends DecoratorNode
+    - [ ] `exportDOM()` tạo `<img>` với src, alt, width, height
+    - [ ] `importDOM()` parse `<img>` thành ImageNode
+    - [ ] `setWidthAndHeight()` cho resize
+    - [ ] ImageComponent với `useLexicalNodeSelection`
+    - [ ] ImageResizer với pointer events
+    - [ ] ImagesPlugin đăng ký INSERT_IMAGE_COMMAND
+    - [ ] ImageNode đăng ký trong `initialConfig.nodes`
+
 ## Modules đã QA OK (Reference)
 
 - ✅ **Posts** - Module chuẩn với đầy đủ features + pagination
