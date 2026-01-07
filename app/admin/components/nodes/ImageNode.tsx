@@ -15,6 +15,7 @@ import {
   COMMAND_PRIORITY_LOW,
   DOMConversionMap,
   DOMConversionOutput,
+  DOMExportOutput,
   DecoratorNode,
   KEY_BACKSPACE_COMMAND,
   KEY_DELETE_COMMAND,
@@ -52,12 +53,24 @@ type SerializedImageNode = {
 
 function convertImageElement(domNode: HTMLElement): DOMConversionOutput | null {
   if (domNode instanceof HTMLImageElement) {
-    const { src, alt, width, height } = domNode;
+    const { src, alt } = domNode;
+    // Get width/height from attributes or style
+    let width = domNode.getAttribute('width');
+    let height = domNode.getAttribute('height');
+    
+    // Also check style
+    if (!width && domNode.style.width) {
+      width = domNode.style.width.replace('px', '');
+    }
+    if (!height && domNode.style.height) {
+      height = domNode.style.height.replace('px', '');
+    }
+    
     const node = $createImageNode({ 
       src, 
-      altText: alt,
-      width: width || undefined,
-      height: height || undefined,
+      altText: alt || '',
+      width: width ? parseInt(width, 10) : undefined,
+      height: height ? parseInt(height, 10) : undefined,
     });
     return { node };
   }
@@ -107,6 +120,25 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
         priority: 0,
       }),
     };
+  }
+
+  exportDOM(): DOMExportOutput {
+    const element = document.createElement('img');
+    element.setAttribute('src', this.__src);
+    element.setAttribute('alt', this.__altText);
+    if (this.__width) {
+      element.setAttribute('width', String(this.__width));
+      element.style.width = `${this.__width}px`;
+    }
+    if (this.__height) {
+      element.setAttribute('height', String(this.__height));
+      element.style.height = `${this.__height}px`;
+    }
+    element.style.maxWidth = '100%';
+    element.style.borderRadius = '4px';
+    element.style.display = 'block';
+    element.style.margin = '8px 0';
+    return { element };
   }
 
   constructor(
