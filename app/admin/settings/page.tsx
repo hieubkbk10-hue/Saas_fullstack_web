@@ -1,21 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Save, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Save, Loader2, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../components/ui';
 import { ModuleGuard } from '../components/ModuleGuard';
 
+const MODULE_KEY = 'settings';
+
+// Color utilities
 const hexToHSL = (hex: string): { h: number; s: number; l: number } => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return { h: 0, s: 0, l: 0 };
-  let r = parseInt(result[1], 16) / 255;
-  let g = parseInt(result[2], 16) / 255;
-  let b = parseInt(result[3], 16) / 255;
+  const r = parseInt(result[1], 16) / 255;
+  const g = parseInt(result[2], 16) / 255;
+  const b = parseInt(result[3], 16) / 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h = 0, s = 0, l = (max + min) / 2;
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
   if (max !== min) {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
@@ -45,111 +49,392 @@ const generateTintsShades = (hex: string): string[] => {
   return lightnesses.map(newL => hslToHex(h, s, newL));
 };
 
-type SettingsForm = {
-  // General
-  siteName: string;
-  siteDescription: string;
-  timezone: string;
-  brandColor: string;
-  // Contact
-  email: string;
-  hotline: string;
-  address: string;
-  facebook: string;
-  zalo: string;
-  googleMapsEmbed: string;
-  // SEO
-  metaTitle: string;
-  metaDescription: string;
-  metaKeywords: string;
-  ogImage: string;
-};
+const isValidHexColor = (color: string): boolean => /^#[0-9A-Fa-f]{6}$/.test(color);
 
-const defaultSettings: SettingsForm = {
-  siteName: '',
-  siteDescription: '',
-  timezone: 'GMT+07:00',
-  brandColor: '#3b82f6',
-  email: '',
-  hotline: '',
-  address: '',
-  facebook: '',
-  zalo: '',
-  googleMapsEmbed: '',
-  metaTitle: '',
-  metaDescription: '',
-  metaKeywords: '',
-  ogImage: '',
-};
+// Tab config với feature mapping
+const TAB_CONFIG = [
+  { id: 'site', label: 'Chung', feature: null }, // Luôn hiển thị
+  { id: 'contact', label: 'Liên hệ', feature: 'enableContact' },
+  { id: 'seo', label: 'SEO', feature: 'enableSEO' },
+  { id: 'social', label: 'Mạng xã hội', feature: 'enableSocial' },
+  { id: 'mail', label: 'Email', feature: 'enableMail' },
+];
 
-const settingsKeys = Object.keys(defaultSettings) as (keyof SettingsForm)[];
+// Group labels for display
+const GROUP_LABELS: Record<string, string> = {
+  site: 'Thông tin chung',
+  contact: 'Thông tin liên hệ',
+  seo: 'Cài đặt SEO',
+  social: 'Mạng xã hội',
+  mail: 'Cấu hình Email',
+};
 
 export default function SettingsPage() {
   return (
-    <ModuleGuard moduleKey="settings">
+    <ModuleGuard moduleKey={MODULE_KEY}>
       <SettingsContent />
     </ModuleGuard>
   );
 }
 
 function SettingsContent() {
-  const [activeTab, setActiveTab] = useState('general');
-  const [form, setForm] = useState<SettingsForm>(defaultSettings);
+  const [activeTab, setActiveTab] = useState('site');
+  const [form, setForm] = useState<Record<string, string>>({});
+  const [initialForm, setInitialForm] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
 
-  const settingsData = useQuery(api.settings.getMultiple, { keys: settingsKeys });
+  // Queries
+  const settingsData = useQuery(api.settings.listAll);
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
+  const fieldsData = useQuery(api.admin.modules.listModuleFields, { moduleKey: MODULE_KEY });
+
+  // Mutations
   const setMultiple = useMutation(api.settings.setMultiple);
 
-  const isLoading = settingsData === undefined;
+  const isLoading = settingsData === undefined || featuresData === undefined || fieldsData === undefined;
 
+  // Parse enabled features
+  const enabledFeatures = useMemo(() => {
+    const features: Record<string, boolean> = {};
+    featuresData?.forEach(f => { features[f.featureKey] = f.enabled; });
+    return features;
+  }, [featuresData]);
+
+  // Filter tabs based on enabled features
+  const visibleTabs = useMemo(() => {
+    return TAB_CONFIG.filter(tab => 
+      tab.feature === null || enabledFeatures[tab.feature] !== false
+    );
+  }, [enabledFeatures]);
+
+  // Filter and group fields based on enabled status and feature
+  const fieldsByGroup = useMemo(() => {
+    const groups: Record<string, typeof fieldsData> = {};
+    
+    fieldsData?.forEach(field => {
+      // Skip disabled fields
+      if (!field.enabled) return;
+      
+      // Skip fields whose linked feature is disabled
+      if (field.linkedFeature && enabledFeatures[field.linkedFeature] === false) return;
+      
+      const group = field.group || 'site';
+      if (!groups[group]) groups[group] = [];
+      groups[group]!.push(field);
+    });
+
+    // Sort fields by order within each group
+    Object.keys(groups).forEach(key => {
+      groups[key]!.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    });
+
+    return groups;
+  }, [fieldsData, enabledFeatures]);
+
+  // Sync form with settings data
   useEffect(() => {
     if (settingsData) {
-      setForm(prev => {
-        const newForm = { ...prev };
-        for (const key of settingsKeys) {
-          if (settingsData[key] !== null && settingsData[key] !== undefined) {
-            newForm[key] = settingsData[key] as string;
-          }
-        }
-        return newForm;
+      const values: Record<string, string> = {};
+      settingsData.forEach(s => {
+        values[s.key] = typeof s.value === 'string' ? s.value : String(s.value ?? '');
       });
-      setHasChanges(false);
+      setForm(values);
+      setInitialForm(values);
     }
   }, [settingsData]);
 
-  const updateField = <K extends keyof SettingsForm>(key: K, value: SettingsForm[K]) => {
+  // Reset active tab if current tab becomes hidden
+  useEffect(() => {
+    if (!visibleTabs.find(t => t.id === activeTab)) {
+      setActiveTab(visibleTabs[0]?.id || 'site');
+    }
+  }, [visibleTabs, activeTab]);
+
+  // Detect changes
+  const hasChanges = useMemo(() => {
+    return Object.keys(form).some(key => form[key] !== initialForm[key]);
+  }, [form, initialForm]);
+
+  const updateField = (key: string, value: string) => {
     setForm(prev => ({ ...prev, [key]: value }));
-    setHasChanges(true);
+  };
+
+  // Validate before save
+  const validateForm = (): boolean => {
+    // Validate color fields
+    const colorFields = fieldsData?.filter(f => f.type === 'color') || [];
+    for (const field of colorFields) {
+      const value = form[field.fieldKey];
+      if (value && !isValidHexColor(value)) {
+        toast.error(`${field.name}: Mã màu không hợp lệ (cần format #RRGGBB)`);
+        return false;
+      }
+    }
+
+    // Validate required fields
+    const requiredFields = fieldsData?.filter(f => f.required && f.enabled) || [];
+    for (const field of requiredFields) {
+      if (!form[field.fieldKey]?.trim()) {
+        toast.error(`${field.name} là bắt buộc`);
+        return false;
+      }
+    }
+
+    return true;
   };
 
   const handleSave = async () => {
+    if (!validateForm()) return;
+
     setIsSaving(true);
     try {
-      const settingsToSave = settingsKeys.map(key => {
-        let group = 'general';
-        if (['email', 'hotline', 'address', 'facebook', 'zalo', 'googleMapsEmbed'].includes(key)) {
-          group = 'contact';
-        } else if (['metaTitle', 'metaDescription', 'metaKeywords', 'ogImage'].includes(key)) {
-          group = 'seo';
-        }
-        return { key, value: form[key], group };
-      });
+      // Get all enabled fields and their groups
+      const settingsToSave = fieldsData
+        ?.filter(f => f.enabled && (!f.linkedFeature || enabledFeatures[f.linkedFeature] !== false))
+        .map(field => ({
+          key: field.fieldKey,
+          value: form[field.fieldKey] ?? '',
+          group: field.group || 'site',
+        })) || [];
+
       await setMultiple({ settings: settingsToSave });
-      setHasChanges(false);
+      setInitialForm({ ...form });
       toast.success('Đã lưu cài đặt thành công!');
-    } catch {
-      toast.error('Lỗi khi lưu cài đặt');
+    } catch (error) {
+      console.error('Save settings error:', error);
+      toast.error(`Lỗi khi lưu: ${error instanceof Error ? error.message : 'Không xác định'}`);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const tabs = [
-    { id: 'general', label: 'Chung' },
-    { id: 'contact', label: 'Liên hệ' },
-    { id: 'seo', label: 'SEO' },
-  ];
+  // Render field based on type
+  const renderField = (field: NonNullable<typeof fieldsData>[number]) => {
+    const value = form[field.fieldKey] ?? '';
+    const key = field.fieldKey;
+
+    switch (field.type) {
+      case 'color':
+        return (
+          <div className="space-y-2" key={key}>
+            <Label>{field.name}</Label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={isValidHexColor(value) ? value : '#3b82f6'}
+                onChange={(e) => updateField(key, e.target.value)}
+                className="w-10 h-10 rounded-lg cursor-pointer border border-slate-200 dark:border-slate-700"
+              />
+              <Input
+                value={value.toUpperCase()}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  updateField(key, val);
+                }}
+                className="w-28 font-mono text-sm uppercase"
+                maxLength={7}
+                placeholder="#000000"
+              />
+              <Palette size={16} className="text-slate-400" />
+            </div>
+            {value && isValidHexColor(value) && (
+              <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
+                {generateTintsShades(value).map((shade, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => updateField(key, shade)}
+                    className="flex-1 h-8 transition-all hover:scale-y-125 hover:z-10 relative group"
+                    style={{ backgroundColor: shade }}
+                    title={shade.toUpperCase()}
+                  >
+                    <span
+                      className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 text-[8px] font-mono font-bold"
+                      style={{ color: idx < 5 ? '#000' : '#fff' }}
+                    >
+                      {shade.toUpperCase().slice(1)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case 'textarea':
+        return (
+          <div className="space-y-2" key={key}>
+            <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
+            <textarea
+              value={value}
+              onChange={(e) => updateField(key, e.target.value)}
+              className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              placeholder={`Nhập ${field.name.toLowerCase()}...`}
+            />
+          </div>
+        );
+
+      case 'select':
+        // Handle specific select fields
+        if (key === 'site_timezone') {
+          return (
+            <div className="space-y-2" key={key}>
+              <Label>{field.name}</Label>
+              <select
+                value={value}
+                onChange={(e) => updateField(key, e.target.value)}
+                className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              >
+                <option value="Asia/Ho_Chi_Minh">GMT+07:00 Bangkok, Hanoi, Jakarta</option>
+                <option value="Asia/Singapore">GMT+08:00 Singapore, Hong Kong</option>
+                <option value="Asia/Tokyo">GMT+09:00 Tokyo, Seoul</option>
+                <option value="Europe/London">GMT+00:00 London, Dublin</option>
+              </select>
+            </div>
+          );
+        }
+        if (key === 'site_language') {
+          return (
+            <div className="space-y-2" key={key}>
+              <Label>{field.name}</Label>
+              <select
+                value={value}
+                onChange={(e) => updateField(key, e.target.value)}
+                className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              >
+                <option value="vi">Tiếng Việt</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+          );
+        }
+        if (key === 'mail_driver') {
+          return (
+            <div className="space-y-2" key={key}>
+              <Label>{field.name}</Label>
+              <select
+                value={value}
+                onChange={(e) => updateField(key, e.target.value)}
+                className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              >
+                <option value="smtp">SMTP</option>
+                <option value="sendmail">Sendmail</option>
+                <option value="mailgun">Mailgun</option>
+              </select>
+            </div>
+          );
+        }
+        if (key === 'mail_encryption') {
+          return (
+            <div className="space-y-2" key={key}>
+              <Label>{field.name}</Label>
+              <select
+                value={value}
+                onChange={(e) => updateField(key, e.target.value)}
+                className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              >
+                <option value="tls">TLS</option>
+                <option value="ssl">SSL</option>
+                <option value="">None</option>
+              </select>
+            </div>
+          );
+        }
+        // Default select - render as text input
+        return (
+          <div className="space-y-2" key={key}>
+            <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
+            <Input
+              value={value}
+              onChange={(e) => updateField(key, e.target.value)}
+              placeholder={`Nhập ${field.name.toLowerCase()}...`}
+            />
+          </div>
+        );
+
+      case 'number':
+        return (
+          <div className="space-y-2" key={key}>
+            <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
+            <Input
+              type="number"
+              value={value}
+              onChange={(e) => updateField(key, e.target.value)}
+              placeholder={`Nhập ${field.name.toLowerCase()}...`}
+            />
+          </div>
+        );
+
+      case 'image':
+        return (
+          <div className="space-y-2" key={key}>
+            <Label>{field.name}</Label>
+            <Input
+              value={value}
+              onChange={(e) => updateField(key, e.target.value)}
+              placeholder="URL hình ảnh..."
+            />
+            {value && (
+              <div className="mt-2 w-20 h-20 rounded border border-slate-200 dark:border-slate-700 overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={value} alt={field.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              </div>
+            )}
+          </div>
+        );
+
+      case 'email':
+        return (
+          <div className="space-y-2" key={key}>
+            <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
+            <Input
+              type="email"
+              value={value}
+              onChange={(e) => updateField(key, e.target.value)}
+              placeholder="example@domain.com"
+            />
+          </div>
+        );
+
+      case 'phone':
+        return (
+          <div className="space-y-2" key={key}>
+            <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
+            <Input
+              type="tel"
+              value={value}
+              onChange={(e) => updateField(key, e.target.value)}
+              placeholder="0901234567"
+            />
+          </div>
+        );
+
+      case 'tags':
+        return (
+          <div className="space-y-2" key={key}>
+            <Label>{field.name}</Label>
+            <Input
+              value={value}
+              onChange={(e) => updateField(key, e.target.value)}
+              placeholder="từ khóa 1, từ khóa 2, ..."
+            />
+            <p className="text-xs text-slate-500">Phân cách bằng dấu phẩy</p>
+          </div>
+        );
+
+      default: // text
+        return (
+          <div className="space-y-2" key={key}>
+            <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
+            <Input
+              value={value}
+              onChange={(e) => updateField(key, e.target.value)}
+              placeholder={`Nhập ${field.name.toLowerCase()}...`}
+            />
+          </div>
+        );
+    }
+  };
 
   if (isLoading) {
     return (
@@ -159,6 +444,8 @@ function SettingsContent() {
     );
   }
 
+  const currentFields = fieldsByGroup[activeTab] || [];
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
       <div>
@@ -167,15 +454,18 @@ function SettingsContent() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
+        {/* Tabs sidebar */}
         <div className="w-full md:w-64 flex-shrink-0">
           <div className="flex flex-col space-y-1">
-            {tabs.map(tab => (
+            {visibleTabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
                   "text-left px-4 py-2 rounded-md text-sm font-medium transition-colors",
-                  activeTab === tab.id ? "bg-white dark:bg-slate-800 shadow-sm text-blue-600" : "text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50"
+                  activeTab === tab.id
+                    ? "bg-white dark:bg-slate-800 shadow-sm text-blue-600"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-800/50"
                 )}
               >
                 {tab.label}
@@ -184,206 +474,43 @@ function SettingsContent() {
           </div>
         </div>
 
+        {/* Content */}
         <div className="flex-1 space-y-6">
-          {activeTab === 'general' && (
-            <>
-              <Card>
-                <CardHeader><CardTitle>Thông tin chung</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Tên Website</Label>
-                    <Input 
-                      value={form.siteName} 
-                      onChange={(e) => updateField('siteName', e.target.value)}
-                      placeholder="VietAdmin Shop"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Mô tả ngắn</Label>
-                    <Input 
-                      value={form.siteDescription} 
-                      onChange={(e) => updateField('siteDescription', e.target.value)}
-                      placeholder="Hệ thống bán hàng trực tuyến hàng đầu"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Múi giờ</Label>
-                    <select 
-                      value={form.timezone}
-                      onChange={(e) => updateField('timezone', e.target.value)}
-                      className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
-                    >
-                      <option value="GMT+07:00">GMT+07:00 Bangkok, Hanoi, Jakarta</option>
-                      <option value="GMT+08:00">GMT+08:00 Singapore, Hong Kong</option>
-                      <option value="GMT+09:00">GMT+09:00 Tokyo, Seoul</option>
-                      <option value="GMT+00:00">GMT+00:00 London, Dublin</option>
-                    </select>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Màu sắc thương hiệu</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-3 mb-3">
-                    <input
-                      type="color"
-                      value={form.brandColor}
-                      onChange={(e) => updateField('brandColor', e.target.value)}
-                      className="w-10 h-10 rounded-lg cursor-pointer border border-slate-200 dark:border-slate-700"
-                    />
-                    <Input 
-                      value={form.brandColor.toUpperCase()} 
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (/^#[0-9A-Fa-f]{6}$/.test(val)) updateField('brandColor', val);
-                      }}
-                      className="w-24 font-mono text-sm uppercase"
-                      maxLength={7}
-                    />
-                    <span className="text-xs text-slate-500 dark:text-slate-400">Màu chủ đạo</span>
-                  </div>
-                  <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700">
-                    {generateTintsShades(form.brandColor).map((shade, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => updateField('brandColor', shade)}
-                        className="flex-1 h-9 transition-all hover:scale-y-125 hover:z-10 relative group"
-                        style={{ backgroundColor: shade }}
-                        title={shade.toUpperCase()}
-                      >
-                        <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 text-[9px] font-mono font-bold"
-                          style={{ color: idx < 5 ? '#000' : '#fff' }}>
-                          {shade.toUpperCase().slice(1)}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-slate-400 mt-2">Click vào shade để chọn</p>
-                </CardContent>
-              </Card>
-            </>
-          )}
-          
-          {activeTab === 'contact' && (
+          {currentFields.length > 0 ? (
             <Card>
-              <CardHeader><CardTitle>Thông tin liên hệ</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle>{GROUP_LABELS[activeTab] || activeTab}</CardTitle>
+              </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Email liên hệ</Label>
-                  <Input 
-                    value={form.email} 
-                    onChange={(e) => updateField('email', e.target.value)}
-                    placeholder="contact@vietadmin.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Hotline</Label>
-                  <Input 
-                    value={form.hotline} 
-                    onChange={(e) => updateField('hotline', e.target.value)}
-                    placeholder="1900 1234"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Địa chỉ</Label>
-                  <Input 
-                    value={form.address} 
-                    onChange={(e) => updateField('address', e.target.value)}
-                    placeholder="123 Nguyễn Huệ, Quận 1, TP.HCM"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Facebook</Label>
-                    <Input 
-                      value={form.facebook} 
-                      onChange={(e) => updateField('facebook', e.target.value)}
-                      placeholder="https://facebook.com/vietadmin"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Zalo</Label>
-                    <Input 
-                      value={form.zalo} 
-                      onChange={(e) => updateField('zalo', e.target.value)}
-                      placeholder="0901234567"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Google Maps Embed</Label>
-                  <Input 
-                    value={form.googleMapsEmbed} 
-                    onChange={(e) => updateField('googleMapsEmbed', e.target.value)}
-                    placeholder="URL nhúng Google Maps"
-                  />
-                </div>
+                {currentFields.map(field => renderField(field))}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="py-8 text-center text-slate-500">
+                Không có trường nào được bật cho nhóm này.
+                <br />
+                <span className="text-sm">Kiểm tra cấu hình tại System → Modules → Settings</span>
               </CardContent>
             </Card>
           )}
 
-          {activeTab === 'seo' && (
-            <Card>
-              <CardHeader><CardTitle>Cài đặt SEO</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Meta Title mặc định</Label>
-                  <Input 
-                    value={form.metaTitle} 
-                    onChange={(e) => updateField('metaTitle', e.target.value)}
-                    placeholder="VietAdmin - Hệ thống bán hàng trực tuyến"
-                  />
-                  <p className="text-xs text-slate-500">Tối đa 60 ký tự</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Meta Description mặc định</Label>
-                  <textarea 
-                    value={form.metaDescription}
-                    onChange={(e) => updateField('metaDescription', e.target.value)}
-                    className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
-                    placeholder="VietAdmin cung cấp giải pháp bán hàng online chuyên nghiệp..."
-                  />
-                  <p className="text-xs text-slate-500">Tối đa 160 ký tự</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Meta Keywords</Label>
-                  <Input 
-                    value={form.metaKeywords} 
-                    onChange={(e) => updateField('metaKeywords', e.target.value)}
-                    placeholder="từ khóa 1, từ khóa 2, ..."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Hình ảnh OG mặc định</Label>
-                  <Input 
-                    value={form.ogImage} 
-                    onChange={(e) => updateField('ogImage', e.target.value)}
-                    placeholder="/og-image.jpg"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
+          {/* Save button */}
           <div className="flex justify-end gap-3">
             {hasChanges && (
               <span className="text-sm text-amber-600 dark:text-amber-400 self-center">
                 Có thay đổi chưa lưu
               </span>
             )}
-            <Button 
-              variant="accent" 
+            <Button
+              variant="accent"
               onClick={handleSave}
               disabled={isSaving || !hasChanges}
             >
               {isSaving ? (
-                <Loader2 size={16} className="mr-2 animate-spin"/>
+                <Loader2 size={16} className="mr-2 animate-spin" />
               ) : (
-                <Save size={16} className="mr-2"/>
+                <Save size={16} className="mr-2" />
               )}
               Lưu thay đổi
             </Button>

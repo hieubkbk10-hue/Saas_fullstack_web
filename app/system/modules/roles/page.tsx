@@ -22,7 +22,7 @@ const FEATURES_CONFIG = [
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { maxRolesPerUser: number };
+type SettingsState = { maxRolesPerUser: number; rolesPerPage: number };
 type TabType = 'config' | 'data';
 
 export default function RolesModuleConfigPage() {
@@ -46,7 +46,7 @@ export default function RolesModuleConfigPage() {
 
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ maxRolesPerUser: 1 });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ maxRolesPerUser: 1, rolesPerPage: 10 });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -81,7 +81,8 @@ export default function RolesModuleConfigPage() {
   useEffect(() => {
     if (settingsData) {
       const maxRolesPerUser = settingsData.find(s => s.settingKey === 'maxRolesPerUser')?.value as number ?? 1;
-      setLocalSettings({ maxRolesPerUser });
+      const rolesPerPage = settingsData.find(s => s.settingKey === 'rolesPerPage')?.value as number ?? 10;
+      setLocalSettings({ maxRolesPerUser, rolesPerPage });
     }
   }, [settingsData]);
 
@@ -98,7 +99,8 @@ export default function RolesModuleConfigPage() {
 
   const serverSettings = useMemo(() => {
     const maxRolesPerUser = settingsData?.find(s => s.settingKey === 'maxRolesPerUser')?.value as number ?? 1;
-    return { maxRolesPerUser };
+    const rolesPerPage = settingsData?.find(s => s.settingKey === 'rolesPerPage')?.value as number ?? 10;
+    return { maxRolesPerUser, rolesPerPage };
   }, [settingsData]);
 
   // Check for changes
@@ -108,7 +110,8 @@ export default function RolesModuleConfigPage() {
       const server = serverFields.find(s => s.id === f.id);
       return server && f.enabled !== server.enabled;
     });
-    const settingsChanged = localSettings.maxRolesPerUser !== serverSettings.maxRolesPerUser;
+    const settingsChanged = localSettings.maxRolesPerUser !== serverSettings.maxRolesPerUser ||
+                            localSettings.rolesPerPage !== serverSettings.rolesPerPage;
     return featuresChanged || fieldsChanged || settingsChanged;
   }, [localFeatures, serverFeatures, localFields, serverFields, localSettings, serverSettings]);
 
@@ -144,6 +147,9 @@ export default function RolesModuleConfigPage() {
       }
       if (localSettings.maxRolesPerUser !== serverSettings.maxRolesPerUser) {
         await setSetting({ moduleKey: MODULE_KEY, settingKey: 'maxRolesPerUser', value: localSettings.maxRolesPerUser });
+      }
+      if (localSettings.rolesPerPage !== serverSettings.rolesPerPage) {
+        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'rolesPerPage', value: localSettings.rolesPerPage });
       }
       toast.success('Đã lưu cấu hình thành công!');
     } catch {
@@ -239,6 +245,12 @@ export default function RolesModuleConfigPage() {
                   label="Max roles / user" 
                   value={localSettings.maxRolesPerUser} 
                   onChange={(v) => setLocalSettings({...localSettings, maxRolesPerUser: v})}
+                  focusColor="focus:border-purple-500"
+                />
+                <SettingInput 
+                  label="Số vai trò / trang" 
+                  value={localSettings.rolesPerPage} 
+                  onChange={(v) => setLocalSettings({...localSettings, rolesPerPage: v})}
                   focusColor="focus:border-purple-500"
                 />
               </SettingsCard>

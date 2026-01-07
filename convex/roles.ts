@@ -79,7 +79,7 @@ export const create = mutation({
       .withIndex("by_name", (q) => q.eq("name", args.name))
       .unique();
     if (existing) {
-      throw new Error("Role name already exists");
+      throw new Error(`Tên vai trò "${args.name}" đã tồn tại`);
     }
     return await ctx.db.insert("roles", {
       ...args,
@@ -100,8 +100,20 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
     const role = await ctx.db.get(id);
-    if (!role) throw new Error("Role not found");
-    if (role.isSystem) throw new Error("Cannot modify system role");
+    if (!role) throw new Error("Không tìm thấy vai trò");
+    if (role.isSystem) throw new Error("Không thể chỉnh sửa vai trò hệ thống");
+    
+    // Check unique name if updating name
+    if (updates.name && updates.name !== role.name) {
+      const existing = await ctx.db
+        .query("roles")
+        .withIndex("by_name", (q) => q.eq("name", updates.name!))
+        .unique();
+      if (existing) {
+        throw new Error(`Tên vai trò "${updates.name}" đã tồn tại`);
+      }
+    }
+    
     await ctx.db.patch(id, updates);
     return null;
   },
@@ -112,15 +124,18 @@ export const remove = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const role = await ctx.db.get(args.id);
-    if (!role) throw new Error("Role not found");
-    if (role.isSystem) throw new Error("Cannot delete system role");
+    if (!role) throw new Error("Không tìm thấy vai trò");
+    if (role.isSystem) throw new Error("Không thể xóa vai trò hệ thống");
+    
     const usersWithRole = await ctx.db
       .query("users")
       .withIndex("by_role_status", (q) => q.eq("roleId", args.id))
-      .first();
-    if (usersWithRole) {
-      throw new Error("Cannot delete role with assigned users");
+      .collect();
+    
+    if (usersWithRole.length > 0) {
+      throw new Error(`Không thể xóa vai trò "${role.name}" vì đang được gán cho ${usersWithRole.length} người dùng`);
     }
+    
     await ctx.db.delete(args.id);
     return null;
   },

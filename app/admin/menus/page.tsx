@@ -11,8 +11,10 @@ import {
 import { ModuleGuard } from '../components/ModuleGuard';
 import { 
   Plus, Trash2, Save, ArrowUp, ArrowDown, GripVertical, ChevronRight, 
-  Menu, Loader2, RefreshCw, ExternalLink, Eye, EyeOff
+  Menu, Loader2, RefreshCw, ExternalLink, Eye, EyeOff, ChevronLeft
 } from 'lucide-react';
+
+const MODULE_KEY = 'menus';
 
 type MenuItem = {
   _id: Id<"menuItems">;
@@ -127,6 +129,8 @@ function MenuBuilderPage() {
 
 function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
   const menuItemsData = useQuery(api.menus.listMenuItems, { menuId });
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   const createMenuItem = useMutation(api.menus.createMenuItem);
   const updateMenuItem = useMutation(api.menus.updateMenuItem);
   const removeMenuItem = useMutation(api.menus.removeMenuItem);
@@ -134,10 +138,39 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
 
   const [editingItems, setEditingItems] = useState<Map<string, { label: string; url: string }>>(new Map());
   const [isSaving, setIsSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Settings from System Config
+  const menusPerPage = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'menusPerPage');
+    return (setting?.value as number) || 10;
+  }, [settingsData]);
+
+  const maxDepth = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'maxDepth');
+    return (setting?.value as number) || 3;
+  }, [settingsData]);
+
+  // Feature toggles from System Config
+  const enabledFeatures = useMemo(() => {
+    const features: Record<string, boolean> = {};
+    featuresData?.forEach(f => { features[f.featureKey] = f.enabled; });
+    return features;
+  }, [featuresData]);
+
+  const showNested = enabledFeatures.enableNested ?? true;
+  const showNewTab = enabledFeatures.enableNewTab ?? true;
 
   const items = useMemo(() => {
     return menuItemsData?.sort((a, b) => a.order - b.order) || [];
   }, [menuItemsData]);
+
+  // Pagination
+  const totalPages = Math.ceil(items.length / menusPerPage);
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * menusPerPage;
+    return items.slice(start, start + menusPerPage);
+  }, [items, currentPage, menusPerPage]);
 
   const isLoading = menuItemsData === undefined;
 
@@ -161,7 +194,7 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
 
   const handleIndent = async (item: MenuItem, direction: 'in' | 'out') => {
     const newDepth = direction === 'in' 
-      ? Math.min(item.depth + 1, 2) 
+      ? Math.min(item.depth + 1, maxDepth - 1) 
       : Math.max(item.depth - 1, 0);
     
     if (newDepth === item.depth) return;
@@ -260,27 +293,31 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
     );
   }
 
+  // Get actual index in full items array for move operations
+  const getActualIndex = (item: MenuItem) => items.findIndex(i => i._id === item._id);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-3">
-        {items.map((item, index) => {
+        {paginatedItems.map((item) => {
           const isEditing = editingItems.has(item._id);
           const editedValues = editingItems.get(item._id);
+          const actualIndex = getActualIndex(item);
           
           return (
             <div 
               key={item._id}
               className={cn(
                 "flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border rounded-lg shadow-sm transition-all",
-                item.depth === 1 ? "ml-8 border-l-4 border-l-orange-500/30" : "",
-                item.depth === 2 ? "ml-16 border-l-4 border-l-orange-500/50" : "border-slate-200 dark:border-slate-700",
+                showNested && item.depth === 1 ? "ml-8 border-l-4 border-l-orange-500/30" : "",
+                showNested && item.depth === 2 ? "ml-16 border-l-4 border-l-orange-500/50" : "border-slate-200 dark:border-slate-700",
                 !item.active && "opacity-50"
               )}
             >
               <div className="flex flex-col gap-1 text-slate-300">
-                <button type="button" onClick={() => handleMove(index, 'up')} className="hover:text-orange-600 disabled:opacity-30" disabled={index === 0}><ArrowUp size={14}/></button>
+                <button type="button" onClick={() => handleMove(actualIndex, 'up')} className="hover:text-orange-600 disabled:opacity-30" disabled={actualIndex === 0}><ArrowUp size={14}/></button>
                 <GripVertical size={14} />
-                <button type="button" onClick={() => handleMove(index, 'down')} className="hover:text-orange-600 disabled:opacity-30" disabled={index === items.length - 1}><ArrowDown size={14}/></button>
+                <button type="button" onClick={() => handleMove(actualIndex, 'down')} className="hover:text-orange-600 disabled:opacity-30" disabled={actualIndex === items.length - 1}><ArrowDown size={14}/></button>
               </div>
               
               <div className="flex-1 grid grid-cols-2 gap-4">
@@ -334,13 +371,17 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
                   </Button>
                 ) : (
                   <>
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleIndent(item, 'out')} disabled={item.depth === 0} title="Thụt lề trái">
-                      <ChevronRight size={14} className="rotate-180"/>
-                    </Button>
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleIndent(item, 'in')} disabled={item.depth >= 2} title="Thụt lề phải">
-                      <ChevronRight size={14}/>
-                    </Button>
-                    {item.openInNewTab && (
+                    {showNested && (
+                      <>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleIndent(item, 'out')} disabled={item.depth === 0} title="Thụt lề trái">
+                          <ChevronRight size={14} className="rotate-180"/>
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleIndent(item, 'in')} disabled={item.depth >= maxDepth - 1} title="Thụt lề phải">
+                          <ChevronRight size={14}/>
+                        </Button>
+                      </>
+                    )}
+                    {showNewTab && item.openInNewTab && (
                       <span title="Mở tab mới"><ExternalLink size={14} className="text-slate-400" /></span>
                     )}
                     <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggleActive(item)} title={item.active ? 'Ẩn' : 'Hiện'}>
@@ -359,6 +400,36 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
         <Button variant="outline" className="w-full border-dashed" onClick={handleAdd}>
           <Plus size={16} className="mr-2"/> Thêm liên kết mới
         </Button>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="text-sm text-slate-500">
+              Hiển thị {(currentPage - 1) * menusPerPage + 1}-{Math.min(currentPage * menusPerPage, items.length)} / {items.length}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft size={14} />
+              </Button>
+              <span className="text-sm text-slate-600 dark:text-slate-400">
+                Trang {currentPage} / {totalPages}
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight size={14} />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="space-y-6">

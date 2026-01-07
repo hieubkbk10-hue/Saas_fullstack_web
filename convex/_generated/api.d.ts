@@ -11,6 +11,7 @@
 import type * as activityLogs from "../activityLogs.js";
 import type * as admin_modules from "../admin/modules.js";
 import type * as admin_presets from "../admin/presets.js";
+import type * as analytics from "../analytics.js";
 import type * as cart from "../cart.js";
 import type * as comments from "../comments.js";
 import type * as convexDashboard from "../convexDashboard.js";
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   activityLogs: typeof activityLogs;
   "admin/modules": typeof admin_modules;
   "admin/presets": typeof admin_presets;
+  analytics: typeof analytics;
   cart: typeof cart;
   comments: typeof comments;
   convexDashboard: typeof convexDashboard;

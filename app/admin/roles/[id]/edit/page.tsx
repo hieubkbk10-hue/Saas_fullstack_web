@@ -1,31 +1,72 @@
 'use client';
 
-import React, { useState, use } from 'react';
+import React, { useState, useMemo, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { mockRoles } from '../../../mockData';
+import { Loader2, AlertTriangle } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Badge } from '../../../components/ui';
 
-const permissionModules = [
-  { key: 'posts', label: 'Bài viết' },
-  { key: 'products', label: 'Sản phẩm' },
-  { key: 'orders', label: 'Đơn hàng' },
-  { key: 'users', label: 'Người dùng' },
-  { key: 'settings', label: 'Cài đặt' },
-];
+const MODULE_KEY = 'roles';
 
 const permissionActions = ['view', 'create', 'edit', 'delete'];
+const actionLabels: Record<string, string> = {
+  view: 'Xem',
+  create: 'Tạo',
+  edit: 'Sửa',
+  delete: 'Xóa',
+};
 
 export default function RoleEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const role = mockRoles.find(r => r.id === id);
-  const [permissions, setPermissions] = useState<Record<string, string[]>>(role?.permissions || {});
+  
+  const roleData = useQuery(api.roles.getById, { id: id as Id<"roles"> });
+  const modulesData = useQuery(api.admin.modules.listModules);
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
+  const updateRole = useMutation(api.roles.update);
 
-  if (!role) {
-    return <div className="text-center py-8 text-slate-500">Không tìm thấy vai trò</div>;
-  }
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [color, setColor] = useState('#3b82f6');
+  const [permissions, setPermissions] = useState<Record<string, string[]>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  const isLoading = roleData === undefined || modulesData === undefined;
+
+  // Get enabled features
+  const enabledFeatures = useMemo(() => {
+    const features: Record<string, boolean> = {};
+    featuresData?.forEach(f => { features[f.featureKey] = f.enabled; });
+    return features;
+  }, [featuresData]);
+
+  const showDescription = enabledFeatures.enableDescription ?? true;
+  const showColor = enabledFeatures.enableColor ?? true;
+
+  // Initialize form data when role loads
+  useEffect(() => {
+    if (roleData && !isInitialized) {
+      setName(roleData.name);
+      setDescription(roleData.description);
+      setColor(roleData.color || '#3b82f6');
+      setPermissions(roleData.permissions);
+      setIsInitialized(true);
+    }
+  }, [roleData, isInitialized]);
+
+  // Get permission modules (enabled modules that are not system-only)
+  const permissionModules = useMemo(() => {
+    if (!modulesData) return [];
+    return modulesData
+      .filter(m => m.enabled && !['settings', 'homepage'].includes(m.key))
+      .map(m => ({ key: m.key, label: m.name }));
+  }, [modulesData]);
 
   const togglePermission = (module: string, action: string) => {
     setPermissions(prev => {
@@ -38,34 +79,151 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Đã cập nhật vai trò");
-    router.push('/admin/roles');
+  const toggleAllForModule = (module: string) => {
+    setPermissions(prev => {
+      const current = prev[module] || [];
+      if (current.length === permissionActions.length) {
+        return { ...prev, [module]: [] };
+      } else {
+        return { ...prev, [module]: [...permissionActions] };
+      }
+    });
   };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!name.trim()) {
+      newErrors.name = 'Vui lòng nhập tên vai trò';
+    } else if (name.length > 50) {
+      newErrors.name = 'Tên vai trò tối đa 50 ký tự';
+    }
+    if (description.length > 200) {
+      newErrors.description = 'Mô tả tối đa 200 ký tự';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    setIsSubmitting(true);
+    try {
+      await updateRole({ 
+        id: id as Id<"roles">,
+        name: name.trim(), 
+        description: description.trim(),
+        color: showColor ? color : undefined,
+        permissions,
+      });
+      toast.success('Đã cập nhật vai trò');
+      router.push('/admin/roles');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra khi cập nhật vai trò');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (!roleData) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <Card className="p-8 text-center">
+          <AlertTriangle size={48} className="mx-auto text-amber-500 mb-4" />
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-2">Không tìm thấy vai trò</h2>
+          <p className="text-slate-500 mb-4">Vai trò này có thể đã bị xóa hoặc không tồn tại.</p>
+          <Link href="/admin/roles">
+            <Button>Quay lại danh sách</Button>
+          </Link>
+        </Card>
+      </div>
+    );
+  }
+
+  const isSystemRole = roleData.isSystem;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-20">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Chỉnh sửa vai trò</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Chỉnh sửa vai trò</h1>
+          {isSystemRole && (
+            <Badge variant="info">Vai trò hệ thống</Badge>
+          )}
+        </div>
         <Link href="/admin/roles" className="text-sm text-blue-600 hover:underline">Quay lại danh sách</Link>
       </div>
+
+      {isSystemRole && (
+        <Card className="p-4 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="text-amber-600" size={20} />
+            <p className="text-sm text-amber-700 dark:text-amber-400">
+              Vai trò hệ thống không thể chỉnh sửa. Bạn chỉ có thể xem thông tin.
+            </p>
+          </div>
+        </Card>
+      )}
 
       <form onSubmit={handleSubmit}>
         <Card className="mb-6">
           <CardContent className="p-6 space-y-4">
             <div className="space-y-2">
               <Label>Tên vai trò <span className="text-red-500">*</span></Label>
-              <Input defaultValue={role.name} required placeholder="Ví dụ: Biên tập viên..." disabled={role.isSystem} />
-            </div>
-            <div className="space-y-2">
-              <Label>Mô tả</Label>
-              <textarea 
-                className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                defaultValue={role.description}
-                placeholder="Mô tả quyền hạn của vai trò này..."
+              <Input 
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ví dụ: Biên tập viên..." 
+                className={errors.name ? 'border-red-500' : ''}
+                disabled={isSystemRole}
               />
+              {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
             </div>
+
+            {showDescription && (
+              <div className="space-y-2">
+                <Label>Mô tả</Label>
+                <textarea 
+                  className={`w-full min-h-[80px] rounded-md border ${errors.description ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Mô tả quyền hạn của vai trò này..."
+                  disabled={isSystemRole}
+                />
+                {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+              </div>
+            )}
+
+            {showColor && (
+              <div className="space-y-2">
+                <Label>Màu sắc</Label>
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="color" 
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="w-10 h-10 rounded cursor-pointer border border-slate-200 dark:border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isSystemRole}
+                  />
+                  <Input 
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    placeholder="#3b82f6"
+                    className="w-32"
+                    disabled={isSystemRole}
+                  />
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -74,35 +232,75 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
             <CardTitle className="text-base">Phân quyền chi tiết</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="grid grid-cols-5 gap-4 pb-2 border-b border-slate-200 dark:border-slate-700">
-                <div className="font-medium text-sm text-slate-500">Module</div>
-                {permissionActions.map(action => (
-                  <div key={action} className="text-center text-sm font-medium text-slate-500 capitalize">{action === 'view' ? 'Xem' : action === 'create' ? 'Tạo' : action === 'edit' ? 'Sửa' : 'Xóa'}</div>
-                ))}
+            {roleData.isSuperAdmin ? (
+              <div className="text-center py-8">
+                <Badge variant="outline" className="text-lg px-4 py-2">Toàn quyền hệ thống</Badge>
+                <p className="text-slate-500 mt-3">Vai trò Super Admin có quyền truy cập tất cả chức năng.</p>
               </div>
-              {permissionModules.map(module => (
-                <div key={module.key} className="grid grid-cols-5 gap-4 items-center py-2">
-                  <div className="font-medium text-slate-700 dark:text-slate-300">{module.label}</div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-6 gap-4 pb-2 border-b border-slate-200 dark:border-slate-700">
+                  <div className="font-medium text-sm text-slate-500">Module</div>
+                  <div className="text-center text-sm font-medium text-slate-500">Tất cả</div>
                   {permissionActions.map(action => (
-                    <div key={action} className="flex justify-center">
-                      <input
-                        type="checkbox"
-                        checked={permissions[module.key]?.includes(action) || false}
-                        onChange={() => togglePermission(module.key, action)}
-                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                      />
+                    <div key={action} className="text-center text-sm font-medium text-slate-500">
+                      {actionLabels[action]}
                     </div>
                   ))}
                 </div>
-              ))}
-            </div>
+                {permissionModules.map(module => {
+                  const modulePerms = permissions[module.key] || [];
+                  const allChecked = modulePerms.length === permissionActions.length;
+                  return (
+                    <div key={module.key} className="grid grid-cols-6 gap-4 items-center py-2">
+                      <div className="font-medium text-slate-700 dark:text-slate-300">{module.label}</div>
+                      <div className="flex justify-center">
+                        <input
+                          type="checkbox"
+                          checked={allChecked}
+                          onChange={() => toggleAllForModule(module.key)}
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                          disabled={isSystemRole}
+                        />
+                      </div>
+                      {permissionActions.map(action => (
+                        <div key={action} className="flex justify-center">
+                          <input
+                            type="checkbox"
+                            checked={modulePerms.includes(action)}
+                            onChange={() => togglePermission(module.key, action)}
+                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                            disabled={isSystemRole}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+                {permissionModules.length === 0 && (
+                  <p className="text-center text-slate-500 py-4">Không có module nào để phân quyền</p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <div className="mt-6 flex justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={() => router.push('/admin/roles')}>Hủy bỏ</Button>
-          <Button type="submit" variant="accent">Lưu thay đổi</Button>
+          <Button type="button" variant="ghost" onClick={() => router.push('/admin/roles')} disabled={isSubmitting}>
+            {isSystemRole ? 'Đóng' : 'Hủy bỏ'}
+          </Button>
+          {!isSystemRole && (
+            <Button type="submit" variant="accent" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin mr-2" />
+                  Đang lưu...
+                </>
+              ) : (
+                'Lưu thay đổi'
+              )}
+            </Button>
+          )}
         </div>
       </form>
     </div>

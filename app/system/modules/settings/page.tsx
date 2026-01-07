@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
-import { Settings as SettingsIcon, Globe, Mail, MapPin, Share2, Loader2, Database, Trash2, RefreshCw, SettingsIcon as SettingsTab } from 'lucide-react';
+import { Settings as SettingsIcon, Globe, Mail, MapPin, Share2, Loader2, Database, Trash2, RefreshCw, SettingsIcon as SettingsTab, Save } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
 import { 
   ModuleHeader, ModuleStatus, ConventionNote, Code,
@@ -53,8 +53,10 @@ export default function SettingsModuleConfigPage() {
   const [localModuleSettings, setLocalModuleSettings] = useState({ cacheEnabled: true, cacheDuration: 3600 });
   const [isSaving, setIsSaving] = useState(false);
 
-  // Editable settings values
+  // Editable settings values + dirty tracking
   const [editingSettings, setEditingSettings] = useState<Record<string, string>>({});
+  const [originalSettings, setOriginalSettings] = useState<Record<string, string>>({});
+  const [isSavingData, setIsSavingData] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
                     fieldsData === undefined || moduleSettingsData === undefined;
@@ -102,6 +104,7 @@ export default function SettingsModuleConfigPage() {
         values[s.key] = typeof s.value === 'string' ? s.value : JSON.stringify(s.value); 
       });
       setEditingSettings(values);
+      setOriginalSettings(values);
     }
   }, [settingsData]);
 
@@ -181,11 +184,47 @@ export default function SettingsModuleConfigPage() {
     }
   };
 
+  // Track dirty settings
+  const dirtySettings = useMemo(() => {
+    const dirty = new Set<string>();
+    Object.keys(editingSettings).forEach(key => {
+      if (editingSettings[key] !== originalSettings[key]) {
+        dirty.add(key);
+      }
+    });
+    return dirty;
+  }, [editingSettings, originalSettings]);
+
+  const hasDataChanges = dirtySettings.size > 0;
+
   // Save single setting value
   const handleSaveSetting = async (key: string, group: string) => {
     const value = editingSettings[key];
     await setSetting({ key, value, group });
+    setOriginalSettings(prev => ({ ...prev, [key]: value }));
     toast.success(`Đã lưu ${key}`);
+  };
+
+  // Save all dirty settings
+  const handleSaveAllDirty = async () => {
+    if (dirtySettings.size === 0) return;
+    
+    setIsSavingData(true);
+    try {
+      for (const key of dirtySettings) {
+        const setting = settingsData?.find(s => s.key === key);
+        if (setting) {
+          await setSetting({ key, value: editingSettings[key], group: setting.group });
+        }
+      }
+      setOriginalSettings({ ...editingSettings });
+      toast.success(`Đã lưu ${dirtySettings.size} settings`);
+    } catch (error) {
+      console.error('Save all settings error:', error);
+      toast.error('Có lỗi khi lưu settings');
+    } finally {
+      setIsSavingData(false);
+    }
   };
 
   // Data tab handlers
@@ -405,7 +444,7 @@ export default function SettingsModuleConfigPage() {
           </Card>
 
           {/* Statistics */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <Card className="p-4">
               <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.total}</p>
               <p className="text-sm text-slate-500">Tổng settings</p>
@@ -418,7 +457,37 @@ export default function SettingsModuleConfigPage() {
               <p className="text-2xl font-bold text-emerald-600">{stats.filled}</p>
               <p className="text-sm text-slate-500">Đã điền</p>
             </Card>
+            <Card className="p-4">
+              <p className="text-2xl font-bold text-amber-600">{dirtySettings.size}</p>
+              <p className="text-sm text-slate-500">Chưa lưu</p>
+            </Card>
           </div>
+
+          {/* Save All Button - show when has changes */}
+          {hasDataChanges && (
+            <Card className="p-4 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-sm text-amber-700 dark:text-amber-400">
+                    Có {dirtySettings.size} thay đổi chưa lưu
+                  </span>
+                </div>
+                <Button 
+                  onClick={handleSaveAllDirty} 
+                  disabled={isSavingData}
+                  className="gap-2 bg-amber-600 hover:bg-amber-500"
+                >
+                  {isSavingData ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Save size={16} />
+                  )}
+                  Lưu tất cả ({dirtySettings.size})
+                </Button>
+              </div>
+            </Card>
+          )}
 
           {/* Settings by Group */}
           {settingsGroups?.map(group => (
@@ -436,27 +505,35 @@ export default function SettingsModuleConfigPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {settingsByGroup[group]?.map(setting => (
-                    <TableRow key={setting._id}>
-                      <TableCell className="font-mono text-sm">{setting.key}</TableCell>
-                      <TableCell>
-                        <Input
-                          value={editingSettings[setting.key] ?? ''}
-                          onChange={(e) => setEditingSettings(prev => ({ ...prev, [setting.key]: e.target.value }))}
-                          className="h-8"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleSaveSetting(setting.key, setting.group)}
-                        >
-                          Lưu
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {settingsByGroup[group]?.map(setting => {
+                    const isDirty = dirtySettings.has(setting.key);
+                    return (
+                      <TableRow key={setting._id} className={isDirty ? 'bg-amber-50 dark:bg-amber-950/20' : ''}>
+                        <TableCell className="font-mono text-sm">
+                          {setting.key}
+                          {isDirty && <span className="ml-2 text-amber-500">*</span>}
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={editingSettings[setting.key] ?? ''}
+                            onChange={(e) => setEditingSettings(prev => ({ ...prev, [setting.key]: e.target.value }))}
+                            className={`h-8 ${isDirty ? 'border-amber-400 dark:border-amber-600' : ''}`}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button 
+                            size="sm" 
+                            variant={isDirty ? 'default' : 'outline'}
+                            onClick={() => handleSaveSetting(setting.key, setting.group)}
+                            disabled={!isDirty}
+                            className={isDirty ? 'bg-amber-600 hover:bg-amber-500' : ''}
+                          >
+                            Lưu
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </Card>

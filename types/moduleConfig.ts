@@ -14,7 +14,8 @@ export type FieldType =
   | 'date'
   | 'daterange'
   | 'json'
-  | 'boolean';
+  | 'boolean'
+  | 'color';
 
 export interface FieldConfig {
   id: string;

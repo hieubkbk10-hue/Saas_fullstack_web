@@ -1679,6 +1679,7 @@ export const seedRolesModule = mutation({
     if (!existingSettings) {
       await ctx.db.insert("moduleSettings", { moduleKey: "roles", settingKey: "maxRolesPerUser", value: 1 });
       await ctx.db.insert("moduleSettings", { moduleKey: "roles", settingKey: "defaultRole", value: "Viewer" });
+      await ctx.db.insert("moduleSettings", { moduleKey: "roles", settingKey: "rolesPerPage", value: 10 });
     }
 
     return null;
@@ -1738,6 +1739,7 @@ export const seedSettingsModule = mutation({
         { key: "site_favicon", value: "", group: "site" },
         { key: "site_timezone", value: "Asia/Ho_Chi_Minh", group: "site" },
         { key: "site_language", value: "vi", group: "site" },
+        { key: "site_brand_color", value: "#3b82f6", group: "site" },
         
         // Contact settings
         { key: "contact_email", value: "contact@vietadmin.com", group: "contact" },
@@ -1796,6 +1798,7 @@ export const seedSettingsModule = mutation({
         { moduleKey: "settings", fieldKey: "site_favicon", name: "Favicon", type: "image" as const, required: false, enabled: true, isSystem: true, group: "site", order: 3 },
         { moduleKey: "settings", fieldKey: "site_timezone", name: "Múi giờ", type: "select" as const, required: false, enabled: true, isSystem: false, group: "site", order: 4 },
         { moduleKey: "settings", fieldKey: "site_language", name: "Ngôn ngữ", type: "select" as const, required: false, enabled: true, isSystem: false, group: "site", order: 5 },
+        { moduleKey: "settings", fieldKey: "site_brand_color", name: "Màu thương hiệu", type: "color" as const, required: false, enabled: true, isSystem: false, group: "site", order: 6 },
         // Contact fields
         { moduleKey: "settings", fieldKey: "contact_email", name: "Email", type: "email" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableContact", group: "contact", order: 6 },
         { moduleKey: "settings", fieldKey: "contact_phone", name: "Số điện thoại", type: "phone" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableContact", group: "contact", order: 7 },
@@ -1967,6 +1970,7 @@ export const seedMenusModule = mutation({
     if (!existingSettings) {
       await ctx.db.insert("moduleSettings", { moduleKey: "menus", settingKey: "maxDepth", value: 3 });
       await ctx.db.insert("moduleSettings", { moduleKey: "menus", settingKey: "defaultLocation", value: "header" });
+      await ctx.db.insert("moduleSettings", { moduleKey: "menus", settingKey: "menusPerPage", value: 10 });
     }
 
     return null;
@@ -2231,7 +2235,7 @@ export const seedNotificationsModule = mutation({
     // 4. Seed module settings
     const existingSettings = await ctx.db.query("moduleSettings").withIndex("by_module", q => q.eq("moduleKey", "notifications")).first();
     if (!existingSettings) {
-      await ctx.db.insert("moduleSettings", { moduleKey: "notifications", settingKey: "notificationsPerPage", value: 20 });
+      await ctx.db.insert("moduleSettings", { moduleKey: "notifications", settingKey: "itemsPerPage", value: 20 });
       await ctx.db.insert("moduleSettings", { moduleKey: "notifications", settingKey: "defaultType", value: "info" });
       await ctx.db.insert("moduleSettings", { moduleKey: "notifications", settingKey: "autoSendEmail", value: false });
     }
@@ -2416,7 +2420,7 @@ export const seedPromotionsModule = mutation({
     // 4. Seed module settings
     const existingSettings = await ctx.db.query("moduleSettings").withIndex("by_module", q => q.eq("moduleKey", "promotions")).first();
     if (!existingSettings) {
-      await ctx.db.insert("moduleSettings", { moduleKey: "promotions", settingKey: "itemsPerPage", value: 20 });
+      await ctx.db.insert("moduleSettings", { moduleKey: "promotions", settingKey: "promotionsPerPage", value: 20 });
       await ctx.db.insert("moduleSettings", { moduleKey: "promotions", settingKey: "defaultDiscountType", value: "percent" });
       await ctx.db.insert("moduleSettings", { moduleKey: "promotions", settingKey: "codeLength", value: 8 });
     }

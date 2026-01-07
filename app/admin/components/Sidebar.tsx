@@ -6,14 +6,14 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, FileText, ShoppingCart, Image as ImageIcon, 
   Users, Globe, Settings, ChevronRight, X, LogOut,
-  ChevronsLeft, ChevronsRight, Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Loader2, ShoppingBag, Bell
+  ChevronsLeft, ChevronsRight, Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Loader2, ShoppingBag, Bell, Ticket
 } from 'lucide-react';
 import { cn, Button } from './ui';
 import { useAdminModules } from '../context/AdminModulesContext';
 
 const iconMap: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, ShoppingCart, ImageIcon, Users, Globe, Settings,
-  Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Image: ImageIcon, ShoppingBag, Bell
+  Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Image: ImageIcon, ShoppingBag, Bell, Ticket
 };
 
 interface SidebarItemProps {
@@ -172,6 +172,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
   const showWebsiteSection = isModuleEnabled('menus') || isModuleEnabled('homepage');
   const showSettingsSection = isModuleEnabled('settings');
   const showNotificationsSection = isModuleEnabled('notifications');
+  const showPromotionsSection = isModuleEnabled('promotions');
 
   return (
     <>
@@ -294,21 +295,36 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
               </div>
             )}
 
-            {/* Notifications Section */}
-            {showNotificationsSection && (
+            {/* Marketing Section */}
+            {(showNotificationsSection || showPromotionsSection) && (
               <div className="space-y-1">
                 {!isSidebarCollapsed && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Marketing</div>}
-                <SidebarItem 
-                  icon={Bell} 
-                  label="Thông báo" 
-                  href="/admin/notifications" 
-                  active={isActive('/admin/notifications')} 
-                  isCollapsed={isSidebarCollapsed}
-                  isExpanded={false}
-                  onToggle={() => {}}
-                  pathname={pathname}
-                  isModuleEnabled={isModuleEnabled}
-                />
+                {showNotificationsSection && (
+                  <SidebarItem 
+                    icon={Bell} 
+                    label="Thông báo" 
+                    href="/admin/notifications" 
+                    active={isActive('/admin/notifications')} 
+                    isCollapsed={isSidebarCollapsed}
+                    isExpanded={false}
+                    onToggle={() => {}}
+                    pathname={pathname}
+                    isModuleEnabled={isModuleEnabled}
+                  />
+                )}
+                {showPromotionsSection && (
+                  <SidebarItem 
+                    icon={Ticket} 
+                    label="Khuyến mãi" 
+                    href="/admin/promotions" 
+                    active={isActive('/admin/promotions')} 
+                    isCollapsed={isSidebarCollapsed}
+                    isExpanded={false}
+                    onToggle={() => {}}
+                    pathname={pathname}
+                    isModuleEnabled={isModuleEnabled}
+                  />
+                )}
               </div>
             )}
 

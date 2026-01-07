@@ -22,7 +22,7 @@ const FEATURES_CONFIG = [
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { maxDepth: number; defaultLocation: string };
+type SettingsState = { maxDepth: number; defaultLocation: string; menusPerPage: number };
 type TabType = 'config' | 'data';
 
 export default function MenusModuleConfigPage() {
@@ -47,7 +47,7 @@ export default function MenusModuleConfigPage() {
   // Local state
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ maxDepth: 3, defaultLocation: 'header' });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ maxDepth: 3, defaultLocation: 'header', menusPerPage: 10 });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -83,7 +83,8 @@ export default function MenusModuleConfigPage() {
     if (settingsData) {
       const maxDepth = settingsData.find(s => s.settingKey === 'maxDepth')?.value as number ?? 3;
       const defaultLocation = settingsData.find(s => s.settingKey === 'defaultLocation')?.value as string ?? 'header';
-      setLocalSettings({ maxDepth, defaultLocation });
+      const menusPerPage = settingsData.find(s => s.settingKey === 'menusPerPage')?.value as number ?? 10;
+      setLocalSettings({ maxDepth, defaultLocation, menusPerPage });
     }
   }, [settingsData]);
 
@@ -101,7 +102,8 @@ export default function MenusModuleConfigPage() {
   const serverSettings = useMemo(() => {
     const maxDepth = settingsData?.find(s => s.settingKey === 'maxDepth')?.value as number ?? 3;
     const defaultLocation = settingsData?.find(s => s.settingKey === 'defaultLocation')?.value as string ?? 'header';
-    return { maxDepth, defaultLocation };
+    const menusPerPage = settingsData?.find(s => s.settingKey === 'menusPerPage')?.value as number ?? 10;
+    return { maxDepth, defaultLocation, menusPerPage };
   }, [settingsData]);
 
   // Check for changes
@@ -112,7 +114,8 @@ export default function MenusModuleConfigPage() {
       return server && f.enabled !== server.enabled;
     });
     const settingsChanged = localSettings.maxDepth !== serverSettings.maxDepth ||
-                           localSettings.defaultLocation !== serverSettings.defaultLocation;
+                           localSettings.defaultLocation !== serverSettings.defaultLocation ||
+                           localSettings.menusPerPage !== serverSettings.menusPerPage;
     return featuresChanged || fieldsChanged || settingsChanged;
   }, [localFeatures, serverFeatures, localFields, serverFields, localSettings, serverSettings]);
 
@@ -151,6 +154,9 @@ export default function MenusModuleConfigPage() {
       }
       if (localSettings.defaultLocation !== serverSettings.defaultLocation) {
         await setSetting({ moduleKey: MODULE_KEY, settingKey: 'defaultLocation', value: localSettings.defaultLocation });
+      }
+      if (localSettings.menusPerPage !== serverSettings.menusPerPage) {
+        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'menusPerPage', value: localSettings.menusPerPage });
       }
       toast.success('Đã lưu cấu hình thành công!');
     } catch {
@@ -252,23 +258,29 @@ export default function MenusModuleConfigPage() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="space-y-4">
                   <SettingsCard>
-                <SettingInput 
-                  label="Độ sâu tối đa" 
-                  value={localSettings.maxDepth} 
-                  onChange={(v) => setLocalSettings({...localSettings, maxDepth: v})}
-                  focusColor="focus:border-orange-500"
-                />
-                <SettingSelect
-                  label="Vị trí mặc định"
-                  value={localSettings.defaultLocation}
-                  onChange={(v) => setLocalSettings({...localSettings, defaultLocation: v})}
-                  options={[
-                    { value: 'header', label: 'Header' },
-                    { value: 'footer', label: 'Footer' },
-                    { value: 'sidebar', label: 'Sidebar' },
-                  ]}
-                  focusColor="focus:border-orange-500"
-                />
+                    <SettingInput 
+                      label="Độ sâu tối đa" 
+                      value={localSettings.maxDepth} 
+                      onChange={(v) => setLocalSettings({...localSettings, maxDepth: v})}
+                      focusColor="focus:border-orange-500"
+                    />
+                    <SettingInput 
+                      label="Items mỗi trang" 
+                      value={localSettings.menusPerPage} 
+                      onChange={(v) => setLocalSettings({...localSettings, menusPerPage: v})}
+                      focusColor="focus:border-orange-500"
+                    />
+                    <SettingSelect
+                      label="Vị trí mặc định"
+                      value={localSettings.defaultLocation}
+                      onChange={(v) => setLocalSettings({...localSettings, defaultLocation: v})}
+                      options={[
+                        { value: 'header', label: 'Header' },
+                        { value: 'footer', label: 'Footer' },
+                        { value: 'sidebar', label: 'Sidebar' },
+                      ]}
+                      focusColor="focus:border-orange-500"
+                    />
                   </SettingsCard>
 
                   <FeaturesCard

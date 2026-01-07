@@ -8,6 +8,7 @@ import { Home, LayoutGrid, ImageIcon, FileText, Users, Phone, Loader2, Database,
 import { FieldConfig } from '@/types/moduleConfig';
 import { 
   ModuleHeader, ModuleStatus, ConventionNote, Code,
+  SettingsCard, SettingInput, SettingSelect,
   FeaturesCard, FieldsCard
 } from '@/components/modules/shared';
 import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
@@ -42,7 +43,17 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 type FeaturesState = Record<string, boolean>;
+type SettingsState = { maxSections: number; defaultSectionType: string };
 type TabType = 'config' | 'data';
+
+const SECTION_TYPES = [
+  { value: 'hero', label: 'Hero Banner' },
+  { value: 'about', label: 'Giới thiệu' },
+  { value: 'products', label: 'Sản phẩm nổi bật' },
+  { value: 'posts', label: 'Bài viết mới' },
+  { value: 'partners', label: 'Đối tác' },
+  { value: 'contact', label: 'Liên hệ' },
+];
 
 export default function HomepageModuleConfigPage() {
   const [activeTab, setActiveTab] = useState<TabType>('config');
@@ -58,12 +69,14 @@ export default function HomepageModuleConfigPage() {
 
   const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
   const updateField = useMutation(api.admin.modules.updateModuleField);
+  const setSetting = useMutation(api.admin.modules.setModuleSetting);
   const seedHomepageModule = useMutation(api.seed.seedHomepageModule);
   const clearHomepageData = useMutation(api.seed.clearHomepageData);
   const toggleComponent = useMutation(api.homeComponents.toggle);
 
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ maxSections: 10, defaultSectionType: 'hero' });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -94,6 +107,15 @@ export default function HomepageModuleConfigPage() {
     }
   }, [fieldsData]);
 
+  // Sync settings
+  useEffect(() => {
+    if (settingsData) {
+      const maxSections = settingsData.find(s => s.settingKey === 'maxSections')?.value as number ?? 10;
+      const defaultSectionType = settingsData.find(s => s.settingKey === 'defaultSectionType')?.value as string ?? 'hero';
+      setLocalSettings({ maxSections, defaultSectionType });
+    }
+  }, [settingsData]);
+
   // Server state for comparison
   const serverFeatures = useMemo(() => {
     const result: FeaturesState = {};
@@ -105,6 +127,12 @@ export default function HomepageModuleConfigPage() {
     return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
   }, [fieldsData]);
 
+  const serverSettings = useMemo(() => {
+    const maxSections = settingsData?.find(s => s.settingKey === 'maxSections')?.value as number ?? 10;
+    const defaultSectionType = settingsData?.find(s => s.settingKey === 'defaultSectionType')?.value as string ?? 'hero';
+    return { maxSections, defaultSectionType };
+  }, [settingsData]);
+
   // Check for changes
   const hasChanges = useMemo(() => {
     const featuresChanged = Object.keys(localFeatures).some(key => localFeatures[key] !== serverFeatures[key]);
@@ -112,30 +140,51 @@ export default function HomepageModuleConfigPage() {
       const server = serverFields.find(s => s.id === f.id);
       return server && f.enabled !== server.enabled;
     });
-    return featuresChanged || fieldsChanged;
-  }, [localFeatures, serverFeatures, localFields, serverFields]);
+    const settingsChanged = 
+      localSettings.maxSections !== serverSettings.maxSections ||
+      localSettings.defaultSectionType !== serverSettings.defaultSectionType;
+    return featuresChanged || fieldsChanged || settingsChanged;
+  }, [localFeatures, serverFeatures, localFields, serverFields, localSettings, serverSettings]);
 
   const handleToggleFeature = (key: string) => {
     setLocalFeatures(prev => ({ ...prev, [key]: !prev[key] }));
+    // Also update linked fields
+    setLocalFields(prev => prev.map(f => 
+      f.linkedFeature === key ? { ...f, enabled: !localFeatures[key] } : f
+    ));
   };
 
   const handleToggleField = (id: string) => {
-    setLocalFields(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
+    const field = localFields.find(f => f.id === id);
+    if (field?.linkedFeature) {
+      handleToggleFeature(field.linkedFeature);
+    } else {
+      setLocalFields(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
+    }
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      // Save features
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
           await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
         }
       }
+      // Save fields
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
           await updateField({ id: field.id as any, enabled: field.enabled });
         }
+      }
+      // Save settings
+      if (localSettings.maxSections !== serverSettings.maxSections) {
+        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'maxSections', value: localSettings.maxSections });
+      }
+      if (localSettings.defaultSectionType !== serverSettings.defaultSectionType) {
+        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'defaultSectionType', value: localSettings.defaultSectionType });
       }
       toast.success('Đã lưu cấu hình thành công!');
     } catch {
@@ -229,11 +278,32 @@ export default function HomepageModuleConfigPage() {
           <ModuleStatus isCore={moduleData?.isCore ?? false} enabled={moduleData?.enabled ?? true} toggleColor="bg-orange-500" />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <FeaturesCard
-              features={FEATURES_CONFIG.map(f => ({ config: f, enabled: localFeatures[f.key] ?? false }))}
-              onToggle={handleToggleFeature}
-              toggleColor="bg-orange-500"
-            />
+            <div className="space-y-4">
+              <SettingsCard title="Cài đặt Homepage">
+                <SettingInput
+                  label="Số section tối đa"
+                  value={localSettings.maxSections}
+                  onChange={(v) => setLocalSettings(prev => ({ ...prev, maxSections: Number(v) }))}
+                  type="number"
+                  min={1}
+                  max={20}
+                  focusColor="focus:border-orange-500"
+                />
+                <SettingSelect
+                  label="Loại section mặc định"
+                  value={localSettings.defaultSectionType}
+                  onChange={(v) => setLocalSettings(prev => ({ ...prev, defaultSectionType: v }))}
+                  options={SECTION_TYPES}
+                  focusColor="focus:border-orange-500"
+                />
+              </SettingsCard>
+
+              <FeaturesCard
+                features={FEATURES_CONFIG.map(f => ({ config: f, enabled: localFeatures[f.key] ?? false }))}
+                onToggle={handleToggleFeature}
+                toggleColor="bg-orange-500"
+              />
+            </div>
 
             <div className="lg:col-span-2">
               <FieldsCard

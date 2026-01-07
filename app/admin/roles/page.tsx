@@ -2,50 +2,99 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, Shield, Search } from 'lucide-react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { Plus, Edit, Trash2, Shield, Search, Loader2, RefreshCw, ChevronLeft, ChevronRight, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
-import { mockRoles } from '../mockData';
+
+const MODULE_KEY = 'roles';
 
 export default function RolesListPage() {
   return (
-    <ModuleGuard moduleKey="roles">
+    <ModuleGuard moduleKey={MODULE_KEY}>
       <RolesContent />
     </ModuleGuard>
   );
 }
 
 function RolesContent() {
-  const [roles, setRoles] = useState(mockRoles);
+  const rolesData = useQuery(api.roles.listAll);
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
+  const userCountByRole = useQuery(api.roles.getUserCountByRole);
+  
+  const deleteRole = useMutation(api.roles.remove);
+  const seedRolesModule = useMutation(api.seed.seedRolesModule);
+  const clearRolesData = useMutation(api.seed.clearRolesData);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
   const [visibleColumns, setVisibleColumns] = useState(['select', 'name', 'description', 'usersCount', 'type', 'actions']);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Id<"roles">[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const columns = [
-    { key: 'select', label: 'Chọn' },
-    { key: 'name', label: 'Tên vai trò', required: true },
-    { key: 'description', label: 'Mô tả' },
-    { key: 'usersCount', label: 'Số người dùng' },
-    { key: 'type', label: 'Loại' },
-    { key: 'actions', label: 'Hành động', required: true }
-  ];
+  const isLoading = rolesData === undefined || settingsData === undefined;
 
-  const handleSort = (key: string) => {
-    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
-  };
+  // Get settings
+  const rolesPerPage = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'rolesPerPage');
+    return (setting?.value as number) || 10;
+  }, [settingsData]);
 
-  const toggleColumn = (key: string) => {
-    setVisibleColumns(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
-  };
+  // Get enabled features
+  const enabledFeatures = useMemo(() => {
+    const features: Record<string, boolean> = {};
+    featuresData?.forEach(f => { features[f.featureKey] = f.enabled; });
+    return features;
+  }, [featuresData]);
 
+  const showDescription = enabledFeatures.enableDescription ?? true;
+  const showColor = enabledFeatures.enableColor ?? true;
+
+  // Map roleId to userCount
+  const userCountMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    userCountByRole?.forEach(r => { map[r.roleId] = r.userCount; });
+    return map;
+  }, [userCountByRole]);
+
+  // Transform data
+  const roles = useMemo(() => {
+    return rolesData?.map(role => ({
+      ...role,
+      id: role._id,
+      usersCount: userCountMap[role._id] ?? 0,
+    })) || [];
+  }, [rolesData, userCountMap]);
+
+  // Build columns based on features
+  const columns = useMemo(() => {
+    const cols = [
+      { key: 'select', label: 'Chọn' },
+      { key: 'name', label: 'Tên vai trò', required: true },
+    ];
+    if (showDescription) {
+      cols.push({ key: 'description', label: 'Mô tả' });
+    }
+    cols.push({ key: 'usersCount', label: 'Số người dùng' });
+    cols.push({ key: 'type', label: 'Loại' });
+    cols.push({ key: 'actions', label: 'Hành động', required: true });
+    return cols;
+  }, [showDescription]);
+
+  // Filter data
   const filteredData = useMemo(() => {
     let data = [...roles];
     if (searchTerm) {
-      data = data.filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase()) || r.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      data = data.filter(r => 
+        r.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        r.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
     if (filterType === 'system') {
       data = data.filter(r => r.isSystem);
@@ -57,29 +106,92 @@ function RolesContent() {
 
   const sortedData = useSortableData(filteredData, sortConfig);
 
-  const selectableRoles = sortedData.filter(r => !r.isSystem);
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === selectableRoles.length ? [] : selectableRoles.map(r => r.id));
-  const toggleSelectItem = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  // Pagination
+  const totalPages = Math.ceil(sortedData.length / rolesPerPage);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * rolesPerPage;
+    return sortedData.slice(start, start + rolesPerPage);
+  }, [sortedData, currentPage, rolesPerPage]);
 
-  const handleDelete = (id: string) => {
-    const role = roles.find(r => r.id === id);
+  // Only non-system roles are selectable
+  const selectableRoles = paginatedData.filter(r => !r.isSystem);
+
+  const handleSort = (key: string) => {
+    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setCurrentPage(1);
+  };
+
+  const handleFilterChange = (value: string) => {
+    setFilterType(value);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const toggleColumn = (key: string) => {
+    setVisibleColumns(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds(selectedIds.length === selectableRoles.length ? [] : selectableRoles.map(r => r._id));
+  };
+
+  const toggleSelectItem = (id: Id<"roles">) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleDelete = async (id: Id<"roles">) => {
+    const role = roles.find(r => r._id === id);
     if (role?.isSystem) {
       toast.error('Không thể xóa vai trò hệ thống');
       return;
     }
     if (confirm('Xóa vai trò này?')) {
-      setRoles(prev => prev.filter(r => r.id !== id));
-      toast.success('Đã xóa vai trò');
+      try {
+        await deleteRole({ id });
+        toast.success('Đã xóa vai trò');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa vai trò');
+      }
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} vai trò đã chọn?`)) {
-      setRoles(prev => prev.filter(r => !selectedIds.includes(r.id)));
-      setSelectedIds([]);
-      toast.success(`Đã xóa ${selectedIds.length} vai trò`);
+      try {
+        for (const id of selectedIds) {
+          await deleteRole({ id });
+        }
+        setSelectedIds([]);
+        toast.success(`Đã xóa ${selectedIds.length} vai trò`);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa vai trò');
+      }
     }
   };
+
+  const handleReseed = async () => {
+    if (confirm('Reset dữ liệu vai trò về mặc định?')) {
+      try {
+        await clearRolesData();
+        await seedRolesModule();
+        toast.success('Đã reset dữ liệu vai trò');
+      } catch {
+        toast.error('Có lỗi khi reset dữ liệu');
+      }
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -88,7 +200,14 @@ function RolesContent() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Phân quyền vai trò</h1>
           <p className="text-sm text-slate-500">Định nghĩa quyền truy cập cho từng nhóm người dùng</p>
         </div>
-        <Link href="/admin/roles/create"><Button className="gap-2"><Plus size={16}/> Thêm vai trò</Button></Link>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleReseed} title="Reset dữ liệu mẫu">
+            <RefreshCw size={16}/> Reset
+          </Button>
+          <Link href="/admin/roles/create">
+            <Button className="gap-2"><Plus size={16}/> Thêm vai trò</Button>
+          </Link>
+        </div>
       </div>
 
       <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
@@ -98,9 +217,18 @@ function RolesContent() {
           <div className="flex flex-wrap gap-3 flex-1">
             <div className="relative max-w-xs">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input placeholder="Tìm vai trò..." className="pl-9 w-48" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <Input 
+                placeholder="Tìm vai trò..." 
+                className="pl-9 w-48" 
+                value={searchTerm} 
+                onChange={(e) => handleSearchChange(e.target.value)} 
+              />
             </div>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+            <select 
+              className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
+              value={filterType} 
+              onChange={(e) => handleFilterChange(e.target.value)}
+            >
               <option value="">Tất cả loại</option>
               <option value="system">Hệ thống</option>
               <option value="custom">Tùy chỉnh</option>
@@ -108,40 +236,65 @@ function RolesContent() {
           </div>
           <ColumnToggle columns={columns} visibleColumns={visibleColumns} onToggle={toggleColumn} />
         </div>
+
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === selectableRoles.length && selectableRoles.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < selectableRoles.length} /></TableHead>}
-              {visibleColumns.includes('name') && <SortableHeader label="Tên vai trò" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('description') && <TableHead>Mô tả</TableHead>}
-              {visibleColumns.includes('usersCount') && <SortableHeader label="Số người dùng" sortKey="usersCount" sortConfig={sortConfig} onSort={handleSort} className="text-center" />}
-              {visibleColumns.includes('type') && <TableHead className="text-center">Loại</TableHead>}
-              {visibleColumns.includes('actions') && <TableHead className="text-right">Hành động</TableHead>}
+              {visibleColumns.includes('select') && (
+                <TableHead className="w-[40px]">
+                  <SelectCheckbox 
+                    checked={selectedIds.length === selectableRoles.length && selectableRoles.length > 0} 
+                    onChange={toggleSelectAll} 
+                    indeterminate={selectedIds.length > 0 && selectedIds.length < selectableRoles.length} 
+                  />
+                </TableHead>
+              )}
+              {visibleColumns.includes('name') && (
+                <SortableHeader label="Tên vai trò" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />
+              )}
+              {visibleColumns.includes('description') && showDescription && (
+                <TableHead>Mô tả</TableHead>
+              )}
+              {visibleColumns.includes('usersCount') && (
+                <SortableHeader label="Số người dùng" sortKey="usersCount" sortConfig={sortConfig} onSort={handleSort} className="text-center" />
+              )}
+              {visibleColumns.includes('type') && (
+                <TableHead className="text-center">Loại</TableHead>
+              )}
+              {visibleColumns.includes('actions') && (
+                <TableHead className="text-right">Hành động</TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedData.map(role => (
-              <TableRow key={role.id} className={selectedIds.includes(role.id) ? 'bg-blue-500/5' : ''}>
+            {paginatedData.map(role => (
+              <TableRow key={role._id} className={selectedIds.includes(role._id) ? 'bg-blue-500/5' : ''}>
                 {visibleColumns.includes('select') && (
                   <TableCell>
                     {role.isSystem ? (
                       <span className="w-4 h-4 block" title="Không thể chọn vai trò hệ thống" />
                     ) : (
-                      <SelectCheckbox checked={selectedIds.includes(role.id)} onChange={() => toggleSelectItem(role.id)} />
+                      <SelectCheckbox checked={selectedIds.includes(role._id)} onChange={() => toggleSelectItem(role._id)} />
                     )}
                   </TableCell>
                 )}
                 {visibleColumns.includes('name') && (
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                        <Shield size={16} className="text-blue-500" />
+                      <div 
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: showColor && role.color ? `${role.color}20` : 'rgb(59 130 246 / 0.1)' }}
+                      >
+                        <Shield size={16} style={{ color: showColor && role.color ? role.color : '#3b82f6' }} />
                       </div>
                       <span className="font-medium">{role.name}</span>
+                      {role.isSuperAdmin && (
+                        <span title="Super Admin"><Crown size={14} className="text-amber-500" /></span>
+                      )}
                     </div>
                   </TableCell>
                 )}
-                {visibleColumns.includes('description') && (
+                {visibleColumns.includes('description') && showDescription && (
                   <TableCell className="text-slate-500 max-w-[300px] truncate">{role.description}</TableCell>
                 )}
                 {visibleColumns.includes('usersCount') && (
@@ -161,14 +314,14 @@ function RolesContent() {
                 {visibleColumns.includes('actions') && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Link href={`/admin/roles/${role.id}/edit`}>
+                      <Link href={`/admin/roles/${role._id}/edit`}>
                         <Button variant="ghost" size="icon"><Edit size={16}/></Button>
                       </Link>
                       <Button 
                         variant="ghost" 
                         size="icon" 
                         className={role.isSystem ? "text-slate-300 cursor-not-allowed" : "text-red-500 hover:text-red-600"} 
-                        onClick={() => handleDelete(role.id)}
+                        onClick={() => handleDelete(role._id)}
                         disabled={role.isSystem}
                         title={role.isSystem ? "Không thể xóa vai trò hệ thống" : "Xóa"}
                       >
@@ -179,7 +332,7 @@ function RolesContent() {
                 )}
               </TableRow>
             ))}
-            {sortedData.length === 0 && (
+            {paginatedData.length === 0 && (
               <TableRow>
                 <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-slate-500">
                   {searchTerm || filterType ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có vai trò nào'}
@@ -188,9 +341,35 @@ function RolesContent() {
             )}
           </TableBody>
         </Table>
+
         {sortedData.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">
-            Hiển thị {sortedData.length} / {roles.length} vai trò
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-sm text-slate-500">
+              Hiển thị {(currentPage - 1) * rolesPerPage + 1} - {Math.min(currentPage * rolesPerPage, sortedData.length)} / {sortedData.length} vai trò
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Trang {currentPage} / {totalPages}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </Card>

@@ -24,7 +24,7 @@ const FEATURES_CONFIG = [
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { itemsPerPage: number };
+type SettingsState = { promotionsPerPage: number };
 type TabType = 'config' | 'data';
 
 function formatCurrency(amount: number): string {
@@ -56,7 +56,7 @@ export default function PromotionsModuleConfigPage() {
 
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ itemsPerPage: 20 });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ promotionsPerPage: 20 });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -90,8 +90,8 @@ export default function PromotionsModuleConfigPage() {
   // Sync settings
   useEffect(() => {
     if (settingsData) {
-      const itemsPerPage = settingsData.find(s => s.settingKey === 'itemsPerPage')?.value as number ?? 20;
-      setLocalSettings({ itemsPerPage });
+      const promotionsPerPage = settingsData.find(s => s.settingKey === 'promotionsPerPage')?.value as number ?? 20;
+      setLocalSettings({ promotionsPerPage });
     }
   }, [settingsData]);
 
@@ -107,8 +107,8 @@ export default function PromotionsModuleConfigPage() {
   }, [fieldsData]);
 
   const serverSettings = useMemo(() => {
-    const itemsPerPage = settingsData?.find(s => s.settingKey === 'itemsPerPage')?.value as number ?? 20;
-    return { itemsPerPage };
+    const promotionsPerPage = settingsData?.find(s => s.settingKey === 'promotionsPerPage')?.value as number ?? 20;
+    return { promotionsPerPage };
   }, [settingsData]);
 
   // Check for changes
@@ -118,7 +118,7 @@ export default function PromotionsModuleConfigPage() {
       const server = serverFields.find(s => s.id === f.id);
       return server && f.enabled !== server.enabled;
     });
-    const settingsChanged = localSettings.itemsPerPage !== serverSettings.itemsPerPage;
+    const settingsChanged = localSettings.promotionsPerPage !== serverSettings.promotionsPerPage;
     return featuresChanged || fieldsChanged || settingsChanged;
   }, [localFeatures, serverFeatures, localFields, serverFields, localSettings, serverSettings]);
 
@@ -152,8 +152,8 @@ export default function PromotionsModuleConfigPage() {
           await updateField({ id: field.id as any, enabled: field.enabled });
         }
       }
-      if (localSettings.itemsPerPage !== serverSettings.itemsPerPage) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'itemsPerPage', value: localSettings.itemsPerPage });
+      if (localSettings.promotionsPerPage !== serverSettings.promotionsPerPage) {
+        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'promotionsPerPage', value: localSettings.promotionsPerPage });
       }
       toast.success('Đã lưu cấu hình thành công!');
     } catch {
@@ -258,8 +258,8 @@ export default function PromotionsModuleConfigPage() {
               <SettingsCard>
                 <SettingInput 
                   label="Số voucher / trang" 
-                  value={localSettings.itemsPerPage} 
-                  onChange={(v) => setLocalSettings({...localSettings, itemsPerPage: v})}
+                  value={localSettings.promotionsPerPage} 
+                  onChange={(v) => setLocalSettings({...localSettings, promotionsPerPage: v})}
                   focusColor="focus:border-pink-500"
                 />
               </SettingsCard>

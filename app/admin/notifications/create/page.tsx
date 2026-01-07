@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
@@ -11,20 +11,36 @@ import { Button, Card, CardContent, Input, Label } from '../../components/ui';
 
 const MODULE_KEY = 'notifications';
 
+type NotificationType = 'info' | 'success' | 'warning' | 'error';
+
 export default function NotificationCreatePage() {
   const router = useRouter();
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const createNotification = useMutation(api.notifications.create);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [type, setType] = useState<'info' | 'success' | 'warning' | 'error'>('info');
+  const [type, setType] = useState<NotificationType>('info');
   const [targetType, setTargetType] = useState<'all' | 'customers' | 'users' | 'specific'>('all');
   const [sendEmail, setSendEmail] = useState(false);
   const [scheduledAt, setScheduledAt] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isLoading = fieldsData === undefined;
+
+  // Lấy defaultType từ settings
+  const defaultType = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'defaultType');
+    return (setting?.value as NotificationType) || 'info';
+  }, [settingsData]);
+
+  // Sync type với defaultType khi settings load
+  useEffect(() => {
+    if (defaultType) {
+      setType(defaultType);
+    }
+  }, [defaultType]);
 
   const enabledFields = useMemo(() => {
     const fields = new Set<string>();

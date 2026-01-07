@@ -175,27 +175,42 @@ export default function NotificationsModuleConfigPage() {
 
   // Data tab handlers
   const handleSeedData = async () => {
-    toast.loading('Đang tạo dữ liệu mẫu...');
-    await seedNotificationsModule();
-    toast.dismiss();
-    toast.success('Đã tạo dữ liệu mẫu thành công!');
+    try {
+      toast.loading('Đang tạo dữ liệu mẫu...');
+      await seedNotificationsModule();
+      toast.dismiss();
+      toast.success('Đã tạo dữ liệu mẫu thành công!');
+    } catch {
+      toast.dismiss();
+      toast.error('Có lỗi khi tạo dữ liệu mẫu');
+    }
   };
 
   const handleClearData = async () => {
     if (!confirm('Xóa toàn bộ dữ liệu thông báo?')) return;
-    toast.loading('Đang xóa dữ liệu...');
-    await clearNotificationsData();
-    toast.dismiss();
-    toast.success('Đã xóa toàn bộ dữ liệu!');
+    try {
+      toast.loading('Đang xóa dữ liệu...');
+      await clearNotificationsData();
+      toast.dismiss();
+      toast.success('Đã xóa toàn bộ dữ liệu!');
+    } catch {
+      toast.dismiss();
+      toast.error('Có lỗi khi xóa dữ liệu');
+    }
   };
 
   const handleResetData = async () => {
     if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
-    toast.loading('Đang reset dữ liệu...');
-    await clearNotificationsData();
-    await seedNotificationsModule();
-    toast.dismiss();
-    toast.success('Đã reset dữ liệu thành công!');
+    try {
+      toast.loading('Đang reset dữ liệu...');
+      await clearNotificationsData();
+      await seedNotificationsModule();
+      toast.dismiss();
+      toast.success('Đã reset dữ liệu thành công!');
+    } catch {
+      toast.dismiss();
+      toast.error('Có lỗi khi reset dữ liệu');
+    }
   };
 
   if (isLoading) {

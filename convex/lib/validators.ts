@@ -82,7 +82,8 @@ export const fieldType = v.union(
   v.literal("phone"),
   v.literal("tags"),
   v.literal("password"),
-  v.literal("json")
+  v.literal("json"),
+  v.literal("color")
 );
 
 // Target type for polymorphic relations

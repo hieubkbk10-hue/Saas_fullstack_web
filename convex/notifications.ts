@@ -39,6 +39,27 @@ const notificationDoc = v.object({
 });
 
 // Queries
+export const count = query({
+  args: {},
+  returns: v.number(),
+  handler: async (ctx) => {
+    const notifications = await ctx.db.query("notifications").collect();
+    return notifications.length;
+  },
+});
+
+export const countByStatus = query({
+  args: { status: notificationStatus },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    const notifications = await ctx.db
+      .query("notifications")
+      .withIndex("by_status", (q) => q.eq("status", args.status))
+      .collect();
+    return notifications.length;
+  },
+});
+
 export const listAll = query({
   args: {},
   returns: v.array(notificationDoc),

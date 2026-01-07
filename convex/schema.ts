@@ -51,7 +51,8 @@ export default defineSchema({
       v.literal("phone"),
       v.literal("tags"),
       v.literal("password"),
-      v.literal("json")
+      v.literal("json"),
+      v.literal("color")
     ),
     required: v.boolean(),
     enabled: v.boolean(),

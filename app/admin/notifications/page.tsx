@@ -1,15 +1,17 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, Search, Loader2, RefreshCw, Send, Ban, Bell, Info, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Loader2, RefreshCw, Send, Ban, Bell, Info, CheckCircle, AlertTriangle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+
+const MODULE_KEY = 'notifications';
 
 const TYPE_CONFIG = {
   info: { icon: Info, color: 'text-blue-500', bg: 'bg-blue-500/10', label: 'Thông tin' },
@@ -42,6 +44,8 @@ export default function NotificationsListPage() {
 
 function NotificationsContent() {
   const notificationsData = useQuery(api.notifications.listAll);
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   const deleteNotification = useMutation(api.notifications.remove);
   const sendNotification = useMutation(api.notifications.send);
   const cancelNotification = useMutation(api.notifications.cancel);
@@ -53,8 +57,22 @@ function NotificationsContent() {
   const [filterStatus, setFilterStatus] = useState('');
   const [filterType, setFilterType] = useState('');
   const [selectedIds, setSelectedIds] = useState<Id<"notifications">[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const isLoading = notificationsData === undefined;
+
+  // Lấy itemsPerPage từ module settings
+  const itemsPerPage = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'itemsPerPage');
+    return (setting?.value as number) || 20;
+  }, [settingsData]);
+
+  // Lấy enabled features
+  const enabledFeatures = useMemo(() => {
+    const features: Record<string, boolean> = {};
+    featuresData?.forEach(f => { features[f.featureKey] = f.enabled; });
+    return features;
+  }, [featuresData]);
 
   const notifications = useMemo(() => {
     return notificationsData?.map(n => ({
@@ -81,11 +99,21 @@ function NotificationsContent() {
 
   const sortedNotifications = useSortableData(filteredNotifications, sortConfig);
 
+  // Pagination
+  const totalPages = Math.ceil(sortedNotifications.length / itemsPerPage);
+  const paginatedNotifications = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return sortedNotifications.slice(start, start + itemsPerPage);
+  }, [sortedNotifications, currentPage, itemsPerPage]);
+
+  // Reset page khi filter/sort thay đổi
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, filterStatus, filterType, sortConfig]);
+
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
   };
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedNotifications.length ? [] : sortedNotifications.map(n => n._id));
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedNotifications.length ? [] : paginatedNotifications.map(n => n._id));
   const toggleSelectItem = (id: Id<"notifications">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
   const handleDelete = async (id: Id<"notifications">) => {
@@ -209,18 +237,18 @@ function NotificationsContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === sortedNotifications.length && sortedNotifications.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedNotifications.length} /></TableHead>
+              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedNotifications.length && paginatedNotifications.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedNotifications.length} /></TableHead>
               <TableHead className="w-[40px]">Loại</TableHead>
               <SortableHeader label="Tiêu đề" sortKey="title" sortConfig={sortConfig} onSort={handleSort} />
-              <TableHead>Đối tượng</TableHead>
+              {(enabledFeatures.enableTargeting ?? true) && <TableHead>Đối tượng</TableHead>}
               <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
               <SortableHeader label="Đã đọc" sortKey="readCount" sortConfig={sortConfig} onSort={handleSort} />
-              <TableHead>Thời gian</TableHead>
+              {(enabledFeatures.enableScheduling ?? true) && <TableHead>Thời gian</TableHead>}
               <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedNotifications.map(notif => {
+            {paginatedNotifications.map(notif => {
               const TypeIcon = TYPE_CONFIG[notif.type]?.icon || Bell;
               const typeConfig = TYPE_CONFIG[notif.type];
               const statusConfig = STATUS_CONFIG[notif.status];
@@ -236,17 +264,21 @@ function NotificationsContent() {
                     <div className="font-medium max-w-[250px] truncate">{notif.title}</div>
                     <div className="text-xs text-slate-500 max-w-[250px] truncate">{notif.content}</div>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{notif.targetLabel}</Badge>
-                    {notif.sendEmail && <span className="ml-1 text-xs text-pink-500">📧</span>}
-                  </TableCell>
+                  {(enabledFeatures.enableTargeting ?? true) && (
+                    <TableCell>
+                      <Badge variant="outline">{notif.targetLabel}</Badge>
+                      {(enabledFeatures.enableEmail ?? true) && notif.sendEmail && <span className="ml-1 text-xs text-pink-500">📧</span>}
+                    </TableCell>
+                  )}
                   <TableCell>
                     <Badge variant={statusConfig?.variant}>{statusConfig?.label}</Badge>
                   </TableCell>
                   <TableCell className="text-slate-500">{notif.readCount.toLocaleString()}</TableCell>
-                  <TableCell className="text-slate-500 text-sm">
-                    {notif.status === 'Sent' ? formatDate(notif.sentAt) : notif.status === 'Scheduled' ? formatDate(notif.scheduledAt) : '-'}
-                  </TableCell>
+                  {(enabledFeatures.enableScheduling ?? true) && (
+                    <TableCell className="text-slate-500 text-sm">
+                      {notif.status === 'Sent' ? formatDate(notif.sentAt) : notif.status === 'Scheduled' ? formatDate(notif.scheduledAt) : '-'}
+                    </TableCell>
+                  )}
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       {(notif.status === 'Draft' || notif.status === 'Scheduled') && (
@@ -270,7 +302,7 @@ function NotificationsContent() {
                 </TableRow>
               );
             })}
-            {sortedNotifications.length === 0 && (
+            {paginatedNotifications.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                   {searchTerm || filterStatus || filterType ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có thông báo nào'}
@@ -280,8 +312,33 @@ function NotificationsContent() {
           </TableBody>
         </Table>
         {sortedNotifications.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">
-            Hiển thị {sortedNotifications.length} / {notifications.length} thông báo
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-sm text-slate-500">
+              Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, sortedNotifications.length)} / {sortedNotifications.length} thông báo
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Trang {currentPage} / {totalPages}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </Card>

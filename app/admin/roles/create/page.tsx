@@ -1,24 +1,57 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../components/ui';
 
-const permissionModules = [
-  { key: 'posts', label: 'Bài viết' },
-  { key: 'products', label: 'Sản phẩm' },
-  { key: 'orders', label: 'Đơn hàng' },
-  { key: 'users', label: 'Người dùng' },
-  { key: 'settings', label: 'Cài đặt' },
-];
+const MODULE_KEY = 'roles';
 
 const permissionActions = ['view', 'create', 'edit', 'delete'];
+const actionLabels: Record<string, string> = {
+  view: 'Xem',
+  create: 'Tạo',
+  edit: 'Sửa',
+  delete: 'Xóa',
+};
 
 export default function RoleCreatePage() {
   const router = useRouter();
+  
+  const modulesData = useQuery(api.admin.modules.listModules);
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
+  const createRole = useMutation(api.roles.create);
+
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [color, setColor] = useState('#3b82f6');
   const [permissions, setPermissions] = useState<Record<string, string[]>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const isLoading = modulesData === undefined;
+
+  // Get enabled features
+  const enabledFeatures = useMemo(() => {
+    const features: Record<string, boolean> = {};
+    featuresData?.forEach(f => { features[f.featureKey] = f.enabled; });
+    return features;
+  }, [featuresData]);
+
+  const showDescription = enabledFeatures.enableDescription ?? true;
+  const showColor = enabledFeatures.enableColor ?? true;
+
+  // Get permission modules (enabled modules that are not system-only)
+  const permissionModules = useMemo(() => {
+    if (!modulesData) return [];
+    return modulesData
+      .filter(m => m.enabled && !['settings', 'homepage'].includes(m.key))
+      .map(m => ({ key: m.key, label: m.name }));
+  }, [modulesData]);
 
   const togglePermission = (module: string, action: string) => {
     setPermissions(prev => {
@@ -31,11 +64,60 @@ export default function RoleCreatePage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Đã tạo vai trò mới");
-    router.push('/admin/roles');
+  const toggleAllForModule = (module: string) => {
+    setPermissions(prev => {
+      const current = prev[module] || [];
+      if (current.length === permissionActions.length) {
+        return { ...prev, [module]: [] };
+      } else {
+        return { ...prev, [module]: [...permissionActions] };
+      }
+    });
   };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!name.trim()) {
+      newErrors.name = 'Vui lòng nhập tên vai trò';
+    } else if (name.length > 50) {
+      newErrors.name = 'Tên vai trò tối đa 50 ký tự';
+    }
+    if (description.length > 200) {
+      newErrors.description = 'Mô tả tối đa 200 ký tự';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    setIsSubmitting(true);
+    try {
+      await createRole({ 
+        name: name.trim(), 
+        description: description.trim(),
+        color: showColor ? color : undefined,
+        permissions,
+        isSystem: false,
+      });
+      toast.success('Đã tạo vai trò mới');
+      router.push('/admin/roles');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo vai trò');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-20">
@@ -49,15 +131,47 @@ export default function RoleCreatePage() {
           <CardContent className="p-6 space-y-4">
             <div className="space-y-2">
               <Label>Tên vai trò <span className="text-red-500">*</span></Label>
-              <Input required placeholder="Ví dụ: Biên tập viên..." />
-            </div>
-            <div className="space-y-2">
-              <Label>Mô tả</Label>
-              <textarea 
-                className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Mô tả quyền hạn của vai trò này..."
+              <Input 
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ví dụ: Biên tập viên..." 
+                className={errors.name ? 'border-red-500' : ''}
               />
+              {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
             </div>
+
+            {showDescription && (
+              <div className="space-y-2">
+                <Label>Mô tả</Label>
+                <textarea 
+                  className={`w-full min-h-[80px] rounded-md border ${errors.description ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Mô tả quyền hạn của vai trò này..."
+                />
+                {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+              </div>
+            )}
+
+            {showColor && (
+              <div className="space-y-2">
+                <Label>Màu sắc</Label>
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="color" 
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="w-10 h-10 rounded cursor-pointer border border-slate-200 dark:border-slate-700"
+                  />
+                  <Input 
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    placeholder="#3b82f6"
+                    className="w-32"
+                  />
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -67,34 +181,63 @@ export default function RoleCreatePage() {
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-4">
-              <div className="grid grid-cols-5 gap-4 pb-2 border-b border-slate-200 dark:border-slate-700">
+              <div className="grid grid-cols-6 gap-4 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <div className="font-medium text-sm text-slate-500">Module</div>
+                <div className="text-center text-sm font-medium text-slate-500">Tất cả</div>
                 {permissionActions.map(action => (
-                  <div key={action} className="text-center text-sm font-medium text-slate-500 capitalize">{action === 'view' ? 'Xem' : action === 'create' ? 'Tạo' : action === 'edit' ? 'Sửa' : 'Xóa'}</div>
+                  <div key={action} className="text-center text-sm font-medium text-slate-500">
+                    {actionLabels[action]}
+                  </div>
                 ))}
               </div>
-              {permissionModules.map(module => (
-                <div key={module.key} className="grid grid-cols-5 gap-4 items-center py-2">
-                  <div className="font-medium text-slate-700 dark:text-slate-300">{module.label}</div>
-                  {permissionActions.map(action => (
-                    <div key={action} className="flex justify-center">
+              {permissionModules.map(module => {
+                const modulePerms = permissions[module.key] || [];
+                const allChecked = modulePerms.length === permissionActions.length;
+                return (
+                  <div key={module.key} className="grid grid-cols-6 gap-4 items-center py-2">
+                    <div className="font-medium text-slate-700 dark:text-slate-300">{module.label}</div>
+                    <div className="flex justify-center">
                       <input
                         type="checkbox"
-                        checked={permissions[module.key]?.includes(action) || false}
-                        onChange={() => togglePermission(module.key, action)}
+                        checked={allChecked}
+                        onChange={() => toggleAllForModule(module.key)}
                         className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                       />
                     </div>
-                  ))}
-                </div>
-              ))}
+                    {permissionActions.map(action => (
+                      <div key={action} className="flex justify-center">
+                        <input
+                          type="checkbox"
+                          checked={modulePerms.includes(action)}
+                          onChange={() => togglePermission(module.key, action)}
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+              {permissionModules.length === 0 && (
+                <p className="text-center text-slate-500 py-4">Không có module nào để phân quyền</p>
+              )}
             </div>
           </CardContent>
         </Card>
 
         <div className="mt-6 flex justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={() => router.push('/admin/roles')}>Hủy bỏ</Button>
-          <Button type="submit" variant="accent">Tạo vai trò</Button>
+          <Button type="button" variant="ghost" onClick={() => router.push('/admin/roles')} disabled={isSubmitting}>
+            Hủy bỏ
+          </Button>
+          <Button type="submit" variant="accent" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 size={16} className="animate-spin mr-2" />
+                Đang tạo...
+              </>
+            ) : (
+              'Tạo vai trò'
+            )}
+          </Button>
         </div>
       </form>
     </div>
