@@ -23,7 +23,7 @@ const FEATURES_CONFIG = [
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { expiryDays: number; maxItemsPerCart: number; autoCleanupAbandoned: boolean };
+type SettingsState = { cartsPerPage: number; expiryDays: number; maxItemsPerCart: number; autoCleanupAbandoned: boolean };
 type TabType = 'config' | 'data';
 
 export default function CartModuleConfigPage() {
@@ -54,7 +54,7 @@ export default function CartModuleConfigPage() {
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localCartFields, setLocalCartFields] = useState<FieldConfig[]>([]);
   const [localItemFields, setLocalItemFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ expiryDays: 7, maxItemsPerCart: 50, autoCleanupAbandoned: true });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ cartsPerPage: 20, expiryDays: 7, maxItemsPerCart: 50, autoCleanupAbandoned: true });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -103,10 +103,11 @@ export default function CartModuleConfigPage() {
   // Sync settings
   useEffect(() => {
     if (settingsData) {
+      const cartsPerPage = settingsData.find(s => s.settingKey === 'cartsPerPage')?.value as number ?? 20;
       const expiryDays = settingsData.find(s => s.settingKey === 'expiryDays')?.value as number ?? 7;
       const maxItemsPerCart = settingsData.find(s => s.settingKey === 'maxItemsPerCart')?.value as number ?? 50;
       const autoCleanupAbandoned = settingsData.find(s => s.settingKey === 'autoCleanupAbandoned')?.value as boolean ?? true;
-      setLocalSettings({ expiryDays, maxItemsPerCart, autoCleanupAbandoned });
+      setLocalSettings({ cartsPerPage, expiryDays, maxItemsPerCart, autoCleanupAbandoned });
     }
   }, [settingsData]);
 
@@ -126,10 +127,11 @@ export default function CartModuleConfigPage() {
   }, [cartItemFieldsData]);
 
   const serverSettings = useMemo(() => {
+    const cartsPerPage = settingsData?.find(s => s.settingKey === 'cartsPerPage')?.value as number ?? 20;
     const expiryDays = settingsData?.find(s => s.settingKey === 'expiryDays')?.value as number ?? 7;
     const maxItemsPerCart = settingsData?.find(s => s.settingKey === 'maxItemsPerCart')?.value as number ?? 50;
     const autoCleanupAbandoned = settingsData?.find(s => s.settingKey === 'autoCleanupAbandoned')?.value as boolean ?? true;
-    return { expiryDays, maxItemsPerCart, autoCleanupAbandoned };
+    return { cartsPerPage, expiryDays, maxItemsPerCart, autoCleanupAbandoned };
   }, [settingsData]);
 
   // Check for changes
@@ -143,7 +145,8 @@ export default function CartModuleConfigPage() {
       const server = serverItemFields.find(s => s.id === f.id);
       return server && f.enabled !== server.enabled;
     });
-    const settingsChanged = localSettings.expiryDays !== serverSettings.expiryDays ||
+    const settingsChanged = localSettings.cartsPerPage !== serverSettings.cartsPerPage ||
+                           localSettings.expiryDays !== serverSettings.expiryDays ||
                            localSettings.maxItemsPerCart !== serverSettings.maxItemsPerCart ||
                            localSettings.autoCleanupAbandoned !== serverSettings.autoCleanupAbandoned;
     return featuresChanged || cartFieldsChanged || itemFieldsChanged || settingsChanged;
@@ -193,6 +196,9 @@ export default function CartModuleConfigPage() {
         }
       }
       // Save settings
+      if (localSettings.cartsPerPage !== serverSettings.cartsPerPage) {
+        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'cartsPerPage', value: localSettings.cartsPerPage });
+      }
       if (localSettings.expiryDays !== serverSettings.expiryDays) {
         await setSetting({ moduleKey: MODULE_KEY, settingKey: 'expiryDays', value: localSettings.expiryDays });
       }
@@ -323,6 +329,12 @@ export default function CartModuleConfigPage() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="space-y-4">
                   <SettingsCard>
+                    <SettingInput 
+                      label="Số giỏ hàng / trang" 
+                      value={localSettings.cartsPerPage} 
+                      onChange={(v) => setLocalSettings({...localSettings, cartsPerPage: v})}
+                      focusColor="focus:border-emerald-500"
+                    />
                     <SettingInput 
                       label="Hết hạn sau (ngày)" 
                       value={localSettings.expiryDays} 

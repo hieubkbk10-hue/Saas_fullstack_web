@@ -1,5 +1,6 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 
 const cartStatus = v.union(
   v.literal("Active"),
@@ -119,6 +120,22 @@ export const getTotalValue = query({
   },
 });
 
+export const count = query({
+  args: { status: v.optional(cartStatus) },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    if (args.status) {
+      const carts = await ctx.db
+        .query("carts")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .collect();
+      return carts.length;
+    }
+    const carts = await ctx.db.query("carts").collect();
+    return carts.length;
+  },
+});
+
 // ============ CART ITEM QUERIES ============
 
 export const listCartItems = query({
@@ -147,16 +164,30 @@ export const create = mutation({
     customerId: v.optional(v.id("customers")),
     sessionId: v.optional(v.string()),
     expiresAt: v.optional(v.number()),
+    note: v.optional(v.string()),
   },
   returns: v.id("carts"),
   handler: async (ctx, args) => {
+    // Get expiry days setting if expiresAt not provided
+    let expiresAt = args.expiresAt;
+    if (!expiresAt) {
+      const expirySetting = await ctx.db
+        .query("moduleSettings")
+        .withIndex("by_module", (q) => q.eq("moduleKey", "cart"))
+        .filter((q) => q.eq(q.field("settingKey"), "expiryDays"))
+        .first();
+      const expiryDays = (expirySetting?.value as number) ?? 7;
+      expiresAt = Date.now() + expiryDays * 24 * 60 * 60 * 1000;
+    }
+
     return await ctx.db.insert("carts", {
       customerId: args.customerId,
       sessionId: args.sessionId,
       status: "Active",
       itemsCount: 0,
       totalAmount: 0,
-      expiresAt: args.expiresAt,
+      expiresAt,
+      note: args.note,
     });
   },
 });
@@ -165,7 +196,20 @@ export const updateStatus = mutation({
   args: { id: v.id("carts"), status: cartStatus },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const cart = await ctx.db.get(args.id);
+    if (!cart) throw new Error("Cart not found");
     await ctx.db.patch(args.id, { status: args.status });
+    return null;
+  },
+});
+
+export const updateNote = mutation({
+  args: { id: v.id("carts"), note: v.optional(v.string()) },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const cart = await ctx.db.get(args.id);
+    if (!cart) throw new Error("Cart not found");
+    await ctx.db.patch(args.id, { note: args.note });
     return null;
   },
 });
@@ -174,6 +218,8 @@ export const markAsAbandoned = mutation({
   args: { id: v.id("carts") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const cart = await ctx.db.get(args.id);
+    if (!cart) throw new Error("Cart not found");
     await ctx.db.patch(args.id, { status: "Abandoned" });
     return null;
   },
@@ -183,6 +229,8 @@ export const markAsConverted = mutation({
   args: { id: v.id("carts") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const cart = await ctx.db.get(args.id);
+    if (!cart) throw new Error("Cart not found");
     await ctx.db.patch(args.id, { status: "Converted" });
     return null;
   },
@@ -192,6 +240,10 @@ export const remove = mutation({
   args: { id: v.id("carts") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const cart = await ctx.db.get(args.id);
+    if (!cart) throw new Error("Cart not found");
+
+    // Cascade delete cart items
     const items = await ctx.db
       .query("cartItems")
       .withIndex("by_cart", (q) => q.eq("cartId", args.id))
@@ -214,8 +266,19 @@ export const addItem = mutation({
   },
   returns: v.id("cartItems"),
   handler: async (ctx, args) => {
+    const cart = await ctx.db.get(args.cartId);
+    if (!cart) throw new Error("Cart not found");
+
     const product = await ctx.db.get(args.productId);
     if (!product) throw new Error("Product not found");
+
+    // Check maxItemsPerCart setting
+    const maxItemsSetting = await ctx.db
+      .query("moduleSettings")
+      .withIndex("by_module", (q) => q.eq("moduleKey", "cart"))
+      .filter((q) => q.eq(q.field("settingKey"), "maxItemsPerCart"))
+      .first();
+    const maxItems = (maxItemsSetting?.value as number) ?? 50;
 
     const existingItem = await ctx.db
       .query("cartItems")
@@ -232,6 +295,15 @@ export const addItem = mutation({
       });
       await recalculateCart(ctx, args.cartId);
       return existingItem._id;
+    }
+
+    // Check limit only for new items
+    const currentItems = await ctx.db
+      .query("cartItems")
+      .withIndex("by_cart", (q) => q.eq("cartId", args.cartId))
+      .collect();
+    if (currentItems.length >= maxItems) {
+      throw new Error(`Giỏ hàng đã đạt giới hạn ${maxItems} sản phẩm`);
     }
 
     const price = product.salePrice ?? product.price;
@@ -291,6 +363,9 @@ export const clearCart = mutation({
   args: { cartId: v.id("carts") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const cart = await ctx.db.get(args.cartId);
+    if (!cart) throw new Error("Cart not found");
+
     const items = await ctx.db
       .query("cartItems")
       .withIndex("by_cart", (q) => q.eq("cartId", args.cartId))
@@ -303,15 +378,15 @@ export const clearCart = mutation({
   },
 });
 
-// Helper function
-async function recalculateCart(ctx: any, cartId: any) {
+// Helper function with proper types
+async function recalculateCart(ctx: MutationCtx, cartId: Id<"carts">) {
   const items = await ctx.db
     .query("cartItems")
-    .withIndex("by_cart", (q: any) => q.eq("cartId", cartId))
+    .withIndex("by_cart", (q) => q.eq("cartId", cartId))
     .collect();
 
-  const itemsCount = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
-  const totalAmount = items.reduce((sum: number, item: any) => sum + item.subtotal, 0);
+  const itemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
 
   await ctx.db.patch(cartId, { itemsCount, totalAmount });
 }

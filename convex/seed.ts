@@ -1385,6 +1385,7 @@ export const seedCartModule = mutation({
     // 6. Seed module settings
     const existingSettings = await ctx.db.query("moduleSettings").withIndex("by_module", q => q.eq("moduleKey", "cart")).first();
     if (!existingSettings) {
+      await ctx.db.insert("moduleSettings", { moduleKey: "cart", settingKey: "cartsPerPage", value: 20 });
       await ctx.db.insert("moduleSettings", { moduleKey: "cart", settingKey: "expiryDays", value: 7 });
       await ctx.db.insert("moduleSettings", { moduleKey: "cart", settingKey: "maxItemsPerCart", value: 50 });
       await ctx.db.insert("moduleSettings", { moduleKey: "cart", settingKey: "autoCleanupAbandoned", value: true });

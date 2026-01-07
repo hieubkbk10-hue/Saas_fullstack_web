@@ -267,6 +267,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                     { label: 'Sản phẩm', href: '/admin/products', moduleKey: 'products' },
                     { label: 'Danh mục sản phẩm', href: '/admin/categories', moduleKey: 'products' },
                     { label: 'Đơn hàng', href: '/admin/orders', moduleKey: 'orders' },
+                    { label: 'Giỏ hàng', href: '/admin/cart', moduleKey: 'cart' },
                     { label: 'Wishlist', href: '/admin/wishlist', moduleKey: 'wishlist' },
                     ...(showProductReviews ? [{ label: 'Đánh giá sản phẩm', href: '/admin/reviews' }] : []),
                     { label: 'Khách hàng', href: '/admin/customers', moduleKey: 'customers' },
