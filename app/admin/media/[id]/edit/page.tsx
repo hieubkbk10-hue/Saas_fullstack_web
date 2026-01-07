@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, use, useEffect } from 'react';
+import React, { useState, use, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
@@ -9,6 +9,8 @@ import { Id } from '@/convex/_generated/dataModel';
 import { Loader2, ArrowLeft, Image as ImageIcon, FileVideo, FileText, Copy, Check, ExternalLink, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label, Badge } from '../../../components/ui';
+
+const MODULE_KEY = 'media';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -30,8 +32,19 @@ export default function MediaEditPage({ params }: { params: Promise<{ id: string
 
   const mediaData = useQuery(api.media.getByIdWithUrl, { id: id as Id<"images"> });
   const foldersData = useQuery(api.media.getFolders);
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   const updateMedia = useMutation(api.media.update);
   const removeMedia = useMutation(api.media.remove);
+
+  // Check enabled features
+  const enabledFeatures = useMemo(() => {
+    const features: Record<string, boolean> = {};
+    featuresData?.forEach(f => { features[f.featureKey] = f.enabled; });
+    return features;
+  }, [featuresData]);
+  
+  const showFolders = enabledFeatures.enableFolders ?? true;
+  const showAltText = enabledFeatures.enableAltText ?? true;
 
   const [filename, setFilename] = useState('');
   const [alt, setAlt] = useState('');
@@ -237,51 +250,57 @@ export default function MediaEditPage({ params }: { params: Promise<{ id: string
                   />
                 </div>
 
-                {/* Alt text */}
-                <div className="space-y-2">
-                  <Label>Alt text (SEO)</Label>
-                  <Input 
-                    value={alt} 
-                    onChange={(e) => setAlt(e.target.value)}
-                    placeholder="Mô tả hình ảnh cho SEO và accessibility"
-                  />
-                  <p className="text-xs text-slate-500">
-                    Mô tả ngắn gọn nội dung hình ảnh, hỗ trợ SEO và người dùng screen reader
-                  </p>
-                </div>
-
-                {/* Folder */}
-                <div className="space-y-2">
-                  <Label>Thư mục</Label>
-                  <div className="flex gap-2">
-                    <select 
-                      value={folder}
-                      onChange={(e) => {
-                        setFolder(e.target.value);
-                        setNewFolder('');
-                      }}
-                      className="flex-1 h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
-                    >
-                      <option value="">Không có thư mục</option>
-                      {foldersData?.map(f => (
-                        <option key={f} value={f}>{f}</option>
-                      ))}
-                    </select>
+                {/* Alt text - only show if feature enabled */}
+                {showAltText && (
+                  <div className="space-y-2">
+                    <Label>Alt text (SEO)</Label>
+                    <Input 
+                      value={alt} 
+                      onChange={(e) => setAlt(e.target.value)}
+                      placeholder="Mô tả hình ảnh cho SEO và accessibility"
+                    />
+                    <p className="text-xs text-slate-500">
+                      Mô tả ngắn gọn nội dung hình ảnh, hỗ trợ SEO và người dùng screen reader
+                    </p>
                   </div>
-                </div>
+                )}
 
-                {/* New folder */}
-                <div className="space-y-2">
-                  <Label>Hoặc tạo thư mục mới</Label>
-                  <Input 
-                    value={newFolder} 
-                    onChange={(e) => {
-                      setNewFolder(e.target.value);
-                      if (e.target.value) setFolder('');
-                    }}
-                    placeholder="Tên thư mục mới"
-                  />
-                </div>
+                {/* Folder - only show if feature enabled */}
+                {showFolders && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Thư mục</Label>
+                      <div className="flex gap-2">
+                        <select 
+                          value={folder}
+                          onChange={(e) => {
+                            setFolder(e.target.value);
+                            setNewFolder('');
+                          }}
+                          className="flex-1 h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                        >
+                          <option value="">Không có thư mục</option>
+                          {foldersData?.map(f => (
+                            <option key={f} value={f}>{f}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* New folder */}
+                    <div className="space-y-2">
+                      <Label>Hoặc tạo thư mục mới</Label>
+                      <Input 
+                        value={newFolder} 
+                        onChange={(e) => {
+                          setNewFolder(e.target.value);
+                          if (e.target.value) setFolder('');
+                        }}
+                        placeholder="Tên thư mục mới"
+                      />
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 

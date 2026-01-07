@@ -197,7 +197,11 @@ convex/{module}.ts
 **Kiểm tra tích hợp giữa các phần:**
 
 1. **⚠️ System ↔ Admin (CRITICAL)**
-   - [ ] Feature toggle ảnh hưởng admin UI
+   - [ ] **Feature toggle ẢNH HƯỞNG admin UI:**
+     - [ ] Tắt feature → ẩn filter/column tương ứng ở list page
+     - [ ] Tắt feature → ẩn field tương ứng ở create/edit form
+     - [ ] Query `listModuleFeatures` để check enabled features
+     - [ ] VD: `enableFolders=false` → ẩn folder filter + folder field trong edit
    - [ ] Field toggle ảnh hưởng form
    - [ ] **Settings apply đúng:**
      - [ ] `{module}PerPage` → Pagination trong admin list page
@@ -345,7 +349,41 @@ convex/{module}.ts
    ));
    ```
 
-6. **⚠️ Missing Pagination from Settings (CRITICAL)**
+6. **⚠️ Missing Feature Toggle in Admin UI (CRITICAL)**
+   ```tsx
+   // Bad - không check feature toggle
+   function MediaContent() {
+     const foldersData = useQuery(api.media.getFolders);
+     return (
+       // Folder filter luôn hiển thị dù feature bị tắt
+       <select>{foldersData?.map(f => <option>{f}</option>)}</select>
+     );
+   }
+   
+   // Good - check feature toggle từ System Config
+   const MODULE_KEY = 'media';
+   function MediaContent() {
+     const foldersData = useQuery(api.media.getFolders);
+     const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
+     
+     const enabledFeatures = useMemo(() => {
+       const features: Record<string, boolean> = {};
+       featuresData?.forEach(f => { features[f.featureKey] = f.enabled; });
+       return features;
+     }, [featuresData]);
+     
+     const showFolders = enabledFeatures.enableFolders ?? true;
+     
+     return (
+       // Folder filter chỉ hiển thị khi feature bật
+       {showFolders && foldersData && (
+         <select>{foldersData.map(f => <option>{f}</option>)}</select>
+       )}
+     );
+   }
+   ```
+
+7. **⚠️ Missing Pagination from Settings (CRITICAL)**
    ```tsx
    // Bad - không dùng settings
    const sortedPosts = useSortableData(filteredPosts, sortConfig);

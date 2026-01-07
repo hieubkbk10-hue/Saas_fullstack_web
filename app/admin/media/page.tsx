@@ -15,6 +15,7 @@ import { Button, Card, Input, Badge, cn } from '../components/ui';
 import { BulkActionBar, SelectCheckbox } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
+const MODULE_KEY = 'media';
 type ViewMode = 'grid' | 'list';
 type FilterType = 'all' | 'image' | 'video' | 'document';
 
@@ -51,11 +52,21 @@ function MediaContent() {
   const mediaData = useQuery(api.media.listWithUrls, { limit: 100 });
   const foldersData = useQuery(api.media.getFolders);
   const statsData = useQuery(api.media.getStats);
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   
   const generateUploadUrl = useMutation(api.media.generateUploadUrl);
   const createMedia = useMutation(api.media.create);
   const removeMedia = useMutation(api.media.remove);
   const bulkRemoveMedia = useMutation(api.media.bulkRemove);
+
+  // Check enabled features
+  const enabledFeatures = useMemo(() => {
+    const features: Record<string, boolean> = {};
+    featuresData?.forEach(f => { features[f.featureKey] = f.enabled; });
+    return features;
+  }, [featuresData]);
+  
+  const showFolders = enabledFeatures.enableFolders ?? true;
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchTerm, setSearchTerm] = useState('');
@@ -321,8 +332,8 @@ function MediaContent() {
               <option value="document">Tài liệu ({statsData?.documentCount ?? 0})</option>
             </select>
 
-            {/* Folder filter */}
-            {foldersData && foldersData.length > 0 && (
+            {/* Folder filter - only show if feature enabled */}
+            {showFolders && foldersData && foldersData.length > 0 && (
               <select 
                 className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 value={filterFolder}
@@ -502,7 +513,7 @@ function MediaContent() {
                         {media.width && media.height && (
                           <span>{media.width}x{media.height}</span>
                         )}
-                        {media.folder && (
+                        {showFolders && media.folder && (
                           <Badge variant="secondary" className="text-xs">
                             <FolderOpen size={12} className="mr-1" />
                             {media.folder}
