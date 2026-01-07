@@ -216,6 +216,7 @@ export const update = mutation({
         .unique();
       if (existing) throw new Error("Slug already exists");
     }
+    
     const patchData: Record<string, unknown> = { ...updates };
     if (args.status === "Published" && post.status !== "Published") {
       patchData.publishedAt = Date.now();
@@ -240,6 +241,7 @@ export const remove = mutation({
   args: { id: v.id("posts") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    // Delete related comments
     const comments = await ctx.db
       .query("comments")
       .withIndex("by_target_status", (q) =>

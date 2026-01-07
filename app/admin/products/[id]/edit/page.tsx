@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Upload, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../../components/ui';
 import { LexicalEditor } from '../../../components/LexicalEditor';
+import { ImageUpload } from '../../../components/ImageUpload';
 
 const MODULE_KEY = 'products';
 
@@ -30,8 +31,10 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
   const [stock, setStock] = useState('0');
   const [categoryId, setCategoryId] = useState('');
   const [description, setDescription] = useState('');
+  const [image, setImage] = useState<string | undefined>();
   const [status, setStatus] = useState<'Draft' | 'Active' | 'Archived'>('Draft');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   const enabledFields = useMemo(() => {
     const fields = new Set<string>();
@@ -40,7 +43,7 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
   }, [fieldsData]);
 
   useEffect(() => {
-    if (productData) {
+    if (productData && !isDataLoaded) {
       setName(productData.name);
       setSlug(productData.slug);
       setSku(productData.sku);
@@ -49,9 +52,11 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
       setStock(productData.stock.toString());
       setCategoryId(productData.categoryId);
       setDescription(productData.description || '');
+      setImage(productData.image);
       setStatus(productData.status);
+      setIsDataLoaded(true);
     }
-  }, [productData]);
+  }, [productData, isDataLoaded]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +82,7 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
         stock: parseInt(stock) || 0,
         categoryId: categoryId as Id<"productCategories">,
         description: description.trim() || undefined,
+        image,
         status,
       });
       toast.success("Cập nhật sản phẩm thành công");
@@ -137,12 +143,12 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
               {enabledFields.has('description') && (
                 <div className="space-y-2">
                   <Label>Mô tả sản phẩm</Label>
-                  <LexicalEditor onChange={setDescription} />
-                  {productData.description && (
-                    <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border">
-                      <p className="text-xs text-slate-500 mb-2">Nội dung hiện tại:</p>
-                      <div className="text-sm prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: productData.description }} />
-                    </div>
+                  {isDataLoaded && (
+                    <LexicalEditor 
+                      onChange={setDescription} 
+                      initialContent={productData.description}
+                      folder="products-content"
+                    />
                   )}
                 </div>
               )}
@@ -199,8 +205,10 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
                   <option value="">-- Chọn danh mục --</option>
-                  {categoriesData?.map(cat => (
-                    <option key={cat._id} value={cat._id}>{cat.name}</option>
+                  {categoriesData?.filter(cat => cat.active || cat._id === productData?.categoryId).map(cat => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}{!cat.active ? ' (Đã ẩn)' : ''}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -210,17 +218,7 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
           <Card>
             <CardHeader><CardTitle className="text-base">Ảnh sản phẩm</CardTitle></CardHeader>
             <CardContent>
-              {productData.image ? (
-                <div className="space-y-2">
-                  <img src={productData.image} alt={productData.name} className="w-full h-40 object-cover rounded-lg" />
-                  <p className="text-xs text-slate-500 text-center">Ảnh hiện tại</p>
-                </div>
-              ) : (
-                <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                  <Upload size={24} className="text-slate-400 mb-2"/>
-                  <span className="text-sm text-slate-500">Kéo thả hoặc click để tải lên</span>
-                </div>
-              )}
+              <ImageUpload value={image} onChange={setImage} folder="products" />
             </CardContent>
           </Card>
 

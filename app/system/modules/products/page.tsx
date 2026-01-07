@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { Package, FolderTree, Tag, DollarSign, Box, Image, Loader2, Database, Trash2, RefreshCw, MessageSquare, Settings } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
@@ -177,13 +178,13 @@ export default function ProductsModuleConfigPage() {
       for (const field of localProductFields) {
         const server = serverProductFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          await updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled });
         }
       }
       for (const field of localCategoryFields) {
         const server = serverCategoryFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          await updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled });
         }
       }
       if (localSettings.productsPerPage !== serverSettings.productsPerPage) {

@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Upload, Loader2, Plus, X } from 'lucide-react';
+import { Loader2, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../components/ui';
 import { LexicalEditor } from '../../components/LexicalEditor';
+import { ImageUpload } from '../../components/ImageUpload';
 
 function QuickCreateCategoryModal({ 
   isOpen, 
@@ -98,6 +99,7 @@ export default function ProductCreatePage() {
   const categoriesData = useQuery(api.productCategories.listAll);
   const createProduct = useMutation(api.products.create);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
 
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -107,6 +109,7 @@ export default function ProductCreatePage() {
   const [stock, setStock] = useState('0');
   const [categoryId, setCategoryId] = useState('');
   const [description, setDescription] = useState('');
+  const [image, setImage] = useState<string | undefined>();
   const [status, setStatus] = useState<'Draft' | 'Active' | 'Archived'>('Draft');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -116,6 +119,18 @@ export default function ProductCreatePage() {
     fieldsData?.forEach(f => fields.add(f.fieldKey));
     return fields;
   }, [fieldsData]);
+
+  // Apply defaultStatus from settings
+  const defaultStatus = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'defaultStatus');
+    return (setting?.value as string) || 'Draft';
+  }, [settingsData]);
+
+  useEffect(() => {
+    if (defaultStatus) {
+      setStatus(defaultStatus as 'Draft' | 'Active' | 'Archived');
+    }
+  }, [defaultStatus]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -147,12 +162,13 @@ export default function ProductCreatePage() {
       await createProduct({
         name: name.trim(),
         slug: slug.trim() || name.toLowerCase().replace(/\s+/g, '-'),
-        sku: sku.trim() || `SKU-${Date.now()}`, // Auto-generate if not provided
+        sku: sku.trim() || `SKU-${Date.now()}`,
         price: parseInt(price) || 0,
         salePrice: salePrice ? parseInt(salePrice) : undefined,
         stock: parseInt(stock) || 0,
         categoryId: categoryId as Id<"productCategories">,
         description: description.trim() || undefined,
+        image,
         status,
       });
       toast.success("Tạo sản phẩm mới thành công");
@@ -281,10 +297,7 @@ export default function ProductCreatePage() {
           <Card>
             <CardHeader><CardTitle className="text-base">Ảnh sản phẩm</CardTitle></CardHeader>
             <CardContent>
-              <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                <Upload size={24} className="text-slate-400 mb-2"/>
-                <span className="text-sm text-slate-500">Kéo thả hoặc click để tải lên</span>
-              </div>
+              <ImageUpload value={image} onChange={setImage} folder="products" />
             </CardContent>
           </Card>
         </div>

@@ -202,6 +202,7 @@
 □ Pre-fill form với existing data
 □ Handle not found case
 □ Loading state khi fetch
+□ isDataLoaded flag để tránh re-init LexicalEditor
 ```
 
 ### 4.3 Form Updates
@@ -218,6 +219,14 @@
 □ Image update/keep existing
 □ Related entity updates
 □ Status change side effects
+□ LexicalEditor initialContent prop (nếu có rich text)
+```
+
+### 4.5 LexicalEditor Integration (nếu có)
+```
+□ Truyền initialContent prop với content cũ
+□ Đợi isDataLoaded trước khi render LexicalEditor
+□ Không hiển thị preview HTML riêng (đã có trong editor)
 ```
 
 ## 5. Convex Backend Checklist
@@ -338,6 +347,17 @@
 □ Lazy loading (nếu cần)
 □ Image optimization
 □ Bundle size reasonable
+```
+
+### 7.5 LexicalEditor (Rich Text) ⚠️ CRITICAL
+```
+□ PasteImagePlugin có mặt - auto upload pasted images
+□ Ảnh paste được compress 85% trước khi upload
+□ KHÔNG lưu base64 vào DB (dùng storage URL)
+□ InitialContentPlugin filter valid nodes (ElementNode/DecoratorNode)
+□ Wrap <img> trong <p> khi insert
+□ handleImageUpload compress + upload + return URL
+□ Images được lưu vào folder riêng (e.g., posts-content, products-content)
 ```
 
 ### 7.5 Maintainability

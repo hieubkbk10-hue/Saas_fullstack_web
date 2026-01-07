@@ -32,7 +32,10 @@ import {
   NodeKey,
   SerializedLexicalNode,
   Spread,
-  LexicalEditor as LexicalEditorType
+  LexicalEditor as LexicalEditorType,
+  $isElementNode,
+  $isDecoratorNode,
+  $isTextNode
 } from 'lexical';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
 import { $setBlocksType, $patchStyleText, $getSelectionStyleValueForProperty } from '@lexical/selection';
@@ -249,15 +252,24 @@ const ToolbarPlugin: React.FC<ToolbarPluginProps> = ({ onImageUpload }) => {
         try {
           const url = await onImageUpload(file);
           if (url) {
-            // Insert image HTML into editor
+            // Insert image as paragraph with img element
             editor.update(() => {
               const selection = $getSelection();
               if ($isRangeSelection(selection)) {
-                const imgHtml = `<img src="${url}" alt="" style="max-width: 100%; height: auto; display: block; margin: 8px 0;" />`;
+                // Create a paragraph containing the image HTML
+                const imgHtml = `<p><img src="${url}" alt="" style="max-width: 100%; height: auto; display: block; margin: 8px 0;" /></p>`;
                 const parser = new DOMParser();
                 const dom = parser.parseFromString(imgHtml, 'text/html');
                 const nodes = $generateNodesFromDOM(editor, dom);
-                selection.insertNodes(nodes);
+                
+                // Filter valid nodes for insertion
+                const validNodes = nodes.filter(node => 
+                  $isElementNode(node) || $isDecoratorNode(node)
+                );
+                
+                if (validNodes.length > 0) {
+                  selection.insertNodes(validNodes);
+                }
               }
             });
             toast.success('Đã chèn ảnh vào nội dung');
@@ -409,6 +421,66 @@ interface LexicalEditorProps {
   folder?: string;
 }
 
+// Plugin to handle paste events and auto-upload base64 images
+interface PasteImagePluginProps {
+  onImageUpload: (file: File) => Promise<string | null>;
+}
+
+const PasteImagePlugin: React.FC<PasteImagePluginProps> = ({ onImageUpload }) => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    const handlePaste = async (event: ClipboardEvent) => {
+      const items = event.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          event.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            try {
+              const url = await onImageUpload(file);
+              if (url) {
+                editor.update(() => {
+                  const selection = $getSelection();
+                  if ($isRangeSelection(selection)) {
+                    const imgHtml = `<p><img src="${url}" alt="" style="max-width: 100%; height: auto; display: block; margin: 8px 0;" /></p>`;
+                    const parser = new DOMParser();
+                    const dom = parser.parseFromString(imgHtml, 'text/html');
+                    const nodes = $generateNodesFromDOM(editor, dom);
+                    const validNodes = nodes.filter(node => 
+                      $isElementNode(node) || $isDecoratorNode(node)
+                    );
+                    if (validNodes.length > 0) {
+                      selection.insertNodes(validNodes);
+                    }
+                  }
+                });
+                toast.success('Đã paste và upload ảnh');
+              }
+            } catch (error) {
+              console.error('Paste image error:', error);
+              toast.error('Không thể upload ảnh');
+            }
+          }
+          break;
+        }
+      }
+    };
+
+    const rootElement = editor.getRootElement();
+    if (rootElement) {
+      rootElement.addEventListener('paste', handlePaste as unknown as EventListener);
+      return () => {
+        rootElement.removeEventListener('paste', handlePaste as unknown as EventListener);
+      };
+    }
+  }, [editor, onImageUpload]);
+
+  return null;
+};
+
 const InitialContentPlugin: React.FC<{ initialContent?: string }> = ({ initialContent }) => {
   const [editor] = useLexicalComposerContext();
   const [isInitialized, setIsInitialized] = useState(false);
@@ -421,7 +493,27 @@ const InitialContentPlugin: React.FC<{ initialContent?: string }> = ({ initialCo
         const nodes = $generateNodesFromDOM(editor, dom);
         const root = $getRoot();
         root.clear();
-        root.append(...nodes);
+        
+        // Filter: only ElementNode or DecoratorNode can be appended to root
+        // TextNodes need to be wrapped in ParagraphNode
+        const validNodes: LexicalNode[] = [];
+        for (const node of nodes) {
+          if ($isElementNode(node) || $isDecoratorNode(node)) {
+            validNodes.push(node);
+          } else if ($isTextNode(node)) {
+            // Wrap text nodes in paragraph
+            const text = node.getTextContent().trim();
+            if (text) {
+              const paragraph = $createParagraphNode();
+              paragraph.append(node);
+              validNodes.push(paragraph);
+            }
+          }
+        }
+        
+        if (validNodes.length > 0) {
+          root.append(...validNodes);
+        }
       });
       setIsInitialized(true);
     }
@@ -510,6 +602,7 @@ export const LexicalEditor: React.FC<LexicalEditorProps> = ({ onChange, initialC
           <HistoryPlugin />
           <ListPlugin />
           <LinkPlugin />
+          <PasteImagePlugin onImageUpload={handleImageUpload} />
           <InitialContentPlugin initialContent={initialContent} />
           <OnChangePlugin onChange={(editorState, editor) => {
              editorState.read(() => {

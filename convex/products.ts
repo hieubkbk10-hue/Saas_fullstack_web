@@ -235,6 +235,7 @@ export const update = mutation({
         .unique();
       if (existing) throw new Error("Slug already exists");
     }
+    
     await ctx.db.patch(id, updates);
     return null;
   },
@@ -268,6 +269,18 @@ export const remove = mutation({
   args: { id: v.id("products") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    // Cascade delete: Remove related comments/reviews
+    const comments = await ctx.db
+      .query("comments")
+      .withIndex("by_target_status", (q) =>
+        q.eq("targetType", "product").eq("targetId", args.id)
+      )
+      .collect();
+    for (const comment of comments) {
+      await ctx.db.delete(comment._id);
+    }
+
+    // Delete the product
     await ctx.db.delete(args.id);
     return null;
   },

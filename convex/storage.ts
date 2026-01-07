@@ -114,18 +114,30 @@ export const cleanupOrphanedImages = mutation({
       const url = await ctx.storage.getUrl(image.storageId);
       if (!url) continue;
       
+      let isUsed = false;
+      
       // Check if image is used in posts
-      if (args.folder === "posts") {
+      if (args.folder === "posts" || args.folder === "posts-content") {
         const posts = await ctx.db.query("posts").collect();
-        const isUsed = posts.some(post => 
-          post.thumbnail === url || post.content.includes(url)
+        isUsed = posts.some(post => 
+          post.thumbnail === url || (post.content && post.content.includes(url))
         );
-        
-        if (!isUsed) {
-          await ctx.storage.delete(image.storageId);
-          await ctx.db.delete(image._id);
-          deletedCount++;
-        }
+      }
+      
+      // Check if image is used in products
+      if (args.folder === "products" || args.folder === "products-content") {
+        const products = await ctx.db.query("products").collect();
+        isUsed = isUsed || products.some(product => 
+          product.image === url || 
+          (product.images && product.images.includes(url)) ||
+          (product.description && product.description.includes(url))
+        );
+      }
+      
+      if (!isUsed) {
+        await ctx.storage.delete(image.storageId);
+        await ctx.db.delete(image._id);
+        deletedCount++;
       }
     }
     

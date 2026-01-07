@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, RefreshCw, Package } from 'lucide-react';
+import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, RefreshCw, Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
@@ -25,6 +25,7 @@ function ProductsContent() {
   const productsData = useQuery(api.products.listAll);
   const categoriesData = useQuery(api.productCategories.listAll);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const deleteProduct = useMutation(api.products.remove);
   const seedProductsModule = useMutation(api.seed.seedProductsModule);
   const clearProductsData = useMutation(api.seed.clearProductsData);
@@ -35,8 +36,15 @@ function ProductsContent() {
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Id<"products">[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const isLoading = productsData === undefined || categoriesData === undefined || fieldsData === undefined;
+
+  // Get productsPerPage from module settings
+  const productsPerPage = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'productsPerPage');
+    return (setting?.value as number) || 12;
+  }, [settingsData]);
 
   // Get enabled fields from system config
   const enabledFields = useMemo(() => {
@@ -96,6 +104,13 @@ function ProductsContent() {
 
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setCurrentPage(1); // Reset page on sort change
+  };
+
+  const handleFilterChange = (type: 'category' | 'status', value: string) => {
+    if (type === 'category') setFilterCategory(value);
+    else setFilterStatus(value);
+    setCurrentPage(1); // Reset page on filter change
   };
 
   const toggleColumn = (key: string) => {
@@ -122,7 +137,14 @@ function ProductsContent() {
 
   const sortedData = useSortableData(filteredData, sortConfig);
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(p => p._id));
+  // Pagination
+  const totalPages = Math.ceil(sortedData.length / productsPerPage);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * productsPerPage;
+    return sortedData.slice(start, start + productsPerPage);
+  }, [sortedData, currentPage, productsPerPage]);
+
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(p => p._id));
   const toggleSelectItem = (id: Id<"products">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
   const openFrontend = (slug: string) => {
@@ -206,11 +228,11 @@ function ProductsContent() {
                 onChange={(e) => setSearchTerm(e.target.value)} 
               />
             </div>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterCategory} onChange={(e) => handleFilterChange('category', e.target.value)}>
               <option value="">Tất cả danh mục</option>
               {categoriesData?.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
             </select>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => handleFilterChange('status', e.target.value)}>
               <option value="">Tất cả trạng thái</option>
               <option value="Active">Đang bán</option>
               <option value="Draft">Bản nháp</option>
@@ -222,7 +244,7 @@ function ProductsContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === sortedData.length && sortedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedData.length} /></TableHead>}
+              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedData.length && paginatedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedData.length} /></TableHead>}
               {visibleColumns.includes('image') && <TableHead className="w-[60px]">Ảnh</TableHead>}
               {visibleColumns.includes('name') && <SortableHeader label="Tên sản phẩm" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('sku') && enabledFields.has('sku') && <SortableHeader label="SKU" sortKey="sku" sortConfig={sortConfig} onSort={handleSort} />}
@@ -234,7 +256,7 @@ function ProductsContent() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedData.map(product => (
+            {paginatedData.map(product => (
               <TableRow key={product._id} className={selectedIds.includes(product._id) ? 'bg-orange-500/5' : ''}>
                 {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(product._id)} onChange={() => toggleSelectItem(product._id)} /></TableCell>}
                 {visibleColumns.includes('image') && (
@@ -284,7 +306,7 @@ function ProductsContent() {
                 )}
               </TableRow>
             ))}
-            {sortedData.length === 0 && (
+            {paginatedData.length === 0 && (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center py-8 text-slate-500">
                   {searchTerm || filterCategory || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có sản phẩm nào. Nhấn Reset để tạo dữ liệu mẫu.'}
@@ -294,8 +316,33 @@ function ProductsContent() {
           </TableBody>
         </Table>
         {sortedData.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">
-            Hiển thị {sortedData.length} / {products.length} sản phẩm
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-sm text-slate-500">
+              Hiển thị {(currentPage - 1) * productsPerPage + 1} - {Math.min(currentPage * productsPerPage, sortedData.length)} / {sortedData.length} sản phẩm
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Trang {currentPage} / {totalPages}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </Card>

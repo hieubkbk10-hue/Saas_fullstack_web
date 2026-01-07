@@ -471,11 +471,146 @@ convex/{module}.ts
    });
    ```
 
+10. **⚠️ LexicalEditor Image Upload Issues (CRITICAL)**
+    ```tsx
+    // Bad - insert image trực tiếp gây lỗi "Only element or decorator nodes"
+    editor.update(() => {
+      const imgHtml = `<img src="${url}" />`;
+      const dom = parser.parseFromString(imgHtml, 'text/html');
+      const nodes = $generateNodesFromDOM(editor, dom);
+      selection.insertNodes(nodes); // ERROR: TextNode không insert được
+    });
+    
+    // Good - wrap trong <p> và filter valid nodes
+    editor.update(() => {
+      const imgHtml = `<p><img src="${url}" style="max-width: 100%;" /></p>`;
+      const dom = parser.parseFromString(imgHtml, 'text/html');
+      const nodes = $generateNodesFromDOM(editor, dom);
+      
+      // Filter: chỉ ElementNode hoặc DecoratorNode
+      const validNodes = nodes.filter(node => 
+        $isElementNode(node) || $isDecoratorNode(node)
+      );
+      
+      if (validNodes.length > 0) {
+        selection.insertNodes(validNodes);
+      }
+    });
+    ```
+
+    **⚠️ Quan trọng: Base64 Image Handling**
+    - Khi user paste ảnh vào editor, browser tạo base64 string
+    - KHÔNG lưu base64 vào DB (quá lớn, chậm queries)
+    - Cần: PasteImagePlugin để intercept paste → upload file → insert URL
+    
+    ```tsx
+    // PasteImagePlugin - auto upload pasted images
+    const PasteImagePlugin = ({ onImageUpload }) => {
+      const [editor] = useLexicalComposerContext();
+      
+      useEffect(() => {
+        const handlePaste = async (event: ClipboardEvent) => {
+          const items = event.clipboardData?.items;
+          for (const item of Array.from(items || [])) {
+            if (item.type.startsWith('image/')) {
+              event.preventDefault();
+              const file = item.getAsFile();
+              if (file) {
+                const url = await onImageUpload(file); // Upload + compress 85%
+                // Insert URL instead of base64
+                editor.update(() => {
+                  const imgHtml = `<p><img src="${url}" /></p>`;
+                  // ... insert logic
+                });
+              }
+            }
+          }
+        };
+        
+        const root = editor.getRootElement();
+        root?.addEventListener('paste', handlePaste);
+        return () => root?.removeEventListener('paste', handlePaste);
+      }, [editor, onImageUpload]);
+      
+      return null;
+    };
+    ```
+
+11. **⚠️ LexicalEditor InitialContent Loading Issues**
+    ```tsx
+    // Bad - append trực tiếp có thể gây lỗi với TextNode
+    const InitialContentPlugin = ({ initialContent }) => {
+      useEffect(() => {
+        editor.update(() => {
+          const nodes = $generateNodesFromDOM(editor, dom);
+          root.append(...nodes); // ERROR nếu có TextNode
+        });
+      }, []);
+    };
+    
+    // Good - filter và wrap TextNode trong ParagraphNode
+    const InitialContentPlugin = ({ initialContent }) => {
+      useEffect(() => {
+        editor.update(() => {
+          const nodes = $generateNodesFromDOM(editor, dom);
+          const validNodes: LexicalNode[] = [];
+          
+          for (const node of nodes) {
+            if ($isElementNode(node) || $isDecoratorNode(node)) {
+              validNodes.push(node);
+            } else if ($isTextNode(node)) {
+              const text = node.getTextContent().trim();
+              if (text) {
+                const paragraph = $createParagraphNode();
+                paragraph.append(node);
+                validNodes.push(paragraph);
+              }
+            }
+          }
+          
+          if (validNodes.length > 0) {
+            root.append(...validNodes);
+          }
+        });
+      }, []);
+    };
+    ```
+
+12. **⚠️ Storage Cleanup cho nhiều Module**
+    ```tsx
+    // Bad - chỉ check 1 folder
+    if (args.folder === "posts") {
+      const posts = await ctx.db.query("posts").collect();
+      // check...
+    }
+    
+    // Good - check tất cả folders liên quan
+    let isUsed = false;
+    
+    if (args.folder === "posts" || args.folder === "posts-content") {
+      const posts = await ctx.db.query("posts").collect();
+      isUsed = posts.some(post => 
+        post.thumbnail === url || 
+        (post.content && post.content.includes(url))
+      );
+    }
+    
+    if (args.folder === "products" || args.folder === "products-content") {
+      const products = await ctx.db.query("products").collect();
+      isUsed = isUsed || products.some(product => 
+        product.image === url || 
+        (product.images && product.images.includes(url)) ||
+        (product.description && product.description.includes(url))
+      );
+    }
+    ```
+
 ## Modules đã QA OK (Reference)
 
 - ✅ **Posts** - Module chuẩn với đầy đủ features + pagination
 - ✅ **Comments** - Module với full CRUD + pagination
 - ✅ **Media** - Module với compression 85%, feature toggle, storage cleanup
+- ✅ **Products** - Module với pagination, image upload, cascade delete, feature toggles
 
 ## Modules cần QA
 
