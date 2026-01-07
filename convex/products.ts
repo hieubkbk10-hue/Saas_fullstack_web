@@ -33,6 +33,30 @@ export const list = query({
   },
 });
 
+export const listAll = query({
+  args: {},
+  returns: v.array(productDoc),
+  handler: async (ctx) => {
+    return await ctx.db.query("products").collect();
+  },
+});
+
+export const count = query({
+  args: { status: v.optional(productStatus) },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    if (args.status) {
+      const products = await ctx.db
+        .query("products")
+        .withIndex("by_status_order", (q) => q.eq("status", args.status!))
+        .collect();
+      return products.length;
+    }
+    const products = await ctx.db.query("products").collect();
+    return products.length;
+  },
+});
+
 export const getById = query({
   args: { id: v.id("products") },
   returns: v.union(productDoc, v.null()),

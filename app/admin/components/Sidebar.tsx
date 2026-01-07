@@ -141,7 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
   useEffect(() => {
     if (isActive('/admin/posts') || isActive('/admin/post-categories') || isActive('/admin/comments')) {
       setExpandedMenu('Quản lý bài viết');
-    } else if (isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers')) {
+    } else if (isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers') || isActive('/admin/reviews')) {
       setExpandedMenu('E-Commerce');
     } else if (isActive('/admin/users') || isActive('/admin/roles')) {
       setExpandedMenu('Người dùng');
@@ -251,7 +251,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   icon={ShoppingCart} 
                   label="E-Commerce" 
                   href="/admin/products"
-                  active={isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers')}
+                  active={isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers') || isActive('/admin/reviews')}
                   isCollapsed={isSidebarCollapsed}
                   isExpanded={expandedMenu === 'E-Commerce'}
                   onToggle={() => handleMenuToggle('E-Commerce')}
@@ -260,6 +260,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   subItems={[
                     { label: 'Sản phẩm', href: '/admin/products', moduleKey: 'products' },
                     { label: 'Danh mục sản phẩm', href: '/admin/categories', moduleKey: 'products' },
+                    { label: 'Đánh giá sản phẩm', href: '/admin/reviews', moduleKey: 'comments' },
                     { label: 'Khách hàng', href: '/admin/customers', moduleKey: 'customers' },
                   ]}
                 />

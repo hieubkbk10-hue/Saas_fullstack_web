@@ -37,6 +37,24 @@ export const listAll = query({
   },
 });
 
+export const listByTargetType = query({
+  args: { targetType: targetType },
+  returns: v.array(commentDoc),
+  handler: async (ctx, args) => {
+    const all = await ctx.db.query("comments").collect();
+    return all.filter(c => c.targetType === args.targetType);
+  },
+});
+
+export const countByTargetType = query({
+  args: { targetType: targetType },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    const all = await ctx.db.query("comments").collect();
+    return all.filter(c => c.targetType === args.targetType).length;
+  },
+});
+
 export const getById = query({
   args: { id: v.id("comments") },
   returns: v.union(commentDoc, v.null()),

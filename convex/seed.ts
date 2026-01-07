@@ -253,7 +253,7 @@ export const seedPostsModule = mutation({
   },
 });
 
-// Seed Comments
+// Seed Comments (for both posts and products)
 export const seedComments = mutation({
   args: {},
   returns: v.null(),
@@ -261,22 +261,44 @@ export const seedComments = mutation({
     const existing = await ctx.db.query("comments").first();
     if (existing) return null;
 
-    // Get some posts to link comments
+    // Get posts and products to link comments
     const posts = await ctx.db.query("posts").collect();
-    if (posts.length === 0) return null;
+    const products = await ctx.db.query("products").collect();
 
-    const comments = [
-      { content: "Bài viết rất hay và hữu ích! Cảm ơn admin.", authorName: "Nguyễn Văn A", authorEmail: "nguyenvana@gmail.com", authorIp: "192.168.1.100", targetType: "post" as const, targetId: posts[0]?._id, status: "Approved" as const },
-      { content: "Mình đã áp dụng và thấy hiệu quả ngay. Tuyệt vời!", authorName: "Trần Thị B", authorEmail: "tranthib@gmail.com", authorIp: "192.168.1.101", targetType: "post" as const, targetId: posts[0]?._id, status: "Approved" as const },
-      { content: "Có thể viết thêm về chủ đề này được không ạ?", authorName: "Lê Văn C", authorEmail: "levanc@gmail.com", authorIp: "192.168.1.102", targetType: "post" as const, targetId: posts[1]?._id, status: "Pending" as const },
-      { content: "Hướng dẫn chi tiết quá, thank admin!", authorName: "Phạm Thị D", authorEmail: "phamthid@gmail.com", authorIp: "192.168.1.103", targetType: "post" as const, targetId: posts[1]?._id, status: "Approved" as const },
-      { content: "Khuyến mãi này còn hiệu lực không ạ?", authorName: "Hoàng Văn E", authorEmail: "hoangvane@gmail.com", authorIp: "192.168.1.104", targetType: "post" as const, targetId: posts[2]?._id, status: "Pending" as const },
-      { content: "Spam link quảng cáo", authorName: "Spammer", authorEmail: "spam@spam.com", authorIp: "10.0.0.1", targetType: "post" as const, targetId: posts[0]?._id, status: "Spam" as const },
-    ];
+    // Post comments
+    if (posts.length > 0) {
+      const postComments = [
+        { content: "Bài viết rất hay và hữu ích! Cảm ơn admin.", authorName: "Nguyễn Văn A", authorEmail: "nguyenvana@gmail.com", authorIp: "192.168.1.100", targetType: "post" as const, targetId: posts[0]?._id, status: "Approved" as const },
+        { content: "Mình đã áp dụng và thấy hiệu quả ngay. Tuyệt vời!", authorName: "Trần Thị B", authorEmail: "tranthib@gmail.com", authorIp: "192.168.1.101", targetType: "post" as const, targetId: posts[0]?._id, status: "Approved" as const },
+        { content: "Có thể viết thêm về chủ đề này được không ạ?", authorName: "Lê Văn C", authorEmail: "levanc@gmail.com", authorIp: "192.168.1.102", targetType: "post" as const, targetId: posts[1]?._id, status: "Pending" as const },
+        { content: "Hướng dẫn chi tiết quá, thank admin!", authorName: "Phạm Thị D", authorEmail: "phamthid@gmail.com", authorIp: "192.168.1.103", targetType: "post" as const, targetId: posts[1]?._id, status: "Approved" as const },
+        { content: "Khuyến mãi này còn hiệu lực không ạ?", authorName: "Hoàng Văn E", authorEmail: "hoangvane@gmail.com", authorIp: "192.168.1.104", targetType: "post" as const, targetId: posts[2]?._id, status: "Pending" as const },
+        { content: "Spam link quảng cáo", authorName: "Spammer", authorEmail: "spam@spam.com", authorIp: "10.0.0.1", targetType: "post" as const, targetId: posts[0]?._id, status: "Spam" as const },
+      ];
+      for (const comment of postComments) {
+        if (comment.targetId) {
+          await ctx.db.insert("comments", comment);
+        }
+      }
+    }
 
-    for (const comment of comments) {
-      if (comment.targetId) {
-        await ctx.db.insert("comments", comment);
+    // Product reviews
+    if (products.length > 0) {
+      const productReviews = [
+        { content: "Sản phẩm chất lượng, đóng gói cẩn thận. Giao hàng nhanh!", authorName: "Trần Minh Tuấn", authorEmail: "tuantran@gmail.com", authorIp: "192.168.1.110", targetType: "product" as const, targetId: products[0]?._id, status: "Approved" as const },
+        { content: "Máy đẹp, pin trâu, camera chụp rõ nét. 5 sao!", authorName: "Nguyễn Thị Hoa", authorEmail: "hoanguyen@gmail.com", authorIp: "192.168.1.111", targetType: "product" as const, targetId: products[0]?._id, status: "Approved" as const },
+        { content: "Đã dùng được 2 tuần, rất hài lòng với sản phẩm.", authorName: "Lê Văn Hùng", authorEmail: "hungle@gmail.com", authorIp: "192.168.1.112", targetType: "product" as const, targetId: products[1]?._id, status: "Approved" as const },
+        { content: "Sản phẩm như mô tả, shop tư vấn nhiệt tình.", authorName: "Phạm Thanh Mai", authorEmail: "maipham@gmail.com", authorIp: "192.168.1.113", targetType: "product" as const, targetId: products[2]?._id, status: "Approved" as const },
+        { content: "Vải đẹp, form chuẩn, mặc thoải mái. Sẽ mua thêm màu khác.", authorName: "Hoàng Anh Dũng", authorEmail: "dunghoang@gmail.com", authorIp: "192.168.1.114", targetType: "product" as const, targetId: products[3]?._id, status: "Approved" as const },
+        { content: "Giao hàng hơi chậm nhưng sản phẩm ok.", authorName: "Vũ Thị Lan", authorEmail: "lanvu@gmail.com", authorIp: "192.168.1.115", targetType: "product" as const, targetId: products[4]?._id, status: "Pending" as const },
+        { content: "Nồi chiên rất tốt, tiết kiệm dầu. Recommend!", authorName: "Đỗ Văn Bình", authorEmail: "binhdo@gmail.com", authorIp: "192.168.1.116", targetType: "product" as const, targetId: products[5]?._id, status: "Approved" as const },
+        { content: "Robot hút sạch, app điều khiển dễ dùng.", authorName: "Ngô Thị Hạnh", authorEmail: "hanhngo@gmail.com", authorIp: "192.168.1.117", targetType: "product" as const, targetId: products[6]?._id, status: "Pending" as const },
+        { content: "Quảng cáo spam - không liên quan sản phẩm", authorName: "Fake Reviewer", authorEmail: "fake@spam.com", authorIp: "10.0.0.2", targetType: "product" as const, targetId: products[0]?._id, status: "Spam" as const },
+      ];
+      for (const review of productReviews) {
+        if (review.targetId) {
+          await ctx.db.insert("comments", review);
+        }
       }
     }
 
@@ -437,6 +459,154 @@ export const seedAll = mutation({
       }
     }
 
+    return null;
+  },
+});
+
+// ============ PRODUCTS MODULE ============
+
+export const seedProductsModule = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    // 1. Seed product categories
+    const existingCategories = await ctx.db.query("productCategories").first();
+    if (!existingCategories) {
+      const categories = [
+        { name: "Điện tử", slug: "dien-tu", description: "Thiết bị điện tử, công nghệ", order: 0, active: true },
+        { name: "Thời trang", slug: "thoi-trang", description: "Quần áo, phụ kiện thời trang", order: 1, active: true },
+        { name: "Gia dụng", slug: "gia-dung", description: "Đồ dùng gia đình", order: 2, active: true },
+        { name: "Sách & Văn phòng phẩm", slug: "sach-van-phong-pham", description: "Sách, vở, dụng cụ văn phòng", order: 3, active: true },
+        { name: "Thể thao", slug: "the-thao", description: "Dụng cụ, trang phục thể thao", order: 4, active: false },
+      ];
+      for (const cat of categories) {
+        await ctx.db.insert("productCategories", cat);
+      }
+    }
+
+    // 2. Seed products
+    const existingProducts = await ctx.db.query("products").first();
+    if (!existingProducts) {
+      const dienTuCat = await ctx.db.query("productCategories").withIndex("by_slug", q => q.eq("slug", "dien-tu")).first();
+      const thoiTrangCat = await ctx.db.query("productCategories").withIndex("by_slug", q => q.eq("slug", "thoi-trang")).first();
+      const giaDungCat = await ctx.db.query("productCategories").withIndex("by_slug", q => q.eq("slug", "gia-dung")).first();
+      
+      if (dienTuCat && thoiTrangCat && giaDungCat) {
+        const products = [
+          { name: "iPhone 15 Pro Max", sku: "IP15PM-256", slug: "iphone-15-pro-max", categoryId: dienTuCat._id, price: 34990000, salePrice: 32990000, stock: 50, status: "Active" as const, image: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400", sales: 125, description: "iPhone 15 Pro Max 256GB chính hãng Apple", order: 0 },
+          { name: "Samsung Galaxy S24 Ultra", sku: "SS-S24U-512", slug: "samsung-galaxy-s24-ultra", categoryId: dienTuCat._id, price: 33990000, stock: 35, status: "Active" as const, image: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400", sales: 89, description: "Samsung Galaxy S24 Ultra 512GB", order: 1 },
+          { name: "MacBook Pro M3", sku: "MBP-M3-14", slug: "macbook-pro-m3", categoryId: dienTuCat._id, price: 49990000, stock: 20, status: "Active" as const, image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400", sales: 45, description: "MacBook Pro 14 inch chip M3", order: 2 },
+          { name: "Áo Polo Nam Premium", sku: "POLO-NAM-001", slug: "ao-polo-nam-premium", categoryId: thoiTrangCat._id, price: 450000, salePrice: 350000, stock: 200, status: "Active" as const, image: "https://images.unsplash.com/photo-1625910513413-5fc5f8b9920b?w=400", sales: 320, description: "Áo polo nam cao cấp, chất liệu cotton", order: 3 },
+          { name: "Quần Jean Nam Slim Fit", sku: "JEAN-NAM-001", slug: "quan-jean-nam-slim-fit", categoryId: thoiTrangCat._id, price: 650000, stock: 150, status: "Active" as const, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=400", sales: 180, description: "Quần jean nam form slim fit", order: 4 },
+          { name: "Nồi chiên không dầu Philips", sku: "AF-PHILIPS-01", slug: "noi-chien-khong-dau-philips", categoryId: giaDungCat._id, price: 3500000, salePrice: 2990000, stock: 80, status: "Active" as const, image: "https://images.unsplash.com/photo-1585515320310-259814833e62?w=400", sales: 95, description: "Nồi chiên không dầu Philips 4.1L", order: 5 },
+          { name: "Robot hút bụi Xiaomi", sku: "ROBOT-XIAOMI-01", slug: "robot-hut-bui-xiaomi", categoryId: giaDungCat._id, price: 8500000, stock: 5, status: "Active" as const, image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400", sales: 42, description: "Robot hút bụi lau nhà Xiaomi", order: 6 },
+          { name: "Tai nghe AirPods Pro 2", sku: "APP2-2024", slug: "tai-nghe-airpods-pro-2", categoryId: dienTuCat._id, price: 6990000, stock: 0, status: "Draft" as const, image: "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400", sales: 0, description: "Tai nghe AirPods Pro thế hệ 2", order: 7 },
+          { name: "Váy đầm nữ dự tiệc", sku: "DRESS-NU-001", slug: "vay-dam-nu-du-tiec", categoryId: thoiTrangCat._id, price: 890000, stock: 60, status: "Archived" as const, image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400", sales: 75, description: "Váy đầm nữ sang trọng dự tiệc", order: 8 },
+        ];
+        for (const product of products) {
+          await ctx.db.insert("products", product);
+        }
+      }
+    }
+
+    // 3. Seed module features
+    const existingFeatures = await ctx.db.query("moduleFeatures").withIndex("by_module", q => q.eq("moduleKey", "products")).first();
+    if (!existingFeatures) {
+      const features = [
+        { moduleKey: "products", featureKey: "enableSalePrice", name: "Giá khuyến mãi", description: "Hiển thị giá khuyến mãi cho sản phẩm", enabled: true, linkedFieldKey: "salePrice" },
+        { moduleKey: "products", featureKey: "enableGallery", name: "Thư viện ảnh", description: "Cho phép nhiều ảnh sản phẩm", enabled: true, linkedFieldKey: "images" },
+        { moduleKey: "products", featureKey: "enableSKU", name: "Mã SKU", description: "Quản lý mã SKU sản phẩm", enabled: true, linkedFieldKey: "sku" },
+        { moduleKey: "products", featureKey: "enableStock", name: "Quản lý kho", description: "Theo dõi số lượng tồn kho", enabled: true, linkedFieldKey: "stock" },
+      ];
+      for (const feature of features) {
+        await ctx.db.insert("moduleFeatures", feature);
+      }
+    }
+
+    // 4. Seed module fields for products
+    const existingFields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "products")).first();
+    if (!existingFields) {
+      const productFields = [
+        { moduleKey: "products", fieldKey: "name", name: "Tên sản phẩm", type: "text" as const, required: true, enabled: true, isSystem: true, order: 0 },
+        { moduleKey: "products", fieldKey: "slug", name: "Slug", type: "text" as const, required: true, enabled: true, isSystem: true, order: 1 },
+        { moduleKey: "products", fieldKey: "sku", name: "Mã SKU", type: "text" as const, required: true, enabled: true, isSystem: false, linkedFeature: "enableSKU", order: 2 },
+        { moduleKey: "products", fieldKey: "price", name: "Giá bán", type: "price" as const, required: true, enabled: true, isSystem: true, order: 3 },
+        { moduleKey: "products", fieldKey: "salePrice", name: "Giá khuyến mãi", type: "price" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableSalePrice", order: 4 },
+        { moduleKey: "products", fieldKey: "stock", name: "Tồn kho", type: "number" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableStock", order: 5 },
+        { moduleKey: "products", fieldKey: "status", name: "Trạng thái", type: "select" as const, required: true, enabled: true, isSystem: true, order: 6 },
+        { moduleKey: "products", fieldKey: "categoryId", name: "Danh mục", type: "select" as const, required: true, enabled: true, isSystem: true, order: 7 },
+        { moduleKey: "products", fieldKey: "description", name: "Mô tả", type: "richtext" as const, required: false, enabled: true, isSystem: false, order: 8 },
+        { moduleKey: "products", fieldKey: "image", name: "Ảnh đại diện", type: "image" as const, required: false, enabled: true, isSystem: false, order: 9 },
+        { moduleKey: "products", fieldKey: "images", name: "Thư viện ảnh", type: "gallery" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableGallery", order: 10 },
+      ];
+      for (const field of productFields) {
+        await ctx.db.insert("moduleFields", field);
+      }
+
+      // Category fields
+      const categoryFields = [
+        { moduleKey: "productCategories", fieldKey: "name", name: "Tên danh mục", type: "text" as const, required: true, enabled: true, isSystem: true, order: 0 },
+        { moduleKey: "productCategories", fieldKey: "slug", name: "Slug", type: "text" as const, required: true, enabled: true, isSystem: true, order: 1 },
+        { moduleKey: "productCategories", fieldKey: "order", name: "Thứ tự", type: "number" as const, required: true, enabled: true, isSystem: true, order: 2 },
+        { moduleKey: "productCategories", fieldKey: "active", name: "Trạng thái", type: "boolean" as const, required: true, enabled: true, isSystem: true, order: 3 },
+        { moduleKey: "productCategories", fieldKey: "description", name: "Mô tả", type: "textarea" as const, required: false, enabled: true, isSystem: false, order: 4 },
+        { moduleKey: "productCategories", fieldKey: "image", name: "Hình ảnh", type: "image" as const, required: false, enabled: false, isSystem: false, order: 5 },
+      ];
+      for (const field of categoryFields) {
+        await ctx.db.insert("moduleFields", field);
+      }
+    }
+
+    // 5. Seed module settings
+    const existingSettings = await ctx.db.query("moduleSettings").withIndex("by_module", q => q.eq("moduleKey", "products")).first();
+    if (!existingSettings) {
+      await ctx.db.insert("moduleSettings", { moduleKey: "products", settingKey: "productsPerPage", value: 12 });
+      await ctx.db.insert("moduleSettings", { moduleKey: "products", settingKey: "defaultStatus", value: "Draft" });
+      await ctx.db.insert("moduleSettings", { moduleKey: "products", settingKey: "lowStockThreshold", value: 10 });
+    }
+
+    return null;
+  },
+});
+
+// Clear products DATA only (products, categories) - keeps config
+export const clearProductsData = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const products = await ctx.db.query("products").collect();
+    for (const p of products) {
+      await ctx.db.delete(p._id);
+    }
+    const categories = await ctx.db.query("productCategories").collect();
+    for (const cat of categories) {
+      await ctx.db.delete(cat._id);
+    }
+    return null;
+  },
+});
+
+// Clear products module CONFIG (features, fields, settings)
+export const clearProductsConfig = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const features = await ctx.db.query("moduleFeatures").withIndex("by_module", q => q.eq("moduleKey", "products")).collect();
+    for (const f of features) {
+      await ctx.db.delete(f._id);
+    }
+    const fields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "products")).collect();
+    for (const f of fields) {
+      await ctx.db.delete(f._id);
+    }
+    const catFields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "productCategories")).collect();
+    for (const f of catFields) {
+      await ctx.db.delete(f._id);
+    }
+    const settings = await ctx.db.query("moduleSettings").withIndex("by_module", q => q.eq("moduleKey", "products")).collect();
+    for (const s of settings) {
+      await ctx.db.delete(s._id);
+    }
     return null;
   },
 });

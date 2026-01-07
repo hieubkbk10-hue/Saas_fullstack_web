@@ -11,15 +11,15 @@ import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, Ta
 import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
-export default function CategoriesListPage() {
+export default function ProductCategoriesListPage() {
   return (
     <ModuleGuard moduleKey="products">
-      <CategoriesContent />
+      <ProductCategoriesContent />
     </ModuleGuard>
   );
 }
 
-function CategoriesContent() {
+function ProductCategoriesContent() {
   const categoriesData = useQuery(api.productCategories.listAll);
   const productsData = useQuery(api.products.listAll);
   const deleteCategory = useMutation(api.productCategories.remove);
@@ -32,15 +32,6 @@ function CategoriesContent() {
   const [selectedIds, setSelectedIds] = useState<Id<"productCategories">[]>([]);
 
   const isLoading = categoriesData === undefined || productsData === undefined;
-
-  const columns = [
-    { key: 'select', label: 'Chọn' },
-    { key: 'name', label: 'Tên danh mục', required: true },
-    { key: 'slug', label: 'Slug' },
-    { key: 'count', label: 'Số sản phẩm' },
-    { key: 'status', label: 'Trạng thái' },
-    { key: 'actions', label: 'Hành động', required: true }
-  ];
 
   const productCountMap = useMemo(() => {
     const map: Record<string, number> = {};
@@ -57,6 +48,15 @@ function CategoriesContent() {
       count: productCountMap[cat._id] || 0,
     })) || [];
   }, [categoriesData, productCountMap]);
+
+  const columns = [
+    { key: 'select', label: 'Chọn' },
+    { key: 'name', label: 'Tên danh mục', required: true },
+    { key: 'slug', label: 'Slug' },
+    { key: 'count', label: 'Số sản phẩm' },
+    { key: 'status', label: 'Trạng thái' },
+    { key: 'actions', label: 'Hành động', required: true }
+  ];
 
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
@@ -76,14 +76,14 @@ function CategoriesContent() {
 
   const sortedData = useSortableData(filteredData, sortConfig);
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(item => item.id));
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(item => item.id as Id<"productCategories">));
   const toggleSelectItem = (id: Id<"productCategories">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
   const handleDelete = async (id: Id<"productCategories">) => {
     if (confirm('Xóa danh mục này?')) {
       try {
         await deleteCategory({ id });
-        toast.success('Đã xóa danh mục');
+        toast.success('Đã xóa danh mục thành công');
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Không thể xóa danh mục');
       }
@@ -106,14 +106,10 @@ function CategoriesContent() {
 
   const handleReset = async () => {
     if (confirm('Reset dữ liệu danh mục? Tất cả dữ liệu cũ sẽ bị xóa.')) {
-      try {
-        await clearProductsData();
-        await seedProductsModule();
-        setSelectedIds([]);
-        toast.success('Đã reset dữ liệu danh mục');
-      } catch {
-        toast.error('Có lỗi khi reset dữ liệu');
-      }
+      await clearProductsData();
+      await seedProductsModule();
+      setSelectedIds([]);
+      toast.success('Đã reset dữ liệu danh mục');
     }
   };
 
@@ -134,11 +130,11 @@ function CategoriesContent() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Danh mục sản phẩm</h1>
-          <p className="text-sm text-slate-500">Tổ chức cây thư mục cho cửa hàng</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý phân loại sản phẩm</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleReset} className="gap-2"><RefreshCw size={16}/> Reset</Button>
-          <Link href="/admin/categories/create"><Button className="gap-2"><Plus size={16}/> Thêm danh mục</Button></Link>
+          <Link href="/admin/product-categories/create"><Button className="gap-2"><Plus size={16}/> Thêm danh mục</Button></Link>
         </div>
       </div>
 
@@ -146,27 +142,35 @@ function CategoriesContent() {
       
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between">
-          <div className="relative max-w-xs flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm danh mục..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <div className="flex gap-4 flex-1">
+            <div className="relative max-w-xs flex-1">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Input placeholder="Tìm kiếm danh mục..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            </div>
           </div>
           <ColumnToggle columns={columns} visibleColumns={visibleColumns} onToggle={toggleColumn} />
         </div>
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === sortedData.length && sortedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedData.length} /></TableHead>}
+              {visibleColumns.includes('select') && (
+                <TableHead className="w-[40px]">
+                  <SelectCheckbox checked={selectedIds.length === sortedData.length && sortedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedData.length} />
+                </TableHead>
+              )}
               {visibleColumns.includes('name') && <SortableHeader label="Tên danh mục" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('slug') && <SortableHeader label="Slug" sortKey="slug" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('count') && <SortableHeader label="Số sản phẩm" sortKey="count" sortConfig={sortConfig} onSort={handleSort} className="text-center" />}
-              {visibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="active" sortConfig={sortConfig} onSort={handleSort} />}
+              {visibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('actions') && <TableHead className="text-right">Hành động</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedData.map(cat => (
               <TableRow key={cat.id} className={selectedIds.includes(cat.id) ? 'bg-orange-500/5' : ''}>
-                {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(cat.id)} onChange={() => toggleSelectItem(cat.id)} /></TableCell>}
+                {visibleColumns.includes('select') && (
+                  <TableCell><SelectCheckbox checked={selectedIds.includes(cat.id)} onChange={() => toggleSelectItem(cat.id)} /></TableCell>
+                )}
                 {visibleColumns.includes('name') && (
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
@@ -186,8 +190,8 @@ function CategoriesContent() {
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem trên web" onClick={() => openFrontend(cat.slug)}><ExternalLink size={16}/></Button>
-                      <Link href={`/admin/categories/${cat.id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(cat.id)}><Trash2 size={16}/></Button>
+                      <Link href={`/admin/product-categories/${cat.id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
+                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(cat.id as Id<"productCategories">)}><Trash2 size={16}/></Button>
                     </div>
                   </TableCell>
                 )}

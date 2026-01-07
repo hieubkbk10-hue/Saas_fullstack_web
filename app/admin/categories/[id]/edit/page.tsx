@@ -1,43 +1,100 @@
 'use client';
 
-import React, { useState, use } from 'react';
+import React, { useState, use, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ExternalLink } from 'lucide-react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, Input, Label, Badge, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, cn } from '../../../components/ui';
-import { mockCategories, mockProducts } from '../../../mockData';
+
+const MODULE_KEY = 'productCategories';
 
 export default function CategoryEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const currentCategory = mockCategories.find(c => c.id === id);
-  
-  const [activeTab, setActiveTab] = useState('info');
-  const [name, setName] = useState(currentCategory?.name || '');
-  const [parent, setParent] = useState(currentCategory?.parent || '');
-  const [slug] = useState(currentCategory?.slug || '');
 
-  if (!currentCategory) {
+  const categoryData = useQuery(api.productCategories.getById, { id: id as Id<"productCategories"> });
+  const categoriesData = useQuery(api.productCategories.listAll);
+  const productsData = useQuery(api.products.listAll);
+  const updateCategory = useMutation(api.productCategories.update);
+  const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
+
+  const [activeTab, setActiveTab] = useState('info');
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [description, setDescription] = useState('');
+  const [parentId, setParentId] = useState('');
+  const [active, setActive] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const enabledFields = useMemo(() => {
+    const fields = new Set<string>();
+    fieldsData?.forEach(f => fields.add(f.fieldKey));
+    return fields;
+  }, [fieldsData]);
+
+  useEffect(() => {
+    if (categoryData) {
+      setName(categoryData.name);
+      setSlug(categoryData.slug);
+      setDescription(categoryData.description || '');
+      setParentId(categoryData.parentId || '');
+      setActive(categoryData.active);
+    }
+  }, [categoryData]);
+
+  const relatedProducts = useMemo(() => {
+    return productsData?.filter(p => p.categoryId === id) || [];
+  }, [productsData, id]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      await updateCategory({
+        id: id as Id<"productCategories">,
+        name: name.trim(),
+        slug: slug.trim(),
+        description: description.trim() || undefined,
+        parentId: parentId ? parentId as Id<"productCategories"> : undefined,
+        active,
+      });
+      toast.success('Cập nhật danh mục thành công');
+      router.push('/admin/categories');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không thể cập nhật danh mục');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (categoryData === undefined) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-orange-500" />
+      </div>
+    );
+  }
+
+  if (categoryData === null) {
     return <div className="text-center py-8 text-slate-500">Không tìm thấy danh mục</div>;
   }
 
-  const relatedProducts = mockProducts.filter(p => p.category === currentCategory.name);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Đã cập nhật danh mục");
-    router.push('/admin/categories');
-  };
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Chỉnh sửa danh mục</h1>
-          <Link href="/admin/categories" className="text-sm text-blue-600 hover:underline">Quay lại danh sách</Link>
+          <Link href="/admin/categories" className="text-sm text-orange-600 hover:underline">Quay lại danh sách</Link>
         </div>
-        <Button variant="outline" className="gap-2" onClick={() => window.open(`https://example.com/shop/category/${slug}`, '_blank')}>
+        <Button variant="outline" className="gap-2" onClick={() => window.open(`/category/${slug}`, '_blank')}>
           <ExternalLink size={16}/> Xem trên web
         </Button>
       </div>
@@ -47,7 +104,7 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
           onClick={() => setActiveTab('info')}
           className={cn(
             "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
-            activeTab === 'info' ? "border-blue-500 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-700"
+            activeTab === 'info' ? "border-orange-500 text-orange-600" : "border-transparent text-slate-500 hover:text-slate-700"
           )}
         >
           Thông tin chung
@@ -56,7 +113,7 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
           onClick={() => setActiveTab('products')}
           className={cn(
             "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
-            activeTab === 'products' ? "border-blue-500 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-700"
+            activeTab === 'products' ? "border-orange-500 text-orange-600" : "border-transparent text-slate-500 hover:text-slate-700"
           )}
         >
           Sản phẩm thuộc danh mục <Badge variant="secondary" className="ml-1">{relatedProducts.length}</Badge>
@@ -71,25 +128,57 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
                 <Label>Tên danh mục <span className="text-red-500">*</span></Label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Ví dụ: Điện thoại, Áo sơ mi..." autoFocus />
               </div>
+
+              <div className="space-y-2">
+                <Label>Slug</Label>
+                <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="slug" className="font-mono text-sm" />
+              </div>
               
               <div className="space-y-2">
                 <Label>Danh mục cha</Label>
                 <select 
-                  value={parent}
-                  onChange={(e) => setParent(e.target.value)}
+                  value={parentId}
+                  onChange={(e) => setParentId(e.target.value)}
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
                   <option value="">-- Không có (Danh mục gốc) --</option>
-                  {mockCategories.filter(c => c.id !== id).map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  {categoriesData?.filter(c => c._id !== id).map(cat => (
+                    <option key={cat._id} value={cat._id}>{cat.name}</option>
                   ))}
+                </select>
+              </div>
+
+              {enabledFields.has('description') && (
+                <div className="space-y-2">
+                  <Label>Mô tả</Label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Mô tả ngắn về danh mục..."
+                    className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>Trạng thái</Label>
+                <select 
+                  value={active ? 'active' : 'inactive'}
+                  onChange={(e) => setActive(e.target.value === 'active')}
+                  className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                >
+                  <option value="active">Hoạt động</option>
+                  <option value="inactive">Ẩn</option>
                 </select>
               </div>
             </CardContent>
             
             <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
               <Button type="button" variant="ghost" onClick={() => router.push('/admin/categories')}>Hủy bỏ</Button>
-              <Button type="submit" variant="accent">Lưu thay đổi</Button>
+              <Button type="submit" variant="accent" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
+                Lưu thay đổi
+              </Button>
             </div>
           </form>
         </Card>
@@ -102,18 +191,36 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
                 <TableHead>Tên sản phẩm</TableHead>
                 <TableHead>Giá bán</TableHead>
                 <TableHead>Kho</TableHead>
+                <TableHead>Trạng thái</TableHead>
                 <TableHead className="text-right">Hành động</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {relatedProducts.map(prod => (
-                <TableRow key={prod.id}>
-                  <TableCell><img src={prod.image} className="w-10 h-10 object-cover rounded bg-slate-100" alt="" /></TableCell>
+                <TableRow key={prod._id}>
+                  <TableCell>
+                    {prod.image ? (
+                      <img src={prod.image} className="w-10 h-10 object-cover rounded bg-slate-100" alt="" />
+                    ) : (
+                      <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded" />
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium">{prod.name}</TableCell>
-                  <TableCell>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(prod.price)}</TableCell>
-                  <TableCell>{prod.stock}</TableCell>
+                  <TableCell>
+                    {prod.salePrice ? (
+                      <span className="text-red-500">{formatPrice(prod.salePrice)}</span>
+                    ) : (
+                      formatPrice(prod.price)
+                    )}
+                  </TableCell>
+                  <TableCell className={prod.stock < 10 ? 'text-red-500 font-medium' : ''}>{prod.stock}</TableCell>
+                  <TableCell>
+                    <Badge variant={prod.status === 'Active' ? 'success' : 'secondary'}>
+                      {prod.status === 'Active' ? 'Đang bán' : prod.status === 'Draft' ? 'Nháp' : 'Lưu trữ'}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-right">
-                    <Link href={`/admin/products/${prod.id}/edit`}>
+                    <Link href={`/admin/products/${prod._id}/edit`}>
                       <Button variant="ghost" size="sm" className="h-8">Sửa</Button>
                     </Link>
                   </TableCell>
@@ -121,7 +228,7 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
               ))}
               {relatedProducts.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                  <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                     Chưa có sản phẩm nào trong danh mục này.
                   </TableCell>
                 </TableRow>

@@ -1,134 +1,289 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Upload } from 'lucide-react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { Upload, Loader2, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn, Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../components/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../components/ui';
 import { LexicalEditor } from '../../components/LexicalEditor';
-import { mockCategories } from '../../mockData';
+
+function QuickCreateCategoryModal({ 
+  isOpen, 
+  onClose, 
+  onCreated 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onCreated: (id: string) => void;
+}) {
+  const createCategory = useMutation(api.productCategories.create);
+  const [name, setName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      const slug = name.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[đĐ]/g, "d")
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '-');
+      
+      const id = await createCategory({
+        name: name.trim(),
+        slug,
+        active: true,
+      });
+      toast.success('Tạo danh mục thành công');
+      onCreated(id);
+      setName('');
+      onClose();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không thể tạo danh mục');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Tạo danh mục nhanh</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <X size={20} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Tên danh mục <span className="text-red-500">*</span></Label>
+              <Input 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                required 
+                placeholder="VD: Điện thoại, Laptop..." 
+                autoFocus 
+              />
+              <p className="text-xs text-slate-500">Slug sẽ được tạo tự động từ tên</p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 mt-6">
+            <Button type="button" variant="ghost" onClick={onClose}>Hủy</Button>
+            <Button type="submit" variant="accent" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
+              Tạo danh mục
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+const MODULE_KEY = 'products';
 
 export default function ProductCreatePage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('general');
+  const categoriesData = useQuery(api.productCategories.listAll);
+  const createProduct = useMutation(api.products.create);
+  const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [sku, setSku] = useState('');
+  const [price, setPrice] = useState('');
+  const [salePrice, setSalePrice] = useState('');
+  const [stock, setStock] = useState('0');
+  const [categoryId, setCategoryId] = useState('');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState<'Draft' | 'Active' | 'Archived'>('Draft');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+
+  const enabledFields = useMemo(() => {
+    const fields = new Set<string>();
+    fieldsData?.forEach(f => fields.add(f.fieldKey));
+    return fields;
+  }, [fieldsData]);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setName(val);
+    const generatedSlug = val.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[đĐ]/g, "d")
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, '-');
+    setSlug(generatedSlug);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Đã tạo sản phẩm mới");
-    router.push('/admin/products');
-  }
+    
+    // Validate required fields
+    if (!name.trim() || !categoryId || !price) {
+      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
+      return;
+    }
+    // SKU required only if field is enabled
+    if (enabledFields.has('sku') && !sku.trim()) {
+      toast.error('Vui lòng nhập mã SKU');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await createProduct({
+        name: name.trim(),
+        slug: slug.trim() || name.toLowerCase().replace(/\s+/g, '-'),
+        sku: sku.trim() || `SKU-${Date.now()}`, // Auto-generate if not provided
+        price: parseInt(price) || 0,
+        salePrice: salePrice ? parseInt(salePrice) : undefined,
+        stock: parseInt(stock) || 0,
+        categoryId: categoryId as Id<"productCategories">,
+        description: description.trim() || undefined,
+        status,
+      });
+      toast.success("Tạo sản phẩm mới thành công");
+      router.push('/admin/products');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể tạo sản phẩm");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
+    <>
+    <QuickCreateCategoryModal 
+      isOpen={showCategoryModal} 
+      onClose={() => setShowCategoryModal(false)} 
+      onCreated={(id) => setCategoryId(id)}
+    />
     <form onSubmit={handleSubmit} className="space-y-6 pb-20">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Thêm sản phẩm mới</h1>
-          <div className="text-sm text-slate-500 mt-1">Tạo mới sản phẩm vào kho hàng</div>
+          <Link href="/admin/products" className="text-sm text-orange-600 hover:underline">Quay lại danh sách</Link>
         </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-16 z-10 flex gap-6 px-4">
-            {['general', 'pricing', 'images'].map(tab => (
-              <button 
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={cn(
-                  "py-3 text-sm font-medium border-b-2 transition-colors capitalize",
-                  activeTab === tab ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-800"
+          <Card>
+            <CardHeader><CardTitle className="text-base">Thông tin cơ bản</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Tên sản phẩm <span className="text-red-500">*</span></Label>
+                <Input value={name} onChange={handleNameChange} required placeholder="Nhập tên sản phẩm..." autoFocus />
+              </div>
+              <div className={enabledFields.has('sku') ? "grid grid-cols-2 gap-4" : ""}>
+                <div className="space-y-2">
+                  <Label>Slug</Label>
+                  <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="tu-dong-tao-tu-ten" className="font-mono text-sm" />
+                </div>
+                {enabledFields.has('sku') && (
+                  <div className="space-y-2">
+                    <Label>Mã SKU <span className="text-red-500">*</span></Label>
+                    <Input value={sku} onChange={(e) => setSku(e.target.value)} required placeholder="VD: PROD-001" className="font-mono" />
+                  </div>
                 )}
-              >
-                {tab === 'general' ? 'Thông tin chung' : tab === 'pricing' ? 'Giá & Kho' : 'Hình ảnh'}
-              </button>
-            ))}
-          </div>
+              </div>
+              {enabledFields.has('description') && (
+                <div className="space-y-2">
+                  <Label>Mô tả sản phẩm</Label>
+                  <LexicalEditor onChange={setDescription} />
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-          <div className="space-y-6">
-            {activeTab === 'general' && (
-              <Card>
-                <CardContent className="p-6 space-y-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Giá & Kho hàng</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className={enabledFields.has('salePrice') ? "grid grid-cols-2 gap-4" : ""}>
+                <div className="space-y-2">
+                  <Label>Giá bán (VNĐ) <span className="text-red-500">*</span></Label>
+                  <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} required placeholder="0" min="0" />
+                </div>
+                {enabledFields.has('salePrice') && (
                   <div className="space-y-2">
-                    <Label>Tên sản phẩm</Label>
-                    <Input required placeholder="Nhập tên sản phẩm..." />
+                    <Label>Giá khuyến mãi (VNĐ)</Label>
+                    <Input type="number" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} placeholder="Để trống nếu không KM" min="0" />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Mã SKU</Label>
-                    <Input placeholder="VD: SKU-12345" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Mô tả chi tiết</Label>
-                    <LexicalEditor />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {activeTab === 'pricing' && (
-              <Card>
-                <CardContent className="p-6 space-y-6">
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label>Giá bán (VNĐ)</Label>
-                      <Input type="number" required placeholder="0" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Giá khuyến mãi (VNĐ)</Label>
-                      <Input type="number" placeholder="Nhập 0 nếu không giảm" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Số lượng tồn kho</Label>
-                      <Input type="number" placeholder="0" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {activeTab === 'images' && (
-              <Card>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-4 gap-4 mb-4">
-                    {[1,2,3,4].map(i => (
-                      <div key={i} className="aspect-square bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center">
-                        <Upload className="text-slate-400" />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                    <Upload size={24} className="text-slate-400 mb-2"/>
-                    <span className="text-sm text-slate-500">Kéo thả hoặc click để tải thêm ảnh</span>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                )}
+              </div>
+              {enabledFields.has('stock') && (
+                <div className="space-y-2">
+                  <Label>Số lượng tồn kho</Label>
+                  <Input type="number" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="0" min="0" />
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
         
         <div className="space-y-6">
           <Card>
-            <CardHeader><CardTitle className="text-base">Phân loại</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">Xuất bản</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Trạng thái</Label>
-                <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
-                  <option value="Active">Đang bán</option>
+                <select 
+                  value={status} 
+                  onChange={(e) => setStatus(e.target.value as 'Draft' | 'Active' | 'Archived')}
+                  className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                >
                   <option value="Draft">Bản nháp</option>
-                  <option value="Archived">Ngừng kinh doanh</option>
+                  <option value="Active">Đang bán</option>
+                  <option value="Archived">Lưu trữ</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <Label>Danh mục sản phẩm</Label>
-                <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
-                  {mockCategories.map(cat => (
-                    <option key={cat.id} value={cat.name}>{cat.name}</option>
-                  ))}
-                </select>
+                <Label>Danh mục <span className="text-red-500">*</span></Label>
+                <div className="flex gap-2">
+                  <select 
+                    value={categoryId} 
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    required
+                    className="flex-1 h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                  >
+                    <option value="">-- Chọn danh mục --</option>
+                    {categoriesData?.filter(c => c.active).map(cat => (
+                      <option key={cat._id} value={cat._id}>{cat.name}</option>
+                    ))}
+                  </select>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => setShowCategoryModal(true)}
+                    title="Tạo danh mục mới"
+                  >
+                    <Plus size={16} />
+                  </Button>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Tags</Label>
-                <Input placeholder="Nhập tag và nhấn Enter" />
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader><CardTitle className="text-base">Ảnh sản phẩm</CardTitle></CardHeader>
+            <CardContent>
+              <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <Upload size={24} className="text-slate-400 mb-2"/>
+                <span className="text-sm text-slate-500">Kéo thả hoặc click để tải lên</span>
               </div>
             </CardContent>
           </Card>
@@ -138,10 +293,14 @@ export default function ProductCreatePage() {
       <div className="fixed bottom-0 left-0 lg:left-[280px] right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center z-10">
         <Button type="button" variant="ghost" onClick={() => router.push('/admin/products')}>Hủy bỏ</Button>
         <div className="flex gap-2">
-          <Button type="button" variant="secondary">Lưu nháp</Button>
-          <Button type="submit" variant="accent">Tạo sản phẩm</Button>
+          <Button type="button" variant="secondary" onClick={() => setStatus('Draft')}>Lưu nháp</Button>
+          <Button type="submit" variant="accent" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
+            Tạo sản phẩm
+          </Button>
         </div>
       </div>
     </form>
-  )
+    </>
+  );
 }

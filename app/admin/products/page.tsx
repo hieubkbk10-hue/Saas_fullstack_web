@@ -1,13 +1,17 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, ExternalLink, Search } from 'lucide-react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, RefreshCw, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
-import { mockProducts, mockCategories } from '../mockData';
+
+const MODULE_KEY = 'products';
 
 export default function ProductsListPage() {
   return (
@@ -18,25 +22,77 @@ export default function ProductsListPage() {
 }
 
 function ProductsContent() {
-  const [products, setProducts] = useState(mockProducts);
+  const productsData = useQuery(api.products.listAll);
+  const categoriesData = useQuery(api.productCategories.listAll);
+  const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
+  const deleteProduct = useMutation(api.products.remove);
+  const seedProductsModule = useMutation(api.seed.seedProductsModule);
+  const clearProductsData = useMutation(api.seed.clearProductsData);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
-  const [visibleColumns, setVisibleColumns] = useState(['select', 'image', 'name', 'sku', 'price', 'stock', 'status', 'actions']);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Id<"products">[]>([]);
 
-  const columns = [
-    { key: 'select', label: 'Chọn' },
-    { key: 'image', label: 'Ảnh' },
-    { key: 'name', label: 'Tên sản phẩm', required: true },
-    { key: 'sku', label: 'SKU' },
-    { key: 'category', label: 'Danh mục' },
-    { key: 'price', label: 'Giá bán' },
-    { key: 'stock', label: 'Tồn kho' },
-    { key: 'status', label: 'Trạng thái' },
-    { key: 'actions', label: 'Hành động', required: true }
-  ];
+  const isLoading = productsData === undefined || categoriesData === undefined || fieldsData === undefined;
+
+  // Get enabled fields from system config
+  const enabledFields = useMemo(() => {
+    const fields = new Set<string>();
+    fieldsData?.forEach(f => fields.add(f.fieldKey));
+    return fields;
+  }, [fieldsData]);
+
+  // Build columns based on enabled fields
+  const columns = useMemo(() => {
+    const cols = [
+      { key: 'select', label: 'Chọn' },
+      { key: 'image', label: 'Ảnh' },
+      { key: 'name', label: 'Tên sản phẩm', required: true },
+    ];
+    
+    if (enabledFields.has('sku')) cols.push({ key: 'sku', label: 'SKU' });
+    cols.push({ key: 'category', label: 'Danh mục' });
+    cols.push({ key: 'price', label: 'Giá bán' });
+    if (enabledFields.has('stock')) cols.push({ key: 'stock', label: 'Tồn kho' });
+    cols.push({ key: 'status', label: 'Trạng thái' });
+    cols.push({ key: 'actions', label: 'Hành động', required: true });
+    
+    return cols;
+  }, [enabledFields]);
+
+  // Initialize visible columns when columns change
+  useEffect(() => {
+    if (columns.length > 0 && visibleColumns.length === 0) {
+      setVisibleColumns(columns.map(c => c.key));
+    }
+  }, [columns, visibleColumns.length]);
+
+  // Update visible columns when fields change
+  useEffect(() => {
+    if (fieldsData !== undefined) {
+      setVisibleColumns(prev => {
+        const validKeys = columns.map(c => c.key);
+        return prev.filter(key => validKeys.includes(key));
+      });
+    }
+  }, [fieldsData, columns]);
+
+  const categoryMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    categoriesData?.forEach(cat => { map[cat._id] = cat.name; });
+    return map;
+  }, [categoriesData]);
+
+  const products = useMemo(() => {
+    return productsData?.map(p => ({
+      ...p,
+      id: p._id,
+      category: categoryMap[p.categoryId] || 'Không có',
+    })) || [];
+  }, [productsData, categoryMap]);
 
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
@@ -49,40 +105,77 @@ function ProductsContent() {
   const filteredData = useMemo(() => {
     let data = [...products];
     if (searchTerm) {
-      data = data.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
+      data = data.filter(p => {
+        const matchName = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchSku = enabledFields.has('sku') && p.sku.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchName || matchSku;
+      });
     }
     if (filterCategory) {
-      data = data.filter(p => p.category === filterCategory);
+      data = data.filter(p => p.categoryId === filterCategory);
     }
     if (filterStatus) {
       data = data.filter(p => p.status === filterStatus);
     }
     return data;
-  }, [products, searchTerm, filterCategory, filterStatus]);
+  }, [products, searchTerm, filterCategory, filterStatus, enabledFields]);
 
   const sortedData = useSortableData(filteredData, sortConfig);
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(p => p.id));
-  const toggleSelectItem = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(p => p._id));
+  const toggleSelectItem = (id: Id<"products">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
-  const openFrontend = (id: string) => {
-    window.open(`https://example.com/product/${id}`, '_blank');
+  const openFrontend = (slug: string) => {
+    window.open(`/product/${slug}`, '_blank');
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: Id<"products">) => {
     if (confirm('Xóa sản phẩm này?')) {
-      setProducts(prev => prev.filter(p => p.id !== id));
-      toast.success('Đã xóa sản phẩm');
+      try {
+        await deleteProduct({ id });
+        toast.success('Đã xóa sản phẩm');
+      } catch {
+        toast.error('Có lỗi khi xóa sản phẩm');
+      }
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} sản phẩm đã chọn?`)) {
-      setProducts(prev => prev.filter(p => !selectedIds.includes(p.id)));
-      setSelectedIds([]);
-      toast.success(`Đã xóa ${selectedIds.length} sản phẩm`);
+      try {
+        for (const id of selectedIds) {
+          await deleteProduct({ id });
+        }
+        setSelectedIds([]);
+        toast.success(`Đã xóa ${selectedIds.length} sản phẩm`);
+      } catch {
+        toast.error('Có lỗi khi xóa sản phẩm');
+      }
     }
   };
+
+  const handleReset = async () => {
+    if (confirm('Xóa tất cả sản phẩm và seed lại dữ liệu mẫu?')) {
+      try {
+        await clearProductsData();
+        await seedProductsModule();
+        setSelectedIds([]);
+        toast.success('Đã reset dữ liệu sản phẩm');
+      } catch {
+        toast.error('Có lỗi khi reset dữ liệu');
+      }
+    }
+  };
+
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-orange-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -91,7 +184,12 @@ function ProductsContent() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Sản phẩm</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý kho hàng và thông tin sản phẩm</p>
         </div>
-        <Link href="/admin/products/create"><Button className="gap-2"><Plus size={16}/> Thêm sản phẩm</Button></Link>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleReset} title="Reset dữ liệu mẫu">
+            <RefreshCw size={16}/> Reset
+          </Button>
+          <Link href="/admin/products/create"><Button className="gap-2"><Plus size={16}/> Thêm sản phẩm</Button></Link>
+        </div>
       </div>
 
       <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
@@ -101,11 +199,16 @@ function ProductsContent() {
           <div className="flex flex-wrap gap-3 flex-1">
             <div className="relative max-w-xs">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input placeholder="Tìm tên, SKU..." className="pl-9 w-48" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <Input 
+                placeholder={enabledFields.has('sku') ? "Tìm tên, SKU..." : "Tìm tên sản phẩm..."} 
+                className="pl-9 w-48" 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+              />
             </div>
             <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
               <option value="">Tất cả danh mục</option>
-              {mockCategories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+              {categoriesData?.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
             </select>
             <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
               <option value="">Tất cả trạng thái</option>
@@ -122,27 +225,50 @@ function ProductsContent() {
               {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === sortedData.length && sortedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedData.length} /></TableHead>}
               {visibleColumns.includes('image') && <TableHead className="w-[60px]">Ảnh</TableHead>}
               {visibleColumns.includes('name') && <SortableHeader label="Tên sản phẩm" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('sku') && <SortableHeader label="SKU" sortKey="sku" sortConfig={sortConfig} onSort={handleSort} />}
+              {visibleColumns.includes('sku') && enabledFields.has('sku') && <SortableHeader label="SKU" sortKey="sku" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('category') && <SortableHeader label="Danh mục" sortKey="category" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('price') && <SortableHeader label="Giá bán" sortKey="price" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('stock') && <SortableHeader label="Tồn kho" sortKey="stock" sortConfig={sortConfig} onSort={handleSort} />}
+              {visibleColumns.includes('stock') && enabledFields.has('stock') && <SortableHeader label="Tồn kho" sortKey="stock" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('actions') && <TableHead className="text-right">Hành động</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedData.map(product => (
-              <TableRow key={product.id} className={selectedIds.includes(product.id) ? 'bg-blue-500/5' : ''}>
-                {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(product.id)} onChange={() => toggleSelectItem(product.id)} /></TableCell>}
-                {visibleColumns.includes('image') && <TableCell><img src={product.image} className="w-10 h-10 object-cover rounded bg-slate-100" alt="" /></TableCell>}
-                {visibleColumns.includes('name') && <TableCell className="font-medium">{product.name}</TableCell>}
-                {visibleColumns.includes('sku') && <TableCell className="font-mono text-xs text-slate-500">{product.sku}</TableCell>}
+              <TableRow key={product._id} className={selectedIds.includes(product._id) ? 'bg-orange-500/5' : ''}>
+                {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(product._id)} onChange={() => toggleSelectItem(product._id)} /></TableCell>}
+                {visibleColumns.includes('image') && (
+                  <TableCell>
+                    {product.image ? (
+                      <img src={product.image} className="w-10 h-10 object-cover rounded bg-slate-100" alt="" />
+                    ) : (
+                      <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
+                        <Package size={16} className="text-slate-400" />
+                      </div>
+                    )}
+                  </TableCell>
+                )}
+                {visibleColumns.includes('name') && <TableCell className="font-medium max-w-[200px] truncate">{product.name}</TableCell>}
+                {visibleColumns.includes('sku') && enabledFields.has('sku') && <TableCell className="font-mono text-xs text-slate-500">{product.sku}</TableCell>}
                 {visibleColumns.includes('category') && <TableCell>{product.category}</TableCell>}
-                {visibleColumns.includes('price') && <TableCell>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</TableCell>}
-                {visibleColumns.includes('stock') && <TableCell className={product.stock < 10 ? 'text-red-500 font-medium' : ''}>{product.stock}</TableCell>}
+                {visibleColumns.includes('price') && (
+                  <TableCell>
+                    <div>
+                      {product.salePrice && enabledFields.has('salePrice') ? (
+                        <>
+                          <span className="text-red-500 font-medium">{formatPrice(product.salePrice)}</span>
+                          <span className="text-slate-400 line-through text-xs ml-1">{formatPrice(product.price)}</span>
+                        </>
+                      ) : (
+                        <span>{formatPrice(product.price)}</span>
+                      )}
+                    </div>
+                  </TableCell>
+                )}
+                {visibleColumns.includes('stock') && enabledFields.has('stock') && <TableCell className={product.stock < 10 ? 'text-red-500 font-medium' : ''}>{product.stock}</TableCell>}
                 {visibleColumns.includes('status') && (
                   <TableCell>
-                    <Badge variant={product.status === 'Active' ? 'success' : 'secondary'}>
+                    <Badge variant={product.status === 'Active' ? 'success' : product.status === 'Draft' ? 'secondary' : 'warning'}>
                       {product.status === 'Active' ? 'Đang bán' : product.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ'}
                     </Badge>
                   </TableCell>
@@ -150,9 +276,9 @@ function ProductsContent() {
                 {visibleColumns.includes('actions') && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem trên web" onClick={() => openFrontend(product.id)}><ExternalLink size={16}/></Button>
-                      <Link href={`/admin/products/${product.id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(product.id)}><Trash2 size={16}/></Button>
+                      <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem trên web" onClick={() => openFrontend(product.slug)}><ExternalLink size={16}/></Button>
+                      <Link href={`/admin/products/${product._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
+                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(product._id)}><Trash2 size={16}/></Button>
                     </div>
                   </TableCell>
                 )}
@@ -160,8 +286,8 @@ function ProductsContent() {
             ))}
             {sortedData.length === 0 && (
               <TableRow>
-                <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-slate-500">
-                  {searchTerm || filterCategory || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có sản phẩm nào'}
+                <TableCell colSpan={columns.length} className="text-center py-8 text-slate-500">
+                  {searchTerm || filterCategory || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có sản phẩm nào. Nhấn Reset để tạo dữ liệu mẫu.'}
                 </TableCell>
               </TableRow>
             )}
