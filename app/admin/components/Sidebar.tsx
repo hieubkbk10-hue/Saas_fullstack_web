@@ -281,9 +281,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                 {!isSidebarCollapsed && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Media</div>}
                 <SidebarItem 
                   icon={ImageIcon} 
-                  label="Thư viện ảnh" 
-                  href="/admin/images" 
-                  active={isActive('/admin/images')} 
+                  label="Thư viện Media" 
+                  href="/admin/media" 
+                  active={isActive('/admin/media')} 
                   isCollapsed={isSidebarCollapsed}
                   isExpanded={false}
                   onToggle={() => {}}

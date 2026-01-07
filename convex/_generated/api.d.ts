@@ -17,7 +17,6 @@ import type * as convexDashboard from "../convexDashboard.js";
 import type * as customers from "../customers.js";
 import type * as dataManager from "../dataManager.js";
 import type * as homeComponents from "../homeComponents.js";
-import type * as images from "../images.js";
 import type * as lib_helpers from "../lib/helpers.js";
 import type * as lib_validators from "../lib/validators.js";
 import type * as media from "../media.js";
@@ -52,7 +51,6 @@ declare const fullApi: ApiFromModules<{
   customers: typeof customers;
   dataManager: typeof dataManager;
   homeComponents: typeof homeComponents;
-  images: typeof images;
   "lib/helpers": typeof lib_helpers;
   "lib/validators": typeof lib_validators;
   media: typeof media;

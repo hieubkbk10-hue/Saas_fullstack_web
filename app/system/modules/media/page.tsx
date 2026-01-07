@@ -172,26 +172,41 @@ export default function MediaModuleConfigPage() {
 
   // Data tab handlers
   const handleSeedConfig = async () => {
-    toast.loading('Đang tạo cấu hình...');
-    await seedMediaModule();
-    toast.dismiss();
-    toast.success('Đã tạo cấu hình thành công!');
+    try {
+      toast.loading('Đang tạo cấu hình...');
+      await seedMediaModule();
+      toast.dismiss();
+      toast.success('Đã tạo cấu hình thành công!');
+    } catch {
+      toast.dismiss();
+      toast.error('Có lỗi xảy ra khi tạo cấu hình');
+    }
   };
 
   const handleClearData = async () => {
     if (!confirm('Xóa toàn bộ media? Thao tác này không thể hoàn tác.')) return;
-    toast.loading('Đang xóa dữ liệu...');
-    await clearMediaData();
-    toast.dismiss();
-    toast.success('Đã xóa toàn bộ media!');
+    try {
+      toast.loading('Đang xóa dữ liệu...');
+      await clearMediaData();
+      toast.dismiss();
+      toast.success('Đã xóa toàn bộ media!');
+    } catch {
+      toast.dismiss();
+      toast.error('Có lỗi xảy ra khi xóa dữ liệu');
+    }
   };
 
   const handleResetAll = async () => {
     if (!confirm('Reset cấu hình về mặc định?')) return;
-    toast.loading('Đang reset...');
-    await seedMediaModule();
-    toast.dismiss();
-    toast.success('Đã reset cấu hình thành công!');
+    try {
+      toast.loading('Đang reset...');
+      await seedMediaModule();
+      toast.dismiss();
+      toast.success('Đã reset cấu hình thành công!');
+    } catch {
+      toast.dismiss();
+      toast.error('Có lỗi xảy ra khi reset cấu hình');
+    }
   };
 
   if (isLoading) {
