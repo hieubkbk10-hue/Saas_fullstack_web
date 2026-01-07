@@ -171,9 +171,56 @@ export const updateStats = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("customers") },
+  args: { id: v.id("customers"), cascadeOrders: v.optional(v.boolean()) },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const customer = await ctx.db.get(args.id);
+    if (!customer) throw new Error("Customer not found");
+
+    // Check for related orders
+    const orders = await ctx.db
+      .query("orders")
+      .withIndex("by_customer", (q) => q.eq("customerId", args.id))
+      .collect();
+
+    if (orders.length > 0) {
+      if (args.cascadeOrders) {
+        // Cascade delete all orders
+        for (const order of orders) {
+          await ctx.db.delete(order._id);
+        }
+      } else {
+        throw new Error(`Không thể xóa khách hàng vì còn ${orders.length} đơn hàng liên quan. Vui lòng xóa đơn hàng trước hoặc chọn cascade delete.`);
+      }
+    }
+
+    // Delete related carts
+    const carts = await ctx.db
+      .query("carts")
+      .withIndex("by_customer", (q) => q.eq("customerId", args.id))
+      .collect();
+    for (const cart of carts) {
+      await ctx.db.delete(cart._id);
+    }
+
+    // Delete related wishlist items
+    const wishlistItems = await ctx.db
+      .query("wishlist")
+      .withIndex("by_customer", (q) => q.eq("customerId", args.id))
+      .collect();
+    for (const item of wishlistItems) {
+      await ctx.db.delete(item._id);
+    }
+
+    // Delete related comments
+    const comments = await ctx.db
+      .query("comments")
+      .withIndex("by_customer", (q) => q.eq("customerId", args.id))
+      .collect();
+    for (const comment of comments) {
+      await ctx.db.delete(comment._id);
+    }
+
     await ctx.db.delete(args.id);
     return null;
   },

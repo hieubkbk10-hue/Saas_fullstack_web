@@ -1,29 +1,136 @@
 'use client';
 
-import React, { useState, use } from 'react';
+import React, { useState, useEffect, useMemo, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User as UserIcon } from 'lucide-react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { User as UserIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn, Button, Card, CardHeader, CardTitle, CardContent, Input, Label, Badge, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../../components/ui';
-import { mockCustomers, mockOrders } from '../../../mockData';
+
+const MODULE_KEY = 'customers';
+
+const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+interface FormData {
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+  address: string;
+  notes: string;
+  status: 'Active' | 'Inactive';
+}
 
 export default function CustomerEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const customer = mockCustomers.find(c => c.id === id);
-  const customerOrders = mockOrders.filter(o => o.customerId === id);
-  const [activeTab, setActiveTab] = useState('profile');
 
-  if (!customer) {
-    return <div className="text-center py-8 text-slate-500">Không tìm thấy khách hàng</div>;
+  // Convex queries
+  const customerData = useQuery(api.customers.getById, { id: id as Id<"customers"> });
+  const ordersData = useQuery(api.orders.listAllByCustomer, { customerId: id as Id<"customers"> });
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
+
+  // Convex mutations
+  const updateCustomer = useMutation(api.customers.update);
+
+  // States
+  const [activeTab, setActiveTab] = useState('profile');
+  const [formData, setFormData] = useState<FormData | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isLoading = customerData === undefined;
+
+  // Get enabled features
+  const enabledFeatures = useMemo(() => {
+    const features: Record<string, boolean> = {};
+    featuresData?.forEach(f => { features[f.featureKey] = f.enabled; });
+    return features;
+  }, [featuresData]);
+
+  const showNotes = enabledFeatures.enableNotes ?? true;
+  const showAddresses = enabledFeatures.enableAddresses ?? true;
+  const showAvatar = enabledFeatures.enableAvatar ?? true;
+
+  // Sync form with customer data
+  useEffect(() => {
+    if (customerData && !formData) {
+      setFormData({
+        name: customerData.name,
+        email: customerData.email,
+        phone: customerData.phone,
+        city: customerData.city || '',
+        address: customerData.address || '',
+        notes: customerData.notes || '',
+        status: customerData.status,
+      });
+    }
+  }, [customerData, formData]);
+
+  const handleChange = (field: keyof FormData, value: string) => {
+    setFormData(prev => prev ? { ...prev, [field]: value } : null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData) return;
+
+    // Validation
+    if (!formData.name.trim()) {
+      toast.error('Vui lòng nhập họ tên');
+      return;
+    }
+    if (!formData.email.trim() || !isValidEmail(formData.email.trim())) {
+      toast.error('Email không hợp lệ');
+      return;
+    }
+    if (!formData.phone.trim()) {
+      toast.error('Vui lòng nhập số điện thoại');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await updateCustomer({
+        id: id as Id<"customers">,
+        name: formData.name.trim(),
+        email: formData.email.toLowerCase().trim(),
+        phone: formData.phone.trim(),
+        city: formData.city.trim() || undefined,
+        address: formData.address.trim() || undefined,
+        notes: formData.notes.trim() || undefined,
+        status: formData.status,
+      });
+      toast.success('Đã lưu thông tin khách hàng');
+      router.push('/admin/customers');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Có lỗi xảy ra';
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-slate-400" />
+      </div>
+    );
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Đã lưu thông tin khách hàng");
-    router.push('/admin/customers');
-  };
+  if (!customerData) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-slate-500 mb-4">Không tìm thấy khách hàng</p>
+        <Link href="/admin/customers">
+          <Button variant="outline">Quay lại danh sách</Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
@@ -40,80 +147,161 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
           <Card>
             <CardContent className="p-6 flex flex-col items-center text-center">
               <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 mb-4 overflow-hidden">
-                {customer.avatar ? <img src={customer.avatar} className="w-full h-full object-cover" alt="" /> : <UserIcon className="w-full h-full p-6 text-slate-300"/>}
+                {showAvatar && customerData.avatar ? (
+                  <img src={customerData.avatar} className="w-full h-full object-cover" alt="" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-purple-100 dark:bg-purple-900/30">
+                    <UserIcon className="w-12 h-12 text-purple-400" />
+                  </div>
+                )}
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{customer.name}</h3>
-              <p className="text-slate-500 text-sm mb-4">{customer.email}</p>
-              
-              <div className="grid grid-cols-2 gap-4 w-full border-t border-slate-100 dark:border-slate-800 pt-4">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{customerData.name}</h3>
+              <p className="text-slate-500 text-sm mb-2">{customerData.email}</p>
+              <Badge variant={customerData.status === 'Active' ? 'success' : 'secondary'}>
+                {customerData.status === 'Active' ? 'Hoạt động' : 'Đã khóa'}
+              </Badge>
+
+              <div className="grid grid-cols-2 gap-4 w-full border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
                 <div>
-                  <div className="text-xl font-bold text-slate-900 dark:text-slate-100">{customer.ordersCount}</div>
+                  <div className="text-xl font-bold text-slate-900 dark:text-slate-100">{customerData.ordersCount}</div>
                   <div className="text-xs text-slate-500">Đơn hàng</div>
                 </div>
                 <div>
-                  <div className="text-xl font-bold text-slate-900 dark:text-slate-100">{new Intl.NumberFormat('vi-VN', {notation: "compact"}).format(customer.totalSpent)}</div>
+                  <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    {new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(customerData.totalSpent)}
+                  </div>
                   <div className="text-xs text-slate-500">Chi tiêu</div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader><CardTitle className="text-base">Ghi chú</CardTitle></CardHeader>
-            <CardContent>
-              <textarea className="w-full h-32 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" defaultValue={customer.notes}></textarea>
-            </CardContent>
-          </Card>
+          {showNotes && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Ghi chú nhanh</CardTitle></CardHeader>
+              <CardContent>
+                <textarea
+                  className="w-full h-32 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={formData?.notes || ''}
+                  onChange={(e) => handleChange('notes', e.target.value)}
+                  placeholder="Ghi chú về khách hàng..."
+                />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Main Content */}
         <div className="flex-1">
           <div className="flex border-b border-slate-200 dark:border-slate-700 mb-6">
-            <button onClick={() => setActiveTab('profile')} className={cn("px-6 py-3 text-sm font-medium border-b-2 transition-colors", activeTab === 'profile' ? "border-blue-500 text-blue-600" : "border-transparent text-slate-500")}>Hồ sơ & Địa chỉ</button>
-            <button onClick={() => setActiveTab('orders')} className={cn("px-6 py-3 text-sm font-medium border-b-2 transition-colors", activeTab === 'orders' ? "border-blue-500 text-blue-600" : "border-transparent text-slate-500")}>Lịch sử mua hàng</button>
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={cn(
+                "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
+                activeTab === 'profile' ? "border-purple-500 text-purple-600" : "border-transparent text-slate-500 hover:text-slate-700"
+              )}
+            >
+              Hồ sơ & Địa chỉ
+            </button>
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={cn(
+                "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
+                activeTab === 'orders' ? "border-purple-500 text-purple-600" : "border-transparent text-slate-500 hover:text-slate-700"
+              )}
+            >
+              Lịch sử mua hàng ({ordersData?.length || 0})
+            </button>
           </div>
 
-          {activeTab === 'profile' && (
+          {activeTab === 'profile' && formData && (
             <Card>
               <form onSubmit={handleSubmit}>
                 <CardContent className="p-6 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Họ và tên</Label>
-                      <Input defaultValue={customer.name} required />
+                      <Label>Họ và tên <span className="text-red-500">*</span></Label>
+                      <Input
+                        value={formData.name}
+                        onChange={(e) => handleChange('name', e.target.value)}
+                        required
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label>Số điện thoại</Label>
-                      <Input defaultValue={customer.phone} required />
+                      <Label>Số điện thoại <span className="text-red-500">*</span></Label>
+                      <Input
+                        value={formData.phone}
+                        onChange={(e) => handleChange('phone', e.target.value)}
+                        required
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input type="email" defaultValue={customer.email} required />
+                    <Label>Email <span className="text-red-500">*</span></Label>
+                    <Input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleChange('email', e.target.value)}
+                      required
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Địa chỉ</Label>
-                    <Input defaultValue={customer.address} placeholder="Số nhà, tên đường..." />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Thành phố / Tỉnh</Label>
-                      <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" defaultValue={customer.city}>
-                        <option>Hà Nội</option>
-                        <option>Hồ Chí Minh</option>
-                        <option>Đà Nẵng</option>
-                      </select>
-                    </div>
+
+                  {showAddresses && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Địa chỉ</Label>
+                        <Input
+                          value={formData.address}
+                          onChange={(e) => handleChange('address', e.target.value)}
+                          placeholder="Số nhà, tên đường..."
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Thành phố / Tỉnh</Label>
+                          <Input
+                            value={formData.city}
+                            onChange={(e) => handleChange('city', e.target.value)}
+                            placeholder="Nhập thành phố..."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Trạng thái</Label>
+                          <select
+                            className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                            value={formData.status}
+                            onChange={(e) => handleChange('status', e.target.value)}
+                          >
+                            <option value="Active">Hoạt động</option>
+                            <option value="Inactive">Bị khóa</option>
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {!showAddresses && (
                     <div className="space-y-2">
                       <Label>Trạng thái</Label>
-                      <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" defaultValue={customer.status}>
+                      <select
+                        className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                        value={formData.status}
+                        onChange={(e) => handleChange('status', e.target.value)}
+                      >
                         <option value="Active">Hoạt động</option>
                         <option value="Inactive">Bị khóa</option>
                       </select>
                     </div>
-                  </div>
-                  <div className="pt-4 flex justify-end">
-                    <Button type="submit" variant="accent">Lưu thay đổi</Button>
+                  )}
+
+                  <div className="pt-4 flex justify-end gap-3">
+                    <Button type="button" variant="ghost" onClick={() => router.push('/admin/customers')}>
+                      Hủy
+                    </Button>
+                    <Button type="submit" variant="accent" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
+                      Lưu thay đổi
+                    </Button>
                   </div>
                 </CardContent>
               </form>
@@ -127,25 +315,56 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                   <TableRow>
                     <TableHead>Mã đơn</TableHead>
                     <TableHead>Ngày đặt</TableHead>
-                    <TableHead>Tổng tiền</TableHead>
+                    <TableHead className="text-right">Tổng tiền</TableHead>
+                    <TableHead>Thanh toán</TableHead>
                     <TableHead>Trạng thái</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {customerOrders.map(order => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium text-blue-600 cursor-pointer hover:underline">{order.id}</TableCell>
-                      <TableCell className="text-slate-500 text-xs">{new Date(order.date).toLocaleDateString('vi-VN')}</TableCell>
-                      <TableCell>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.total)}</TableCell>
+                  {ordersData?.map(order => (
+                    <TableRow key={order._id}>
                       <TableCell>
-                        <Badge variant={order.status === 'Completed' ? 'success' : order.status === 'Cancelled' ? 'destructive' : 'warning'}>
-                          {order.status}
+                        <Link href={`/admin/orders/${order._id}/edit`} className="font-medium text-blue-600 hover:underline">
+                          {order.orderNumber}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-slate-500 text-sm">
+                        {new Date(order._creationTime).toLocaleDateString('vi-VN')}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={
+                          order.paymentStatus === 'Paid' ? 'success' :
+                          order.paymentStatus === 'Failed' ? 'destructive' :
+                          order.paymentStatus === 'Refunded' ? 'secondary' : 'warning'
+                        }>
+                          {order.paymentStatus === 'Paid' ? 'Đã thanh toán' :
+                           order.paymentStatus === 'Failed' ? 'Thất bại' :
+                           order.paymentStatus === 'Refunded' ? 'Hoàn tiền' : 'Chờ thanh toán'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={
+                          order.status === 'Delivered' ? 'success' :
+                          order.status === 'Cancelled' ? 'destructive' :
+                          order.status === 'Shipped' ? 'default' : 'warning'
+                        }>
+                          {order.status === 'Pending' ? 'Chờ xử lý' :
+                           order.status === 'Processing' ? 'Đang xử lý' :
+                           order.status === 'Shipped' ? 'Đang giao' :
+                           order.status === 'Delivered' ? 'Hoàn thành' : 'Đã hủy'}
                         </Badge>
                       </TableCell>
                     </TableRow>
                   ))}
-                  {customerOrders.length === 0 && (
-                    <TableRow><TableCell colSpan={4} className="text-center py-6 text-slate-500">Chưa có đơn hàng nào.</TableCell></TableRow>
+                  {(!ordersData || ordersData.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                        Chưa có đơn hàng nào.
+                      </TableCell>
+                    </TableRow>
                   )}
                 </TableBody>
               </Table>
