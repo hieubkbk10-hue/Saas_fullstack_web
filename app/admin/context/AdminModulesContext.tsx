@@ -10,6 +10,8 @@ type AdminModule = {
   enabled: boolean;
   icon: string;
   category: string;
+  dependencies?: string[];
+  dependencyType?: 'all' | 'any';
 };
 
 type AdminModulesContextType = {
@@ -34,15 +36,42 @@ export function AdminModulesProvider({ children }: { children: React.ReactNode }
       enabled: m.enabled,
       icon: m.icon,
       category: m.category,
+      dependencies: m.dependencies,
+      dependencyType: m.dependencyType,
     }));
   }, [modulesData]);
 
+  // Check if module is enabled AND all its dependencies are satisfied
   const isModuleEnabled = (key: string): boolean => {
     const module = modules.find(m => m.key === key);
-    return module?.enabled ?? false;
+    if (!module) return false;
+    if (!module.enabled) return false;
+    
+    // Check dependencies
+    if (module.dependencies && module.dependencies.length > 0) {
+      const depType = module.dependencyType || 'all';
+      
+      if (depType === 'all') {
+        // ALL dependencies must be enabled
+        const allDepsEnabled = module.dependencies.every(depKey => {
+          const depModule = modules.find(m => m.key === depKey);
+          return depModule?.enabled ?? false;
+        });
+        if (!allDepsEnabled) return false;
+      } else {
+        // ANY dependency must be enabled
+        const anyDepEnabled = module.dependencies.some(depKey => {
+          const depModule = modules.find(m => m.key === depKey);
+          return depModule?.enabled ?? false;
+        });
+        if (!anyDepEnabled) return false;
+      }
+    }
+    
+    return true;
   };
 
-  const getEnabledModules = () => modules.filter(m => m.enabled);
+  const getEnabledModules = () => modules.filter(m => isModuleEnabled(m.key));
 
   return (
     <AdminModulesContext.Provider value={{ modules, isLoading, isModuleEnabled, getEnabledModules }}>
