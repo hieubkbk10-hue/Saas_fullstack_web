@@ -41,8 +41,10 @@ export const listByTargetType = query({
   args: { targetType: targetType },
   returns: v.array(commentDoc),
   handler: async (ctx, args) => {
-    const all = await ctx.db.query("comments").collect();
-    return all.filter(c => c.targetType === args.targetType);
+    return await ctx.db
+      .query("comments")
+      .withIndex("by_target_status", (q) => q.eq("targetType", args.targetType))
+      .collect();
   },
 });
 
@@ -50,8 +52,11 @@ export const countByTargetType = query({
   args: { targetType: targetType },
   returns: v.number(),
   handler: async (ctx, args) => {
-    const all = await ctx.db.query("comments").collect();
-    return all.filter(c => c.targetType === args.targetType).length;
+    const comments = await ctx.db
+      .query("comments")
+      .withIndex("by_target_status", (q) => q.eq("targetType", args.targetType))
+      .collect();
+    return comments.length;
   },
 });
 
@@ -159,13 +164,60 @@ export const create = mutation({
     targetId: v.string(),
     parentId: v.optional(v.id("comments")),
     customerId: v.optional(v.id("customers")),
+    status: v.optional(commentStatus),
   },
   returns: v.id("comments"),
   handler: async (ctx, args) => {
+    // Lấy default status từ module settings nếu không truyền status
+    let finalStatus = args.status;
+    if (!finalStatus) {
+      const defaultStatusSetting = await ctx.db
+        .query("moduleSettings")
+        .withIndex("by_module_setting", (q) =>
+          q.eq("moduleKey", "comments").eq("settingKey", "defaultStatus")
+        )
+        .unique();
+      finalStatus = (defaultStatusSetting?.value as "Pending" | "Approved" | "Spam") || "Pending";
+    }
+    
     return await ctx.db.insert("comments", {
-      ...args,
-      status: "Pending",
+      content: args.content,
+      authorName: args.authorName,
+      authorEmail: args.authorEmail,
+      authorIp: args.authorIp,
+      targetType: args.targetType,
+      targetId: args.targetId,
+      parentId: args.parentId,
+      customerId: args.customerId,
+      status: finalStatus,
     });
+  },
+});
+
+export const update = mutation({
+  args: {
+    id: v.id("comments"),
+    content: v.optional(v.string()),
+    authorName: v.optional(v.string()),
+    authorEmail: v.optional(v.string()),
+    status: v.optional(commentStatus),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { id, ...updates } = args;
+    const comment = await ctx.db.get(id);
+    if (!comment) throw new Error("Comment not found");
+    
+    const patchData: Record<string, unknown> = {};
+    if (updates.content !== undefined) patchData.content = updates.content;
+    if (updates.authorName !== undefined) patchData.authorName = updates.authorName;
+    if (updates.authorEmail !== undefined) patchData.authorEmail = updates.authorEmail;
+    if (updates.status !== undefined) patchData.status = updates.status;
+    
+    if (Object.keys(patchData).length > 0) {
+      await ctx.db.patch(id, patchData);
+    }
+    return null;
   },
 });
 

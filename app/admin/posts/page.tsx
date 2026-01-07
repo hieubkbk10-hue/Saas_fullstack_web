@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, RefreshCw } from 'lucide-react';
+import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
@@ -22,6 +22,7 @@ export default function PostsListPage() {
 function PostsContent() {
   const postsData = useQuery(api.posts.listAll);
   const categoriesData = useQuery(api.postCategories.listAll);
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'posts' });
   const deletePost = useMutation(api.posts.remove);
   const seedPostsModule = useMutation(api.seed.seedPostsModule);
   const clearPostsData = useMutation(api.seed.clearPostsData);
@@ -30,8 +31,15 @@ function PostsContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [selectedIds, setSelectedIds] = useState<Id<"posts">[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const isLoading = postsData === undefined || categoriesData === undefined;
+
+  // Lấy setting postsPerPage từ module settings
+  const postsPerPage = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'postsPerPage');
+    return (setting?.value as number) || 10;
+  }, [settingsData]);
 
   // Map category ID to name
   const categoryMap = useMemo(() => {
@@ -61,11 +69,24 @@ function PostsContent() {
 
   const sortedPosts = useSortableData(filteredPosts, sortConfig);
 
+  // Pagination
+  const totalPages = Math.ceil(sortedPosts.length / postsPerPage);
+  const paginatedPosts = useMemo(() => {
+    const start = (currentPage - 1) * postsPerPage;
+    return sortedPosts.slice(start, start + postsPerPage);
+  }, [sortedPosts, currentPage, postsPerPage]);
+
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setCurrentPage(1);
   };
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedPosts.length ? [] : sortedPosts.map(p => p._id));
+  const handleFilterChange = (value: string) => {
+    setFilterStatus(value);
+    setCurrentPage(1);
+  };
+
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedPosts.length ? [] : paginatedPosts.map(p => p._id));
   const toggleSelectItem = (id: Id<"posts">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
   const handleDelete = async (id: Id<"posts">) => {
@@ -137,7 +158,7 @@ function PostsContent() {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input placeholder="Tìm kiếm bài viết..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => handleFilterChange(e.target.value)}>
             <option value="">Tất cả trạng thái</option>
             <option value="Published">Đã xuất bản</option>
             <option value="Draft">Bản nháp</option>
@@ -147,7 +168,7 @@ function PostsContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === sortedPosts.length && sortedPosts.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedPosts.length} /></TableHead>
+              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedPosts.length && paginatedPosts.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedPosts.length} /></TableHead>
               <TableHead className="w-[80px]">Thumbnail</TableHead>
               <SortableHeader label="Tiêu đề" sortKey="title" sortConfig={sortConfig} onSort={handleSort} />
               <SortableHeader label="Danh mục" sortKey="category" sortConfig={sortConfig} onSort={handleSort} />
@@ -157,7 +178,7 @@ function PostsContent() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedPosts.map(post => (
+            {paginatedPosts.map(post => (
               <TableRow key={post._id} className={selectedIds.includes(post._id) ? 'bg-blue-500/5' : ''}>
                 <TableCell><SelectCheckbox checked={selectedIds.includes(post._id)} onChange={() => toggleSelectItem(post._id)} /></TableCell>
                 <TableCell>
@@ -184,7 +205,7 @@ function PostsContent() {
                 </TableCell>
               </TableRow>
             ))}
-            {sortedPosts.length === 0 && (
+            {paginatedPosts.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-slate-500">
                   {searchTerm || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có bài viết nào'}
@@ -194,7 +215,34 @@ function PostsContent() {
           </TableBody>
         </Table>
         {sortedPosts.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">Hiển thị {sortedPosts.length} / {posts.length} bài viết</div>
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-sm text-slate-500">
+              Hiển thị {(currentPage - 1) * postsPerPage + 1} - {Math.min(currentPage * postsPerPage, sortedPosts.length)} / {sortedPosts.length} bài viết
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Trang {currentPage} / {totalPages}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            )}
+          </div>
         )}
       </Card>
     </div>
