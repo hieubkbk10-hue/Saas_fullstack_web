@@ -28,7 +28,7 @@ function PostCategoriesContent() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
-  const [visibleColumns, setVisibleColumns] = useState(['select', 'name', 'slug', 'count', 'status', 'actions']);
+  const [visibleColumns, setVisibleColumns] = useState(['select', 'thumbnail', 'name', 'slug', 'count', 'status', 'actions']);
   const [selectedIds, setSelectedIds] = useState<Id<"postCategories">[]>([]);
 
   const isLoading = categoriesData === undefined || postsData === undefined;
@@ -52,6 +52,7 @@ function PostCategoriesContent() {
 
   const columns = [
     { key: 'select', label: 'Chọn' },
+    { key: 'thumbnail', label: 'Ảnh' },
     { key: 'name', label: 'Tên danh mục', required: true },
     { key: 'slug', label: 'Slug' },
     { key: 'count', label: 'Số bài viết' },
@@ -159,6 +160,7 @@ function PostCategoriesContent() {
                   <SelectCheckbox checked={selectedIds.length === sortedData.length && sortedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedData.length} />
                 </TableHead>
               )}
+              {visibleColumns.includes('thumbnail') && <TableHead className="w-[60px]">Ảnh</TableHead>}
               {visibleColumns.includes('name') && <SortableHeader label="Tên danh mục" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('slug') && <SortableHeader label="Slug" sortKey="slug" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('count') && <SortableHeader label="Số bài viết" sortKey="count" sortConfig={sortConfig} onSort={handleSort} className="text-center" />}
@@ -171,6 +173,15 @@ function PostCategoriesContent() {
               <TableRow key={cat.id} className={selectedIds.includes(cat.id) ? 'bg-blue-500/5' : ''}>
                 {visibleColumns.includes('select') && (
                   <TableCell><SelectCheckbox checked={selectedIds.includes(cat.id)} onChange={() => toggleSelectItem(cat.id)} /></TableCell>
+                )}
+                {visibleColumns.includes('thumbnail') && (
+                  <TableCell>
+                    {cat.thumbnail ? (
+                      <img src={cat.thumbnail} alt="" className="w-10 h-8 object-cover rounded" />
+                    ) : (
+                      <div className="w-10 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-slate-400">-</div>
+                    )}
+                  </TableCell>
                 )}
                 {visibleColumns.includes('name') && <TableCell className="font-medium">{cat.name}</TableCell>}
                 {visibleColumns.includes('slug') && <TableCell className="text-slate-500 font-mono text-sm">{cat.slug}</TableCell>}

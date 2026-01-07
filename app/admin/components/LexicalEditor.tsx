@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useMutation, useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -20,16 +23,70 @@ import {
   FORMAT_ELEMENT_COMMAND, 
   $createParagraphNode,
   SELECTION_CHANGE_COMMAND,
-  COMMAND_PRIORITY_CRITICAL
+  COMMAND_PRIORITY_CRITICAL,
+  $getRoot,
+  $insertNodes,
+  $createTextNode,
+  DecoratorNode,
+  LexicalNode,
+  NodeKey,
+  SerializedLexicalNode,
+  Spread,
+  LexicalEditor as LexicalEditorType
 } from 'lexical';
-import { $generateHtmlFromNodes } from '@lexical/html';
+import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
 import { $setBlocksType, $patchStyleText, $getSelectionStyleValueForProperty } from '@lexical/selection';
 import { 
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify, 
   Type, Heading1, Heading2, Quote, List as ListIcon, ListOrdered, Image as ImageIcon, 
-  Palette, ChevronDown 
+  Palette, ChevronDown, Loader2 
 } from 'lucide-react';
 import { cn } from './ui';
+import { toast } from 'sonner';
+
+// Image compression utility
+function slugifyFilename(filename: string): string {
+  const ext = filename.split('.').pop() || '';
+  const name = filename.replace(/\.[^/.]+$/, '');
+  const slugified = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+  const timestamp = Date.now();
+  return `${slugified}-${timestamp}.${ext}`;
+}
+
+async function compressImage(file: File, quality: number = 0.85): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas context not available'));
+        return;
+      }
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Failed to compress image'));
+        },
+        file.type === 'image/png' ? 'image/png' : 'image/jpeg',
+        quality
+      );
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
 
 const theme = {
   paragraph: 'editor-paragraph',
@@ -75,8 +132,13 @@ const FONT_SIZE_OPTIONS = [
   ['30px', '30px'],
 ];
 
-const ToolbarPlugin = () => {
+interface ToolbarPluginProps {
+  onImageUpload?: (file: File) => Promise<string | null>;
+}
+
+const ToolbarPlugin: React.FC<ToolbarPluginProps> = ({ onImageUpload }) => {
   const [editor] = useLexicalComposerContext();
+  const [isUploading, setIsUploading] = useState(false);
   const [activeState, setActiveState] = useState({
     bold: false,
     italic: false,
@@ -175,20 +237,40 @@ const ToolbarPlugin = () => {
     }
   };
 
-  const handleImageUpload = () => {
+  const handleImageUpload = async () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.onchange = (e: Event) => {
-       const target = e.target as HTMLInputElement;
-       const file = target.files?.[0];
-       if(file) {
-          const reader = new FileReader();
-          reader.onload = () => {
-             alert("Trong bản demo thực tế (kết nối backend), ảnh sẽ được chèn vào vị trí con trỏ.");
+    input.onchange = async (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
+      if (file && onImageUpload) {
+        setIsUploading(true);
+        try {
+          const url = await onImageUpload(file);
+          if (url) {
+            // Insert image HTML into editor
+            editor.update(() => {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                const imgHtml = `<img src="${url}" alt="" style="max-width: 100%; height: auto; display: block; margin: 8px 0;" />`;
+                const parser = new DOMParser();
+                const dom = parser.parseFromString(imgHtml, 'text/html');
+                const nodes = $generateNodesFromDOM(editor, dom);
+                selection.insertNodes(nodes);
+              }
+            });
+            toast.success('Đã chèn ảnh vào nội dung');
           }
-          reader.readAsDataURL(file);
-       }
+        } catch (error) {
+          console.error('Image upload error:', error);
+          toast.error('Không thể tải ảnh lên');
+        } finally {
+          setIsUploading(false);
+        }
+      } else if (!onImageUpload) {
+        toast.error('Chức năng upload ảnh chưa được cấu hình');
+      }
     };
     input.click();
   };
@@ -239,7 +321,7 @@ const ToolbarPlugin = () => {
           <ChevronDown size={12} className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         </div>
 
-        <div className="relative flex items-center justify-center w-8 h-8 rounded hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer group" title="Mau chu">
+        <div className="relative flex items-center justify-center w-8 h-8 rounded hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer group" title="Màu chữ">
           <Palette size={16} className="text-slate-600 dark:text-slate-400" />
           <div className="absolute bottom-1.5 right-1.5 w-2 h-2 rounded-full border border-slate-200" style={{ backgroundColor: activeState.fontColor }}></div>
           <input 
@@ -254,13 +336,13 @@ const ToolbarPlugin = () => {
       <Divider />
 
       <div className="flex items-center gap-0.5">
-        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')} active={activeState.bold} title="In dam (Ctrl+B)">
+        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')} active={activeState.bold} title="In đậm (Ctrl+B)">
           <Bold size={16} />
         </ToolbarBtn>
-        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')} active={activeState.italic} title="In nghieng (Ctrl+I)">
+        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')} active={activeState.italic} title="In nghiêng (Ctrl+I)">
           <Italic size={16} />
         </ToolbarBtn>
-        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline')} active={activeState.underline} title="Gach chan (Ctrl+U)">
+        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline')} active={activeState.underline} title="Gạch chân (Ctrl+U)">
           <Underline size={16} />
         </ToolbarBtn>
       </div>
@@ -268,16 +350,16 @@ const ToolbarPlugin = () => {
       <Divider />
 
       <div className="flex items-center gap-0.5">
-        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left')} active={activeState.align === 'left'} title="Can trai">
+        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left')} active={activeState.align === 'left'} title="Căn trái">
           <AlignLeft size={16} />
         </ToolbarBtn>
-        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center')} active={activeState.align === 'center'} title="Can giua">
+        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center')} active={activeState.align === 'center'} title="Căn giữa">
           <AlignCenter size={16} />
         </ToolbarBtn>
-        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right')} active={activeState.align === 'right'} title="Can phai">
+        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right')} active={activeState.align === 'right'} title="Căn phải">
           <AlignRight size={16} />
         </ToolbarBtn>
-        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify')} active={activeState.align === 'justify'} title="Can deu">
+        <ToolbarBtn onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify')} active={activeState.align === 'justify'} title="Căn đều">
           <AlignJustify size={16} />
         </ToolbarBtn>
       </div>
@@ -285,16 +367,16 @@ const ToolbarPlugin = () => {
       <Divider />
 
       <div className="flex items-center gap-0.5">
-        <ToolbarBtn onClick={() => formatBlock('paragraph')} active={activeState.blockType === 'paragraph'} title="Van ban thuong">
+        <ToolbarBtn onClick={() => formatBlock('paragraph')} active={activeState.blockType === 'paragraph'} title="Văn bản thường">
           <Type size={16} />
         </ToolbarBtn>
-        <ToolbarBtn onClick={() => formatBlock('h1')} active={activeState.blockType === 'h1'} title="Tieu de 1">
+        <ToolbarBtn onClick={() => formatBlock('h1')} active={activeState.blockType === 'h1'} title="Tiêu đề 1">
           <Heading1 size={16} />
         </ToolbarBtn>
-        <ToolbarBtn onClick={() => formatBlock('h2')} active={activeState.blockType === 'h2'} title="Tieu de 2">
+        <ToolbarBtn onClick={() => formatBlock('h2')} active={activeState.blockType === 'h2'} title="Tiêu đề 2">
           <Heading2 size={16} />
         </ToolbarBtn>
-        <ToolbarBtn onClick={() => formatBlock('quote')} active={activeState.blockType === 'quote'} title="Trich dan">
+        <ToolbarBtn onClick={() => formatBlock('quote')} active={activeState.blockType === 'quote'} title="Trích dẫn">
           <Quote size={16} />
         </ToolbarBtn>
       </div>
@@ -302,10 +384,10 @@ const ToolbarPlugin = () => {
       <Divider />
 
       <div className="flex items-center gap-0.5">
-        <ToolbarBtn onClick={() => formatBlock('ul')} active={activeState.blockType === 'ul'} title="Danh sach cham">
+        <ToolbarBtn onClick={() => formatBlock('ul')} active={activeState.blockType === 'ul'} title="Danh sách chấm">
           <ListIcon size={16} />
         </ToolbarBtn>
-        <ToolbarBtn onClick={() => formatBlock('ol')} active={activeState.blockType === 'ol'} title="Danh sach so">
+        <ToolbarBtn onClick={() => formatBlock('ol')} active={activeState.blockType === 'ol'} title="Danh sách số">
           <ListOrdered size={16} />
         </ToolbarBtn>
       </div>
@@ -313,8 +395,8 @@ const ToolbarPlugin = () => {
       <Divider />
 
       <div className="flex items-center gap-0.5">
-        <ToolbarBtn onClick={handleImageUpload} title="Tai anh len">
-          <ImageIcon size={16} />
+        <ToolbarBtn onClick={handleImageUpload} title="Tải ảnh lên">
+          {isUploading ? <Loader2 size={16} className="animate-spin" /> : <ImageIcon size={16} />}
         </ToolbarBtn>
       </div>
     </div>
@@ -324,9 +406,34 @@ const ToolbarPlugin = () => {
 interface LexicalEditorProps {
   onChange?: (html: string) => void;
   initialContent?: string;
+  folder?: string;
 }
 
-export const LexicalEditor: React.FC<LexicalEditorProps> = ({ onChange }) => {
+const InitialContentPlugin: React.FC<{ initialContent?: string }> = ({ initialContent }) => {
+  const [editor] = useLexicalComposerContext();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    if (initialContent && !isInitialized) {
+      editor.update(() => {
+        const parser = new DOMParser();
+        const dom = parser.parseFromString(initialContent, 'text/html');
+        const nodes = $generateNodesFromDOM(editor, dom);
+        const root = $getRoot();
+        root.clear();
+        root.append(...nodes);
+      });
+      setIsInitialized(true);
+    }
+  }, [editor, initialContent, isInitialized]);
+
+  return null;
+};
+
+export const LexicalEditor: React.FC<LexicalEditorProps> = ({ onChange, initialContent, folder = 'posts-content' }) => {
+  const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
+  const saveImage = useMutation(api.storage.saveImage);
+  
   const initialConfig = {
     namespace: 'MyEditor',
     theme,
@@ -341,19 +448,69 @@ export const LexicalEditor: React.FC<LexicalEditorProps> = ({ onChange }) => {
     ],
   };
 
+  const handleImageUpload = useCallback(async (file: File): Promise<string | null> => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file hình ảnh');
+      return null;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Kích thước file không được vượt quá 5MB');
+      return null;
+    }
+    
+    try {
+      // Compress image
+      const compressedBlob = await compressImage(file, 0.85);
+      const slugifiedName = slugifyFilename(file.name);
+      const compressedFile = new File([compressedBlob], slugifiedName, { type: compressedBlob.type });
+      
+      // Get upload URL
+      const uploadUrl = await generateUploadUrl();
+      
+      // Upload to Convex storage
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': compressedFile.type },
+        body: compressedFile,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      const { storageId } = await response.json();
+      
+      // Save to database
+      const result = await saveImage({
+        storageId: storageId as Id<"_storage">,
+        filename: slugifiedName,
+        mimeType: compressedFile.type,
+        size: compressedFile.size,
+        folder,
+      });
+      
+      return result.url;
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+  }, [generateUploadUrl, saveImage, folder]);
+
   return (
     <div className="border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 shadow-sm w-full editor-shell">
       <LexicalComposer initialConfig={initialConfig}>
-        <ToolbarPlugin />
+        <ToolbarPlugin onImageUpload={handleImageUpload} />
         <div className="relative min-h-[400px] editor-container">
           <RichTextPlugin
             contentEditable={<ContentEditable className="editor-input outline-none h-full min-h-[400px] p-4" />}
-            placeholder={<div className="editor-placeholder absolute top-4 left-4 text-slate-400 pointer-events-none">Bat dau viet noi dung tuyet voi cua ban...</div>}
+            placeholder={<div className="editor-placeholder absolute top-4 left-4 text-slate-400 pointer-events-none">Bắt đầu viết nội dung tuyệt vời của bạn...</div>}
             ErrorBoundary={LexicalErrorBoundary}
           />
           <HistoryPlugin />
           <ListPlugin />
           <LinkPlugin />
+          <InitialContentPlugin initialContent={initialContent} />
           <OnChangePlugin onChange={(editorState, editor) => {
              editorState.read(() => {
                 const html = $generateHtmlFromNodes(editor, null);
@@ -373,6 +530,7 @@ export const LexicalEditor: React.FC<LexicalEditorProps> = ({ onChange }) => {
         .editor-text-bold { font-weight: bold; }
         .editor-text-italic { font-style: italic; }
         .editor-text-underline { text-decoration: underline; }
+        .editor-input img { max-width: 100%; height: auto; display: block; margin: 8px 0; border-radius: 4px; }
       `}</style>
     </div>
   );

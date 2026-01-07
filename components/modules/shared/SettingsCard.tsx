@@ -28,6 +28,8 @@ interface SettingInputProps {
   onChange: (value: any) => void;
   type?: 'number' | 'text';
   focusColor?: string;
+  min?: number;
+  max?: number;
 }
 
 export const SettingInput: React.FC<SettingInputProps> = ({
@@ -35,18 +37,42 @@ export const SettingInput: React.FC<SettingInputProps> = ({
   value,
   onChange,
   type = 'number',
-  focusColor = 'focus:border-cyan-500'
-}) => (
-  <div>
-    <label className="text-xs text-slate-500 mb-1 block">{label}</label>
-    <input 
-      type={type}
-      value={value}
-      onChange={(e) => onChange(type === 'number' ? parseInt(e.target.value) : e.target.value)}
-      className={`w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none ${focusColor}`}
-    />
-  </div>
-);
+  focusColor = 'focus:border-cyan-500',
+  min = 1,
+  max = 100
+}) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (type === 'number') {
+      const val = e.target.value;
+      if (val === '') {
+        onChange(min);
+        return;
+      }
+      const num = parseInt(val);
+      if (isNaN(num)) {
+        onChange(min);
+      } else {
+        onChange(Math.max(min, Math.min(max, num)));
+      }
+    } else {
+      onChange(e.target.value);
+    }
+  };
+
+  return (
+    <div>
+      <label className="text-xs text-slate-500 mb-1 block">{label}</label>
+      <input 
+        type={type}
+        value={value}
+        onChange={handleChange}
+        min={type === 'number' ? min : undefined}
+        max={type === 'number' ? max : undefined}
+        className={`w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none ${focusColor}`}
+      />
+    </div>
+  );
+};
 
 interface SettingSelectProps {
   label: string;

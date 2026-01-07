@@ -9,6 +9,7 @@ import { Id } from '@/convex/_generated/dataModel';
 import { ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, Input, Label, Badge, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, cn } from '../../../components/ui';
+import { ImageUploader } from '../../../components/ImageUploader';
 
 const MODULE_KEY = 'postCategories';
 
@@ -25,14 +26,27 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
+  const [thumbnail, setThumbnail] = useState<string | undefined>();
   const [active, setActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Check which fields are enabled - MUST be before any conditional returns
+  const enabledFields = useMemo(() => {
+    const fields = new Set<string>();
+    fieldsData?.forEach(f => fields.add(f.fieldKey));
+    return fields;
+  }, [fieldsData]);
+
+  const relatedPosts = useMemo(() => {
+    return postsData?.filter(p => p.categoryId === id) || [];
+  }, [postsData, id]);
 
   useEffect(() => {
     if (categoryData) {
       setName(categoryData.name);
       setSlug(categoryData.slug);
       setDescription(categoryData.description || '');
+      setThumbnail(categoryData.thumbnail);
       setActive(categoryData.active);
     }
   }, [categoryData]);
@@ -49,15 +63,6 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
     return <div className="text-center py-8 text-slate-500">Không tìm thấy danh mục</div>;
   }
 
-  const relatedPosts = postsData?.filter(p => p.categoryId === id) || [];
-
-  // Check which fields are enabled
-  const enabledFields = useMemo(() => {
-    const fields = new Set<string>();
-    fieldsData?.forEach(f => fields.add(f.fieldKey));
-    return fields;
-  }, [fieldsData]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -69,6 +74,7 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
         name: name.trim(),
         slug: slug.trim(),
         description: description.trim() || undefined,
+        thumbnail,
         active,
       });
       toast.success("Đã cập nhật danh mục");
@@ -132,6 +138,18 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
                 <div className="space-y-2">
                   <Label>Mô tả</Label>
                   <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Mô tả ngắn về danh mục..." />
+                </div>
+              )}
+              {/* thumbnail - conditional */}
+              {enabledFields.has('thumbnail') && (
+                <div className="space-y-2">
+                  <Label>Ảnh đại diện</Label>
+                  <ImageUploader
+                    value={thumbnail}
+                    onChange={(url) => setThumbnail(url)}
+                    folder="post-categories"
+                    aspectRatio="video"
+                  />
                 </div>
               )}
               {/* active - always shown (system field) */}

@@ -12,7 +12,7 @@ import { ModuleGuard } from '../components/ModuleGuard';
 
 export default function CommentsListPage() {
   return (
-    <ModuleGuard moduleKey="comments">
+    <ModuleGuard moduleKey="comments" requiredModules={['posts', 'products']} requiredModulesType="any">
       <CommentsContent />
     </ModuleGuard>
   );
@@ -189,7 +189,7 @@ function CommentsContent() {
                 </TableCell>
                 <TableCell><p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2">{comment.content}</p></TableCell>
                 <TableCell>
-                  <Badge variant={comment.targetType === 'post' ? 'secondary' : 'outline'} className="gap-1">
+                  <Badge variant={comment.targetType === 'post' ? 'secondary' : 'outline'} className="gap-1 whitespace-nowrap">
                     {comment.targetType === 'post' ? <FileText size={12} /> : <Package size={12} />}
                     {comment.targetType === 'post' ? 'Bài viết' : 'Sản phẩm'}
                   </Badge>
@@ -200,7 +200,7 @@ function CommentsContent() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={comment.status === 'Approved' ? 'default' : comment.status === 'Pending' ? 'secondary' : 'destructive'}>
+                  <Badge variant={comment.status === 'Approved' ? 'default' : comment.status === 'Pending' ? 'secondary' : 'destructive'} className="whitespace-nowrap">
                     {comment.status === 'Approved' ? 'Đã duyệt' : comment.status === 'Pending' ? 'Chờ duyệt' : 'Spam'}
                   </Badge>
                 </TableCell>

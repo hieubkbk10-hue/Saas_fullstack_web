@@ -8,6 +8,7 @@ const categoryDoc = v.object({
   slug: v.string(),
   parentId: v.optional(v.id("postCategories")),
   description: v.optional(v.string()),
+  thumbnail: v.optional(v.string()),
   order: v.number(),
   active: v.boolean(),
 });
@@ -84,6 +85,7 @@ export const create = mutation({
     slug: v.string(),
     parentId: v.optional(v.id("postCategories")),
     description: v.optional(v.string()),
+    thumbnail: v.optional(v.string()),
     order: v.optional(v.number()),
     active: v.optional(v.boolean()),
   },
@@ -110,6 +112,7 @@ export const update = mutation({
     slug: v.optional(v.string()),
     parentId: v.optional(v.id("postCategories")),
     description: v.optional(v.string()),
+    thumbnail: v.optional(v.string()),
     order: v.optional(v.number()),
     active: v.optional(v.boolean()),
   },

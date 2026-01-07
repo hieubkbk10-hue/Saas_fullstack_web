@@ -8,6 +8,7 @@ import { api } from '@/convex/_generated/api';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, Input, Label } from '../../components/ui';
+import { ImageUploader } from '../../components/ImageUploader';
 
 const MODULE_KEY = 'postCategories';
 
@@ -19,6 +20,7 @@ export default function PostCategoryCreatePage() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
+  const [thumbnail, setThumbnail] = useState<string | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Check which fields are enabled
@@ -49,6 +51,7 @@ export default function PostCategoryCreatePage() {
         name: name.trim(),
         slug: slug.trim(),
         description: description.trim() || undefined,
+        thumbnail,
         active: true,
       });
       toast.success("Đã tạo danh mục mới");
@@ -87,6 +90,18 @@ export default function PostCategoryCreatePage() {
               <div className="space-y-2">
                 <Label>Mô tả</Label>
                 <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Mô tả ngắn về danh mục..." />
+              </div>
+            )}
+            {/* thumbnail - conditional */}
+            {enabledFields.has('thumbnail') && (
+              <div className="space-y-2">
+                <Label>Ảnh đại diện</Label>
+                <ImageUploader
+                  value={thumbnail}
+                  onChange={(url) => setThumbnail(url)}
+                  folder="post-categories"
+                  aspectRatio="video"
+                />
               </div>
             )}
           </CardContent>

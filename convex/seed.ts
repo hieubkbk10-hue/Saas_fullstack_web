@@ -369,6 +369,18 @@ export const clearPostsData = mutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
+    // Delete images in posts and posts-content folders
+    const postImages = await ctx.db.query("images").withIndex("by_folder", q => q.eq("folder", "posts")).collect();
+    for (const img of postImages) {
+      await ctx.storage.delete(img.storageId);
+      await ctx.db.delete(img._id);
+    }
+    const contentImages = await ctx.db.query("images").withIndex("by_folder", q => q.eq("folder", "posts-content")).collect();
+    for (const img of contentImages) {
+      await ctx.storage.delete(img.storageId);
+      await ctx.db.delete(img._id);
+    }
+    
     // Delete posts
     const posts = await ctx.db.query("posts").collect();
     for (const post of posts) {

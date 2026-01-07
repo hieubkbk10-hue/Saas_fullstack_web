@@ -203,6 +203,7 @@ export default defineSchema({
     slug: v.string(),
     parentId: v.optional(v.id("postCategories")),
     description: v.optional(v.string()),
+    thumbnail: v.optional(v.string()),
     order: v.number(),
     active: v.boolean(),
   })

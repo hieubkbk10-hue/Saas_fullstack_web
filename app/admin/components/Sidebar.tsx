@@ -160,8 +160,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
   };
 
   const showAnalyticsSection = isModuleEnabled('analytics');
-  const showPostsSection = isModuleEnabled('posts') || isModuleEnabled('comments');
+  // Posts section: chỉ hiện khi posts bật (comments bài viết phụ thuộc vào posts)
+  const showPostsSection = isModuleEnabled('posts');
+  // Comments trong posts section chỉ hiện khi cả posts VÀ comments đều bật
+  const showPostComments = isModuleEnabled('posts') && isModuleEnabled('comments');
   const showCommerceSection = isModuleEnabled('products') || isModuleEnabled('customers') || isModuleEnabled('orders') || isModuleEnabled('wishlist');
+  // Product reviews chỉ hiện khi products VÀ comments đều bật  
+  const showProductReviews = isModuleEnabled('products') && isModuleEnabled('comments');
   const showMediaSection = isModuleEnabled('media');
   const showUsersSection = isModuleEnabled('users') || isModuleEnabled('roles');
   const showWebsiteSection = isModuleEnabled('menus') || isModuleEnabled('homepage');
@@ -238,7 +243,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   subItems={[
                     { label: 'Tất cả bài viết', href: '/admin/posts', moduleKey: 'posts' },
                     { label: 'Danh mục bài viết', href: '/admin/post-categories', moduleKey: 'posts' },
-                    { label: 'Bình luận', href: '/admin/comments', moduleKey: 'comments' },
+                    ...(showPostComments ? [{ label: 'Bình luận', href: '/admin/comments' }] : []),
                   ]}
                 />
               </div>
@@ -263,7 +268,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                     { label: 'Danh mục sản phẩm', href: '/admin/categories', moduleKey: 'products' },
                     { label: 'Đơn hàng', href: '/admin/orders', moduleKey: 'orders' },
                     { label: 'Wishlist', href: '/admin/wishlist', moduleKey: 'wishlist' },
-                    { label: 'Đánh giá sản phẩm', href: '/admin/reviews', moduleKey: 'comments' },
+                    ...(showProductReviews ? [{ label: 'Đánh giá sản phẩm', href: '/admin/reviews' }] : []),
                     { label: 'Khách hàng', href: '/admin/customers', moduleKey: 'customers' },
                   ]}
                 />

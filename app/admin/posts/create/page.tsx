@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Upload, Loader2, Plus, X } from 'lucide-react';
+import { Loader2, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../components/ui';
 import { LexicalEditor } from '../../components/LexicalEditor';
+import { ImageUploader } from '../../components/ImageUploader';
 
 function QuickCreateCategoryModal({ 
   isOpen, 
@@ -99,14 +100,27 @@ export default function PostCreatePage() {
   const createPost = useMutation(api.posts.create);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
 
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [content, setContent] = useState('');
   const [excerpt, setExcerpt] = useState('');
+  const [thumbnail, setThumbnail] = useState<string | undefined>();
   const [categoryId, setCategoryId] = useState('');
-  const [status, setStatus] = useState<'Draft' | 'Published' | 'Archived'>('Draft');
+  const [status, setStatus] = useState<'Draft' | 'Published'>('Draft');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+
+  // Sync default status from settings
+  useEffect(() => {
+    if (settingsData) {
+      const defaultStatus = settingsData.find(s => s.settingKey === 'defaultStatus')?.value as string;
+      if (defaultStatus === 'published') {
+        setStatus('Published');
+      }
+    }
+  }, [settingsData]);
 
   // Check which fields are enabled
   const enabledFields = useMemo(() => {
@@ -137,6 +151,7 @@ export default function PostCreatePage() {
         slug: slug.trim() || title.toLowerCase().replace(/\s+/g, '-'),
         content,
         excerpt: excerpt.trim() || undefined,
+        thumbnail,
         categoryId: categoryId as Id<"postCategories">,
         authorId: usersData[0]._id,
         status,
@@ -203,12 +218,11 @@ export default function PostCreatePage() {
                 <Label>Trạng thái</Label>
                 <select 
                   value={status} 
-                  onChange={(e) => setStatus(e.target.value as 'Draft' | 'Published' | 'Archived')}
+                  onChange={(e) => setStatus(e.target.value as 'Draft' | 'Published')}
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
                   <option value="Draft">Bản nháp</option>
                   <option value="Published">Đã xuất bản</option>
-                  <option value="Archived">Lưu trữ</option>
                 </select>
               </div>
               <div className="space-y-2">
@@ -242,10 +256,12 @@ export default function PostCreatePage() {
           <Card>
             <CardHeader><CardTitle className="text-base">Ảnh đại diện</CardTitle></CardHeader>
             <CardContent>
-              <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                <Upload size={24} className="text-slate-400 mb-2"/>
-                <span className="text-sm text-slate-500">Kéo thả hoặc click để tải lên</span>
-              </div>
+              <ImageUploader
+                value={thumbnail}
+                onChange={(url) => setThumbnail(url)}
+                folder="posts"
+                aspectRatio="video"
+              />
             </CardContent>
           </Card>
         </div>
