@@ -6,14 +6,14 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, FileText, ShoppingCart, Image as ImageIcon, 
   Users, Globe, Settings, ChevronRight, X, LogOut,
-  ChevronsLeft, ChevronsRight, Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Loader2
+  ChevronsLeft, ChevronsRight, Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Loader2, ShoppingBag, Bell
 } from 'lucide-react';
 import { cn, Button } from './ui';
 import { useAdminModules } from '../context/AdminModulesContext';
 
 const iconMap: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, ShoppingCart, ImageIcon, Users, Globe, Settings,
-  Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Image: ImageIcon
+  Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Image: ImageIcon, ShoppingBag, Bell
 };
 
 interface SidebarItemProps {
@@ -141,7 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
   useEffect(() => {
     if (isActive('/admin/posts') || isActive('/admin/post-categories') || isActive('/admin/comments')) {
       setExpandedMenu('Quản lý bài viết');
-    } else if (isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers') || isActive('/admin/reviews')) {
+    } else if (isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers') || isActive('/admin/reviews') || isActive('/admin/orders') || isActive('/admin/wishlist')) {
       setExpandedMenu('E-Commerce');
     } else if (isActive('/admin/users') || isActive('/admin/roles')) {
       setExpandedMenu('Người dùng');
@@ -161,11 +161,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
 
   const showAnalyticsSection = isModuleEnabled('analytics');
   const showPostsSection = isModuleEnabled('posts') || isModuleEnabled('comments');
-  const showCommerceSection = isModuleEnabled('products') || isModuleEnabled('customers');
+  const showCommerceSection = isModuleEnabled('products') || isModuleEnabled('customers') || isModuleEnabled('orders') || isModuleEnabled('wishlist');
   const showMediaSection = isModuleEnabled('media');
   const showUsersSection = isModuleEnabled('users') || isModuleEnabled('roles');
   const showWebsiteSection = isModuleEnabled('menus') || isModuleEnabled('homepage');
   const showSettingsSection = isModuleEnabled('settings');
+  const showNotificationsSection = isModuleEnabled('notifications');
 
   return (
     <>
@@ -251,7 +252,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   icon={ShoppingCart} 
                   label="E-Commerce" 
                   href="/admin/products"
-                  active={isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers') || isActive('/admin/reviews')}
+                  active={isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers') || isActive('/admin/reviews') || isActive('/admin/orders') || isActive('/admin/wishlist')}
                   isCollapsed={isSidebarCollapsed}
                   isExpanded={expandedMenu === 'E-Commerce'}
                   onToggle={() => handleMenuToggle('E-Commerce')}
@@ -260,6 +261,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   subItems={[
                     { label: 'Sản phẩm', href: '/admin/products', moduleKey: 'products' },
                     { label: 'Danh mục sản phẩm', href: '/admin/categories', moduleKey: 'products' },
+                    { label: 'Đơn hàng', href: '/admin/orders', moduleKey: 'orders' },
+                    { label: 'Wishlist', href: '/admin/wishlist', moduleKey: 'wishlist' },
                     { label: 'Đánh giá sản phẩm', href: '/admin/reviews', moduleKey: 'comments' },
                     { label: 'Khách hàng', href: '/admin/customers', moduleKey: 'customers' },
                   ]}
@@ -276,6 +279,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   label="Thư viện ảnh" 
                   href="/admin/images" 
                   active={isActive('/admin/images')} 
+                  isCollapsed={isSidebarCollapsed}
+                  isExpanded={false}
+                  onToggle={() => {}}
+                  pathname={pathname}
+                  isModuleEnabled={isModuleEnabled}
+                />
+              </div>
+            )}
+
+            {/* Notifications Section */}
+            {showNotificationsSection && (
+              <div className="space-y-1">
+                {!isSidebarCollapsed && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Marketing</div>}
+                <SidebarItem 
+                  icon={Bell} 
+                  label="Thông báo" 
+                  href="/admin/notifications" 
+                  active={isActive('/admin/notifications')} 
                   isCollapsed={isSidebarCollapsed}
                   isExpanded={false}
                   onToggle={() => {}}

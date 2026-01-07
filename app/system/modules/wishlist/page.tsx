@@ -1,67 +1,414 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Heart } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { toast } from 'sonner';
+import { Heart, Bell, Loader2, Database, Trash2, RefreshCw, Settings, User, Package } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
 import { 
   ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput, FieldsCard
+  SettingsCard, SettingInput,
+  FeaturesCard, FieldsCard
 } from '@/components/modules/shared';
+import { Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
 
-const INITIAL_FIELDS: FieldConfig[] = [
-  { id: 'W1', name: 'Khách hàng', key: 'customer_id', type: 'select', required: true, enabled: true, isSystem: true },
-  { id: 'W2', name: 'Sản phẩm', key: 'product_id', type: 'select', required: true, enabled: true, isSystem: true },
-  { id: 'W3', name: 'Thứ tự', key: 'order', type: 'number', required: true, enabled: true, isSystem: true },
-  { id: 'W4', name: 'Trạng thái', key: 'active', type: 'boolean', required: true, enabled: true, isSystem: true },
+const MODULE_KEY = 'wishlist';
+
+const FEATURES_CONFIG = [
+  { key: 'enableNote', label: 'Ghi chú', icon: Heart, description: 'Cho phép khách thêm ghi chú cho SP yêu thích', linkedField: 'note' },
+  { key: 'enableNotification', label: 'Thông báo', icon: Bell, description: 'Thông báo khi SP giảm giá/có hàng' },
 ];
 
-export default function WishlistModuleConfigPage() {
-  const [fields, setFields] = useState(INITIAL_FIELDS);
-  const [settings, setSettings] = useState({ maxItems: 50 });
+type FeaturesState = Record<string, boolean>;
+type SettingsState = { maxItemsPerCustomer: number; itemsPerPage: number };
+type TabType = 'config' | 'data';
 
-  const handleToggleField = (id: string) => {
-    setFields(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
+export default function WishlistModuleConfigPage() {
+  const [activeTab, setActiveTab] = useState<TabType>('config');
+
+  // Queries
+  const moduleData = useQuery(api.admin.modules.getModuleByKey, { key: MODULE_KEY });
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
+  const fieldsData = useQuery(api.admin.modules.listModuleFields, { moduleKey: MODULE_KEY });
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+
+  // Data tab queries
+  const wishlistData = useQuery(api.wishlist.listAll);
+  const customersData = useQuery(api.customers.listAll);
+  const productsData = useQuery(api.products.listAll);
+
+  // Mutations
+  const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
+  const updateField = useMutation(api.admin.modules.updateModuleField);
+  const setSetting = useMutation(api.admin.modules.setModuleSetting);
+  const seedWishlistModule = useMutation(api.seed.seedWishlistModule);
+  const clearWishlistData = useMutation(api.seed.clearWishlistData);
+
+  // Local state
+  const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
+  const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ maxItemsPerCustomer: 50, itemsPerPage: 20 });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const isLoading = moduleData === undefined || featuresData === undefined || 
+                    fieldsData === undefined || settingsData === undefined;
+
+  // Sync features
+  useEffect(() => {
+    if (featuresData) {
+      const features: FeaturesState = {};
+      featuresData.forEach(f => { features[f.featureKey] = f.enabled; });
+      setLocalFeatures(features);
+    }
+  }, [featuresData]);
+
+  // Sync fields
+  useEffect(() => {
+    if (fieldsData) {
+      setLocalFields(fieldsData.map(f => ({
+        id: f._id,
+        key: f.fieldKey,
+        name: f.name,
+        type: f.type,
+        required: f.required,
+        enabled: f.enabled,
+        isSystem: f.isSystem,
+        linkedFeature: f.linkedFeature,
+      })));
+    }
+  }, [fieldsData]);
+
+  // Sync settings
+  useEffect(() => {
+    if (settingsData) {
+      const maxItemsPerCustomer = settingsData.find(s => s.settingKey === 'maxItemsPerCustomer')?.value as number ?? 50;
+      const itemsPerPage = settingsData.find(s => s.settingKey === 'itemsPerPage')?.value as number ?? 20;
+      setLocalSettings({ maxItemsPerCustomer, itemsPerPage });
+    }
+  }, [settingsData]);
+
+  // Server state for comparison
+  const serverFeatures = useMemo(() => {
+    const result: FeaturesState = {};
+    featuresData?.forEach(f => { result[f.featureKey] = f.enabled; });
+    return result;
+  }, [featuresData]);
+
+  const serverFields = useMemo(() => {
+    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
+  }, [fieldsData]);
+
+  const serverSettings = useMemo(() => {
+    const maxItemsPerCustomer = settingsData?.find(s => s.settingKey === 'maxItemsPerCustomer')?.value as number ?? 50;
+    const itemsPerPage = settingsData?.find(s => s.settingKey === 'itemsPerPage')?.value as number ?? 20;
+    return { maxItemsPerCustomer, itemsPerPage };
+  }, [settingsData]);
+
+  // Check for changes
+  const hasChanges = useMemo(() => {
+    const featuresChanged = Object.keys(localFeatures).some(key => localFeatures[key] !== serverFeatures[key]);
+    const fieldsChanged = localFields.some(f => {
+      const server = serverFields.find(s => s.id === f.id);
+      return server && f.enabled !== server.enabled;
+    });
+    const settingsChanged = localSettings.maxItemsPerCustomer !== serverSettings.maxItemsPerCustomer ||
+                           localSettings.itemsPerPage !== serverSettings.itemsPerPage;
+    return featuresChanged || fieldsChanged || settingsChanged;
+  }, [localFeatures, serverFeatures, localFields, serverFields, localSettings, serverSettings]);
+
+  const handleToggleFeature = (key: string) => {
+    setLocalFeatures(prev => ({ ...prev, [key]: !prev[key] }));
+    setLocalFields(prev => prev.map(f => 
+      f.linkedFeature === key ? { ...f, enabled: !localFeatures[key] } : f
+    ));
   };
 
+  const handleToggleField = (id: string) => {
+    const field = localFields.find(f => f.id === id);
+    if (field?.linkedFeature) {
+      handleToggleFeature(field.linkedFeature);
+    } else {
+      setLocalFields(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
+    }
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      for (const key of Object.keys(localFeatures)) {
+        if (localFeatures[key] !== serverFeatures[key]) {
+          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+        }
+      }
+      for (const field of localFields) {
+        const server = serverFields.find(s => s.id === field.id);
+        if (server && field.enabled !== server.enabled) {
+          await updateField({ id: field.id as any, enabled: field.enabled });
+        }
+      }
+      if (localSettings.maxItemsPerCustomer !== serverSettings.maxItemsPerCustomer) {
+        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'maxItemsPerCustomer', value: localSettings.maxItemsPerCustomer });
+      }
+      if (localSettings.itemsPerPage !== serverSettings.itemsPerPage) {
+        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'itemsPerPage', value: localSettings.itemsPerPage });
+      }
+      toast.success('Đã lưu cấu hình thành công!');
+    } catch {
+      toast.error('Có lỗi xảy ra khi lưu cấu hình');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Data tab handlers
+  const handleSeedData = async () => {
+    toast.loading('Đang tạo dữ liệu mẫu...');
+    await seedWishlistModule();
+    toast.dismiss();
+    toast.success('Đã tạo dữ liệu mẫu thành công!');
+  };
+
+  const handleClearData = async () => {
+    if (!confirm('Xóa toàn bộ dữ liệu wishlist?')) return;
+    toast.loading('Đang xóa dữ liệu...');
+    await clearWishlistData();
+    toast.dismiss();
+    toast.success('Đã xóa toàn bộ dữ liệu!');
+  };
+
+  const handleResetData = async () => {
+    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
+    toast.loading('Đang reset dữ liệu...');
+    await clearWishlistData();
+    await seedWishlistModule();
+    toast.dismiss();
+    toast.success('Đã reset dữ liệu thành công!');
+  };
+
+  // Stats & Maps
+  const customerMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    customersData?.forEach(c => { map[c._id] = c.name; });
+    return map;
+  }, [customersData]);
+
+  const productMap = useMemo(() => {
+    const map: Record<string, { name: string; price: number }> = {};
+    productsData?.forEach(p => { map[p._id] = { name: p.name, price: p.salePrice || p.price }; });
+    return map;
+  }, [productsData]);
+
+  const stats = useMemo(() => {
+    if (!wishlistData) return { total: 0, uniqueCustomers: 0, uniqueProducts: 0 };
+    const customerIds = new Set(wishlistData.map(w => w.customerId));
+    const productIds = new Set(wishlistData.map(w => w.productId));
+    return {
+      total: wishlistData.length,
+      uniqueCustomers: customerIds.size,
+      uniqueProducts: productIds.size,
+    };
+  }, [wishlistData]);
+
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const formatDate = (timestamp: number) => new Date(timestamp).toLocaleDateString('vi-VN');
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-pink-500" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto">
       <ModuleHeader
         icon={Heart}
-        title="Module Sản phẩm yeu thich"
-        description="Danh sách sản phẩm yêu thích của khách"
-        iconBgClass="bg-emerald-500/10"
-        iconTextClass="text-emerald-600 dark:text-emerald-400"
-        buttonClass="bg-emerald-600 hover:bg-emerald-500"
+        title="Module Sản phẩm yêu thích"
+        description="Cấu hình danh sách SP yêu thích của khách hàng"
+        iconBgClass="bg-pink-500/10"
+        iconTextClass="text-pink-600 dark:text-pink-400"
+        buttonClass="bg-pink-600 hover:bg-pink-500"
+        onSave={activeTab === 'config' ? handleSave : undefined}
+        hasChanges={activeTab === 'config' ? hasChanges : false}
+        isSaving={isSaving}
       />
 
-      <ModuleStatus isCore={false} enabled={false} toggleColor="bg-emerald-500" />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <SettingsCard>
-          <SettingInput 
-            label="Max SP / khách" 
-            value={settings.maxItems} 
-            onChange={(v) => setSettings({...settings, maxItems: v})}
-            focusColor="focus:border-emerald-500"
-          />
-        </SettingsCard>
-
-        <div className="lg:col-span-2">
-          <FieldsCard
-            title="Trường wishlist"
-            icon={Heart}
-            iconColorClass="text-emerald-500"
-            fields={fields}
-            onToggle={handleToggleField}
-            fieldColorClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-            toggleColor="bg-emerald-500"
-          />
-        </div>
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
+        <button
+          onClick={() => setActiveTab('config')}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'config'
+              ? 'border-pink-500 text-pink-600 dark:text-pink-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          <Settings size={16} /> Cấu hình
+        </button>
+        <button
+          onClick={() => setActiveTab('data')}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'data'
+              ? 'border-pink-500 text-pink-600 dark:text-pink-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          <Database size={16} /> Dữ liệu
+        </button>
       </div>
 
-      <ConventionNote>
-        <strong>Convention:</strong> Wishlist phụ thuộc module <Code>Sản phẩm</Code>. Mỗi cặp customer_id + product_id là unique.
-      </ConventionNote>
+      {activeTab === 'config' && (
+        <>
+          <ModuleStatus isCore={moduleData?.isCore ?? false} enabled={moduleData?.enabled ?? false} toggleColor="bg-pink-500" />
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="space-y-4">
+              <SettingsCard>
+                <SettingInput 
+                  label="Max SP / khách" 
+                  value={localSettings.maxItemsPerCustomer} 
+                  onChange={(v) => setLocalSettings({...localSettings, maxItemsPerCustomer: v})}
+                  focusColor="focus:border-pink-500"
+                />
+                <SettingInput 
+                  label="Số mục / trang" 
+                  value={localSettings.itemsPerPage} 
+                  onChange={(v) => setLocalSettings({...localSettings, itemsPerPage: v})}
+                  focusColor="focus:border-pink-500"
+                />
+              </SettingsCard>
+
+              <FeaturesCard
+                features={FEATURES_CONFIG.map(f => ({ config: f, enabled: localFeatures[f.key] ?? false }))}
+                onToggle={handleToggleFeature}
+                toggleColor="bg-pink-500"
+              />
+            </div>
+
+            <div className="lg:col-span-2">
+              <FieldsCard
+                title="Trường wishlist"
+                icon={Heart}
+                iconColorClass="text-pink-500"
+                fields={localFields}
+                onToggle={handleToggleField}
+                fieldColorClass="bg-pink-500/10 text-pink-600 dark:text-pink-400"
+                toggleColor="bg-pink-500"
+              />
+            </div>
+          </div>
+
+          <ConventionNote>
+            <strong>Convention:</strong> Wishlist phụ thuộc module <Code>Sản phẩm</Code>. Mỗi cặp <Code>customerId + productId</Code> là unique.
+          </ConventionNote>
+        </>
+      )}
+
+      {activeTab === 'data' && (
+        <div className="space-y-6">
+          {/* Action buttons */}
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-slate-900 dark:text-slate-100">Quản lý dữ liệu mẫu</h3>
+                <p className="text-sm text-slate-500 mt-1">Seed, clear hoặc reset dữ liệu cho module wishlist</p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleSeedData} className="gap-2">
+                  <Database size={16} /> Seed Data
+                </Button>
+                <Button variant="outline" onClick={handleClearData} className="gap-2 text-red-500 hover:text-red-600">
+                  <Trash2 size={16} /> Clear All
+                </Button>
+                <Button onClick={handleResetData} className="gap-2 bg-pink-600 hover:bg-pink-500">
+                  <RefreshCw size={16} /> Reset
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-pink-500/10 rounded-lg">
+                  <Heart className="w-5 h-5 text-pink-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.total}</p>
+                  <p className="text-sm text-slate-500">Tổng mục</p>
+                </div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <User className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.uniqueCustomers}</p>
+                  <p className="text-sm text-slate-500">Khách hàng</p>
+                </div>
+              </div>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-500/10 rounded-lg">
+                  <Package className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.uniqueProducts}</p>
+                  <p className="text-sm text-slate-500">Sản phẩm được thích</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Wishlist Table */}
+          <Card>
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
+              <Heart className="w-5 h-5 text-pink-500" />
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Wishlist ({wishlistData?.length ?? 0})</h3>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Khách hàng</TableHead>
+                  <TableHead>Sản phẩm</TableHead>
+                  <TableHead className="text-right">Giá</TableHead>
+                  <TableHead>Ghi chú</TableHead>
+                  <TableHead>Ngày thêm</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {wishlistData?.slice(0, 10).map(item => (
+                  <TableRow key={item._id}>
+                    <TableCell className="font-medium">{customerMap[item.customerId] || 'N/A'}</TableCell>
+                    <TableCell>{productMap[item.productId]?.name || 'N/A'}</TableCell>
+                    <TableCell className="text-right">{productMap[item.productId] ? formatPrice(productMap[item.productId].price) : '-'}</TableCell>
+                    <TableCell className="text-slate-500 text-sm max-w-[150px] truncate">{item.note || '-'}</TableCell>
+                    <TableCell className="text-slate-500 text-sm">{formatDate(item._creationTime)}</TableCell>
+                  </TableRow>
+                ))}
+                {(!wishlistData || wishlistData.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                      Chưa có dữ liệu wishlist. Nhấn &quot;Seed Data&quot; để tạo dữ liệu mẫu.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+            {wishlistData && wishlistData.length > 10 && (
+              <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500 text-center">
+                Hiển thị 10 / {wishlistData.length} mục
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

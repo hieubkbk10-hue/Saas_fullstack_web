@@ -1,20 +1,69 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, Input, Label } from '../../components/ui';
-import { mockRoles } from '../../mockData';
+
+const MODULE_KEY = 'users';
 
 export default function UserCreatePage() {
   const router = useRouter();
+  const rolesData = useQuery(api.roles.listAll);
+  const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
+  const createUser = useMutation(api.users.create);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [roleId, setRoleId] = useState<Id<"roles"> | ''>('');
+  const [status, setStatus] = useState<'Active' | 'Inactive'>('Active');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isLoading = rolesData === undefined || fieldsData === undefined;
+
+  const enabledFields = useMemo(() => {
+    const fields = new Set<string>();
+    fieldsData?.forEach(f => fields.add(f.fieldKey));
+    return fields;
+  }, [fieldsData]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Đã tạo người dùng mới");
-    router.push('/admin/users');
+    if (!roleId) {
+      toast.error('Vui lòng chọn vai trò');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await createUser({
+        name,
+        email,
+        phone: enabledFields.has('phone') && phone ? phone : undefined,
+        roleId: roleId as Id<"roles">,
+        status,
+      });
+      toast.success('Đã tạo người dùng mới');
+      router.push('/admin/users');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-20">
@@ -29,33 +78,58 @@ export default function UserCreatePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Họ tên <span className="text-red-500">*</span></Label>
-                <Input required placeholder="Nhập họ tên..." />
+                <Input 
+                  required 
+                  placeholder="Nhập họ tên..." 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Email <span className="text-red-500">*</span></Label>
-                <Input type="email" required placeholder="Nhập email..." />
-              </div>
-              <div className="space-y-2">
-                <Label>Mật khẩu <span className="text-red-500">*</span></Label>
-                <Input type="password" required placeholder="Nhập mật khẩu..." />
-              </div>
-              <div className="space-y-2">
-                <Label>Số điện thoại</Label>
-                <Input placeholder="Nhập số điện thoại..." />
+                <Input 
+                  type="email" 
+                  required 
+                  placeholder="Nhập email..." 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
             </div>
+
+            {enabledFields.has('phone') && (
+              <div className="space-y-2">
+                <Label>Số điện thoại</Label>
+                <Input 
+                  placeholder="Nhập số điện thoại..." 
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Vai trò</Label>
-                <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
-                  {mockRoles.map(role => (
-                    <option key={role.id} value={role.id}>{role.name}</option>
+                <Label>Vai trò <span className="text-red-500">*</span></Label>
+                <select 
+                  className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                  value={roleId}
+                  onChange={(e) => setRoleId(e.target.value as Id<"roles">)}
+                  required
+                >
+                  <option value="">Chọn vai trò...</option>
+                  {rolesData?.map(role => (
+                    <option key={role._id} value={role._id}>{role.name}</option>
                   ))}
                 </select>
               </div>
               <div className="space-y-2">
                 <Label>Trạng thái</Label>
-                <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
+                <select 
+                  className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as 'Active' | 'Inactive')}
+                >
                   <option value="Active">Hoạt động</option>
                   <option value="Inactive">Không hoạt động</option>
                 </select>
@@ -65,7 +139,10 @@ export default function UserCreatePage() {
           
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
             <Button type="button" variant="ghost" onClick={() => router.push('/admin/users')}>Hủy bỏ</Button>
-            <Button type="submit" variant="accent">Tạo User</Button>
+            <Button type="submit" variant="accent" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
+              Tạo User
+            </Button>
           </div>
         </form>
       </Card>

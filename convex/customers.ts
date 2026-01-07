@@ -30,6 +30,14 @@ export const list = query({
   },
 });
 
+export const listAll = query({
+  args: {},
+  returns: v.array(customerDoc),
+  handler: async (ctx) => {
+    return await ctx.db.query("customers").collect();
+  },
+});
+
 export const getById = query({
   args: { id: v.id("customers") },
   returns: v.union(customerDoc, v.null()),
@@ -168,5 +176,69 @@ export const remove = mutation({
   handler: async (ctx, args) => {
     await ctx.db.delete(args.id);
     return null;
+  },
+});
+
+export const count = query({
+  args: { status: v.optional(customerStatus) },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    if (args.status) {
+      const customers = await ctx.db
+        .query("customers")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .collect();
+      return customers.length;
+    }
+    const customers = await ctx.db.query("customers").collect();
+    return customers.length;
+  },
+});
+
+export const getStats = query({
+  args: {},
+  returns: v.object({
+    totalCount: v.number(),
+    activeCount: v.number(),
+    inactiveCount: v.number(),
+    totalSpent: v.number(),
+    totalOrders: v.number(),
+    avgOrderValue: v.number(),
+  }),
+  handler: async (ctx) => {
+    const customers = await ctx.db.query("customers").collect();
+    let activeCount = 0;
+    let inactiveCount = 0;
+    let totalSpent = 0;
+    let totalOrders = 0;
+
+    for (const c of customers) {
+      if (c.status === "Active") activeCount++;
+      else inactiveCount++;
+      totalSpent += c.totalSpent;
+      totalOrders += c.ordersCount;
+    }
+
+    return {
+      totalCount: customers.length,
+      activeCount,
+      inactiveCount,
+      totalSpent,
+      totalOrders,
+      avgOrderValue: totalOrders > 0 ? Math.round(totalSpent / totalOrders) : 0,
+    };
+  },
+});
+
+export const getCities = query({
+  args: {},
+  returns: v.array(v.string()),
+  handler: async (ctx) => {
+    const customers = await ctx.db.query("customers").collect();
+    const cities = new Set<string>();
+    for (const c of customers) {
+      if (c.city) cities.add(c.city);
+    }
+    return Array.from(cities).sort();
   },
 });

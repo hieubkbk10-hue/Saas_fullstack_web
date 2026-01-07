@@ -3,7 +3,7 @@
 import React from 'react';
 import { 
   Hash, FileText, Edit3, Image, Clock, Tag, ToggleLeft, 
-  Mail, Phone, Key, DollarSign, Layers, FolderTree
+  Mail, Phone, Key, DollarSign, Layers, FolderTree, Calendar, Code
 } from 'lucide-react';
 import { FieldConfig, FieldType } from '@/types/moduleConfig';
 import { ToggleSwitch } from './ToggleSwitch';
@@ -22,6 +22,8 @@ const fieldTypeIcons: Record<FieldType, React.ComponentType<{ size?: number }>> 
   select: FolderTree,
   tags: Tag,
   date: Clock,
+  daterange: Calendar,
+  json: Code,
   boolean: ToggleLeft,
 };
 

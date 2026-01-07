@@ -11,6 +11,7 @@
 import type * as activityLogs from "../activityLogs.js";
 import type * as admin_modules from "../admin/modules.js";
 import type * as admin_presets from "../admin/presets.js";
+import type * as cart from "../cart.js";
 import type * as comments from "../comments.js";
 import type * as convexDashboard from "../convexDashboard.js";
 import type * as customers from "../customers.js";
@@ -19,15 +20,20 @@ import type * as homeComponents from "../homeComponents.js";
 import type * as images from "../images.js";
 import type * as lib_helpers from "../lib/helpers.js";
 import type * as lib_validators from "../lib/validators.js";
+import type * as media from "../media.js";
 import type * as menus from "../menus.js";
+import type * as notifications from "../notifications.js";
+import type * as orders from "../orders.js";
 import type * as postCategories from "../postCategories.js";
 import type * as posts from "../posts.js";
 import type * as productCategories from "../productCategories.js";
 import type * as products from "../products.js";
+import type * as promotions from "../promotions.js";
 import type * as roles from "../roles.js";
 import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
 import type * as users from "../users.js";
+import type * as wishlist from "../wishlist.js";
 
 import type {
   ApiFromModules,
@@ -39,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   activityLogs: typeof activityLogs;
   "admin/modules": typeof admin_modules;
   "admin/presets": typeof admin_presets;
+  cart: typeof cart;
   comments: typeof comments;
   convexDashboard: typeof convexDashboard;
   customers: typeof customers;
@@ -47,15 +54,20 @@ declare const fullApi: ApiFromModules<{
   images: typeof images;
   "lib/helpers": typeof lib_helpers;
   "lib/validators": typeof lib_validators;
+  media: typeof media;
   menus: typeof menus;
+  notifications: typeof notifications;
+  orders: typeof orders;
   postCategories: typeof postCategories;
   posts: typeof posts;
   productCategories: typeof productCategories;
   products: typeof products;
+  promotions: typeof promotions;
   roles: typeof roles;
   seed: typeof seed;
   settings: typeof settings;
   users: typeof users;
+  wishlist: typeof wishlist;
 }>;
 
 /**

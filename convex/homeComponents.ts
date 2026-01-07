@@ -145,3 +145,57 @@ export const duplicate = mutation({
     });
   },
 });
+
+export const count = query({
+  args: {},
+  returns: v.number(),
+  handler: async (ctx) => {
+    const components = await ctx.db.query("homeComponents").collect();
+    return components.length;
+  },
+});
+
+export const getStats = query({
+  args: {},
+  returns: v.object({
+    totalCount: v.number(),
+    activeCount: v.number(),
+    inactiveCount: v.number(),
+    typeBreakdown: v.array(v.object({
+      type: v.string(),
+      count: v.number(),
+    })),
+  }),
+  handler: async (ctx) => {
+    const components = await ctx.db.query("homeComponents").collect();
+    let activeCount = 0;
+    const typeMap: Record<string, number> = {};
+
+    for (const c of components) {
+      if (c.active) activeCount++;
+      typeMap[c.type] = (typeMap[c.type] || 0) + 1;
+    }
+
+    const typeBreakdown = Object.entries(typeMap).map(([type, count]) => ({ type, count }));
+
+    return {
+      totalCount: components.length,
+      activeCount,
+      inactiveCount: components.length - activeCount,
+      typeBreakdown,
+    };
+  },
+});
+
+export const getTypes = query({
+  args: {},
+  returns: v.array(v.string()),
+  handler: async (ctx) => {
+    const components = await ctx.db.query("homeComponents").collect();
+    const types = new Set<string>();
+    for (const c of components) {
+      types.add(c.type);
+    }
+    return Array.from(types).sort();
+  },
+});

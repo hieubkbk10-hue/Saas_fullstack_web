@@ -142,3 +142,63 @@ export const checkPermission = query({
     return modulePermissions.includes(args.action);
   },
 });
+
+export const count = query({
+  args: {},
+  returns: v.number(),
+  handler: async (ctx) => {
+    const roles = await ctx.db.query("roles").collect();
+    return roles.length;
+  },
+});
+
+export const getStats = query({
+  args: {},
+  returns: v.object({
+    totalCount: v.number(),
+    systemCount: v.number(),
+    customCount: v.number(),
+    superAdminCount: v.number(),
+  }),
+  handler: async (ctx) => {
+    const roles = await ctx.db.query("roles").collect();
+    let systemCount = 0;
+    let superAdminCount = 0;
+
+    for (const r of roles) {
+      if (r.isSystem) systemCount++;
+      if (r.isSuperAdmin) superAdminCount++;
+    }
+
+    return {
+      totalCount: roles.length,
+      systemCount,
+      customCount: roles.length - systemCount,
+      superAdminCount,
+    };
+  },
+});
+
+export const getUserCountByRole = query({
+  args: {},
+  returns: v.array(v.object({
+    roleId: v.id("roles"),
+    roleName: v.string(),
+    userCount: v.number(),
+  })),
+  handler: async (ctx) => {
+    const roles = await ctx.db.query("roles").collect();
+    const users = await ctx.db.query("users").collect();
+
+    const result = roles.map(role => {
+      const userCount = users.filter(u => u.roleId === role._id).length;
+      return {
+        roleId: role._id,
+        roleName: role.name,
+        userCount,
+      };
+    });
+
+    return result;
+  },
+});

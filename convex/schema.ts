@@ -46,10 +46,12 @@ export default defineSchema({
       v.literal("gallery"),
       v.literal("select"),
       v.literal("date"),
+      v.literal("daterange"),
       v.literal("email"),
       v.literal("phone"),
       v.literal("tags"),
-      v.literal("password")
+      v.literal("password"),
+      v.literal("json")
     ),
     required: v.boolean(),
     enabled: v.boolean(),
@@ -325,4 +327,159 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_targetType", ["targetType"])
     .index("by_action", ["action"]),
+
+  // 20. orders - Đơn hàng
+  orders: defineTable({
+    orderNumber: v.string(),
+    customerId: v.id("customers"),
+    items: v.array(
+      v.object({
+        productId: v.id("products"),
+        productName: v.string(),
+        quantity: v.number(),
+        price: v.number(),
+      })
+    ),
+    subtotal: v.number(),
+    shippingFee: v.number(),
+    totalAmount: v.number(),
+    status: v.union(
+      v.literal("Pending"),
+      v.literal("Processing"),
+      v.literal("Shipped"),
+      v.literal("Delivered"),
+      v.literal("Cancelled")
+    ),
+    paymentMethod: v.optional(
+      v.union(
+        v.literal("COD"),
+        v.literal("BankTransfer"),
+        v.literal("CreditCard"),
+        v.literal("EWallet")
+      )
+    ),
+    paymentStatus: v.optional(
+      v.union(
+        v.literal("Pending"),
+        v.literal("Paid"),
+        v.literal("Failed"),
+        v.literal("Refunded")
+      )
+    ),
+    shippingAddress: v.optional(v.string()),
+    trackingNumber: v.optional(v.string()),
+    note: v.optional(v.string()),
+  })
+    .index("by_orderNumber", ["orderNumber"])
+    .index("by_customer", ["customerId"])
+    .index("by_status", ["status"])
+    .index("by_paymentStatus", ["paymentStatus"]),
+
+  // 21. wishlist - Sản phẩm yêu thích
+  wishlist: defineTable({
+    customerId: v.id("customers"),
+    productId: v.id("products"),
+    note: v.optional(v.string()),
+  })
+    .index("by_customer", ["customerId"])
+    .index("by_product", ["productId"])
+    .index("by_customer_product", ["customerId", "productId"]),
+
+  // 22. carts - Giỏ hàng
+  carts: defineTable({
+    customerId: v.optional(v.id("customers")),
+    sessionId: v.optional(v.string()),
+    status: v.union(
+      v.literal("Active"),
+      v.literal("Converted"),
+      v.literal("Abandoned")
+    ),
+    itemsCount: v.number(),
+    totalAmount: v.number(),
+    expiresAt: v.optional(v.number()),
+    note: v.optional(v.string()),
+  })
+    .index("by_customer", ["customerId"])
+    .index("by_session", ["sessionId"])
+    .index("by_status", ["status"])
+    .index("by_expiresAt", ["expiresAt"]),
+
+  // 23. cartItems - Items trong giỏ hàng
+  cartItems: defineTable({
+    cartId: v.id("carts"),
+    productId: v.id("products"),
+    productName: v.string(),
+    productImage: v.optional(v.string()),
+    quantity: v.number(),
+    price: v.number(),
+    subtotal: v.number(),
+  })
+    .index("by_cart", ["cartId"])
+    .index("by_product", ["productId"]),
+
+  // 24. notifications - Thông báo hệ thống
+  notifications: defineTable({
+    title: v.string(),
+    content: v.string(),
+    type: v.union(
+      v.literal("info"),
+      v.literal("success"),
+      v.literal("warning"),
+      v.literal("error")
+    ),
+    targetType: v.union(
+      v.literal("all"),
+      v.literal("customers"),
+      v.literal("users"),
+      v.literal("specific")
+    ),
+    targetIds: v.optional(v.array(v.string())),
+    status: v.union(
+      v.literal("Draft"),
+      v.literal("Scheduled"),
+      v.literal("Sent"),
+      v.literal("Cancelled")
+    ),
+    sendEmail: v.optional(v.boolean()),
+    scheduledAt: v.optional(v.number()),
+    sentAt: v.optional(v.number()),
+    readCount: v.number(),
+    order: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_type", ["type"])
+    .index("by_targetType", ["targetType"])
+    .index("by_scheduledAt", ["scheduledAt"])
+    .index("by_status_order", ["status", "order"]),
+
+  // 22. promotions - Khuyến mãi & Voucher
+  promotions: defineTable({
+    name: v.string(),
+    code: v.string(),
+    description: v.optional(v.string()),
+    discountType: v.union(v.literal("percent"), v.literal("fixed")),
+    discountValue: v.number(),
+    minOrderAmount: v.optional(v.number()),
+    maxDiscountAmount: v.optional(v.number()),
+    usageLimit: v.optional(v.number()),
+    usedCount: v.number(),
+    startDate: v.optional(v.number()),
+    endDate: v.optional(v.number()),
+    status: v.union(
+      v.literal("Active"),
+      v.literal("Inactive"),
+      v.literal("Expired"),
+      v.literal("Scheduled")
+    ),
+    applicableTo: v.optional(
+      v.union(v.literal("all"), v.literal("products"), v.literal("categories"))
+    ),
+    applicableIds: v.optional(v.array(v.string())),
+    order: v.number(),
+  })
+    .index("by_code", ["code"])
+    .index("by_status", ["status"])
+    .index("by_status_order", ["status", "order"])
+    .index("by_startDate", ["startDate"])
+    .index("by_endDate", ["endDate"]),
 });

@@ -11,7 +11,9 @@ export type FieldType =
   | 'gallery' 
   | 'select' 
   | 'tags' 
-  | 'date' 
+  | 'date'
+  | 'daterange'
+  | 'json'
   | 'boolean';
 
 export interface FieldConfig {

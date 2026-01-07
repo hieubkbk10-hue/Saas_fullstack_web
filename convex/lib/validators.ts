@@ -34,6 +34,28 @@ export const commentStatus = v.union(
   v.literal("Spam")
 );
 
+export const orderStatus = v.union(
+  v.literal("Pending"),
+  v.literal("Processing"),
+  v.literal("Shipped"),
+  v.literal("Delivered"),
+  v.literal("Cancelled")
+);
+
+export const paymentMethod = v.union(
+  v.literal("COD"),
+  v.literal("BankTransfer"),
+  v.literal("CreditCard"),
+  v.literal("EWallet")
+);
+
+export const paymentStatus = v.union(
+  v.literal("Pending"),
+  v.literal("Paid"),
+  v.literal("Failed"),
+  v.literal("Refunded")
+);
+
 // Module category
 export const moduleCategory = v.union(
   v.literal("content"),
@@ -55,10 +77,12 @@ export const fieldType = v.union(
   v.literal("gallery"),
   v.literal("select"),
   v.literal("date"),
+  v.literal("daterange"),
   v.literal("email"),
   v.literal("phone"),
   v.literal("tags"),
-  v.literal("password")
+  v.literal("password"),
+  v.literal("json")
 );
 
 // Target type for polymorphic relations

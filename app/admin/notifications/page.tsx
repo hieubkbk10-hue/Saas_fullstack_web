@@ -1,0 +1,290 @@
+'use client';
+
+import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { Plus, Edit, Trash2, Search, Loader2, RefreshCw, Send, Ban, Bell, Info, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
+import { SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { ModuleGuard } from '../components/ModuleGuard';
+
+const TYPE_CONFIG = {
+  info: { icon: Info, color: 'text-blue-500', bg: 'bg-blue-500/10', label: 'Thông tin' },
+  success: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10', label: 'Thành công' },
+  warning: { icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-500/10', label: 'Cảnh báo' },
+  error: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10', label: 'Lỗi' },
+};
+
+const STATUS_CONFIG = {
+  Draft: { variant: 'secondary' as const, label: 'Bản nháp' },
+  Scheduled: { variant: 'warning' as const, label: 'Đã hẹn' },
+  Sent: { variant: 'success' as const, label: 'Đã gửi' },
+  Cancelled: { variant: 'destructive' as const, label: 'Đã hủy' },
+};
+
+const TARGET_LABELS = {
+  all: 'Tất cả',
+  customers: 'Khách hàng',
+  users: 'Admin',
+  specific: 'Cụ thể',
+};
+
+export default function NotificationsListPage() {
+  return (
+    <ModuleGuard moduleKey="notifications">
+      <NotificationsContent />
+    </ModuleGuard>
+  );
+}
+
+function NotificationsContent() {
+  const notificationsData = useQuery(api.notifications.listAll);
+  const deleteNotification = useMutation(api.notifications.remove);
+  const sendNotification = useMutation(api.notifications.send);
+  const cancelNotification = useMutation(api.notifications.cancel);
+  const seedNotificationsModule = useMutation(api.seed.seedNotificationsModule);
+  const clearNotificationsData = useMutation(api.seed.clearNotificationsData);
+
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Id<"notifications">[]>([]);
+
+  const isLoading = notificationsData === undefined;
+
+  const notifications = useMemo(() => {
+    return notificationsData?.map(n => ({
+      ...n,
+      typeLabel: TYPE_CONFIG[n.type]?.label || n.type,
+      statusLabel: STATUS_CONFIG[n.status]?.label || n.status,
+      targetLabel: TARGET_LABELS[n.targetType] || n.targetType,
+    })) || [];
+  }, [notificationsData]);
+
+  const filteredNotifications = useMemo(() => {
+    let data = [...notifications];
+    if (searchTerm) {
+      data = data.filter(n => n.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
+    if (filterStatus) {
+      data = data.filter(n => n.status === filterStatus);
+    }
+    if (filterType) {
+      data = data.filter(n => n.type === filterType);
+    }
+    return data;
+  }, [notifications, searchTerm, filterStatus, filterType]);
+
+  const sortedNotifications = useSortableData(filteredNotifications, sortConfig);
+
+  const handleSort = (key: string) => {
+    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+  };
+
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedNotifications.length ? [] : sortedNotifications.map(n => n._id));
+  const toggleSelectItem = (id: Id<"notifications">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+
+  const handleDelete = async (id: Id<"notifications">) => {
+    if (confirm('Xóa thông báo này?')) {
+      try {
+        await deleteNotification({ id });
+        toast.success('Đã xóa thông báo');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      }
+    }
+  };
+
+  const handleSend = async (id: Id<"notifications">) => {
+    if (confirm('Gửi thông báo này ngay?')) {
+      try {
+        await sendNotification({ id });
+        toast.success('Đã gửi thông báo');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      }
+    }
+  };
+
+  const handleCancel = async (id: Id<"notifications">) => {
+    if (confirm('Hủy thông báo này?')) {
+      try {
+        await cancelNotification({ id });
+        toast.success('Đã hủy thông báo');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      }
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (confirm(`Xóa ${selectedIds.length} thông báo đã chọn?`)) {
+      try {
+        for (const id of selectedIds) {
+          await deleteNotification({ id });
+        }
+        setSelectedIds([]);
+        toast.success(`Đã xóa ${selectedIds.length} thông báo`);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      }
+    }
+  };
+
+  const handleReseed = async () => {
+    if (confirm('Xóa tất cả và seed lại dữ liệu mẫu?')) {
+      try {
+        await clearNotificationsData();
+        await seedNotificationsModule();
+        toast.success('Đã reset dữ liệu thông báo');
+      } catch {
+        toast.error('Có lỗi khi reset dữ liệu');
+      }
+    }
+  };
+
+  const formatDate = (timestamp?: number) => {
+    if (!timestamp) return '-';
+    return new Date(timestamp).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Thông báo</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý thông báo hệ thống</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleReseed} title="Reset dữ liệu mẫu">
+            <RefreshCw size={16}/> Reset
+          </Button>
+          <Link href="/admin/notifications/create"><Button className="gap-2 bg-pink-600 hover:bg-pink-500"><Plus size={16}/> Tạo thông báo</Button></Link>
+        </div>
+      </div>
+
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+
+      <Card>
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
+          <div className="relative max-w-xs flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Input placeholder="Tìm kiếm tiêu đề..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          </div>
+          <select 
+            className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
+            value={filterStatus} 
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="Draft">Bản nháp</option>
+            <option value="Scheduled">Đã hẹn</option>
+            <option value="Sent">Đã gửi</option>
+            <option value="Cancelled">Đã hủy</option>
+          </select>
+          <select 
+            className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
+            value={filterType} 
+            onChange={(e) => setFilterType(e.target.value)}
+          >
+            <option value="">Tất cả loại</option>
+            <option value="info">Thông tin</option>
+            <option value="success">Thành công</option>
+            <option value="warning">Cảnh báo</option>
+            <option value="error">Lỗi</option>
+          </select>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === sortedNotifications.length && sortedNotifications.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedNotifications.length} /></TableHead>
+              <TableHead className="w-[40px]">Loại</TableHead>
+              <SortableHeader label="Tiêu đề" sortKey="title" sortConfig={sortConfig} onSort={handleSort} />
+              <TableHead>Đối tượng</TableHead>
+              <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
+              <SortableHeader label="Đã đọc" sortKey="readCount" sortConfig={sortConfig} onSort={handleSort} />
+              <TableHead>Thời gian</TableHead>
+              <TableHead className="text-right">Hành động</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedNotifications.map(notif => {
+              const TypeIcon = TYPE_CONFIG[notif.type]?.icon || Bell;
+              const typeConfig = TYPE_CONFIG[notif.type];
+              const statusConfig = STATUS_CONFIG[notif.status];
+              return (
+                <TableRow key={notif._id} className={selectedIds.includes(notif._id) ? 'bg-pink-500/5' : ''}>
+                  <TableCell><SelectCheckbox checked={selectedIds.includes(notif._id)} onChange={() => toggleSelectItem(notif._id)} /></TableCell>
+                  <TableCell>
+                    <div className={`w-8 h-8 rounded-lg ${typeConfig?.bg} flex items-center justify-center`}>
+                      <TypeIcon size={16} className={typeConfig?.color} />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium max-w-[250px] truncate">{notif.title}</div>
+                    <div className="text-xs text-slate-500 max-w-[250px] truncate">{notif.content}</div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{notif.targetLabel}</Badge>
+                    {notif.sendEmail && <span className="ml-1 text-xs text-pink-500">📧</span>}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={statusConfig?.variant}>{statusConfig?.label}</Badge>
+                  </TableCell>
+                  <TableCell className="text-slate-500">{notif.readCount.toLocaleString()}</TableCell>
+                  <TableCell className="text-slate-500 text-sm">
+                    {notif.status === 'Sent' ? formatDate(notif.sentAt) : notif.status === 'Scheduled' ? formatDate(notif.scheduledAt) : '-'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      {(notif.status === 'Draft' || notif.status === 'Scheduled') && (
+                        <Button variant="ghost" size="icon" className="text-green-500 hover:text-green-600" onClick={() => handleSend(notif._id)} title="Gửi ngay">
+                          <Send size={16}/>
+                        </Button>
+                      )}
+                      {notif.status === 'Scheduled' && (
+                        <Button variant="ghost" size="icon" className="text-amber-500 hover:text-amber-600" onClick={() => handleCancel(notif._id)} title="Hủy">
+                          <Ban size={16}/>
+                        </Button>
+                      )}
+                      {notif.status !== 'Sent' && (
+                        <Link href={`/admin/notifications/${notif._id}/edit`}>
+                          <Button variant="ghost" size="icon"><Edit size={16}/></Button>
+                        </Link>
+                      )}
+                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(notif._id)}><Trash2 size={16}/></Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            {sortedNotifications.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8 text-slate-500">
+                  {searchTerm || filterStatus || filterType ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có thông báo nào'}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+        {sortedNotifications.length > 0 && (
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">
+            Hiển thị {sortedNotifications.length} / {notifications.length} thông báo
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
