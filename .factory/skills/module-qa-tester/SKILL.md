@@ -406,10 +406,76 @@ convex/{module}.ts
    // Hiển thị paginatedPosts trong table + pagination UI
    ```
 
+8. **⚠️ Missing Image Compression on Upload (Media Module)**
+   ```tsx
+   // Bad - upload file gốc không compress
+   const response = await fetch(uploadUrl, {
+     method: 'POST',
+     headers: { 'Content-Type': file.type },
+     body: file, // File gốc, có thể rất lớn
+   });
+   
+   // Good - compress image 85% trước khi upload
+   const COMPRESSION_QUALITY = 0.85;
+   
+   async function compressImage(file: File, quality: number): Promise<Blob> {
+     if (!file.type.startsWith('image/') || file.type === 'image/png') {
+       return file; // Skip PNG to preserve transparency
+     }
+     return new Promise((resolve) => {
+       const img = new Image();
+       img.onload = () => {
+         const canvas = document.createElement('canvas');
+         canvas.width = img.width;
+         canvas.height = img.height;
+         canvas.getContext('2d')?.drawImage(img, 0, 0);
+         canvas.toBlob(
+           (blob) => resolve(blob && blob.size < file.size ? blob : file),
+           'image/jpeg',
+           quality
+         );
+       };
+       img.src = URL.createObjectURL(file);
+     });
+   }
+   
+   const compressedBlob = await compressImage(file, COMPRESSION_QUALITY);
+   const response = await fetch(uploadUrl, {
+     method: 'POST',
+     headers: { 'Content-Type': 'image/jpeg' },
+     body: compressedBlob,
+   });
+   ```
+
+9. **⚠️ Missing Storage Cleanup on Delete**
+   ```tsx
+   // Bad - chỉ xóa DB record, không xóa file storage
+   export const remove = mutation({
+     handler: async (ctx, args) => {
+       await ctx.db.delete(args.id); // Storage file orphaned!
+     },
+   });
+   
+   // Good - xóa cả storage file
+   export const remove = mutation({
+     handler: async (ctx, args) => {
+       const media = await ctx.db.get(args.id);
+       if (!media) throw new Error("Media not found");
+       try {
+         await ctx.storage.delete(media.storageId);
+       } catch {
+         // Storage file might already be deleted
+       }
+       await ctx.db.delete(args.id);
+     },
+   });
+   ```
+
 ## Modules đã QA OK (Reference)
 
 - ✅ **Posts** - Module chuẩn với đầy đủ features + pagination
 - ✅ **Comments** - Module với full CRUD + pagination
+- ✅ **Media** - Module với compression 85%, feature toggle, storage cleanup
 
 ## Modules cần QA
 

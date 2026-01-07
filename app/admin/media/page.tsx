@@ -19,6 +19,65 @@ const MODULE_KEY = 'media';
 type ViewMode = 'grid' | 'list';
 type FilterType = 'all' | 'image' | 'video' | 'document';
 
+const COMPRESSION_QUALITY = 0.85;
+
+// Compress image using canvas (client-side)
+async function compressImage(file: File, quality: number = COMPRESSION_QUALITY): Promise<Blob> {
+  // Skip compression for non-image files or PNG (to preserve transparency)
+  if (!file.type.startsWith('image/') || file.type === 'image/png' || file.type === 'image/gif') {
+    return file;
+  }
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(file); // Fallback to original
+        return;
+      }
+      
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      
+      canvas.toBlob(
+        (blob) => {
+          if (blob && blob.size < file.size) {
+            resolve(blob);
+          } else {
+            resolve(file); // Use original if compression didn't help
+          }
+        },
+        'image/jpeg',
+        quality
+      );
+    };
+    img.onerror = () => resolve(file);
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// Slugify filename
+function slugifyFilename(filename: string): string {
+  const ext = filename.split('.').pop() || '';
+  const name = filename.replace(/\.[^/.]+$/, '');
+  
+  const slugified = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+  
+  const timestamp = Date.now();
+  return `${slugified}-${timestamp}.${ext}`;
+}
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
@@ -132,7 +191,7 @@ function MediaContent() {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
-  // Upload handler
+  // Upload handler with compression
   const handleFileSelect = useCallback(async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
@@ -150,14 +209,21 @@ function MediaContent() {
           continue;
         }
 
+        // Compress image (85% quality) and slugify filename
+        const compressedBlob = await compressImage(file, COMPRESSION_QUALITY);
+        const slugifiedName = slugifyFilename(file.name);
+        const finalMimeType = file.type.startsWith('image/') && file.type !== 'image/png' && file.type !== 'image/gif' 
+          ? 'image/jpeg' 
+          : file.type;
+
         // Get upload URL
         const uploadUrl = await generateUploadUrl();
 
-        // Upload to storage
+        // Upload compressed file to storage
         const response = await fetch(uploadUrl, {
           method: 'POST',
-          headers: { 'Content-Type': file.type },
-          body: file,
+          headers: { 'Content-Type': finalMimeType },
+          body: compressedBlob,
         });
 
         if (!response.ok) {
@@ -176,18 +242,18 @@ function MediaContent() {
           const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
             img.onload = () => resolve({ width: img.width, height: img.height });
             img.onerror = () => resolve({ width: 0, height: 0 });
-            img.src = URL.createObjectURL(file);
+            img.src = URL.createObjectURL(compressedBlob);
           });
           width = dimensions.width;
           height = dimensions.height;
         }
 
-        // Save to database
+        // Save to database with compressed size
         await createMedia({
           storageId: storageId as Id<"_storage">,
-          filename: file.name,
-          mimeType: file.type,
-          size: file.size,
+          filename: slugifiedName,
+          mimeType: finalMimeType,
+          size: compressedBlob.size,
           width,
           height,
           folder: 'uploads',
