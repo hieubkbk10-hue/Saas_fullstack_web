@@ -58,6 +58,7 @@ function OrdersContent() {
   const ordersData = useQuery(api.orders.listAll);
   const customersData = useQuery(api.customers.listAll);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const deleteOrder = useMutation(api.orders.remove);
   const seedOrdersModule = useMutation(api.seed.seedOrdersModule);
   const clearOrdersData = useMutation(api.seed.clearOrdersData);
@@ -68,6 +69,7 @@ function OrdersContent() {
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Id<"orders">[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const isLoading = ordersData === undefined || customersData === undefined || fieldsData === undefined;
 
@@ -146,7 +148,25 @@ function OrdersContent() {
 
   const sortedData = useSortableData(filteredData, sortConfig);
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(o => o._id));
+  // Lấy ordersPerPage từ settings
+  const ordersPerPage = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'ordersPerPage');
+    return (setting?.value as number) || 20;
+  }, [settingsData]);
+
+  // Pagination
+  const totalPages = Math.ceil(sortedData.length / ordersPerPage);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * ordersPerPage;
+    return sortedData.slice(start, start + ordersPerPage);
+  }, [sortedData, currentPage, ordersPerPage]);
+
+  // Reset page khi filter thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus, filterPaymentStatus]);
+
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(o => o._id));
   const toggleSelectItem = (id: Id<"orders">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
   const handleDelete = async (id: Id<"orders">) => {
@@ -245,7 +265,7 @@ function OrdersContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === sortedData.length && sortedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedData.length} /></TableHead>}
+              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedData.length && paginatedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedData.length} /></TableHead>}
               {visibleColumns.includes('orderNumber') && <SortableHeader label="Mã đơn" sortKey="orderNumber" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('customer') && <SortableHeader label="Khách hàng" sortKey="customerName" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('items') && <TableHead>Sản phẩm</TableHead>}
@@ -258,7 +278,7 @@ function OrdersContent() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedData.map(order => (
+            {paginatedData.map(order => (
               <TableRow key={order._id} className={selectedIds.includes(order._id) ? 'bg-emerald-500/5' : ''}>
                 {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(order._id)} onChange={() => toggleSelectItem(order._id)} /></TableCell>}
                 {visibleColumns.includes('orderNumber') && <TableCell className="font-mono text-sm font-medium text-emerald-600">{order.orderNumber}</TableCell>}
@@ -301,7 +321,7 @@ function OrdersContent() {
                 )}
               </TableRow>
             ))}
-            {sortedData.length === 0 && (
+            {paginatedData.length === 0 && (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center py-8 text-slate-500">
                   {searchTerm || filterStatus || filterPaymentStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có đơn hàng nào. Nhấn Reset để tạo dữ liệu mẫu.'}
@@ -311,8 +331,33 @@ function OrdersContent() {
           </TableBody>
         </Table>
         {sortedData.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">
-            Hiển thị {sortedData.length} / {orders.length} đơn hàng
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-sm text-slate-500">
+              Hiển thị {(currentPage - 1) * ordersPerPage + 1} - {Math.min(currentPage * ordersPerPage, sortedData.length)} / {sortedData.length} đơn hàng
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                >
+                  Trước
+                </Button>
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Trang {currentPage} / {totalPages}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                >
+                  Sau
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </Card>

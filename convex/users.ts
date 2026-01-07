@@ -35,6 +35,15 @@ export const listAll = query({
   },
 });
 
+export const count = query({
+  args: {},
+  returns: v.number(),
+  handler: async (ctx) => {
+    const users = await ctx.db.query("users").collect();
+    return users.length;
+  },
+});
+
 export const getById = query({
   args: { id: v.id("users") },
   returns: v.union(userDoc, v.null()),

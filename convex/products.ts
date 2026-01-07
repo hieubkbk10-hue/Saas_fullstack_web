@@ -280,6 +280,24 @@ export const remove = mutation({
       await ctx.db.delete(comment._id);
     }
 
+    // Cascade delete: Remove related wishlist items
+    const wishlistItems = await ctx.db
+      .query("wishlist")
+      .withIndex("by_product", (q) => q.eq("productId", args.id))
+      .collect();
+    for (const item of wishlistItems) {
+      await ctx.db.delete(item._id);
+    }
+
+    // Cascade delete: Remove related cart items
+    const cartItems = await ctx.db
+      .query("cartItems")
+      .withIndex("by_product", (q) => q.eq("productId", args.id))
+      .collect();
+    for (const item of cartItems) {
+      await ctx.db.delete(item._id);
+    }
+
     // Delete the product
     await ctx.db.delete(args.id);
     return null;

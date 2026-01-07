@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, Search, Loader2, RefreshCw } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+
+const MODULE_KEY = 'users';
 
 export default function UsersListPage() {
   return (
@@ -22,6 +24,8 @@ export default function UsersListPage() {
 function UsersContent() {
   const usersData = useQuery(api.users.listAll);
   const rolesData = useQuery(api.roles.listAll);
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   const deleteUser = useMutation(api.users.remove);
   const seedUsersModule = useMutation(api.seed.seedUsersModule);
   const clearUsersData = useMutation(api.seed.clearUsersData);
@@ -31,8 +35,22 @@ function UsersContent() {
   const [filterRole, setFilterRole] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [selectedIds, setSelectedIds] = useState<Id<"users">[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const isLoading = usersData === undefined || rolesData === undefined;
+
+  // Settings: usersPerPage
+  const usersPerPage = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'usersPerPage');
+    return (setting?.value as number) || 20;
+  }, [settingsData]);
+
+  // Features: enableLastLogin
+  const enabledFeatures = useMemo(() => {
+    const features: Record<string, boolean> = {};
+    featuresData?.forEach(f => { features[f.featureKey] = f.enabled; });
+    return features;
+  }, [featuresData]);
 
   const roleMap = useMemo(() => {
     const map: Record<string, { name: string; color?: string }> = {};
@@ -67,11 +85,34 @@ function UsersContent() {
 
   const sortedUsers = useSortableData(filteredUsers, sortConfig);
 
+  // Pagination
+  const totalPages = Math.ceil(sortedUsers.length / usersPerPage);
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * usersPerPage;
+    return sortedUsers.slice(start, start + usersPerPage);
+  }, [sortedUsers, currentPage, usersPerPage]);
+
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setCurrentPage(1);
   };
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedUsers.length ? [] : sortedUsers.map(u => u._id));
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterRole = (value: string) => {
+    setFilterRole(value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterStatus = (value: string) => {
+    setFilterStatus(value);
+    setCurrentPage(1);
+  };
+
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedUsers.length ? [] : paginatedUsers.map(u => u._id));
   const toggleSelectItem = (id: Id<"users">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
   const handleDelete = async (id: Id<"users">) => {
@@ -146,12 +187,12 @@ function UsersContent() {
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
           <div className="relative max-w-xs flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm theo tên, email..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Input placeholder="Tìm kiếm theo tên, email..." className="pl-9" value={searchTerm} onChange={(e) => handleSearch(e.target.value)} />
           </div>
           <select 
             className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
             value={filterRole} 
-            onChange={(e) => setFilterRole(e.target.value)}
+            onChange={(e) => handleFilterRole(e.target.value)}
           >
             <option value="">Tất cả vai trò</option>
             {rolesData?.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
@@ -159,7 +200,7 @@ function UsersContent() {
           <select 
             className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
             value={filterStatus} 
-            onChange={(e) => setFilterStatus(e.target.value)}
+            onChange={(e) => handleFilterStatus(e.target.value)}
           >
             <option value="">Tất cả trạng thái</option>
             <option value="Active">Hoạt động</option>
@@ -170,26 +211,28 @@ function UsersContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === sortedUsers.length && sortedUsers.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedUsers.length} /></TableHead>
+              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedUsers.length && paginatedUsers.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedUsers.length} /></TableHead>
               <SortableHeader label="Người dùng" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />
               <SortableHeader label="Vai trò" sortKey="roleName" sortConfig={sortConfig} onSort={handleSort} />
               <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
-              <TableHead>Đăng nhập cuối</TableHead>
+              {(enabledFeatures.enableLastLogin ?? true) && <TableHead>Đăng nhập cuối</TableHead>}
               <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedUsers.map(user => (
+            {paginatedUsers.map(user => (
               <TableRow key={user._id} className={selectedIds.includes(user._id) ? 'bg-blue-500/5' : ''}>
                 <TableCell><SelectCheckbox checked={selectedIds.includes(user._id)} onChange={() => toggleSelectItem(user._id)} /></TableCell>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    {user.avatar ? (
-                      <img src={user.avatar} className="w-9 h-9 rounded-full object-cover" alt="" />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm font-medium text-slate-500">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
+                    {(enabledFeatures.enableAvatar ?? true) && (
+                      user.avatar ? (
+                        <img src={user.avatar} className="w-9 h-9 rounded-full object-cover" alt="" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm font-medium text-slate-500">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                      )
                     )}
                     <div>
                       <div className="font-medium">{user.name}</div>
@@ -214,7 +257,9 @@ function UsersContent() {
                     {user.status === 'Active' ? 'Hoạt động' : user.status === 'Inactive' ? 'Không hoạt động' : 'Bị cấm'}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-slate-500 text-sm">{formatLastLogin(user.lastLogin)}</TableCell>
+                {(enabledFeatures.enableLastLogin ?? true) && (
+                  <TableCell className="text-slate-500 text-sm">{formatLastLogin(user.lastLogin)}</TableCell>
+                )}
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Link href={`/admin/users/${user._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
@@ -223,9 +268,9 @@ function UsersContent() {
                 </TableCell>
               </TableRow>
             ))}
-            {sortedUsers.length === 0 && (
+            {paginatedUsers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={(enabledFeatures.enableLastLogin ?? true) ? 6 : 5} className="text-center py-8 text-slate-500">
                   {searchTerm || filterRole || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có người dùng nào'}
                 </TableCell>
               </TableRow>
@@ -233,8 +278,33 @@ function UsersContent() {
           </TableBody>
         </Table>
         {sortedUsers.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">
-            Hiển thị {sortedUsers.length} / {users.length} người dùng
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-sm text-slate-500">
+              Hiển thị {Math.min((currentPage - 1) * usersPerPage + 1, sortedUsers.length)} - {Math.min(currentPage * usersPerPage, sortedUsers.length)} / {sortedUsers.length} người dùng
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Trang {currentPage} / {totalPages}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </Card>

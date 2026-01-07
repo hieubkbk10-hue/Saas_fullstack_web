@@ -9,6 +9,7 @@ import { Id } from '@/convex/_generated/dataModel';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, Input, Label } from '../../../components/ui';
+import { ImageUploader } from '../../../components/ImageUploader';
 
 const MODULE_KEY = 'users';
 
@@ -23,6 +24,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [avatar, setAvatar] = useState<string | undefined>();
   const [roleId, setRoleId] = useState<Id<"roles"> | ''>('');
   const [status, setStatus] = useState<'Active' | 'Inactive' | 'Banned'>('Active');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,6 +42,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
       setName(userData.name);
       setEmail(userData.email);
       setPhone(userData.phone || '');
+      setAvatar(userData.avatar);
       setRoleId(userData.roleId);
       setStatus(userData.status);
     }
@@ -58,6 +61,7 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
         name,
         email,
         phone: enabledFields.has('phone') && phone ? phone : undefined,
+        avatar: enabledFields.has('avatar') ? avatar : undefined,
         roleId: roleId as Id<"roles">,
         status,
       });
@@ -121,6 +125,18 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
                   placeholder="Nhập số điện thoại..." 
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+            )}
+
+            {enabledFields.has('avatar') && (
+              <div className="space-y-2">
+                <Label>Ảnh đại diện</Label>
+                <ImageUploader
+                  value={avatar}
+                  onChange={(url) => setAvatar(url)}
+                  folder="users"
+                  aspectRatio="square"
                 />
               </div>
             )}

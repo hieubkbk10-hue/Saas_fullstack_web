@@ -119,6 +119,17 @@ export const listByCustomer = query({
   },
 });
 
+export const listAllByCustomer = query({
+  args: { customerId: v.id("customers") },
+  returns: v.array(orderDoc),
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("orders")
+      .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
+      .collect();
+  },
+});
+
 export const listByStatus = query({
   args: { status: orderStatus, paginationOpts: paginationOptsValidator },
   returns: v.object({
@@ -197,6 +208,11 @@ export const update = mutation({
       Object.entries(updates).filter(([, v]) => v !== undefined)
     );
 
+    // Skip if no updates
+    if (Object.keys(filteredUpdates).length === 0) {
+      return null;
+    }
+
     await ctx.db.patch(id, filteredUpdates);
     return null;
   },
@@ -228,7 +244,47 @@ export const remove = mutation({
   args: { id: v.id("orders") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.id);
+    if (!order) throw new Error("Order not found");
+
+    // Future: Delete related logs, history, etc.
+    // const logs = await ctx.db.query("orderLogs")
+    //   .withIndex("by_order", q => q.eq("orderId", args.id))
+    //   .collect();
+    // for (const log of logs) await ctx.db.delete(log._id);
+
     await ctx.db.delete(args.id);
     return null;
+  },
+});
+
+// Query to count orders by customer (for cascade delete check)
+export const countByCustomer = query({
+  args: { customerId: v.id("customers") },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    const orders = await ctx.db
+      .query("orders")
+      .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
+      .collect();
+    return orders.length;
+  },
+});
+
+// Delete all orders by customer (for cascade delete)
+export const removeByCustomer = mutation({
+  args: { customerId: v.id("customers") },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    const orders = await ctx.db
+      .query("orders")
+      .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
+      .collect();
+    
+    for (const order of orders) {
+      await ctx.db.delete(order._id);
+    }
+    
+    return orders.length;
   },
 });
