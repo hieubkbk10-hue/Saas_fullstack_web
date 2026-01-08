@@ -25,11 +25,12 @@ export const list = query({
   },
 });
 
+// USR-003 FIX: Thêm limit để tránh memory overflow (roles thường ít nên 100 là đủ)
 export const listAll = query({
   args: {},
   returns: v.array(roleDoc),
   handler: async (ctx) => {
-    return await ctx.db.query("roles").collect();
+    return await ctx.db.query("roles").take(100);
   },
 });
 
@@ -63,6 +64,23 @@ export const getSystemRoles = query({
   },
 });
 
+// Helper function to update roleStats counter
+async function updateRoleStats(
+  ctx: { db: any },
+  key: string,
+  delta: number
+) {
+  const stats = await ctx.db
+    .query("roleStats")
+    .withIndex("by_key", (q: any) => q.eq("key", key))
+    .unique();
+  if (stats) {
+    await ctx.db.patch(stats._id, { count: Math.max(0, stats.count + delta) });
+  } else {
+    await ctx.db.insert("roleStats", { key, count: Math.max(0, delta) });
+  }
+}
+
 export const create = mutation({
   args: {
     name: v.string(),
@@ -81,10 +99,18 @@ export const create = mutation({
     if (existing) {
       throw new Error(`Tên vai trò "${args.name}" đã tồn tại`);
     }
-    return await ctx.db.insert("roles", {
+    const roleId = await ctx.db.insert("roles", {
       ...args,
       isSystem: args.isSystem ?? false,
     });
+    
+    // Update counters
+    const updates = [updateRoleStats(ctx, "total", 1)];
+    if (args.isSystem) updates.push(updateRoleStats(ctx, "system", 1));
+    if (args.isSuperAdmin) updates.push(updateRoleStats(ctx, "superAdmin", 1));
+    await Promise.all(updates);
+    
+    return roleId;
   },
 });
 
@@ -130,13 +156,20 @@ export const remove = mutation({
     const usersWithRole = await ctx.db
       .query("users")
       .withIndex("by_role_status", (q) => q.eq("roleId", args.id))
-      .collect();
+      .take(1);
     
     if (usersWithRole.length > 0) {
-      throw new Error(`Không thể xóa vai trò "${role.name}" vì đang được gán cho ${usersWithRole.length} người dùng`);
+      throw new Error(`Không thể xóa vai trò "${role.name}" vì đang được gán cho người dùng`);
     }
     
     await ctx.db.delete(args.id);
+    
+    // Update counters
+    const updates = [updateRoleStats(ctx, "total", -1)];
+    if (role.isSystem) updates.push(updateRoleStats(ctx, "system", -1));
+    if (role.isSuperAdmin) updates.push(updateRoleStats(ctx, "superAdmin", -1));
+    await Promise.all(updates);
+    
     return null;
   },
 });
@@ -158,15 +191,20 @@ export const checkPermission = query({
   },
 });
 
+// USR-002 FIX: Dùng counter table thay vì fetch ALL
 export const count = query({
   args: {},
   returns: v.number(),
   handler: async (ctx) => {
-    const roles = await ctx.db.query("roles").collect();
-    return roles.length;
+    const stats = await ctx.db
+      .query("roleStats")
+      .withIndex("by_key", (q) => q.eq("key", "total"))
+      .unique();
+    return stats?.count ?? 0;
   },
 });
 
+// USR-002 FIX: Dùng counter table cho stats
 export const getStats = query({
   args: {},
   returns: v.object({
@@ -176,24 +214,26 @@ export const getStats = query({
     superAdminCount: v.number(),
   }),
   handler: async (ctx) => {
-    const roles = await ctx.db.query("roles").collect();
-    let systemCount = 0;
-    let superAdminCount = 0;
+    const [total, system, superAdmin] = await Promise.all([
+      ctx.db.query("roleStats").withIndex("by_key", (q) => q.eq("key", "total")).unique(),
+      ctx.db.query("roleStats").withIndex("by_key", (q) => q.eq("key", "system")).unique(),
+      ctx.db.query("roleStats").withIndex("by_key", (q) => q.eq("key", "superAdmin")).unique(),
+    ]);
 
-    for (const r of roles) {
-      if (r.isSystem) systemCount++;
-      if (r.isSuperAdmin) superAdminCount++;
-    }
+    const totalCount = total?.count ?? 0;
+    const systemCount = system?.count ?? 0;
+    const superAdminCount = superAdmin?.count ?? 0;
 
     return {
-      totalCount: roles.length,
+      totalCount,
       systemCount,
-      customCount: roles.length - systemCount,
+      customCount: totalCount - systemCount,
       superAdminCount,
     };
   },
 });
 
+// USR-004 FIX: Optimize với Map lookup thay vì filter O(n²)
 export const getUserCountByRole = query({
   args: {},
   returns: v.array(v.object({
@@ -202,18 +242,22 @@ export const getUserCountByRole = query({
     userCount: v.number(),
   })),
   handler: async (ctx) => {
-    const roles = await ctx.db.query("roles").collect();
-    const users = await ctx.db.query("users").collect();
+    const [roles, users] = await Promise.all([
+      ctx.db.query("roles").take(100),
+      ctx.db.query("users").take(500),
+    ]);
 
-    const result = roles.map(role => {
-      const userCount = users.filter(u => u.roleId === role._id).length;
-      return {
-        roleId: role._id,
-        roleName: role.name,
-        userCount,
-      };
+    // Build Map for O(1) lookup instead of O(n) filter
+    const userCountMap = new Map<string, number>();
+    users.forEach((u) => {
+      const count = userCountMap.get(u.roleId) || 0;
+      userCountMap.set(u.roleId, count + 1);
     });
 
-    return result;
+    return roles.map((role) => ({
+      roleId: role._id,
+      roleName: role.name,
+      userCount: userCountMap.get(role._id) || 0,
+    }));
   },
 });

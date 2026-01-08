@@ -27,20 +27,38 @@ export const list = query({
   },
 });
 
+// USR-003 FIX: Thêm limit để tránh memory overflow
 export const listAll = query({
   args: {},
   returns: v.array(userDoc),
   handler: async (ctx) => {
-    return await ctx.db.query("users").collect();
+    return await ctx.db.query("users").take(500);
   },
 });
 
+// USR-001 FIX: Dùng counter table thay vì fetch ALL
 export const count = query({
   args: {},
   returns: v.number(),
   handler: async (ctx) => {
-    const users = await ctx.db.query("users").collect();
-    return users.length;
+    const stats = await ctx.db
+      .query("userStats")
+      .withIndex("by_key", (q) => q.eq("key", "total"))
+      .unique();
+    return stats?.count ?? 0;
+  },
+});
+
+// Helper: Get count by status from counter table
+export const countByStatus = query({
+  args: { status: userStatus },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    const stats = await ctx.db
+      .query("userStats")
+      .withIndex("by_key", (q) => q.eq("key", args.status))
+      .unique();
+    return stats?.count ?? 0;
   },
 });
 
@@ -99,6 +117,23 @@ export const getByStatus = query({
   },
 });
 
+// Helper function to update userStats counter
+async function updateUserStats(
+  ctx: { db: any },
+  key: string,
+  delta: number
+) {
+  const stats = await ctx.db
+    .query("userStats")
+    .withIndex("by_key", (q: any) => q.eq("key", key))
+    .unique();
+  if (stats) {
+    await ctx.db.patch(stats._id, { count: Math.max(0, stats.count + delta) });
+  } else {
+    await ctx.db.insert("userStats", { key, count: Math.max(0, delta) });
+  }
+}
+
 export const create = mutation({
   args: {
     name: v.string(),
@@ -117,7 +152,15 @@ export const create = mutation({
     if (existing) {
       throw new Error("Email already exists");
     }
-    return await ctx.db.insert("users", { ...args });
+    const userId = await ctx.db.insert("users", { ...args });
+    
+    // Update counters
+    await Promise.all([
+      updateUserStats(ctx, "total", 1),
+      updateUserStats(ctx, args.status, 1),
+    ]);
+    
+    return userId;
   },
 });
 
@@ -137,6 +180,15 @@ export const update = mutation({
     const { id, ...updates } = args;
     const user = await ctx.db.get(id);
     if (!user) throw new Error("User not found");
+    
+    // Update status counters if status changed
+    if (updates.status && updates.status !== user.status) {
+      await Promise.all([
+        updateUserStats(ctx, user.status, -1),
+        updateUserStats(ctx, updates.status, 1),
+      ]);
+    }
+    
     await ctx.db.patch(id, updates);
     return null;
   },
@@ -155,7 +207,45 @@ export const remove = mutation({
   args: { id: v.id("users") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.id);
+    if (!user) throw new Error("User not found");
+    
     await ctx.db.delete(args.id);
+    
+    // Update counters
+    await Promise.all([
+      updateUserStats(ctx, "total", -1),
+      updateUserStats(ctx, user.status, -1),
+    ]);
+    
+    return null;
+  },
+});
+
+// USR-005 FIX: Bulk delete with parallel execution
+export const bulkRemove = mutation({
+  args: { ids: v.array(v.id("users")) },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const users = await Promise.all(args.ids.map((id) => ctx.db.get(id)));
+    const validUsers = users.filter((u): u is NonNullable<typeof u> => u !== null);
+    
+    // Delete all users in parallel
+    await Promise.all(args.ids.map((id) => ctx.db.delete(id)));
+    
+    // Update counters
+    const statusCounts: Record<string, number> = {};
+    validUsers.forEach((u) => {
+      statusCounts[u.status] = (statusCounts[u.status] || 0) + 1;
+    });
+    
+    await Promise.all([
+      updateUserStats(ctx, "total", -validUsers.length),
+      ...Object.entries(statusCounts).map(([status, count]) =>
+        updateUserStats(ctx, status, -count)
+      ),
+    ]);
+    
     return null;
   },
 });

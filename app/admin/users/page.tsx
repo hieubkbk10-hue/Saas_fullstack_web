@@ -27,6 +27,7 @@ function UsersContent() {
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   const deleteUser = useMutation(api.users.remove);
+  const bulkDeleteUsers = useMutation(api.users.bulkRemove);
   const seedUsersModule = useMutation(api.seed.seedUsersModule);
   const clearUsersData = useMutation(api.seed.clearUsersData);
 
@@ -126,27 +127,31 @@ function UsersContent() {
     }
   };
 
+  // USR-005 FIX: Sử dụng bulkRemove mutation thay vì sequential delete
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} người dùng đã chọn?`)) {
       try {
-        for (const id of selectedIds) {
-          await deleteUser({ id });
-        }
+        const count = selectedIds.length;
+        await bulkDeleteUsers({ ids: selectedIds });
         setSelectedIds([]);
-        toast.success(`Đã xóa ${selectedIds.length} người dùng`);
+        toast.success(`Đã xóa ${count} người dùng`);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
       }
     }
   };
 
+  // USR-009 FIX: Thêm loading toast cho handleReseed
   const handleReseed = async () => {
     if (confirm('Xóa tất cả users/roles và seed lại dữ liệu mẫu?')) {
+      const loadingToast = toast.loading('Đang reset dữ liệu...');
       try {
         await clearUsersData();
         await seedUsersModule();
+        toast.dismiss(loadingToast);
         toast.success('Đã reset dữ liệu users');
       } catch {
+        toast.dismiss(loadingToast);
         toast.error('Có lỗi khi reset dữ liệu');
       }
     }

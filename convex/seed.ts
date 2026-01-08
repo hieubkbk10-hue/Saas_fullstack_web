@@ -8,7 +8,6 @@ export const seedModules = mutation({
     // Check if already seeded
     const existing = await ctx.db.query("adminModules").first();
     if (existing) {
-      console.log("Modules already seeded");
       return null;
     }
 
@@ -39,7 +38,6 @@ export const seedModules = mutation({
       await ctx.db.insert("adminModules", mod);
     }
 
-    console.log("Seeded", modules.length, "modules");
     return null;
   },
 });
@@ -51,7 +49,6 @@ export const seedPresets = mutation({
     // Check if already seeded
     const existing = await ctx.db.query("systemPresets").first();
     if (existing) {
-      console.log("Presets already seeded");
       return null;
     }
 
@@ -97,7 +94,6 @@ export const seedPresets = mutation({
       await ctx.db.insert("systemPresets", preset);
     }
 
-    console.log("Seeded", presets.length, "presets");
     return null;
   },
 });
@@ -1598,23 +1594,58 @@ export const seedUsersModule = mutation({
       await ctx.db.insert("moduleSettings", { moduleKey: "users", settingKey: "maxLoginAttempts", value: 5 });
     }
 
+    // 7. Initialize counter tables (userStats, roleStats)
+    const existingUserStats = await ctx.db.query("userStats").first();
+    if (!existingUserStats) {
+      const users = await ctx.db.query("users").collect();
+      const roles = await ctx.db.query("roles").collect();
+      
+      // Count users by status
+      const statusCounts: Record<string, number> = { Active: 0, Inactive: 0, Banned: 0 };
+      users.forEach(u => { statusCounts[u.status] = (statusCounts[u.status] || 0) + 1; });
+      
+      // Count roles
+      let systemCount = 0, superAdminCount = 0;
+      roles.forEach(r => {
+        if (r.isSystem) systemCount++;
+        if (r.isSuperAdmin) superAdminCount++;
+      });
+      
+      await Promise.all([
+        ctx.db.insert("userStats", { key: "total", count: users.length }),
+        ctx.db.insert("userStats", { key: "Active", count: statusCounts.Active }),
+        ctx.db.insert("userStats", { key: "Inactive", count: statusCounts.Inactive }),
+        ctx.db.insert("userStats", { key: "Banned", count: statusCounts.Banned }),
+        ctx.db.insert("roleStats", { key: "total", count: roles.length }),
+        ctx.db.insert("roleStats", { key: "system", count: systemCount }),
+        ctx.db.insert("roleStats", { key: "superAdmin", count: superAdminCount }),
+      ]);
+    }
+
     return null;
   },
 });
 
-// Clear users DATA only (users, roles)
+// USR-008 FIX: Clear users DATA with parallel deletion + reset counters
 export const clearUsersData = mutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    const users = await ctx.db.query("users").collect();
-    for (const user of users) {
-      await ctx.db.delete(user._id);
-    }
-    const roles = await ctx.db.query("roles").collect();
-    for (const role of roles) {
-      await ctx.db.delete(role._id);
-    }
+    const [users, roles, userStats, roleStats] = await Promise.all([
+      ctx.db.query("users").collect(),
+      ctx.db.query("roles").collect(),
+      ctx.db.query("userStats").collect(),
+      ctx.db.query("roleStats").collect(),
+    ]);
+    
+    // Delete all in parallel
+    await Promise.all([
+      ...users.map((u) => ctx.db.delete(u._id)),
+      ...roles.map((r) => ctx.db.delete(r._id)),
+      ...userStats.map((s) => ctx.db.delete(s._id)),
+      ...roleStats.map((s) => ctx.db.delete(s._id)),
+    ]);
+    
     return null;
   },
 });
