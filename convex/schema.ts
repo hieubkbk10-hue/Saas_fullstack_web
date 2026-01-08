@@ -137,6 +137,18 @@ export default defineSchema({
     .index("by_name", ["name"])
     .index("by_isSystem", ["isSystem"]),
 
+  // 7a. userStats - Counter table cho user statistics (tránh full scan)
+  userStats: defineTable({
+    key: v.string(), // "total", "Active", "Inactive", "Banned"
+    count: v.number(),
+  }).index("by_key", ["key"]),
+
+  // 7b. roleStats - Counter table cho role statistics (tránh full scan)
+  roleStats: defineTable({
+    key: v.string(), // "total", "system", "custom"
+    count: v.number(),
+  }).index("by_key", ["key"]),
+
   // 8. customers - Khách hàng
   customers: defineTable({
     name: v.string(),

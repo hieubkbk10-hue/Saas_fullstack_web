@@ -35,8 +35,18 @@ export default function UserCreatePage() {
     return fields;
   }, [fieldsData]);
 
+  // USR-007 FIX: Email validation regex
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateEmail(email)) {
+      toast.error('Email không hợp lệ');
+      return;
+    }
     if (!roleId) {
       toast.error('Vui lòng chọn vai trò');
       return;

@@ -133,32 +133,40 @@ export default function UsersModuleConfigPage() {
     }
   };
 
+  // USR-006 FIX: Batch save với Promise.all thay vì sequential
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Save features
+      const promises: Promise<any>[] = [];
+      
+      // Collect feature updates
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
         }
       }
-      // Save fields
+      
+      // Collect field updates
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          promises.push(updateField({ id: field.id as any, enabled: field.enabled }));
         }
       }
-      // Save settings
+      
+      // Collect settings updates
       if (localSettings.usersPerPage !== serverSettings.usersPerPage) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'usersPerPage', value: localSettings.usersPerPage });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'usersPerPage', value: localSettings.usersPerPage }));
       }
       if (localSettings.sessionTimeout !== serverSettings.sessionTimeout) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'sessionTimeout', value: localSettings.sessionTimeout });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'sessionTimeout', value: localSettings.sessionTimeout }));
       }
       if (localSettings.maxLoginAttempts !== serverSettings.maxLoginAttempts) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'maxLoginAttempts', value: localSettings.maxLoginAttempts });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'maxLoginAttempts', value: localSettings.maxLoginAttempts }));
       }
+      
+      // Execute all updates in parallel
+      await Promise.all(promises);
       toast.success('Đã lưu cấu hình thành công!');
     } catch {
       toast.error('Có lỗi xảy ra khi lưu cấu hình');
