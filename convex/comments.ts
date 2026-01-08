@@ -50,6 +50,22 @@ export const listByTargetType = query({
   },
 });
 
+// Paginated version for system page
+export const listByTargetTypePaginated = query({
+  args: { targetType: targetType, paginationOpts: paginationOptsValidator },
+  returns: v.object({
+    page: v.array(commentDoc),
+    isDone: v.boolean(),
+    continueCursor: v.string(),
+  }),
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("comments")
+      .filter((q) => q.eq(q.field("targetType"), args.targetType))
+      .paginate(args.paginationOpts);
+  },
+});
+
 // Efficient count using take()
 export const countByTargetType = query({
   args: { targetType: targetType },

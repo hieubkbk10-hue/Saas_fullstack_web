@@ -96,10 +96,20 @@ export const create = mutation({
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .unique();
     if (existing) throw new Error("Slug already exists");
-    const count = (await ctx.db.query("productCategories").collect()).length;
+    
+    // FIX: Get last order instead of fetching ALL
+    let nextOrder = args.order;
+    if (nextOrder === undefined) {
+      const lastCategory = await ctx.db
+        .query("productCategories")
+        .order("desc")
+        .first();
+      nextOrder = lastCategory ? lastCategory.order + 1 : 0;
+    }
+    
     return await ctx.db.insert("productCategories", {
       ...args,
-      order: args.order ?? count,
+      order: nextOrder,
       active: args.active ?? true,
     });
   },
@@ -157,9 +167,10 @@ export const reorder = mutation({
   args: { items: v.array(v.object({ id: v.id("productCategories"), order: v.number() })) },
   returns: v.null(),
   handler: async (ctx, args) => {
-    for (const item of args.items) {
-      await ctx.db.patch(item.id, { order: item.order });
-    }
+    // FIX: Use Promise.all for batch operations
+    await Promise.all(
+      args.items.map((item) => ctx.db.patch(item.id, { order: item.order }))
+    );
     return null;
   },
 });

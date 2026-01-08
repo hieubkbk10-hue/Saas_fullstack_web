@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
@@ -36,10 +36,21 @@ export default function ProductsModuleConfigPage() {
   const categoryFieldsData = useQuery(api.admin.modules.listModuleFields, { moduleKey: CATEGORY_MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
 
-  // Data tab queries
-  const productsData = useQuery(api.products.listAll);
-  const categoriesData = useQuery(api.productCategories.listAll);
-  const reviewsData = useQuery(api.comments.listByTargetType, { targetType: "product" });
+  // FIX #6: Use stats instead of listAll for counts
+  const productStats = useQuery(api.products.getStats);
+  const categoryStats = useQuery(api.productCategories.listActive);
+  
+  // Data tab queries with pagination
+  const { results: productsData, status: productsStatus, loadMore: loadMoreProducts } = usePaginatedQuery(
+    api.products.list,
+    {},
+    { initialNumItems: 10 }
+  );
+  const { results: reviewsData, status: reviewsStatus, loadMore: loadMoreReviews } = usePaginatedQuery(
+    api.comments.listByTargetTypePaginated,
+    { targetType: "product" },
+    { initialNumItems: 10 }
+  );
 
   const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
   const updateField = useMutation(api.admin.modules.updateModuleField);
@@ -48,6 +59,7 @@ export default function ProductsModuleConfigPage() {
   const clearProductsData = useMutation(api.seed.clearProductsData);
   const seedComments = useMutation(api.seed.seedComments);
   const clearComments = useMutation(api.seed.clearComments);
+  const initStats = useMutation(api.products.initStats);
 
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localProductFields, setLocalProductFields] = useState<FieldConfig[]>([]);
@@ -209,6 +221,7 @@ export default function ProductsModuleConfigPage() {
     toast.loading('Đang tạo dữ liệu mẫu...');
     await seedProductsModule();
     await seedComments();
+    await initStats();
     toast.dismiss();
     toast.success('Đã tạo dữ liệu mẫu thành công!');
   };
@@ -218,6 +231,7 @@ export default function ProductsModuleConfigPage() {
     toast.loading('Đang xóa dữ liệu...');
     await clearComments();
     await clearProductsData();
+    await initStats();
     toast.dismiss();
     toast.success('Đã xóa toàn bộ dữ liệu!');
   };
@@ -229,6 +243,7 @@ export default function ProductsModuleConfigPage() {
     await clearProductsData();
     await seedProductsModule();
     await seedComments();
+    await initStats();
     toast.dismiss();
     toast.success('Đã reset dữ liệu thành công!');
   };
@@ -241,8 +256,9 @@ export default function ProductsModuleConfigPage() {
     );
   }
 
+  // Build category map for lookup (O(1))
   const categoryMap: Record<string, string> = {};
-  categoriesData?.forEach(cat => { categoryMap[cat._id] = cat.name; });
+  categoryStats?.forEach(cat => { categoryMap[cat._id] = cat.name; });
 
   const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
@@ -369,7 +385,7 @@ export default function ProductsModuleConfigPage() {
             </div>
           </Card>
 
-          {/* Statistics */}
+          {/* Statistics - FIX #6: Use stats queries instead of counting all */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="p-4">
               <div className="flex items-center gap-3">
@@ -377,7 +393,7 @@ export default function ProductsModuleConfigPage() {
                   <Package className="w-5 h-5 text-orange-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{productsData?.length ?? 0}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{productStats?.total ?? 0}</p>
                   <p className="text-sm text-slate-500">Sản phẩm</p>
                 </div>
               </div>
@@ -388,7 +404,7 @@ export default function ProductsModuleConfigPage() {
                   <FolderTree className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{categoriesData?.length ?? 0}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{categoryStats?.length ?? 0}</p>
                   <p className="text-sm text-slate-500">Danh mục</p>
                 </div>
               </div>
@@ -399,18 +415,18 @@ export default function ProductsModuleConfigPage() {
                   <MessageSquare className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{reviewsData?.length ?? 0}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{reviewsData?.length ?? 0}+</p>
                   <p className="text-sm text-slate-500">Đánh giá</p>
                 </div>
               </div>
             </Card>
           </div>
 
-          {/* Products Table */}
+          {/* Products Table - Using paginated data */}
           <Card>
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
               <Package className="w-5 h-5 text-orange-500" />
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Sản phẩm ({productsData?.length ?? 0})</h3>
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Sản phẩm ({productStats?.total ?? 0})</h3>
             </div>
             <Table>
               <TableHeader>
@@ -424,7 +440,7 @@ export default function ProductsModuleConfigPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {productsData?.slice(0, 10).map(product => (
+                {productsData?.map(product => (
                   <TableRow key={product._id}>
                     <TableCell className="font-medium max-w-[200px] truncate">{product.name}</TableCell>
                     <TableCell className="font-mono text-xs text-slate-500">{product.sku}</TableCell>
@@ -453,9 +469,11 @@ export default function ProductsModuleConfigPage() {
                 )}
               </TableBody>
             </Table>
-            {productsData && productsData.length > 10 && (
-              <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500 text-center">
-                Hiển thị 10 / {productsData.length} sản phẩm
+            {productsStatus === 'CanLoadMore' && (
+              <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-center">
+                <Button variant="ghost" size="sm" onClick={() => loadMoreProducts(10)}>
+                  Tải thêm sản phẩm
+                </Button>
               </div>
             )}
           </Card>
@@ -464,7 +482,7 @@ export default function ProductsModuleConfigPage() {
           <Card>
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
               <FolderTree className="w-5 h-5 text-amber-500" />
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Danh mục ({categoriesData?.length ?? 0})</h3>
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Danh mục ({categoryStats?.length ?? 0})</h3>
             </div>
             <Table>
               <TableHeader>
@@ -472,26 +490,21 @@ export default function ProductsModuleConfigPage() {
                   <TableHead>Tên danh mục</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead>Trạng thái</TableHead>
-                  <TableHead className="text-right">Số sản phẩm</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {categoriesData?.map(cat => {
-                  const productCount = productsData?.filter(p => p.categoryId === cat._id).length ?? 0;
-                  return (
-                    <TableRow key={cat._id}>
-                      <TableCell className="font-medium">{cat.name}</TableCell>
-                      <TableCell className="text-slate-500 font-mono text-sm">{cat.slug}</TableCell>
-                      <TableCell>
-                        <Badge variant={cat.active ? 'success' : 'secondary'}>{cat.active ? 'Hoạt động' : 'Ẩn'}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">{productCount}</TableCell>
-                    </TableRow>
-                  );
-                })}
-                {(!categoriesData || categoriesData.length === 0) && (
+                {categoryStats?.map(cat => (
+                  <TableRow key={cat._id}>
+                    <TableCell className="font-medium">{cat.name}</TableCell>
+                    <TableCell className="text-slate-500 font-mono text-sm">{cat.slug}</TableCell>
+                    <TableCell>
+                      <Badge variant={cat.active ? 'success' : 'secondary'}>{cat.active ? 'Hoạt động' : 'Ẩn'}</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {(!categoryStats || categoryStats.length === 0) && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={3} className="text-center py-8 text-slate-500">
                       Chưa có danh mục nào.
                     </TableCell>
                   </TableRow>
@@ -500,11 +513,11 @@ export default function ProductsModuleConfigPage() {
             </Table>
           </Card>
 
-          {/* Reviews Table */}
+          {/* Reviews Table - Using paginated data */}
           <Card>
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-blue-500" />
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Đánh giá sản phẩm ({reviewsData?.length ?? 0})</h3>
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Đánh giá sản phẩm</h3>
             </div>
             <Table>
               <TableHeader>
@@ -515,7 +528,7 @@ export default function ProductsModuleConfigPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {reviewsData?.slice(0, 10).map(review => (
+                {reviewsData?.map(review => (
                   <TableRow key={review._id}>
                     <TableCell className="font-medium">{review.authorName}</TableCell>
                     <TableCell className="text-slate-600 dark:text-slate-400 max-w-xs truncate">{review.content}</TableCell>
@@ -535,9 +548,11 @@ export default function ProductsModuleConfigPage() {
                 )}
               </TableBody>
             </Table>
-            {reviewsData && reviewsData.length > 10 && (
-              <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500 text-center">
-                Hiển thị 10 / {reviewsData.length} đánh giá
+            {reviewsStatus === 'CanLoadMore' && (
+              <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-center">
+                <Button variant="ghost" size="sm" onClick={() => loadMoreReviews(10)}>
+                  Tải thêm đánh giá
+                </Button>
               </div>
             )}
           </Card>

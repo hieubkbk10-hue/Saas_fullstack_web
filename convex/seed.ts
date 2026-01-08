@@ -622,23 +622,44 @@ export const seedProductsModule = mutation({
       await ctx.db.insert("moduleSettings", { moduleKey: "products", settingKey: "lowStockThreshold", value: 10 });
     }
 
+    // 6. Initialize product stats (counter table)
+    const existingStats = await ctx.db.query("productStats").first();
+    if (!existingStats) {
+      const products = await ctx.db.query("products").collect();
+      const counts = { total: 0, Active: 0, Draft: 0, Archived: 0 };
+      let maxOrder = 0;
+      for (const p of products) {
+        counts.total++;
+        counts[p.status as keyof typeof counts]++;
+        if (p.order > maxOrder) maxOrder = p.order;
+      }
+      await Promise.all([
+        ctx.db.insert("productStats", { key: "total", count: counts.total, lastOrder: maxOrder }),
+        ctx.db.insert("productStats", { key: "Active", count: counts.Active, lastOrder: 0 }),
+        ctx.db.insert("productStats", { key: "Draft", count: counts.Draft, lastOrder: 0 }),
+        ctx.db.insert("productStats", { key: "Archived", count: counts.Archived, lastOrder: 0 }),
+      ]);
+    }
+
     return null;
   },
 });
 
-// Clear products DATA only (products, categories) - keeps config
+// Clear products DATA only (products, categories, stats) - keeps config
 export const clearProductsData = mutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
     const products = await ctx.db.query("products").collect();
-    for (const p of products) {
-      await ctx.db.delete(p._id);
-    }
+    await Promise.all(products.map((p) => ctx.db.delete(p._id)));
+    
     const categories = await ctx.db.query("productCategories").collect();
-    for (const cat of categories) {
-      await ctx.db.delete(cat._id);
-    }
+    await Promise.all(categories.map((cat) => ctx.db.delete(cat._id)));
+    
+    // Also clear product stats
+    const stats = await ctx.db.query("productStats").collect();
+    await Promise.all(stats.map((s) => ctx.db.delete(s._id)));
+    
     return null;
   },
 });
@@ -994,7 +1015,71 @@ export const clearMediaData = mutation({
       }
       await ctx.db.delete(img._id);
     }
+    // Clear counter tables
+    const stats = await ctx.db.query("mediaStats").collect();
+    for (const s of stats) await ctx.db.delete(s._id);
+    const folders = await ctx.db.query("mediaFolders").collect();
+    for (const f of folders) await ctx.db.delete(f._id);
     return null;
+  },
+});
+
+// Sync media counters from existing data (run once after migration)
+export const syncMediaCounters = mutation({
+  args: {},
+  returns: v.object({ stats: v.any(), folders: v.any() }),
+  handler: async (ctx) => {
+    // Clear existing counters
+    const existingStats = await ctx.db.query("mediaStats").collect();
+    for (const s of existingStats) await ctx.db.delete(s._id);
+    const existingFolders = await ctx.db.query("mediaFolders").collect();
+    for (const f of existingFolders) await ctx.db.delete(f._id);
+
+    // Scan all images and aggregate
+    const images = await ctx.db.query("images").collect();
+    
+    const stats: Record<string, { count: number; totalSize: number }> = {
+      total: { count: 0, totalSize: 0 },
+      image: { count: 0, totalSize: 0 },
+      video: { count: 0, totalSize: 0 },
+      document: { count: 0, totalSize: 0 },
+      other: { count: 0, totalSize: 0 },
+    };
+    const folders: Record<string, number> = {};
+
+    for (const img of images) {
+      stats.total.count++;
+      stats.total.totalSize += img.size;
+
+      // Determine type
+      let typeKey: "image" | "video" | "document" | "other" = "other";
+      if (img.mimeType.startsWith("image/")) typeKey = "image";
+      else if (img.mimeType.startsWith("video/")) typeKey = "video";
+      else if (img.mimeType === "application/pdf" || img.mimeType.includes("document") || img.mimeType.includes("spreadsheet")) {
+        typeKey = "document";
+      }
+      stats[typeKey].count++;
+      stats[typeKey].totalSize += img.size;
+
+      // Count folder
+      if (img.folder) {
+        folders[img.folder] = (folders[img.folder] || 0) + 1;
+      }
+    }
+
+    // Insert stats
+    for (const [key, { count, totalSize }] of Object.entries(stats)) {
+      if (count > 0) {
+        await ctx.db.insert("mediaStats", { key, count, totalSize });
+      }
+    }
+
+    // Insert folders
+    for (const [name, count] of Object.entries(folders)) {
+      await ctx.db.insert("mediaFolders", { name, count });
+    }
+
+    return { stats, folders };
   },
 });
 

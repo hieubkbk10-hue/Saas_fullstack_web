@@ -2,10 +2,10 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, RefreshCw, Package, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, RefreshCw, Package, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
@@ -22,13 +22,17 @@ export default function ProductsListPage() {
 }
 
 function ProductsContent() {
-  const productsData = useQuery(api.products.listAll);
-  const categoriesData = useQuery(api.productCategories.listAll);
+  // FIX #5: Use server-side pagination instead of listAll
+  const categoriesData = useQuery(api.productCategories.listActive);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+  const productStats = useQuery(api.products.getStats);
+  
   const deleteProduct = useMutation(api.products.remove);
+  const bulkRemove = useMutation(api.products.bulkRemove);
   const seedProductsModule = useMutation(api.seed.seedProductsModule);
   const clearProductsData = useMutation(api.seed.clearProductsData);
+  const initStats = useMutation(api.products.initStats);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -36,15 +40,22 @@ function ProductsContent() {
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Id<"products">[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const isLoading = productsData === undefined || categoriesData === undefined || fieldsData === undefined;
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Get productsPerPage from module settings
   const productsPerPage = useMemo(() => {
     const setting = settingsData?.find(s => s.settingKey === 'productsPerPage');
     return (setting?.value as number) || 12;
   }, [settingsData]);
+
+  // FIX #5: Server-side pagination
+  const { results: productsData, status, loadMore } = usePaginatedQuery(
+    api.products.list,
+    {},
+    { initialNumItems: productsPerPage }
+  );
+
+  const isLoading = productsData === undefined || categoriesData === undefined || fieldsData === undefined;
 
   // Get enabled fields from system config
   const enabledFields = useMemo(() => {
@@ -88,6 +99,7 @@ function ProductsContent() {
     }
   }, [fieldsData, columns]);
 
+  // Build category map for lookup (O(1) instead of O(n))
   const categoryMap = useMemo(() => {
     const map: Record<string, string> = {};
     categoriesData?.forEach(cat => { map[cat._id] = cat.name; });
@@ -104,19 +116,13 @@ function ProductsContent() {
 
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
-    setCurrentPage(1); // Reset page on sort change
-  };
-
-  const handleFilterChange = (type: 'category' | 'status', value: string) => {
-    if (type === 'category') setFilterCategory(value);
-    else setFilterStatus(value);
-    setCurrentPage(1); // Reset page on filter change
   };
 
   const toggleColumn = (key: string) => {
     setVisibleColumns(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
   };
 
+  // Client-side filtering (on paginated data)
   const filteredData = useMemo(() => {
     let data = [...products];
     if (searchTerm) {
@@ -137,14 +143,7 @@ function ProductsContent() {
 
   const sortedData = useSortableData(filteredData, sortConfig);
 
-  // Pagination
-  const totalPages = Math.ceil(sortedData.length / productsPerPage);
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * productsPerPage;
-    return sortedData.slice(start, start + productsPerPage);
-  }, [sortedData, currentPage, productsPerPage]);
-
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(p => p._id));
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(p => p._id));
   const toggleSelectItem = (id: Id<"products">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
   const openFrontend = (slug: string) => {
@@ -162,16 +161,18 @@ function ProductsContent() {
     }
   };
 
+  // FIX #10: Add loading state for bulk delete
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} sản phẩm đã chọn?`)) {
+      setIsDeleting(true);
       try {
-        for (const id of selectedIds) {
-          await deleteProduct({ id });
-        }
+        const count = await bulkRemove({ ids: selectedIds });
         setSelectedIds([]);
-        toast.success(`Đã xóa ${selectedIds.length} sản phẩm`);
+        toast.success(`Đã xóa ${count} sản phẩm`);
       } catch {
         toast.error('Có lỗi khi xóa sản phẩm');
+      } finally {
+        setIsDeleting(false);
       }
     }
   };
@@ -181,6 +182,7 @@ function ProductsContent() {
       try {
         await clearProductsData();
         await seedProductsModule();
+        await initStats();
         setSelectedIds([]);
         toast.success('Đã reset dữ liệu sản phẩm');
       } catch {
@@ -204,7 +206,14 @@ function ProductsContent() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Sản phẩm</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý kho hàng và thông tin sản phẩm</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Quản lý kho hàng và thông tin sản phẩm
+            {productStats && (
+              <span className="ml-2 text-xs">
+                (Tổng: {productStats.total} | Active: {productStats.active} | Draft: {productStats.draft})
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="gap-2" onClick={handleReset} title="Reset dữ liệu mẫu">
@@ -214,7 +223,12 @@ function ProductsContent() {
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+      <BulkActionBar 
+        selectedCount={selectedIds.length} 
+        onDelete={handleBulkDelete} 
+        onClearSelection={() => setSelectedIds([])} 
+        isLoading={isDeleting}
+      />
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between">
@@ -228,11 +242,11 @@ function ProductsContent() {
                 onChange={(e) => setSearchTerm(e.target.value)} 
               />
             </div>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterCategory} onChange={(e) => handleFilterChange('category', e.target.value)}>
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
               <option value="">Tất cả danh mục</option>
               {categoriesData?.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
             </select>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => handleFilterChange('status', e.target.value)}>
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
               <option value="">Tất cả trạng thái</option>
               <option value="Active">Đang bán</option>
               <option value="Draft">Bản nháp</option>
@@ -244,7 +258,7 @@ function ProductsContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedData.length && paginatedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedData.length} /></TableHead>}
+              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === sortedData.length && sortedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedData.length} /></TableHead>}
               {visibleColumns.includes('image') && <TableHead className="w-[60px]">Ảnh</TableHead>}
               {visibleColumns.includes('name') && <SortableHeader label="Tên sản phẩm" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('sku') && enabledFields.has('sku') && <SortableHeader label="SKU" sortKey="sku" sortConfig={sortConfig} onSort={handleSort} />}
@@ -256,7 +270,7 @@ function ProductsContent() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedData.map(product => (
+            {sortedData.map(product => (
               <TableRow key={product._id} className={selectedIds.includes(product._id) ? 'bg-orange-500/5' : ''}>
                 {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(product._id)} onChange={() => toggleSelectItem(product._id)} /></TableCell>}
                 {visibleColumns.includes('image') && (
@@ -306,7 +320,7 @@ function ProductsContent() {
                 )}
               </TableRow>
             ))}
-            {paginatedData.length === 0 && (
+            {sortedData.length === 0 && (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center py-8 text-slate-500">
                   {searchTerm || filterCategory || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có sản phẩm nào. Nhấn Reset để tạo dữ liệu mẫu.'}
@@ -318,29 +332,22 @@ function ProductsContent() {
         {sortedData.length > 0 && (
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <span className="text-sm text-slate-500">
-              Hiển thị {(currentPage - 1) * productsPerPage + 1} - {Math.min(currentPage * productsPerPage, sortedData.length)} / {sortedData.length} sản phẩm
+              Hiển thị {sortedData.length} sản phẩm
+              {productStats && ` / ${productStats.total} tổng`}
             </span>
-            {totalPages > 1 && (
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
-                >
-                  <ChevronLeft size={16} />
-                </Button>
-                <span className="text-sm text-slate-600 dark:text-slate-400">
-                  Trang {currentPage} / {totalPages}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
-                >
-                  <ChevronRight size={16} />
-                </Button>
+            {status === 'CanLoadMore' && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => loadMore(productsPerPage)}
+                className="gap-2"
+              >
+                <ChevronRight size={16} /> Tải thêm
+              </Button>
+            )}
+            {status === 'LoadingMore' && (
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <Loader2 size={16} className="animate-spin" /> Đang tải...
               </div>
             )}
           </div>

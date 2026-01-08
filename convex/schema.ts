@@ -198,6 +198,13 @@ export default defineSchema({
     .index("by_status_sales", ["status", "sales"])
     .index("by_status_order", ["status", "order"]),
 
+  // 10a. productStats - Counter table cho product statistics (tránh full scan)
+  productStats: defineTable({
+    key: v.string(), // "total", "Active", "Draft", "Archived"
+    count: v.number(),
+    lastOrder: v.number(),
+  }).index("by_key", ["key"]),
+
   // 11. postCategories - Danh mục bài viết (Hierarchical)
   postCategories: defineTable({
     name: v.string(),
@@ -273,6 +280,19 @@ export default defineSchema({
     .index("by_folder", ["folder"])
     .index("by_mimeType", ["mimeType"])
     .index("by_uploadedBy", ["uploadedBy"]),
+
+  // 14a. mediaStats - Counter table cho media statistics (tránh full scan)
+  mediaStats: defineTable({
+    key: v.string(), // "total", "image", "video", "document", "other"
+    count: v.number(),
+    totalSize: v.number(),
+  }).index("by_key", ["key"]),
+
+  // 14b. mediaFolders - Track folders riêng (tránh scan ALL images)
+  mediaFolders: defineTable({
+    name: v.string(),
+    count: v.number(),
+  }).index("by_name", ["name"]),
 
   // 15. menus - Menu động
   menus: defineTable({

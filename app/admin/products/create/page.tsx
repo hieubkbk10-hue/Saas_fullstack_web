@@ -96,7 +96,8 @@ const MODULE_KEY = 'products';
 
 export default function ProductCreatePage() {
   const router = useRouter();
-  const categoriesData = useQuery(api.productCategories.listAll);
+  // FIX #8: Use listActive instead of listAll
+const categoriesData = useQuery(api.productCategories.listActive);
   const createProduct = useMutation(api.products.create);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
@@ -276,7 +277,7 @@ export default function ProductCreatePage() {
                     className="flex-1 h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   >
                     <option value="">-- Chọn danh mục --</option>
-                    {categoriesData?.filter(c => c.active).map(cat => (
+                    {categoriesData?.map(cat => (
                       <option key={cat._id} value={cat._id}>{cat.name}</option>
                     ))}
                   </select>

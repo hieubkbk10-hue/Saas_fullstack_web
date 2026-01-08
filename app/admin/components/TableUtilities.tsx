@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowUpDown, SlidersHorizontal, ChevronDown, Trash2 } from 'lucide-react';
+import { ArrowUpDown, SlidersHorizontal, ChevronDown, Trash2, Loader2 } from 'lucide-react';
 import { cn, Button, TableHead } from './ui';
 
 export const ColumnToggle = ({ columns, visibleColumns, onToggle }: {
@@ -80,10 +80,12 @@ export function useSortableData<T>(items: T[], config: { key: string | null; dir
   }, [items, config]);
 }
 
-export const BulkActionBar = ({ selectedCount, onDelete, onClearSelection }: {
+// FIX #10: Add loading state support
+export const BulkActionBar = ({ selectedCount, onDelete, onClearSelection, isLoading }: {
   selectedCount: number;
   onDelete: () => void;
   onClearSelection: () => void;
+  isLoading?: boolean;
 }) => {
   if (selectedCount === 0) return null;
   
@@ -91,14 +93,14 @@ export const BulkActionBar = ({ selectedCount, onDelete, onClearSelection }: {
     <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 flex items-center justify-between">
       <div className="flex items-center gap-3">
         <span className="text-sm font-medium text-blue-600 dark:text-blue-400">Đã chọn {selectedCount} mục</span>
-        <button onClick={onClearSelection} className="text-xs text-slate-500 hover:text-slate-700 underline">
+        <button onClick={onClearSelection} className="text-xs text-slate-500 hover:text-slate-700 underline" disabled={isLoading}>
           Bỏ chọn
         </button>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="destructive" size="sm" className="gap-2 h-8" onClick={onDelete}>
-          <Trash2 size={14} />
-          Xóa ({selectedCount})
+        <Button variant="destructive" size="sm" className="gap-2 h-8" onClick={onDelete} disabled={isLoading}>
+          {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+          {isLoading ? 'Đang xóa...' : `Xóa (${selectedCount})`}
         </Button>
       </div>
     </div>
