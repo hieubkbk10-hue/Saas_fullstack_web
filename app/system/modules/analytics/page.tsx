@@ -20,6 +20,7 @@ const FEATURES_CONFIG = [
   { key: 'enableSales', label: 'Báo cáo doanh thu', icon: TrendingUp, description: 'Thống kê đơn hàng, doanh thu theo thời gian', linkedField: 'revenue' },
   { key: 'enableCustomers', label: 'Báo cáo khách hàng', icon: Users, description: 'Khách mới, khách quay lại, phân khúc', linkedField: 'newCustomers' },
   { key: 'enableProducts', label: 'Báo cáo sản phẩm', icon: Package, description: 'Sản phẩm bán chạy, tồn kho, xu hướng', linkedField: 'topProducts' },
+  { key: 'enableTraffic', label: 'Báo cáo lượt truy cập', icon: BarChart3, description: 'Pageviews, sessions, nguồn traffic', linkedField: 'pageviews' },
   { key: 'enableExport', label: 'Xuất báo cáo', icon: FileDown, description: 'Export CSV, Excel, PDF', linkedField: 'exportFormat' },
 ];
 
@@ -134,7 +135,13 @@ export default function AnalyticsModuleConfigPage() {
   }, [localFeatures, serverFeatures, localFields, serverFields, localSettings, serverSettings]);
 
   const handleToggleFeature = (key: string) => {
-    setLocalFeatures(prev => ({ ...prev, [key]: !prev[key] }));
+    const newEnabled = !localFeatures[key];
+    setLocalFeatures(prev => ({ ...prev, [key]: newEnabled }));
+    
+    // Auto-toggle linked fields when feature is toggled
+    setLocalFields(prev => prev.map(f => 
+      f.linkedFeature === key ? { ...f, enabled: newEnabled } : f
+    ));
   };
 
   const handleToggleField = (key: string) => {

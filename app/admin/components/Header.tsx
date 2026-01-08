@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu as MenuIcon, Search as SearchIcon, Sun, Moon, ChevronRight } from 'lucide-react';
+import { Menu as MenuIcon, Search as SearchIcon, Sun, Moon, ChevronRight, Home } from 'lucide-react';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -41,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleTheme, setMobi
         </nav>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <div className="relative hidden md:block group">
           <SearchIcon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
           <input 
@@ -50,6 +50,15 @@ export const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleTheme, setMobi
             className="pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 dark:text-slate-200 border border-transparent focus:border-blue-500/50 rounded-full text-sm w-64 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
           />
         </div>
+        
+        <Link
+          href="/"
+          target="_blank"
+          className="p-2.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 rounded-full transition-colors"
+          title="Mở trang chủ"
+        >
+          <Home size={20} />
+        </Link>
         
         <button 
           onClick={toggleTheme}

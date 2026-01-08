@@ -24,6 +24,7 @@ import type * as media from "../media.js";
 import type * as menus from "../menus.js";
 import type * as notifications from "../notifications.js";
 import type * as orders from "../orders.js";
+import type * as pageViews from "../pageViews.js";
 import type * as postCategories from "../postCategories.js";
 import type * as posts from "../posts.js";
 import type * as productCategories from "../productCategories.js";
@@ -59,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   menus: typeof menus;
   notifications: typeof notifications;
   orders: typeof orders;
+  pageViews: typeof pageViews;
   postCategories: typeof postCategories;
   posts: typeof posts;
   productCategories: typeof productCategories;

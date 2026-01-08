@@ -1,96 +1,36 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui';
 import { ModuleGuard } from '../components/ModuleGuard';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Loader2 } from 'lucide-react';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Loader2, TrendingUp, Users, Package, AlertTriangle, Eye, Globe } from 'lucide-react';
+import { Badge } from '../components/ui';
 
-type TimeRange = 'today' | '7d' | '30d' | '3m' | '1y' | 'all';
+type TimeRange = '7d' | '30d' | '90d' | '1y';
+type ChartGroupBy = 'day' | 'month' | 'year';
+
+function formatNumber(num: number): string {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  return num.toString();
+}
 
 const TIME_TABS: { key: TimeRange; label: string }[] = [
-  { key: 'today', label: 'Hôm nay' },
   { key: '7d', label: '7 ngày' },
   { key: '30d', label: '30 ngày' },
-  { key: '3m', label: '3 tháng' },
+  { key: '90d', label: '90 ngày' },
   { key: '1y', label: '1 năm' },
-  { key: 'all', label: 'Tất cả' },
 ];
 
-const MOCK_DATA: Record<TimeRange, { 
-  chart: { name: string; visits: number }[];
-  visitors: number;
-  pageviews: number;
-  pages: { label: string; value: number }[];
-  sources: { label: string; value: number }[];
-}> = {
-  today: {
-    chart: [
-      { name: '00:00', visits: 5 }, { name: '04:00', visits: 2 }, { name: '08:00', visits: 15 },
-      { name: '12:00', visits: 25 }, { name: '16:00', visits: 18 }, { name: '20:00', visits: 12 },
-    ],
-    visitors: 12, pageviews: 45,
-    pages: [{ label: '/', value: 20 }, { label: '/products', value: 12 }, { label: '/cart', value: 8 }],
-    sources: [{ label: 'Trực tiếp', value: 25 }, { label: 'google.com', value: 15 }],
-  },
-  '7d': {
-    chart: [
-      { name: 'T2', visits: 45 }, { name: 'T3', visits: 62 }, { name: 'T4', visits: 58 },
-      { name: 'T5', visits: 71 }, { name: 'T6', visits: 89 }, { name: 'T7', visits: 120 }, { name: 'CN', visits: 95 },
-    ],
-    visitors: 106, pageviews: 540,
-    pages: [{ label: '/', value: 180 }, { label: '/products', value: 120 }, { label: '/cart', value: 85 }, { label: '/checkout', value: 60 }],
-    sources: [{ label: 'Trực tiếp', value: 220 }, { label: 'google.com', value: 180 }, { label: 'facebook.com', value: 90 }],
-  },
-  '30d': {
-    chart: [
-      { name: '01/10', visits: 120 }, { name: '05/10', visits: 180 }, { name: '10/10', visits: 150 },
-      { name: '15/10', visits: 250 }, { name: '20/10', visits: 390 }, { name: '25/10', visits: 320 }, { name: '30/10', visits: 480 },
-    ],
-    visitors: 1890, pageviews: 7910,
-    pages: [{ label: '/', value: 2910 }, { label: '/products', value: 1730 }, { label: '/cart', value: 1200 }, { label: '/checkout', value: 820 }, { label: '/blog', value: 620 }],
-    sources: [{ label: 'Trực tiếp', value: 4530 }, { label: 'google.com', value: 1660 }, { label: 'facebook.com', value: 800 }, { label: 'tiktok.com', value: 400 }],
-  },
-  '3m': {
-    chart: [
-      { name: 'T8', visits: 2100 }, { name: 'T9', visits: 2800 }, { name: 'T10', visits: 3200 },
-    ],
-    visitors: 8100, pageviews: 32500,
-    pages: [{ label: '/', value: 12000 }, { label: '/products', value: 8500 }, { label: '/cart', value: 5200 }, { label: '/checkout', value: 3800 }],
-    sources: [{ label: 'Trực tiếp', value: 15000 }, { label: 'google.com', value: 9500 }, { label: 'facebook.com', value: 5000 }],
-  },
-  '1y': {
-    chart: [
-      { name: 'T1', visits: 1800 }, { name: 'T3', visits: 2200 }, { name: 'T5', visits: 2800 },
-      { name: 'T7', visits: 3500 }, { name: 'T9', visits: 4200 }, { name: 'T11', visits: 5100 },
-    ],
-    visitors: 45000, pageviews: 180000,
-    pages: [{ label: '/', value: 65000 }, { label: '/products', value: 45000 }, { label: '/cart', value: 32000 }],
-    sources: [{ label: 'Trực tiếp', value: 85000 }, { label: 'google.com', value: 52000 }, { label: 'facebook.com', value: 28000 }],
-  },
-  all: {
-    chart: [
-      { name: '2022', visits: 25000 }, { name: '2023', visits: 42000 }, { name: '2024', visits: 68000 },
-    ],
-    visitors: 135000, pageviews: 540000,
-    pages: [{ label: '/', value: 195000 }, { label: '/products', value: 135000 }, { label: '/cart', value: 96000 }],
-    sources: [{ label: 'Trực tiếp', value: 255000 }, { label: 'google.com', value: 156000 }, { label: 'facebook.com', value: 84000 }],
-  },
-};
-
-const ProgressBar = ({ label, value, color = "bg-blue-500" }: { label: string, value: number, color?: string }) => (
-  <div className="mb-4">
-    <div className="flex justify-between mb-1.5">
-      <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate max-w-[200px]">{label}</span>
-      <span className="text-sm text-slate-500 dark:text-slate-400">{value}</span>
-    </div>
-    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2">
-      <div className={`h-2 rounded-full ${color}`} style={{ width: `${Math.min(value / 5, 100)}%` }}></div>
-    </div>
-  </div>
-);
+function formatCurrency(value: number): string {
+  if (value >= 1000000000) return `${(value / 1000000000).toFixed(1)}B`;
+  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+  return value.toLocaleString('vi-VN');
+}
 
 export default function DashboardPage() {
   return (
@@ -100,24 +40,46 @@ export default function DashboardPage() {
   );
 }
 
-const formatNumber = (num: number): string => {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-  return num.toString();
-};
-
 function DashboardContent() {
+  // Fetch features and settings from server
   const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: 'analytics' });
-  const [timeRange, setTimeRange] = useState<TimeRange>('30d');
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'analytics' });
   
-  const isLoading = featuresData === undefined;
+  // Get default period from settings, fallback to '30d'
+  const defaultPeriod = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'defaultPeriod');
+    return (setting?.value as TimeRange) || '30d';
+  }, [settingsData]);
+  
+  const [timeRange, setTimeRange] = useState<TimeRange>('30d');
+  const [trafficChartGroupBy, setTrafficChartGroupBy] = useState<ChartGroupBy>('day');
+  
+  // Sync timeRange with server settings on load
+  useEffect(() => {
+    if (defaultPeriod && TIME_TABS.some(t => t.key === defaultPeriod)) {
+      setTimeRange(defaultPeriod);
+    }
+  }, [defaultPeriod]);
+  
+  // Real data queries from Convex
+  const summaryStats = useQuery(api.analytics.getSummaryStats, { period: timeRange });
+  const chartData = useQuery(api.analytics.getRevenueChartData, { period: timeRange });
+  const topProducts = useQuery(api.analytics.getTopProducts, { limit: 5 });
+  const lowStockProducts = useQuery(api.analytics.getLowStockProducts, { threshold: 10, limit: 5 });
+  
+  // Traffic data queries
+  const trafficStats = useQuery(api.pageViews.getTrafficStats, { period: timeRange });
+  const trafficChartData = useQuery(api.pageViews.getTrafficChartData, { period: timeRange, groupBy: trafficChartGroupBy });
+  const topPages = useQuery(api.pageViews.getTopPages, { period: timeRange, limit: 5 });
+  const trafficSources = useQuery(api.pageViews.getTrafficSources, { period: timeRange, limit: 5 });
+  const deviceStats = useQuery(api.pageViews.getDeviceStats, { period: timeRange });
+  
+  const isLoading = featuresData === undefined || settingsData === undefined;
   
   const isFeatureEnabled = (featureKey: string): boolean => {
     const feature = featuresData?.find(f => f.featureKey === featureKey);
-    return feature?.enabled ?? true;
+    return feature?.enabled ?? false;
   };
-
-  const currentData = useMemo(() => MOCK_DATA[timeRange], [timeRange]);
 
   if (isLoading) {
     return (
@@ -155,214 +117,474 @@ function DashboardContent() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Tổng quan</h1>
-        <p className="text-slate-500 dark:text-slate-400">Chào mừng trở lại, Admin User!</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Tổng quan</h1>
+          <p className="text-slate-500 dark:text-slate-400">Chào mừng trở lại, Admin User!</p>
+        </div>
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+          {TIME_TABS.map((tab) => (
+            <button 
+              key={tab.key}
+              onClick={() => setTimeRange(tab.key)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                timeRange === tab.key 
+                  ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-slate-100' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Sales Report */}
-      {showSales && (
+      {/* Summary Stats Cards */}
+      {(showSales || showCustomers || showProducts) && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {showSales && (
+            <>
+              <Card className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-500/10 rounded-lg">
+                    <TrendingUp size={20} className="text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-500 truncate">Doanh thu</p>
+                    <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                      {summaryStats ? formatCurrency(summaryStats.revenue.value) : '...'}
+                    </p>
+                    {summaryStats && summaryStats.revenue.change !== 0 && (
+                      <Badge variant={summaryStats.revenue.change > 0 ? "success" : "destructive"} className="text-xs">
+                        {summaryStats.revenue.change > 0 ? '+' : ''}{summaryStats.revenue.change}%
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </Card>
+              <Card className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <Package size={20} className="text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-500 truncate">Đơn hàng</p>
+                    <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                      {summaryStats?.orders.value.toLocaleString('vi-VN') ?? '...'}
+                    </p>
+                    {summaryStats && summaryStats.orders.change !== 0 && (
+                      <Badge variant={summaryStats.orders.change > 0 ? "success" : "destructive"} className="text-xs">
+                        {summaryStats.orders.change > 0 ? '+' : ''}{summaryStats.orders.change}%
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </>
+          )}
+          {showCustomers && (
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-cyan-500/10 rounded-lg">
+                  <Users size={20} className="text-cyan-600 dark:text-cyan-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-slate-500 truncate">Khách mới</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    {summaryStats?.customers.value.toLocaleString('vi-VN') ?? '...'}
+                  </p>
+                  {summaryStats && summaryStats.customers.change !== 0 && (
+                    <Badge variant={summaryStats.customers.change > 0 ? "success" : "destructive"} className="text-xs">
+                      {summaryStats.customers.change > 0 ? '+' : ''}{summaryStats.customers.change}%
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </Card>
+          )}
+          {showProducts && (
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <Package size={20} className="text-purple-600 dark:text-purple-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-slate-500 truncate">Sản phẩm</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    {summaryStats?.products.value.toLocaleString('vi-VN') ?? '...'}
+                  </p>
+                  {summaryStats?.products.lowStock ? (
+                    <span className="text-xs text-amber-600 flex items-center gap-0.5">
+                      <AlertTriangle size={10} /> {summaryStats.products.lowStock} sắp hết
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Revenue Chart */}
+      {showSales && chartData && chartData.length > 0 && (
         <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
           <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
-            <CardTitle className="text-slate-900 dark:text-slate-100">Báo cáo doanh thu</CardTitle>
+            <CardTitle className="text-slate-900 dark:text-slate-100">Biểu đồ doanh thu</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg">
-                <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium mb-1">Tổng doanh thu</p>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">125.5M</h3>
-              </div>
-              <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-lg">
-                <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mb-1">Đơn hàng</p>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">156</h3>
-              </div>
-              <div className="p-4 bg-purple-50 dark:bg-purple-500/10 rounded-lg">
-                <p className="text-sm text-purple-600 dark:text-purple-400 font-medium mb-1">Giá trị TB/đơn</p>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">805K</h3>
-              </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                  <YAxis 
+                    tick={{ fontSize: 12 }} 
+                    stroke="#94a3b8"
+                    tickFormatter={(value) => formatCurrency(value)}
+                  />
+                  <Tooltip 
+                    formatter={(value) => [formatCurrency(value as number) + ' VND', 'Doanh thu']}
+                    contentStyle={{ 
+                      backgroundColor: '#1e293b', 
+                      border: 'none', 
+                      borderRadius: '8px',
+                      color: '#f1f5f9'
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#10b981" 
+                    strokeWidth={2}
+                    fill="url(#colorRevenue)" 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Customers Report */}
-      {showCustomers && (
+      {/* Orders Chart */}
+      {showSales && chartData && chartData.length > 0 && (
         <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
           <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
-            <CardTitle className="text-slate-900 dark:text-slate-100">Báo cáo khách hàng</CardTitle>
+            <CardTitle className="text-slate-900 dark:text-slate-100">Số đơn hàng</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-4 bg-cyan-50 dark:bg-cyan-500/10 rounded-lg">
-                <p className="text-sm text-cyan-600 dark:text-cyan-400 font-medium mb-1">Khách mới</p>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">48</h3>
-              </div>
-              <div className="p-4 bg-amber-50 dark:bg-amber-500/10 rounded-lg">
-                <p className="text-sm text-amber-600 dark:text-amber-400 font-medium mb-1">Khách quay lại</p>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">72</h3>
-              </div>
-              <div className="p-4 bg-rose-50 dark:bg-rose-500/10 rounded-lg">
-                <p className="text-sm text-rose-600 dark:text-rose-400 font-medium mb-1">Tỷ lệ quay lại</p>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">60%</h3>
-              </div>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                  <Tooltip 
+                    formatter={(value) => [value + ' đơn', 'Đơn hàng']}
+                    contentStyle={{ 
+                      backgroundColor: '#1e293b', 
+                      border: 'none', 
+                      borderRadius: '8px',
+                      color: '#f1f5f9'
+                    }}
+                  />
+                  <Bar dataKey="orders" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Products Report */}
+      {/* Top Products & Low Stock */}
       {showProducts && (
-        <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
-          <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
-            <CardTitle className="text-slate-900 dark:text-slate-100">Báo cáo sản phẩm</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide mb-4">Sản phẩm bán chạy</h4>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top Products */}
+          {topProducts && topProducts.length > 0 && (
+            <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+              <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
+                <CardTitle className="text-slate-900 dark:text-slate-100">Sản phẩm bán chạy</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
                 <div className="space-y-3">
-                  <ProgressBar label="iPhone 15 Pro Max" value={45} color="bg-blue-500" />
-                  <ProgressBar label="MacBook Air M3" value={32} color="bg-blue-500" />
-                  <ProgressBar label="AirPods Pro 2" value={28} color="bg-blue-500" />
+                  {topProducts.map((product, i) => (
+                    <div key={product.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-blue-600 w-6">#{i + 1}</span>
+                        {product.image && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={product.image} alt={product.name} className="w-10 h-10 rounded object-cover" />
+                        )}
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{product.name}</span>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="default">{product.sales} đã bán</Badge>
+                        <p className="text-xs text-slate-500 mt-1">{formatCurrency(product.revenue)} VND</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide mb-4">Tồn kho thấp</h4>
-                <div className="space-y-3">
-                  <ProgressBar label="iPad Mini 6" value={5} color="bg-rose-500" />
-                  <ProgressBar label="Apple Watch Ultra" value={8} color="bg-amber-500" />
-                  <ProgressBar label="Magic Keyboard" value={12} color="bg-amber-500" />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Low Stock Warning */}
+          {lowStockProducts && lowStockProducts.length > 0 && (
+            <Card className="border-amber-200 dark:border-amber-800 shadow-sm">
+              <CardHeader className="border-b border-amber-100 dark:border-amber-800 pb-4">
+                <CardTitle className="text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                  <AlertTriangle size={20} /> Sản phẩm sắp hết hàng
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-2">
+                  {lowStockProducts.map((product) => (
+                    <div key={product.id} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                      <div>
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{product.name}</span>
+                        <p className="text-xs text-slate-500">SKU: {product.sku}</p>
+                      </div>
+                      <Badge variant="warning" className="text-xs">
+                        Còn {product.stock}
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
       {/* Traffic Report */}
       {showTraffic && (
-        <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
-          <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <CardTitle className="text-slate-900 dark:text-slate-100">Báo cáo lượt truy cập</CardTitle>
-              <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg self-start sm:self-auto">
-                {TIME_TABS.map((tab) => (
-                  <button 
-                    key={tab.key}
-                    onClick={() => setTimeRange(tab.key)}
-                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                      timeRange === tab.key 
-                        ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-slate-100' 
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+        <>
+          {/* Traffic Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <Eye size={20} className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-slate-500 truncate">Lượt xem trang</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    {trafficStats ? formatNumber(trafficStats.totalPageviews) : '...'}
+                  </p>
+                  {trafficStats && trafficStats.pageviewsChange !== 0 && (
+                    <Badge variant={trafficStats.pageviewsChange > 0 ? "success" : "destructive"} className="text-xs">
+                      {trafficStats.pageviewsChange > 0 ? '+' : ''}{trafficStats.pageviewsChange}%
+                    </Badge>
+                  )}
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium uppercase mb-1">NGƯỜI TRUY CẬP</p>
-                <h3 className="text-4xl font-bold text-slate-900 dark:text-slate-100">{formatNumber(currentData.visitors)}</h3>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-500/10 rounded-lg">
+                  <Users size={20} className="text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-slate-500 truncate">Người truy cập</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    {trafficStats ? formatNumber(trafficStats.uniqueVisitors) : '...'}
+                  </p>
+                  {trafficStats && trafficStats.visitorsChange !== 0 && (
+                    <Badge variant={trafficStats.visitorsChange > 0 ? "success" : "destructive"} className="text-xs">
+                      {trafficStats.visitorsChange > 0 ? '+' : ''}{trafficStats.visitorsChange}%
+                    </Badge>
+                  )}
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium uppercase mb-1">LƯỢT XEM TRANG</p>
-                <h3 className="text-4xl font-bold text-slate-900 dark:text-slate-100">{formatNumber(currentData.pageviews)}</h3>
-              </div>
-            </div>
+            </Card>
+          </div>
 
-            <div className="h-[300px] w-full mb-8">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={currentData.chart}>
-                  <defs>
-                    <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                  <Tooltip 
-                    contentStyle={{backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                    itemStyle={{color: '#334155'}}
-                    formatter={(value) => [formatNumber(value as number), 'Lượt truy cập']}
-                  />
-                  <Area type="monotone" dataKey="visits" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorVisits)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-8">
-              <div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide mb-4">Trang được xem</h4>
-                <div className="space-y-4">
-                  {currentData.pages.map((page) => (
-                    <ProgressBar key={page.label} label={page.label} value={page.value} />
+          {/* Traffic Chart */}
+          <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+            <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <CardTitle className="text-slate-900 dark:text-slate-100">Biểu đồ lượt truy cập</CardTitle>
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                  {([
+                    { key: 'day', label: 'Ngày' },
+                    { key: 'month', label: 'Tháng' },
+                    { key: 'year', label: 'Năm' },
+                  ] as { key: ChartGroupBy; label: string }[]).map((tab) => (
+                    <button 
+                      key={tab.key}
+                      onClick={() => setTrafficChartGroupBy(tab.key)}
+                      className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                        trafficChartGroupBy === tab.key 
+                          ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-slate-100' 
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
                   ))}
                 </div>
-
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide mt-8 mb-4">Quốc gia</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm text-slate-700 dark:text-slate-300">
-                    <span className="flex items-center gap-2"><span className="text-lg">🇻🇳</span> Việt Nam</span>
-                    <span className="font-medium">80%</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-slate-700 dark:text-slate-300">
-                    <span className="flex items-center gap-2"><span className="text-lg">🇯🇵</span> Nhật Bản</span>
-                    <span className="font-medium">8%</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-slate-700 dark:text-slate-300">
-                    <span className="flex items-center gap-2"><span className="text-lg">🌐</span> Không xác định</span>
-                    <span className="font-medium">6%</span>
-                  </div>
-                </div>
               </div>
-
-              <div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide mb-4">Nguồn truy cập</h4>
-                <div className="space-y-4">
-                  {currentData.sources.map((source) => (
-                    <ProgressBar key={source.label} label={source.label} value={source.value} color="bg-emerald-500" />
-                  ))}
+            </CardHeader>
+            <CardContent className="p-6">
+              {trafficChartData && trafficChartData.length > 0 ? (
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={trafficChartData}>
+                      <defs>
+                        <linearGradient id="colorPageviews" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                      <YAxis tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                      <Tooltip 
+                        formatter={(value, name) => [
+                          formatNumber(value as number), 
+                          name === 'pageviews' ? 'Lượt xem' : 'Người truy cập'
+                        ]}
+                        contentStyle={{ 
+                          backgroundColor: '#1e293b', 
+                          border: 'none', 
+                          borderRadius: '8px',
+                          color: '#f1f5f9'
+                        }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="pageviews" 
+                        stroke="#3b82f6" 
+                        strokeWidth={2}
+                        fill="url(#colorPageviews)" 
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
-
-                <div className="grid grid-cols-2 gap-6 mt-8">
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide mb-3">Thiết bị</h4>
-                    <div className="flex items-center justify-between text-sm py-1 border-b border-slate-100 dark:border-slate-800">
-                      <span className="text-slate-600 dark:text-slate-400">Di động</span>
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">59%</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm py-1">
-                      <span className="text-slate-600 dark:text-slate-400">Máy tính</span>
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">41%</span>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide mb-3">Hệ điều hành</h4>
-                    <div className="flex items-center justify-between text-sm py-1 border-b border-slate-100 dark:border-slate-800">
-                      <span className="text-slate-600 dark:text-slate-400">Windows</span>
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">39%</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm py-1 border-b border-slate-100 dark:border-slate-800">
-                      <span className="text-slate-600 dark:text-slate-400">iOS</span>
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">34%</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm py-1">
-                      <span className="text-slate-600 dark:text-slate-400">Android</span>
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">25%</span>
-                    </div>
-                  </div>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-slate-400">
+                  Chưa có dữ liệu lượt truy cập
                 </div>
-              </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top Pages & Traffic Sources */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Top Pages */}
+            {topPages && topPages.length > 0 && (
+              <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+                <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <CardTitle className="text-slate-900 dark:text-slate-100">Trang được xem nhiều</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-3">
+                    {topPages.map((page, i) => (
+                      <div key={page.path} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="text-xs font-medium text-blue-600 w-5">#{i + 1}</span>
+                          <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{page.path}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{formatNumber(page.views)}</span>
+                          <Badge variant="outline" className="text-xs">{page.percentage}%</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Traffic Sources */}
+            {trafficSources && trafficSources.length > 0 && (
+              <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+                <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <CardTitle className="text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <Globe size={18} /> Nguồn truy cập
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-3">
+                    {trafficSources.map((source, i) => (
+                      <div key={source.source} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="text-xs font-medium text-emerald-600 w-5">#{i + 1}</span>
+                          <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{source.source}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{formatNumber(source.views)}</span>
+                          <Badge variant="outline" className="text-xs">{source.percentage}%</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Device & Browser Stats */}
+          {deviceStats && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Devices */}
+              <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+                <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <CardTitle className="text-slate-900 dark:text-slate-100 text-sm">Thiết bị</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    {deviceStats.devices.map((item) => (
+                      <div key={item.device} className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600 dark:text-slate-400 capitalize">{item.device}</span>
+                        <span className="font-semibold text-slate-900 dark:text-slate-100">{item.percentage}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* OS */}
+              <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+                <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <CardTitle className="text-slate-900 dark:text-slate-100 text-sm">Hệ điều hành</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    {deviceStats.os.map((item) => (
+                      <div key={item.os} className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">{item.os}</span>
+                        <span className="font-semibold text-slate-900 dark:text-slate-100">{item.percentage}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Browsers */}
+              <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
+                <CardHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <CardTitle className="text-slate-900 dark:text-slate-100 text-sm">Trình duyệt</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    {deviceStats.browsers.map((item) => (
+                      <div key={item.browser} className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">{item.browser}</span>
+                        <span className="font-semibold text-slate-900 dark:text-slate-100">{item.percentage}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </>
       )}
     </div>
   );

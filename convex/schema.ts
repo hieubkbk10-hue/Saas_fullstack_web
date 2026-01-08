@@ -454,7 +454,21 @@ export default defineSchema({
     .index("by_scheduledAt", ["scheduledAt"])
     .index("by_status_order", ["status", "order"]),
 
-  // 22. promotions - Khuyến mãi & Voucher
+  // 25. pageViews - Tracking lượt truy cập
+  pageViews: defineTable({
+    path: v.string(),
+    sessionId: v.string(),
+    referrer: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    country: v.optional(v.string()),
+    device: v.optional(v.union(v.literal("mobile"), v.literal("desktop"), v.literal("tablet"))),
+    os: v.optional(v.string()),
+    browser: v.optional(v.string()),
+  })
+    .index("by_path", ["path"])
+    .index("by_session", ["sessionId"]),
+
+  // 26. promotions - Khuyến mãi & Voucher
   promotions: defineTable({
     name: v.string(),
     code: v.string(),
