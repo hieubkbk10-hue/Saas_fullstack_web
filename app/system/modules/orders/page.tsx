@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Doc } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { ShoppingBag, Truck, MapPin, CreditCard, Loader2, Database, Trash2, RefreshCw, Settings, Users } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
@@ -43,15 +44,23 @@ type TabType = 'config' | 'data';
 export default function OrdersModuleConfigPage() {
   const [activeTab, setActiveTab] = useState<TabType>('config');
 
-  // Queries
+  // Config tab queries
   const moduleData = useQuery(api.admin.modules.getModuleByKey, { key: MODULE_KEY });
   const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   const fieldsData = useQuery(api.admin.modules.listModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
 
-  // Data tab queries
-  const ordersData = useQuery(api.orders.listAll);
-  const customersData = useQuery(api.customers.listAll);
+  // Data tab queries - use efficient stats query instead of listAll
+  // Only fetch when on data tab
+  const orderStats = useQuery(api.orders.getStats, activeTab === 'data' ? { limit: 100 } : "skip");
+  const ordersData = useQuery(api.orders.listAll, activeTab === 'data' ? { limit: 10 } : "skip");
+  const customersCount = useQuery(api.customers.count, activeTab === 'data' ? {} : "skip");
+
+  // Build customer map only when needed and with limit
+  const customersForTable = useQuery(
+    api.customers.listAll,
+    activeTab === 'data' ? { limit: 50 } : "skip"
+  );
 
   // Mutations
   const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
@@ -65,6 +74,9 @@ export default function OrdersModuleConfigPage() {
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
   const [localSettings, setLocalSettings] = useState<SettingsState>({ ordersPerPage: 20, defaultStatus: 'Pending' });
   const [isSaving, setIsSaving] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
                     fieldsData === undefined || settingsData === undefined;
@@ -178,47 +190,50 @@ export default function OrdersModuleConfigPage() {
 
   // Data tab handlers
   const handleSeedData = async () => {
-    toast.loading('Đang tạo dữ liệu mẫu...');
-    await seedOrdersModule();
-    toast.dismiss();
-    toast.success('Đã tạo dữ liệu mẫu thành công!');
+    setIsSeeding(true);
+    try {
+      await seedOrdersModule();
+      toast.success('Đã tạo dữ liệu mẫu thành công!');
+    } catch {
+      toast.error('Có lỗi xảy ra');
+    } finally {
+      setIsSeeding(false);
+    }
   };
 
   const handleClearData = async () => {
     if (!confirm('Xóa toàn bộ dữ liệu đơn hàng?')) return;
-    toast.loading('Đang xóa dữ liệu...');
-    await clearOrdersData();
-    toast.dismiss();
-    toast.success('Đã xóa toàn bộ dữ liệu!');
+    setIsClearing(true);
+    try {
+      await clearOrdersData();
+      toast.success('Đã xóa toàn bộ dữ liệu!');
+    } catch {
+      toast.error('Có lỗi xảy ra');
+    } finally {
+      setIsClearing(false);
+    }
   };
 
   const handleResetData = async () => {
     if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
-    toast.loading('Đang reset dữ liệu...');
-    await clearOrdersData();
-    await seedOrdersModule();
-    toast.dismiss();
-    toast.success('Đã reset dữ liệu thành công!');
+    setIsResetting(true);
+    try {
+      await clearOrdersData();
+      await seedOrdersModule();
+      toast.success('Đã reset dữ liệu thành công!');
+    } catch {
+      toast.error('Có lỗi xảy ra');
+    } finally {
+      setIsResetting(false);
+    }
   };
 
-  // Stats
-  const stats = useMemo(() => {
-    if (!ordersData) return { total: 0, pending: 0, processing: 0, delivered: 0, cancelled: 0, totalRevenue: 0 };
-    return {
-      total: ordersData.length,
-      pending: ordersData.filter(o => o.status === 'Pending').length,
-      processing: ordersData.filter(o => o.status === 'Processing' || o.status === 'Shipped').length,
-      delivered: ordersData.filter(o => o.status === 'Delivered').length,
-      cancelled: ordersData.filter(o => o.status === 'Cancelled').length,
-      totalRevenue: ordersData.filter(o => o.status === 'Delivered').reduce((sum, o) => sum + o.totalAmount, 0),
-    };
-  }, [ordersData]);
-
+  // Use Map for O(1) lookup
   const customerMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    customersData?.forEach(c => { map[c._id] = c.name; });
+    const map = new Map<string, string>();
+    customersForTable?.forEach((c: Doc<"customers">) => map.set(c._id, c.name));
     return map;
-  }, [customersData]);
+  }, [customersForTable]);
 
   const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   const formatDate = (timestamp: number) => new Date(timestamp).toLocaleDateString('vi-VN');
@@ -330,20 +345,20 @@ export default function OrdersModuleConfigPage() {
                 <p className="text-sm text-slate-500 mt-1">Seed, clear hoặc reset dữ liệu cho module đơn hàng</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleSeedData} className="gap-2">
-                  <Database size={16} /> Seed Data
+                <Button variant="outline" onClick={handleSeedData} disabled={isSeeding} className="gap-2">
+                  {isSeeding ? <Loader2 size={16} className="animate-spin" /> : <Database size={16} />} Seed Data
                 </Button>
-                <Button variant="outline" onClick={handleClearData} className="gap-2 text-red-500 hover:text-red-600">
-                  <Trash2 size={16} /> Clear All
+                <Button variant="outline" onClick={handleClearData} disabled={isClearing} className="gap-2 text-red-500 hover:text-red-600">
+                  {isClearing ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />} Clear All
                 </Button>
-                <Button onClick={handleResetData} className="gap-2 bg-emerald-600 hover:bg-emerald-500">
-                  <RefreshCw size={16} /> Reset
+                <Button onClick={handleResetData} disabled={isResetting} className="gap-2 bg-emerald-600 hover:bg-emerald-500">
+                  {isResetting ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />} Reset
                 </Button>
               </div>
             </div>
           </Card>
 
-          {/* Statistics */}
+          {/* Statistics - use orderStats query */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <Card className="p-4">
               <div className="flex items-center gap-3">
@@ -351,7 +366,7 @@ export default function OrdersModuleConfigPage() {
                   <ShoppingBag className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.total}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{orderStats?.total ?? 0}</p>
                   <p className="text-sm text-slate-500">Tổng đơn</p>
                 </div>
               </div>
@@ -362,7 +377,7 @@ export default function OrdersModuleConfigPage() {
                   <ShoppingBag className="w-5 h-5 text-slate-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.pending}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{orderStats?.pending ?? 0}</p>
                   <p className="text-sm text-slate-500">Chờ xử lý</p>
                 </div>
               </div>
@@ -373,7 +388,7 @@ export default function OrdersModuleConfigPage() {
                   <Truck className="w-5 h-5 text-yellow-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.processing}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{orderStats?.processing ?? 0}</p>
                   <p className="text-sm text-slate-500">Đang giao</p>
                 </div>
               </div>
@@ -384,7 +399,7 @@ export default function OrdersModuleConfigPage() {
                   <ShoppingBag className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.delivered}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{orderStats?.delivered ?? 0}</p>
                   <p className="text-sm text-slate-500">Hoàn thành</p>
                 </div>
               </div>
@@ -395,7 +410,7 @@ export default function OrdersModuleConfigPage() {
                   <ShoppingBag className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.cancelled}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{orderStats?.cancelled ?? 0}</p>
                   <p className="text-sm text-slate-500">Đã hủy</p>
                 </div>
               </div>
@@ -406,7 +421,7 @@ export default function OrdersModuleConfigPage() {
                   <Users className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{customersData?.length ?? 0}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{customersCount?.count ?? 0}</p>
                   <p className="text-sm text-slate-500">Khách hàng</p>
                 </div>
               </div>
@@ -418,16 +433,16 @@ export default function OrdersModuleConfigPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-500">Tổng doanh thu (đơn hoàn thành)</p>
-                <p className="text-3xl font-bold text-emerald-600">{formatPrice(stats.totalRevenue)}</p>
+                <p className="text-3xl font-bold text-emerald-600">{formatPrice(orderStats?.totalRevenue ?? 0)}</p>
               </div>
             </div>
           </Card>
 
-          {/* Orders Table */}
+          {/* Orders Table - only shows 10 items */}
           <Card>
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
               <ShoppingBag className="w-5 h-5 text-emerald-500" />
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Đơn hàng ({ordersData?.length ?? 0})</h3>
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Đơn hàng gần đây (tối đa 10)</h3>
             </div>
             <Table>
               <TableHeader>
@@ -441,10 +456,10 @@ export default function OrdersModuleConfigPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {ordersData?.slice(0, 10).map(order => (
+                {ordersData?.map((order: Doc<"orders">) => (
                   <TableRow key={order._id}>
                     <TableCell className="font-mono text-sm text-emerald-600 font-medium">{order.orderNumber}</TableCell>
-                    <TableCell>{customerMap[order.customerId] || 'N/A'}</TableCell>
+                    <TableCell>{customerMap.get(order.customerId) || 'N/A'}</TableCell>
                     <TableCell className="text-right font-medium">{formatPrice(order.totalAmount)}</TableCell>
                     <TableCell>
                       <Badge variant={order.status === 'Delivered' ? 'success' : order.status === 'Cancelled' ? 'destructive' : 'secondary'}>
@@ -470,11 +485,6 @@ export default function OrdersModuleConfigPage() {
                 )}
               </TableBody>
             </Table>
-            {ordersData && ordersData.length > 10 && (
-              <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500 text-center">
-                Hiển thị 10 / {ordersData.length} đơn hàng
-              </div>
-            )}
           </Card>
         </div>
       )}

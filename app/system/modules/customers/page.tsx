@@ -39,9 +39,9 @@ export default function CustomersModuleConfigPage() {
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
 
   // Data tab queries
-  const customersData = useQuery(api.customers.listAll);
-  const statsData = useQuery(api.customers.getStats);
-  const citiesData = useQuery(api.customers.getCities);
+  const customersData = useQuery(api.customers.listAll, { limit: 100 });
+  const statsData = useQuery(api.customers.getStats, { limit: 1000 });
+  const citiesData = useQuery(api.customers.getCities, { limit: 500 });
 
   const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
   const updateField = useMutation(api.admin.modules.updateModuleField);

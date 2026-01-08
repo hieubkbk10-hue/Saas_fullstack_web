@@ -30,11 +30,12 @@ export const list = query({
   },
 });
 
+// Limited list for admin (max 100 items - use pagination for more)
 export const listAll = query({
-  args: {},
-  returns: v.array(customerDoc),
-  handler: async (ctx) => {
-    return await ctx.db.query("customers").collect();
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const maxLimit = Math.min(args.limit ?? 100, 100);
+    return await ctx.db.query("customers").order("desc").take(maxLimit);
   },
 });
 
@@ -226,24 +227,30 @@ export const remove = mutation({
   },
 });
 
+// Efficient count using take() instead of collect()
 export const count = query({
   args: { status: v.optional(customerStatus) },
-  returns: v.number(),
+  returns: v.object({
+    count: v.number(),
+    hasMore: v.boolean(),
+  }),
   handler: async (ctx, args) => {
-    if (args.status) {
-      const customers = await ctx.db
-        .query("customers")
-        .withIndex("by_status", (q) => q.eq("status", args.status!))
-        .collect();
-      return customers.length;
-    }
-    const customers = await ctx.db.query("customers").collect();
-    return customers.length;
+    const limit = 1000;
+    const query = args.status
+      ? ctx.db.query("customers").withIndex("by_status", (q) => q.eq("status", args.status!))
+      : ctx.db.query("customers");
+    
+    const items = await query.take(limit + 1);
+    return {
+      count: Math.min(items.length, limit),
+      hasMore: items.length > limit,
+    };
   },
 });
 
+// Get stats with limit to avoid fetching all records
 export const getStats = query({
-  args: {},
+  args: { limit: v.optional(v.number()) },
   returns: v.object({
     totalCount: v.number(),
     activeCount: v.number(),
@@ -252,8 +259,9 @@ export const getStats = query({
     totalOrders: v.number(),
     avgOrderValue: v.number(),
   }),
-  handler: async (ctx) => {
-    const customers = await ctx.db.query("customers").collect();
+  handler: async (ctx, args) => {
+    const maxLimit = Math.min(args.limit ?? 1000, 1000);
+    const customers = await ctx.db.query("customers").take(maxLimit);
     let activeCount = 0;
     let inactiveCount = 0;
     let totalSpent = 0;
@@ -277,11 +285,13 @@ export const getStats = query({
   },
 });
 
+// Get unique cities with limit
 export const getCities = query({
-  args: {},
+  args: { limit: v.optional(v.number()) },
   returns: v.array(v.string()),
-  handler: async (ctx) => {
-    const customers = await ctx.db.query("customers").collect();
+  handler: async (ctx, args) => {
+    const maxLimit = Math.min(args.limit ?? 500, 500);
+    const customers = await ctx.db.query("customers").take(maxLimit);
     const cities = new Set<string>();
     for (const c of customers) {
       if (c.city) cities.add(c.city);

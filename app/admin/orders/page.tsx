@@ -55,11 +55,14 @@ export default function OrdersListPage() {
 }
 
 function OrdersContent() {
-  const ordersData = useQuery(api.orders.listAll);
-  const customersData = useQuery(api.customers.listAll);
+  // Use limited queries instead of collecting all
+  const ordersData = useQuery(api.orders.listAll, { limit: 100 });
+  const customersData = useQuery(api.customers.listAll, { limit: 100 });
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+  
   const deleteOrder = useMutation(api.orders.remove);
+  const bulkDeleteOrders = useMutation(api.orders.bulkRemove);
   const seedOrdersModule = useMutation(api.seed.seedOrdersModule);
   const clearOrdersData = useMutation(api.seed.clearOrdersData);
 
@@ -70,6 +73,8 @@ function OrdersContent() {
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Id<"orders">[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const isLoading = ordersData === undefined || customersData === undefined || fieldsData === undefined;
 
@@ -110,9 +115,10 @@ function OrdersContent() {
     }
   }, [fieldsData, columns]);
 
+  // Build customer map using Map for O(1) lookup
   const customerMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    customersData?.forEach(c => { map[c._id] = c.name; });
+    const map = new Map<string, string>();
+    customersData?.forEach(c => map.set(c._id, c.name));
     return map;
   }, [customersData]);
 
@@ -120,7 +126,7 @@ function OrdersContent() {
     return ordersData?.map(o => ({
       ...o,
       id: o._id,
-      customerName: customerMap[o.customerId] || 'Không xác định',
+      customerName: customerMap.get(o.customerId) || 'Không xác định',
       itemsCount: o.items.reduce((sum, item) => sum + item.quantity, 0),
     })) || [];
   }, [ordersData, customerMap]);
@@ -136,9 +142,10 @@ function OrdersContent() {
   const filteredData = useMemo(() => {
     let data = [...orders];
     if (searchTerm) {
+      const term = searchTerm.toLowerCase();
       data = data.filter(o => 
-        o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        o.customerName.toLowerCase().includes(searchTerm.toLowerCase())
+        o.orderNumber.toLowerCase().includes(term) ||
+        o.customerName.toLowerCase().includes(term)
       );
     }
     if (filterStatus) data = data.filter(o => o.status === filterStatus);
@@ -148,20 +155,17 @@ function OrdersContent() {
 
   const sortedData = useSortableData(filteredData, sortConfig);
 
-  // Lấy ordersPerPage từ settings
   const ordersPerPage = useMemo(() => {
     const setting = settingsData?.find(s => s.settingKey === 'ordersPerPage');
     return (setting?.value as number) || 20;
   }, [settingsData]);
 
-  // Pagination
   const totalPages = Math.ceil(sortedData.length / ordersPerPage);
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * ordersPerPage;
     return sortedData.slice(start, start + ordersPerPage);
   }, [sortedData, currentPage, ordersPerPage]);
 
-  // Reset page khi filter thay đổi
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterStatus, filterPaymentStatus]);
@@ -182,20 +186,22 @@ function OrdersContent() {
 
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} đơn hàng đã chọn?`)) {
+      setIsDeleting(true);
       try {
-        for (const id of selectedIds) {
-          await deleteOrder({ id });
-        }
+        const deletedCount = await bulkDeleteOrders({ ids: selectedIds });
         setSelectedIds([]);
-        toast.success(`Đã xóa ${selectedIds.length} đơn hàng`);
+        toast.success(`Đã xóa ${deletedCount} đơn hàng`);
       } catch {
         toast.error('Có lỗi khi xóa đơn hàng');
+      } finally {
+        setIsDeleting(false);
       }
     }
   };
 
   const handleReset = async () => {
     if (confirm('Xóa tất cả đơn hàng và seed lại dữ liệu mẫu?')) {
+      setIsResetting(true);
       try {
         await clearOrdersData();
         await seedOrdersModule();
@@ -203,6 +209,8 @@ function OrdersContent() {
         toast.success('Đã reset dữ liệu đơn hàng');
       } catch {
         toast.error('Có lỗi khi reset dữ liệu');
+      } finally {
+        setIsResetting(false);
       }
     }
   };
@@ -226,14 +234,19 @@ function OrdersContent() {
           <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý đơn hàng và vận chuyển</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleReset} title="Reset dữ liệu mẫu">
-            <RefreshCw size={16}/> Reset
+          <Button variant="outline" className="gap-2" onClick={handleReset} disabled={isResetting} title="Reset dữ liệu mẫu">
+            {isResetting ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16}/>} Reset
           </Button>
           <Link href="/admin/orders/create"><Button className="gap-2 bg-emerald-600 hover:bg-emerald-500"><Plus size={16}/> Tạo đơn hàng</Button></Link>
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+      <BulkActionBar 
+        selectedCount={selectedIds.length} 
+        onDelete={handleBulkDelete} 
+        onClearSelection={() => setSelectedIds([])} 
+        isLoading={isDeleting}
+      />
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between">

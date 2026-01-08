@@ -23,7 +23,7 @@ export default function CustomersListPage() {
 
 function CustomersContent() {
   // Convex queries
-  const customersData = useQuery(api.customers.listAll);
+  const customersData = useQuery(api.customers.listAll, { limit: 100 });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
 

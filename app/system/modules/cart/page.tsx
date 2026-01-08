@@ -39,7 +39,7 @@ export default function CartModuleConfigPage() {
   // Data tab queries
   const cartsData = useQuery(api.cart.listAll);
   const cartItemsData = useQuery(api.cart.listAllItems);
-  const customersData = useQuery(api.customers.listAll);
+  const customersData = useQuery(api.customers.listAll, { limit: 100 });
 
   // Mutations
   const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);

@@ -23,6 +23,7 @@ import type * as lib_validators from "../lib/validators.js";
 import type * as media from "../media.js";
 import type * as menus from "../menus.js";
 import type * as model_comments from "../model/comments.js";
+import type * as model_orders from "../model/orders.js";
 import type * as model_postCategories from "../model/postCategories.js";
 import type * as model_posts from "../model/posts.js";
 import type * as notifications from "../notifications.js";
@@ -62,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   media: typeof media;
   menus: typeof menus;
   "model/comments": typeof model_comments;
+  "model/orders": typeof model_orders;
   "model/postCategories": typeof model_postCategories;
   "model/posts": typeof model_posts;
   notifications: typeof notifications;

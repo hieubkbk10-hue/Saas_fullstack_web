@@ -30,8 +30,9 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
 
 export default function CreateOrderPage() {
   const router = useRouter();
-  const customersData = useQuery(api.customers.listAll);
-  const productsData = useQuery(api.products.listAll, {});
+  // Use limited queries for dropdowns
+  const customersData = useQuery(api.customers.listAll, { limit: 100 });
+  const productsData = useQuery(api.products.listAll, { limit: 100 });
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const createOrder = useMutation(api.orders.create);
 
@@ -53,18 +54,26 @@ export default function CreateOrderPage() {
     return fields;
   }, [fieldsData]);
 
+  // Use Map for O(1) lookup
   const productMap = useMemo(() => {
-    const map: Record<string, { name: string; price: number; stock: number }> = {};
-    productsData?.forEach(p => { map[p._id] = { name: p.name, price: p.salePrice || p.price, stock: p.stock }; });
+    const map = new Map<string, { name: string; price: number; stock: number }>();
+    productsData?.forEach(p => map.set(p._id, { name: p.name, price: p.salePrice || p.price, stock: p.stock }));
     return map;
   }, [productsData]);
+
+  // Use Map for O(1) customer lookup
+  const customerMap = useMemo(() => {
+    const map = new Map<string, { name: string; phone: string; address?: string }>();
+    customersData?.forEach(c => map.set(c._id, { name: c.name, phone: c.phone, address: c.address }));
+    return map;
+  }, [customersData]);
 
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + item.price * item.quantity, 0), [items]);
   const totalAmount = subtotal + shippingFee;
 
   const addItem = () => {
     if (!selectedProductId) return;
-    const product = productMap[selectedProductId];
+    const product = productMap.get(selectedProductId);
     if (!product) return;
 
     const existingIndex = items.findIndex(i => i.productId === selectedProductId);
@@ -88,6 +97,14 @@ export default function CreateOrderPage() {
     const newItems = [...items];
     newItems[index].quantity = newQuantity;
     setItems(newItems);
+  };
+
+  const handleCustomerChange = (newCustomerId: string) => {
+    setCustomerId(newCustomerId as Id<"customers">);
+    const customer = customerMap.get(newCustomerId);
+    if (customer?.address && enabledFields.has('shippingAddress')) {
+      setShippingAddress(customer.address);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -153,13 +170,7 @@ export default function CreateOrderPage() {
                 <select
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   value={customerId}
-                  onChange={(e) => {
-                    setCustomerId(e.target.value as Id<"customers">);
-                    const customer = customersData?.find(c => c._id === e.target.value);
-                    if (customer?.address && enabledFields.has('shippingAddress')) {
-                      setShippingAddress(customer.address);
-                    }
-                  }}
+                  onChange={(e) => handleCustomerChange(e.target.value)}
                   required
                 >
                   <option value="">Chọn khách hàng</option>

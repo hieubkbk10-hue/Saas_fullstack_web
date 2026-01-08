@@ -35,7 +35,7 @@ export default function WishlistModuleConfigPage() {
 
   // Data tab queries
   const wishlistData = useQuery(api.wishlist.listAll);
-  const customersData = useQuery(api.customers.listAll);
+  const customersData = useQuery(api.customers.listAll, { limit: 100 });
   const productsData = useQuery(api.products.listAll, {});
 
   // Mutations
