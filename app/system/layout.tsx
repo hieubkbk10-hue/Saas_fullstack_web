@@ -14,13 +14,18 @@ import {
   Globe,
   BarChart3,
   Languages,
-  Database
+  Database,
+  LogOut,
+  Shield
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Toaster } from 'sonner';
 import { I18nProvider, useI18n } from './i18n/context';
 import { Locale } from './i18n/translations';
+import { SystemAuthProvider, useSystemAuth } from './auth/context';
+import { SystemAuthGuard } from './auth/SystemAuthGuard';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const SidebarItem = ({ href, icon: Icon, label, collapsed }: { href: string, icon: any, label: string, collapsed: boolean }) => {
   const pathname = usePathname();
@@ -47,6 +52,43 @@ const SidebarGroup = ({ label, collapsed }: { label: string, collapsed: boolean 
     {label}
   </div>
 );
+
+const UserMenu = () => {
+  const { logout } = useSystemAuth();
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 pl-2"
+      >
+        <div className="w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+          <Shield size={16} />
+        </div>
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-20 overflow-hidden">
+            <div className="p-3 border-b border-slate-100 dark:border-slate-800">
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Developer</p>
+              <p className="text-xs text-slate-500">hieubkav</p>
+            </div>
+            <button
+              onClick={async () => { await logout(); setIsOpen(false); }}
+              className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-red-500 transition-colors"
+            >
+              <LogOut size={16} />
+              Đăng xuất
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 const LanguageSwitcher = () => {
   const { locale, setLocale } = useI18n();
@@ -98,23 +140,32 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
+  // SYS-013 FIX: Sync theme - chỉ chạy 1 lần khi mount
   useEffect(() => {
-    const saved = localStorage.getItem('darkMode');
-    if (saved !== null) {
-      setDarkMode(JSON.parse(saved));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('darkMode', JSON.stringify(darkMode));
-    if (darkMode) {
+    const saved = localStorage.getItem('theme');
+    const isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    setDarkMode(isDark);
+    if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [darkMode]);
+    setMounted(true);
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem('theme', newMode ? 'dark' : 'light');
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
   const getPageName = () => {
     if (pathname === '/system') return t.pages.dashboard;
@@ -152,6 +203,7 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
           
           <SidebarGroup label={t.sidebar.control} collapsed={collapsed} />
           <SidebarItem href="/system/modules" icon={Blocks} label={t.sidebar.modules} collapsed={collapsed} />
+          <SidebarItem href="/system/admin-config" icon={Shield} label="SuperAdmin" collapsed={collapsed} />
           <SidebarItem href="/system/data" icon={Database} label="Data Manager" collapsed={collapsed} />
           <SidebarItem href="/system/integrations" icon={BarChart3} label={t.sidebar.analytics} collapsed={collapsed} />
           <SidebarItem href="/system/seo" icon={Globe} label={t.sidebar.seo} collapsed={collapsed} />
@@ -209,24 +261,22 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
             <LanguageSwitcher />
 
             <button 
-              onClick={() => setDarkMode(!darkMode)}
+              onClick={toggleDarkMode}
               className="relative p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
               title={darkMode ? t.header.lightMode : t.header.darkMode}
             >
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             
-            <button className="flex items-center gap-2 pl-2">
-              <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300">
-                <User size={16} />
-              </div>
-            </button>
+            <UserMenu />
           </div>
         </header>
 
-        {/* Page Content Scrollable Area */}
+        {/* Page Content Scrollable Area - SYS-007: Wrapped with ErrorBoundary */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar bg-slate-100 dark:bg-slate-950">
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </main>
 
         {/* System Status Bar */}
@@ -254,11 +304,28 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
   );
 }
 
+function SystemLayoutWrapper({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  
+  // Login page doesn't need full layout
+  if (pathname === '/system/auth/login') {
+    return <>{children}</>;
+  }
+  
+  return (
+    <SystemAuthGuard>
+      <SystemLayoutContent>{children}</SystemLayoutContent>
+    </SystemAuthGuard>
+  );
+}
+
 export default function SystemLayout({ children }: { children: React.ReactNode }) {
   return (
     <I18nProvider>
-      <SystemLayoutContent>{children}</SystemLayoutContent>
-      <Toaster position="top-right" richColors />
+      <SystemAuthProvider>
+        <SystemLayoutWrapper>{children}</SystemLayoutWrapper>
+        <Toaster position="top-right" richColors />
+      </SystemAuthProvider>
     </I18nProvider>
   );
 }

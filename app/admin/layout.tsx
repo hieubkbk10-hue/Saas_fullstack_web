@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { Toaster } from 'sonner';
 import { AdminModulesProvider } from './context/AdminModulesContext';
+import { AdminAuthProvider } from './auth/context';
+import { AdminAuthGuard } from './auth/AdminAuthGuard';
 
-export default function AdminLayout({
+function AdminLayoutContent({
   children,
 }: {
   children: React.ReactNode;
@@ -14,39 +17,75 @@ export default function AdminLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  // SYS-013 FIX: Sync theme key
   useEffect(() => {
     const isDark = localStorage.getItem('theme') === 'dark' || 
       (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
     setIsDarkMode(isDark);
-    document.documentElement.classList.toggle('dark', isDark);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }, []);
 
   const toggleTheme = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
-    document.documentElement.classList.toggle('dark', newMode);
     localStorage.setItem('theme', newMode ? 'dark' : 'light');
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
 
   return (
-    <AdminModulesProvider>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 flex font-sans">
-        <Toaster position="top-right" richColors theme={isDarkMode ? 'dark' : 'light'} />
-        
-        <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 flex font-sans">
+      <Toaster position="top-right" richColors theme={isDarkMode ? 'dark' : 'light'} />
+      
+      <Sidebar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
 
-        <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
-          <Header 
-            isDarkMode={isDarkMode} 
-            toggleTheme={toggleTheme} 
-            setMobileMenuOpen={setMobileMenuOpen} 
-          />
+      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300">
+        <Header 
+          isDarkMode={isDarkMode} 
+          toggleTheme={toggleTheme} 
+          setMobileMenuOpen={setMobileMenuOpen} 
+        />
 
-          <main className="flex-1 p-4 lg:p-8 overflow-x-hidden w-full max-w-[1600px] mx-auto">
-            {children}
-          </main>
-        </div>
+        <main className="flex-1 p-4 lg:p-8 overflow-x-hidden w-full max-w-[1600px] mx-auto">
+          {children}
+        </main>
       </div>
-    </AdminModulesProvider>
+    </div>
+  );
+}
+
+function AdminLayoutWrapper({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  
+  // Login page doesn't need full layout
+  if (pathname === '/admin/auth/login') {
+    return <>{children}</>;
+  }
+  
+  return (
+    <AdminAuthGuard>
+      <AdminModulesProvider>
+        <AdminLayoutContent>{children}</AdminLayoutContent>
+      </AdminModulesProvider>
+    </AdminAuthGuard>
+  );
+}
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AdminAuthProvider>
+      <AdminLayoutWrapper>{children}</AdminLayoutWrapper>
+    </AdminAuthProvider>
   );
 }

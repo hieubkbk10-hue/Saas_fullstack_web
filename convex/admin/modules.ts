@@ -113,6 +113,27 @@ export const updateModule = mutation({
   },
 });
 
+// SYS-004: Query để lấy các modules phụ thuộc vào module này
+export const getDependentModules = query({
+  args: { key: v.string() },
+  returns: v.array(v.object({
+    key: v.string(),
+    name: v.string(),
+    enabled: v.boolean(),
+  })),
+  handler: async (ctx, args) => {
+    const allModules = await ctx.db.query("adminModules").collect();
+    const dependents = allModules.filter(m => 
+      m.enabled && m.dependencies?.includes(args.key)
+    );
+    return dependents.map(m => ({
+      key: m.key,
+      name: m.name,
+      enabled: m.enabled,
+    }));
+  },
+});
+
 export const toggleModule = mutation({
   args: { key: v.string(), enabled: v.boolean(), updatedBy: v.optional(v.id("users")) },
   returns: v.null(),
@@ -140,6 +161,66 @@ export const toggleModule = mutation({
     }
     await ctx.db.patch(module._id, { enabled: args.enabled, updatedBy: args.updatedBy });
     return null;
+  },
+});
+
+// SYS-004: Toggle với cascade - auto disable các modules con
+export const toggleModuleWithCascade = mutation({
+  args: { 
+    key: v.string(), 
+    enabled: v.boolean(), 
+    updatedBy: v.optional(v.id("users")),
+    cascadeKeys: v.optional(v.array(v.string())), // Modules con cần disable cùng
+  },
+  returns: v.object({
+    success: v.boolean(),
+    disabledModules: v.array(v.string()),
+  }),
+  handler: async (ctx, args) => {
+    const module = await ctx.db
+      .query("adminModules")
+      .withIndex("by_key", (q) => q.eq("key", args.key))
+      .unique();
+    if (!module) throw new Error("Module not found");
+    if (module.isCore && !args.enabled) {
+      throw new Error("Cannot disable core module");
+    }
+    
+    // Khi enable, check dependencies
+    if (args.enabled && module.dependencies?.length) {
+      for (const depKey of module.dependencies) {
+        const dep = await ctx.db
+          .query("adminModules")
+          .withIndex("by_key", (q) => q.eq("key", depKey))
+          .unique();
+        if (!dep?.enabled) {
+          if (module.dependencyType === "all") {
+            throw new Error(`Dependency module "${depKey}" must be enabled first`);
+          }
+        }
+      }
+    }
+    
+    const disabledModules: string[] = [];
+    
+    // Khi disable, cascade disable các modules con
+    if (!args.enabled && args.cascadeKeys?.length) {
+      for (const cascadeKey of args.cascadeKeys) {
+        const cascadeModule = await ctx.db
+          .query("adminModules")
+          .withIndex("by_key", (q) => q.eq("key", cascadeKey))
+          .unique();
+        if (cascadeModule && cascadeModule.enabled && !cascadeModule.isCore) {
+          await ctx.db.patch(cascadeModule._id, { enabled: false, updatedBy: args.updatedBy });
+          disabledModules.push(cascadeKey);
+        }
+      }
+    }
+    
+    // Toggle module chính
+    await ctx.db.patch(module._id, { enabled: args.enabled, updatedBy: args.updatedBy });
+    
+    return { success: true, disabledModules };
   },
 });
 

@@ -103,6 +103,45 @@ export default defineSchema({
     notes: v.optional(v.string()),
   }),
 
+  // 7. systemSessions - Sessions cho /system login
+  systemSessions: defineTable({
+    token: v.string(),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+  }).index("by_token", ["token"]),
+
+  // 8. adminUsers - Tài khoản admin (khác với users table - đây là auth)
+  adminUsers: defineTable({
+    name: v.string(),
+    email: v.string(),
+    passwordHash: v.string(),
+    roleId: v.id("roles"),
+    status: v.union(v.literal("Active"), v.literal("Inactive")),
+    isSuperAdmin: v.optional(v.boolean()),
+    createdAt: v.number(),
+    lastLogin: v.optional(v.number()),
+  })
+    .index("by_email", ["email"])
+    .index("by_role", ["roleId"])
+    .index("by_status", ["status"]),
+
+  // 9. adminSessions - Sessions cho /admin login
+  adminSessions: defineTable({
+    token: v.string(),
+    adminUserId: v.id("adminUsers"),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+  })
+    .index("by_token", ["token"])
+    .index("by_adminUser", ["adminUserId"]),
+
+  // 10. rateLimitBuckets - Rate limiting buckets
+  rateLimitBuckets: defineTable({
+    key: v.string(), // "mutation:{name}:{identifier}" or "global:{identifier}"
+    tokens: v.number(),
+    lastRefill: v.number(),
+  }).index("by_key", ["key"]),
+
   // ============================================================
   // LEVEL 2: DATA TABLES (cho /admin)
   // ============================================================

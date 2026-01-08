@@ -2250,6 +2250,21 @@ export const seedHomepageModule = mutation({
       await ctx.db.insert("moduleSettings", { moduleKey: "homepage", settingKey: "defaultSectionType", value: "hero" });
     }
 
+    // 5. Initialize homeComponentStats counter table
+    const existingStats = await ctx.db.query("homeComponentStats").first();
+    if (!existingStats) {
+      const components = await ctx.db.query("homeComponents").collect();
+      const counts: Record<string, number> = { total: 0, active: 0, inactive: 0 };
+      for (const c of components) {
+        counts.total++;
+        if (c.active) counts.active++; else counts.inactive++;
+        counts[c.type] = (counts[c.type] || 0) + 1;
+      }
+      for (const [key, count] of Object.entries(counts)) {
+        await ctx.db.insert("homeComponentStats", { key, count });
+      }
+    }
+
     return null;
   },
 });
@@ -2262,6 +2277,11 @@ export const clearHomepageData = mutation({
     const components = await ctx.db.query("homeComponents").collect();
     for (const c of components) {
       await ctx.db.delete(c._id);
+    }
+    // Also clear stats
+    const stats = await ctx.db.query("homeComponentStats").collect();
+    for (const s of stats) {
+      await ctx.db.delete(s._id);
     }
     return null;
   },
@@ -2348,6 +2368,21 @@ export const seedNotificationsModule = mutation({
       await ctx.db.insert("moduleSettings", { moduleKey: "notifications", settingKey: "autoSendEmail", value: false });
     }
 
+    // 5. Initialize notificationStats counter table
+    const existingStats = await ctx.db.query("notificationStats").first();
+    if (!existingStats) {
+      const notifications = await ctx.db.query("notifications").collect();
+      const counts: Record<string, number> = { total: 0, Draft: 0, Scheduled: 0, Sent: 0, Cancelled: 0 };
+      for (const n of notifications) {
+        counts.total++;
+        counts[n.status] = (counts[n.status] || 0) + 1;
+        counts[n.type] = (counts[n.type] || 0) + 1;
+      }
+      for (const [key, count] of Object.entries(counts)) {
+        await ctx.db.insert("notificationStats", { key, count });
+      }
+    }
+
     return null;
   },
 });
@@ -2360,6 +2395,11 @@ export const clearNotificationsData = mutation({
     const notifications = await ctx.db.query("notifications").collect();
     for (const n of notifications) {
       await ctx.db.delete(n._id);
+    }
+    // Also clear stats
+    const stats = await ctx.db.query("notificationStats").collect();
+    for (const s of stats) {
+      await ctx.db.delete(s._id);
     }
     return null;
   },
@@ -2533,40 +2573,56 @@ export const seedPromotionsModule = mutation({
       await ctx.db.insert("moduleSettings", { moduleKey: "promotions", settingKey: "codeLength", value: 8 });
     }
 
+    // 5. Initialize promotionStats counter table
+    const existingStats = await ctx.db.query("promotionStats").first();
+    if (!existingStats) {
+      const promotions = await ctx.db.query("promotions").collect();
+      const counts: Record<string, number> = { total: 0, Active: 0, Scheduled: 0, Expired: 0, Disabled: 0 };
+      for (const p of promotions) {
+        counts.total++;
+        counts[p.status] = (counts[p.status] || 0) + 1;
+      }
+      for (const [key, count] of Object.entries(counts)) {
+        await ctx.db.insert("promotionStats", { key, count });
+      }
+    }
+
     return null;
   },
 });
 
-// Clear promotions DATA only
+// SYS-006 FIX: Clear promotions DATA only - với Promise.all
 export const clearPromotionsData = mutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    const promotions = await ctx.db.query("promotions").collect();
-    for (const p of promotions) {
-      await ctx.db.delete(p._id);
-    }
+    const [promotions, stats] = await Promise.all([
+      ctx.db.query("promotions").collect(),
+      ctx.db.query("promotionStats").collect(),
+    ]);
+    await Promise.all([
+      ...promotions.map(p => ctx.db.delete(p._id)),
+      ...stats.map(s => ctx.db.delete(s._id)),
+    ]);
     return null;
   },
 });
 
-// Clear promotions module CONFIG
+// SYS-006 FIX: Clear promotions module CONFIG - với Promise.all
 export const clearPromotionsConfig = mutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    const features = await ctx.db.query("moduleFeatures").withIndex("by_module", q => q.eq("moduleKey", "promotions")).collect();
-    for (const f of features) {
-      await ctx.db.delete(f._id);
-    }
-    const fields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "promotions")).collect();
-    for (const f of fields) {
-      await ctx.db.delete(f._id);
-    }
-    const settings = await ctx.db.query("moduleSettings").withIndex("by_module", q => q.eq("moduleKey", "promotions")).collect();
-    for (const s of settings) {
-      await ctx.db.delete(s._id);
-    }
+    const [features, fields, settings] = await Promise.all([
+      ctx.db.query("moduleFeatures").withIndex("by_module", q => q.eq("moduleKey", "promotions")).collect(),
+      ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "promotions")).collect(),
+      ctx.db.query("moduleSettings").withIndex("by_module", q => q.eq("moduleKey", "promotions")).collect(),
+    ]);
+    await Promise.all([
+      ...features.map(f => ctx.db.delete(f._id)),
+      ...fields.map(f => ctx.db.delete(f._id)),
+      ...settings.map(s => ctx.db.delete(s._id)),
+    ]);
     return null;
   },
 });

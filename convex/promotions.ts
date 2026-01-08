@@ -1,6 +1,23 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+// HIGH-004 FIX: Helper function to update promotionStats counter
+async function updatePromotionStats(
+  ctx: { db: any },
+  key: string,
+  delta: number
+) {
+  const stats = await ctx.db
+    .query("promotionStats")
+    .withIndex("by_key", (q: any) => q.eq("key", key))
+    .unique();
+  if (stats) {
+    await ctx.db.patch(stats._id, { count: Math.max(0, stats.count + delta) });
+  } else {
+    await ctx.db.insert("promotionStats", { key, count: Math.max(0, delta) });
+  }
+}
+
 const promotionStatus = v.union(
   v.literal("Active"),
   v.literal("Inactive"),
@@ -32,14 +49,16 @@ const promotionDoc = v.object({
   order: v.number(),
 });
 
+// HIGH-004 FIX: Thêm limit
 export const listAll = query({
   args: {},
   returns: v.array(promotionDoc),
   handler: async (ctx) => {
-    return await ctx.db.query("promotions").collect();
+    return await ctx.db.query("promotions").take(500);
   },
 });
 
+// HIGH-004 FIX: Thêm limit
 export const listActive = query({
   args: {},
   returns: v.array(promotionDoc),
@@ -47,7 +66,7 @@ export const listActive = query({
     return await ctx.db
       .query("promotions")
       .withIndex("by_status", (q) => q.eq("status", "Active"))
-      .collect();
+      .take(200);
   },
 });
 
@@ -70,6 +89,7 @@ export const getByCode = query({
   },
 });
 
+// HIGH-004 FIX: Thêm limit
 export const listByStatus = query({
   args: { status: promotionStatus },
   returns: v.array(promotionDoc),
@@ -77,10 +97,11 @@ export const listByStatus = query({
     return await ctx.db
       .query("promotions")
       .withIndex("by_status", (q) => q.eq("status", args.status))
-      .collect();
+      .take(200);
   },
 });
 
+// MED-001 FIX: Thêm validation discountValue + HIGH-004: Update counters
 export const create = mutation({
   args: {
     name: v.string(),
@@ -101,6 +122,14 @@ export const create = mutation({
   },
   returns: v.id("promotions"),
   handler: async (ctx, args) => {
+    // MED-001: Validate discountValue
+    if (args.discountValue <= 0) {
+      throw new Error("Giá trị giảm phải lớn hơn 0");
+    }
+    if (args.discountType === "percent" && args.discountValue > 100) {
+      throw new Error("Phần trăm giảm không được lớn hơn 100%");
+    }
+    
     const code = args.code.toUpperCase();
     const existing = await ctx.db
       .query("promotions")
@@ -108,17 +137,31 @@ export const create = mutation({
       .unique();
     if (existing) throw new Error("Mã voucher đã tồn tại");
     
-    const count = (await ctx.db.query("promotions").collect()).length;
-    return await ctx.db.insert("promotions", {
+    // Get order from last item
+    const lastItem = await ctx.db.query("promotions").order("desc").first();
+    const newOrder = lastItem ? lastItem.order + 1 : 0;
+    const status = args.status ?? "Active";
+    
+    const id = await ctx.db.insert("promotions", {
       ...args,
       code,
-      status: args.status ?? "Active",
+      status,
       usedCount: 0,
-      order: count,
+      order: newOrder,
     });
+    
+    // Update counters
+    await Promise.all([
+      updatePromotionStats(ctx, "total", 1),
+      updatePromotionStats(ctx, status, 1),
+      updatePromotionStats(ctx, args.discountType, 1),
+    ]);
+    
+    return id;
   },
 });
 
+// MED-001 FIX: Thêm validation + HIGH-004: Update counters khi status thay đổi
 export const update = mutation({
   args: {
     id: v.id("promotions"),
@@ -145,6 +188,17 @@ export const update = mutation({
     const promotion = await ctx.db.get(id);
     if (!promotion) throw new Error("Promotion not found");
     
+    // MED-001: Validate discountValue nếu được cập nhật
+    if (args.discountValue !== undefined) {
+      if (args.discountValue <= 0) {
+        throw new Error("Giá trị giảm phải lớn hơn 0");
+      }
+      const type = args.discountType ?? promotion.discountType;
+      if (type === "percent" && args.discountValue > 100) {
+        throw new Error("Phần trăm giảm không được lớn hơn 100%");
+      }
+    }
+    
     if (args.code && args.code.toUpperCase() !== promotion.code) {
       const code = args.code.toUpperCase();
       const existing = await ctx.db
@@ -156,10 +210,28 @@ export const update = mutation({
     }
     
     await ctx.db.patch(id, updates);
+    
+    // Update counters nếu status thay đổi
+    if (args.status && args.status !== promotion.status) {
+      await Promise.all([
+        updatePromotionStats(ctx, promotion.status, -1),
+        updatePromotionStats(ctx, args.status, 1),
+      ]);
+    }
+    
+    // Update counters nếu discountType thay đổi
+    if (args.discountType && args.discountType !== promotion.discountType) {
+      await Promise.all([
+        updatePromotionStats(ctx, promotion.discountType, -1),
+        updatePromotionStats(ctx, args.discountType, 1),
+      ]);
+    }
+    
     return null;
   },
 });
 
+// HIGH-004 FIX: Update totalUsed counter
 export const incrementUsage = mutation({
   args: { id: v.id("promotions") },
   returns: v.null(),
@@ -167,35 +239,51 @@ export const incrementUsage = mutation({
     const promotion = await ctx.db.get(args.id);
     if (!promotion) throw new Error("Promotion not found");
     await ctx.db.patch(args.id, { usedCount: promotion.usedCount + 1 });
+    
+    // Update totalUsed counter
+    await updatePromotionStats(ctx, "totalUsed", 1);
+    
     return null;
   },
 });
 
+// HIGH-004 FIX: Update counters khi remove
 export const remove = mutation({
   args: { id: v.id("promotions") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const promotion = await ctx.db.get(args.id);
+    if (!promotion) throw new Error("Promotion not found");
+    
     await ctx.db.delete(args.id);
+    
+    // Update counters
+    await Promise.all([
+      updatePromotionStats(ctx, "total", -1),
+      updatePromotionStats(ctx, promotion.status, -1),
+      updatePromotionStats(ctx, promotion.discountType, -1),
+      updatePromotionStats(ctx, "totalUsed", -promotion.usedCount),
+    ]);
+    
     return null;
   },
 });
 
+// HIGH-004 FIX: Dùng counter table thay vì fetch ALL
 export const count = query({
   args: { status: v.optional(promotionStatus) },
   returns: v.number(),
   handler: async (ctx, args) => {
-    if (args.status) {
-      const promotions = await ctx.db
-        .query("promotions")
-        .withIndex("by_status", (q) => q.eq("status", args.status!))
-        .collect();
-      return promotions.length;
-    }
-    const promotions = await ctx.db.query("promotions").collect();
-    return promotions.length;
+    const key = args.status ?? "total";
+    const stats = await ctx.db
+      .query("promotionStats")
+      .withIndex("by_key", (q) => q.eq("key", key))
+      .unique();
+    return stats?.count ?? 0;
   },
 });
 
+// HIGH-004 FIX: Dùng counter table thay vì fetch ALL
 export const getStats = query({
   args: {},
   returns: v.object({
@@ -208,31 +296,18 @@ export const getStats = query({
     fixedTypeCount: v.number(),
   }),
   handler: async (ctx) => {
-    const promotions = await ctx.db.query("promotions").collect();
-    let activeCount = 0;
-    let expiredCount = 0;
-    let scheduledCount = 0;
-    let totalUsed = 0;
-    let percentTypeCount = 0;
-    let fixedTypeCount = 0;
-
-    for (const p of promotions) {
-      if (p.status === "Active") activeCount++;
-      else if (p.status === "Expired") expiredCount++;
-      else if (p.status === "Scheduled") scheduledCount++;
-      totalUsed += p.usedCount;
-      if (p.discountType === "percent") percentTypeCount++;
-      else fixedTypeCount++;
-    }
+    // Fetch tất cả stats 1 lần
+    const allStats = await ctx.db.query("promotionStats").take(100);
+    const statsMap = new Map(allStats.map(s => [s.key, s.count]));
 
     return {
-      totalCount: promotions.length,
-      activeCount,
-      expiredCount,
-      scheduledCount,
-      totalUsed,
-      percentTypeCount,
-      fixedTypeCount,
+      totalCount: statsMap.get("total") ?? 0,
+      activeCount: statsMap.get("Active") ?? 0,
+      expiredCount: statsMap.get("Expired") ?? 0,
+      scheduledCount: statsMap.get("Scheduled") ?? 0,
+      totalUsed: statsMap.get("totalUsed") ?? 0,
+      percentTypeCount: statsMap.get("percent") ?? 0,
+      fixedTypeCount: statsMap.get("fixed") ?? 0,
     };
   },
 });

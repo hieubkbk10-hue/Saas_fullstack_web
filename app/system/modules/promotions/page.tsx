@@ -12,6 +12,7 @@ import {
   FeaturesCard, FieldsCard
 } from '@/components/modules/shared';
 import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { useUnsavedChangesWarning } from '../../hooks/useUnsavedChangesWarning';
 
 const MODULE_KEY = 'promotions';
 
@@ -121,6 +122,9 @@ export default function PromotionsModuleConfigPage() {
     const settingsChanged = localSettings.promotionsPerPage !== serverSettings.promotionsPerPage;
     return featuresChanged || fieldsChanged || settingsChanged;
   }, [localFeatures, serverFeatures, localFields, serverFields, localSettings, serverSettings]);
+
+  // SYS-012: Unsaved changes warning
+  useUnsavedChangesWarning(hasChanges && activeTab === 'config');
 
   const handleToggleFeature = (key: string) => {
     setLocalFeatures(prev => ({ ...prev, [key]: !prev[key] }));

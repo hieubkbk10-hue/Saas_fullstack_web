@@ -30,10 +30,88 @@ import {
   FileCode,
   Download,
   ExternalLink,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { useI18n } from '../i18n/context';
+
+// SYS-004: Confirmation Dialog component
+const CascadeConfirmDialog: React.FC<{
+  isOpen: boolean;
+  moduleKey: string;
+  moduleName: string;
+  dependentModules: { key: string; name: string }[];
+  onConfirm: () => void;
+  onCancel: () => void;
+  isLoading?: boolean;
+}> = ({ isOpen, moduleName, dependentModules, onConfirm, onCancel, isLoading }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-amber-500/10 rounded-lg">
+              <AlertTriangle className="w-6 h-6 text-amber-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+              Xác nhận tắt module
+            </h3>
+          </div>
+          
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+            Tắt module <strong className="text-slate-800 dark:text-slate-200">{moduleName}</strong> sẽ 
+            <span className="text-amber-600 dark:text-amber-400 font-medium"> tự động tắt </span> 
+            các module phụ thuộc sau:
+          </p>
+          
+          <div className="bg-slate-50 dark:bg-slate-950 rounded-lg p-3 mb-4">
+            <ul className="space-y-1">
+              {dependentModules.map(dep => (
+                <li key={dep.key} className="flex items-center gap-2 text-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                  <span className="text-slate-700 dark:text-slate-300">{dep.name}</span>
+                  <span className="text-xs text-slate-400">({dep.key})</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          <p className="text-xs text-slate-500 mb-6">
+            Bạn có thể bật lại các module này sau khi đã bật lại module {moduleName}.
+          </p>
+          
+          <div className="flex gap-3">
+            <button
+              onClick={onCancel}
+              disabled={isLoading}
+              className="flex-1 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={isLoading}
+              className="flex-1 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                'Xác nhận tắt'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FileText, Image, MessageSquare, Package, ShoppingCart, ShoppingBag, Heart, 
@@ -303,13 +381,15 @@ const ModuleCard: React.FC<{
   canToggle: boolean;
   allModules: AdminModule[];
   isToggling?: boolean;
+  isAnyToggling?: boolean; // SYS-008: disable all khi có 1 đang toggle
   t: any;
-}> = ({ module, onToggle, canToggle, allModules, isToggling, t }) => {
+}> = ({ module, onToggle, canToggle, allModules, isToggling, isAnyToggling, t }) => {
   const Icon = iconMap[module.icon] || Package;
   const categoryColor = categoryColors[module.category];
   const categoryLabel = t.modules.categories[module.category];
   const configRoute = moduleConfigRoutes[module.key];
-  const isDisabled = module.isCore || !canToggle || isToggling;
+  // SYS-008: Disable toggle khi có bất kỳ module nào đang toggle
+  const isDisabled = module.isCore || !canToggle || isToggling || isAnyToggling;
   const hasDependents = allModules.some(m => m.dependencies?.includes(module.key) && m.enabled);
   
   return (
@@ -406,6 +486,7 @@ export default function ModuleManagementPage() {
   const modulesData = useQuery(api.admin.modules.listModules);
   const presetsData = useQuery(api.admin.presets.listPresets);
   const toggleModule = useMutation(api.admin.modules.toggleModule);
+  const toggleModuleWithCascade = useMutation(api.admin.modules.toggleModuleWithCascade);
   const applyPreset = useMutation(api.admin.presets.applyPreset);
   const seedAll = useMutation(api.seed.seedAll);
   
@@ -414,6 +495,14 @@ export default function ModuleManagementPage() {
   const [selectedPreset, setSelectedPreset] = useState<string>('custom');
   const [togglingKey, setTogglingKey] = useState<string | null>(null);
   const [applyingPreset, setApplyingPreset] = useState(false);
+  
+  // SYS-004: State cho cascade confirmation dialog
+  const [cascadeDialog, setCascadeDialog] = useState<{
+    isOpen: boolean;
+    moduleKey: string;
+    moduleName: string;
+    dependentModules: { key: string; name: string }[];
+  }>({ isOpen: false, moduleKey: '', moduleName: '', dependentModules: [] });
 
   const modules = modulesData || [];
   const presets = presetsData || [];
@@ -437,14 +526,63 @@ export default function ModuleManagementPage() {
     }
   };
   
+  // SYS-004: Tìm các modules phụ thuộc vào module này (enabled)
+  const getDependentModules = (moduleKey: string) => {
+    return modules.filter(m => 
+      m.enabled && m.dependencies?.includes(moduleKey)
+    ).map(m => ({ key: m.key, name: m.name }));
+  };
+
   const handleToggleModule = async (key: string, enabled: boolean) => {
     setSelectedPreset('custom');
+    
+    // Khi tắt module, kiểm tra xem có modules con không
+    if (!enabled) {
+      const dependents = getDependentModules(key);
+      if (dependents.length > 0) {
+        const module = modules.find(m => m.key === key);
+        setCascadeDialog({
+          isOpen: true,
+          moduleKey: key,
+          moduleName: module?.name || key,
+          dependentModules: dependents,
+        });
+        return;
+      }
+    }
+    
     setTogglingKey(key);
     try {
       await toggleModule({ key, enabled });
     } finally {
       setTogglingKey(null);
     }
+  };
+
+  // SYS-004: Handle cascade confirm
+  const handleCascadeConfirm = async () => {
+    const { moduleKey, dependentModules } = cascadeDialog;
+    setTogglingKey(moduleKey);
+    try {
+      const result = await toggleModuleWithCascade({
+        key: moduleKey,
+        enabled: false,
+        cascadeKeys: dependentModules.map(d => d.key),
+      });
+      
+      if (result.disabledModules.length > 0) {
+        toast.success(`Đã tắt ${moduleKey} và ${result.disabledModules.length} modules phụ thuộc`);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    } finally {
+      setTogglingKey(null);
+      setCascadeDialog({ isOpen: false, moduleKey: '', moduleName: '', dependentModules: [] });
+    }
+  };
+
+  const handleCascadeCancel = () => {
+    setCascadeDialog({ isOpen: false, moduleKey: '', moduleName: '', dependentModules: [] });
   };
   
   const canToggleModule = (module: AdminModule): boolean => {
@@ -564,6 +702,7 @@ export default function ModuleManagementPage() {
                   canToggle={canToggleModule(module)}
                   allModules={modules}
                   isToggling={togglingKey === module.key}
+                  isAnyToggling={!!togglingKey} // SYS-008: Pass to disable all
                   t={t}
                 />
               ))}
@@ -578,6 +717,17 @@ export default function ModuleManagementPage() {
           <p>{t.modules.noModuleFound}</p>
         </div>
       )}
+
+      {/* SYS-004: Cascade Confirmation Dialog */}
+      <CascadeConfirmDialog
+        isOpen={cascadeDialog.isOpen}
+        moduleKey={cascadeDialog.moduleKey}
+        moduleName={cascadeDialog.moduleName}
+        dependentModules={cascadeDialog.dependentModules}
+        onConfirm={handleCascadeConfirm}
+        onCancel={handleCascadeCancel}
+        isLoading={!!togglingKey}
+      />
     </div>
   );
 }

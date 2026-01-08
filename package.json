@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@convex-dev/rate-limiter": "^0.3.2",
     "@lexical/html": "^0.39.0",
     "@lexical/link": "^0.39.0",
     "@lexical/list": "^0.39.0",
