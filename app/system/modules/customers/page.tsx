@@ -38,10 +38,10 @@ export default function CustomersModuleConfigPage() {
   const fieldsData = useQuery(api.admin.modules.listModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
 
-  // Data tab queries
+  // Data tab queries - CUST-003, CUST-004 FIX: removed limit args
   const customersData = useQuery(api.customers.listAll, { limit: 100 });
-  const statsData = useQuery(api.customers.getStats, { limit: 1000 });
-  const citiesData = useQuery(api.customers.getCities, { limit: 500 });
+  const statsData = useQuery(api.customers.getStats, {});
+  const citiesData = useQuery(api.customers.getCities, {});
 
   const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
   const updateField = useMutation(api.admin.modules.updateModuleField);
@@ -158,29 +158,44 @@ export default function CustomersModuleConfigPage() {
     }
   };
 
-  // Data tab handlers
+  // CUST-008 FIX: Data tab handlers with proper error handling
   const handleSeedAll = async () => {
-    toast.loading('Đang tạo dữ liệu mẫu...');
-    await seedCustomersModule();
-    toast.dismiss();
-    toast.success('Đã tạo dữ liệu mẫu thành công!');
+    try {
+      toast.loading('Đang tạo dữ liệu mẫu...');
+      await seedCustomersModule();
+      toast.dismiss();
+      toast.success('Đã tạo dữ liệu mẫu thành công!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi tạo dữ liệu mẫu');
+    }
   };
 
   const handleClearData = async () => {
     if (!confirm('Xóa toàn bộ khách hàng? Thao tác này không thể hoàn tác.')) return;
-    toast.loading('Đang xóa dữ liệu...');
-    await clearCustomersData();
-    toast.dismiss();
-    toast.success('Đã xóa toàn bộ khách hàng!');
+    try {
+      toast.loading('Đang xóa dữ liệu...');
+      await clearCustomersData();
+      toast.dismiss();
+      toast.success('Đã xóa toàn bộ khách hàng!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa dữ liệu');
+    }
   };
 
   const handleResetAll = async () => {
     if (!confirm('Reset dữ liệu về mặc định?')) return;
-    toast.loading('Đang reset dữ liệu...');
-    await clearCustomersData();
-    await seedCustomersModule();
-    toast.dismiss();
-    toast.success('Đã reset dữ liệu thành công!');
+    try {
+      toast.loading('Đang reset dữ liệu...');
+      await clearCustomersData();
+      await seedCustomersModule();
+      toast.dismiss();
+      toast.success('Đã reset dữ liệu thành công!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi reset dữ liệu');
+    }
   };
 
   if (isLoading) {

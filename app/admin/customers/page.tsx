@@ -139,18 +139,33 @@ function CustomersContent() {
     }
   };
 
+  // CUST-007 FIX: Bulk delete with progress indicator
   const handleBulkDelete = async () => {
-    if (confirm(`Xóa ${selectedIds.length} khách hàng đã chọn?`)) {
+    if (!confirm(`Xóa ${selectedIds.length} khách hàng đã chọn?`)) return;
+    
+    const total = selectedIds.length;
+    let deleted = 0;
+    let failed = 0;
+    
+    toast.loading(`Đang xóa 0/${total}...`);
+    
+    for (const id of selectedIds) {
       try {
-        for (const id of selectedIds) {
-          await deleteCustomer({ id, cascadeOrders: false });
-        }
-        setSelectedIds([]);
-        toast.success(`Đã xóa ${selectedIds.length} khách hàng`);
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : 'Có lỗi khi xóa khách hàng';
-        toast.error(message);
+        await deleteCustomer({ id, cascadeOrders: false });
+        deleted++;
+        toast.loading(`Đang xóa ${deleted}/${total}...`);
+      } catch {
+        failed++;
       }
+    }
+    
+    toast.dismiss();
+    setSelectedIds([]);
+    
+    if (failed === 0) {
+      toast.success(`Đã xóa ${deleted} khách hàng`);
+    } else {
+      toast.warning(`Đã xóa ${deleted}/${total} khách hàng. ${failed} lỗi.`);
     }
   };
 

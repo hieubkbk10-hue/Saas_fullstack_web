@@ -6,13 +6,16 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { User as UserIcon, Loader2 } from 'lucide-react';
+import { User as UserIcon, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn, Button, Card, CardHeader, CardTitle, CardContent, Input, Label, Badge, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../../components/ui';
 
 const MODULE_KEY = 'customers';
+const ORDERS_PER_PAGE = 10; // CUST-010: Add pagination constant
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+// CUST-005 FIX: Add phone validation for Vietnamese phone numbers
+const isValidPhone = (phone: string) => /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone.replace(/\s|-/g, ''));
 
 interface FormData {
   name: string;
@@ -24,6 +27,7 @@ interface FormData {
   status: 'Active' | 'Inactive';
 }
 
+// CUST-009 FIX: Keep use(params) since this is 'use client' component - it's valid pattern
 export default function CustomerEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -40,6 +44,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState<FormData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ordersPage, setOrdersPage] = useState(1); // CUST-010: Add pagination state
 
   const isLoading = customerData === undefined;
 
@@ -88,6 +93,11 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
     }
     if (!formData.phone.trim()) {
       toast.error('Vui lòng nhập số điện thoại');
+      return;
+    }
+    // CUST-005 FIX: Validate phone format
+    if (!isValidPhone(formData.phone.trim())) {
+      toast.error('Số điện thoại không hợp lệ (VD: 0901234567 hoặc +84901234567)');
       return;
     }
 
@@ -320,7 +330,8 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {ordersData?.map(order => (
+                  {/* CUST-010 FIX: Add pagination for orders */}
+                  {ordersData?.slice((ordersPage - 1) * ORDERS_PER_PAGE, ordersPage * ORDERS_PER_PAGE).map(order => (
                     <TableRow key={order._id}>
                       <TableCell>
                         <Link href={`/admin/orders/${order._id}/edit`} className="font-medium text-blue-600 hover:underline">
@@ -367,6 +378,35 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                   )}
                 </TableBody>
               </Table>
+              {/* CUST-010 FIX: Pagination controls */}
+              {ordersData && ordersData.length > ORDERS_PER_PAGE && (
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <span className="text-sm text-slate-500">
+                    Hiển thị {(ordersPage - 1) * ORDERS_PER_PAGE + 1} - {Math.min(ordersPage * ORDERS_PER_PAGE, ordersData.length)} / {ordersData.length} đơn hàng
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={ordersPage === 1}
+                      onClick={() => setOrdersPage(p => p - 1)}
+                    >
+                      <ChevronLeft size={16} />
+                    </Button>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                      Trang {ordersPage} / {Math.ceil(ordersData.length / ORDERS_PER_PAGE)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={ordersPage >= Math.ceil(ordersData.length / ORDERS_PER_PAGE)}
+                      onClick={() => setOrdersPage(p => p + 1)}
+                    >
+                      <ChevronRight size={16} />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </Card>
           )}
         </div>

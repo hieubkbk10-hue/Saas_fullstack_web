@@ -1172,36 +1172,32 @@ export const seedCustomersModule = mutation({
   },
 });
 
-// Clear customers DATA only
+// CUST-002 FIX: Clear customers DATA only - using Promise.all
 export const clearCustomersData = mutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
     const customers = await ctx.db.query("customers").collect();
-    for (const c of customers) {
-      await ctx.db.delete(c._id);
-    }
+    await Promise.all(customers.map(c => ctx.db.delete(c._id)));
     return null;
   },
 });
 
-// Clear customers module CONFIG
+// CUST-002 FIX: Clear customers module CONFIG - using Promise.all
 export const clearCustomersConfig = mutation({
   args: {},
   returns: v.null(),
   handler: async (ctx) => {
-    const features = await ctx.db.query("moduleFeatures").withIndex("by_module", q => q.eq("moduleKey", "customers")).collect();
-    for (const f of features) {
-      await ctx.db.delete(f._id);
-    }
-    const fields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "customers")).collect();
-    for (const f of fields) {
-      await ctx.db.delete(f._id);
-    }
-    const settings = await ctx.db.query("moduleSettings").withIndex("by_module", q => q.eq("moduleKey", "customers")).collect();
-    for (const s of settings) {
-      await ctx.db.delete(s._id);
-    }
+    const [features, fields, settings] = await Promise.all([
+      ctx.db.query("moduleFeatures").withIndex("by_module", q => q.eq("moduleKey", "customers")).collect(),
+      ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "customers")).collect(),
+      ctx.db.query("moduleSettings").withIndex("by_module", q => q.eq("moduleKey", "customers")).collect(),
+    ]);
+    await Promise.all([
+      ...features.map(f => ctx.db.delete(f._id)),
+      ...fields.map(f => ctx.db.delete(f._id)),
+      ...settings.map(s => ctx.db.delete(s._id)),
+    ]);
     return null;
   },
 });

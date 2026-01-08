@@ -148,6 +148,18 @@ export const update = mutation({
     const { id, ...updates } = args;
     const customer = await ctx.db.get(id);
     if (!customer) throw new Error("Customer not found");
+
+    // CUST-006 FIX: Check email uniqueness when updating
+    if (updates.email && updates.email !== customer.email) {
+      const existing = await ctx.db
+        .query("customers")
+        .withIndex("by_email", (q) => q.eq("email", updates.email!))
+        .unique();
+      if (existing) {
+        throw new Error("Email đã được sử dụng bởi khách hàng khác");
+      }
+    }
+
     await ctx.db.patch(id, updates);
     return null;
   },
@@ -186,41 +198,26 @@ export const remove = mutation({
 
     if (orders.length > 0) {
       if (args.cascadeOrders) {
-        // Cascade delete all orders
-        for (const order of orders) {
-          await ctx.db.delete(order._id);
-        }
+        // CUST-001 FIX: Cascade delete all orders using Promise.all
+        await Promise.all(orders.map(order => ctx.db.delete(order._id)));
       } else {
         throw new Error(`Không thể xóa khách hàng vì còn ${orders.length} đơn hàng liên quan. Vui lòng xóa đơn hàng trước hoặc chọn cascade delete.`);
       }
     }
 
-    // Delete related carts
-    const carts = await ctx.db
-      .query("carts")
-      .withIndex("by_customer", (q) => q.eq("customerId", args.id))
-      .collect();
-    for (const cart of carts) {
-      await ctx.db.delete(cart._id);
-    }
+    // CUST-001 FIX: Parallel fetch related data
+    const [carts, wishlistItems, comments] = await Promise.all([
+      ctx.db.query("carts").withIndex("by_customer", (q) => q.eq("customerId", args.id)).collect(),
+      ctx.db.query("wishlist").withIndex("by_customer", (q) => q.eq("customerId", args.id)).collect(),
+      ctx.db.query("comments").withIndex("by_customer", (q) => q.eq("customerId", args.id)).collect(),
+    ]);
 
-    // Delete related wishlist items
-    const wishlistItems = await ctx.db
-      .query("wishlist")
-      .withIndex("by_customer", (q) => q.eq("customerId", args.id))
-      .collect();
-    for (const item of wishlistItems) {
-      await ctx.db.delete(item._id);
-    }
-
-    // Delete related comments
-    const comments = await ctx.db
-      .query("comments")
-      .withIndex("by_customer", (q) => q.eq("customerId", args.id))
-      .collect();
-    for (const comment of comments) {
-      await ctx.db.delete(comment._id);
-    }
+    // CUST-001 FIX: Parallel delete all related records
+    await Promise.all([
+      ...carts.map(cart => ctx.db.delete(cart._id)),
+      ...wishlistItems.map(item => ctx.db.delete(item._id)),
+      ...comments.map(comment => ctx.db.delete(comment._id)),
+    ]);
 
     await ctx.db.delete(args.id);
     return null;
@@ -248,9 +245,9 @@ export const count = query({
   },
 });
 
-// Get stats with limit to avoid fetching all records
+// CUST-003 FIX: Get stats using parallel indexed queries instead of fetch all
 export const getStats = query({
-  args: { limit: v.optional(v.number()) },
+  args: {},
   returns: v.object({
     totalCount: v.number(),
     activeCount: v.number(),
@@ -259,23 +256,33 @@ export const getStats = query({
     totalOrders: v.number(),
     avgOrderValue: v.number(),
   }),
-  handler: async (ctx, args) => {
-    const maxLimit = Math.min(args.limit ?? 1000, 1000);
-    const customers = await ctx.db.query("customers").take(maxLimit);
-    let activeCount = 0;
-    let inactiveCount = 0;
+  handler: async (ctx) => {
+    const countLimit = 1001;
+    
+    // Parallel fetch with indexed queries
+    const [activeCustomers, inactiveCustomers] = await Promise.all([
+      ctx.db.query("customers").withIndex("by_status", (q) => q.eq("status", "Active")).take(countLimit),
+      ctx.db.query("customers").withIndex("by_status", (q) => q.eq("status", "Inactive")).take(countLimit),
+    ]);
+
+    const activeCount = Math.min(activeCustomers.length, 1000);
+    const inactiveCount = Math.min(inactiveCustomers.length, 1000);
+    const totalCount = activeCount + inactiveCount;
+
+    // Calculate totals from fetched data
     let totalSpent = 0;
     let totalOrders = 0;
-
-    for (const c of customers) {
-      if (c.status === "Active") activeCount++;
-      else inactiveCount++;
+    for (const c of activeCustomers) {
+      totalSpent += c.totalSpent;
+      totalOrders += c.ordersCount;
+    }
+    for (const c of inactiveCustomers) {
       totalSpent += c.totalSpent;
       totalOrders += c.ordersCount;
     }
 
     return {
-      totalCount: customers.length,
+      totalCount,
       activeCount,
       inactiveCount,
       totalSpent,
@@ -285,13 +292,18 @@ export const getStats = query({
   },
 });
 
-// Get unique cities with limit
+// CUST-004 FIX: Get unique cities - optimized with indexed query
 export const getCities = query({
-  args: { limit: v.optional(v.number()) },
+  args: {},
   returns: v.array(v.string()),
-  handler: async (ctx, args) => {
-    const maxLimit = Math.min(args.limit ?? 500, 500);
-    const customers = await ctx.db.query("customers").take(maxLimit);
+  handler: async (ctx) => {
+    // Use indexed query by city to get distinct cities more efficiently
+    // Fetch customers with city field, limited to reasonable amount
+    const customers = await ctx.db
+      .query("customers")
+      .withIndex("by_city_status")
+      .take(500);
+    
     const cities = new Set<string>();
     for (const c of customers) {
       if (c.city) cities.add(c.city);

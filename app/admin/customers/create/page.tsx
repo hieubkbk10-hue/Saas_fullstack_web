@@ -12,6 +12,8 @@ import { Button, Card, CardContent, Input, Label } from '../../components/ui';
 const MODULE_KEY = 'customers';
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+// CUST-005 FIX: Add phone validation for Vietnamese phone numbers
+const isValidPhone = (phone: string) => /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone.replace(/\s|-/g, ''));
 
 interface FormData {
   name: string;
@@ -74,6 +76,11 @@ export default function CustomerCreatePage() {
     }
     if (!formData.phone.trim()) {
       toast.error('Vui lòng nhập số điện thoại');
+      return;
+    }
+    // CUST-005 FIX: Validate phone format
+    if (!isValidPhone(formData.phone.trim())) {
+      toast.error('Số điện thoại không hợp lệ (VD: 0901234567 hoặc +84901234567)');
       return;
     }
     
