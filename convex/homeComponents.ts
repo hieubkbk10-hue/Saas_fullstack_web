@@ -11,11 +11,29 @@ const homeComponentDoc = v.object({
   config: v.any(),
 });
 
+// CRIT-002 FIX: Helper function to update homeComponentStats counter
+async function updateHomeComponentStats(
+  ctx: { db: any },
+  key: string,
+  delta: number
+) {
+  const stats = await ctx.db
+    .query("homeComponentStats")
+    .withIndex("by_key", (q: any) => q.eq("key", key))
+    .unique();
+  if (stats) {
+    await ctx.db.patch(stats._id, { count: Math.max(0, stats.count + delta) });
+  } else {
+    await ctx.db.insert("homeComponentStats", { key, count: Math.max(0, delta) });
+  }
+}
+
+// CRIT-002 FIX: Thêm limit
 export const listAll = query({
   args: {},
   returns: v.array(homeComponentDoc),
   handler: async (ctx) => {
-    return await ctx.db.query("homeComponents").collect();
+    return await ctx.db.query("homeComponents").take(100);
   },
 });
 
@@ -30,6 +48,7 @@ export const listActive = query({
   },
 });
 
+// CRIT-002 FIX: Thêm limit
 export const listByType = query({
   args: { type: v.string() },
   returns: v.array(homeComponentDoc),
@@ -37,7 +56,7 @@ export const listByType = query({
     return await ctx.db
       .query("homeComponents")
       .withIndex("by_type", (q) => q.eq("type", args.type))
-      .collect();
+      .take(50);
   },
 });
 
@@ -49,6 +68,7 @@ export const getById = query({
   },
 });
 
+// CRIT-002 FIX: Dùng counter table và fix count logic
 export const create = mutation({
   args: {
     type: v.string(),
@@ -59,15 +79,29 @@ export const create = mutation({
   },
   returns: v.id("homeComponents"),
   handler: async (ctx, args) => {
-    const count = (await ctx.db.query("homeComponents").collect()).length;
-    return await ctx.db.insert("homeComponents", {
+    // Get order from last item instead of count
+    const lastItem = await ctx.db.query("homeComponents").order("desc").first();
+    const newOrder = args.order ?? (lastItem ? lastItem.order + 1 : 0);
+    const isActive = args.active ?? true;
+    
+    const id = await ctx.db.insert("homeComponents", {
       ...args,
-      active: args.active ?? true,
-      order: args.order ?? count,
+      active: isActive,
+      order: newOrder,
     });
+    
+    // Update counters
+    await Promise.all([
+      updateHomeComponentStats(ctx, "total", 1),
+      updateHomeComponentStats(ctx, isActive ? "active" : "inactive", 1),
+      updateHomeComponentStats(ctx, args.type, 1),
+    ]);
+    
+    return id;
   },
 });
 
+// TICKET #6 FIX: Update counters khi active hoặc type thay đổi
 export const update = mutation({
   args: {
     id: v.id("homeComponents"),
@@ -82,6 +116,23 @@ export const update = mutation({
     const { id, ...updates } = args;
     const component = await ctx.db.get(id);
     if (!component) throw new Error("Component not found");
+    
+    // Update counters nếu active thay đổi
+    if (args.active !== undefined && args.active !== component.active) {
+      await Promise.all([
+        updateHomeComponentStats(ctx, args.active ? "active" : "inactive", 1),
+        updateHomeComponentStats(ctx, args.active ? "inactive" : "active", -1),
+      ]);
+    }
+    
+    // Update counters nếu type thay đổi
+    if (args.type !== undefined && args.type !== component.type) {
+      await Promise.all([
+        updateHomeComponentStats(ctx, component.type, -1),
+        updateHomeComponentStats(ctx, args.type, 1),
+      ]);
+    }
+    
     await ctx.db.patch(id, updates);
     return null;
   },
@@ -98,63 +149,103 @@ export const updateConfig = mutation({
   },
 });
 
+// CRIT-002 FIX: Update counters khi toggle
 export const toggle = mutation({
   args: { id: v.id("homeComponents") },
   returns: v.null(),
   handler: async (ctx, args) => {
     const component = await ctx.db.get(args.id);
     if (!component) throw new Error("Component not found");
-    await ctx.db.patch(args.id, { active: !component.active });
+    
+    const newActive = !component.active;
+    await ctx.db.patch(args.id, { active: newActive });
+    
+    // Update active/inactive counters
+    await Promise.all([
+      updateHomeComponentStats(ctx, newActive ? "active" : "inactive", 1),
+      updateHomeComponentStats(ctx, newActive ? "inactive" : "active", -1),
+    ]);
+    
     return null;
   },
 });
 
+// CRIT-002 FIX: Update counters khi remove
 export const remove = mutation({
   args: { id: v.id("homeComponents") },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const component = await ctx.db.get(args.id);
+    if (!component) throw new Error("Component not found");
+    
     await ctx.db.delete(args.id);
+    
+    // Update counters
+    await Promise.all([
+      updateHomeComponentStats(ctx, "total", -1),
+      updateHomeComponentStats(ctx, component.active ? "active" : "inactive", -1),
+      updateHomeComponentStats(ctx, component.type, -1),
+    ]);
+    
     return null;
   },
 });
 
+// TICKET #3 FIX: Dùng Promise.all thay vì sequential updates
 export const reorder = mutation({
   args: { items: v.array(v.object({ id: v.id("homeComponents"), order: v.number() })) },
   returns: v.null(),
   handler: async (ctx, args) => {
-    for (const item of args.items) {
-      await ctx.db.patch(item.id, { order: item.order });
-    }
+    await Promise.all(args.items.map(item => ctx.db.patch(item.id, { order: item.order })));
     return null;
   },
 });
 
+// CRIT-002 FIX: Update counters và fix count logic
 export const duplicate = mutation({
   args: { id: v.id("homeComponents") },
   returns: v.id("homeComponents"),
   handler: async (ctx, args) => {
     const component = await ctx.db.get(args.id);
     if (!component) throw new Error("Component not found");
-    const count = (await ctx.db.query("homeComponents").collect()).length;
-    return await ctx.db.insert("homeComponents", {
+    
+    // Get order from last item
+    const lastItem = await ctx.db.query("homeComponents").order("desc").first();
+    const newOrder = lastItem ? lastItem.order + 1 : 0;
+    
+    const id = await ctx.db.insert("homeComponents", {
       type: component.type,
       title: `${component.title} (Copy)`,
       active: false,
-      order: count,
+      order: newOrder,
       config: component.config,
     });
+    
+    // Update counters (duplicate is always inactive)
+    await Promise.all([
+      updateHomeComponentStats(ctx, "total", 1),
+      updateHomeComponentStats(ctx, "inactive", 1),
+      updateHomeComponentStats(ctx, component.type, 1),
+    ]);
+    
+    return id;
   },
 });
 
+// CRIT-002 FIX: Dùng counter table thay vì fetch ALL
 export const count = query({
   args: {},
   returns: v.number(),
   handler: async (ctx) => {
-    const components = await ctx.db.query("homeComponents").collect();
-    return components.length;
+    const stats = await ctx.db
+      .query("homeComponentStats")
+      .withIndex("by_key", (q) => q.eq("key", "total"))
+      .unique();
+    return stats?.count ?? 0;
   },
 });
 
+// CRIT-002 FIX: Dùng counter table thay vì fetch ALL
 export const getStats = query({
   args: {},
   returns: v.object({
@@ -167,35 +258,39 @@ export const getStats = query({
     })),
   }),
   handler: async (ctx) => {
-    const components = await ctx.db.query("homeComponents").collect();
-    let activeCount = 0;
-    const typeMap: Record<string, number> = {};
-
-    for (const c of components) {
-      if (c.active) activeCount++;
-      typeMap[c.type] = (typeMap[c.type] || 0) + 1;
-    }
-
-    const typeBreakdown = Object.entries(typeMap).map(([type, count]) => ({ type, count }));
+    // Fetch tất cả stats 1 lần
+    const allStats = await ctx.db.query("homeComponentStats").take(100);
+    const statsMap = new Map(allStats.map(s => [s.key, s.count]));
+    
+    const totalCount = statsMap.get("total") ?? 0;
+    const activeCount = statsMap.get("active") ?? 0;
+    const inactiveCount = statsMap.get("inactive") ?? 0;
+    
+    // Build type breakdown từ stats (exclude total, active, inactive)
+    const excludeKeys = new Set(["total", "active", "inactive"]);
+    const typeBreakdown = allStats
+      .filter(s => !excludeKeys.has(s.key) && s.count > 0)
+      .map(s => ({ type: s.key, count: s.count }));
 
     return {
-      totalCount: components.length,
+      totalCount,
       activeCount,
-      inactiveCount: components.length - activeCount,
+      inactiveCount,
       typeBreakdown,
     };
   },
 });
 
+// CRIT-002 FIX: Dùng counter table thay vì fetch ALL
 export const getTypes = query({
   args: {},
   returns: v.array(v.string()),
   handler: async (ctx) => {
-    const components = await ctx.db.query("homeComponents").collect();
-    const types = new Set<string>();
-    for (const c of components) {
-      types.add(c.type);
-    }
-    return Array.from(types).sort();
+    const allStats = await ctx.db.query("homeComponentStats").take(100);
+    const excludeKeys = new Set(["total", "active", "inactive"]);
+    const types = allStats
+      .filter(s => !excludeKeys.has(s.key) && s.count > 0)
+      .map(s => s.key);
+    return types.sort();
   },
 });

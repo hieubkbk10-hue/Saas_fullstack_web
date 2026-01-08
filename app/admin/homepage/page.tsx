@@ -120,23 +120,23 @@ function HomepageContent() {
   const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedComponents.length ? [] : paginatedComponents.map(c => c._id));
   const toggleSelectItem = (id: Id<"homeComponents">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
+  // TICKET #10 FIX: Show detailed error message
   const handleDelete = async (id: Id<"homeComponents">) => {
     if (confirm('Xóa section này?')) {
       try {
         await deleteComponent({ id });
         toast.success('Đã xóa section');
-      } catch {
-        toast.error('Có lỗi khi xóa section');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa section');
       }
     }
   };
 
+  // HIGH-006 FIX: Dùng Promise.all thay vì sequential
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} section đã chọn?`)) {
       try {
-        for (const id of selectedIds) {
-          await deleteComponent({ id });
-        }
+        await Promise.all(selectedIds.map(id => deleteComponent({ id })));
         setSelectedIds([]);
         toast.success(`Đã xóa ${selectedIds.length} section`);
       } catch {
@@ -145,23 +145,25 @@ function HomepageContent() {
     }
   };
 
+  // TICKET #10 FIX: Show detailed error message
   const handleToggle = async (id: Id<"homeComponents">) => {
     try {
       await toggleComponent({ id });
       toast.success('Đã cập nhật trạng thái');
-    } catch {
-      toast.error('Có lỗi khi cập nhật trạng thái');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi cập nhật trạng thái');
     }
   };
 
+  // TICKET #10 FIX: Show detailed error message
   const handleReseed = async () => {
     if (confirm('Xóa tất cả sections và seed lại dữ liệu mẫu?')) {
       try {
         await clearHomepageData();
         await seedHomepageModule();
         toast.success('Đã reset dữ liệu Homepage');
-      } catch {
-        toast.error('Có lỗi khi reset dữ liệu');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi khi reset dữ liệu');
       }
     }
   };

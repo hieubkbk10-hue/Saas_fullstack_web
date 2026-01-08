@@ -100,31 +100,33 @@ function PromotionsContent() {
   const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedPromotions.length ? [] : paginatedPromotions.map(p => p._id));
   const toggleSelectItem = (id: Id<"promotions">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
+  // TICKET #10 FIX: Show detailed error message
   const handleDelete = async (id: Id<"promotions">) => {
     if (confirm('Xóa khuyến mãi này?')) {
       try {
         await deletePromotion({ id });
         toast.success('Đã xóa khuyến mãi');
-      } catch {
-        toast.error('Có lỗi khi xóa khuyến mãi');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa khuyến mãi');
       }
     }
   };
 
+  // HIGH-006 FIX: Dùng Promise.all thay vì sequential
+  // TICKET #10 FIX: Show detailed error message
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} khuyến mãi đã chọn?`)) {
       try {
-        for (const id of selectedIds) {
-          await deletePromotion({ id });
-        }
+        await Promise.all(selectedIds.map(id => deletePromotion({ id })));
         setSelectedIds([]);
         toast.success(`Đã xóa ${selectedIds.length} khuyến mãi`);
-      } catch {
-        toast.error('Có lỗi khi xóa khuyến mãi');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa khuyến mãi');
       }
     }
   };
 
+  // TICKET #10 FIX: Show detailed error message
   const handleReseed = async () => {
     if (confirm('Xóa tất cả khuyến mãi và seed lại dữ liệu mẫu?')) {
       try {
@@ -132,17 +134,22 @@ function PromotionsContent() {
         await seedPromotionsModule();
         setSelectedIds([]);
         toast.success('Đã reset dữ liệu khuyến mãi');
-      } catch {
-        toast.error('Có lỗi khi reset dữ liệu');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi khi reset dữ liệu');
       }
     }
   };
 
-  const copyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    toast.success('Đã copy mã voucher');
-    setTimeout(() => setCopiedCode(null), 2000);
+  // TICKET #12 FIX: Handle clipboard API errors
+  const copyCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(code);
+      toast.success('Đã copy mã voucher');
+      setTimeout(() => setCopiedCode(null), 2000);
+    } catch {
+      toast.error('Không thể copy, vui lòng copy thủ công');
+    }
   };
 
   const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);

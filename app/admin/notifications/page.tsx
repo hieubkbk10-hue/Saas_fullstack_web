@@ -149,12 +149,11 @@ function NotificationsContent() {
     }
   };
 
+  // HIGH-006 FIX: Dùng Promise.all thay vì sequential
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} thông báo đã chọn?`)) {
       try {
-        for (const id of selectedIds) {
-          await deleteNotification({ id });
-        }
+        await Promise.all(selectedIds.map(id => deleteNotification({ id })));
         setSelectedIds([]);
         toast.success(`Đã xóa ${selectedIds.length} thông báo`);
       } catch (error) {

@@ -159,12 +159,11 @@ function RolesContent() {
     }
   };
 
+  // HIGH-006 FIX: Dùng Promise.all thay vì sequential
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} vai trò đã chọn?`)) {
       try {
-        for (const id of selectedIds) {
-          await deleteRole({ id });
-        }
+        await Promise.all(selectedIds.map(id => deleteRole({ id })));
         setSelectedIds([]);
         toast.success(`Đã xóa ${selectedIds.length} vai trò`);
       } catch (error) {
@@ -173,14 +172,15 @@ function RolesContent() {
     }
   };
 
+  // TICKET #10 FIX: Show detailed error message
   const handleReseed = async () => {
     if (confirm('Reset dữ liệu vai trò về mặc định?')) {
       try {
         await clearRolesData();
         await seedRolesModule();
         toast.success('Đã reset dữ liệu vai trò');
-      } catch {
-        toast.error('Có lỗi khi reset dữ liệu');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi khi reset dữ liệu');
       }
     }
   };

@@ -149,6 +149,24 @@ export default defineSchema({
     count: v.number(),
   }).index("by_key", ["key"]),
 
+  // 7c. homeComponentStats - Counter table cho homepage components (tránh full scan)
+  homeComponentStats: defineTable({
+    key: v.string(), // "total", "active", "inactive", or type names like "hero", "about"
+    count: v.number(),
+  }).index("by_key", ["key"]),
+
+  // 7d. notificationStats - Counter table cho notifications (tránh full scan)
+  notificationStats: defineTable({
+    key: v.string(), // "total", "Draft", "Scheduled", "Sent", "Cancelled", "totalReads"
+    count: v.number(),
+  }).index("by_key", ["key"]),
+
+  // 7e. promotionStats - Counter table cho promotions (tránh full scan)
+  promotionStats: defineTable({
+    key: v.string(), // "total", "Active", "Inactive", "Expired", "Scheduled", "totalUsed", "percent", "fixed"
+    count: v.number(),
+  }).index("by_key", ["key"]),
+
   // 8. customers - Khách hàng
   customers: defineTable({
     name: v.string(),

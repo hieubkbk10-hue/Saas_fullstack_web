@@ -24,11 +24,12 @@ const menuItemDoc = v.object({
 
 // ============ MENUS ============
 
+// HIGH-005 FIX: Thêm limit
 export const listMenus = query({
   args: {},
   returns: v.array(menuDoc),
   handler: async (ctx) => {
-    return await ctx.db.query("menus").collect();
+    return await ctx.db.query("menus").take(50);
   },
 });
 
@@ -88,6 +89,7 @@ export const updateMenu = mutation({
   },
 });
 
+// TICKET #4 FIX: Dùng Promise.all thay vì sequential deletes
 export const removeMenu = mutation({
   args: { id: v.id("menus") },
   returns: v.null(),
@@ -96,9 +98,7 @@ export const removeMenu = mutation({
       .query("menuItems")
       .withIndex("by_menu_order", (q) => q.eq("menuId", args.id))
       .collect();
-    for (const item of items) {
-      await ctx.db.delete(item._id);
-    }
+    await Promise.all(items.map(item => ctx.db.delete(item._id)));
     await ctx.db.delete(args.id);
     return null;
   },
@@ -106,6 +106,7 @@ export const removeMenu = mutation({
 
 // ============ MENU ITEMS ============
 
+// HIGH-005 FIX: Thêm limit
 export const listMenuItems = query({
   args: { menuId: v.id("menus") },
   returns: v.array(menuItemDoc),
@@ -113,10 +114,11 @@ export const listMenuItems = query({
     return await ctx.db
       .query("menuItems")
       .withIndex("by_menu_order", (q) => q.eq("menuId", args.menuId))
-      .collect();
+      .take(200);
   },
 });
 
+// HIGH-005 FIX: Thêm limit
 export const listActiveMenuItems = query({
   args: { menuId: v.id("menus") },
   returns: v.array(menuItemDoc),
@@ -124,7 +126,7 @@ export const listActiveMenuItems = query({
     return await ctx.db
       .query("menuItems")
       .withIndex("by_menu_active", (q) => q.eq("menuId", args.menuId).eq("active", true))
-      .collect();
+      .take(100);
   },
 });
 
@@ -136,6 +138,7 @@ export const getMenuItemById = query({
   },
 });
 
+// HIGH-005 FIX: Thêm limit
 export const listChildItems = query({
   args: { parentId: v.id("menuItems") },
   returns: v.array(menuItemDoc),
@@ -143,10 +146,11 @@ export const listChildItems = query({
     return await ctx.db
       .query("menuItems")
       .withIndex("by_parent", (q) => q.eq("parentId", args.parentId))
-      .collect();
+      .take(50);
   },
 });
 
+// HIGH-003 FIX: Dùng order("desc").first() thay vì count + MED-005: URL validation
 export const createMenuItem = mutation({
   args: {
     menuId: v.id("menus"),
@@ -161,21 +165,35 @@ export const createMenuItem = mutation({
   },
   returns: v.id("menuItems"),
   handler: async (ctx, args) => {
-    const count = (
-      await ctx.db
-        .query("menuItems")
-        .withIndex("by_menu_order", (q) => q.eq("menuId", args.menuId))
-        .collect()
-    ).length;
+    // MED-005: Basic URL validation
+    const url = args.url.trim();
+    if (!url) {
+      throw new Error("URL không được để trống");
+    }
+    // Allow relative URLs starting with / or #, or absolute URLs
+    if (!url.startsWith("/") && !url.startsWith("#") && !url.startsWith("http")) {
+      throw new Error("URL phải bắt đầu bằng /, # hoặc http");
+    }
+    
+    // HIGH-003 FIX: Get order from last item instead of count
+    const lastItem = await ctx.db
+      .query("menuItems")
+      .withIndex("by_menu_order", (q) => q.eq("menuId", args.menuId))
+      .order("desc")
+      .first();
+    const newOrder = args.order ?? (lastItem ? lastItem.order + 1 : 0);
+    
     return await ctx.db.insert("menuItems", {
       ...args,
-      order: args.order ?? count,
+      url,
+      order: newOrder,
       depth: args.depth ?? 0,
       active: args.active ?? true,
     });
   },
 });
 
+// TICKET #7 FIX: Thêm URL validation như createMenuItem
 export const updateMenuItem = mutation({
   args: {
     id: v.id("menuItems"),
@@ -193,36 +211,56 @@ export const updateMenuItem = mutation({
     const { id, ...updates } = args;
     const item = await ctx.db.get(id);
     if (!item) throw new Error("Menu item not found");
+    
+    // URL validation nếu được cập nhật
+    if (updates.url !== undefined) {
+      const url = updates.url.trim();
+      if (!url) {
+        throw new Error("URL không được để trống");
+      }
+      if (!url.startsWith("/") && !url.startsWith("#") && !url.startsWith("http")) {
+        throw new Error("URL phải bắt đầu bằng /, # hoặc http");
+      }
+      updates.url = url;
+    }
+    
     await ctx.db.patch(id, updates);
     return null;
   },
 });
 
+// TICKET #5 FIX: Recursive delete với Promise.all
 export const removeMenuItem = mutation({
   args: { id: v.id("menuItems") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const children = await ctx.db
-      .query("menuItems")
-      .withIndex("by_parent", (q) => q.eq("parentId", args.id))
-      .collect();
-    for (const child of children) {
-      await ctx.db.delete(child._id);
-    }
-    await ctx.db.delete(args.id);
+    // Recursive function để xóa item và tất cả descendants
+    const deleteWithChildren = async (itemId: typeof args.id): Promise<void> => {
+      const children = await ctx.db
+        .query("menuItems")
+        .withIndex("by_parent", (q) => q.eq("parentId", itemId))
+        .collect();
+      // Xóa tất cả children đệ quy (parallel)
+      await Promise.all(children.map(child => deleteWithChildren(child._id)));
+      // Xóa item hiện tại
+      await ctx.db.delete(itemId);
+    };
+    
+    await deleteWithChildren(args.id);
     return null;
   },
 });
 
+// TICKET #3 FIX: Dùng Promise.all thay vì sequential updates
 export const reorderMenuItems = mutation({
   args: { items: v.array(v.object({ id: v.id("menuItems"), order: v.number(), depth: v.optional(v.number()) })) },
   returns: v.null(),
   handler: async (ctx, args) => {
-    for (const item of args.items) {
+    await Promise.all(args.items.map(item => {
       const updates: Record<string, number> = { order: item.order };
       if (item.depth !== undefined) updates.depth = item.depth;
-      await ctx.db.patch(item.id, updates);
-    }
+      return ctx.db.patch(item.id, updates);
+    }));
     return null;
   },
 });

@@ -54,6 +54,7 @@ function MenuBuilderPage() {
     }
   }, [menusData, selectedMenuId]);
 
+  // TICKET #10 FIX: Show detailed error message
   const handleReset = async () => {
     if (confirm('Xóa tất cả và seed lại dữ liệu mẫu?')) {
       try {
@@ -61,8 +62,8 @@ function MenuBuilderPage() {
         await seedMenusModule();
         setSelectedMenuId(null);
         toast.success('Đã reset dữ liệu menu');
-      } catch {
-        toast.error('Có lỗi khi reset dữ liệu');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi khi reset dữ liệu');
       }
     }
   };
@@ -174,6 +175,7 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
 
   const isLoading = menuItemsData === undefined;
 
+  // TICKET #10 FIX: Show detailed error message
   const handleMove = async (index: number, direction: 'up' | 'down') => {
     if ((direction === 'up' && index === 0) || (direction === 'down' && index === items.length - 1)) return;
     
@@ -187,11 +189,12 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
     
     try {
       await reorderMenuItems({ items: updates });
-    } catch {
-      toast.error('Có lỗi khi sắp xếp');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi sắp xếp');
     }
   };
 
+  // TICKET #10 FIX: Show detailed error message
   const handleIndent = async (item: MenuItem, direction: 'in' | 'out') => {
     const newDepth = direction === 'in' 
       ? Math.min(item.depth + 1, maxDepth - 1) 
@@ -201,31 +204,34 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
     
     try {
       await updateMenuItem({ id: item._id, depth: newDepth });
-    } catch {
-      toast.error('Có lỗi khi cập nhật');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi cập nhật');
     }
   };
 
+  // TICKET #10 FIX: Show detailed error message
   const handleToggleActive = async (item: MenuItem) => {
     try {
       await updateMenuItem({ id: item._id, active: !item.active });
       toast.success(item.active ? 'Đã ẩn menu item' : 'Đã hiện menu item');
-    } catch {
-      toast.error('Có lỗi khi cập nhật');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi cập nhật');
     }
   };
 
+  // TICKET #10 FIX: Show detailed error message
   const handleDelete = async (id: Id<"menuItems">) => {
     if (confirm('Xóa liên kết này?')) {
       try {
         await removeMenuItem({ id });
         toast.success('Đã xóa');
-      } catch {
-        toast.error('Có lỗi khi xóa');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa');
       }
     }
   };
 
+  // TICKET #10 FIX: Show detailed error message
   const handleAdd = async () => {
     try {
       await createMenuItem({
@@ -236,8 +242,8 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
         active: true,
       });
       toast.success('Đã thêm liên kết mới');
-    } catch {
-      toast.error('Có lỗi khi thêm');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi thêm');
     }
   };
 
@@ -278,8 +284,9 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
         return newMap;
       });
       toast.success('Đã lưu');
-    } catch {
-      toast.error('Có lỗi khi lưu');
+    } catch (error) {
+      // TICKET #10 FIX: Show detailed error message
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi lưu');
     } finally {
       setIsSaving(false);
     }
