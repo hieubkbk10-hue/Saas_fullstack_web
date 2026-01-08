@@ -140,13 +140,14 @@ export const listPending = query({
 });
 
 export const listByParent = query({
-  args: { parentId: v.id("comments") },
+  args: { parentId: v.id("comments"), limit: v.optional(v.number()) },
   returns: v.array(commentDoc),
   handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 50, 100);
     return await ctx.db
       .query("comments")
       .withIndex("by_parent", (q) => q.eq("parentId", args.parentId))
-      .collect();
+      .take(limit);
   },
 });
 

@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Trash2, Package, Loader2, RefreshCw, Check, Ban, Search } from 'lucide-react';
+import { Trash2, Package, Loader2, RefreshCw, Check, Ban, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { BulkActionBar, SelectCheckbox } from '../components/TableUtilities';
@@ -32,6 +32,8 @@ function ReviewsContent() {
   const [filterStatus, setFilterStatus] = useState('');
   const [filterProduct, setFilterProduct] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const reviewsPerPage = 20;
 
   const isLoading = commentsData === undefined || productsData === undefined;
 
@@ -67,7 +69,20 @@ function ReviewsContent() {
     return data;
   }, [commentsData, productMap, filterStatus, filterProduct, searchTerm]);
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === reviews.length ? [] : reviews.map(c => c.id));
+  // Pagination
+  const totalPages = Math.ceil(reviews.length / reviewsPerPage);
+  const paginatedReviews = useMemo(() => {
+    const start = (currentPage - 1) * reviewsPerPage;
+    return reviews.slice(start, start + reviewsPerPage);
+  }, [reviews, currentPage, reviewsPerPage]);
+
+  // Reset page when filters change
+  const handleFilterChange = (setter: (v: string) => void, value: string) => {
+    setter(value);
+    setCurrentPage(1);
+  };
+
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedReviews.length ? [] : paginatedReviews.map(c => c.id));
   const toggleSelectItem = (id: Id<"comments">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
   const handleDelete = async (id: Id<"comments">) => {
@@ -141,13 +156,13 @@ function ReviewsContent() {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input placeholder="Tìm kiếm..." className="pl-9 w-48" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterProduct} onChange={(e) => setFilterProduct(e.target.value)}>
+          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterProduct} onChange={(e) => handleFilterChange(setFilterProduct, e.target.value)}>
             <option value="">Tất cả sản phẩm</option>
             {productsData?.map(p => (
               <option key={p._id} value={p._id}>{p.name}</option>
             ))}
           </select>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => handleFilterChange(setFilterStatus, e.target.value)}>
             <option value="">Tất cả trạng thái</option>
             <option value="Approved">Đã duyệt</option>
             <option value="Pending">Chờ duyệt</option>
@@ -157,7 +172,7 @@ function ReviewsContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === reviews.length && reviews.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < reviews.length} /></TableHead>
+              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedReviews.length && paginatedReviews.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedReviews.length} /></TableHead>
               <TableHead className="w-[180px]">Khách hàng</TableHead>
               <TableHead>Nội dung</TableHead>
               <TableHead className="w-[180px]">Sản phẩm</TableHead>
@@ -167,7 +182,7 @@ function ReviewsContent() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {reviews.map(review => (
+            {paginatedReviews.map(review => (
               <TableRow key={review.id} className={selectedIds.includes(review.id) ? 'bg-orange-500/5' : ''}>
                 <TableCell><SelectCheckbox checked={selectedIds.includes(review.id)} onChange={() => toggleSelectItem(review.id)} /></TableCell>
                 <TableCell>
@@ -200,7 +215,7 @@ function ReviewsContent() {
                 </TableCell>
               </TableRow>
             ))}
-            {reviews.length === 0 && (
+            {paginatedReviews.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center text-slate-500">
                   {filterStatus || filterProduct || searchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có đánh giá nào. Nhấn Reset để tạo dữ liệu mẫu.'}
@@ -210,7 +225,34 @@ function ReviewsContent() {
           </TableBody>
         </Table>
         {reviews.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">Hiển thị {reviews.length} đánh giá</div>
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-sm text-slate-500">
+              Hiển thị {(currentPage - 1) * reviewsPerPage + 1} - {Math.min(currentPage * reviewsPerPage, reviews.length)} / {reviews.length} đánh giá
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Trang {currentPage} / {totalPages}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            )}
+          </div>
         )}
       </Card>
     </div>

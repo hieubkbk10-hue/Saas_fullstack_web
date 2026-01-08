@@ -97,16 +97,16 @@ export async function listByTarget(
 }
 
 /**
- * List child comments
+ * List child comments with limit
  */
 export async function listByParent(
   ctx: QueryCtx,
-  { parentId }: { parentId: Id<"comments"> }
+  { parentId, limit = 50 }: { parentId: Id<"comments">; limit?: number }
 ): Promise<Doc<"comments">[]> {
   return await ctx.db
     .query("comments")
     .withIndex("by_parent", (q) => q.eq("parentId", parentId))
-    .collect();
+    .take(Math.min(limit, 100));
 }
 
 /**
