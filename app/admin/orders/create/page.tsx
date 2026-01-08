@@ -31,7 +31,7 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
 export default function CreateOrderPage() {
   const router = useRouter();
   const customersData = useQuery(api.customers.listAll);
-  const productsData = useQuery(api.products.listAll);
+  const productsData = useQuery(api.products.listAll, {});
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const createOrder = useMutation(api.orders.create);
 

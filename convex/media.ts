@@ -32,6 +32,69 @@ const mediaWithUrl = v.object({
   url: v.union(v.string(), v.null()),
 });
 
+// ============ HELPER FUNCTIONS ============
+
+// Get media type key from mimeType
+function getMediaTypeKey(mimeType: string): "image" | "video" | "document" | "other" {
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType === "application/pdf" || mimeType.includes("document") || mimeType.includes("spreadsheet")) {
+    return "document";
+  }
+  return "other";
+}
+
+// Update mediaStats counter (increment or decrement)
+async function updateMediaStats(
+  ctx: { db: any },
+  typeKey: "total" | "image" | "video" | "document" | "other",
+  countDelta: number,
+  sizeDelta: number
+) {
+  const existing = await ctx.db
+    .query("mediaStats")
+    .withIndex("by_key", (q: any) => q.eq("key", typeKey))
+    .first();
+
+  if (existing) {
+    await ctx.db.patch(existing._id, {
+      count: Math.max(0, existing.count + countDelta),
+      totalSize: Math.max(0, existing.totalSize + sizeDelta),
+    });
+  } else if (countDelta > 0) {
+    await ctx.db.insert("mediaStats", {
+      key: typeKey,
+      count: countDelta,
+      totalSize: sizeDelta,
+    });
+  }
+}
+
+// Update mediaFolders counter
+async function updateMediaFolder(
+  ctx: { db: any },
+  folderName: string | undefined,
+  countDelta: number
+) {
+  if (!folderName) return;
+
+  const existing = await ctx.db
+    .query("mediaFolders")
+    .withIndex("by_name", (q: any) => q.eq("name", folderName))
+    .first();
+
+  if (existing) {
+    const newCount = existing.count + countDelta;
+    if (newCount <= 0) {
+      await ctx.db.delete(existing._id);
+    } else {
+      await ctx.db.patch(existing._id, { count: newCount });
+    }
+  } else if (countDelta > 0) {
+    await ctx.db.insert("mediaFolders", { name: folderName, count: countDelta });
+  }
+}
+
 // ============ QUERIES ============
 
 // List with pagination
@@ -153,21 +216,17 @@ export const getUrl = query({
   },
 });
 
-// Get all folders
+// Get all folders (optimized - reads from mediaFolders table)
 export const getFolders = query({
   args: {},
   returns: v.array(v.string()),
   handler: async (ctx) => {
-    const images = await ctx.db.query("images").collect();
-    const folders = new Set<string>();
-    for (const img of images) {
-      if (img.folder) folders.add(img.folder);
-    }
-    return Array.from(folders).sort();
+    const folders = await ctx.db.query("mediaFolders").collect();
+    return folders.map(f => f.name).sort();
   },
 });
 
-// Get statistics
+// Get statistics (optimized - reads from mediaStats counter table)
 export const getStats = query({
   args: {},
   returns: v.object({
@@ -179,48 +238,44 @@ export const getStats = query({
     otherCount: v.number(),
   }),
   handler: async (ctx) => {
-    const images = await ctx.db.query("images").collect();
-    let totalSize = 0;
-    let imageCount = 0;
-    let videoCount = 0;
-    let documentCount = 0;
-    let otherCount = 0;
+    const stats = await ctx.db.query("mediaStats").collect();
+    const statsMap = new Map(stats.map(s => [s.key, s]));
 
-    for (const img of images) {
-      totalSize += img.size;
-      if (img.mimeType.startsWith("image/")) {
-        imageCount++;
-      } else if (img.mimeType.startsWith("video/")) {
-        videoCount++;
-      } else if (
-        img.mimeType === "application/pdf" ||
-        img.mimeType.includes("document") ||
-        img.mimeType.includes("spreadsheet")
-      ) {
-        documentCount++;
-      } else {
-        otherCount++;
-      }
-    }
+    const total = statsMap.get("total");
+    const image = statsMap.get("image");
+    const video = statsMap.get("video");
+    const document = statsMap.get("document");
+    const other = statsMap.get("other");
 
-    return { totalCount: images.length, totalSize, imageCount, videoCount, documentCount, otherCount };
+    return {
+      totalCount: total?.count ?? 0,
+      totalSize: total?.totalSize ?? 0,
+      imageCount: image?.count ?? 0,
+      videoCount: video?.count ?? 0,
+      documentCount: document?.count ?? 0,
+      otherCount: other?.count ?? 0,
+    };
   },
 });
 
-// Count media
+// Count media (optimized - reads from counter tables)
 export const count = query({
   args: { folder: v.optional(v.string()) },
   returns: v.number(),
   handler: async (ctx, args) => {
     if (args.folder) {
-      const items = await ctx.db
-        .query("images")
-        .withIndex("by_folder", (q) => q.eq("folder", args.folder))
-        .collect();
-      return items.length;
+      const folderName = args.folder;
+      const folderRecord = await ctx.db
+        .query("mediaFolders")
+        .withIndex("by_name", (q) => q.eq("name", folderName))
+        .first();
+      return folderRecord?.count ?? 0;
     }
-    const items = await ctx.db.query("images").collect();
-    return items.length;
+    const totalStat = await ctx.db
+      .query("mediaStats")
+      .withIndex("by_key", (q) => q.eq("key", "total"))
+      .first();
+    return totalStat?.count ?? 0;
   },
 });
 
@@ -255,6 +310,13 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const id = await ctx.db.insert("images", args);
     const url = await ctx.storage.getUrl(args.storageId);
+
+    // Update counters
+    const typeKey = getMediaTypeKey(args.mimeType);
+    await updateMediaStats(ctx, "total", 1, args.size);
+    await updateMediaStats(ctx, typeKey, 1, args.size);
+    await updateMediaFolder(ctx, args.folder, 1);
+
     return { id, url };
   },
 });
@@ -279,6 +341,12 @@ export const update = mutation({
     if (updates.alt !== undefined) filteredUpdates.alt = updates.alt;
     if (updates.folder !== undefined) filteredUpdates.folder = updates.folder;
     
+    // Update folder counter if folder changed
+    if (updates.folder !== undefined && updates.folder !== media.folder) {
+      await updateMediaFolder(ctx, media.folder, -1); // Decrement old folder
+      await updateMediaFolder(ctx, updates.folder, 1);  // Increment new folder
+    }
+    
     await ctx.db.patch(id, filteredUpdates);
     return null;
   },
@@ -298,28 +366,68 @@ export const remove = mutation({
       // Storage file might already be deleted
     }
     await ctx.db.delete(args.id);
+
+    // Update counters
+    const typeKey = getMediaTypeKey(media.mimeType);
+    await updateMediaStats(ctx, "total", -1, -media.size);
+    await updateMediaStats(ctx, typeKey, -1, -media.size);
+    await updateMediaFolder(ctx, media.folder, -1);
+
     return null;
   },
 });
 
-// Bulk remove
+// Bulk remove (optimized - batch load to avoid N+1)
 export const bulkRemove = mutation({
   args: { ids: v.array(v.id("images")) },
   returns: v.number(),
   handler: async (ctx, args) => {
-    let count = 0;
-    for (const id of args.ids) {
-      const media = await ctx.db.get(id);
-      if (media) {
-        try {
-          await ctx.storage.delete(media.storageId);
-        } catch {
-          // Storage file might already be deleted
-        }
-        await ctx.db.delete(id);
-        count++;
+    // Batch load all media items (avoid N+1)
+    const mediaItems = await Promise.all(args.ids.map(id => ctx.db.get(id)));
+    const validItems = mediaItems.filter((m): m is NonNullable<typeof m> => m !== null);
+
+    // Aggregate counter updates
+    const statsUpdates: Record<string, { count: number; size: number }> = {
+      total: { count: 0, size: 0 },
+      image: { count: 0, size: 0 },
+      video: { count: 0, size: 0 },
+      document: { count: 0, size: 0 },
+      other: { count: 0, size: 0 },
+    };
+    const folderUpdates: Record<string, number> = {};
+
+    // Delete items and aggregate stats
+    for (const media of validItems) {
+      try {
+        await ctx.storage.delete(media.storageId);
+      } catch {
+        // Storage file might already be deleted
+      }
+      await ctx.db.delete(media._id);
+
+      // Aggregate counter changes
+      const typeKey = getMediaTypeKey(media.mimeType);
+      statsUpdates.total.count++;
+      statsUpdates.total.size += media.size;
+      statsUpdates[typeKey].count++;
+      statsUpdates[typeKey].size += media.size;
+      if (media.folder) {
+        folderUpdates[media.folder] = (folderUpdates[media.folder] || 0) + 1;
       }
     }
-    return count;
+
+    // Batch update mediaStats
+    for (const [key, { count, size }] of Object.entries(statsUpdates)) {
+      if (count > 0) {
+        await updateMediaStats(ctx, key as any, -count, -size);
+      }
+    }
+
+    // Batch update mediaFolders
+    for (const [folder, count] of Object.entries(folderUpdates)) {
+      await updateMediaFolder(ctx, folder, -count);
+    }
+
+    return validItems.length;
   },
 });

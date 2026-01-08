@@ -51,6 +51,7 @@ export default function MediaModuleConfigPage() {
   const setSetting = useMutation(api.admin.modules.setModuleSetting);
   const seedMediaModule = useMutation(api.seed.seedMediaModule);
   const clearMediaData = useMutation(api.seed.clearMediaData);
+  const syncMediaCounters = useMutation(api.seed.syncMediaCounters);
 
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
@@ -209,6 +210,18 @@ export default function MediaModuleConfigPage() {
     }
   };
 
+  const handleSyncCounters = async () => {
+    try {
+      toast.loading('Đang sync counters...');
+      const result = await syncMediaCounters();
+      toast.dismiss();
+      toast.success(`Đã sync: ${result.stats.total?.count ?? 0} files, ${Object.keys(result.folders).length} folders`);
+    } catch {
+      toast.dismiss();
+      toast.error('Có lỗi xảy ra khi sync counters');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -311,9 +324,12 @@ export default function MediaModuleConfigPage() {
                 <h3 className="font-semibold text-slate-900 dark:text-slate-100">Quản lý dữ liệu</h3>
                 <p className="text-sm text-slate-500 mt-1">Seed cấu hình, clear hoặc reset module media</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button variant="outline" onClick={handleSeedConfig} className="gap-2">
                   <Database size={16} /> Seed Config
+                </Button>
+                <Button variant="outline" onClick={handleSyncCounters} className="gap-2">
+                  <RefreshCw size={16} /> Sync Counters
                 </Button>
                 <Button variant="outline" onClick={handleClearData} className="gap-2 text-red-500 hover:text-red-600">
                   <Trash2 size={16} /> Clear Media

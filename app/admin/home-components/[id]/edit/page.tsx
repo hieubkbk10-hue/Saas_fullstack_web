@@ -68,7 +68,6 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     toast.success('Đã cập nhật component');
-    router.push('/admin/home-components');
   };
 
   const handleAddSlide = () => {

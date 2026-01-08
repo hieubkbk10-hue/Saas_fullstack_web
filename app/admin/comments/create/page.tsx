@@ -21,7 +21,7 @@ export default function CreateCommentPage() {
 function CreateCommentContent() {
   const router = useRouter();
   const postsData = useQuery(api.posts.listAll, {});
-  const productsData = useQuery(api.products.listAll);
+  const productsData = useQuery(api.products.listAll, {});
   const createComment = useMutation(api.comments.create);
 
   const [formData, setFormData] = useState({

@@ -55,7 +55,6 @@ export default function ProductCategoryEditPage({ params }: { params: Promise<{ 
         active,
       });
       toast.success('Cập nhật danh mục thành công');
-      router.push('/admin/product-categories');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Không thể cập nhật danh mục');
     } finally {

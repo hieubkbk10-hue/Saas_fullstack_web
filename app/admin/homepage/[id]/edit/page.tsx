@@ -102,7 +102,6 @@ function EditContent() {
         config,
       });
       toast.success('Đã cập nhật section!');
-      router.push('/admin/homepage');
     } catch (error) {
       toast.error('Có lỗi xảy ra khi cập nhật section');
       console.error(error);

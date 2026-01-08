@@ -118,7 +118,6 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
         permissions,
       });
       toast.success('Đã cập nhật vai trò');
-      router.push('/admin/roles');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra khi cập nhật vai trò');
     } finally {

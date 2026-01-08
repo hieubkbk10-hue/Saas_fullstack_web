@@ -86,7 +86,6 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
         status,
       });
       toast.success("Cập nhật sản phẩm thành công");
-      router.push('/admin/products');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể cập nhật sản phẩm");
     } finally {

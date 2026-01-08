@@ -87,7 +87,6 @@ export default function EditOrderPage() {
         note: enabledFields.has('note') ? note : undefined,
       });
       toast.success('Đã cập nhật đơn hàng');
-      router.push('/admin/orders');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     } finally {

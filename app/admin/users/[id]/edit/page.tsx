@@ -66,7 +66,6 @@ export default function UserEditPage({ params }: { params: Promise<{ id: string 
         status,
       });
       toast.success('Đã cập nhật người dùng');
-      router.push('/admin/users');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     } finally {

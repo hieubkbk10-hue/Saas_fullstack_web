@@ -23,7 +23,7 @@ export default function WishlistListPage() {
 function WishlistContent() {
   const wishlistData = useQuery(api.wishlist.listAll);
   const customersData = useQuery(api.customers.listAll);
-  const productsData = useQuery(api.products.listAll);
+  const productsData = useQuery(api.products.listAll, {});
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const removeItem = useMutation(api.wishlist.remove);

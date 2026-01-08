@@ -37,7 +37,7 @@ export default function CommentsModuleConfigPage() {
   // Data tab queries
   const commentsData = useQuery(api.comments.listAll, {});
   const postsData = useQuery(api.posts.listAll, {});
-  const productsData = useQuery(api.products.listAll);
+  const productsData = useQuery(api.products.listAll, {});
 
   // Mutations
   const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);

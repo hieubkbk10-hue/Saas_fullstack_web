@@ -21,7 +21,7 @@ export default function ProductCategoriesListPage() {
 
 function ProductCategoriesContent() {
   const categoriesData = useQuery(api.productCategories.listAll);
-  const productsData = useQuery(api.products.listAll);
+  const productsData = useQuery(api.products.listAll, {});
   const deleteCategory = useMutation(api.productCategories.remove);
   const seedProductsModule = useMutation(api.seed.seedProductsModule);
   const clearProductsData = useMutation(api.seed.clearProductsData);

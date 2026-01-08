@@ -22,7 +22,7 @@ export default function CommentsListPage() {
 function CommentsContent() {
   const commentsData = useQuery(api.comments.listAll, {});
   const postsData = useQuery(api.posts.listAll, {});
-  const productsData = useQuery(api.products.listAll);
+  const productsData = useQuery(api.products.listAll, {});
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'comments' });
   const deleteComment = useMutation(api.comments.remove);
   const approveComment = useMutation(api.comments.approve);

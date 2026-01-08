@@ -89,7 +89,6 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
         status,
       });
       toast.success('Cập nhật khuyến mãi thành công');
-      router.push('/admin/promotions');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Không thể cập nhật khuyến mãi');
     } finally {

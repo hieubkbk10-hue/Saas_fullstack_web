@@ -20,7 +20,7 @@ export default function ReviewsListPage() {
 
 function ReviewsContent() {
   const commentsData = useQuery(api.comments.listByTargetType, { targetType: 'product' });
-  const productsData = useQuery(api.products.listAll);
+  const productsData = useQuery(api.products.listAll, {});
   const deleteComment = useMutation(api.comments.remove);
   const approveComment = useMutation(api.comments.approve);
   const markAsSpam = useMutation(api.comments.markAsSpam);

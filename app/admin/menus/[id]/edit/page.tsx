@@ -93,7 +93,6 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
       }
       
       toast.success('Đã cập nhật menu');
-      router.push('/admin/menus');
     } catch {
       toast.error('Có lỗi khi cập nhật menu');
     } finally {

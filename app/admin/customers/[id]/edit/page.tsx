@@ -104,7 +104,6 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
         status: formData.status,
       });
       toast.success('Đã lưu thông tin khách hàng');
-      router.push('/admin/customers');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Có lỗi xảy ra';
       toast.error(message);

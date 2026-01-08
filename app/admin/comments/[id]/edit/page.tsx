@@ -26,7 +26,7 @@ function EditCommentContent() {
 
   const commentData = useQuery(api.comments.getById, { id: commentId });
   const postsData = useQuery(api.posts.listAll, {});
-  const productsData = useQuery(api.products.listAll);
+  const productsData = useQuery(api.products.listAll, {});
   const updateComment = useMutation(api.comments.update);
 
   const [formData, setFormData] = useState({

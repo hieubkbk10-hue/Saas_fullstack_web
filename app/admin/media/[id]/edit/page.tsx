@@ -79,7 +79,6 @@ export default function MediaEditPage({ params }: { params: Promise<{ id: string
         folder: finalFolder || undefined,
       });
       toast.success('Cập nhật thành công');
-      router.push('/admin/media');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Không thể cập nhật');
     } finally {

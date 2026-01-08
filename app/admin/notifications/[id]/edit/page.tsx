@@ -64,7 +64,6 @@ export default function NotificationEditPage({ params }: { params: Promise<{ id:
         status: scheduledAt ? 'Scheduled' : 'Draft',
       });
       toast.success('Đã cập nhật thông báo');
-      router.push('/admin/notifications');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     } finally {
