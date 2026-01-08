@@ -36,10 +36,13 @@ export default function CartListPage() {
 }
 
 function CartContent() {
-  const cartsData = useQuery(api.cart.listAll);
+  // FIX Issue #7: Use listAll with limit instead of fetching ALL
+  const cartsData = useQuery(api.cart.listAll, { limit: 100 });
   const customersData = useQuery(api.customers.listAll, { limit: 100 });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
+  // FIX: Use getStats for efficient statistics instead of calculating from full list
+  const statsData = useQuery(api.cart.getStats);
   const deleteCart = useMutation(api.cart.remove);
   const markAsAbandoned = useMutation(api.cart.markAsAbandoned);
   const seedCartModule = useMutation(api.seed.seedCartModule);
@@ -61,11 +64,15 @@ function CartContent() {
     return features;
   }, [featuresData]);
 
-  // Get cartsPerPage from settings
-  const cartsPerPage = useMemo(() => {
-    const setting = settingsData?.find(s => s.settingKey === 'cartsPerPage');
-    return (setting?.value as number) || 20;
+  // FIX Issue #9: Convert settings to Map for O(1) lookup instead of O(n) Array.find()
+  const settingsMap = useMemo(() => {
+    return new Map(settingsData?.map(s => [s.settingKey, s.value]) ?? []);
   }, [settingsData]);
+
+  // Get cartsPerPage from settings using Map lookup
+  const cartsPerPage = useMemo(() => {
+    return (settingsMap.get('cartsPerPage') as number) || 20;
+  }, [settingsMap]);
 
   const columns = useMemo(() => {
     const cols = [
@@ -195,13 +202,13 @@ function CartContent() {
   const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
   const formatDate = (timestamp: number) => new Date(timestamp).toLocaleDateString('vi-VN');
 
-  // Statistics
+  // FIX: Use statsData from server instead of calculating from full client-side list
   const stats = useMemo(() => ({
-    total: carts.length,
-    active: carts.filter(c => c.status === 'Active').length,
-    abandoned: carts.filter(c => c.status === 'Abandoned').length,
-    converted: carts.filter(c => c.status === 'Converted').length,
-  }), [carts]);
+    total: statsData?.total ?? carts.length,
+    active: statsData?.active ?? carts.filter(c => c.status === 'Active').length,
+    abandoned: statsData?.abandoned ?? carts.filter(c => c.status === 'Abandoned').length,
+    converted: statsData?.converted ?? carts.filter(c => c.status === 'Converted').length,
+  }), [statsData, carts]);
 
   if (isLoading) {
     return (

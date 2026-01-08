@@ -424,7 +424,10 @@ export default defineSchema({
     .index("by_customer", ["customerId"])
     .index("by_session", ["sessionId"])
     .index("by_status", ["status"])
-    .index("by_expiresAt", ["expiresAt"]),
+    .index("by_expiresAt", ["expiresAt"])
+    // FIX Issue #8: Compound indexes for efficient filtering
+    .index("by_customer_status", ["customerId", "status"])
+    .index("by_session_status", ["sessionId", "status"]),
 
   // 23. cartItems - Items trong giỏ hàng
   cartItems: defineTable({

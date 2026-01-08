@@ -36,9 +36,10 @@ export default function CartModuleConfigPage() {
   const cartItemFieldsData = useQuery(api.admin.modules.listModuleFields, { moduleKey: CART_ITEMS_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
 
-  // Data tab queries
-  const cartsData = useQuery(api.cart.listAll);
-  const cartItemsData = useQuery(api.cart.listAllItems);
+  // Data tab queries - FIX: Add limits to prevent fetching ALL
+  const cartsData = useQuery(api.cart.listAll, { limit: 100 });
+  const cartItemsData = useQuery(api.cart.listAllItems, { limit: 100 });
+  const statsData = useQuery(api.cart.getStats);
   const customersData = useQuery(api.customers.listAll, { limit: 100 });
 
   // Mutations
@@ -100,16 +101,21 @@ export default function CartModuleConfigPage() {
     }
   }, [cartItemFieldsData]);
 
-  // Sync settings
+  // FIX Issue #9: Convert settings to Map for O(1) lookup instead of O(n) Array.find()
+  const settingsMap = useMemo(() => {
+    return new Map(settingsData?.map(s => [s.settingKey, s.value]) ?? []);
+  }, [settingsData]);
+
+  // Sync settings using Map lookup
   useEffect(() => {
-    if (settingsData) {
-      const cartsPerPage = settingsData.find(s => s.settingKey === 'cartsPerPage')?.value as number ?? 20;
-      const expiryDays = settingsData.find(s => s.settingKey === 'expiryDays')?.value as number ?? 7;
-      const maxItemsPerCart = settingsData.find(s => s.settingKey === 'maxItemsPerCart')?.value as number ?? 50;
-      const autoCleanupAbandoned = settingsData.find(s => s.settingKey === 'autoCleanupAbandoned')?.value as boolean ?? true;
+    if (settingsData && settingsMap.size > 0) {
+      const cartsPerPage = (settingsMap.get('cartsPerPage') as number) ?? 20;
+      const expiryDays = (settingsMap.get('expiryDays') as number) ?? 7;
+      const maxItemsPerCart = (settingsMap.get('maxItemsPerCart') as number) ?? 50;
+      const autoCleanupAbandoned = (settingsMap.get('autoCleanupAbandoned') as boolean) ?? true;
       setLocalSettings({ cartsPerPage, expiryDays, maxItemsPerCart, autoCleanupAbandoned });
     }
-  }, [settingsData]);
+  }, [settingsData, settingsMap]);
 
   // Server state for comparison
   const serverFeatures = useMemo(() => {
@@ -126,31 +132,41 @@ export default function CartModuleConfigPage() {
     return cartItemFieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
   }, [cartItemFieldsData]);
 
+  // FIX Issue #9: Use Map lookup for server settings comparison
   const serverSettings = useMemo(() => {
-    const cartsPerPage = settingsData?.find(s => s.settingKey === 'cartsPerPage')?.value as number ?? 20;
-    const expiryDays = settingsData?.find(s => s.settingKey === 'expiryDays')?.value as number ?? 7;
-    const maxItemsPerCart = settingsData?.find(s => s.settingKey === 'maxItemsPerCart')?.value as number ?? 50;
-    const autoCleanupAbandoned = settingsData?.find(s => s.settingKey === 'autoCleanupAbandoned')?.value as boolean ?? true;
+    const cartsPerPage = (settingsMap.get('cartsPerPage') as number) ?? 20;
+    const expiryDays = (settingsMap.get('expiryDays') as number) ?? 7;
+    const maxItemsPerCart = (settingsMap.get('maxItemsPerCart') as number) ?? 50;
+    const autoCleanupAbandoned = (settingsMap.get('autoCleanupAbandoned') as boolean) ?? true;
     return { cartsPerPage, expiryDays, maxItemsPerCart, autoCleanupAbandoned };
-  }, [settingsData]);
+  }, [settingsMap]);
 
-  // Check for changes
+  // FIX Issue #9: Convert server fields to Maps for O(1) lookup
+  const serverCartFieldsMap = useMemo(() => {
+    return new Map<string, boolean>(serverCartFields.map(f => [String(f.id), f.enabled]));
+  }, [serverCartFields]);
+
+  const serverItemFieldsMap = useMemo(() => {
+    return new Map<string, boolean>(serverItemFields.map(f => [String(f.id), f.enabled]));
+  }, [serverItemFields]);
+
+  // Check for changes using Map lookups
   const hasChanges = useMemo(() => {
     const featuresChanged = Object.keys(localFeatures).some(key => localFeatures[key] !== serverFeatures[key]);
     const cartFieldsChanged = localCartFields.some(f => {
-      const server = serverCartFields.find(s => s.id === f.id);
-      return server && f.enabled !== server.enabled;
+      const serverEnabled = serverCartFieldsMap.get(f.id);
+      return serverEnabled !== undefined && f.enabled !== serverEnabled;
     });
     const itemFieldsChanged = localItemFields.some(f => {
-      const server = serverItemFields.find(s => s.id === f.id);
-      return server && f.enabled !== server.enabled;
+      const serverEnabled = serverItemFieldsMap.get(f.id);
+      return serverEnabled !== undefined && f.enabled !== serverEnabled;
     });
     const settingsChanged = localSettings.cartsPerPage !== serverSettings.cartsPerPage ||
                            localSettings.expiryDays !== serverSettings.expiryDays ||
                            localSettings.maxItemsPerCart !== serverSettings.maxItemsPerCart ||
                            localSettings.autoCleanupAbandoned !== serverSettings.autoCleanupAbandoned;
     return featuresChanged || cartFieldsChanged || itemFieldsChanged || settingsChanged;
-  }, [localFeatures, serverFeatures, localCartFields, serverCartFields, localItemFields, serverItemFields, localSettings, serverSettings]);
+  }, [localFeatures, serverFeatures, localCartFields, serverCartFieldsMap, localItemFields, serverItemFieldsMap, localSettings, serverSettings]);
 
   const handleToggleFeature = (key: string) => {
     setLocalFeatures(prev => ({ ...prev, [key]: !prev[key] }));
@@ -181,17 +197,17 @@ export default function CartModuleConfigPage() {
           await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
         }
       }
-      // Save cart fields
+      // Save cart fields - FIX: Use Map lookup instead of Array.find()
       for (const field of localCartFields) {
-        const server = serverCartFields.find(s => s.id === field.id);
-        if (server && field.enabled !== server.enabled) {
+        const serverEnabled = serverCartFieldsMap.get(field.id);
+        if (serverEnabled !== undefined && field.enabled !== serverEnabled) {
           await updateField({ id: field.id as any, enabled: field.enabled });
         }
       }
-      // Save item fields
+      // Save item fields - FIX: Use Map lookup instead of Array.find()
       for (const field of localItemFields) {
-        const server = serverItemFields.find(s => s.id === field.id);
-        if (server && field.enabled !== server.enabled) {
+        const serverEnabled = serverItemFieldsMap.get(field.id);
+        if (serverEnabled !== undefined && field.enabled !== serverEnabled) {
           await updateField({ id: field.id as any, enabled: field.enabled });
         }
       }
@@ -251,16 +267,16 @@ export default function CartModuleConfigPage() {
     return map;
   }, [customersData]);
 
-  // Statistics
+  // FIX: Use statsData from server for efficient statistics
   const stats = useMemo(() => {
-    const total = cartsData?.length ?? 0;
-    const active = cartsData?.filter(c => c.status === 'Active').length ?? 0;
-    const abandoned = cartsData?.filter(c => c.status === 'Abandoned').length ?? 0;
-    const converted = cartsData?.filter(c => c.status === 'Converted').length ?? 0;
-    const totalValue = cartsData?.filter(c => c.status === 'Active').reduce((sum, c) => sum + c.totalAmount, 0) ?? 0;
+    const total = statsData?.total ?? cartsData?.length ?? 0;
+    const active = statsData?.active ?? cartsData?.filter(c => c.status === 'Active').length ?? 0;
+    const abandoned = statsData?.abandoned ?? cartsData?.filter(c => c.status === 'Abandoned').length ?? 0;
+    const converted = statsData?.converted ?? cartsData?.filter(c => c.status === 'Converted').length ?? 0;
+    const totalValue = statsData?.totalValue ?? cartsData?.filter(c => c.status === 'Active').reduce((sum, c) => sum + c.totalAmount, 0) ?? 0;
     const totalItems = cartItemsData?.length ?? 0;
     return { total, active, abandoned, converted, totalValue, totalItems };
-  }, [cartsData, cartItemsData]);
+  }, [statsData, cartsData, cartItemsData]);
 
   if (isLoading) {
     return (

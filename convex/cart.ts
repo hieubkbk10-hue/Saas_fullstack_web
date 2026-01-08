@@ -2,6 +2,15 @@ import { query, mutation, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 
+// ============ CONSTANTS ============
+const CART_DEFAULTS = {
+  ITEMS_PER_PAGE: 20,
+  MAX_ITEMS_PER_PAGE: 100,
+  EXPIRY_DAYS: 7,
+  MAX_ITEMS_PER_CART: 50,
+  CLEANUP_BATCH_SIZE: 100,
+} as const;
+
 const cartStatus = v.union(
   v.literal("Active"),
   v.literal("Converted"),
@@ -34,33 +43,66 @@ const cartItemDoc = v.object({
 
 // ============ CART QUERIES ============
 
+// FIX Issue #1: Added limit parameter with default
 export const listAll = query({
-  args: {},
-  returns: v.array(cartDoc),
-  handler: async (ctx) => {
-    return await ctx.db.query("carts").collect();
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? CART_DEFAULTS.ITEMS_PER_PAGE, CART_DEFAULTS.MAX_ITEMS_PER_PAGE);
+    return await ctx.db
+      .query("carts")
+      .order("desc")
+      .take(limit);
+  },
+});
+
+// FIX Issue #1: Added paginated query for server-side pagination (Issue #7)
+export const listPaginated = query({
+  args: {
+    status: v.optional(cartStatus),
+    limit: v.optional(v.number()),
+    cursor: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? CART_DEFAULTS.ITEMS_PER_PAGE, CART_DEFAULTS.MAX_ITEMS_PER_PAGE);
+    
+    const results = args.status
+      ? await ctx.db.query("carts")
+          .withIndex("by_status", (q) => q.eq("status", args.status!))
+          .order("desc")
+          .paginate({ numItems: limit, cursor: args.cursor ?? null })
+      : await ctx.db.query("carts")
+          .order("desc")
+          .paginate({ numItems: limit, cursor: args.cursor ?? null });
+    
+    return {
+      items: results.page,
+      nextCursor: results.continueCursor,
+      isDone: results.isDone,
+    };
   },
 });
 
 export const listActive = query({
-  args: {},
-  returns: v.array(cartDoc),
-  handler: async (ctx) => {
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? CART_DEFAULTS.ITEMS_PER_PAGE, CART_DEFAULTS.MAX_ITEMS_PER_PAGE);
     return await ctx.db
       .query("carts")
       .withIndex("by_status", (q) => q.eq("status", "Active"))
-      .collect();
+      .order("desc")
+      .take(limit);
   },
 });
 
 export const listAbandoned = query({
-  args: {},
-  returns: v.array(cartDoc),
-  handler: async (ctx) => {
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? CART_DEFAULTS.ITEMS_PER_PAGE, CART_DEFAULTS.MAX_ITEMS_PER_PAGE);
     return await ctx.db
       .query("carts")
       .withIndex("by_status", (q) => q.eq("status", "Abandoned"))
-      .collect();
+      .order("desc")
+      .take(limit);
   },
 });
 
@@ -96,6 +138,7 @@ export const getBySession = query({
   },
 });
 
+// FIX Issue #3 & #10: Added limit to prevent fetching ALL
 export const countByStatus = query({
   args: { status: cartStatus },
   returns: v.number(),
@@ -103,23 +146,26 @@ export const countByStatus = query({
     const carts = await ctx.db
       .query("carts")
       .withIndex("by_status", (q) => q.eq("status", args.status))
-      .collect();
+      .take(10000);
     return carts.length;
   },
 });
 
+// FIX Issue #10: Added limit to prevent fetching ALL
 export const getTotalValue = query({
-  args: {},
+  args: { limit: v.optional(v.number()) },
   returns: v.number(),
-  handler: async (ctx) => {
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 1000;
     const carts = await ctx.db
       .query("carts")
       .withIndex("by_status", (q) => q.eq("status", "Active"))
-      .collect();
+      .take(limit);
     return carts.reduce((sum, cart) => sum + cart.totalAmount, 0);
   },
 });
 
+// FIX Issue #3: Added limit to prevent fetching ALL
 export const count = query({
   args: { status: v.optional(cartStatus) },
   returns: v.number(),
@@ -128,11 +174,33 @@ export const count = query({
       const carts = await ctx.db
         .query("carts")
         .withIndex("by_status", (q) => q.eq("status", args.status!))
-        .collect();
+        .take(10000);
       return carts.length;
     }
-    const carts = await ctx.db.query("carts").collect();
+    const carts = await ctx.db.query("carts").take(10000);
     return carts.length;
+  },
+});
+
+// Get statistics efficiently - all counts in one query
+export const getStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const [active, abandoned, converted] = await Promise.all([
+      ctx.db.query("carts").withIndex("by_status", (q) => q.eq("status", "Active")).take(10000),
+      ctx.db.query("carts").withIndex("by_status", (q) => q.eq("status", "Abandoned")).take(10000),
+      ctx.db.query("carts").withIndex("by_status", (q) => q.eq("status", "Converted")).take(10000),
+    ]);
+    
+    const totalValue = active.reduce((sum, cart) => sum + cart.totalAmount, 0);
+    
+    return {
+      total: active.length + abandoned.length + converted.length,
+      active: active.length,
+      abandoned: abandoned.length,
+      converted: converted.length,
+      totalValue,
+    };
   },
 });
 
@@ -149,11 +217,22 @@ export const listCartItems = query({
   },
 });
 
+// FIX Issue #2: Added limit to prevent fetching ALL items
 export const listAllItems = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? CART_DEFAULTS.ITEMS_PER_PAGE, CART_DEFAULTS.MAX_ITEMS_PER_PAGE);
+    return await ctx.db.query("cartItems").order("desc").take(limit);
+  },
+});
+
+// Count all items efficiently
+export const countAllItems = query({
   args: {},
-  returns: v.array(cartItemDoc),
+  returns: v.number(),
   handler: async (ctx) => {
-    return await ctx.db.query("cartItems").collect();
+    const items = await ctx.db.query("cartItems").take(10000);
+    return items.length;
   },
 });
 
@@ -168,7 +247,6 @@ export const create = mutation({
   },
   returns: v.id("carts"),
   handler: async (ctx, args) => {
-    // Get expiry days setting if expiresAt not provided
     let expiresAt = args.expiresAt;
     if (!expiresAt) {
       const expirySetting = await ctx.db
@@ -176,7 +254,7 @@ export const create = mutation({
         .withIndex("by_module", (q) => q.eq("moduleKey", "cart"))
         .filter((q) => q.eq(q.field("settingKey"), "expiryDays"))
         .first();
-      const expiryDays = (expirySetting?.value as number) ?? 7;
+      const expiryDays = (expirySetting?.value as number) ?? CART_DEFAULTS.EXPIRY_DAYS;
       expiresAt = Date.now() + expiryDays * 24 * 60 * 60 * 1000;
     }
 
@@ -236,6 +314,7 @@ export const markAsConverted = mutation({
   },
 });
 
+// FIX Issue #4: Use Promise.all instead of sequential loop
 export const remove = mutation({
   args: { id: v.id("carts") },
   returns: v.null(),
@@ -243,14 +322,13 @@ export const remove = mutation({
     const cart = await ctx.db.get(args.id);
     if (!cart) throw new Error("Cart not found");
 
-    // Cascade delete cart items
     const items = await ctx.db
       .query("cartItems")
       .withIndex("by_cart", (q) => q.eq("cartId", args.id))
       .collect();
-    for (const item of items) {
-      await ctx.db.delete(item._id);
-    }
+    
+    // FIX: Parallel delete instead of sequential
+    await Promise.all(items.map(item => ctx.db.delete(item._id)));
     await ctx.db.delete(args.id);
     return null;
   },
@@ -258,6 +336,7 @@ export const remove = mutation({
 
 // ============ CART ITEM MUTATIONS ============
 
+// FIX Issue #11: Added quantity validation
 export const addItem = mutation({
   args: {
     cartId: v.id("carts"),
@@ -266,19 +345,23 @@ export const addItem = mutation({
   },
   returns: v.id("cartItems"),
   handler: async (ctx, args) => {
+    // FIX Issue #11: Validate quantity > 0
+    if (args.quantity <= 0) {
+      throw new Error("Quantity must be greater than 0");
+    }
+
     const cart = await ctx.db.get(args.cartId);
     if (!cart) throw new Error("Cart not found");
 
     const product = await ctx.db.get(args.productId);
     if (!product) throw new Error("Product not found");
 
-    // Check maxItemsPerCart setting
     const maxItemsSetting = await ctx.db
       .query("moduleSettings")
       .withIndex("by_module", (q) => q.eq("moduleKey", "cart"))
       .filter((q) => q.eq(q.field("settingKey"), "maxItemsPerCart"))
       .first();
-    const maxItems = (maxItemsSetting?.value as number) ?? 50;
+    const maxItems = (maxItemsSetting?.value as number) ?? CART_DEFAULTS.MAX_ITEMS_PER_CART;
 
     const existingItem = await ctx.db
       .query("cartItems")
@@ -297,7 +380,6 @@ export const addItem = mutation({
       return existingItem._id;
     }
 
-    // Check limit only for new items
     const currentItems = await ctx.db
       .query("cartItems")
       .withIndex("by_cart", (q) => q.eq("cartId", args.cartId))
@@ -359,6 +441,7 @@ export const removeItem = mutation({
   },
 });
 
+// FIX Issue #5: Use Promise.all instead of sequential loop
 export const clearCart = mutation({
   args: { cartId: v.id("carts") },
   returns: v.null(),
@@ -370,15 +453,14 @@ export const clearCart = mutation({
       .query("cartItems")
       .withIndex("by_cart", (q) => q.eq("cartId", args.cartId))
       .collect();
-    for (const item of items) {
-      await ctx.db.delete(item._id);
-    }
+    
+    // FIX: Parallel delete instead of sequential
+    await Promise.all(items.map(item => ctx.db.delete(item._id)));
     await ctx.db.patch(args.cartId, { itemsCount: 0, totalAmount: 0 });
     return null;
   },
 });
 
-// Helper function with proper types
 async function recalculateCart(ctx: MutationCtx, cartId: Id<"carts">) {
   const items = await ctx.db
     .query("cartItems")
@@ -393,6 +475,7 @@ async function recalculateCart(ctx: MutationCtx, cartId: Id<"carts">) {
 
 // ============ CLEANUP MUTATIONS ============
 
+// FIX Issue #6: Use Promise.all with batch size limit
 export const cleanupExpiredCarts = mutation({
   args: {},
   returns: v.number(),
@@ -407,11 +490,12 @@ export const cleanupExpiredCarts = mutation({
           q.lt(q.field("expiresAt"), now)
         )
       )
-      .collect();
+      .take(CART_DEFAULTS.CLEANUP_BATCH_SIZE);
 
-    for (const cart of expiredCarts) {
-      await ctx.db.patch(cart._id, { status: "Abandoned" });
-    }
+    // FIX: Parallel patch instead of sequential
+    await Promise.all(
+      expiredCarts.map(cart => ctx.db.patch(cart._id, { status: "Abandoned" }))
+    );
 
     return expiredCarts.length;
   },
