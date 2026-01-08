@@ -12,18 +12,24 @@ import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'wishlist';
 
+// WL-007 FIX: Thêm requiredModules dependency cho customers và products
 export default function WishlistListPage() {
   return (
-    <ModuleGuard moduleKey="wishlist">
+    <ModuleGuard 
+      moduleKey="wishlist" 
+      requiredModules={["products", "customers"]} 
+      requiredModulesType="all"
+    >
       <WishlistContent />
     </ModuleGuard>
   );
 }
 
 function WishlistContent() {
-  const wishlistData = useQuery(api.wishlist.listAll);
-  const customersData = useQuery(api.customers.listAll, { limit: 100 });
-  const productsData = useQuery(api.products.listAll, {});
+  // WL-004 FIX: Thêm limit để tránh fetch all
+  const wishlistData = useQuery(api.wishlist.listAll, { limit: 500 });
+  const customersData = useQuery(api.customers.listAll, { limit: 200 });
+  const productsData = useQuery(api.products.listAll, { limit: 500 });
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const removeItem = useMutation(api.wishlist.remove);
@@ -154,14 +160,14 @@ function WishlistContent() {
     }
   };
 
+  // WL-006 FIX: Sử dụng Promise.all thay vì sequential delete
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} mục đã chọn?`)) {
       try {
-        for (const id of selectedIds) {
-          await removeItem({ id });
-        }
+        const count = selectedIds.length;
+        await Promise.all(selectedIds.map(id => removeItem({ id })));
         setSelectedIds([]);
-        toast.success(`Đã xóa ${selectedIds.length} mục`);
+        toast.success(`Đã xóa ${count} mục`);
       } catch {
         toast.error('Có lỗi khi xóa');
       }

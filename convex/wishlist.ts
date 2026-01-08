@@ -51,31 +51,29 @@ const wishlistDoc = v.object({
 });
 
 // Queries
+// WL-001 FIX: Thêm limit parameter để tránh fetch all
 export const listAll = query({
-  args: {},
-  returns: v.array(wishlistDoc),
-  handler: async (ctx) => {
-    return await ctx.db.query("wishlist").collect();
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit || 100, 500);
+    return await ctx.db.query("wishlist").take(limit);
   },
 });
 
 export const list = query({
   args: { paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(wishlistDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
   handler: async (ctx, args) => {
     return await ctx.db.query("wishlist").paginate(args.paginationOpts);
   },
 });
 
+// WL-001 FIX: Thêm limit để tránh fetch all chỉ để count
 export const count = query({
-  args: {},
+  args: { limit: v.optional(v.number()) },
   returns: v.number(),
-  handler: async (ctx) => {
-    const items = await ctx.db.query("wishlist").collect();
+  handler: async (ctx, args) => {
+    const limit = args.limit || 10000;
+    const items = await ctx.db.query("wishlist").take(limit);
     return items.length;
   },
 });
@@ -88,48 +86,66 @@ export const getById = query({
   },
 });
 
+// WL-005 FIX: Thêm limit parameter
 export const listByCustomer = query({
-  args: { customerId: v.id("customers") },
-  returns: v.array(wishlistDoc),
+  args: { 
+    customerId: v.id("customers"),
+    limit: v.optional(v.number())
+  },
   handler: async (ctx, args) => {
+    const limit = Math.min(args.limit || 50, 200);
     return await ctx.db
       .query("wishlist")
       .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
-      .collect();
+      .take(limit);
   },
 });
 
+// WL-005 FIX: Thêm limit parameter
 export const listByProduct = query({
-  args: { productId: v.id("products") },
-  returns: v.array(wishlistDoc),
+  args: { 
+    productId: v.id("products"),
+    limit: v.optional(v.number())
+  },
   handler: async (ctx, args) => {
+    const limit = Math.min(args.limit || 50, 200);
     return await ctx.db
       .query("wishlist")
       .withIndex("by_product", (q) => q.eq("productId", args.productId))
-      .collect();
+      .take(limit);
   },
 });
 
+// WL-003 FIX: Thêm limit để giới hạn fetch
 export const countByCustomer = query({
-  args: { customerId: v.id("customers") },
+  args: { 
+    customerId: v.id("customers"),
+    limit: v.optional(v.number())
+  },
   returns: v.number(),
   handler: async (ctx, args) => {
+    const limit = args.limit || 1000;
     const items = await ctx.db
       .query("wishlist")
       .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
-      .collect();
+      .take(limit);
     return items.length;
   },
 });
 
+// WL-003 FIX: Thêm limit để giới hạn fetch
 export const countByProduct = query({
-  args: { productId: v.id("products") },
+  args: { 
+    productId: v.id("products"),
+    limit: v.optional(v.number())
+  },
   returns: v.number(),
   handler: async (ctx, args) => {
+    const limit = args.limit || 1000;
     const items = await ctx.db
       .query("wishlist")
       .withIndex("by_product", (q) => q.eq("productId", args.productId))
-      .collect();
+      .take(limit);
     return items.length;
   },
 });
@@ -211,6 +227,7 @@ export const removeByCustomerProduct = mutation({
   },
 });
 
+// WL-002 FIX: Sử dụng Promise.all thay vì sequential deletes
 export const clearByCustomer = mutation({
   args: { customerId: v.id("customers") },
   returns: v.null(),
@@ -220,9 +237,7 @@ export const clearByCustomer = mutation({
       .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
       .collect();
     
-    for (const item of items) {
-      await ctx.db.delete(item._id);
-    }
+    await Promise.all(items.map((item) => ctx.db.delete(item._id)));
     return null;
   },
 });

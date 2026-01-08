@@ -33,10 +33,10 @@ export default function WishlistModuleConfigPage() {
   const fieldsData = useQuery(api.admin.modules.listModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
 
-  // Data tab queries
-  const wishlistData = useQuery(api.wishlist.listAll);
-  const customersData = useQuery(api.customers.listAll, { limit: 100 });
-  const productsData = useQuery(api.products.listAll, {});
+  // WL-008 FIX: Lazy load data queries - chỉ fetch khi ở tab 'data'
+  const wishlistData = useQuery(api.wishlist.listAll, activeTab === 'data' ? { limit: 100 } : 'skip');
+  const customersData = useQuery(api.customers.listAll, activeTab === 'data' ? { limit: 100 } : 'skip');
+  const productsData = useQuery(api.products.listAll, activeTab === 'data' ? { limit: 100 } : 'skip');
 
   // Mutations
   const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
@@ -161,29 +161,47 @@ export default function WishlistModuleConfigPage() {
     }
   };
 
-  // Data tab handlers
+  // WL-010 FIX: Thêm error handling cho data tab handlers
   const handleSeedData = async () => {
-    toast.loading('Đang tạo dữ liệu mẫu...');
-    await seedWishlistModule();
-    toast.dismiss();
-    toast.success('Đã tạo dữ liệu mẫu thành công!');
+    try {
+      toast.loading('Đang tạo dữ liệu mẫu...');
+      await seedWishlistModule();
+      toast.dismiss();
+      toast.success('Đã tạo dữ liệu mẫu thành công!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error('Có lỗi xảy ra khi tạo dữ liệu mẫu');
+      console.error('Seed error:', error);
+    }
   };
 
   const handleClearData = async () => {
     if (!confirm('Xóa toàn bộ dữ liệu wishlist?')) return;
-    toast.loading('Đang xóa dữ liệu...');
-    await clearWishlistData();
-    toast.dismiss();
-    toast.success('Đã xóa toàn bộ dữ liệu!');
+    try {
+      toast.loading('Đang xóa dữ liệu...');
+      await clearWishlistData();
+      toast.dismiss();
+      toast.success('Đã xóa toàn bộ dữ liệu!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error('Có lỗi xảy ra khi xóa dữ liệu');
+      console.error('Clear error:', error);
+    }
   };
 
   const handleResetData = async () => {
     if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
-    toast.loading('Đang reset dữ liệu...');
-    await clearWishlistData();
-    await seedWishlistModule();
-    toast.dismiss();
-    toast.success('Đã reset dữ liệu thành công!');
+    try {
+      toast.loading('Đang reset dữ liệu...');
+      await clearWishlistData();
+      await seedWishlistModule();
+      toast.dismiss();
+      toast.success('Đã reset dữ liệu thành công!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error('Có lỗi xảy ra khi reset dữ liệu');
+      console.error('Reset error:', error);
+    }
   };
 
   // Stats & Maps
