@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { contentStatus } from "./lib/validators";
+import * as PostsModel from "./model/posts";
 
 const postDoc = v.object({
   _id: v.id("posts"),
@@ -31,27 +32,34 @@ export const list = query({
   },
 });
 
+// Limited list for admin (max 100 items - use pagination for more)
 export const listAll = query({
-  args: {},
+  args: { limit: v.optional(v.number()) },
   returns: v.array(postDoc),
-  handler: async (ctx) => {
-    return await ctx.db.query("posts").collect();
+  handler: async (ctx, args) => {
+    return await PostsModel.listWithLimit(ctx, { limit: args.limit });
   },
 });
 
+// Efficient count using take() instead of collect()
 export const count = query({
+  args: { status: v.optional(contentStatus) },
+  returns: v.object({
+    count: v.number(),
+    hasMore: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    return await PostsModel.countWithLimit(ctx, { status: args.status });
+  },
+});
+
+// Legacy count for backward compatibility (returns number)
+export const countSimple = query({
   args: { status: v.optional(contentStatus) },
   returns: v.number(),
   handler: async (ctx, args) => {
-    if (args.status) {
-      const posts = await ctx.db
-        .query("posts")
-        .withIndex("by_status_publishedAt", (q) => q.eq("status", args.status!))
-        .collect();
-      return posts.length;
-    }
-    const posts = await ctx.db.query("posts").collect();
-    return posts.length;
+    const result = await PostsModel.countWithLimit(ctx, { status: args.status });
+    return result.count;
   },
 });
 
@@ -174,20 +182,7 @@ export const create = mutation({
   },
   returns: v.id("posts"),
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("posts")
-      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
-      .unique();
-    if (existing) throw new Error("Slug already exists");
-    const count = (await ctx.db.query("posts").collect()).length;
-    const status = args.status ?? "Draft";
-    return await ctx.db.insert("posts", {
-      ...args,
-      status,
-      views: 0,
-      publishedAt: status === "Published" ? Date.now() : undefined,
-      order: args.order ?? count,
-    });
+    return await PostsModel.create(ctx, args);
   },
 });
 
@@ -205,23 +200,7 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { id, ...updates } = args;
-    const post = await ctx.db.get(id);
-    if (!post) throw new Error("Post not found");
-    if (args.slug && args.slug !== post.slug) {
-      const newSlug = args.slug;
-      const existing = await ctx.db
-        .query("posts")
-        .withIndex("by_slug", (q) => q.eq("slug", newSlug))
-        .unique();
-      if (existing) throw new Error("Slug already exists");
-    }
-    
-    const patchData: Record<string, unknown> = { ...updates };
-    if (args.status === "Published" && post.status !== "Published") {
-      patchData.publishedAt = Date.now();
-    }
-    await ctx.db.patch(id, patchData);
+    await PostsModel.update(ctx, args);
     return null;
   },
 });
@@ -230,9 +209,7 @@ export const incrementViews = mutation({
   args: { id: v.id("posts") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const post = await ctx.db.get(args.id);
-    if (!post) throw new Error("Post not found");
-    await ctx.db.patch(args.id, { views: post.views + 1 });
+    await PostsModel.incrementViews(ctx, args);
     return null;
   },
 });
@@ -241,17 +218,7 @@ export const remove = mutation({
   args: { id: v.id("posts") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Delete related comments
-    const comments = await ctx.db
-      .query("comments")
-      .withIndex("by_target_status", (q) =>
-        q.eq("targetType", "post").eq("targetId", args.id)
-      )
-      .collect();
-    for (const comment of comments) {
-      await ctx.db.delete(comment._id);
-    }
-    await ctx.db.delete(args.id);
+    await PostsModel.remove(ctx, args);
     return null;
   },
 });

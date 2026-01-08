@@ -95,7 +95,7 @@ const MODULE_KEY = 'posts';
 
 export default function PostCreatePage() {
   const router = useRouter();
-  const categoriesData = useQuery(api.postCategories.listAll);
+  const categoriesData = useQuery(api.postCategories.listAll, {});
   const usersData = useQuery(api.users.listAll);
   const createPost = useMutation(api.posts.create);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });

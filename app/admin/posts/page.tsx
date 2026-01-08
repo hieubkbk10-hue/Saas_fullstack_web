@@ -20,8 +20,8 @@ export default function PostsListPage() {
 }
 
 function PostsContent() {
-  const postsData = useQuery(api.posts.listAll);
-  const categoriesData = useQuery(api.postCategories.listAll);
+  const postsData = useQuery(api.posts.listAll, {});
+  const categoriesData = useQuery(api.postCategories.listAll, {});
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'posts' });
   const deletePost = useMutation(api.posts.remove);
   const seedPostsModule = useMutation(api.seed.seedPostsModule);

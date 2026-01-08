@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { commentStatus, targetType } from "./lib/validators";
+import * as CommentsModel from "./model/comments";
 
 const commentDoc = v.object({
   _id: v.id("comments"),
@@ -29,34 +30,32 @@ export const list = query({
   },
 });
 
+// Limited list for admin (max 100 items)
 export const listAll = query({
-  args: {},
+  args: { limit: v.optional(v.number()) },
   returns: v.array(commentDoc),
-  handler: async (ctx) => {
-    return await ctx.db.query("comments").collect();
+  handler: async (ctx, args) => {
+    return await CommentsModel.listWithLimit(ctx, { limit: args.limit });
   },
 });
 
 export const listByTargetType = query({
-  args: { targetType: targetType },
+  args: { targetType: targetType, limit: v.optional(v.number()) },
   returns: v.array(commentDoc),
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("comments")
-      .withIndex("by_target_status", (q) => q.eq("targetType", args.targetType))
-      .collect();
+    return await CommentsModel.listByTargetType(ctx, { 
+      targetType: args.targetType, 
+      limit: args.limit 
+    });
   },
 });
 
+// Efficient count using take()
 export const countByTargetType = query({
   args: { targetType: targetType },
   returns: v.number(),
   handler: async (ctx, args) => {
-    const comments = await ctx.db
-      .query("comments")
-      .withIndex("by_target_status", (q) => q.eq("targetType", args.targetType))
-      .collect();
-    return comments.length;
+    return await CommentsModel.countByTargetType(ctx, { targetType: args.targetType });
   },
 });
 
@@ -64,7 +63,19 @@ export const getById = query({
   args: { id: v.id("comments") },
   returns: v.union(commentDoc, v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    return await CommentsModel.getById(ctx, args);
+  },
+});
+
+// Efficient count
+export const count = query({
+  args: { status: v.optional(commentStatus) },
+  returns: v.object({
+    count: v.number(),
+    hasMore: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    return await CommentsModel.countWithLimit(ctx, { status: args.status });
   },
 });
 
@@ -168,29 +179,7 @@ export const create = mutation({
   },
   returns: v.id("comments"),
   handler: async (ctx, args) => {
-    // Lấy default status từ module settings nếu không truyền status
-    let finalStatus = args.status;
-    if (!finalStatus) {
-      const defaultStatusSetting = await ctx.db
-        .query("moduleSettings")
-        .withIndex("by_module_setting", (q) =>
-          q.eq("moduleKey", "comments").eq("settingKey", "defaultStatus")
-        )
-        .unique();
-      finalStatus = (defaultStatusSetting?.value as "Pending" | "Approved" | "Spam") || "Pending";
-    }
-    
-    return await ctx.db.insert("comments", {
-      content: args.content,
-      authorName: args.authorName,
-      authorEmail: args.authorEmail,
-      authorIp: args.authorIp,
-      targetType: args.targetType,
-      targetId: args.targetId,
-      parentId: args.parentId,
-      customerId: args.customerId,
-      status: finalStatus,
-    });
+    return await CommentsModel.create(ctx, args);
   },
 });
 
@@ -204,19 +193,7 @@ export const update = mutation({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { id, ...updates } = args;
-    const comment = await ctx.db.get(id);
-    if (!comment) throw new Error("Comment not found");
-    
-    const patchData: Record<string, unknown> = {};
-    if (updates.content !== undefined) patchData.content = updates.content;
-    if (updates.authorName !== undefined) patchData.authorName = updates.authorName;
-    if (updates.authorEmail !== undefined) patchData.authorEmail = updates.authorEmail;
-    if (updates.status !== undefined) patchData.status = updates.status;
-    
-    if (Object.keys(patchData).length > 0) {
-      await ctx.db.patch(id, patchData);
-    }
+    await CommentsModel.update(ctx, args);
     return null;
   },
 });
@@ -225,9 +202,7 @@ export const updateStatus = mutation({
   args: { id: v.id("comments"), status: commentStatus },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const comment = await ctx.db.get(args.id);
-    if (!comment) throw new Error("Comment not found");
-    await ctx.db.patch(args.id, { status: args.status });
+    await CommentsModel.updateStatus(ctx, args);
     return null;
   },
 });
@@ -236,7 +211,7 @@ export const approve = mutation({
   args: { id: v.id("comments") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.id, { status: "Approved" });
+    await CommentsModel.approve(ctx, args);
     return null;
   },
 });
@@ -245,7 +220,7 @@ export const markAsSpam = mutation({
   args: { id: v.id("comments") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.id, { status: "Spam" });
+    await CommentsModel.markAsSpam(ctx, args);
     return null;
   },
 });
@@ -254,9 +229,7 @@ export const bulkUpdateStatus = mutation({
   args: { ids: v.array(v.id("comments")), status: commentStatus },
   returns: v.null(),
   handler: async (ctx, args) => {
-    for (const id of args.ids) {
-      await ctx.db.patch(id, { status: args.status });
-    }
+    await CommentsModel.bulkUpdateStatus(ctx, args);
     return null;
   },
 });
@@ -265,26 +238,16 @@ export const remove = mutation({
   args: { id: v.id("comments") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const children = await ctx.db
-      .query("comments")
-      .withIndex("by_parent", (q) => q.eq("parentId", args.id))
-      .collect();
-    for (const child of children) {
-      await ctx.db.delete(child._id);
-    }
-    await ctx.db.delete(args.id);
+    await CommentsModel.remove(ctx, args);
     return null;
   },
 });
 
+// Efficient count pending using take()
 export const countPending = query({
   args: {},
   returns: v.number(),
   handler: async (ctx) => {
-    const pending = await ctx.db
-      .query("comments")
-      .withIndex("by_status", (q) => q.eq("status", "Pending"))
-      .collect();
-    return pending.length;
+    return await CommentsModel.countPending(ctx);
   },
 });

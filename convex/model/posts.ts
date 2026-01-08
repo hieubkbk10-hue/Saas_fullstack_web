@@ -1,0 +1,248 @@
+import { QueryCtx, MutationCtx } from "../_generated/server";
+import { Doc, Id } from "../_generated/dataModel";
+
+// ============================================================
+// HELPER FUNCTIONS - Posts Model Layer
+// ============================================================
+
+const MAX_ITEMS_LIMIT = 100;
+
+/**
+ * Get post by ID with null check
+ */
+export async function getById(
+  ctx: QueryCtx,
+  { id }: { id: Id<"posts"> }
+): Promise<Doc<"posts"> | null> {
+  return await ctx.db.get(id);
+}
+
+/**
+ * Get post by ID or throw error
+ */
+export async function getByIdOrThrow(
+  ctx: QueryCtx,
+  { id }: { id: Id<"posts"> }
+): Promise<Doc<"posts">> {
+  const post = await ctx.db.get(id);
+  if (!post) throw new Error("Post not found");
+  return post;
+}
+
+/**
+ * Get post by slug
+ */
+export async function getBySlug(
+  ctx: QueryCtx,
+  { slug }: { slug: string }
+): Promise<Doc<"posts"> | null> {
+  return await ctx.db
+    .query("posts")
+    .withIndex("by_slug", (q) => q.eq("slug", slug))
+    .unique();
+}
+
+/**
+ * Check if slug exists (excluding specific ID)
+ */
+export async function isSlugExists(
+  ctx: QueryCtx,
+  { slug, excludeId }: { slug: string; excludeId?: Id<"posts"> }
+): Promise<boolean> {
+  const existing = await ctx.db
+    .query("posts")
+    .withIndex("by_slug", (q) => q.eq("slug", slug))
+    .unique();
+  if (!existing) return false;
+  if (excludeId && existing._id === excludeId) return false;
+  return true;
+}
+
+/**
+ * List posts with limit (for admin listing without pagination)
+ * Use take() instead of collect() to limit results
+ */
+export async function listWithLimit(
+  ctx: QueryCtx,
+  { limit = MAX_ITEMS_LIMIT }: { limit?: number } = {}
+): Promise<Doc<"posts">[]> {
+  return await ctx.db
+    .query("posts")
+    .order("desc")
+    .take(Math.min(limit, MAX_ITEMS_LIMIT));
+}
+
+/**
+ * List posts by status with limit
+ */
+export async function listByStatus(
+  ctx: QueryCtx,
+  { status, limit = MAX_ITEMS_LIMIT }: { status: Doc<"posts">["status"]; limit?: number }
+): Promise<Doc<"posts">[]> {
+  return await ctx.db
+    .query("posts")
+    .withIndex("by_status_publishedAt", (q) => q.eq("status", status))
+    .order("desc")
+    .take(Math.min(limit, MAX_ITEMS_LIMIT));
+}
+
+/**
+ * List posts by category with limit
+ */
+export async function listByCategory(
+  ctx: QueryCtx,
+  { categoryId, limit = MAX_ITEMS_LIMIT }: { categoryId: Id<"postCategories">; limit?: number }
+): Promise<Doc<"posts">[]> {
+  return await ctx.db
+    .query("posts")
+    .withIndex("by_category_status", (q) => q.eq("categoryId", categoryId))
+    .take(Math.min(limit, MAX_ITEMS_LIMIT));
+}
+
+/**
+ * Count posts efficiently using take() and checking length
+ * Returns actual count up to limit, or "limit+" indicator
+ */
+export async function countWithLimit(
+  ctx: QueryCtx,
+  { status, limit = 1000 }: { status?: Doc<"posts">["status"]; limit?: number } = {}
+): Promise<{ count: number; hasMore: boolean }> {
+  const query = status
+    ? ctx.db.query("posts").withIndex("by_status_publishedAt", (q) => q.eq("status", status))
+    : ctx.db.query("posts");
+  
+  const items = await query.take(limit + 1);
+  return {
+    count: Math.min(items.length, limit),
+    hasMore: items.length > limit,
+  };
+}
+
+/**
+ * Count posts by category
+ */
+export async function countByCategory(
+  ctx: QueryCtx,
+  { categoryId }: { categoryId: Id<"postCategories"> }
+): Promise<number> {
+  const posts = await ctx.db
+    .query("posts")
+    .withIndex("by_category_status", (q) => q.eq("categoryId", categoryId))
+    .take(1000);
+  return posts.length;
+}
+
+/**
+ * Get next order value
+ */
+export async function getNextOrder(ctx: QueryCtx): Promise<number> {
+  const lastPost = await ctx.db.query("posts").order("desc").first();
+  return lastPost ? lastPost.order + 1 : 0;
+}
+
+/**
+ * Create post
+ */
+export async function create(
+  ctx: MutationCtx,
+  args: {
+    title: string;
+    slug: string;
+    content: string;
+    excerpt?: string;
+    thumbnail?: string;
+    categoryId: Id<"postCategories">;
+    authorId: Id<"users">;
+    status?: Doc<"posts">["status"];
+    order?: number;
+  }
+): Promise<Id<"posts">> {
+  if (await isSlugExists(ctx, { slug: args.slug })) {
+    throw new Error("Slug already exists");
+  }
+
+  const order = args.order ?? (await getNextOrder(ctx));
+  const status = args.status ?? "Draft";
+
+  return await ctx.db.insert("posts", {
+    title: args.title,
+    slug: args.slug,
+    content: args.content,
+    excerpt: args.excerpt,
+    thumbnail: args.thumbnail,
+    categoryId: args.categoryId,
+    authorId: args.authorId,
+    status,
+    views: 0,
+    publishedAt: status === "Published" ? Date.now() : undefined,
+    order,
+  });
+}
+
+/**
+ * Update post
+ */
+export async function update(
+  ctx: MutationCtx,
+  args: {
+    id: Id<"posts">;
+    title?: string;
+    slug?: string;
+    content?: string;
+    excerpt?: string;
+    thumbnail?: string;
+    categoryId?: Id<"postCategories">;
+    status?: Doc<"posts">["status"];
+    order?: number;
+  }
+): Promise<void> {
+  const post = await getByIdOrThrow(ctx, { id: args.id });
+
+  if (args.slug && args.slug !== post.slug) {
+    if (await isSlugExists(ctx, { slug: args.slug, excludeId: args.id })) {
+      throw new Error("Slug already exists");
+    }
+  }
+
+  const { id, ...updates } = args;
+  const patchData: Record<string, unknown> = { ...updates };
+
+  if (args.status === "Published" && post.status !== "Published") {
+    patchData.publishedAt = Date.now();
+  }
+
+  await ctx.db.patch(id, patchData);
+}
+
+/**
+ * Delete post and related comments
+ */
+export async function remove(
+  ctx: MutationCtx,
+  { id }: { id: Id<"posts"> }
+): Promise<void> {
+  // Delete related comments
+  const comments = await ctx.db
+    .query("comments")
+    .withIndex("by_target_status", (q) =>
+      q.eq("targetType", "post").eq("targetId", id)
+    )
+    .collect();
+
+  for (const comment of comments) {
+    await ctx.db.delete(comment._id);
+  }
+
+  await ctx.db.delete(id);
+}
+
+/**
+ * Increment views
+ */
+export async function incrementViews(
+  ctx: MutationCtx,
+  { id }: { id: Id<"posts"> }
+): Promise<void> {
+  const post = await getByIdOrThrow(ctx, { id });
+  await ctx.db.patch(id, { views: post.views + 1 });
+}

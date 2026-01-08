@@ -25,7 +25,7 @@ function EditCommentContent() {
   const commentId = params.id as Id<"comments">;
 
   const commentData = useQuery(api.comments.getById, { id: commentId });
-  const postsData = useQuery(api.posts.listAll);
+  const postsData = useQuery(api.posts.listAll, {});
   const productsData = useQuery(api.products.listAll);
   const updateComment = useMutation(api.comments.update);
 
@@ -78,7 +78,6 @@ function EditCommentContent() {
         status: formData.status,
       });
       toast.success('Đã cập nhật bình luận!');
-      router.push('/admin/comments');
     } catch (error) {
       toast.error('Có lỗi xảy ra khi cập nhật');
       console.error(error);

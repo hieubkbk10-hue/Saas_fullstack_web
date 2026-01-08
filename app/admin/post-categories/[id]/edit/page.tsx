@@ -18,7 +18,7 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
   const router = useRouter();
   
   const categoryData = useQuery(api.postCategories.getById, { id: id as Id<"postCategories"> });
-  const postsData = useQuery(api.posts.listAll);
+  const postsData = useQuery(api.posts.listAll, {});
   const updateCategory = useMutation(api.postCategories.update);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   
@@ -78,7 +78,6 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
         active,
       });
       toast.success("Đã cập nhật danh mục");
-      router.push('/admin/post-categories');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể cập nhật danh mục");
     } finally {

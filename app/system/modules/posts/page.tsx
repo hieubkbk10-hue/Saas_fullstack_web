@@ -35,9 +35,9 @@ export default function PostsModuleConfigPage() {
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
 
   // Data tab queries
-  const postsData = useQuery(api.posts.listAll);
-  const categoriesData = useQuery(api.postCategories.listAll);
-  const commentsData = useQuery(api.comments.listAll);
+  const postsData = useQuery(api.posts.listAll, {});
+  const categoriesData = useQuery(api.postCategories.listAll, {});
+  const commentsData = useQuery(api.comments.listAll, {});
 
   const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
   const updateField = useMutation(api.admin.modules.updateModuleField);

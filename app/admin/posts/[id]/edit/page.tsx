@@ -98,7 +98,7 @@ export default function PostEditPage({ params }: { params: Promise<{ id: string 
   const router = useRouter();
 
   const postData = useQuery(api.posts.getById, { id: id as Id<"posts"> });
-  const categoriesData = useQuery(api.postCategories.listAll);
+  const categoriesData = useQuery(api.postCategories.listAll, {});
   const updatePost = useMutation(api.posts.update);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
 
@@ -148,7 +148,6 @@ export default function PostEditPage({ params }: { params: Promise<{ id: string 
         status,
       });
       toast.success("Cập nhật bài viết thành công");
-      router.push('/admin/posts');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể cập nhật bài viết");
     } finally {

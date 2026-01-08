@@ -20,8 +20,8 @@ export default function PostCategoriesListPage() {
 }
 
 function PostCategoriesContent() {
-  const categoriesData = useQuery(api.postCategories.listAll);
-  const postsData = useQuery(api.posts.listAll);
+  const categoriesData = useQuery(api.postCategories.listAll, {});
+  const postsData = useQuery(api.posts.listAll, {});
   const deleteCategory = useMutation(api.postCategories.remove);
   const seedPostsModule = useMutation(api.seed.seedPostsModule);
   const clearPostsData = useMutation(api.seed.clearPostsData);
