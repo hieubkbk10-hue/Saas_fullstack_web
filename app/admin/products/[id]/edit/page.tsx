@@ -125,7 +125,16 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Tên sản phẩm <span className="text-red-500">*</span></Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Nhập tên sản phẩm..." autoFocus />
+                <Input value={name} onChange={(e) => {
+                  const val = e.target.value;
+                  setName(val);
+                  const generatedSlug = val.toLowerCase()
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                    .replace(/[đĐ]/g, "d")
+                    .replace(/[^a-z0-9\s]/g, '')
+                    .replace(/\s+/g, '-');
+                  setSlug(generatedSlug);
+                }} required placeholder="Nhập tên sản phẩm..." autoFocus />
               </div>
               <div className={enabledFields.has('sku') ? "grid grid-cols-2 gap-4" : ""}>
                 <div className="space-y-2">

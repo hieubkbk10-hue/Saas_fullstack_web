@@ -20,11 +20,6 @@ const commentDoc = v.object({
 
 export const list = query({
   args: { paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(commentDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
   handler: async (ctx, args) => {
     return await ctx.db.query("comments").paginate(args.paginationOpts);
   },
@@ -57,6 +52,8 @@ export const listByTargetTypePaginated = query({
     page: v.array(commentDoc),
     isDone: v.boolean(),
     continueCursor: v.string(),
+    pageStatus: v.optional(v.union(v.literal("SplitRecommended"), v.literal("SplitRequired"), v.null())),
+    splitCursor: v.optional(v.union(v.string(), v.null())),
   }),
   handler: async (ctx, args) => {
     return await ctx.db
@@ -106,6 +103,8 @@ export const listByTarget = query({
     page: v.array(commentDoc),
     isDone: v.boolean(),
     continueCursor: v.string(),
+    pageStatus: v.optional(v.union(v.literal("SplitRecommended"), v.literal("SplitRequired"), v.null())),
+    splitCursor: v.optional(v.union(v.string(), v.null())),
   }),
   handler: async (ctx, args) => {
     if (args.status) {
@@ -131,6 +130,8 @@ export const listByStatus = query({
     page: v.array(commentDoc),
     isDone: v.boolean(),
     continueCursor: v.string(),
+    pageStatus: v.optional(v.union(v.literal("SplitRecommended"), v.literal("SplitRequired"), v.null())),
+    splitCursor: v.optional(v.union(v.string(), v.null())),
   }),
   handler: async (ctx, args) => {
     return await ctx.db
@@ -146,6 +147,8 @@ export const listPending = query({
     page: v.array(commentDoc),
     isDone: v.boolean(),
     continueCursor: v.string(),
+    pageStatus: v.optional(v.union(v.literal("SplitRecommended"), v.literal("SplitRequired"), v.null())),
+    splitCursor: v.optional(v.union(v.string(), v.null())),
   }),
   handler: async (ctx, args) => {
     return await ctx.db
@@ -173,6 +176,8 @@ export const listByCustomer = query({
     page: v.array(commentDoc),
     isDone: v.boolean(),
     continueCursor: v.string(),
+    pageStatus: v.optional(v.union(v.literal("SplitRecommended"), v.literal("SplitRequired"), v.null())),
+    splitCursor: v.optional(v.union(v.string(), v.null())),
   }),
   handler: async (ctx, args) => {
     return await ctx.db

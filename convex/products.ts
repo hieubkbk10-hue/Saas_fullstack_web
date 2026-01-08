@@ -27,11 +27,6 @@ const productDoc = v.object({
 
 export const list = query({
   args: { paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(productDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
   handler: async (ctx, args) => {
     return await ctx.db.query("products").paginate(args.paginationOpts);
   },
@@ -118,11 +113,6 @@ export const listByCategory = query({
     status: v.optional(productStatus),
     paginationOpts: paginationOptsValidator,
   },
-  returns: v.object({
-    page: v.array(productDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
   handler: async (ctx, args) => {
     if (args.status) {
       return await ctx.db
@@ -141,11 +131,6 @@ export const listByCategory = query({
 
 export const listByStatus = query({
   args: { status: productStatus, paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(productDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("products")
@@ -157,11 +142,6 @@ export const listByStatus = query({
 // FIX #9: Add filter for threshold
 export const listLowStock = query({
   args: { threshold: v.number(), paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(productDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
   handler: async (ctx, args) => {
     const result = await ctx.db
       .query("products")
@@ -174,11 +154,6 @@ export const listLowStock = query({
 
 export const listBestSellers = query({
   args: { paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(productDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("products")
