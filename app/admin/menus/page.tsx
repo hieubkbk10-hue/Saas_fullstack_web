@@ -6,13 +6,14 @@ import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { 
-  Button, Card, CardHeader, CardTitle, CardContent, Input, Label, cn, Badge
+  Button, Card, CardHeader, CardTitle, CardContent, Input, Label, cn
 } from '../components/ui';
 import { ModuleGuard } from '../components/ModuleGuard';
 import { 
   Plus, Trash2, Save, ArrowUp, ArrowDown, GripVertical, ChevronRight, 
   Menu, Loader2, RefreshCw, ExternalLink, Eye, EyeOff, ChevronLeft
 } from 'lucide-react';
+import { MenuPreview } from './MenuPreview';
 
 const MODULE_KEY = 'menus';
 
@@ -43,16 +44,10 @@ function MenuBuilderPage() {
   const seedMenusModule = useMutation(api.seed.seedMenusModule);
   const clearMenusData = useMutation(api.seed.clearMenusData);
 
-  const [selectedMenuId, setSelectedMenuId] = useState<Id<"menus"> | null>(null);
-
   const isLoading = menusData === undefined;
 
-  // Auto-select first menu when data loads
-  React.useEffect(() => {
-    if (menusData && menusData.length > 0 && !selectedMenuId) {
-      setSelectedMenuId(menusData[0]._id);
-    }
-  }, [menusData, selectedMenuId]);
+  // Only get header menu
+  const headerMenu = menusData?.find(m => m.location === 'header');
 
   // TICKET #10 FIX: Show detailed error message
   const handleReset = async () => {
@@ -60,7 +55,6 @@ function MenuBuilderPage() {
       try {
         await clearMenusData();
         await seedMenusModule();
-        setSelectedMenuId(null);
         toast.success('Đã reset dữ liệu menu');
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Có lỗi khi reset dữ liệu');
@@ -80,44 +74,20 @@ function MenuBuilderPage() {
     <div className="max-w-5xl mx-auto space-y-6 pb-20">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Menu Builder</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý menu điều hướng cho website</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Header Menu</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý menu điều hướng chính trên thanh header</p>
         </div>
         <Button variant="outline" className="gap-2" onClick={handleReset}>
           <RefreshCw size={16}/> Reset
         </Button>
       </div>
 
-      {/* Menu Tabs */}
-      {menusData && menusData.length > 0 ? (
-        <>
-          <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
-            {menusData.map(menu => (
-              <button
-                key={menu._id}
-                onClick={() => setSelectedMenuId(menu._id)}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
-                  selectedMenuId === menu._id
-                    ? "border-orange-500 text-orange-600 dark:text-orange-400"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                )}
-              >
-                <Menu size={16} />
-                {menu.name}
-                <Badge variant="secondary" className="text-xs">{menu.location}</Badge>
-              </button>
-            ))}
-          </div>
-
-          {selectedMenuId && (
-            <MenuItemsEditor menuId={selectedMenuId} />
-          )}
-        </>
+      {headerMenu ? (
+        <MenuItemsEditor menuId={headerMenu._id} />
       ) : (
         <Card className="p-8 text-center">
           <Menu className="w-12 h-12 mx-auto mb-4 text-slate-400" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">Chưa có menu nào</h3>
+          <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">Chưa có Header Menu</h3>
           <p className="text-slate-500 mb-4">Nhấn Reset để tạo dữ liệu mẫu</p>
           <Button onClick={handleReset} className="gap-2 bg-orange-600 hover:bg-orange-500">
             <RefreshCw size={16}/> Tạo dữ liệu mẫu
@@ -140,6 +110,8 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
   const [editingItems, setEditingItems] = useState<Map<string, { label: string; url: string }>>(new Map());
   const [isSaving, setIsSaving] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   // Settings from System Config
   const menusPerPage = useMemo(() => {
@@ -192,6 +164,70 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Có lỗi khi sắp xếp');
     }
+  };
+
+  // Drag & Drop handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const newItems = [...items];
+    const updates: { id: Id<"menuItems">; order: number }[] = [];
+
+    if (draggedIndex < dropIndex) {
+      for (let i = draggedIndex; i <= dropIndex; i++) {
+        if (i === draggedIndex) {
+          updates.push({ id: newItems[i]._id, order: newItems[dropIndex].order });
+        } else {
+          updates.push({ id: newItems[i]._id, order: newItems[i].order - 1 });
+        }
+      }
+    } else {
+      for (let i = dropIndex; i <= draggedIndex; i++) {
+        if (i === draggedIndex) {
+          updates.push({ id: newItems[i]._id, order: newItems[dropIndex].order });
+        } else {
+          updates.push({ id: newItems[i]._id, order: newItems[i].order + 1 });
+        }
+      }
+    }
+
+    try {
+      await reorderMenuItems({ items: updates });
+      toast.success('Đã sắp xếp lại menu');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi sắp xếp');
+    }
+
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   // TICKET #10 FIX: Show detailed error message
@@ -314,16 +350,24 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
           return (
             <div 
               key={item._id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, actualIndex)}
+              onDragOver={(e) => handleDragOver(e, actualIndex)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, actualIndex)}
+              onDragEnd={handleDragEnd}
               className={cn(
                 "flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border rounded-lg shadow-sm transition-all",
                 showNested && item.depth === 1 ? "ml-8 border-l-4 border-l-orange-500/30" : "",
                 showNested && item.depth === 2 ? "ml-16 border-l-4 border-l-orange-500/50" : "border-slate-200 dark:border-slate-700",
-                !item.active && "opacity-50"
+                !item.active && "opacity-50",
+                draggedIndex === actualIndex && "opacity-50 scale-[0.98]",
+                dragOverIndex === actualIndex && "border-orange-500 border-2 bg-orange-50 dark:bg-orange-900/20"
               )}
             >
-              <div className="flex flex-col gap-1 text-slate-300">
+              <div className="flex flex-col gap-1 text-slate-300 cursor-grab active:cursor-grabbing">
                 <button type="button" onClick={() => handleMove(actualIndex, 'up')} className="hover:text-orange-600 disabled:opacity-30" disabled={actualIndex === 0}><ArrowUp size={14}/></button>
-                <GripVertical size={14} />
+                <GripVertical size={14} className="text-slate-400" />
                 <button type="button" onClick={() => handleMove(actualIndex, 'down')} className="hover:text-orange-600 disabled:opacity-30" disabled={actualIndex === items.length - 1}><ArrowDown size={14}/></button>
               </div>
               
@@ -487,6 +531,11 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Menu Preview Section */}
+      <div className="lg:col-span-3">
+        <MenuPreview items={items} />
       </div>
     </div>
   );
