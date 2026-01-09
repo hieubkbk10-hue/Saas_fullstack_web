@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { ProductListPreview, BlogPreview } from '../../previews';
 
 function ProductListCreateContent() {
@@ -17,6 +17,7 @@ function ProductListCreateContent() {
   };
   
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm(titles[type], type);
+  const brandColor = useBrandColor();
   
   const [itemCount, setItemCount] = useState(8);
   const [sortBy, setSortBy] = useState('newest');
@@ -66,9 +67,9 @@ function ProductListCreateContent() {
       </Card>
 
       {type === 'Blog' ? (
-        <BlogPreview brandColor={BRAND_COLOR} postCount={itemCount} />
+        <BlogPreview brandColor={brandColor} postCount={itemCount} />
       ) : (
-        <ProductListPreview brandColor={BRAND_COLOR} itemCount={itemCount} componentType={type as 'ProductList' | 'ServiceList'} />
+        <ProductListPreview brandColor={brandColor} itemCount={itemCount} componentType={type as 'ProductList' | 'ServiceList'} />
       )}
     </ComponentFormWrapper>
   );

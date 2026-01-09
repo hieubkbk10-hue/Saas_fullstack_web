@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { 
   Grid, LayoutTemplate, AlertCircle, Package, Briefcase, FileText, 
@@ -35,7 +35,23 @@ export const COMPONENT_TYPES = [
   { value: 'Contact', label: 'Liên hệ', icon: Phone, description: 'Form liên hệ, bản đồ', route: 'contact' },
 ];
 
-export const BRAND_COLOR = '#3b82f6';
+export const DEFAULT_BRAND_COLOR = '#3b82f6';
+
+// Hook lấy brandColor từ settings - dùng cho tất cả Preview components
+// Key trong settings table là 'site_brand_color' (theo moduleFields của settings module)
+export function useBrandColor() {
+  const setting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
+  // setting === undefined: đang loading
+  // setting === null: không có trong DB
+  // setting.value: có data
+  if (setting === undefined || setting === null) {
+    return DEFAULT_BRAND_COLOR;
+  }
+  return (setting.value as string) || DEFAULT_BRAND_COLOR;
+}
+
+// Legacy export - giữ để không breaking change
+export const BRAND_COLOR = DEFAULT_BRAND_COLOR;
 
 export function getComponentType(type: string) {
   return COMPONENT_TYPES.find(t => t.value === type || t.route === type);

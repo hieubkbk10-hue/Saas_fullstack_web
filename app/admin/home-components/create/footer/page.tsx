@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { FooterPreview } from '../../previews';
 
 export default function FooterCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Footer', 'Footer');
+  const brandColor = useBrandColor();
   
   const [footerConfig, setFooterConfig] = useState({
     logo: '',
@@ -67,7 +68,7 @@ export default function FooterCreatePage() {
         </CardContent>
       </Card>
 
-      <FooterPreview config={footerConfig} brandColor={BRAND_COLOR} />
+      <FooterPreview config={footerConfig} brandColor={brandColor} />
     </ComponentFormWrapper>
   );
 }

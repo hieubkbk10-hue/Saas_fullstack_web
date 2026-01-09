@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { HeroBannerPreview } from '../../previews';
 import { MultiImageUploader, ImageItem } from '../../../components/MultiImageUploader';
 
@@ -15,6 +15,7 @@ interface HeroSlide extends ImageItem {
 
 export default function HeroCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Hero Banner', 'Hero');
+  const brandColor = useBrandColor();
   
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([
     { id: 'slide-1', url: '', image: '', link: '' }
@@ -68,7 +69,7 @@ export default function HeroCreatePage() {
         </CardContent>
       </Card>
 
-      <HeroBannerPreview slides={previewSlides} brandColor={BRAND_COLOR} />
+      <HeroBannerPreview slides={previewSlides} brandColor={brandColor} />
     </ComponentFormWrapper>
   );
 }

@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { GalleryPreview } from '../../previews';
 import { MultiImageUploader, ImageItem } from '../../../components/MultiImageUploader';
 
@@ -30,6 +30,7 @@ function GalleryCreateContent() {
   };
   
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm(titles[type], type);
+  const brandColor = useBrandColor();
   
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([
     { id: 'item-1', url: '', link: '' },
@@ -80,7 +81,7 @@ function GalleryCreateContent() {
 
       <GalleryPreview 
         items={galleryItems.map((item, idx) => ({ id: idx + 1, url: item.url, link: item.link }))} 
-        brandColor={BRAND_COLOR} 
+        brandColor={brandColor} 
         componentType={type} 
       />
     </ComponentFormWrapper>

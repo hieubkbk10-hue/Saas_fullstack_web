@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { FaqPreview } from '../../previews';
 
 export default function FaqCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Câu hỏi thường gặp', 'FAQ');
+  const brandColor = useBrandColor();
   
   const [faqItems, setFaqItems] = useState([
     { id: 1, question: 'Làm thế nào để đặt hàng?', answer: 'Bạn có thể đặt hàng trực tuyến qua website hoặc gọi hotline.' },
@@ -63,7 +64,7 @@ export default function FaqCreatePage() {
         </CardContent>
       </Card>
 
-      <FaqPreview items={faqItems} brandColor={BRAND_COLOR} />
+      <FaqPreview items={faqItems} brandColor={brandColor} />
     </ComponentFormWrapper>
   );
 }

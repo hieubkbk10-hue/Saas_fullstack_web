@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { ServicesPreview } from '../../previews';
 
 export default function ServicesCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Dịch vụ chi tiết', 'Services');
+  const brandColor = useBrandColor();
   
   const [servicesItems, setServicesItems] = useState([
     { id: 1, icon: 'Briefcase', title: 'Tư vấn chiến lược', description: 'Đội ngũ chuyên gia giàu kinh nghiệm' },
@@ -63,7 +64,7 @@ export default function ServicesCreatePage() {
         </CardContent>
       </Card>
 
-      <ServicesPreview items={servicesItems} brandColor={BRAND_COLOR} componentType="Services" />
+      <ServicesPreview items={servicesItems} brandColor={brandColor} componentType="Services" />
     </ComponentFormWrapper>
   );
 }

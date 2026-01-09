@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { ContactPreview } from '../../previews';
 
 export default function ContactCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Liên hệ', 'Contact');
+  const brandColor = useBrandColor();
   
   const [contactConfig, setContactConfig] = useState({
     showMap: true,
@@ -89,7 +90,7 @@ export default function ContactCreatePage() {
         </CardContent>
       </Card>
 
-      <ContactPreview config={contactConfig} brandColor={BRAND_COLOR} />
+      <ContactPreview config={contactConfig} brandColor={brandColor} />
     </ComponentFormWrapper>
   );
 }

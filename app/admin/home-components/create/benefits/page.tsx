@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { ServicesPreview } from '../../previews';
 
 export default function BenefitsCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Lợi ích', 'Benefits');
+  const brandColor = useBrandColor();
   
   const [benefitsItems, setBenefitsItems] = useState([
     { id: 1, icon: 'Check', title: 'Chất lượng đảm bảo', description: 'Sản phẩm chính hãng 100%' },
@@ -72,7 +73,7 @@ export default function BenefitsCreatePage() {
         </CardContent>
       </Card>
 
-      <ServicesPreview items={benefitsItems} brandColor={BRAND_COLOR} componentType="Benefits" />
+      <ServicesPreview items={benefitsItems} brandColor={brandColor} componentType="Benefits" />
     </ComponentFormWrapper>
   );
 }

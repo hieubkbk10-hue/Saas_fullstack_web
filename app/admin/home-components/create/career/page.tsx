@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { CareerPreview } from '../../previews';
 
 export default function CareerCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Tuyển dụng', 'Career');
+  const brandColor = useBrandColor();
   
   const [jobPositions, setJobPositions] = useState([
     { id: 1, title: 'Frontend Developer', department: 'Engineering', location: 'Hà Nội', type: 'Full-time', salary: '15-25 triệu', description: '' },
@@ -95,7 +96,7 @@ export default function CareerCreatePage() {
         </CardContent>
       </Card>
 
-      <CareerPreview jobs={jobPositions} brandColor={BRAND_COLOR} />
+      <CareerPreview jobs={jobPositions} brandColor={brandColor} />
     </ComponentFormWrapper>
   );
 }

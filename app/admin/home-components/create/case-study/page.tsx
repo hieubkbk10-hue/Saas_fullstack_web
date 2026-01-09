@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { CaseStudyPreview } from '../../previews';
 import { SettingsImageUploader } from '../../../components/SettingsImageUploader';
 
@@ -18,6 +18,7 @@ interface Project {
 
 export default function CaseStudyCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Dự án thực tế', 'CaseStudy');
+  const brandColor = useBrandColor();
   
   const [projects, setProjects] = useState<Project[]>([
     { id: 'project-1', title: 'Dự án Website ABC Corp', category: 'Website', image: '', description: 'Thiết kế và phát triển website doanh nghiệp', link: '' },
@@ -153,7 +154,7 @@ export default function CaseStudyCreatePage() {
           description: p.description, 
           link: p.link 
         }))} 
-        brandColor={BRAND_COLOR} 
+        brandColor={brandColor} 
       />
     </ComponentFormWrapper>
   );

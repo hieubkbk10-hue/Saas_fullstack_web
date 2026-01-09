@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { PricingPreview } from '../../previews';
 
 export default function PricingCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Bảng giá', 'Pricing');
+  const brandColor = useBrandColor();
   
   const [pricingPlans, setPricingPlans] = useState([
     { id: 1, name: 'Cơ bản', price: '0', period: '/tháng', features: ['Tính năng A', 'Tính năng B'], isPopular: false, buttonText: 'Bắt đầu', buttonLink: '/register' },
@@ -102,7 +103,7 @@ export default function PricingCreatePage() {
         </CardContent>
       </Card>
 
-      <PricingPreview plans={pricingPlans} brandColor={BRAND_COLOR} />
+      <PricingPreview plans={pricingPlans} brandColor={brandColor} />
     </ComponentFormWrapper>
   );
 }

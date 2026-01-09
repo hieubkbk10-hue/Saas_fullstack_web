@@ -118,15 +118,19 @@ const SEED_CUSTOMERS = [
 ];
 
 const SEED_SETTINGS = [
-  { key: "siteName", value: "VietAdmin Shop", group: "general" },
-  { key: "siteDescription", value: "Hệ thống quản trị website chuyên nghiệp", group: "general" },
-  { key: "timezone", value: "GMT+07:00", group: "general" },
-  { key: "brandColor", value: "#3b82f6", group: "general" },
-  { key: "email", value: "contact@vietadmin.com", group: "contact" },
-  { key: "hotline", value: "1900 1234", group: "contact" },
-  { key: "address", value: "123 Nguyễn Huệ, Q.1, TP.HCM", group: "contact" },
-  { key: "metaTitle", value: "VietAdmin - Hệ thống quản trị chuyên nghiệp", group: "seo" },
-  { key: "metaDescription", value: "VietAdmin cung cấp giải pháp quản trị website toàn diện", group: "seo" },
+  // Site settings (key prefix: site_)
+  { key: "site_name", value: "VietAdmin Shop", group: "site" },
+  { key: "site_description", value: "Hệ thống quản trị website chuyên nghiệp", group: "site" },
+  { key: "site_brand_color", value: "#3b82f6", group: "site" },
+  { key: "site_timezone", value: "Asia/Ho_Chi_Minh", group: "site" },
+  { key: "site_language", value: "vi", group: "site" },
+  // Contact settings (key prefix: contact_)
+  { key: "contact_email", value: "contact@vietadmin.com", group: "contact" },
+  { key: "contact_phone", value: "1900 1234", group: "contact" },
+  { key: "contact_address", value: "123 Nguyễn Huệ, Q.1, TP.HCM", group: "contact" },
+  // SEO settings (key prefix: seo_)
+  { key: "seo_title", value: "VietAdmin - Hệ thống quản trị chuyên nghiệp", group: "seo" },
+  { key: "seo_description", value: "VietAdmin cung cấp giải pháp quản trị website toàn diện", group: "seo" },
 ];
 
 // ============================================================

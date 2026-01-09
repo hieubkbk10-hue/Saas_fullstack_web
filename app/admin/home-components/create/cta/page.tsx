@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { CTAPreview } from '../../previews';
 
 export default function CTACreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Kêu gọi hành động (CTA)', 'CTA');
+  const brandColor = useBrandColor();
   
   const [ctaConfig, setCtaConfig] = useState({
     title: 'Sẵn sàng bắt đầu?',
@@ -92,7 +93,7 @@ export default function CTACreatePage() {
         </CardContent>
       </Card>
 
-      <CTAPreview config={ctaConfig} brandColor={BRAND_COLOR} />
+      <CTAPreview config={ctaConfig} brandColor={brandColor} />
     </ComponentFormWrapper>
   );
 }

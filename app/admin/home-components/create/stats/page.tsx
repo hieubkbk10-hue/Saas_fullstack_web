@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { StatsPreview } from '../../previews';
 
 export default function StatsCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Thống kê', 'Stats');
+  const brandColor = useBrandColor();
   
   const [statsItems, setStatsItems] = useState([
     { id: 1, value: '1000+', label: 'Khách hàng' },
@@ -75,7 +76,7 @@ export default function StatsCreatePage() {
         </CardContent>
       </Card>
 
-      <StatsPreview items={statsItems} brandColor={BRAND_COLOR} />
+      <StatsPreview items={statsItems} brandColor={brandColor} />
     </ComponentFormWrapper>
   );
 }

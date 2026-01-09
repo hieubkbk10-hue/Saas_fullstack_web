@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { Id } from '@/convex/_generated/dataModel';
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { 
   Card, CardHeader, CardTitle, CardContent, Input, cn 
 } from '../components/ui';
@@ -9,6 +11,8 @@ import {
   Eye, Phone, Mail, User, Heart, ShoppingCart, Search, Settings, 
   Monitor, Tablet, Smartphone, HelpCircle, ChevronDown as ChevronDownIcon, ChevronRight
 } from 'lucide-react';
+
+const DEFAULT_BRAND_COLOR = '#f97316';
 
 type MenuPreviewDevice = 'desktop' | 'tablet' | 'mobile';
 type MenuPreviewStyle = 'classic' | 'topbar' | 'transparent';
@@ -28,10 +32,17 @@ interface MenuItemWithChildren extends MenuItem {
 
 interface MenuPreviewProps {
   items: MenuItem[];
-  brandColor?: string;
 }
 
-export function MenuPreview({ items, brandColor = '#f97316' }: MenuPreviewProps) {
+export function MenuPreview({ items }: MenuPreviewProps) {
+  // Lấy brandColor từ settings (key: site_brand_color theo moduleFields)
+  const setting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
+  // setting === undefined: đang loading
+  // setting === null: không có trong DB  
+  // setting.value: có data
+  const brandColor = (setting === undefined || setting === null) 
+    ? DEFAULT_BRAND_COLOR 
+    : ((setting.value as string) || DEFAULT_BRAND_COLOR);
   const [device, setDevice] = useState<MenuPreviewDevice>('desktop');
   const [previewStyle, setPreviewStyle] = useState<MenuPreviewStyle>('classic');
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);

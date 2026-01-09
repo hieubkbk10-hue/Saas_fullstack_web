@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { AboutPreview } from '../../previews';
 
 export default function AboutCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Về chúng tôi', 'About');
+  const brandColor = useBrandColor();
   
   const [aboutConfig, setAboutConfig] = useState({
     layout: 'split-left',
@@ -137,7 +138,7 @@ export default function AboutCreatePage() {
         </CardContent>
       </Card>
 
-      <AboutPreview config={aboutConfig} brandColor={BRAND_COLOR} />
+      <AboutPreview config={aboutConfig} brandColor={brandColor} />
     </ComponentFormWrapper>
   );
 }

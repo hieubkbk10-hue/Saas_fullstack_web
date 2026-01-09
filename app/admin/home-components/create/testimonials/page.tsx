@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Star } from 'lucide-react';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { TestimonialsPreview } from '../../previews';
 
 export default function TestimonialsCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Đánh giá / Review', 'Testimonials');
+  const brandColor = useBrandColor();
   
   const [testimonials, setTestimonials] = useState([
     { id: 1, name: 'Nguyễn Văn A', role: 'CEO, ABC Corp', content: 'Dịch vụ tuyệt vời!', avatar: '', rating: 5 },
@@ -81,7 +82,7 @@ export default function TestimonialsCreatePage() {
         </CardContent>
       </Card>
 
-      <TestimonialsPreview items={testimonials} brandColor={BRAND_COLOR} />
+      <TestimonialsPreview items={testimonials} brandColor={brandColor} />
     </ComponentFormWrapper>
   );
 }
