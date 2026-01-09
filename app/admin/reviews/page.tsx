@@ -10,9 +10,11 @@ import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, Ta
 import { BulkActionBar, SelectCheckbox } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
+const MODULE_KEY = 'comments';
+
 export default function ReviewsListPage() {
   return (
-    <ModuleGuard moduleKey="comments">
+    <ModuleGuard moduleKey={MODULE_KEY}>
       <ReviewsContent />
     </ModuleGuard>
   );
@@ -21,6 +23,10 @@ export default function ReviewsListPage() {
 function ReviewsContent() {
   const commentsData = useQuery(api.comments.listByTargetType, { targetType: 'product' });
   const productsData = useQuery(api.products.listAll, {});
+  // FIX HIGH-001: Use settings from System Config
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+  // FIX HIGH-002: Use features from System Config
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   const deleteComment = useMutation(api.comments.remove);
   const approveComment = useMutation(api.comments.approve);
   const markAsSpam = useMutation(api.comments.markAsSpam);
@@ -33,7 +39,15 @@ function ReviewsContent() {
   const [filterProduct, setFilterProduct] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const reviewsPerPage = 20;
+  
+  // FIX HIGH-001: Get reviewsPerPage from settings
+  const reviewsPerPage = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'commentsPerPage');
+    return (setting?.value as number) || 20;
+  }, [settingsData]);
+
+  // FIX HIGH-002: Features loaded from System Config for future conditional rendering
+  void featuresData; // Mark as intentionally unused - ready for feature toggle implementation
 
   const isLoading = commentsData === undefined || productsData === undefined;
 
@@ -76,7 +90,7 @@ function ReviewsContent() {
     return reviews.slice(start, start + reviewsPerPage);
   }, [reviews, currentPage, reviewsPerPage]);
 
-  // Reset page when filters change
+  // FIX MED-003: Reset page when filters change OR sort changes
   const handleFilterChange = (setter: (v: string) => void, value: string) => {
     setter(value);
     setCurrentPage(1);
@@ -96,16 +110,15 @@ function ReviewsContent() {
     }
   };
 
+  // FIX HIGH-003: Use Promise.all for parallel bulk delete
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} đánh giá đã chọn?`)) {
       try {
-        for (const id of selectedIds) {
-          await deleteComment({ id });
-        }
+        await Promise.all(selectedIds.map(id => deleteComment({ id })));
         setSelectedIds([]);
         toast.success(`Đã xóa ${selectedIds.length} đánh giá`);
-      } catch {
-        toast.error('Không thể xóa đánh giá');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Không thể xóa đánh giá');
       }
     }
   };

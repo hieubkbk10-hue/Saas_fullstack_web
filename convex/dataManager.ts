@@ -36,6 +36,9 @@ type TableName = typeof ALL_TABLES[number];
 // QUERIES - Đếm số lượng records trong các bảng
 // ============================================================
 
+// FIX HIGH-006: Use take() with limit to prevent timeout
+const MAX_COUNT_LIMIT = 1000;
+
 export const getTableStats = query({
   args: {},
   returns: v.array(v.object({
@@ -44,8 +47,6 @@ export const getTableStats = query({
     category: v.string(),
   })),
   handler: async (ctx) => {
-    const stats: { table: string; count: number; category: string }[] = [];
-    
     const tableCategories: Record<string, string> = {
       adminModules: "system",
       moduleFields: "system",
@@ -69,16 +70,19 @@ export const getTableStats = query({
       activityLogs: "logs",
     };
     
-    for (const table of ALL_TABLES) {
-      const records = await ctx.db.query(table as TableName).collect();
-      stats.push({
-        table,
-        count: records.length,
-        category: tableCategories[table] || "other",
-      });
-    }
+    // FIX: Use Promise.all for parallel queries with limit
+    const results = await Promise.all(
+      ALL_TABLES.map(async (table) => {
+        const records = await ctx.db.query(table as TableName).take(MAX_COUNT_LIMIT);
+        return {
+          table,
+          count: records.length,
+          category: tableCategories[table] || "other",
+        };
+      })
+    );
     
-    return stats;
+    return results;
   },
 });
 
@@ -86,28 +90,33 @@ export const getTableStats = query({
 // CLEAR FUNCTIONS - Xóa data theo bảng hoặc category
 // ============================================================
 
+// FIX HIGH-006: Batch processing with limit to prevent timeout
+const BATCH_SIZE = 500;
+
 export const clearTable = mutation({
   args: { table: v.string() },
-  returns: v.object({ deleted: v.number() }),
+  returns: v.object({ deleted: v.number(), hasMore: v.boolean() }),
   handler: async (ctx, args) => {
     const tableName = args.table as TableName;
     if (!ALL_TABLES.includes(tableName)) {
       throw new Error(`Invalid table: ${args.table}`);
     }
     
-    const records = await ctx.db.query(tableName).collect();
-    let deleted = 0;
+    // FIX: Only delete BATCH_SIZE records per call to avoid timeout
+    const records = await ctx.db.query(tableName).take(BATCH_SIZE);
     
-    // Batch delete để tránh timeout
     for (const record of records) {
       await ctx.db.delete(record._id);
-      deleted++;
     }
     
-    return { deleted };
+    // Check if there are more records
+    const remaining = await ctx.db.query(tableName).first();
+    
+    return { deleted: records.length, hasMore: remaining !== null };
   },
 });
 
+// FIX HIGH-006: Batch processing to prevent timeout
 export const clearAllData = mutation({
   args: { 
     excludeSystem: v.optional(v.boolean()),
@@ -115,6 +124,7 @@ export const clearAllData = mutation({
   returns: v.object({ 
     totalDeleted: v.number(),
     tables: v.array(v.object({ table: v.string(), deleted: v.number() })),
+    hasMore: v.boolean(),
   }),
   handler: async (ctx, args) => {
     const systemTables = ["adminModules", "moduleFields", "moduleFeatures", "moduleSettings", "systemPresets", "convexDashboard"];
@@ -124,17 +134,38 @@ export const clearAllData = mutation({
     
     const results: { table: string; deleted: number }[] = [];
     let totalDeleted = 0;
+    let totalBatchSize = 0;
+    const MAX_TOTAL_BATCH = 500;
     
+    // FIX: Process tables with batch limit to avoid timeout
     for (const table of tablesToClear) {
-      const records = await ctx.db.query(table as TableName).collect();
+      if (totalBatchSize >= MAX_TOTAL_BATCH) break;
+      
+      const batchLimit = Math.min(BATCH_SIZE, MAX_TOTAL_BATCH - totalBatchSize);
+      const records = await ctx.db.query(table as TableName).take(batchLimit);
+      
       for (const record of records) {
         await ctx.db.delete(record._id);
       }
-      results.push({ table, deleted: records.length });
-      totalDeleted += records.length;
+      
+      if (records.length > 0) {
+        results.push({ table, deleted: records.length });
+        totalDeleted += records.length;
+        totalBatchSize += records.length;
+      }
     }
     
-    return { totalDeleted, tables: results };
+    // Check if there's more data to delete
+    let hasMore = false;
+    for (const table of tablesToClear) {
+      const remaining = await ctx.db.query(table as TableName).first();
+      if (remaining) {
+        hasMore = true;
+        break;
+      }
+    }
+    
+    return { totalDeleted, tables: results, hasMore };
   },
 });
 

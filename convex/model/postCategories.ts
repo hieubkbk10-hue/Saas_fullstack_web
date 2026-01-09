@@ -213,19 +213,53 @@ export async function update(
 }
 
 /**
- * Delete category (with validation)
+ * Delete category (with validation) - FIX HIGH-005: Better error messages
  */
 export async function remove(
   ctx: MutationCtx,
   { id }: { id: Id<"postCategories"> }
 ): Promise<void> {
-  if (await hasChildren(ctx, { id })) {
-    throw new Error("Cannot delete category with children");
+  const children = await ctx.db
+    .query("postCategories")
+    .withIndex("by_parent", (q) => q.eq("parentId", id))
+    .take(100);
+  if (children.length > 0) {
+    throw new Error(`Không thể xóa danh mục có ${children.length} danh mục con. Vui lòng xóa hoặc di chuyển danh mục con trước.`);
   }
-  if (await hasPosts(ctx, { id })) {
-    throw new Error("Cannot delete category with posts");
+  
+  const posts = await ctx.db
+    .query("posts")
+    .withIndex("by_category_status", (q) => q.eq("categoryId", id))
+    .take(100);
+  if (posts.length > 0) {
+    throw new Error(`Không thể xóa danh mục có ${posts.length} bài viết. Vui lòng xóa hoặc di chuyển bài viết trước.`);
   }
+  
   await ctx.db.delete(id);
+}
+
+/**
+ * FIX HIGH-005: Get delete info for cascade warning
+ */
+export async function getDeleteInfo(
+  ctx: QueryCtx,
+  { id }: { id: Id<"postCategories"> }
+): Promise<{ childrenCount: number; postsCount: number; canDelete: boolean }> {
+  const children = await ctx.db
+    .query("postCategories")
+    .withIndex("by_parent", (q) => q.eq("parentId", id))
+    .take(100);
+  
+  const posts = await ctx.db
+    .query("posts")
+    .withIndex("by_category_status", (q) => q.eq("categoryId", id))
+    .take(100);
+  
+  return {
+    childrenCount: children.length,
+    postsCount: posts.length,
+    canDelete: children.length === 0 && posts.length === 0,
+  };
 }
 
 /**

@@ -1,6 +1,27 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+// Helper: Calculate period timestamps
+function getPeriodTimestamps(period: string) {
+  const now = Date.now();
+  const periodMs = {
+    "7d": 7 * 24 * 60 * 60 * 1000,
+    "30d": 30 * 24 * 60 * 60 * 1000,
+    "90d": 90 * 24 * 60 * 60 * 1000,
+    "1y": 365 * 24 * 60 * 60 * 1000,
+  }[period] || 30 * 24 * 60 * 60 * 1000;
+  
+  return {
+    now,
+    periodMs,
+    startDate: now - periodMs,
+    prevStartDate: now - periodMs * 2,
+  };
+}
+
+// Max records to fetch for analytics (prevents bandwidth explosion)
+const MAX_PAGEVIEWS_LIMIT = 10000;
+
 // Track a page view
 export const track = mutation({
   args: {
@@ -26,7 +47,7 @@ export const track = mutation({
   },
 });
 
-// Get traffic summary stats
+// Get traffic summary stats - OPTIMIZED: use limit instead of collect()
 export const getTrafficStats = query({
   args: {
     period: v.optional(v.string()),
@@ -39,31 +60,22 @@ export const getTrafficStats = query({
   }),
   handler: async (ctx, args) => {
     const period = args.period || "30d";
-    const now = Date.now();
+    const { startDate, prevStartDate } = getPeriodTimestamps(period);
     
-    const periodMs = {
-      "7d": 7 * 24 * 60 * 60 * 1000,
-      "30d": 30 * 24 * 60 * 60 * 1000,
-      "90d": 90 * 24 * 60 * 60 * 1000,
-      "1y": 365 * 24 * 60 * 60 * 1000,
-    }[period] || 30 * 24 * 60 * 60 * 1000;
+    // OPTIMIZED: Use take() with limit instead of collect()
+    const recentViews = await ctx.db.query("pageViews")
+      .order("desc")
+      .take(MAX_PAGEVIEWS_LIMIT);
     
-    const startDate = now - periodMs;
-    const prevStartDate = startDate - periodMs;
-    
-    const allPageViews = await ctx.db.query("pageViews").collect();
-    
-    // Current period
-    const currentViews = allPageViews.filter(pv => pv._creationTime >= startDate);
+    // Filter by period
+    const currentViews = recentViews.filter(pv => pv._creationTime >= startDate);
     const currentSessions = new Set(currentViews.map(pv => pv.sessionId));
     
-    // Previous period
-    const prevViews = allPageViews.filter(pv => 
+    const prevViews = recentViews.filter(pv => 
       pv._creationTime >= prevStartDate && pv._creationTime < startDate
     );
     const prevSessions = new Set(prevViews.map(pv => pv.sessionId));
     
-    // Calculate changes
     const pageviewsChange = prevViews.length > 0
       ? Math.round(((currentViews.length - prevViews.length) / prevViews.length) * 100)
       : (currentViews.length > 0 ? 100 : 0);
@@ -81,7 +93,7 @@ export const getTrafficStats = query({
   },
 });
 
-// Get traffic chart data
+// Get traffic chart data - OPTIMIZED: use limit instead of collect()
 export const getTrafficChartData = query({
   args: {
     period: v.optional(v.string()),
@@ -100,9 +112,9 @@ export const getTrafficChartData = query({
     // For monthly/yearly views, extend the period
     let periodMs: number;
     if (groupBy === "year") {
-      periodMs = 5 * 365 * 24 * 60 * 60 * 1000; // 5 years
+      periodMs = 5 * 365 * 24 * 60 * 60 * 1000;
     } else if (groupBy === "month") {
-      periodMs = 2 * 365 * 24 * 60 * 60 * 1000; // 2 years
+      periodMs = 2 * 365 * 24 * 60 * 60 * 1000;
     } else {
       periodMs = {
         "7d": 7 * 24 * 60 * 60 * 1000,
@@ -114,8 +126,11 @@ export const getTrafficChartData = query({
     
     const startDate = now - periodMs;
     
-    const allPageViews = await ctx.db.query("pageViews").collect();
-    const filteredViews = allPageViews.filter(pv => pv._creationTime >= startDate);
+    // OPTIMIZED: Use take() with limit instead of collect()
+    const recentViews = await ctx.db.query("pageViews")
+      .order("desc")
+      .take(MAX_PAGEVIEWS_LIMIT);
+    const filteredViews = recentViews.filter(pv => pv._creationTime >= startDate);
     
     // Group by date/month/year
     const groupedData: Record<string, { pageviews: number; sessions: Set<string> }> = {};
@@ -201,7 +216,7 @@ export const getTrafficChartData = query({
   },
 });
 
-// Get top pages
+// Get top pages - OPTIMIZED: use limit instead of collect()
 export const getTopPages = query({
   args: {
     period: v.optional(v.string()),
@@ -215,19 +230,13 @@ export const getTopPages = query({
   handler: async (ctx, args) => {
     const period = args.period || "30d";
     const limit = args.limit || 10;
-    const now = Date.now();
+    const { startDate } = getPeriodTimestamps(period);
     
-    const periodMs = {
-      "7d": 7 * 24 * 60 * 60 * 1000,
-      "30d": 30 * 24 * 60 * 60 * 1000,
-      "90d": 90 * 24 * 60 * 60 * 1000,
-      "1y": 365 * 24 * 60 * 60 * 1000,
-    }[period] || 30 * 24 * 60 * 60 * 1000;
-    
-    const startDate = now - periodMs;
-    
-    const allPageViews = await ctx.db.query("pageViews").collect();
-    const filteredViews = allPageViews.filter(pv => pv._creationTime >= startDate);
+    // OPTIMIZED: Use take() with limit
+    const recentViews = await ctx.db.query("pageViews")
+      .order("desc")
+      .take(MAX_PAGEVIEWS_LIMIT);
+    const filteredViews = recentViews.filter(pv => pv._creationTime >= startDate);
     
     // Count by path
     const pathCounts: Record<string, number> = {};
@@ -248,7 +257,7 @@ export const getTopPages = query({
   },
 });
 
-// Get traffic by referrer/source
+// Get traffic by referrer/source - OPTIMIZED: use limit instead of collect()
 export const getTrafficSources = query({
   args: {
     period: v.optional(v.string()),
@@ -262,19 +271,13 @@ export const getTrafficSources = query({
   handler: async (ctx, args) => {
     const period = args.period || "30d";
     const limit = args.limit || 10;
-    const now = Date.now();
+    const { startDate } = getPeriodTimestamps(period);
     
-    const periodMs = {
-      "7d": 7 * 24 * 60 * 60 * 1000,
-      "30d": 30 * 24 * 60 * 60 * 1000,
-      "90d": 90 * 24 * 60 * 60 * 1000,
-      "1y": 365 * 24 * 60 * 60 * 1000,
-    }[period] || 30 * 24 * 60 * 60 * 1000;
-    
-    const startDate = now - periodMs;
-    
-    const allPageViews = await ctx.db.query("pageViews").collect();
-    const filteredViews = allPageViews.filter(pv => pv._creationTime >= startDate);
+    // OPTIMIZED: Use take() with limit
+    const recentViews = await ctx.db.query("pageViews")
+      .order("desc")
+      .take(MAX_PAGEVIEWS_LIMIT);
+    const filteredViews = recentViews.filter(pv => pv._creationTime >= startDate);
     
     // Parse referrer to get source
     const sourceCounts: Record<string, number> = {};
@@ -304,7 +307,7 @@ export const getTrafficSources = query({
   },
 });
 
-// Get device stats
+// Get device stats - OPTIMIZED: use limit instead of collect()
 export const getDeviceStats = query({
   args: {
     period: v.optional(v.string()),
@@ -316,19 +319,13 @@ export const getDeviceStats = query({
   }),
   handler: async (ctx, args) => {
     const period = args.period || "30d";
-    const now = Date.now();
+    const { startDate } = getPeriodTimestamps(period);
     
-    const periodMs = {
-      "7d": 7 * 24 * 60 * 60 * 1000,
-      "30d": 30 * 24 * 60 * 60 * 1000,
-      "90d": 90 * 24 * 60 * 60 * 1000,
-      "1y": 365 * 24 * 60 * 60 * 1000,
-    }[period] || 30 * 24 * 60 * 60 * 1000;
-    
-    const startDate = now - periodMs;
-    
-    const allPageViews = await ctx.db.query("pageViews").collect();
-    const filteredViews = allPageViews.filter(pv => pv._creationTime >= startDate);
+    // OPTIMIZED: Use take() with limit
+    const recentViews = await ctx.db.query("pageViews")
+      .order("desc")
+      .take(MAX_PAGEVIEWS_LIMIT);
+    const filteredViews = recentViews.filter(pv => pv._creationTime >= startDate);
     const total = filteredViews.length;
     
     // Count devices
@@ -345,15 +342,6 @@ export const getDeviceStats = query({
       osCounts[os] = (osCounts[os] || 0) + 1;
       browserCounts[browser] = (browserCounts[browser] || 0) + 1;
     }
-    
-    const toPercentageArray = (counts: Record<string, number>) =>
-      Object.entries(counts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([key, count]) => ({
-          [key === Object.keys(counts).find(k => counts[k] === count) ? 'device' : 'item']: key,
-          percentage: total > 0 ? Math.round((count / total) * 100) : 0,
-        }));
     
     return {
       devices: Object.entries(deviceCounts)

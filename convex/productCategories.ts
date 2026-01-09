@@ -144,6 +144,7 @@ export const update = mutation({
   },
 });
 
+// FIX HIGH-004: Add count info for better error messages
 export const remove = mutation({
   args: { id: v.id("productCategories") },
   returns: v.null(),
@@ -151,15 +152,48 @@ export const remove = mutation({
     const children = await ctx.db
       .query("productCategories")
       .withIndex("by_parent", (q) => q.eq("parentId", args.id))
-      .first();
-    if (children) throw new Error("Cannot delete category with children");
+      .take(100);
+    if (children.length > 0) {
+      throw new Error(`Không thể xóa danh mục có ${children.length} danh mục con. Vui lòng xóa hoặc di chuyển danh mục con trước.`);
+    }
+    
     const products = await ctx.db
       .query("products")
       .withIndex("by_category_status", (q) => q.eq("categoryId", args.id))
-      .first();
-    if (products) throw new Error("Cannot delete category with products");
+      .take(100);
+    if (products.length > 0) {
+      throw new Error(`Không thể xóa danh mục có ${products.length} sản phẩm. Vui lòng xóa hoặc di chuyển sản phẩm trước.`);
+    }
+    
     await ctx.db.delete(args.id);
     return null;
+  },
+});
+
+// FIX HIGH-004: Query to check related data before delete
+export const getDeleteInfo = query({
+  args: { id: v.id("productCategories") },
+  returns: v.object({
+    childrenCount: v.number(),
+    productsCount: v.number(),
+    canDelete: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const children = await ctx.db
+      .query("productCategories")
+      .withIndex("by_parent", (q) => q.eq("parentId", args.id))
+      .take(100);
+    
+    const products = await ctx.db
+      .query("products")
+      .withIndex("by_category_status", (q) => q.eq("categoryId", args.id))
+      .take(100);
+    
+    return {
+      childrenCount: children.length,
+      productsCount: products.length,
+      canDelete: children.length === 0 && products.length === 0,
+    };
   },
 });
 

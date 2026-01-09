@@ -158,30 +158,28 @@ function CartContent() {
     }
   };
 
+  // FIX HIGH-003: Use Promise.all for parallel bulk delete
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} giỏ hàng đã chọn?`)) {
       try {
-        for (const id of selectedIds) {
-          await deleteCart({ id });
-        }
+        await Promise.all(selectedIds.map(id => deleteCart({ id })));
         setSelectedIds([]);
         toast.success(`Đã xóa ${selectedIds.length} giỏ hàng`);
-      } catch {
-        toast.error('Có lỗi khi xóa giỏ hàng');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa giỏ hàng');
       }
     }
   };
 
+  // FIX HIGH-003: Use Promise.all for parallel bulk mark abandoned
   const handleBulkMarkAbandoned = async () => {
     if (confirm(`Đánh dấu ${selectedIds.length} giỏ hàng là bỏ dở?`)) {
       try {
-        for (const id of selectedIds) {
-          await markAsAbandoned({ id });
-        }
+        await Promise.all(selectedIds.map(id => markAsAbandoned({ id })));
         setSelectedIds([]);
         toast.success(`Đã đánh dấu ${selectedIds.length} giỏ hàng là bỏ dở`);
-      } catch {
-        toast.error('Có lỗi khi cập nhật');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Có lỗi khi cập nhật');
       }
     }
   };

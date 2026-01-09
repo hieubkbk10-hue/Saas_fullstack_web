@@ -123,6 +123,9 @@ export const getRecentByUser = query({
   },
 });
 
+// OPTIMIZED: Use limit instead of collect() to prevent bandwidth explosion
+const MAX_LOGS_LIMIT = 5000;
+
 export const getStats = query({
   args: { since: v.optional(v.number()) },
   returns: v.object({
@@ -131,10 +134,15 @@ export const getStats = query({
     byTargetType: v.array(v.object({ targetType: v.string(), count: v.number() })),
   }),
   handler: async (ctx, args) => {
-    const logs = await ctx.db.query("activityLogs").collect();
+    // OPTIMIZED: Use take() with limit instead of collect()
+    const logs = await ctx.db.query("activityLogs")
+      .order("desc")
+      .take(MAX_LOGS_LIMIT);
+    
     const filteredLogs = args.since
       ? logs.filter((l) => l._creationTime >= args.since!)
       : logs;
+    
     const actionCounts: Record<string, number> = {};
     const targetCounts: Record<string, number> = {};
     for (const log of filteredLogs) {
@@ -153,11 +161,17 @@ export const getStats = query({
   },
 });
 
+// OPTIMIZED: Batch delete with limit to prevent timeout
 export const cleanup = internalMutation({
   args: { olderThan: v.number() },
   returns: v.number(),
   handler: async (ctx, args) => {
-    const logs = await ctx.db.query("activityLogs").collect();
+    // Batch delete: only delete up to 1000 records per call to avoid timeout
+    const BATCH_SIZE = 1000;
+    const logs = await ctx.db.query("activityLogs")
+      .order("asc")
+      .take(BATCH_SIZE);
+    
     let deleted = 0;
     for (const log of logs) {
       if (log._creationTime < args.olderThan) {
