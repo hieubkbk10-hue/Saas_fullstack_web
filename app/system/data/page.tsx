@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { toast } from 'sonner';
 import { 
   Database, Trash2, RefreshCw, Play, AlertTriangle, Check, 
   Loader2, ChevronDown, Package, Users, FileText, Settings,
@@ -13,6 +14,7 @@ type TableStat = {
   table: string;
   count: number;
   category: string;
+  isApproximate: boolean;
 };
 
 const categoryIcons: Record<string, React.ElementType> = {
@@ -48,6 +50,37 @@ const categoryLabels: Record<string, string> = {
   logs: 'Logs',
 };
 
+function StatsSkeleton() {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 animate-pulse">
+          <div className="h-3 w-16 bg-slate-200 dark:bg-slate-700 rounded mb-2" />
+          <div className="h-8 w-12 bg-slate-200 dark:bg-slate-700 rounded" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TablesSkeleton() {
+  return (
+    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+      {[...Array(3)].map((_, i) => (
+        <div key={i} className="px-4 py-3 animate-pulse">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+            <div className="flex-1">
+              <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded mb-1" />
+              <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function DataManagerPage() {
   const tableStats = useQuery(api.dataManager.getTableStats);
   const seedAll = useMutation(api.dataManager.seedAll);
@@ -64,40 +97,79 @@ export default function DataManagerPage() {
 
   const isLoading = tableStats === undefined;
 
-  const handleSeedAll = async (force: boolean) => {
+  const handleSeedAll = useCallback(async (force: boolean) => {
     setIsSeeding(true);
     setSeedResult(null);
     try {
       const result = await seedAll({ force });
       setSeedResult(result);
+      if (result.seeded.length > 0) {
+        toast.success(result.message, {
+          description: `Đã seed: ${result.seeded.join(', ')}`,
+        });
+      } else {
+        toast.info(result.message);
+      }
     } catch (error) {
-      console.error('Seed error:', error);
+      const message = error instanceof Error ? error.message : 'Lỗi không xác định';
+      toast.error('Lỗi khi seed dữ liệu', { description: message });
     } finally {
       setIsSeeding(false);
     }
-  };
+  }, [seedAll]);
 
-  const handleClearTable = async (table: string) => {
+  const handleClearTable = useCallback(async (table: string) => {
     if (!confirm(`Xóa tất cả dữ liệu trong bảng "${table}"?`)) return;
     setClearingTable(table);
     try {
-      await clearTable({ table });
+      const result = await clearTable({ table });
+      if (result.hasMore) {
+        toast.warning(`Đã xóa ${result.deleted} records từ "${table}"`, {
+          description: 'Còn dữ liệu chưa xóa hết. Vui lòng xóa lại.',
+          action: {
+            label: 'Xóa tiếp',
+            onClick: () => handleClearTable(table),
+          },
+        });
+      } else {
+        toast.success(`Đã xóa ${result.deleted} records từ "${table}"`);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Lỗi không xác định';
+      toast.error(`Lỗi khi xóa "${table}"`, { description: message });
     } finally {
       setClearingTable(null);
     }
-  };
+  }, [clearTable]);
 
-  const handleClearAll = async (excludeSystem: boolean) => {
+  const handleClearAll = useCallback(async (excludeSystem: boolean) => {
     setIsClearing(true);
     setClearResult(null);
     try {
       const result = await clearAllData({ excludeSystem });
       setClearResult(result);
+      
+      if (result.hasMore) {
+        toast.warning(`Đã xóa ${result.totalDeleted} records`, {
+          description: 'Còn dữ liệu chưa xóa hết. Vui lòng xóa lại.',
+          action: {
+            label: 'Xóa tiếp',
+            onClick: () => handleClearAll(excludeSystem),
+          },
+        });
+      } else {
+        toast.success(`Đã xóa ${result.totalDeleted} records`, {
+          description: result.tables.map(t => `${t.table}: ${t.deleted}`).join(', '),
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Lỗi không xác định';
+      toast.error('Lỗi khi xóa dữ liệu', { description: message });
     } finally {
       setIsClearing(false);
       setShowConfirmClearAll(false);
     }
-  };
+  }, [clearAllData]);
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => 
@@ -112,15 +184,8 @@ export default function DataManagerPage() {
   }, {} as Record<string, TableStat[]>) || {};
 
   const totalRecords = tableStats?.reduce((sum, s) => sum + s.count, 0) || 0;
+  const hasApproximate = tableStats?.some(t => t.isApproximate) || false;
   const totalTables = tableStats?.length || 0;
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-cyan-500" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -138,24 +203,31 @@ export default function DataManagerPage() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
-          <p className="text-xs text-slate-500 uppercase font-medium">Tổng bảng</p>
-          <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{totalTables}</p>
+      {isLoading ? (
+        <StatsSkeleton />
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
+            <p className="text-xs text-slate-500 uppercase font-medium">Tổng bảng</p>
+            <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{totalTables}</p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
+            <p className="text-xs text-slate-500 uppercase font-medium">Tổng records</p>
+            <p className="text-2xl font-bold text-cyan-600">
+              {hasApproximate && '~'}{totalRecords.toLocaleString()}
+              {hasApproximate && <span className="text-xs text-slate-400 ml-1">+</span>}
+            </p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
+            <p className="text-xs text-slate-500 uppercase font-medium">Categories</p>
+            <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{Object.keys(groupedStats).length}</p>
+          </div>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
+            <p className="text-xs text-slate-500 uppercase font-medium">Bảng trống</p>
+            <p className="text-2xl font-bold text-amber-600">{tableStats?.filter(t => t.count === 0).length || 0}</p>
+          </div>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
-          <p className="text-xs text-slate-500 uppercase font-medium">Tổng records</p>
-          <p className="text-2xl font-bold text-cyan-600">{totalRecords.toLocaleString()}</p>
-        </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
-          <p className="text-xs text-slate-500 uppercase font-medium">Categories</p>
-          <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{Object.keys(groupedStats).length}</p>
-        </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
-          <p className="text-xs text-slate-500 uppercase font-medium">Bảng trống</p>
-          <p className="text-2xl font-bold text-amber-600">{tableStats?.filter(t => t.count === 0).length || 0}</p>
-        </div>
-      </div>
+      )}
 
       {/* Action Buttons */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6">
@@ -270,87 +342,93 @@ export default function DataManagerPage() {
           <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Chi tiết các bảng</h3>
         </div>
         
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
-          {Object.entries(groupedStats).map(([category, tables]) => {
-            const Icon = categoryIcons[category] || Package;
-            const colorClass = categoryColors[category] || 'text-slate-500 bg-slate-500/10';
-            const isExpanded = expandedCategories.includes(category);
-            const categoryTotal = tables.reduce((sum, t) => sum + t.count, 0);
-            
-            return (
-              <div key={category}>
-                <button
-                  onClick={() => toggleCategory(category)}
-                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorClass}`}>
-                      <Icon size={16} />
+        {isLoading ? (
+          <TablesSkeleton />
+        ) : (
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {Object.entries(groupedStats).map(([category, tables]) => {
+              const Icon = categoryIcons[category] || Package;
+              const colorClass = categoryColors[category] || 'text-slate-500 bg-slate-500/10';
+              const isExpanded = expandedCategories.includes(category);
+              const categoryTotal = tables.reduce((sum, t) => sum + t.count, 0);
+              const hasApprox = tables.some(t => t.isApproximate);
+              
+              return (
+                <div key={category}>
+                  <button
+                    onClick={() => toggleCategory(category)}
+                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colorClass}`}>
+                        <Icon size={16} />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium text-slate-800 dark:text-slate-200">
+                          {categoryLabels[category] || category}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {tables.length} bảng · {hasApprox && '~'}{categoryTotal.toLocaleString()} records
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-left">
-                      <p className="font-medium text-slate-800 dark:text-slate-200">
-                        {categoryLabels[category] || category}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {tables.length} bảng · {categoryTotal.toLocaleString()} records
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronDown 
-                    size={18} 
-                    className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
-                  />
-                </button>
-                
-                {isExpanded && (
-                  <div className="px-4 pb-3">
-                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg overflow-hidden">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="text-xs text-slate-500 uppercase">
-                            <th className="text-left px-4 py-2 font-medium">Tên bảng</th>
-                            <th className="text-right px-4 py-2 font-medium">Số records</th>
-                            <th className="text-right px-4 py-2 font-medium w-24">Thao tác</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                          {tables.map(table => (
-                            <tr key={table.table} className="text-sm">
-                              <td className="px-4 py-2">
-                                <code className="text-slate-700 dark:text-slate-300 font-mono text-xs">
-                                  {table.table}
-                                </code>
-                              </td>
-                              <td className="px-4 py-2 text-right">
-                                <span className={`font-medium ${table.count === 0 ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>
-                                  {table.count.toLocaleString()}
-                                </span>
-                              </td>
-                              <td className="px-4 py-2 text-right">
-                                <button
-                                  onClick={() => handleClearTable(table.table)}
-                                  disabled={clearingTable === table.table || table.count === 0}
-                                  className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                                  title={table.count === 0 ? 'Bảng trống' : `Xóa ${table.count} records`}
-                                >
-                                  {clearingTable === table.table ? (
-                                    <Loader2 size={14} className="animate-spin" />
-                                  ) : (
-                                    <Trash2 size={14} />
-                                  )}
-                                </button>
-                              </td>
+                    <ChevronDown 
+                      size={18} 
+                      className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                    />
+                  </button>
+                  
+                  {isExpanded && (
+                    <div className="px-4 pb-3">
+                      <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg overflow-hidden">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="text-xs text-slate-500 uppercase">
+                              <th className="text-left px-4 py-2 font-medium">Tên bảng</th>
+                              <th className="text-right px-4 py-2 font-medium">Số records</th>
+                              <th className="text-right px-4 py-2 font-medium w-24">Thao tác</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                            {tables.map(table => (
+                              <tr key={table.table} className="text-sm">
+                                <td className="px-4 py-2">
+                                  <code className="text-slate-700 dark:text-slate-300 font-mono text-xs">
+                                    {table.table}
+                                  </code>
+                                </td>
+                                <td className="px-4 py-2 text-right">
+                                  <span className={`font-medium ${table.count === 0 ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                                    {table.isApproximate && '~'}{table.count.toLocaleString()}
+                                    {table.isApproximate && <span className="text-xs text-amber-500 ml-1" title="Số lượng ước tính (>1000)">+</span>}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-2 text-right">
+                                  <button
+                                    onClick={() => handleClearTable(table.table)}
+                                    disabled={clearingTable === table.table || table.count === 0}
+                                    className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title={table.count === 0 ? 'Bảng trống' : `Xóa ${table.count} records`}
+                                  >
+                                    {clearingTable === table.table ? (
+                                      <Loader2 size={14} className="animate-spin" />
+                                    ) : (
+                                      <Trash2 size={14} />
+                                    )}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Info Card */}
@@ -362,8 +440,9 @@ export default function DataManagerPage() {
         <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1 list-disc list-inside">
           <li>Chỉ sử dụng tính năng này trong môi trường <strong>development</strong></li>
           <li>Seed dữ liệu sẽ bỏ qua các bảng đã có dữ liệu (trừ khi chọn Force)</li>
-          <li>Xóa "Giữ System" sẽ giữ lại các bảng cấu hình hệ thống (modules, presets,...)</li>
+          <li>Xóa &quot;Giữ System&quot; sẽ giữ lại các bảng cấu hình hệ thống (modules, presets,...)</li>
           <li>Dữ liệu đã xóa <strong>không thể khôi phục</strong></li>
+          <li>Số lượng records hiển thị &quot;~&quot; là ước tính (giới hạn đếm 1000 records)</li>
         </ul>
       </div>
     </div>
