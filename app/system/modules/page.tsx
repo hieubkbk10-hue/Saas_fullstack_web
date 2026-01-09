@@ -540,11 +540,11 @@ export default function ModuleManagementPage() {
     if (!enabled) {
       const dependents = getDependentModules(key);
       if (dependents.length > 0) {
-        const module = modules.find(m => m.key === key);
+        const targetModule = modules.find(m => m.key === key);
         setCascadeDialog({
           isOpen: true,
           moduleKey: key,
-          moduleName: module?.name || key,
+          moduleName: targetModule?.name || key,
           dependentModules: dependents,
         });
         return;

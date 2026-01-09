@@ -5,7 +5,7 @@ import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { FileText, FolderTree, Tag, Star, Clock, Loader2, Database, Trash2, RefreshCw, MessageSquare, Settings, Eye } from 'lucide-react';
+import { FileText, FolderTree, Tag, Star, Clock, Loader2, Database, Trash2, RefreshCw, MessageSquare, Settings } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
 import { 
   ModuleHeader, ModuleStatus, ConventionNote, Code,
@@ -152,20 +152,35 @@ export default function PostsModuleConfigPage() {
   }, [localFeatures, serverFeatures, localPostFields, serverPostFields, localCategoryFields, serverCategoryFields, localSettings, serverSettings]);
 
   const handleToggleFeature = (key: string) => {
-    setLocalFeatures(prev => ({ ...prev, [key]: !prev[key] }));
+    const newFeatureState = !localFeatures[key];
+    setLocalFeatures(prev => ({ ...prev, [key]: newFeatureState }));
     // Also update linked fields
     setLocalPostFields(prev => prev.map(f => 
-      f.linkedFeature === key ? { ...f, enabled: !localFeatures[key] } : f
+      f.linkedFeature === key ? { ...f, enabled: newFeatureState } : f
     ));
   };
 
   const handleTogglePostField = (id: string) => {
     const field = localPostFields.find(f => f.id === id);
-    if (field?.linkedFeature) {
-      handleToggleFeature(field.linkedFeature);
-    } else {
-      setLocalPostFields(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
-    }
+    if (!field) return;
+    
+    const newFieldState = !field.enabled;
+    setLocalPostFields(prev => {
+      const updated = prev.map(f => f.id === id ? { ...f, enabled: newFieldState } : f);
+      
+      if (field.linkedFeature) {
+        const linkedFields = updated.filter(f => f.linkedFeature === field.linkedFeature);
+        const allDisabled = linkedFields.every(f => !f.enabled);
+        const anyEnabled = linkedFields.some(f => f.enabled);
+        
+        if (allDisabled) {
+          setLocalFeatures(prevFeatures => ({ ...prevFeatures, [field.linkedFeature!]: false }));
+        } else if (anyEnabled) {
+          setLocalFeatures(prevFeatures => ({ ...prevFeatures, [field.linkedFeature!]: true }));
+        }
+      }
+      return updated;
+    });
   };
 
   const handleToggleCategoryField = (id: string) => {

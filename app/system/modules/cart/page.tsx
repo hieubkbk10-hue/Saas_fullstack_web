@@ -169,19 +169,34 @@ export default function CartModuleConfigPage() {
   }, [localFeatures, serverFeatures, localCartFields, serverCartFieldsMap, localItemFields, serverItemFieldsMap, localSettings, serverSettings]);
 
   const handleToggleFeature = (key: string) => {
-    setLocalFeatures(prev => ({ ...prev, [key]: !prev[key] }));
+    const newFeatureState = !localFeatures[key];
+    setLocalFeatures(prev => ({ ...prev, [key]: newFeatureState }));
     setLocalCartFields(prev => prev.map(f => 
-      f.linkedFeature === key ? { ...f, enabled: !localFeatures[key] } : f
+      f.linkedFeature === key ? { ...f, enabled: newFeatureState } : f
     ));
   };
 
   const handleToggleCartField = (id: string) => {
     const field = localCartFields.find(f => f.id === id);
-    if (field?.linkedFeature) {
-      handleToggleFeature(field.linkedFeature);
-    } else {
-      setLocalCartFields(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
-    }
+    if (!field) return;
+    
+    const newFieldState = !field.enabled;
+    setLocalCartFields(prev => {
+      const updated = prev.map(f => f.id === id ? { ...f, enabled: newFieldState } : f);
+      
+      if (field.linkedFeature) {
+        const linkedFields = updated.filter(f => f.linkedFeature === field.linkedFeature);
+        const allDisabled = linkedFields.every(f => !f.enabled);
+        const anyEnabled = linkedFields.some(f => f.enabled);
+        
+        if (allDisabled) {
+          setLocalFeatures(prevFeatures => ({ ...prevFeatures, [field.linkedFeature!]: false }));
+        } else if (anyEnabled) {
+          setLocalFeatures(prevFeatures => ({ ...prevFeatures, [field.linkedFeature!]: true }));
+        }
+      }
+      return updated;
+    });
   };
 
   const handleToggleItemField = (id: string) => {

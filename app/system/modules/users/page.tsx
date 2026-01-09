@@ -118,19 +118,34 @@ export default function UsersModuleConfigPage() {
   }, [localFeatures, serverFeatures, localFields, serverFields, localSettings, serverSettings]);
 
   const handleToggleFeature = (key: string) => {
-    setLocalFeatures(prev => ({ ...prev, [key]: !prev[key] }));
+    const newFeatureState = !localFeatures[key];
+    setLocalFeatures(prev => ({ ...prev, [key]: newFeatureState }));
     setLocalFields(prev => prev.map(f => 
-      f.linkedFeature === key ? { ...f, enabled: !localFeatures[key] } : f
+      f.linkedFeature === key ? { ...f, enabled: newFeatureState } : f
     ));
   };
 
   const handleToggleField = (id: string) => {
     const field = localFields.find(f => f.id === id);
-    if (field?.linkedFeature) {
-      handleToggleFeature(field.linkedFeature);
-    } else {
-      setLocalFields(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
-    }
+    if (!field) return;
+    
+    const newFieldState = !field.enabled;
+    setLocalFields(prev => {
+      const updated = prev.map(f => f.id === id ? { ...f, enabled: newFieldState } : f);
+      
+      if (field.linkedFeature) {
+        const linkedFields = updated.filter(f => f.linkedFeature === field.linkedFeature);
+        const allDisabled = linkedFields.every(f => !f.enabled);
+        const anyEnabled = linkedFields.some(f => f.enabled);
+        
+        if (allDisabled) {
+          setLocalFeatures(prevFeatures => ({ ...prevFeatures, [field.linkedFeature!]: false }));
+        } else if (anyEnabled) {
+          setLocalFeatures(prevFeatures => ({ ...prevFeatures, [field.linkedFeature!]: true }));
+        }
+      }
+      return updated;
+    });
   };
 
   // USR-006 FIX: Batch save với Promise.all thay vì sequential
@@ -384,7 +399,7 @@ export default function UsersModuleConfigPage() {
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {user.avatar ? (
-                          <img src={user.avatar} className="w-6 h-6 rounded-full" alt="" />
+                          <img src={user.avatar} className="w-6 h-6 rounded-full" alt={user.name} />
                         ) : (
                           <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs">
                             {user.name.charAt(0)}
