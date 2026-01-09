@@ -9,6 +9,7 @@ import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } fr
 import { ModuleGuard } from '../components/ModuleGuard';
 import { SettingsImageUploader } from '../components/SettingsImageUploader';
 import { useSettingsCleanup } from '../components/useSettingsCleanup';
+import { TagInput } from '../components/TagInput';
 
 const MODULE_KEY = 'settings';
 
@@ -430,12 +431,12 @@ function SettingsContent() {
         return (
           <div className="space-y-2" key={key}>
             <Label>{field.name}</Label>
-            <Input
+            <TagInput
               value={value}
-              onChange={(e) => updateField(key, e.target.value)}
-              placeholder="từ khóa 1, từ khóa 2, ..."
+              onChange={(val) => updateField(key, val)}
+              placeholder="Nhập từ khóa và nhấn Enter..."
             />
-            <p className="text-xs text-slate-500">Phân cách bằng dấu phẩy</p>
+            <p className="text-xs text-slate-500">Nhấn Enter để thêm, Backspace để xóa</p>
           </div>
         );
 
