@@ -23,10 +23,17 @@ interface MenuItemWithChildren extends MenuItem {
   children: MenuItemWithChildren[];
 }
 
+type HeaderStyle = 'classic' | 'topbar' | 'transparent';
+
 export function Header() {
   const brandColor = useBrandColor();
   const { siteName, logo } = useSiteSettings();
   const menuData = useQuery(api.menus.getFullMenu, { location: 'header' });
+  const headerStyleSetting = useQuery(api.settings.getByKey, { key: 'header_style' });
+  const headerConfigSetting = useQuery(api.settings.getByKey, { key: 'header_config' });
+  
+  const headerStyle: HeaderStyle = (headerStyleSetting?.value as HeaderStyle) || 'classic';
+  const headerConfig = (headerConfigSetting?.value as Record<string, unknown>) || {};
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -77,10 +84,44 @@ export function Header() {
     );
   }
 
+  // Get config values with defaults
+  const topbarConfig = (headerConfig.topbar || {}) as { hotline?: string; email?: string; showTrackOrder?: boolean; show?: boolean };
+  const ctaConfig = (headerConfig.cta || { show: true, text: 'Liên hệ', url: '/contact' }) as { show?: boolean; text?: string; url?: string };
+  const showTopbar = headerStyle === 'topbar' && topbarConfig.show !== false;
+
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
+    <header className={`sticky top-0 z-50 ${headerStyle === 'transparent' ? 'absolute w-full bg-transparent' : 'bg-white shadow-sm'}`}>
+      {/* Topbar - chỉ hiện khi style = topbar */}
+      {showTopbar && (
+        <div className="text-xs text-white py-2" style={{ backgroundColor: brandColor }}>
+          <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {topbarConfig.hotline && (
+                <a href={`tel:${String(topbarConfig.hotline)}`} className="flex items-center gap-1 hover:opacity-80">
+                  <Phone size={12} />
+                  <span>{String(topbarConfig.hotline)}</span>
+                </a>
+              )}
+              {topbarConfig.email && (
+                <a href={`mailto:${String(topbarConfig.email)}`} className="hidden sm:flex items-center gap-1 hover:opacity-80">
+                  <Mail size={12} />
+                  <span>{String(topbarConfig.email)}</span>
+                </a>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              {topbarConfig.showTrackOrder && <a href="/orders" className="hover:underline hidden sm:inline">Theo dõi đơn hàng</a>}
+              <a href="/login" className="hover:underline flex items-center gap-1">
+                <User size={12} />
+                Đăng nhập
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Main Header */}
-      <div className="max-w-7xl mx-auto px-4">
+      <div className={`max-w-7xl mx-auto px-4 ${headerStyle === 'transparent' ? 'text-white' : ''}`}>
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
@@ -94,7 +135,7 @@ export function Header() {
                 {(siteName || 'V').charAt(0)}
               </div>
             )}
-            <span className="font-bold text-lg text-slate-900">{siteName}</span>
+            <span className={`font-bold text-lg ${headerStyle === 'transparent' ? 'text-white' : 'text-slate-900'}`}>{siteName}</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -109,7 +150,7 @@ export function Header() {
                 <Link
                   href={item.url}
                   target={item.openInNewTab ? '_blank' : undefined}
-                  className="px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${headerStyle === 'transparent' ? 'text-white/80 hover:text-white' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
                   style={hoveredItem === item._id ? { color: brandColor } : {}}
                 >
                   {item.label}

@@ -1,15 +1,17 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Id } from '@/convex/_generated/dataModel';
-import { useQuery } from 'convex/react';
+import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { toast } from 'sonner';
 import { 
-  Card, CardHeader, CardTitle, CardContent, Input, cn 
+  Card, CardHeader, CardTitle, CardContent, Input, cn, Button
 } from '../components/ui';
 import { 
   Eye, Phone, Mail, User, Heart, ShoppingCart, Search, Settings, 
-  Monitor, Tablet, Smartphone, HelpCircle, ChevronDown as ChevronDownIcon, ChevronRight
+  Monitor, Tablet, Smartphone, HelpCircle, ChevronDown as ChevronDownIcon, ChevronRight,
+  Check, Save
 } from 'lucide-react';
 
 const DEFAULT_BRAND_COLOR = '#f97316';
@@ -37,14 +39,29 @@ interface MenuPreviewProps {
 export function MenuPreview({ items }: MenuPreviewProps) {
   // Lấy brandColor từ settings (key: site_brand_color theo moduleFields)
   const setting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
+  const headerStyleSetting = useQuery(api.settings.getByKey, { key: 'header_style' });
+  const headerConfigSetting = useQuery(api.settings.getByKey, { key: 'header_config' });
+  const setSetting = useMutation(api.settings.set);
+  
   // setting === undefined: đang loading
   // setting === null: không có trong DB  
   // setting.value: có data
   const brandColor = (setting === undefined || setting === null) 
     ? DEFAULT_BRAND_COLOR 
     : ((setting.value as string) || DEFAULT_BRAND_COLOR);
+    
   const [device, setDevice] = useState<MenuPreviewDevice>('desktop');
   const [previewStyle, setPreviewStyle] = useState<MenuPreviewStyle>('classic');
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedStyle, setSavedStyle] = useState<string | null>(null);
+  
+  // Load saved style từ settings
+  useEffect(() => {
+    if (headerStyleSetting?.value) {
+      setPreviewStyle(headerStyleSetting.value as MenuPreviewStyle);
+      setSavedStyle(headerStyleSetting.value as string);
+    }
+  }, [headerStyleSetting]);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMobileItems, setExpandedMobileItems] = useState<string[]>([]);
@@ -90,6 +107,23 @@ export function MenuPreview({ items }: MenuPreviewProps) {
   };
 
   const activeItems = useMemo(() => items.filter(i => i.active), [items]);
+
+  // Lưu style và config vào settings
+  const handleApplyToSite = async () => {
+    setIsSaving(true);
+    try {
+      await setSetting({ key: 'header_style', value: previewStyle, group: 'site' });
+      await setSetting({ key: 'header_config', value: config, group: 'site' });
+      setSavedStyle(previewStyle);
+      toast.success('Đã áp dụng style cho trang chủ');
+    } catch {
+      toast.error('Lỗi khi lưu cấu hình');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const hasChanges = previewStyle !== savedStyle;
 
   const menuTree = useMemo((): MenuItemWithChildren[] => {
     const rootItems = activeItems.filter(item => item.depth === 0);
@@ -546,7 +580,33 @@ export function MenuPreview({ items }: MenuPreviewProps) {
             <Eye size={18} />
             Preview Menu
           </CardTitle>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
+            {/* Nút Áp dụng cho Site */}
+            <Button
+              type="button"
+              variant={hasChanges ? "accent" : "outline"}
+              size="sm"
+              onClick={handleApplyToSite}
+              disabled={isSaving}
+              className="gap-1.5"
+            >
+              {isSaving ? (
+                <>Đang lưu...</>
+              ) : savedStyle === previewStyle ? (
+                <>
+                  <Check size={14} />
+                  Đã áp dụng
+                </>
+              ) : (
+                <>
+                  <Save size={14} />
+                  Áp dụng cho Site
+                </>
+              )}
+            </Button>
+            
+            <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
+            
             <button
               type="button"
               onClick={() => setShowSettings(!showSettings)}
@@ -572,13 +632,16 @@ export function MenuPreview({ items }: MenuPreviewProps) {
                     setHoveredItem(null);
                   }}
                   className={cn(
-                    "px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+                    "px-3 py-1.5 rounded-md text-xs font-medium transition-all relative",
                     previewStyle === id
                       ? "bg-white dark:bg-slate-900 shadow-sm text-slate-900 dark:text-slate-100"
                       : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   )}
                 >
                   {label}
+                  {savedStyle === id && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full" title="Đang sử dụng" />
+                  )}
                 </button>
               ))}
             </div>
