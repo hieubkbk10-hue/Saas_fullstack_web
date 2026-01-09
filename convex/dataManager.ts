@@ -182,9 +182,10 @@ export const seedSystemData = mutation({
     // Seed Admin Modules
     const existingModules = await ctx.db.query("adminModules").first();
     if (!existingModules || args.force) {
+      // QA-CRIT-002 FIX: Batch delete với Promise.all thay vì sequential
       if (args.force && existingModules) {
         const allModules = await ctx.db.query("adminModules").collect();
-        for (const m of allModules) await ctx.db.delete(m._id);
+        await Promise.all(allModules.map(m => ctx.db.delete(m._id)));
       }
       
       const modules = [
@@ -206,18 +207,18 @@ export const seedSystemData = mutation({
         { key: "analytics", name: "Thống kê", description: "Báo cáo và phân tích dữ liệu", icon: "BarChart3", category: "marketing" as const, enabled: true, isCore: false, order: 16 },
       ];
       
-      for (const mod of modules) {
-        await ctx.db.insert("adminModules", mod);
-      }
+      // QA-CRIT-002 FIX: Batch insert với Promise.all
+      await Promise.all(modules.map(mod => ctx.db.insert("adminModules", mod)));
       seeded.push("adminModules");
     }
     
     // Seed System Presets
     const existingPresets = await ctx.db.query("systemPresets").first();
     if (!existingPresets || args.force) {
+      // QA-CRIT-002 FIX: Batch delete với Promise.all
       if (args.force && existingPresets) {
         const allPresets = await ctx.db.query("systemPresets").collect();
-        for (const p of allPresets) await ctx.db.delete(p._id);
+        await Promise.all(allPresets.map(p => ctx.db.delete(p._id)));
       }
       
       const presets = [
@@ -228,9 +229,8 @@ export const seedSystemData = mutation({
         { key: "ecommerce-full", name: "eCommerce Full", description: "Shop đầy đủ tính năng", enabledModules: ["posts", "comments", "media", "products", "orders", "cart", "wishlist", "customers", "users", "roles", "settings", "menus", "homepage", "notifications", "promotions", "analytics"], isDefault: true },
       ];
       
-      for (const preset of presets) {
-        await ctx.db.insert("systemPresets", preset);
-      }
+      // QA-CRIT-002 FIX: Batch insert với Promise.all
+      await Promise.all(presets.map(preset => ctx.db.insert("systemPresets", preset)));
       seeded.push("systemPresets");
     }
     
@@ -247,24 +247,30 @@ export const seedRolesAndUsers = mutation({
     // Seed Roles
     const existingRoles = await ctx.db.query("roles").first();
     if (!existingRoles || args.force) {
+      // QA-CRIT-002 FIX: Batch delete
       if (args.force && existingRoles) {
         const allRoles = await ctx.db.query("roles").collect();
-        for (const r of allRoles) await ctx.db.delete(r._id);
+        await Promise.all(allRoles.map(r => ctx.db.delete(r._id)));
       }
       
-      await ctx.db.insert("roles", { name: "Super Admin", description: "Toàn quyền hệ thống", color: "#ef4444", isSystem: true, isSuperAdmin: true, permissions: { "*": ["*"] } as Record<string, string[]> });
-      await ctx.db.insert("roles", { name: "Admin", description: "Quản trị viên", color: "#8b5cf6", isSystem: true, permissions: { posts: ["read", "create", "update", "delete"], products: ["read", "create", "update", "delete"], users: ["read"], settings: ["read", "update"] } as Record<string, string[]> });
-      await ctx.db.insert("roles", { name: "Editor", description: "Biên tập viên nội dung", color: "#3b82f6", isSystem: false, permissions: { posts: ["read", "create", "update"], products: ["read"], comments: ["read", "update", "delete"] } as Record<string, string[]> });
-      await ctx.db.insert("roles", { name: "Moderator", description: "Kiểm duyệt viên", color: "#22c55e", isSystem: false, permissions: { comments: ["read", "update", "delete"], posts: ["read"] } as Record<string, string[]> });
+      // QA-CRIT-002 FIX: Batch insert
+      const roles = [
+        { name: "Super Admin", description: "Toàn quyền hệ thống", color: "#ef4444", isSystem: true, isSuperAdmin: true, permissions: { "*": ["*"] } as Record<string, string[]> },
+        { name: "Admin", description: "Quản trị viên", color: "#8b5cf6", isSystem: true, permissions: { posts: ["read", "create", "update", "delete"], products: ["read", "create", "update", "delete"], users: ["read"], settings: ["read", "update"] } as Record<string, string[]> },
+        { name: "Editor", description: "Biên tập viên nội dung", color: "#3b82f6", isSystem: false, permissions: { posts: ["read", "create", "update"], products: ["read"], comments: ["read", "update", "delete"] } as Record<string, string[]> },
+        { name: "Moderator", description: "Kiểm duyệt viên", color: "#22c55e", isSystem: false, permissions: { comments: ["read", "update", "delete"], posts: ["read"] } as Record<string, string[]> },
+      ];
+      await Promise.all(roles.map(role => ctx.db.insert("roles", role)));
       seeded.push("roles");
     }
     
     // Seed Users
     const existingUsers = await ctx.db.query("users").first();
     if (!existingUsers || args.force) {
+      // QA-CRIT-002 FIX: Batch delete
       if (args.force && existingUsers) {
         const allUsers = await ctx.db.query("users").collect();
-        for (const u of allUsers) await ctx.db.delete(u._id);
+        await Promise.all(allUsers.map(u => ctx.db.delete(u._id)));
       }
       
       const adminRole = await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Super Admin")).first();
@@ -276,9 +282,8 @@ export const seedRolesAndUsers = mutation({
           { name: "Nguyễn Văn Editor", email: "editor@vietadmin.com", phone: "0912345678", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=nguyenvaneditor", roleId: editorRole._id, status: "Active" as const, lastLogin: Date.now() - 86400000 },
         ];
         
-        for (const user of users) {
-          await ctx.db.insert("users", user);
-        }
+        // QA-CRIT-002 FIX: Batch insert
+        await Promise.all(users.map(user => ctx.db.insert("users", user)));
         seeded.push("users");
       }
     }
@@ -296,9 +301,10 @@ export const seedSampleContent = mutation({
     // Seed Post Categories
     const existingPostCats = await ctx.db.query("postCategories").first();
     if (!existingPostCats || args.force) {
+      // QA-CRIT-002 FIX: Batch delete
       if (args.force && existingPostCats) {
         const all = await ctx.db.query("postCategories").collect();
-        for (const item of all) await ctx.db.delete(item._id);
+        await Promise.all(all.map(item => ctx.db.delete(item._id)));
       }
       
       const categories = [
@@ -307,18 +313,18 @@ export const seedSampleContent = mutation({
         { name: "Khuyến mãi", slug: "khuyen-mai", description: "Thông tin khuyến mãi", order: 3, active: true },
       ];
       
-      for (const cat of categories) {
-        await ctx.db.insert("postCategories", cat);
-      }
+      // QA-CRIT-002 FIX: Batch insert
+      await Promise.all(categories.map(cat => ctx.db.insert("postCategories", cat)));
       seeded.push("postCategories");
     }
     
     // Seed Product Categories
     const existingProdCats = await ctx.db.query("productCategories").first();
     if (!existingProdCats || args.force) {
+      // QA-CRIT-002 FIX: Batch delete
       if (args.force && existingProdCats) {
         const all = await ctx.db.query("productCategories").collect();
-        for (const item of all) await ctx.db.delete(item._id);
+        await Promise.all(all.map(item => ctx.db.delete(item._id)));
       }
       
       const categories = [
@@ -328,18 +334,18 @@ export const seedSampleContent = mutation({
         { name: "Tablet", slug: "tablet", description: "Máy tính bảng", order: 4, active: true },
       ];
       
-      for (const cat of categories) {
-        await ctx.db.insert("productCategories", cat);
-      }
+      // QA-CRIT-002 FIX: Batch insert
+      await Promise.all(categories.map(cat => ctx.db.insert("productCategories", cat)));
       seeded.push("productCategories");
     }
     
     // Seed Customers
     const existingCustomers = await ctx.db.query("customers").first();
     if (!existingCustomers || args.force) {
+      // QA-CRIT-002 FIX: Batch delete
       if (args.force && existingCustomers) {
         const all = await ctx.db.query("customers").collect();
-        for (const item of all) await ctx.db.delete(item._id);
+        await Promise.all(all.map(item => ctx.db.delete(item._id)));
       }
       
       const customers = [
@@ -348,18 +354,18 @@ export const seedSampleContent = mutation({
         { name: "Lê Văn C", email: "lec@gmail.com", phone: "0903333333", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=levanc", status: "Inactive" as const, ordersCount: 1, totalSpent: 2000000, city: "Đà Nẵng" },
       ];
       
-      for (const customer of customers) {
-        await ctx.db.insert("customers", customer);
-      }
+      // QA-CRIT-002 FIX: Batch insert
+      await Promise.all(customers.map(customer => ctx.db.insert("customers", customer)));
       seeded.push("customers");
     }
     
     // Seed Settings
     const existingSettings = await ctx.db.query("settings").first();
     if (!existingSettings || args.force) {
+      // QA-CRIT-002 FIX: Batch delete
       if (args.force && existingSettings) {
         const all = await ctx.db.query("settings").collect();
-        for (const item of all) await ctx.db.delete(item._id);
+        await Promise.all(all.map(item => ctx.db.delete(item._id)));
       }
       
       const settings = [
@@ -374,9 +380,8 @@ export const seedSampleContent = mutation({
         { key: "metaDescription", value: "VietAdmin cung cấp giải pháp quản trị website toàn diện", group: "seo" },
       ];
       
-      for (const setting of settings) {
-        await ctx.db.insert("settings", setting);
-      }
+      // QA-CRIT-002 FIX: Batch insert
+      await Promise.all(settings.map(setting => ctx.db.insert("settings", setting)));
       seeded.push("settings");
     }
     
@@ -384,6 +389,7 @@ export const seedSampleContent = mutation({
   },
 });
 
+// QA-CRIT-002 FIX: seedAll với batch operations
 export const seedAll = mutation({
   args: { force: v.optional(v.boolean()) },
   returns: v.object({ 
@@ -398,7 +404,7 @@ export const seedAll = mutation({
     if (!existingModules || args.force) {
       if (args.force && existingModules) {
         const all = await ctx.db.query("adminModules").collect();
-        for (const item of all) await ctx.db.delete(item._id);
+        await Promise.all(all.map(item => ctx.db.delete(item._id)));
       }
       
       const modules = [
@@ -419,7 +425,7 @@ export const seedAll = mutation({
         { key: "promotions", name: "Khuyến mãi", description: "Quản lý mã giảm giá, voucher", icon: "Megaphone", category: "marketing" as const, enabled: false, isCore: false, dependencies: ["products", "orders"], dependencyType: "all" as const, order: 15 },
         { key: "analytics", name: "Thống kê", description: "Báo cáo và phân tích dữ liệu", icon: "BarChart3", category: "marketing" as const, enabled: true, isCore: false, order: 16 },
       ];
-      for (const mod of modules) await ctx.db.insert("adminModules", mod);
+      await Promise.all(modules.map(mod => ctx.db.insert("adminModules", mod)));
       allSeeded.push("adminModules");
     }
     
@@ -428,7 +434,7 @@ export const seedAll = mutation({
     if (!existingPresets || args.force) {
       if (args.force && existingPresets) {
         const all = await ctx.db.query("systemPresets").collect();
-        for (const item of all) await ctx.db.delete(item._id);
+        await Promise.all(all.map(item => ctx.db.delete(item._id)));
       }
       
       const presets = [
@@ -438,7 +444,7 @@ export const seedAll = mutation({
         { key: "ecommerce-basic", name: "eCommerce Basic", description: "Shop đơn giản với giỏ hàng", enabledModules: ["products", "orders", "cart", "media", "customers", "users", "roles", "settings", "menus", "homepage", "notifications", "analytics"], isDefault: false },
         { key: "ecommerce-full", name: "eCommerce Full", description: "Shop đầy đủ tính năng", enabledModules: ["posts", "comments", "media", "products", "orders", "cart", "wishlist", "customers", "users", "roles", "settings", "menus", "homepage", "notifications", "promotions", "analytics"], isDefault: true },
       ];
-      for (const preset of presets) await ctx.db.insert("systemPresets", preset);
+      await Promise.all(presets.map(preset => ctx.db.insert("systemPresets", preset)));
       allSeeded.push("systemPresets");
     }
     
@@ -447,13 +453,16 @@ export const seedAll = mutation({
     if (!existingRoles || args.force) {
       if (args.force && existingRoles) {
         const all = await ctx.db.query("roles").collect();
-        for (const item of all) await ctx.db.delete(item._id);
+        await Promise.all(all.map(item => ctx.db.delete(item._id)));
       }
       
-      await ctx.db.insert("roles", { name: "Super Admin", description: "Toàn quyền hệ thống", color: "#ef4444", isSystem: true, isSuperAdmin: true, permissions: { "*": ["*"] } as Record<string, string[]> });
-      await ctx.db.insert("roles", { name: "Admin", description: "Quản trị viên", color: "#8b5cf6", isSystem: true, permissions: { posts: ["read", "create", "update", "delete"], products: ["read", "create", "update", "delete"], users: ["read"], settings: ["read", "update"] } as Record<string, string[]> });
-      await ctx.db.insert("roles", { name: "Editor", description: "Biên tập viên nội dung", color: "#3b82f6", isSystem: false, permissions: { posts: ["read", "create", "update"], products: ["read"], comments: ["read", "update", "delete"] } as Record<string, string[]> });
-      await ctx.db.insert("roles", { name: "Moderator", description: "Kiểm duyệt viên", color: "#22c55e", isSystem: false, permissions: { comments: ["read", "update", "delete"], posts: ["read"] } as Record<string, string[]> });
+      const roles = [
+        { name: "Super Admin", description: "Toàn quyền hệ thống", color: "#ef4444", isSystem: true, isSuperAdmin: true, permissions: { "*": ["*"] } as Record<string, string[]> },
+        { name: "Admin", description: "Quản trị viên", color: "#8b5cf6", isSystem: true, permissions: { posts: ["read", "create", "update", "delete"], products: ["read", "create", "update", "delete"], users: ["read"], settings: ["read", "update"] } as Record<string, string[]> },
+        { name: "Editor", description: "Biên tập viên nội dung", color: "#3b82f6", isSystem: false, permissions: { posts: ["read", "create", "update"], products: ["read"], comments: ["read", "update", "delete"] } as Record<string, string[]> },
+        { name: "Moderator", description: "Kiểm duyệt viên", color: "#22c55e", isSystem: false, permissions: { comments: ["read", "update", "delete"], posts: ["read"] } as Record<string, string[]> },
+      ];
+      await Promise.all(roles.map(role => ctx.db.insert("roles", role)));
       allSeeded.push("roles");
     }
     
@@ -462,15 +471,18 @@ export const seedAll = mutation({
     if (!existingUsers || args.force) {
       if (args.force && existingUsers) {
         const all = await ctx.db.query("users").collect();
-        for (const item of all) await ctx.db.delete(item._id);
+        await Promise.all(all.map(item => ctx.db.delete(item._id)));
       }
       
       const adminRole = await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Super Admin")).first();
       const editorRole = await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Editor")).first();
       
       if (adminRole && editorRole) {
-        await ctx.db.insert("users", { name: "Admin User", email: "admin@vietadmin.com", phone: "0901234567", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=adminuser", roleId: adminRole._id, status: "Active" as const, lastLogin: Date.now() });
-        await ctx.db.insert("users", { name: "Nguyễn Văn Editor", email: "editor@vietadmin.com", phone: "0912345678", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=nguyenvaneditor", roleId: editorRole._id, status: "Active" as const, lastLogin: Date.now() - 86400000 });
+        const users = [
+          { name: "Admin User", email: "admin@vietadmin.com", phone: "0901234567", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=adminuser", roleId: adminRole._id, status: "Active" as const, lastLogin: Date.now() },
+          { name: "Nguyễn Văn Editor", email: "editor@vietadmin.com", phone: "0912345678", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=nguyenvaneditor", roleId: editorRole._id, status: "Active" as const, lastLogin: Date.now() - 86400000 },
+        ];
+        await Promise.all(users.map(user => ctx.db.insert("users", user)));
         allSeeded.push("users");
       }
     }
@@ -480,12 +492,15 @@ export const seedAll = mutation({
     if (!existingPostCats || args.force) {
       if (args.force && existingPostCats) {
         const all = await ctx.db.query("postCategories").collect();
-        for (const item of all) await ctx.db.delete(item._id);
+        await Promise.all(all.map(item => ctx.db.delete(item._id)));
       }
       
-      await ctx.db.insert("postCategories", { name: "Tin tức", slug: "tin-tuc", description: "Tin tức mới nhất", order: 1, active: true });
-      await ctx.db.insert("postCategories", { name: "Hướng dẫn", slug: "huong-dan", description: "Các bài hướng dẫn", order: 2, active: true });
-      await ctx.db.insert("postCategories", { name: "Khuyến mãi", slug: "khuyen-mai", description: "Thông tin khuyến mãi", order: 3, active: true });
+      const postCats = [
+        { name: "Tin tức", slug: "tin-tuc", description: "Tin tức mới nhất", order: 1, active: true },
+        { name: "Hướng dẫn", slug: "huong-dan", description: "Các bài hướng dẫn", order: 2, active: true },
+        { name: "Khuyến mãi", slug: "khuyen-mai", description: "Thông tin khuyến mãi", order: 3, active: true },
+      ];
+      await Promise.all(postCats.map(cat => ctx.db.insert("postCategories", cat)));
       allSeeded.push("postCategories");
     }
     
@@ -494,13 +509,16 @@ export const seedAll = mutation({
     if (!existingProdCats || args.force) {
       if (args.force && existingProdCats) {
         const all = await ctx.db.query("productCategories").collect();
-        for (const item of all) await ctx.db.delete(item._id);
+        await Promise.all(all.map(item => ctx.db.delete(item._id)));
       }
       
-      await ctx.db.insert("productCategories", { name: "Điện thoại", slug: "dien-thoai", description: "Điện thoại di động", order: 1, active: true });
-      await ctx.db.insert("productCategories", { name: "Laptop", slug: "laptop", description: "Máy tính xách tay", order: 2, active: true });
-      await ctx.db.insert("productCategories", { name: "Phụ kiện", slug: "phu-kien", description: "Phụ kiện công nghệ", order: 3, active: true });
-      await ctx.db.insert("productCategories", { name: "Tablet", slug: "tablet", description: "Máy tính bảng", order: 4, active: true });
+      const prodCats = [
+        { name: "Điện thoại", slug: "dien-thoai", description: "Điện thoại di động", order: 1, active: true },
+        { name: "Laptop", slug: "laptop", description: "Máy tính xách tay", order: 2, active: true },
+        { name: "Phụ kiện", slug: "phu-kien", description: "Phụ kiện công nghệ", order: 3, active: true },
+        { name: "Tablet", slug: "tablet", description: "Máy tính bảng", order: 4, active: true },
+      ];
+      await Promise.all(prodCats.map(cat => ctx.db.insert("productCategories", cat)));
       allSeeded.push("productCategories");
     }
     
@@ -509,12 +527,15 @@ export const seedAll = mutation({
     if (!existingCustomers || args.force) {
       if (args.force && existingCustomers) {
         const all = await ctx.db.query("customers").collect();
-        for (const item of all) await ctx.db.delete(item._id);
+        await Promise.all(all.map(item => ctx.db.delete(item._id)));
       }
       
-      await ctx.db.insert("customers", { name: "Trần Văn A", email: "trana@gmail.com", phone: "0901111111", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=tranvana", status: "Active" as const, ordersCount: 5, totalSpent: 15000000, city: "Hồ Chí Minh" });
-      await ctx.db.insert("customers", { name: "Nguyễn Thị B", email: "nguyenb@gmail.com", phone: "0902222222", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=nguyenthib", status: "Active" as const, ordersCount: 3, totalSpent: 8500000, city: "Hà Nội" });
-      await ctx.db.insert("customers", { name: "Lê Văn C", email: "lec@gmail.com", phone: "0903333333", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=levanc", status: "Inactive" as const, ordersCount: 1, totalSpent: 2000000, city: "Đà Nẵng" });
+      const customers = [
+        { name: "Trần Văn A", email: "trana@gmail.com", phone: "0901111111", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=tranvana", status: "Active" as const, ordersCount: 5, totalSpent: 15000000, city: "Hồ Chí Minh" },
+        { name: "Nguyễn Thị B", email: "nguyenb@gmail.com", phone: "0902222222", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=nguyenthib", status: "Active" as const, ordersCount: 3, totalSpent: 8500000, city: "Hà Nội" },
+        { name: "Lê Văn C", email: "lec@gmail.com", phone: "0903333333", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=levanc", status: "Inactive" as const, ordersCount: 1, totalSpent: 2000000, city: "Đà Nẵng" },
+      ];
+      await Promise.all(customers.map(customer => ctx.db.insert("customers", customer)));
       allSeeded.push("customers");
     }
     
@@ -523,7 +544,7 @@ export const seedAll = mutation({
     if (!existingSettings || args.force) {
       if (args.force && existingSettings) {
         const all = await ctx.db.query("settings").collect();
-        for (const item of all) await ctx.db.delete(item._id);
+        await Promise.all(all.map(item => ctx.db.delete(item._id)));
       }
       
       const settings = [
@@ -537,7 +558,7 @@ export const seedAll = mutation({
         { key: "metaTitle", value: "VietAdmin - Hệ thống quản trị chuyên nghiệp", group: "seo" },
         { key: "metaDescription", value: "VietAdmin cung cấp giải pháp quản trị website toàn diện", group: "seo" },
       ];
-      for (const s of settings) await ctx.db.insert("settings", s);
+      await Promise.all(settings.map(s => ctx.db.insert("settings", s)));
       allSeeded.push("settings");
     }
     

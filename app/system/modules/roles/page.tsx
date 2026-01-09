@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { Shield, FileText, Palette, GitBranch, Loader2, Database, Trash2, RefreshCw, Settings, Users, Crown, Lock } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
@@ -131,26 +132,29 @@ export default function RolesModuleConfigPage() {
     }
   };
 
+  // QA FIX: Batch save với Promise.all
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const promises: Promise<unknown>[] = [];
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
         }
       }
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
         }
       }
       if (localSettings.maxRolesPerUser !== serverSettings.maxRolesPerUser) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'maxRolesPerUser', value: localSettings.maxRolesPerUser });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'maxRolesPerUser', value: localSettings.maxRolesPerUser }));
       }
       if (localSettings.rolesPerPage !== serverSettings.rolesPerPage) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'rolesPerPage', value: localSettings.rolesPerPage });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'rolesPerPage', value: localSettings.rolesPerPage }));
       }
+      await Promise.all(promises);
       toast.success('Đã lưu cấu hình thành công!');
     } catch {
       toast.error('Có lỗi xảy ra khi lưu cấu hình');

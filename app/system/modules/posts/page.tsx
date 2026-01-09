@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { FileText, FolderTree, Tag, Star, Clock, Loader2, Database, Trash2, RefreshCw, MessageSquare, Settings, Eye } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
@@ -34,10 +35,18 @@ export default function PostsModuleConfigPage() {
   const categoryFieldsData = useQuery(api.admin.modules.listModuleFields, { moduleKey: CATEGORY_MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
 
-  // Data tab queries
-  const postsData = useQuery(api.posts.listAll, {});
-  const categoriesData = useQuery(api.postCategories.listAll, {});
-  const commentsData = useQuery(api.comments.listAll, {});
+  // QA-HIGH-001 FIX: Data tab queries với pagination thay vì listAll
+  const { results: postsData, status: postsStatus, loadMore: loadMorePosts } = usePaginatedQuery(
+    api.posts.list,
+    {},
+    { initialNumItems: 10 }
+  );
+  const categoriesData = useQuery(api.postCategories.listAll, { limit: 50 });
+  const { results: commentsData, status: commentsStatus, loadMore: loadMoreComments } = usePaginatedQuery(
+    api.comments.listByTargetTypePaginated,
+    { targetType: "post" },
+    { initialNumItems: 10 }
+  );
 
   const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
   const updateField = useMutation(api.admin.modules.updateModuleField);
@@ -163,36 +172,45 @@ export default function PostsModuleConfigPage() {
     setLocalCategoryFields(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
   };
 
+  // QA-CRIT-001 FIX: Batch save với Promise.all thay vì sequential
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Save features
+      const promises: Promise<unknown>[] = [];
+      
+      // Collect feature updates
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
         }
       }
-      // Save post fields
+      
+      // Collect post field updates
       for (const field of localPostFields) {
         const server = serverPostFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
         }
       }
-      // Save category fields
+      
+      // Collect category field updates
       for (const field of localCategoryFields) {
         const server = serverCategoryFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
         }
       }
-      // Save settings
+      
+      // Collect settings updates
       if (localSettings.postsPerPage !== serverSettings.postsPerPage) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'postsPerPage', value: localSettings.postsPerPage });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'postsPerPage', value: localSettings.postsPerPage }));
       }
       if (localSettings.defaultStatus !== serverSettings.defaultStatus) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'defaultStatus', value: localSettings.defaultStatus });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'defaultStatus', value: localSettings.defaultStatus }));
       }
+      
+      // Execute all updates in parallel
+      await Promise.all(promises);
       toast.success('Đã lưu cấu hình thành công!');
     } catch {
       toast.error('Có lỗi xảy ra khi lưu cấu hình');
@@ -359,7 +377,7 @@ export default function PostsModuleConfigPage() {
             </div>
           </Card>
 
-          {/* Statistics */}
+          {/* Statistics - Using paginated data counts */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="p-4">
               <div className="flex items-center gap-3">
@@ -367,7 +385,7 @@ export default function PostsModuleConfigPage() {
                   <FileText className="w-5 h-5 text-cyan-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{postsData?.length ?? 0}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{postsData?.length ?? 0}{postsStatus === 'CanLoadMore' ? '+' : ''}</p>
                   <p className="text-sm text-slate-500">Bài viết</p>
                 </div>
               </div>
@@ -389,18 +407,18 @@ export default function PostsModuleConfigPage() {
                   <MessageSquare className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{commentsData?.length ?? 0}</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{commentsData?.length ?? 0}{commentsStatus === 'CanLoadMore' ? '+' : ''}</p>
                   <p className="text-sm text-slate-500">Bình luận</p>
                 </div>
               </div>
             </Card>
           </div>
 
-          {/* Posts Table */}
+          {/* Posts Table - With pagination */}
           <Card>
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
               <FileText className="w-5 h-5 text-cyan-500" />
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Bài viết ({postsData?.length ?? 0})</h3>
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Bài viết ({postsData?.length ?? 0}{postsStatus === 'CanLoadMore' ? '+' : ''})</h3>
             </div>
             <Table>
               <TableHeader>
@@ -412,7 +430,7 @@ export default function PostsModuleConfigPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {postsData?.slice(0, 10).map(post => (
+                {postsData?.map(post => (
                   <TableRow key={post._id}>
                     <TableCell className="font-medium">{post.title}</TableCell>
                     <TableCell><Badge variant="secondary">{categoryMap[post.categoryId] || 'N/A'}</Badge></TableCell>
@@ -433,9 +451,11 @@ export default function PostsModuleConfigPage() {
                 )}
               </TableBody>
             </Table>
-            {postsData && postsData.length > 10 && (
-              <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500 text-center">
-                Hiển thị 10 / {postsData.length} bài viết
+            {postsStatus === 'CanLoadMore' && (
+              <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-center">
+                <Button variant="ghost" size="sm" onClick={() => loadMorePosts(10)}>
+                  Tải thêm bài viết
+                </Button>
               </div>
             )}
           </Card>
@@ -480,11 +500,11 @@ export default function PostsModuleConfigPage() {
             </Table>
           </Card>
 
-          {/* Comments Table */}
+          {/* Comments Table - With pagination */}
           <Card>
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-amber-500" />
-              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Bình luận ({commentsData?.length ?? 0})</h3>
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100">Bình luận ({commentsData?.length ?? 0}{commentsStatus === 'CanLoadMore' ? '+' : ''})</h3>
             </div>
             <Table>
               <TableHeader>
@@ -495,7 +515,7 @@ export default function PostsModuleConfigPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {commentsData?.slice(0, 10).map(comment => (
+                {commentsData?.map(comment => (
                   <TableRow key={comment._id}>
                     <TableCell className="font-medium">{comment.authorName}</TableCell>
                     <TableCell className="text-slate-600 dark:text-slate-400 max-w-xs truncate">{comment.content}</TableCell>
@@ -515,9 +535,11 @@ export default function PostsModuleConfigPage() {
                 )}
               </TableBody>
             </Table>
-            {commentsData && commentsData.length > 10 && (
-              <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500 text-center">
-                Hiển thị 10 / {commentsData.length} bình luận
+            {commentsStatus === 'CanLoadMore' && (
+              <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-center">
+                <Button variant="ghost" size="sm" onClick={() => loadMoreComments(10)}>
+                  Tải thêm bình luận
+                </Button>
               </div>
             )}
           </Card>

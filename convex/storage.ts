@@ -68,8 +68,9 @@ export const deleteImage = mutation({
   },
 });
 
+// QA-HIGH-006 FIX: Add limit to prevent fetching ALL images
 export const listByFolder = query({
-  args: { folder: v.optional(v.string()) },
+  args: { folder: v.optional(v.string()), limit: v.optional(v.number()) },
   returns: v.array(v.object({
     _id: v.id("images"),
     storageId: v.id("_storage"),
@@ -79,9 +80,10 @@ export const listByFolder = query({
     url: v.union(v.string(), v.null()),
   })),
   handler: async (ctx, args) => {
+    const maxLimit = args.limit ?? 100; // Default max 100
     const images = args.folder
-      ? await ctx.db.query("images").withIndex("by_folder", q => q.eq("folder", args.folder)).collect()
-      : await ctx.db.query("images").collect();
+      ? await ctx.db.query("images").withIndex("by_folder", q => q.eq("folder", args.folder)).take(maxLimit)
+      : await ctx.db.query("images").take(maxLimit);
     
     const result = await Promise.all(
       images.map(async (img) => ({
@@ -98,35 +100,54 @@ export const listByFolder = query({
   },
 });
 
-// Cleanup orphaned images (images not used anywhere)
+// QA-HIGH-006 FIX: Cleanup orphaned images with batch processing and limits
 export const cleanupOrphanedImages = mutation({
-  args: { folder: v.string() },
-  returns: v.number(),
+  args: { folder: v.string(), batchSize: v.optional(v.number()) },
+  returns: v.object({ deleted: v.number(), hasMore: v.boolean() }),
   handler: async (ctx, args) => {
+    const maxBatch = args.batchSize ?? 50; // Process in batches to avoid timeout
     const images = await ctx.db
       .query("images")
       .withIndex("by_folder", q => q.eq("folder", args.folder))
-      .collect();
+      .take(maxBatch);
     
-    let deletedCount = 0;
+    if (images.length === 0) {
+      return { deleted: 0, hasMore: false };
+    }
     
-    for (const image of images) {
-      const url = await ctx.storage.getUrl(image.storageId);
+    // Pre-fetch all URLs in parallel
+    const imageUrls = await Promise.all(
+      images.map(async (img) => ({
+        image: img,
+        url: await ctx.storage.getUrl(img.storageId),
+      }))
+    );
+    
+    // Pre-fetch posts/products once (not per image!)
+    let posts: { thumbnail?: string; content: string }[] = [];
+    let products: { image?: string; images?: string[]; description?: string }[] = [];
+    
+    if (args.folder === "posts" || args.folder === "posts-content") {
+      posts = await ctx.db.query("posts").take(500);
+    }
+    if (args.folder === "products" || args.folder === "products-content") {
+      products = await ctx.db.query("products").take(500);
+    }
+    
+    // Find orphaned images
+    const toDelete: typeof images = [];
+    for (const { image, url } of imageUrls) {
       if (!url) continue;
       
       let isUsed = false;
       
-      // Check if image is used in posts
       if (args.folder === "posts" || args.folder === "posts-content") {
-        const posts = await ctx.db.query("posts").collect();
         isUsed = posts.some(post => 
           post.thumbnail === url || (post.content && post.content.includes(url))
         );
       }
       
-      // Check if image is used in products
       if (args.folder === "products" || args.folder === "products-content") {
-        const products = await ctx.db.query("products").collect();
         isUsed = isUsed || products.some(product => 
           product.image === url || 
           (product.images && product.images.includes(url)) ||
@@ -135,12 +156,22 @@ export const cleanupOrphanedImages = mutation({
       }
       
       if (!isUsed) {
-        await ctx.storage.delete(image.storageId);
-        await ctx.db.delete(image._id);
-        deletedCount++;
+        toDelete.push(image);
       }
     }
     
-    return deletedCount;
+    // Batch delete
+    await Promise.all(toDelete.map(async (image) => {
+      await ctx.storage.delete(image.storageId);
+      await ctx.db.delete(image._id);
+    }));
+    
+    // Check if there are more images to process
+    const remaining = await ctx.db
+      .query("images")
+      .withIndex("by_folder", q => q.eq("folder", args.folder))
+      .first();
+    
+    return { deleted: toDelete.length, hasMore: remaining !== null };
   },
 });

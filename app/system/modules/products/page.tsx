@@ -179,35 +179,38 @@ export default function ProductsModuleConfigPage() {
     setLocalCategoryFields(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
   };
 
+  // QA FIX: Batch save với Promise.all
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const promises: Promise<unknown>[] = [];
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
         }
       }
       for (const field of localProductFields) {
         const server = serverProductFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled });
+          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
         }
       }
       for (const field of localCategoryFields) {
         const server = serverCategoryFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled });
+          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
         }
       }
       if (localSettings.productsPerPage !== serverSettings.productsPerPage) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'productsPerPage', value: localSettings.productsPerPage });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'productsPerPage', value: localSettings.productsPerPage }));
       }
       if (localSettings.defaultStatus !== serverSettings.defaultStatus) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'defaultStatus', value: localSettings.defaultStatus });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'defaultStatus', value: localSettings.defaultStatus }));
       }
       if (localSettings.lowStockThreshold !== serverSettings.lowStockThreshold) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'lowStockThreshold', value: localSettings.lowStockThreshold });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'lowStockThreshold', value: localSettings.lowStockThreshold }));
       }
+      await Promise.all(promises);
       toast.success('Đã lưu cấu hình thành công!');
     } catch {
       toast.error('Có lỗi xảy ra khi lưu cấu hình');

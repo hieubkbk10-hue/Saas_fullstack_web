@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Doc } from '@/convex/_generated/dataModel';
+import { Doc, Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { ShoppingBag, Truck, MapPin, CreditCard, Loader2, Database, Trash2, RefreshCw, Settings, Users } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
@@ -160,26 +160,31 @@ export default function OrdersModuleConfigPage() {
     }
   };
 
+  // QA FIX: Batch save với Promise.all
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const promises: Promise<unknown>[] = [];
+      
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
         }
       }
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
         }
       }
       if (localSettings.ordersPerPage !== serverSettings.ordersPerPage) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'ordersPerPage', value: localSettings.ordersPerPage });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'ordersPerPage', value: localSettings.ordersPerPage }));
       }
       if (localSettings.defaultStatus !== serverSettings.defaultStatus) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'defaultStatus', value: localSettings.defaultStatus });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'defaultStatus', value: localSettings.defaultStatus }));
       }
+      
+      await Promise.all(promises);
       toast.success('Đã lưu cấu hình thành công!');
     } catch {
       toast.error('Có lỗi xảy ra khi lưu cấu hình');

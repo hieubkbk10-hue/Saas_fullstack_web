@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { MessageSquare, ThumbsUp, Reply, Shield, Loader2, Database, Trash2, RefreshCw, FileText, Package, Settings } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
@@ -141,32 +142,35 @@ export default function CommentsModuleConfigPage() {
     }
   };
 
+  // QA FIX: Batch save với Promise.all
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Save features
+      const promises: Promise<unknown>[] = [];
+      // Collect features
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
         }
       }
-      // Save fields
+      // Collect fields
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
         }
       }
-      // Save settings
+      // Collect settings
       if (localSettings.commentsPerPage !== serverSettings.commentsPerPage) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'commentsPerPage', value: localSettings.commentsPerPage });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'commentsPerPage', value: localSettings.commentsPerPage }));
       }
       if (localSettings.defaultStatus !== serverSettings.defaultStatus) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'defaultStatus', value: localSettings.defaultStatus });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'defaultStatus', value: localSettings.defaultStatus }));
       }
       if (localSettings.autoApprove !== serverSettings.autoApprove) {
-        await setSetting({ moduleKey: MODULE_KEY, settingKey: 'autoApprove', value: localSettings.autoApprove });
+        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'autoApprove', value: localSettings.autoApprove }));
       }
+      await Promise.all(promises);
       toast.success('Đã lưu cấu hình thành công!');
     } catch {
       toast.error('Có lỗi xảy ra khi lưu cấu hình');
