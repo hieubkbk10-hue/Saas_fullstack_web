@@ -40,6 +40,7 @@ import type * as roles from "../roles.js";
 import type * as seed from "../seed.js";
 import type * as settings from "../settings.js";
 import type * as storage from "../storage.js";
+import type * as usageStats from "../usageStats.js";
 import type * as users from "../users.js";
 import type * as wishlist from "../wishlist.js";
 
@@ -82,6 +83,7 @@ declare const fullApi: ApiFromModules<{
   seed: typeof seed;
   settings: typeof settings;
   storage: typeof storage;
+  usageStats: typeof usageStats;
   users: typeof users;
   wishlist: typeof wishlist;
 }>;

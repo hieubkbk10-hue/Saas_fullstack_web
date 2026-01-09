@@ -39,6 +39,8 @@ const vi = {
       bandwidthUsage: 'Sử dụng băng thông theo',
       dbBandwidth: 'Băng thông Database',
       fileBandwidth: 'Băng thông File',
+      noDataTitle: 'Chưa có dữ liệu bandwidth',
+      noDataDesc: 'Dữ liệu sẽ được tracking tự động khi có hoạt động trên hệ thống.',
       timeRanges: {
         'today': 'Hôm nay',
         '7d': '7 ngày',
@@ -143,6 +145,8 @@ const en: typeof vi = {
       bandwidthUsage: 'Bandwidth usage in',
       dbBandwidth: 'Database Bandwidth',
       fileBandwidth: 'File Bandwidth',
+      noDataTitle: 'No bandwidth data yet',
+      noDataDesc: 'Data will be tracked automatically when there is activity on the system.',
       timeRanges: {
         'today': 'Today',
         '7d': '7 days',

@@ -103,6 +103,17 @@ export default defineSchema({
     notes: v.optional(v.string()),
   }),
 
+  // 6a. usageStats - Track bandwidth usage theo ngày
+  usageStats: defineTable({
+    date: v.string(), // "2026-01-09"
+    dbReads: v.number(),
+    dbWrites: v.number(),
+    fileReads: v.number(),
+    fileWrites: v.number(),
+    estimatedDbBandwidth: v.number(), // KB
+    estimatedFileBandwidth: v.number(), // KB
+  }).index("by_date", ["date"]),
+
   // 7. systemSessions - Sessions cho /system login
   systemSessions: defineTable({
     token: v.string(),

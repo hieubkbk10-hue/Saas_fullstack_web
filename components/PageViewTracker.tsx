@@ -60,8 +60,8 @@ export function PageViewTracker() {
   const trackedPaths = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    // Skip admin and system routes
-    if (pathname.startsWith('/admin') || pathname.startsWith('/system')) {
+    // Skip system routes only (keep tracking /admin for bandwidth stats)
+    if (pathname.startsWith('/system')) {
       return;
     }
 

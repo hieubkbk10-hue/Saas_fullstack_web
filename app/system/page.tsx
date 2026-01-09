@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { 
   AreaChart, 
   Area, 
@@ -10,70 +10,12 @@ import {
   Tooltip, 
   ResponsiveContainer 
 } from 'recharts';
-import { ExternalLink, Settings, Eye, EyeOff, Save, Trash2, Edit3, Database, HardDrive } from 'lucide-react';
+import { ExternalLink, Settings, Eye, EyeOff, Save, Trash2, Edit3, Database, HardDrive, AlertCircle } from 'lucide-react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useI18n } from './i18n/context';
 
 type TimeRange = 'today' | '7d' | '1m' | '3m' | '1y';
-
-const generateBandwidthData = (range: TimeRange) => {
-  const now = new Date();
-  const data: { time: string; dbBandwidth: number; fileBandwidth: number }[] = [];
-  
-  const configs: Record<TimeRange, { points: number; format: (d: Date) => string; subtractMs: number; baseDb: number; baseFile: number }> = {
-    'today': { 
-      points: 12, 
-      format: (d) => `${d.getHours()}:00`,
-      subtractMs: 2 * 60 * 60 * 1000,
-      baseDb: 3,
-      baseFile: 8
-    },
-    '7d': { 
-      points: 7, 
-      format: (d) => `${d.getDate()}/${d.getMonth() + 1}`,
-      subtractMs: 24 * 60 * 60 * 1000,
-      baseDb: 15,
-      baseFile: 45
-    },
-    '1m': { 
-      points: 10, 
-      format: (d) => `${d.getDate()}/${d.getMonth() + 1}`,
-      subtractMs: 3 * 24 * 60 * 60 * 1000,
-      baseDb: 40,
-      baseFile: 120
-    },
-    '3m': { 
-      points: 12, 
-      format: (d) => `${d.getDate()}/${d.getMonth() + 1}`,
-      subtractMs: 7 * 24 * 60 * 60 * 1000,
-      baseDb: 100,
-      baseFile: 300
-    },
-    '1y': { 
-      points: 12, 
-      format: (d) => `T${d.getMonth() + 1}`,
-      subtractMs: 30 * 24 * 60 * 60 * 1000,
-      baseDb: 400,
-      baseFile: 1200
-    },
-  };
-
-  const config = configs[range];
-  
-  for (let i = config.points - 1; i >= 0; i--) {
-    const date = new Date(now.getTime() - i * config.subtractMs);
-    const dbBandwidth = Math.round(config.baseDb + Math.random() * config.baseDb * 0.4 + Math.sin(i * 0.6) * config.baseDb * 0.2);
-    const fileBandwidth = Math.round(config.baseFile + Math.random() * config.baseFile * 0.3 + Math.sin(i * 0.8) * config.baseFile * 0.15);
-    data.push({
-      time: config.format(date),
-      dbBandwidth,
-      fileBandwidth,
-    });
-  }
-  
-  return data;
-};
 
 export default function OverviewPage() {
   const { t } = useI18n();
@@ -81,7 +23,7 @@ export default function OverviewPage() {
   const upsert = useMutation(api.convexDashboard.upsert);
   const remove = useMutation(api.convexDashboard.remove);
 
-  const [selectedRange, setSelectedRange] = useState<TimeRange>('1m');
+  const [selectedRange, setSelectedRange] = useState<TimeRange>('today');
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
@@ -91,9 +33,12 @@ export default function OverviewPage() {
     notes: '',
   });
 
-  const chartData = useMemo(() => generateBandwidthData(selectedRange), [selectedRange]);
-  const totalDbBandwidth = useMemo(() => chartData.reduce((sum, d) => sum + d.dbBandwidth, 0), [chartData]);
-  const totalFileBandwidth = useMemo(() => chartData.reduce((sum, d) => sum + d.fileBandwidth, 0), [chartData]);
+  // Fetch bandwidth data from usageStats
+  const bandwidthData = useQuery(api.usageStats.getBandwidthData, { range: selectedRange });
+  const chartData = bandwidthData?.data ?? [];
+  const totalDbBandwidth = bandwidthData?.totalDbBandwidth ?? 0;
+  const totalFileBandwidth = bandwidthData?.totalFileBandwidth ?? 0;
+  const hasData = bandwidthData?.hasData ?? false;
   const timeRanges: TimeRange[] = ['today', '7d', '1m', '3m', '1y'];
 
   const handleEdit = () => {
@@ -344,6 +289,23 @@ export default function OverviewPage() {
           </div>
         </div>
 
+        {/* No Data Warning */}
+        {bandwidthData && !hasData && (
+          <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertCircle size={20} className="text-amber-500 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                  {t.overview.noDataTitle || 'Chưa có dữ liệu bandwidth'}
+                </p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  {t.overview.noDataDesc || 'Dữ liệu sẽ được tracking tự động khi có hoạt động trên hệ thống. Bạn có thể gọi api.usageStats.track() để bắt đầu tracking.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Stats Summary */}
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
@@ -362,34 +324,41 @@ export default function OverviewPage() {
           </div>
         </div>
         
-        <div className="h-72 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="colorDbBandwidth" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2}/>
-                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorFileBandwidth" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2}/>
-                  <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} vertical={false} />
-              <XAxis dataKey="time" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `${value} MB`} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '6px', color: '#f8fafc' }}
-                formatter={(value, name) => [
-                  `${typeof value === 'number' ? value.toLocaleString() : value} MB`, 
-                  name === 'dbBandwidth' ? t.overview.dbBandwidth : t.overview.fileBandwidth
-                ]}
-              />
-              <Area type="monotone" dataKey="fileBandwidth" stroke="#f43f5e" strokeWidth={2} fillOpacity={1} fill="url(#colorFileBandwidth)" />
-              <Area type="monotone" dataKey="dbBandwidth" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorDbBandwidth)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        {/* Loading State */}
+        {bandwidthData === undefined ? (
+          <div className="h-72 w-full flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
+          </div>
+        ) : (
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorDbBandwidth" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorFileBandwidth" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} vertical={false} />
+                <XAxis dataKey="time" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `${value} MB`} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '6px', color: '#f8fafc' }}
+                  formatter={(value, name) => [
+                    `${typeof value === 'number' ? value.toLocaleString() : value} MB`, 
+                    name === 'dbBandwidth' ? t.overview.dbBandwidth : t.overview.fileBandwidth
+                  ]}
+                />
+                <Area type="monotone" dataKey="fileBandwidth" stroke="#f43f5e" strokeWidth={2} fillOpacity={1} fill="url(#colorFileBandwidth)" />
+                <Area type="monotone" dataKey="dbBandwidth" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorDbBandwidth)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
 
         {/* Legend */}
         <div className="flex justify-center gap-6 mt-4">
