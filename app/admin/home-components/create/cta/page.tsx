@@ -6,7 +6,7 @@ import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
 import { CTAPreview } from '../../previews';
 
 export default function CTACreatePage() {
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm('Kêu gọi hành động (CTA)');
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Kêu gọi hành động (CTA)', 'CTA');
   
   const [ctaConfig, setCtaConfig] = useState({
     title: 'Sẵn sàng bắt đầu?',
@@ -17,6 +17,10 @@ export default function CTACreatePage() {
     secondaryButtonLink: '/about'
   });
 
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, ctaConfig);
+  };
+
   return (
     <ComponentFormWrapper
       type="CTA"
@@ -24,7 +28,8 @@ export default function CTACreatePage() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader>

@@ -7,7 +7,7 @@ import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
 import { TestimonialsPreview } from '../../previews';
 
 export default function TestimonialsCreatePage() {
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm('Đánh giá / Review');
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Đánh giá / Review', 'Testimonials');
   
   const [testimonials, setTestimonials] = useState([
     { id: 1, name: 'Nguyễn Văn A', role: 'CEO, ABC Corp', content: 'Dịch vụ tuyệt vời!', avatar: '', rating: 5 },
@@ -17,6 +17,10 @@ export default function TestimonialsCreatePage() {
   const handleAddTestimonial = () => setTestimonials([...testimonials, { id: Date.now(), name: '', role: '', content: '', avatar: '', rating: 5 }]);
   const handleRemoveTestimonial = (id: number) => testimonials.length > 1 && setTestimonials(testimonials.filter(t => t.id !== id));
 
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, { items: testimonials.map(t => ({ name: t.name, role: t.role, content: t.content, avatar: t.avatar, rating: t.rating })) });
+  };
+
   return (
     <ComponentFormWrapper
       type="Testimonials"
@@ -24,7 +28,8 @@ export default function TestimonialsCreatePage() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">

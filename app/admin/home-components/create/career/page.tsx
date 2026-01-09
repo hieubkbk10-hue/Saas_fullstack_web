@@ -7,12 +7,16 @@ import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
 import { CareerPreview } from '../../previews';
 
 export default function CareerCreatePage() {
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm('Tuyển dụng');
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Tuyển dụng', 'Career');
   
   const [jobPositions, setJobPositions] = useState([
     { id: 1, title: 'Frontend Developer', department: 'Engineering', location: 'Hà Nội', type: 'Full-time', salary: '15-25 triệu', description: '' },
     { id: 2, title: 'UI/UX Designer', department: 'Design', location: 'Remote', type: 'Full-time', salary: '12-20 triệu', description: '' }
   ]);
+
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, { jobs: jobPositions.map(j => ({ title: j.title, department: j.department, location: j.location, type: j.type, salary: j.salary, description: j.description })) });
+  };
 
   return (
     <ComponentFormWrapper
@@ -21,7 +25,8 @@ export default function CareerCreatePage() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">

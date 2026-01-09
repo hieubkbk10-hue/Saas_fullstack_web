@@ -6,7 +6,7 @@ import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
 import { ContactPreview } from '../../previews';
 
 export default function ContactCreatePage() {
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm('Liên hệ');
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Liên hệ', 'Contact');
   
   const [contactConfig, setContactConfig] = useState({
     showMap: true,
@@ -22,6 +22,10 @@ export default function ContactCreatePage() {
     ]
   });
 
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, contactConfig);
+  };
+
   return (
     <ComponentFormWrapper
       type="Contact"
@@ -29,7 +33,8 @@ export default function ContactCreatePage() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader>

@@ -5,13 +5,15 @@ import Link from 'next/link';
 import { 
   Plus, Edit, Trash2, Grid, LayoutTemplate, AlertCircle, Package, 
   Briefcase, FileText, Users, MousePointerClick, HelpCircle, 
-  User as UserIcon, Check, Star, Award, Tag, Image as ImageIcon, Phone
+  User as UserIcon, Check, Star, Award, Tag, Image as ImageIcon, Phone, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { cn, Button, Card, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { BulkActionBar, SelectCheckbox } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
-import { mockHomeComponents } from '../mockData';
 
 export default function HomeComponentsPageWrapper() {
   return (
@@ -41,38 +43,60 @@ const COMPONENT_TYPES = [
   { value: 'CaseStudy', label: 'Dự án thực tế', icon: FileText, description: 'Case study tiêu biểu' },
   { value: 'Career', label: 'Tuyển dụng', icon: Users, description: 'Vị trí đang tuyển' },
   { value: 'Contact', label: 'Liên hệ', icon: Phone, description: 'Form liên hệ, bản đồ' },
-  // Alias for mockData compatibility
   { value: 'ProductGrid', label: 'Sản phẩm', icon: Package, description: 'Grid sản phẩm' },
   { value: 'News', label: 'Tin tức', icon: FileText, description: 'Tin mới' },
   { value: 'Banner', label: 'Banner', icon: LayoutTemplate, description: 'Banner slider' },
 ];
 
 function HomeComponentsPage() {
-  const [components, setComponents] = useState(mockHomeComponents);
+  const components = useQuery(api.homeComponents.listAll);
+  const removeMutation = useMutation(api.homeComponents.remove);
+  const toggleMutation = useMutation(api.homeComponents.toggle);
+  
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  
+  if (components === undefined) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      </div>
+    );
+  }
   
   const sortedComponents = [...components].sort((a, b) => a.order - b.order);
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedComponents.length ? [] : sortedComponents.map(c => c.id));
+  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedComponents.length ? [] : sortedComponents.map(c => c._id));
   const toggleSelectItem = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: Id<"homeComponents">) => {
     if (confirm('Xóa component này khỏi trang chủ?')) {
-      setComponents(prev => prev.filter(c => c.id !== id));
-      toast.success('Đã xóa component');
+      try {
+        await removeMutation({ id });
+        toast.success('Đã xóa component');
+      } catch {
+        toast.error('Lỗi khi xóa component');
+      }
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} component đã chọn?`)) {
-      setComponents(prev => prev.filter(c => !selectedIds.includes(c.id)));
-      setSelectedIds([]);
-      toast.success(`Đã xóa ${selectedIds.length} component`);
+      try {
+        await Promise.all(selectedIds.map(id => removeMutation({ id: id as Id<"homeComponents"> })));
+        setSelectedIds([]);
+        toast.success(`Đã xóa ${selectedIds.length} component`);
+      } catch {
+        toast.error('Lỗi khi xóa components');
+      }
     }
   };
 
-  const toggleActive = (id: string) => {
-    setComponents(prev => prev.map(c => c.id === id ? { ...c, active: !c.active } : c));
+  const toggleActive = async (id: Id<"homeComponents">) => {
+    try {
+      await toggleMutation({ id });
+    } catch {
+      toast.error('Lỗi khi cập nhật trạng thái');
+    }
   };
 
   return (
@@ -113,14 +137,14 @@ function HomeComponentsPage() {
             {sortedComponents.map((comp, index) => {
               const TypeIcon = COMPONENT_TYPES.find(t => t.value === comp.type)?.icon || Grid;
               return (
-                <TableRow key={comp.id} className={selectedIds.includes(comp.id) ? 'bg-blue-500/5' : ''}>
+                <TableRow key={comp._id} className={selectedIds.includes(comp._id) ? 'bg-blue-500/5' : ''}>
                   <TableCell>
-                    <SelectCheckbox checked={selectedIds.includes(comp.id)} onChange={() => toggleSelectItem(comp.id)} />
+                    <SelectCheckbox checked={selectedIds.includes(comp._id)} onChange={() => toggleSelectItem(comp._id)} />
                   </TableCell>
                   <TableCell className="font-medium text-slate-500">{index + 1}</TableCell>
                   <TableCell>
                     <div className="font-medium">{comp.title}</div>
-                    <div className="text-xs text-slate-400 truncate max-w-[300px]">{comp.preview}</div>
+                    <div className="text-xs text-slate-400 truncate max-w-[300px]">{comp.config?.preview || comp.config?.description || ''}</div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -136,7 +160,7 @@ function HomeComponentsPage() {
                         "cursor-pointer inline-flex items-center justify-center rounded-full w-8 h-4 transition-colors",
                         comp.active ? "bg-green-500" : "bg-slate-300"
                       )}
-                      onClick={() => toggleActive(comp.id)}
+                      onClick={() => toggleActive(comp._id)}
                     >
                       <div className={cn(
                         "w-3 h-3 bg-white rounded-full transition-transform",
@@ -146,10 +170,10 @@ function HomeComponentsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Link href={`/admin/home-components/${comp.id}/edit`}>
+                      <Link href={`/admin/home-components/${comp._id}/edit`}>
                         <Button variant="ghost" size="icon"><Edit size={16} /></Button>
                       </Link>
-                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(comp.id)}>
+                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(comp._id)}>
                         <Trash2 size={16} />
                       </Button>
                     </div>

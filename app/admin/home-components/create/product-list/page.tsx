@@ -16,9 +16,14 @@ function ProductListCreateContent() {
     Blog: 'Tin tức / Blog'
   };
   
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm(titles[type]);
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm(titles[type], type);
   
   const [itemCount, setItemCount] = useState(8);
+  const [sortBy, setSortBy] = useState('newest');
+
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, { itemCount, sortBy });
+  };
 
   return (
     <ComponentFormWrapper
@@ -27,7 +32,8 @@ function ProductListCreateContent() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader>
@@ -45,10 +51,14 @@ function ProductListCreateContent() {
             </div>
             <div className="space-y-2">
               <Label>Sắp xếp theo</Label>
-              <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
-                <option>Mới nhất</option>
-                <option>Bán chạy nhất</option>
-                <option>Ngẫu nhiên</option>
+              <select 
+                className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="newest">Mới nhất</option>
+                <option value="bestseller">Bán chạy nhất</option>
+                <option value="random">Ngẫu nhiên</option>
               </select>
             </div>
           </div>

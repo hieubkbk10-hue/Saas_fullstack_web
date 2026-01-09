@@ -29,12 +29,16 @@ function GalleryCreateContent() {
     TrustBadges: 'trust-badges'
   };
   
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm(titles[type]);
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm(titles[type], type);
   
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([
     { id: 'item-1', url: '', link: '' },
     { id: 'item-2', url: '', link: '' }
   ]);
+
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, { items: galleryItems.map(g => ({ url: g.url, link: g.link })) });
+  };
 
   return (
     <ComponentFormWrapper
@@ -43,7 +47,8 @@ function GalleryCreateContent() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader>

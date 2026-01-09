@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, DragEvent } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
@@ -98,7 +98,10 @@ export function MultiImageUploader<T extends ImageItem>({
 }: MultiImageUploaderProps<T>) {
   const [uploadingIds, setUploadingIds] = useState<Set<string | number>>(new Set());
   const [urlModeIds, setUrlModeIds] = useState<Set<string | number>>(new Set());
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOverItemId, setDragOverItemId] = useState<string | number | null>(null);
   const inputRefs = useRef<Map<string | number, HTMLInputElement>>(new Map());
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
   const saveImage = useMutation(api.storage.saveImage);
@@ -184,15 +187,49 @@ export function MultiImageUploader<T extends ImageItem>({
   }, [generateUploadUrl, saveImage, folder, imageKey, items, onChange]);
 
   const handleMultipleFiles = useCallback(async (files: FileList) => {
-    const remainingSlots = maxItems - items.length;
-    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+    const filesToUpload = Array.from(files);
+    
+    // If there's exactly 1 item with no image, upload first file to it
+    const firstEmptyItem = items.find(item => !item[imageKey]);
+    if (firstEmptyItem && filesToUpload.length > 0) {
+      await handleFileUpload(firstEmptyItem.id, filesToUpload[0]);
+      // Upload remaining files as new items
+      const remainingFiles = filesToUpload.slice(1);
+      if (remainingFiles.length > 0) {
+        const remainingSlots = maxItems - items.length;
+        const filesToAdd = remainingFiles.slice(0, remainingSlots);
+        
+        if (filesToAdd.length > 0) {
+          const newItems: T[] = filesToAdd.map((_, index) => ({
+            id: `new-${Date.now()}-${index}`,
+            [imageKey]: '',
+          } as unknown as T));
 
-    if (filesToUpload.length < files.length) {
+          const updatedItems = [...items, ...newItems];
+          onChange(updatedItems);
+
+          for (let i = 0; i < filesToAdd.length; i++) {
+            await handleFileUpload(newItems[i].id, filesToAdd[i]);
+          }
+        }
+      }
+      return;
+    }
+
+    // Normal flow: create new items for all files
+    const remainingSlots = maxItems - items.length;
+    const filesToAdd = filesToUpload.slice(0, remainingSlots);
+
+    if (filesToAdd.length < filesToUpload.length) {
       toast.warning(`Chỉ có thể thêm ${remainingSlots} ảnh nữa`);
     }
 
-    // Create new items for each file
-    const newItems: T[] = filesToUpload.map((_, index) => ({
+    if (filesToAdd.length === 0) {
+      toast.error(`Đã đạt giới hạn ${maxItems} ảnh`);
+      return;
+    }
+
+    const newItems: T[] = filesToAdd.map((_, index) => ({
       id: `new-${Date.now()}-${index}`,
       [imageKey]: '',
     } as unknown as T));
@@ -200,15 +237,43 @@ export function MultiImageUploader<T extends ImageItem>({
     const updatedItems = [...items, ...newItems];
     onChange(updatedItems);
 
-    // Upload each file
-    for (let i = 0; i < filesToUpload.length; i++) {
-      await handleFileUpload(newItems[i].id, filesToUpload[i]);
+    for (let i = 0; i < filesToAdd.length; i++) {
+      await handleFileUpload(newItems[i].id, filesToAdd[i]);
     }
   }, [items, maxItems, imageKey, onChange, handleFileUpload]);
 
-  const handleDrop = useCallback((e: React.DragEvent, itemId?: string | number) => {
+  const handleDragEnter = useCallback((e: DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set isDragging to false if leaving the container entirely
+    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
+      setIsDragging(false);
+    }
+    setDragOverItemId(null);
+  }, []);
+
+  const handleDragOver = useCallback((e: DragEvent, itemId?: string | number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (itemId !== undefined) {
+      setDragOverItemId(itemId);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: DragEvent, itemId?: string | number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    setDragOverItemId(null);
+    
     const files = e.dataTransfer.files;
+    if (!files.length) return;
     
     if (itemId !== undefined) {
       // Drop on specific item
@@ -282,13 +347,26 @@ export function MultiImageUploader<T extends ImageItem>({
     });
   }, []);
 
+  const inputId = `multi-image-input-${Math.random().toString(36).substr(2, 9)}`;
+
   return (
-    <div className={cn('space-y-4', className)}>
+    <div 
+      ref={dropZoneRef}
+      className={cn('space-y-4', className)}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={(e) => handleDragOver(e)}
+      onDrop={(e) => handleDrop(e)}
+    >
       {/* Drop zone for adding new images */}
       <div
-        onDrop={(e) => handleDrop(e)}
-        onDragOver={(e) => e.preventDefault()}
-        className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-4 text-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+        className={cn(
+          "border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 cursor-pointer",
+          isDragging 
+            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-[1.02]" 
+            : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+        )}
+        onClick={() => document.getElementById(inputId)?.click()}
       >
         <input
           type="file"
@@ -296,13 +374,13 @@ export function MultiImageUploader<T extends ImageItem>({
           multiple
           onChange={(e) => e.target.files && handleMultipleFiles(e.target.files)}
           className="hidden"
-          id="multi-image-input"
+          id={inputId}
         />
-        <label htmlFor="multi-image-input" className="cursor-pointer">
-          <Upload size={24} className="mx-auto text-slate-400 mb-2" />
-          <p className="text-sm text-slate-500">Kéo thả nhiều ảnh hoặc click để upload</p>
-          <p className="text-xs text-slate-400 mt-1">PNG, JPG, GIF → WebP 85%</p>
-        </label>
+        <Upload size={32} className={cn("mx-auto mb-3 transition-colors", isDragging ? "text-blue-500" : "text-slate-400")} />
+        <p className={cn("text-sm font-medium", isDragging ? "text-blue-600" : "text-slate-600 dark:text-slate-300")}>
+          {isDragging ? 'Thả ảnh vào đây!' : 'Kéo thả ảnh hoặc click để chọn'}
+        </p>
+        <p className="text-xs text-slate-400 mt-1">PNG, JPG, GIF - Tự động chuyển WebP</p>
       </div>
 
       {/* Items grid */}
@@ -316,9 +394,13 @@ export function MultiImageUploader<T extends ImageItem>({
             return (
               <div
                 key={item.id}
-                className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 space-y-3"
+                className={cn(
+                  "bg-slate-50 dark:bg-slate-800 rounded-lg p-3 space-y-3 transition-all duration-200",
+                  dragOverItemId === item.id && "ring-2 ring-blue-500 ring-offset-2 scale-[1.02]"
+                )}
                 onDrop={(e) => handleDrop(e, item.id)}
-                onDragOver={(e) => e.preventDefault()}
+                onDragOver={(e) => handleDragOver(e, item.id)}
+                onDragLeave={() => setDragOverItemId(null)}
               >
                 {/* Image preview / upload area */}
                 <div className="flex gap-3">

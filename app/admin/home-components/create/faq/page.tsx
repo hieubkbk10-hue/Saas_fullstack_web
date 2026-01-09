@@ -7,7 +7,7 @@ import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
 import { FaqPreview } from '../../previews';
 
 export default function FaqCreatePage() {
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm('Câu hỏi thường gặp');
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Câu hỏi thường gặp', 'FAQ');
   
   const [faqItems, setFaqItems] = useState([
     { id: 1, question: 'Làm thế nào để đặt hàng?', answer: 'Bạn có thể đặt hàng trực tuyến qua website hoặc gọi hotline.' },
@@ -17,6 +17,10 @@ export default function FaqCreatePage() {
   const handleAddFaq = () => setFaqItems([...faqItems, { id: Date.now(), question: '', answer: '' }]);
   const handleRemoveFaq = (id: number) => faqItems.length > 1 && setFaqItems(faqItems.filter(f => f.id !== id));
 
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, { items: faqItems.map(f => ({ question: f.question, answer: f.answer })) });
+  };
+
   return (
     <ComponentFormWrapper
       type="FAQ"
@@ -24,7 +28,8 @@ export default function FaqCreatePage() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">

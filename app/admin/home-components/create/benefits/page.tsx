@@ -7,13 +7,17 @@ import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
 import { ServicesPreview } from '../../previews';
 
 export default function BenefitsCreatePage() {
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm('Lợi ích');
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Lợi ích', 'Benefits');
   
   const [benefitsItems, setBenefitsItems] = useState([
     { id: 1, icon: 'Check', title: 'Chất lượng đảm bảo', description: 'Sản phẩm chính hãng 100%' },
     { id: 2, icon: 'Clock', title: 'Tiết kiệm thời gian', description: 'Giao hàng trong 24h' },
     { id: 3, icon: 'Shield', title: 'An toàn bảo mật', description: 'Thanh toán được mã hóa' }
   ]);
+
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, { items: benefitsItems.map(b => ({ icon: b.icon, title: b.title, description: b.description })) });
+  };
 
   return (
     <ComponentFormWrapper
@@ -22,7 +26,8 @@ export default function BenefitsCreatePage() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">

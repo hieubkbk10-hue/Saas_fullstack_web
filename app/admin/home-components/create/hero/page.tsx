@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
 import { HeroBannerPreview } from '../../previews';
@@ -15,23 +14,25 @@ interface HeroSlide extends ImageItem {
 }
 
 export default function HeroCreatePage() {
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm('Hero Banner');
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Hero Banner', 'Hero');
   
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([
     { id: 'slide-1', url: '', image: '', link: '' }
   ]);
 
-  // Sync url and image fields
   const handleSlidesChange = (slides: HeroSlide[]) => {
     setHeroSlides(slides.map(s => ({ ...s, image: s.url })));
   };
 
-  // Transform for preview (uses 'image' field, id as number)
   const previewSlides = heroSlides.map((s, idx) => ({ 
     id: idx + 1, 
     image: s.url || s.image,
     link: s.link 
   }));
+
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, { slides: heroSlides.map(s => ({ image: s.url || s.image, link: s.link })) });
+  };
 
   return (
     <ComponentFormWrapper
@@ -40,7 +41,8 @@ export default function HeroCreatePage() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader>

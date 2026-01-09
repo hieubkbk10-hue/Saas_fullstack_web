@@ -7,7 +7,7 @@ import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
 import { ServicesPreview } from '../../previews';
 
 export default function ServicesCreatePage() {
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm('Dịch vụ chi tiết');
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Dịch vụ chi tiết', 'Services');
   
   const [servicesItems, setServicesItems] = useState([
     { id: 1, icon: 'Briefcase', title: 'Tư vấn chiến lược', description: 'Đội ngũ chuyên gia giàu kinh nghiệm' },
@@ -18,6 +18,10 @@ export default function ServicesCreatePage() {
   const handleAddService = () => setServicesItems([...servicesItems, { id: Date.now(), icon: 'Star', title: '', description: '' }]);
   const handleRemoveService = (id: number) => servicesItems.length > 1 && setServicesItems(servicesItems.filter(s => s.id !== id));
 
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, { items: servicesItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })) });
+  };
+
   return (
     <ComponentFormWrapper
       type="Services"
@@ -25,7 +29,8 @@ export default function ServicesCreatePage() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">

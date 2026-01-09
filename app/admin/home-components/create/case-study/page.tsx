@@ -17,7 +17,7 @@ interface Project {
 }
 
 export default function CaseStudyCreatePage() {
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm('Dự án thực tế');
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Dự án thực tế', 'CaseStudy');
   
   const [projects, setProjects] = useState<Project[]>([
     { id: 'project-1', title: 'Dự án Website ABC Corp', category: 'Website', image: '', description: 'Thiết kế và phát triển website doanh nghiệp', link: '' },
@@ -45,6 +45,10 @@ export default function CaseStudyCreatePage() {
     setProjects(projects.map(p => p.id === id ? { ...p, [field]: value } : p));
   };
 
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, { projects: projects.map(p => ({ title: p.title, category: p.category, image: p.image, description: p.description, link: p.link })) });
+  };
+
   return (
     <ComponentFormWrapper
       type="CaseStudy"
@@ -52,7 +56,8 @@ export default function CaseStudyCreatePage() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">

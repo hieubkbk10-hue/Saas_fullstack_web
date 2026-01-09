@@ -4,6 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { 
   Grid, LayoutTemplate, AlertCircle, Package, Briefcase, FileText, 
   Users, MousePointerClick, HelpCircle, User as UserIcon, Check, 
@@ -46,6 +48,7 @@ export function ComponentFormWrapper({
   active, 
   setActive, 
   onSubmit, 
+  isSubmitting = false,
   children 
 }: { 
   type: string;
@@ -54,6 +57,7 @@ export function ComponentFormWrapper({
   active: boolean;
   setActive: (v: boolean) => void;
   onSubmit: (e: React.FormEvent) => void;
+  isSubmitting?: boolean;
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -111,11 +115,11 @@ export function ComponentFormWrapper({
         {children}
 
         <div className="flex justify-end gap-3 mt-6">
-          <Button type="button" variant="ghost" onClick={() => router.push('/admin/home-components')}>
+          <Button type="button" variant="ghost" onClick={() => router.push('/admin/home-components')} disabled={isSubmitting}>
             Hủy bỏ
           </Button>
-          <Button type="submit" variant="accent">
-            Tạo Component
+          <Button type="submit" variant="accent" disabled={isSubmitting}>
+            {isSubmitting ? 'Đang tạo...' : 'Tạo Component'}
           </Button>
         </div>
       </form>
@@ -123,16 +127,34 @@ export function ComponentFormWrapper({
   );
 }
 
-export function useComponentForm(defaultTitle: string) {
+export function useComponentForm(defaultTitle: string, componentType: string) {
   const router = useRouter();
   const [title, setTitle] = React.useState(defaultTitle);
   const [active, setActive] = React.useState(true);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const createMutation = useMutation(api.homeComponents.create);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, config: Record<string, unknown> = {}) => {
     e.preventDefault();
-    toast.success('Đã thêm component mới');
-    router.push('/admin/home-components');
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      await createMutation({
+        type: componentType,
+        title,
+        active,
+        config,
+      });
+      toast.success('Đã thêm component mới');
+      router.push('/admin/home-components');
+    } catch (error) {
+      toast.error('Lỗi khi tạo component');
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  return { title, setTitle, active, setActive, handleSubmit, router };
+  return { title, setTitle, active, setActive, handleSubmit, isSubmitting, router };
 }

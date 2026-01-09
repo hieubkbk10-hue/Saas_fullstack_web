@@ -7,13 +7,17 @@ import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
 import { PricingPreview } from '../../previews';
 
 export default function PricingCreatePage() {
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm('Bảng giá');
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Bảng giá', 'Pricing');
   
   const [pricingPlans, setPricingPlans] = useState([
     { id: 1, name: 'Cơ bản', price: '0', period: '/tháng', features: ['Tính năng A', 'Tính năng B'], isPopular: false, buttonText: 'Bắt đầu', buttonLink: '/register' },
     { id: 2, name: 'Chuyên nghiệp', price: '299.000', period: '/tháng', features: ['Tất cả Cơ bản', 'Tính năng C'], isPopular: true, buttonText: 'Mua ngay', buttonLink: '/checkout' },
     { id: 3, name: 'Doanh nghiệp', price: 'Liên hệ', period: '', features: ['Tất cả Pro', 'Hỗ trợ 24/7'], isPopular: false, buttonText: 'Liên hệ', buttonLink: '/contact' }
   ]);
+
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, { plans: pricingPlans.map(p => ({ name: p.name, price: p.price, period: p.period, features: p.features, isPopular: p.isPopular, buttonText: p.buttonText, buttonLink: p.buttonLink })) });
+  };
 
   return (
     <ComponentFormWrapper
@@ -22,7 +26,8 @@ export default function PricingCreatePage() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">

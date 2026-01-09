@@ -7,7 +7,7 @@ import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
 import { AboutPreview } from '../../previews';
 
 export default function AboutCreatePage() {
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm('Về chúng tôi');
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Về chúng tôi', 'About');
   
   const [aboutConfig, setAboutConfig] = useState({
     layout: 'split-left',
@@ -23,6 +23,10 @@ export default function AboutCreatePage() {
     buttonLink: '/about'
   });
 
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, aboutConfig);
+  };
+
   return (
     <ComponentFormWrapper
       type="About"
@@ -30,7 +34,8 @@ export default function AboutCreatePage() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader>

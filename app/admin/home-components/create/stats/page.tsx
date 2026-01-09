@@ -7,7 +7,7 @@ import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
 import { StatsPreview } from '../../previews';
 
 export default function StatsCreatePage() {
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm('Thống kê');
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Thống kê', 'Stats');
   
   const [statsItems, setStatsItems] = useState([
     { id: 1, value: '1000+', label: 'Khách hàng' },
@@ -16,6 +16,10 @@ export default function StatsCreatePage() {
     { id: 4, value: '24/7', label: 'Hỗ trợ' }
   ]);
 
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, { items: statsItems.map(s => ({ value: s.value, label: s.label })) });
+  };
+
   return (
     <ComponentFormWrapper
       type="Stats"
@@ -23,7 +27,8 @@ export default function StatsCreatePage() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">

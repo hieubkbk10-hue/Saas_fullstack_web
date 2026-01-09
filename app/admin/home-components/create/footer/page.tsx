@@ -6,7 +6,7 @@ import { ComponentFormWrapper, useComponentForm, BRAND_COLOR } from '../shared';
 import { FooterPreview } from '../../previews';
 
 export default function FooterCreatePage() {
-  const { title, setTitle, active, setActive, handleSubmit } = useComponentForm('Footer');
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Footer', 'Footer');
   
   const [footerConfig, setFooterConfig] = useState({
     logo: '',
@@ -19,6 +19,10 @@ export default function FooterCreatePage() {
     showSocialLinks: true
   });
 
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, footerConfig);
+  };
+
   return (
     <ComponentFormWrapper
       type="Footer"
@@ -26,7 +30,8 @@ export default function FooterCreatePage() {
       setTitle={setTitle}
       active={active}
       setActive={setActive}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
     >
       <Card className="mb-6">
         <CardHeader>
