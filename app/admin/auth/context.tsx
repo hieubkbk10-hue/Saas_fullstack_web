@@ -16,6 +16,7 @@ type AdminUser = {
 type AdminAuthContextType = {
   isAuthenticated: boolean;
   isLoading: boolean;
+  isSessionVerified: boolean; // true khi đã verify session xong (dù valid hay invalid)
   user: AdminUser | null;
   login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
@@ -49,6 +50,8 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Check if session is valid
+  // isSessionVerified: true khi không có token HOẶC sessionResult đã có data (dù valid hay không)
+  const isSessionVerified = !token || sessionResult !== undefined;
   const isAuthenticated = !!token && sessionResult?.valid === true;
   const user = sessionResult?.user ? {
     id: sessionResult.user.id,
@@ -108,7 +111,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   return (
-    <AdminAuthContext.Provider value={{ isAuthenticated, isLoading, user, login, logout, hasPermission }}>
+    <AdminAuthContext.Provider value={{ isAuthenticated, isLoading, isSessionVerified, user, login, logout, hasPermission }}>
       {children}
     </AdminAuthContext.Provider>
   );

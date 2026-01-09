@@ -7,6 +7,7 @@ import { api } from '@/convex/_generated/api';
 type SystemAuthContextType = {
   isAuthenticated: boolean;
   isLoading: boolean;
+  isSessionVerified: boolean; // true khi đã verify session xong (dù valid hay invalid)
   login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
 };
@@ -38,6 +39,8 @@ export function SystemAuthProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   // Check if session is valid
+  // isSessionVerified: true khi không có token HOẶC sessionResult đã có data (dù valid hay không)
+  const isSessionVerified = !token || sessionResult !== undefined;
   const isAuthenticated = !!token && sessionResult?.valid === true;
 
   // Clear invalid token
@@ -70,7 +73,7 @@ export function SystemAuthProvider({ children }: { children: React.ReactNode }) 
   }, [token, logoutMutation]);
 
   return (
-    <SystemAuthContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>
+    <SystemAuthContext.Provider value={{ isAuthenticated, isLoading, isSessionVerified, login, logout }}>
       {children}
     </SystemAuthContext.Provider>
   );
