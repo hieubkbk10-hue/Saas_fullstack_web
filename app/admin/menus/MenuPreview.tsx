@@ -6,12 +6,12 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
 import { 
-  Card, CardHeader, CardTitle, CardContent, Input, cn, Button
+  Card, CardHeader, CardTitle, CardContent, Input, cn, Button, Label
 } from '../components/ui';
 import { 
   Eye, Phone, Mail, User, Heart, ShoppingCart, Search, Settings, 
   Monitor, Tablet, Smartphone, HelpCircle, ChevronDown as ChevronDownIcon, ChevronRight,
-  Check, Save
+  Check, Save, Link as LinkIcon, Database
 } from 'lucide-react';
 
 const DEFAULT_BRAND_COLOR = '#f97316';
@@ -36,16 +36,75 @@ interface MenuPreviewProps {
   items: MenuItem[];
 }
 
+interface TopbarConfig {
+  show: boolean;
+  hotline: string;
+  email: string;
+  showTrackOrder: boolean;
+  trackOrderUrl: string;
+  showStoreSystem: boolean;
+  storeSystemUrl: string;
+  useSettingsData: boolean;
+}
+
+interface SearchConfig {
+  show: boolean;
+  placeholder: string;
+  searchProducts: boolean;
+  searchPosts: boolean;
+}
+
+interface HeaderConfig {
+  brandName: string;
+  cta: { show: boolean; text: string; url: string };
+  topbar: TopbarConfig;
+  search: SearchConfig;
+  cart: { show: boolean; url: string };
+  wishlist: { show: boolean; url: string };
+  login: { show: boolean; url: string; text: string };
+}
+
+const DEFAULT_CONFIG: HeaderConfig = {
+  brandName: 'YourBrand',
+  cta: { show: true, text: 'Liên hệ', url: '/contact' },
+  topbar: {
+    show: true,
+    hotline: '1900 1234',
+    email: 'contact@example.com',
+    showTrackOrder: true,
+    trackOrderUrl: '/orders/tracking',
+    showStoreSystem: true,
+    storeSystemUrl: '/stores',
+    useSettingsData: false,
+  },
+  search: { 
+    show: true, 
+    placeholder: 'Tìm kiếm...', 
+    searchProducts: true,
+    searchPosts: true,
+  },
+  cart: { show: true, url: '/cart' },
+  wishlist: { show: true, url: '/wishlist' },
+  login: { show: true, url: '/login', text: 'Đăng nhập' },
+};
+
 export function MenuPreview({ items }: MenuPreviewProps) {
-  // Lấy brandColor từ settings (key: site_brand_color theo moduleFields)
   const setting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
   const headerStyleSetting = useQuery(api.settings.getByKey, { key: 'header_style' });
   const headerConfigSetting = useQuery(api.settings.getByKey, { key: 'header_config' });
   const setSetting = useMutation(api.settings.set);
   
-  // setting === undefined: đang loading
-  // setting === null: không có trong DB  
-  // setting.value: có data
+  // Site settings for "useSettingsData" option
+  const siteSettings = useQuery(api.settings.listByGroup, { group: 'contact' });
+  
+  // Check enabled modules
+  const modulesData = useQuery(api.admin.modules.listModules);
+  const enabledModules = useMemo(() => {
+    const modules: Record<string, boolean> = {};
+    modulesData?.forEach(m => { modules[m.key] = m.enabled; });
+    return modules;
+  }, [modulesData]);
+  
   const brandColor = (setting === undefined || setting === null) 
     ? DEFAULT_BRAND_COLOR 
     : ((setting.value as string) || DEFAULT_BRAND_COLOR);
@@ -54,39 +113,38 @@ export function MenuPreview({ items }: MenuPreviewProps) {
   const [previewStyle, setPreviewStyle] = useState<MenuPreviewStyle>('classic');
   const [isSaving, setIsSaving] = useState(false);
   const [savedStyle, setSavedStyle] = useState<string | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedMobileItems, setExpandedMobileItems] = useState<string[]>([]);
+  const [showSettings, setShowSettings] = useState(false);
+  const [config, setConfig] = useState<HeaderConfig>(DEFAULT_CONFIG);
   
-  // Load saved style từ settings
+  // Load saved config from settings
   useEffect(() => {
     if (headerStyleSetting?.value) {
       setPreviewStyle(headerStyleSetting.value as MenuPreviewStyle);
       setSavedStyle(headerStyleSetting.value as string);
     }
-  }, [headerStyleSetting]);
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [expandedMobileItems, setExpandedMobileItems] = useState<string[]>([]);
-  const [showSettings, setShowSettings] = useState(false);
-
-  const [config, setConfig] = useState({
-    brandName: 'YourBrand',
-    cta: { show: true, text: 'Liên hệ', url: '/contact' },
-    topbar: {
-      show: true,
-      hotline: '1900 1234',
-      email: 'contact@example.com',
-      showTrackOrder: true,
-      showStoreSystem: true,
-    },
-    search: { show: true, placeholder: 'Tìm kiếm...' },
-    cart: { show: true },
-    wishlist: { show: true },
-    hero: {
-      title: 'Chào mừng đến với',
-      subtitle: 'Khám phá sản phẩm tuyệt vời',
-      buttonText: 'Khám phá ngay',
-      buttonUrl: '#',
+    if (headerConfigSetting?.value) {
+      const savedConfig = headerConfigSetting.value as Partial<HeaderConfig>;
+      setConfig(prev => ({ ...prev, ...savedConfig }));
     }
-  });
+  }, [headerStyleSetting, headerConfigSetting]);
+
+  // Get settings data for topbar when useSettingsData is enabled
+  const settingsPhone = siteSettings?.find(s => s.key === 'contact_phone')?.value as string;
+  const settingsEmail = siteSettings?.find(s => s.key === 'contact_email')?.value as string;
+  
+  const displayTopbar = useMemo(() => {
+    if (config.topbar.useSettingsData) {
+      return {
+        ...config.topbar,
+        hotline: settingsPhone || config.topbar.hotline,
+        email: settingsEmail || config.topbar.email,
+      };
+    }
+    return config.topbar;
+  }, [config.topbar, settingsPhone, settingsEmail]);
 
   const devices = [
     { id: 'desktop' as const, icon: Monitor, label: 'Desktop' },
@@ -108,7 +166,6 @@ export function MenuPreview({ items }: MenuPreviewProps) {
 
   const activeItems = useMemo(() => items.filter(i => i.active), [items]);
 
-  // Lưu style và config vào settings
   const handleApplyToSite = async () => {
     setIsSaving(true);
     try {
@@ -151,6 +208,8 @@ export function MenuPreview({ items }: MenuPreviewProps) {
     setExpandedMobileItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
+  // ===================== RENDER STYLES =====================
+
   const renderClassicStyle = () => (
     <div className="bg-white dark:bg-slate-900">
       <div className="px-6 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
@@ -187,21 +246,14 @@ export function MenuPreview({ items }: MenuPreviewProps) {
                   <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[200px] z-50">
                     {item.children.map((child) => (
                       <div key={child._id} className="relative group">
-                        <a
-                          href={child.url}
-                          className="flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                        >
+                        <a href={child.url} className="flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                           {child.label}
                           {child.children?.length > 0 && <ChevronRight size={14} />}
                         </a>
                         {child.children?.length > 0 && (
                           <div className="absolute left-full top-0 ml-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[180px] hidden group-hover:block">
                             {child.children.map((sub) => (
-                              <a
-                                key={sub._id}
-                                href={sub.url}
-                                className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                              >
+                              <a key={sub._id} href={sub.url} className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                                 {sub.label}
                               </a>
                             ))}
@@ -215,10 +267,7 @@ export function MenuPreview({ items }: MenuPreviewProps) {
             ))}
           </nav>
         ) : (
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
             <div className="w-5 h-4 flex flex-col justify-between">
               <span className={cn("w-full h-0.5 bg-slate-600 rounded transition-all", mobileMenuOpen && "rotate-45 translate-y-1.5")}></span>
               <span className={cn("w-full h-0.5 bg-slate-600 rounded transition-all", mobileMenuOpen && "opacity-0")}></span>
@@ -228,11 +277,7 @@ export function MenuPreview({ items }: MenuPreviewProps) {
         )}
 
         {device !== 'mobile' && config.cta.show && (
-          <a
-            href={config.cta.url}
-            className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
-            style={{ backgroundColor: brandColor }}
-          >
+          <a href={config.cta.url} className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90" style={{ backgroundColor: brandColor }}>
             {config.cta.text}
           </a>
         )}
@@ -242,14 +287,9 @@ export function MenuPreview({ items }: MenuPreviewProps) {
         <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
           {menuTree.map((item) => (
             <div key={item._id}>
-              <button
-                onClick={() => item.children.length > 0 && toggleMobileItem(item._id)}
-                className="w-full px-6 py-3 text-left flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-colors"
-              >
+              <button onClick={() => item.children.length > 0 && toggleMobileItem(item._id)} className="w-full px-6 py-3 text-left flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-colors">
                 {item.label}
-                {item.children.length > 0 && (
-                  <ChevronDownIcon size={16} className={cn("transition-transform", expandedMobileItems.includes(item._id) && "rotate-180")} />
-                )}
+                {item.children.length > 0 && (<ChevronDownIcon size={16} className={cn("transition-transform", expandedMobileItems.includes(item._id) && "rotate-180")} />)}
               </button>
               {item.children.length > 0 && expandedMobileItems.includes(item._id) && (
                 <div className="bg-white dark:bg-slate-800">
@@ -264,9 +304,7 @@ export function MenuPreview({ items }: MenuPreviewProps) {
           ))}
           {config.cta.show && (
             <div className="p-4">
-              <a href={config.cta.url} className="block w-full py-2.5 text-sm font-medium text-white rounded-lg text-center" style={{ backgroundColor: brandColor }}>
-                {config.cta.text}
-              </a>
+              <a href={config.cta.url} className="block w-full py-2.5 text-sm font-medium text-white rounded-lg text-center" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
             </div>
           )}
         </div>
@@ -276,34 +314,29 @@ export function MenuPreview({ items }: MenuPreviewProps) {
 
   const renderTopbarStyle = () => (
     <div className="bg-white dark:bg-slate-900">
-      {config.topbar.show && (
-        <div className="px-4 py-2 text-xs border-b border-slate-100 dark:border-slate-800" style={{ backgroundColor: brandColor }}>
+      {displayTopbar.show && (
+        <div className="px-4 py-2 text-xs" style={{ backgroundColor: brandColor }}>
           <div className="flex items-center justify-between text-white">
             <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1">
-                <Phone size={12} />
-                <span>{config.topbar.hotline}</span>
-              </span>
-              {device !== 'mobile' && (
-                <span className="flex items-center gap-1">
-                  <Mail size={12} />
-                  <span>{config.topbar.email}</span>
-                </span>
+              {displayTopbar.hotline && (
+                <span className="flex items-center gap-1"><Phone size={12} /><span>{displayTopbar.hotline}</span></span>
+              )}
+              {device !== 'mobile' && displayTopbar.email && (
+                <span className="flex items-center gap-1"><Mail size={12} /><span>{displayTopbar.email}</span></span>
               )}
             </div>
             <div className="flex items-center gap-3">
               {device !== 'mobile' && (
                 <>
-                  {config.topbar.showTrackOrder && <a href="#" className="hover:underline">Theo dõi đơn hàng</a>}
-                  {config.topbar.showTrackOrder && config.topbar.showStoreSystem && <span>|</span>}
-                  {config.topbar.showStoreSystem && <a href="#" className="hover:underline">Hệ thống cửa hàng</a>}
-                  {(config.topbar.showTrackOrder || config.topbar.showStoreSystem) && <span>|</span>}
+                  {displayTopbar.showTrackOrder && <a href={displayTopbar.trackOrderUrl} className="hover:underline">Theo dõi đơn hàng</a>}
+                  {displayTopbar.showTrackOrder && displayTopbar.showStoreSystem && <span>|</span>}
+                  {displayTopbar.showStoreSystem && <a href={displayTopbar.storeSystemUrl} className="hover:underline">Hệ thống cửa hàng</a>}
+                  {(displayTopbar.showTrackOrder || displayTopbar.showStoreSystem) && config.login.show && <span>|</span>}
                 </>
               )}
-              <a href="#" className="hover:underline flex items-center gap-1">
-                <User size={12} />
-                Đăng nhập
-              </a>
+              {config.login.show && (
+                <a href={config.login.url} className="hover:underline flex items-center gap-1"><User size={12} />{config.login.text}</a>
+              )}
             </div>
           </div>
         </div>
@@ -319,14 +352,8 @@ export function MenuPreview({ items }: MenuPreviewProps) {
           {device !== 'mobile' && config.search.show && (
             <div className="flex-1 max-w-md">
               <div className="relative">
-                <input
-                  type="text"
-                  placeholder={config.search.placeholder}
-                  className="w-full pl-4 pr-10 py-2 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none text-slate-700 dark:text-slate-300"
-                />
-                <button className="absolute right-1 top-1/2 -translate-y-1/2 p-2 rounded-full text-white" style={{ backgroundColor: brandColor }}>
-                  <Search size={14} />
-                </button>
+                <input type="text" placeholder={config.search.placeholder} className="w-full pl-4 pr-10 py-2 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none text-slate-700 dark:text-slate-300" />
+                <button className="absolute right-1 top-1/2 -translate-y-1/2 p-2 rounded-full text-white" style={{ backgroundColor: brandColor }}><Search size={14} /></button>
               </div>
             </div>
           )}
@@ -334,16 +361,12 @@ export function MenuPreview({ items }: MenuPreviewProps) {
           <div className="flex items-center gap-2">
             {device === 'mobile' ? (
               <>
-                {config.search.show && (
-                  <button className="p-2 text-slate-600 dark:text-slate-400">
-                    <Search size={20} />
-                  </button>
-                )}
+                {config.search.show && (<button className="p-2 text-slate-600 dark:text-slate-400"><Search size={20} /></button>)}
                 {config.cart.show && (
-                  <button className="p-2 text-slate-600 dark:text-slate-400 relative">
+                  <a href={config.cart.url} className="p-2 text-slate-600 dark:text-slate-400 relative">
                     <ShoppingCart size={20} />
                     <span className="absolute -top-1 -right-1 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
-                  </button>
+                  </a>
                 )}
                 <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2">
                   <div className="w-5 h-4 flex flex-col justify-between">
@@ -356,17 +379,15 @@ export function MenuPreview({ items }: MenuPreviewProps) {
             ) : (
               <>
                 {config.wishlist.show && (
-                  <button className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5">
-                    <Heart size={20} />
-                    <span>Yêu thích</span>
-                  </button>
+                  <a href={config.wishlist.url} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5">
+                    <Heart size={20} /><span>Yêu thích</span>
+                  </a>
                 )}
                 {config.cart.show && (
-                  <button className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5 relative">
-                    <ShoppingCart size={20} />
-                    <span>Giỏ hàng</span>
+                  <a href={config.cart.url} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5 relative">
+                    <ShoppingCart size={20} /><span>Giỏ hàng</span>
                     <span className="absolute top-0 right-0 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
-                  </button>
+                  </a>
                 )}
               </>
             )}
@@ -378,32 +399,15 @@ export function MenuPreview({ items }: MenuPreviewProps) {
         <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
           <nav className="flex items-center gap-1">
             {menuTree.map((item) => (
-              <div
-                key={item._id}
-                className="relative"
-                onMouseEnter={() => setHoveredItem(item._id)}
-                onMouseLeave={() => setHoveredItem(null)}
-              >
-                <a
-                  href={item.url}
-                  className={cn(
-                    "px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1",
-                    hoveredItem === item._id
-                      ? "text-white"
-                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                  )}
-                  style={hoveredItem === item._id ? { backgroundColor: brandColor } : {}}
-                >
+              <div key={item._id} className="relative" onMouseEnter={() => setHoveredItem(item._id)} onMouseLeave={() => setHoveredItem(null)}>
+                <a href={item.url} className={cn("px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1", hoveredItem === item._id ? "text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")} style={hoveredItem === item._id ? { backgroundColor: brandColor } : {}}>
                   {item.label}
                   {item.children.length > 0 && <ChevronDownIcon size={14} />}
                 </a>
-
                 {item.children.length > 0 && hoveredItem === item._id && (
                   <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[200px] z-50">
                     {item.children.map((child) => (
-                      <a key={child._id} href={child.url} className="block px-4 py-2.5 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors">
-                        {child.label}
-                      </a>
+                      <a key={child._id} href={child.url} className="block px-4 py-2.5 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors">{child.label}</a>
                     ))}
                   </div>
                 )}
@@ -417,20 +421,13 @@ export function MenuPreview({ items }: MenuPreviewProps) {
         <div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
           {menuTree.map((item) => (
             <div key={item._id} className="border-b border-slate-100 dark:border-slate-800">
-              <button
-                onClick={() => item.children.length > 0 && toggleMobileItem(item._id)}
-                className="w-full px-4 py-3 text-left flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300"
-              >
+              <button onClick={() => item.children.length > 0 && toggleMobileItem(item._id)} className="w-full px-4 py-3 text-left flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300">
                 {item.label}
-                {item.children.length > 0 && <ChevronDownIcon size={16} className={cn("transition-transform", expandedMobileItems.includes(item._id) && "rotate-180")} />}
+                {item.children.length > 0 && (<ChevronDownIcon size={16} className={cn("transition-transform", expandedMobileItems.includes(item._id) && "rotate-180")} />)}
               </button>
               {item.children.length > 0 && expandedMobileItems.includes(item._id) && (
                 <div className="bg-slate-50 dark:bg-slate-800/50 pb-2">
-                  {item.children.map((child) => (
-                    <a key={child._id} href={child.url} className="block px-6 py-2 text-sm text-slate-600 dark:text-slate-400">
-                      {child.label}
-                    </a>
-                  ))}
+                  {item.children.map((child) => (<a key={child._id} href={child.url} className="block px-6 py-2 text-sm text-slate-600 dark:text-slate-400">{child.label}</a>))}
                 </div>
               )}
             </div>
@@ -441,124 +438,290 @@ export function MenuPreview({ items }: MenuPreviewProps) {
   );
 
   const renderTransparentStyle = () => (
-    <div className="bg-white dark:bg-slate-900">
-      <div className="relative">
-        <div className={cn("bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900", device === 'mobile' ? 'h-[300px]' : 'h-[350px]')}>
-          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+    <div className="relative overflow-hidden">
+      {/* Hero Background - Modern gradient with mesh */}
+      <div className="absolute inset-0">
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(135deg, ${brandColor}25 0%, transparent 50%), linear-gradient(225deg, ${brandColor}30 0%, transparent 50%), linear-gradient(180deg, #0f172a 0%, #1e293b 100%)`
+          }}
+        />
+        {/* Decorative blobs */}
+        <div className="absolute top-10 left-10 w-72 h-72 rounded-full blur-3xl opacity-30" style={{ backgroundColor: brandColor }} />
+        <div className="absolute bottom-10 right-10 w-56 h-56 rounded-full blur-3xl opacity-25" style={{ backgroundColor: brandColor }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl opacity-10" style={{ backgroundColor: brandColor }} />
+        {/* Grid pattern */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      </div>
+      
+      {/* Header with semi-transparent overlay */}
+      <div className="relative z-10 px-6 py-4 flex items-center justify-between bg-black/40 backdrop-blur-md">
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold shadow-lg" style={{ backgroundColor: brandColor }}>{config.brandName.charAt(0)}</div>
+          <span className="font-bold text-lg text-white">{config.brandName}</span>
         </div>
 
-        <div className="absolute top-0 left-0 right-0 z-10">
-          <div className="px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>{config.brandName.charAt(0)}</div>
-              <span className="font-bold text-lg text-white">{config.brandName}</span>
-            </div>
-
-            {device !== 'mobile' ? (
-              <>
-                <nav className="flex items-center gap-1">
-                  {menuTree.map((item) => (
-                    <div
-                      key={item._id}
-                      className="relative"
-                      onMouseEnter={() => setHoveredItem(item._id)}
-                      onMouseLeave={() => setHoveredItem(null)}
-                    >
-                      <a
-                        href={item.url}
-                        className="px-4 py-2 text-sm font-medium text-white/80 hover:text-white transition-colors flex items-center gap-1"
-                      >
-                        {item.label}
-                        {item.children.length > 0 && <ChevronDownIcon size={14} className={cn("transition-transform", hoveredItem === item._id && "rotate-180")} />}
-                      </a>
-
-                      {item.children.length > 0 && hoveredItem === item._id && (
-                        <div className="absolute top-full left-0 mt-2 backdrop-blur-xl bg-white/95 dark:bg-slate-800/95 rounded-xl shadow-2xl border border-white/20 py-2 min-w-[200px] z-50">
-                          {item.children.map((child) => (
-                            <a key={child._id} href={child.url} className="block px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-700/80 transition-colors">
-                              {child.label}
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </nav>
-
-                {config.cta.show && (
-                  <a
-                    href={config.cta.url}
-                    className="px-5 py-2 text-sm font-medium text-white rounded-full transition-all hover:scale-105 hover:shadow-lg"
-                    style={{ backgroundColor: brandColor }}
-                  >
-                    {config.cta.text}
-                  </a>
-                )}
-              </>
-            ) : (
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-white">
-                <div className="w-5 h-4 flex flex-col justify-between">
-                  <span className={cn("w-full h-0.5 bg-white rounded transition-all", mobileMenuOpen && "rotate-45 translate-y-1.5")}></span>
-                  <span className={cn("w-full h-0.5 bg-white rounded transition-all", mobileMenuOpen && "opacity-0")}></span>
-                  <span className={cn("w-full h-0.5 bg-white rounded transition-all", mobileMenuOpen && "-rotate-45 -translate-y-1.5")}></span>
-                </div>
-              </button>
-            )}
-          </div>
-
-          {device === 'mobile' && mobileMenuOpen && (
-            <div className="absolute top-full left-0 right-0 backdrop-blur-xl bg-slate-900/95 border-t border-white/10">
+        {device !== 'mobile' ? (
+          <>
+            <nav className="flex items-center gap-1">
               {menuTree.map((item) => (
-                <div key={item._id}>
-                  <button
-                    onClick={() => item.children.length > 0 && toggleMobileItem(item._id)}
-                    className="w-full px-6 py-4 text-left flex items-center justify-between text-sm font-medium text-white/90 hover:text-white hover:bg-white/5 transition-colors"
+                <div key={item._id} className="relative" onMouseEnter={() => setHoveredItem(item._id)} onMouseLeave={() => setHoveredItem(null)}>
+                  <a 
+                    href={item.url} 
+                    className={cn(
+                      "px-4 py-2 text-sm font-medium transition-all flex items-center gap-1 rounded-lg",
+                      hoveredItem === item._id 
+                        ? "text-white bg-white/20" 
+                        : "text-white/90 hover:text-white hover:bg-white/10"
+                    )}
                   >
                     {item.label}
-                    {item.children.length > 0 && <ChevronDownIcon size={16} className={cn("transition-transform", expandedMobileItems.includes(item._id) && "rotate-180")} />}
-                  </button>
-                  {item.children.length > 0 && expandedMobileItems.includes(item._id) && (
-                    <div className="bg-white/5">
-                      {item.children.map((child) => (
-                        <a key={child._id} href={child.url} className="block px-8 py-3 text-sm text-white/70 hover:text-white border-l-2 border-white/20 ml-6">
-                          {child.label}
-                        </a>
-                      ))}
+                    {item.children.length > 0 && (<ChevronDownIcon size={14} className={cn("transition-transform", hoveredItem === item._id && "rotate-180")} />)}
+                  </a>
+                  {item.children.length > 0 && hoveredItem === item._id && (
+                    <div className="absolute top-full left-0 mt-2 backdrop-blur-xl bg-black/80 rounded-xl shadow-2xl border border-white/10 py-2 min-w-[200px] z-50">
+                      {item.children.map((child) => (<a key={child._id} href={child.url} className="block px-4 py-2.5 text-sm text-white/90 hover:bg-white/10 hover:text-white transition-colors">{child.label}</a>))}
                     </div>
                   )}
                 </div>
               ))}
-              {config.cta.show && (
-                <div className="p-4">
-                  <a href={config.cta.url} className="block w-full py-3 text-sm font-medium text-white rounded-full text-center" style={{ backgroundColor: brandColor }}>
-                    {config.cta.text}
-                  </a>
+            </nav>
+            {config.cta.show && (
+              <a href={config.cta.url} className="px-5 py-2 text-sm font-medium text-white rounded-full transition-all hover:scale-105 shadow-lg" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
+            )}
+          </>
+        ) : (
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-white">
+            <div className="w-5 h-4 flex flex-col justify-between">
+              <span className={cn("w-full h-0.5 bg-white rounded transition-all", mobileMenuOpen && "rotate-45 translate-y-1.5")}></span>
+              <span className={cn("w-full h-0.5 bg-white rounded transition-all", mobileMenuOpen && "opacity-0")}></span>
+              <span className={cn("w-full h-0.5 bg-white rounded transition-all", mobileMenuOpen && "-rotate-45 -translate-y-1.5")}></span>
+            </div>
+          </button>
+        )}
+      </div>
+
+      {/* Mobile Menu */}
+      {device === 'mobile' && mobileMenuOpen && (
+        <div className="relative z-10 backdrop-blur-xl bg-slate-900/95 border-t border-white/10">
+          {menuTree.map((item) => (
+            <div key={item._id}>
+              <button onClick={() => item.children.length > 0 && toggleMobileItem(item._id)} className="w-full px-6 py-4 text-left flex items-center justify-between text-sm font-medium text-white/90 hover:text-white hover:bg-white/5 transition-colors">
+                {item.label}
+                {item.children.length > 0 && (<ChevronDownIcon size={16} className={cn("transition-transform", expandedMobileItems.includes(item._id) && "rotate-180")} />)}
+              </button>
+              {item.children.length > 0 && expandedMobileItems.includes(item._id) && (
+                <div className="bg-white/5">
+                  {item.children.map((child) => (<a key={child._id} href={child.url} className="block px-8 py-3 text-sm text-white/70 hover:text-white border-l-2 border-white/20 ml-6">{child.label}</a>))}
                 </div>
               )}
             </div>
+          ))}
+          {config.cta.show && (
+            <div className="p-4">
+              <a href={config.cta.url} className="block w-full py-3 text-sm font-medium text-white rounded-full text-center shadow-lg" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
+            </div>
           )}
         </div>
+      )}
+      
+      {/* Hero Content Preview */}
+      {!mobileMenuOpen && (
+        <div className="relative z-10 px-6 py-16 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium text-white/80 bg-white/10 backdrop-blur-sm mb-6">
+            <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+            Hero Section Preview
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+            Welcome to <span style={{ color: brandColor }}>{config.brandName}</span>
+          </h2>
+          <p className="text-white/60 text-sm max-w-md mx-auto mb-6">
+            Header trong suốt overlay trên nội dung. Phù hợp với hero banner, slider hoặc video background.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <div className="px-6 py-2.5 rounded-full text-sm font-medium text-white" style={{ backgroundColor: brandColor }}>
+              Primary CTA
+            </div>
+            <div className="px-6 py-2.5 rounded-full text-sm font-medium text-white border border-white/30 hover:bg-white/10 transition-colors cursor-pointer">
+              Secondary
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
-        <div className="absolute inset-0 flex items-center justify-center text-center px-6 pt-16">
-          <div>
-            <h1 className={cn("font-bold text-white mb-4", device === 'mobile' ? 'text-2xl' : 'text-4xl')}>
-              {config.hero.title} <span style={{ color: brandColor }}>{config.brandName}</span>
-            </h1>
-            <p className={cn("text-white/70 mb-6 max-w-lg mx-auto", device === 'mobile' ? 'text-sm' : 'text-base')}>
-              {config.hero.subtitle}
-            </p>
-            <a
-              href={config.hero.buttonUrl}
-              className="inline-block px-6 py-3 text-sm font-medium text-white rounded-full hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: brandColor }}
-            >
-              {config.hero.buttonText}
-            </a>
+  // ===================== SETTINGS FORM =====================
+
+  const renderSettingsForm = () => (
+    <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 space-y-5">
+      {/* Basic Settings */}
+      <div>
+        <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+          <Settings size={14} /> Cài đặt chung
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Tên thương hiệu</Label>
+            <Input value={config.brandName} onChange={(e) => setConfig({ ...config, brandName: e.target.value })} placeholder="YourBrand" className="h-8 text-sm" />
+          </div>
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-xs font-medium">
+              <input type="checkbox" checked={config.cta.show} onChange={(e) => setConfig({ ...config, cta: { ...config.cta, show: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+              Nút CTA
+            </label>
+            {config.cta.show && <Input value={config.cta.text} onChange={(e) => setConfig({ ...config, cta: { ...config.cta, text: e.target.value } })} placeholder="Liên hệ" className="h-8 text-sm" />}
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">URL CTA</Label>
+            <Input value={config.cta.url} onChange={(e) => setConfig({ ...config, cta: { ...config.cta, url: e.target.value } })} placeholder="/contact" className="h-8 text-sm" disabled={!config.cta.show} />
           </div>
         </div>
       </div>
+
+      {/* Topbar Settings - Only show when Topbar style */}
+      {previewStyle === 'topbar' && (
+        <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+          <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+            <span className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded text-[10px]">With Topbar</span>
+            Cấu hình Topbar
+          </h4>
+          
+          {/* Use Settings Data Toggle */}
+          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/50">
+            <label className="flex items-center gap-2 text-xs font-medium text-blue-700 dark:text-blue-400">
+              <input type="checkbox" checked={config.topbar.useSettingsData} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, useSettingsData: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+              <Database size={14} />
+              Dùng dữ liệu từ /admin/settings (SĐT, Email từ tab Liên hệ)
+            </label>
+            {config.topbar.useSettingsData && (
+              <p className="mt-2 text-[10px] text-blue-600 dark:text-blue-400">
+                SĐT: {settingsPhone || '(chưa cấu hình)'} • Email: {settingsEmail || '(chưa cấu hình)'}
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-xs font-medium">
+                <input type="checkbox" checked={config.topbar.show} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, show: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+                Hiển thị Topbar
+              </label>
+              
+              {!config.topbar.useSettingsData && (
+                <>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1"><Phone size={12} /> Hotline</Label>
+                    <Input value={config.topbar.hotline} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, hotline: e.target.value } })} placeholder="1900 1234" className="h-8 text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1"><Mail size={12} /> Email</Label>
+                    <Input value={config.topbar.email} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, email: e.target.value } })} placeholder="contact@example.com" className="h-8 text-sm" />
+                  </div>
+                </>
+              )}
+            </div>
+            
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-2 text-xs font-medium">
+                  <input type="checkbox" checked={config.topbar.showTrackOrder} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, showTrackOrder: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+                  Theo dõi đơn hàng
+                </label>
+                {config.topbar.showTrackOrder && (
+                  <Input value={config.topbar.trackOrderUrl} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, trackOrderUrl: e.target.value } })} placeholder="/orders/tracking" className="h-8 text-sm" />
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-2 text-xs font-medium">
+                  <input type="checkbox" checked={config.topbar.showStoreSystem} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, showStoreSystem: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+                  Hệ thống cửa hàng
+                </label>
+                {config.topbar.showStoreSystem && (
+                  <Input value={config.topbar.storeSystemUrl} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, storeSystemUrl: e.target.value } })} placeholder="/stores" className="h-8 text-sm" />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Search Settings */}
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <h5 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-3 flex items-center gap-1">
+              <Search size={12} /> Tìm kiếm
+            </h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-xs font-medium">
+                  <input type="checkbox" checked={config.search.show} onChange={(e) => setConfig({ ...config, search: { ...config.search, show: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+                  Hiển thị thanh tìm kiếm
+                </label>
+                {config.search.show && (
+                  <Input value={config.search.placeholder} onChange={(e) => setConfig({ ...config, search: { ...config.search, placeholder: e.target.value } })} placeholder="Tìm kiếm..." className="h-8 text-sm" />
+                )}
+              </div>
+              {config.search.show && (
+                <div className="space-y-2">
+                  <Label className="text-xs text-slate-500">Tìm kiếm trong:</Label>
+                  <div className="flex flex-wrap gap-3">
+                    <label className={cn("flex items-center gap-2 text-xs", !enabledModules.products && "opacity-50")}>
+                      <input type="checkbox" checked={config.search.searchProducts} onChange={(e) => setConfig({ ...config, search: { ...config.search, searchProducts: e.target.checked } })} className="w-3.5 h-3.5 rounded" disabled={!enabledModules.products} />
+                      Sản phẩm {!enabledModules.products && <span className="text-[10px] text-slate-400">(tắt)</span>}
+                    </label>
+                    <label className={cn("flex items-center gap-2 text-xs", !enabledModules.posts && "opacity-50")}>
+                      <input type="checkbox" checked={config.search.searchPosts} onChange={(e) => setConfig({ ...config, search: { ...config.search, searchPosts: e.target.checked } })} className="w-3.5 h-3.5 rounded" disabled={!enabledModules.posts} />
+                      Bài viết {!enabledModules.posts && <span className="text-[10px] text-slate-400">(tắt)</span>}
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Cart, Wishlist, Login */}
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <h5 className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-3 flex items-center gap-1">
+              <LinkIcon size={12} /> Liên kết
+            </h5>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className={cn("flex items-center gap-2 text-xs font-medium", !enabledModules.cart && "opacity-50")}>
+                  <input type="checkbox" checked={config.cart.show} onChange={(e) => setConfig({ ...config, cart: { ...config.cart, show: e.target.checked } })} className="w-3.5 h-3.5 rounded" disabled={!enabledModules.cart} />
+                  <ShoppingCart size={12} /> Giỏ hàng {!enabledModules.cart && <span className="text-[10px] text-slate-400">(tắt)</span>}
+                </label>
+                {config.cart.show && enabledModules.cart && (
+                  <Input value={config.cart.url} onChange={(e) => setConfig({ ...config, cart: { ...config.cart, url: e.target.value } })} placeholder="/cart" className="h-8 text-sm" />
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className={cn("flex items-center gap-2 text-xs font-medium", !enabledModules.wishlist && "opacity-50")}>
+                  <input type="checkbox" checked={config.wishlist.show} onChange={(e) => setConfig({ ...config, wishlist: { ...config.wishlist, show: e.target.checked } })} className="w-3.5 h-3.5 rounded" disabled={!enabledModules.wishlist} />
+                  <Heart size={12} /> Yêu thích {!enabledModules.wishlist && <span className="text-[10px] text-slate-400">(tắt)</span>}
+                </label>
+                {config.wishlist.show && enabledModules.wishlist && (
+                  <Input value={config.wishlist.url} onChange={(e) => setConfig({ ...config, wishlist: { ...config.wishlist, url: e.target.value } })} placeholder="/wishlist" className="h-8 text-sm" />
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-xs font-medium">
+                  <input type="checkbox" checked={config.login.show} onChange={(e) => setConfig({ ...config, login: { ...config.login, show: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+                  <User size={12} /> Đăng nhập
+                </label>
+                {config.login.show && (
+                  <div className="flex gap-2">
+                    <Input value={config.login.text} onChange={(e) => setConfig({ ...config, login: { ...config.login, text: e.target.value } })} placeholder="Đăng nhập" className="h-8 text-sm flex-1" />
+                    <Input value={config.login.url} onChange={(e) => setConfig({ ...config, login: { ...config.login, url: e.target.value } })} placeholder="/login" className="h-8 text-sm flex-1" />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+
+  // ===================== MAIN RENDER =====================
 
   if (activeItems.length === 0) {
     return (
@@ -581,87 +744,26 @@ export function MenuPreview({ items }: MenuPreviewProps) {
             Preview Menu
           </CardTitle>
           <div className="flex gap-2 flex-wrap items-center">
-            {/* Nút Áp dụng cho Site */}
-            <Button
-              type="button"
-              variant={hasChanges ? "accent" : "outline"}
-              size="sm"
-              onClick={handleApplyToSite}
-              disabled={isSaving}
-              className="gap-1.5"
-            >
-              {isSaving ? (
-                <>Đang lưu...</>
-              ) : savedStyle === previewStyle ? (
-                <>
-                  <Check size={14} />
-                  Đã áp dụng
-                </>
-              ) : (
-                <>
-                  <Save size={14} />
-                  Áp dụng cho Site
-                </>
-              )}
+            <Button type="button" variant={hasChanges ? "accent" : "outline"} size="sm" onClick={handleApplyToSite} disabled={isSaving} className="gap-1.5">
+              {isSaving ? (<>Đang lưu...</>) : savedStyle === previewStyle ? (<><Check size={14} />Đã áp dụng</>) : (<><Save size={14} />Áp dụng cho Site</>)}
             </Button>
             
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
             
-            <button
-              type="button"
-              onClick={() => setShowSettings(!showSettings)}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all",
-                showSettings
-                  ? "bg-orange-600 text-white"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900"
-              )}
-            >
-              <Settings size={14} />
-              Cấu hình
+            <button type="button" onClick={() => setShowSettings(!showSettings)} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all", showSettings ? "bg-orange-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900")}>
+              <Settings size={14} />Cấu hình
             </button>
             <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
               {styles.map(({ id, label }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => {
-                    setPreviewStyle(id);
-                    setMobileMenuOpen(false);
-                    setExpandedMobileItems([]);
-                    setHoveredItem(null);
-                  }}
-                  className={cn(
-                    "px-3 py-1.5 rounded-md text-xs font-medium transition-all relative",
-                    previewStyle === id
-                      ? "bg-white dark:bg-slate-900 shadow-sm text-slate-900 dark:text-slate-100"
-                      : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                  )}
-                >
+                <button key={id} type="button" onClick={() => { setPreviewStyle(id); setMobileMenuOpen(false); setExpandedMobileItems([]); setHoveredItem(null); }} className={cn("px-3 py-1.5 rounded-md text-xs font-medium transition-all relative", previewStyle === id ? "bg-white dark:bg-slate-900 shadow-sm text-slate-900 dark:text-slate-100" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300")}>
                   {label}
-                  {savedStyle === id && (
-                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full" title="Đang sử dụng" />
-                  )}
+                  {savedStyle === id && (<span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full" title="Đang sử dụng" />)}
                 </button>
               ))}
             </div>
             <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
               {devices.map(({ id, icon: Icon, label }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => {
-                    setDevice(id);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={cn(
-                    "px-2 py-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all",
-                    device === id
-                      ? "bg-white dark:bg-slate-900 shadow-sm text-slate-900 dark:text-slate-100"
-                      : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                  )}
-                  title={label}
-                >
+                <button key={id} type="button" onClick={() => { setDevice(id); setMobileMenuOpen(false); }} className={cn("px-2 py-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-all", device === id ? "bg-white dark:bg-slate-900 shadow-sm text-slate-900 dark:text-slate-100" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300")} title={label}>
                   <Icon size={14} />
                 </button>
               ))}
@@ -669,128 +771,20 @@ export function MenuPreview({ items }: MenuPreviewProps) {
           </div>
         </div>
 
-        {showSettings && (
-          <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Tên thương hiệu</label>
-                <Input
-                  value={config.brandName}
-                  onChange={(e) => setConfig({ ...config, brandName: e.target.value })}
-                  placeholder="YourBrand"
-                  className="h-8 text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
-                  <input
-                    type="checkbox"
-                    checked={config.cta.show}
-                    onChange={(e) => setConfig({ ...config, cta: { ...config.cta, show: e.target.checked } })}
-                    className="w-3.5 h-3.5 rounded"
-                  />
-                  Nút CTA
-                </label>
-                {config.cta.show && (
-                  <Input
-                    value={config.cta.text}
-                    onChange={(e) => setConfig({ ...config, cta: { ...config.cta, text: e.target.value } })}
-                    placeholder="Liên hệ"
-                    className="h-8 text-sm"
-                  />
-                )}
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">URL CTA</label>
-                <Input
-                  value={config.cta.url}
-                  onChange={(e) => setConfig({ ...config, cta: { ...config.cta, url: e.target.value } })}
-                  placeholder="/contact"
-                  className="h-8 text-sm"
-                  disabled={!config.cta.show}
-                />
-              </div>
-            </div>
-
-            <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-              <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-                <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px]">With Topbar</span>
-                Utility Bar
-              </h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <label className="flex items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={config.topbar.show}
-                    onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, show: e.target.checked } })}
-                    className="w-3.5 h-3.5 rounded"
-                  />
-                  Hiển thị Topbar
-                </label>
-                <label className="flex items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={config.topbar.showTrackOrder}
-                    onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, showTrackOrder: e.target.checked } })}
-                    className="w-3.5 h-3.5 rounded"
-                  />
-                  Theo dõi đơn
-                </label>
-                <label className="flex items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={config.topbar.showStoreSystem}
-                    onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, showStoreSystem: e.target.checked } })}
-                    className="w-3.5 h-3.5 rounded"
-                  />
-                  Hệ thống cửa hàng
-                </label>
-                <label className="flex items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={config.search.show}
-                    onChange={(e) => setConfig({ ...config, search: { ...config.search, show: e.target.checked } })}
-                    className="w-3.5 h-3.5 rounded"
-                  />
-                  Tìm kiếm
-                </label>
-              </div>
-            </div>
-
-            <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-              <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-                <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px]">Transparent</span>
-                Hero Section
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Input
-                  value={config.hero.title}
-                  onChange={(e) => setConfig({ ...config, hero: { ...config.hero, title: e.target.value } })}
-                  placeholder="Chào mừng đến với"
-                  className="h-8 text-sm"
-                />
-                <Input
-                  value={config.hero.subtitle}
-                  onChange={(e) => setConfig({ ...config, hero: { ...config.hero, subtitle: e.target.value } })}
-                  placeholder="Mô tả ngắn..."
-                  className="h-8 text-sm"
-                />
-              </div>
-            </div>
-          </div>
-        )}
+        {showSettings && renderSettingsForm()}
       </CardHeader>
 
       <CardContent className="pt-0">
-        <div className={cn("mx-auto border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-sm", deviceWidths[device])}>
+        <div className={cn("mx-auto border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-sm relative", deviceWidths[device])}>
           {previewStyle === 'classic' && renderClassicStyle()}
           {previewStyle === 'topbar' && renderTopbarStyle()}
           {previewStyle === 'transparent' && renderTransparentStyle()}
 
+          {/* Content placeholder for non-transparent */}
           {previewStyle !== 'transparent' && (
             <div className="p-4 space-y-3 bg-slate-50 dark:bg-slate-800/50">
               <div className="h-32 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center">
-                <span className="text-slate-400 text-sm">Hero Section</span>
+                <span className="text-slate-400 text-sm">Content Area</span>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div className="h-20 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
@@ -833,8 +827,8 @@ export function MenuPreview({ items }: MenuPreviewProps) {
             )}
             {previewStyle === 'transparent' && (
               <>
-                <li>• Overlay trên hero section - tạo cảm giác hiện đại</li>
-                <li>• Chuyển từ transparent sang solid khi scroll (sticky)</li>
+                <li>• Header trong suốt overlay trên content - tạo cảm giác hiện đại</li>
+                <li>• Phù hợp khi trang có hero banner hoặc slider</li>
                 <li>• Dropdown với hiệu ứng glass/blur tăng tính thẩm mỹ</li>
               </>
             )}

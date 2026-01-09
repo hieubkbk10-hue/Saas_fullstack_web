@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { useBrandColor, useSiteSettings } from './hooks';
-import { Menu, X, ChevronDown, Phone, Mail, ShoppingCart, Heart, Search, User } from 'lucide-react';
+import { ChevronDown, ChevronRight, Phone, Mail, ShoppingCart, Heart, Search, User } from 'lucide-react';
 
 type MenuItem = {
   _id: Id<"menuItems">;
@@ -25,25 +26,112 @@ interface MenuItemWithChildren extends MenuItem {
 
 type HeaderStyle = 'classic' | 'topbar' | 'transparent';
 
+interface TopbarConfig {
+  show?: boolean;
+  hotline?: string;
+  email?: string;
+  showTrackOrder?: boolean;
+  trackOrderUrl?: string;
+  showStoreSystem?: boolean;
+  storeSystemUrl?: string;
+  useSettingsData?: boolean;
+}
+
+interface SearchConfig {
+  show?: boolean;
+  placeholder?: string;
+  searchProducts?: boolean;
+  searchPosts?: boolean;
+}
+
+interface HeaderConfig {
+  brandName?: string;
+  cta?: { show?: boolean; text?: string; url?: string };
+  topbar?: TopbarConfig;
+  search?: SearchConfig;
+  cart?: { show?: boolean; url?: string };
+  wishlist?: { show?: boolean; url?: string };
+  login?: { show?: boolean; url?: string; text?: string };
+}
+
+const DEFAULT_CONFIG: HeaderConfig = {
+  brandName: 'YourBrand',
+  cta: { show: true, text: 'Liên hệ', url: '/contact' },
+  topbar: {
+    show: true,
+    hotline: '1900 1234',
+    email: 'contact@example.com',
+    showTrackOrder: true,
+    trackOrderUrl: '/orders/tracking',
+    showStoreSystem: true,
+    storeSystemUrl: '/stores',
+    useSettingsData: false,
+  },
+  search: { show: true, placeholder: 'Tìm kiếm...', searchProducts: true, searchPosts: true },
+  cart: { show: true, url: '/cart' },
+  wishlist: { show: true, url: '/wishlist' },
+  login: { show: true, url: '/login', text: 'Đăng nhập' },
+};
+
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ');
+}
+
 export function Header() {
   const brandColor = useBrandColor();
   const { siteName, logo } = useSiteSettings();
   const menuData = useQuery(api.menus.getFullMenu, { location: 'header' });
   const headerStyleSetting = useQuery(api.settings.getByKey, { key: 'header_style' });
   const headerConfigSetting = useQuery(api.settings.getByKey, { key: 'header_config' });
+  const contactSettings = useQuery(api.settings.listByGroup, { group: 'contact' });
   
   const headerStyle: HeaderStyle = (headerStyleSetting?.value as HeaderStyle) || 'classic';
-  const headerConfig = (headerConfigSetting?.value as Record<string, unknown>) || {};
+  const savedConfig = (headerConfigSetting?.value as HeaderConfig) || {};
+  const config: HeaderConfig = { ...DEFAULT_CONFIG, ...savedConfig };
+  
+  // Get contact settings when useSettingsData is enabled
+  const settingsPhone = contactSettings?.find(s => s.key === 'contact_phone')?.value as string | undefined;
+  const settingsEmail = contactSettings?.find(s => s.key === 'contact_email')?.value as string | undefined;
+  
+  // Merge topbar data with settings if useSettingsData is enabled
+  const topbarConfig = useMemo(() => {
+    const base = config.topbar || {};
+    if (base.useSettingsData) {
+      return {
+        ...base,
+        hotline: settingsPhone || base.hotline,
+        email: settingsEmail || base.email,
+      };
+    }
+    return base;
+  }, [config.topbar, settingsPhone, settingsEmail]);
+  
+  const displayName = config.brandName || siteName || 'YourBrand';
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [expandedMobileItems, setExpandedMobileItems] = useState<string[]>([]);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Build menu tree từ flat items
+  const handleMenuEnter = useCallback((itemId: string) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setHoveredItem(itemId);
+  }, []);
+
+  const handleMenuLeave = useCallback(() => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredItem(null);
+    }, 150);
+  }, []);
+
+  const menuItems = menuData?.items;
   const menuTree = useMemo((): MenuItemWithChildren[] => {
-    if (!menuData?.items) return [];
+    if (!menuItems) return [];
     
-    const items = [...menuData.items].sort((a, b) => a.order - b.order);
+    const items = [...menuItems].sort((a, b) => a.order - b.order);
     const rootItems = items.filter(item => item.depth === 0);
     
     return rootItems.map(root => {
@@ -66,13 +154,17 @@ export function Header() {
         })
       };
     });
-  }, [menuData?.items]);
+  }, [menuItems]);
 
   const toggleMobileItem = (id: string) => {
     setExpandedMobileItems(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
+
+  const handleMobileMenuToggle = useCallback(() => {
+    setMobileMenuOpen(prev => !prev);
+  }, []);
 
   if (menuData === undefined) {
     return (
@@ -84,58 +176,33 @@ export function Header() {
     );
   }
 
-  // Get config values with defaults
-  const topbarConfig = (headerConfig.topbar || {}) as { hotline?: string; email?: string; showTrackOrder?: boolean; show?: boolean };
-  const ctaConfig = (headerConfig.cta || { show: true, text: 'Liên hệ', url: '/contact' }) as { show?: boolean; text?: string; url?: string };
-  const showTopbar = headerStyle === 'topbar' && topbarConfig.show !== false;
+  // Inline mobile menu button renderer
+  const renderMobileMenuButton = (isTransparent = false) => (
+    <button
+      onClick={handleMobileMenuToggle}
+      className={cn("p-2 rounded-lg lg:hidden")}
+    >
+      <div className="w-5 h-4 flex flex-col justify-between">
+        <span className={cn("w-full h-0.5 rounded transition-all", mobileMenuOpen && "rotate-45 translate-y-1.5", isTransparent ? "bg-white" : "bg-slate-600")}></span>
+        <span className={cn("w-full h-0.5 rounded transition-all", mobileMenuOpen && "opacity-0", isTransparent ? "bg-white" : "bg-slate-600")}></span>
+        <span className={cn("w-full h-0.5 rounded transition-all", mobileMenuOpen && "-rotate-45 -translate-y-1.5", isTransparent ? "bg-white" : "bg-slate-600")}></span>
+      </div>
+    </button>
+  );
 
-  return (
-    <header className={`sticky top-0 z-50 ${headerStyle === 'transparent' ? 'absolute w-full bg-transparent' : 'bg-white shadow-sm'}`}>
-      {/* Topbar - chỉ hiện khi style = topbar */}
-      {showTopbar && (
-        <div className="text-xs text-white py-2" style={{ backgroundColor: brandColor }}>
-          <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {topbarConfig.hotline && (
-                <a href={`tel:${String(topbarConfig.hotline)}`} className="flex items-center gap-1 hover:opacity-80">
-                  <Phone size={12} />
-                  <span>{String(topbarConfig.hotline)}</span>
-                </a>
-              )}
-              {topbarConfig.email && (
-                <a href={`mailto:${String(topbarConfig.email)}`} className="hidden sm:flex items-center gap-1 hover:opacity-80">
-                  <Mail size={12} />
-                  <span>{String(topbarConfig.email)}</span>
-                </a>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              {topbarConfig.showTrackOrder && <a href="/orders" className="hover:underline hidden sm:inline">Theo dõi đơn hàng</a>}
-              <a href="/login" className="hover:underline flex items-center gap-1">
-                <User size={12} />
-                Đăng nhập
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Main Header */}
-      <div className={`max-w-7xl mx-auto px-4 ${headerStyle === 'transparent' ? 'text-white' : ''}`}>
-        <div className="flex items-center justify-between h-16">
+  // Classic Style
+  if (headerStyle === 'classic') {
+    return (
+      <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-3">
             {logo ? (
-              <img src={logo} alt={siteName} className="h-8 w-auto" />
+              <Image src={logo} alt={displayName} width={32} height={32} className="h-8 w-auto" />
             ) : (
-              <div 
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold"
-                style={{ backgroundColor: brandColor }}
-              >
-                {(siteName || 'V').charAt(0)}
-              </div>
+              <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: brandColor }}></div>
             )}
-            <span className={`font-bold text-lg ${headerStyle === 'transparent' ? 'text-white' : 'text-slate-900'}`}>{siteName}</span>
+            <span className="font-semibold text-slate-900 dark:text-white">{displayName}</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -144,122 +211,102 @@ export function Header() {
               <div
                 key={item._id}
                 className="relative"
-                onMouseEnter={() => setHoveredItem(item._id)}
-                onMouseLeave={() => setHoveredItem(null)}
+                onMouseEnter={() => handleMenuEnter(item._id)}
+                onMouseLeave={handleMenuLeave}
               >
                 <Link
                   href={item.url}
                   target={item.openInNewTab ? '_blank' : undefined}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1 ${headerStyle === 'transparent' ? 'text-white/80 hover:text-white' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
-                  style={hoveredItem === item._id ? { color: brandColor } : {}}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1",
+                    hoveredItem === item._id
+                      ? "text-white"
+                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                  )}
+                  style={hoveredItem === item._id ? { backgroundColor: brandColor } : {}}
                 >
                   {item.label}
                   {item.children.length > 0 && (
-                    <ChevronDown 
-                      size={14} 
-                      className={`transition-transform ${hoveredItem === item._id ? 'rotate-180' : ''}`} 
-                    />
+                    <ChevronDown size={14} className={cn("transition-transform", hoveredItem === item._id && "rotate-180")} />
                   )}
                 </Link>
 
-                {/* Dropdown */}
                 {item.children.length > 0 && hoveredItem === item._id && (
-                  <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-xl border border-slate-200 py-2 min-w-[200px] z-50">
-                    {item.children.map((child) => (
-                      <div key={child._id} className="relative group">
-                        <Link
-                          href={child.url}
-                          target={child.openInNewTab ? '_blank' : undefined}
-                          className="flex items-center justify-between px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
-                        >
-                          {child.label}
-                          {child.children?.length > 0 && <ChevronDown size={14} className="-rotate-90" />}
-                        </Link>
-                        {/* Sub-dropdown */}
-                        {child.children?.length > 0 && (
-                          <div className="absolute left-full top-0 ml-1 bg-white rounded-lg shadow-xl border border-slate-200 py-2 min-w-[180px] hidden group-hover:block">
-                            {child.children.map((sub) => (
-                              <Link
-                                key={sub._id}
-                                href={sub.url}
-                                target={sub.openInNewTab ? '_blank' : undefined}
-                                className="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
-                              >
-                                {sub.label}
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                  <div className="absolute top-full left-0 pt-2 z-50">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[200px]">
+                      {item.children.map((child) => (
+                        <div key={child._id} className="relative group/child">
+                          <Link
+                            href={child.url}
+                            target={child.openInNewTab ? '_blank' : undefined}
+                            className="flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                          >
+                            {child.label}
+                            {child.children?.length > 0 && <ChevronRight size={14} />}
+                          </Link>
+                          {child.children?.length > 0 && (
+                            <div className="absolute left-full top-0 pl-1 hidden group-hover/child:block">
+                              <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[180px]">
+                                {child.children.map((sub) => (
+                                  <Link
+                                    key={sub._id}
+                                    href={sub.url}
+                                    target={sub.openInNewTab ? '_blank' : undefined}
+                                    className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                                  >
+                                    {sub.label}
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
             ))}
           </nav>
 
-          {/* Actions */}
+          {/* CTA Button */}
           <div className="flex items-center gap-2">
-            <button className="hidden md:flex p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-              <Search size={20} />
-            </button>
-            <Link 
-              href="/contact"
-              className="hidden md:inline-flex px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
-              style={{ backgroundColor: brandColor }}
-            >
-              Liên hệ
-            </Link>
-            
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
-            >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            {config.cta?.show && (
+              <Link
+                href={config.cta.url || '/contact'}
+                className="hidden lg:inline-flex px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
+                style={{ backgroundColor: brandColor }}
+              >
+                {config.cta.text || 'Liên hệ'}
+              </Link>
+            )}
+            {renderMobileMenuButton(false)}
           </div>
         </div>
-      </div>
 
-      {/* Mobile Navigation */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-200 bg-white">
-          <nav className="max-w-7xl mx-auto px-4 py-4 space-y-1">
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
             {menuTree.map((item) => (
               <div key={item._id}>
-                <div className="flex items-center justify-between">
-                  <Link
-                    href={item.url}
-                    target={item.openInNewTab ? '_blank' : undefined}
-                    onClick={() => item.children.length === 0 && setMobileMenuOpen(false)}
-                    className="flex-1 px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg"
-                  >
-                    {item.label}
-                  </Link>
+                <button
+                  onClick={() => item.children.length > 0 && toggleMobileItem(item._id)}
+                  className="w-full px-6 py-3 text-left flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                >
+                  {item.label}
                   {item.children.length > 0 && (
-                    <button
-                      onClick={() => toggleMobileItem(item._id)}
-                      className="p-2 text-slate-500 hover:text-slate-700"
-                    >
-                      <ChevronDown 
-                        size={16} 
-                        className={`transition-transform ${expandedMobileItems.includes(item._id) ? 'rotate-180' : ''}`} 
-                      />
-                    </button>
+                    <ChevronDown size={16} className={cn("transition-transform", expandedMobileItems.includes(item._id) && "rotate-180")} />
                   )}
-                </div>
-                
-                {/* Mobile submenu */}
+                </button>
                 {item.children.length > 0 && expandedMobileItems.includes(item._id) && (
-                  <div className="ml-4 mt-1 space-y-1 border-l-2 border-slate-200 pl-4">
+                  <div className="bg-white dark:bg-slate-800">
                     {item.children.map((child) => (
-                      <Link
-                        key={child._id}
+                      <Link 
+                        key={child._id} 
                         href={child.url}
                         target={child.openInNewTab ? '_blank' : undefined}
                         onClick={() => setMobileMenuOpen(false)}
-                        className="block px-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg"
+                        className="block px-8 py-2.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-l-2 border-slate-200 dark:border-slate-600 ml-6"
                       >
                         {child.label}
                       </Link>
@@ -268,19 +315,363 @@ export function Header() {
                 )}
               </div>
             ))}
-            
-            {/* Mobile CTA */}
-            <div className="pt-4 border-t border-slate-200 mt-4">
-              <Link
-                href="/contact"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block w-full text-center px-4 py-2 text-sm font-medium text-white rounded-lg"
+            {config.cta?.show && (
+              <div className="p-4">
+                <Link 
+                  href={config.cta.url || '/contact'} 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full py-2.5 text-sm font-medium text-white rounded-lg text-center" 
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {config.cta.text || 'Liên hệ'}
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+      </header>
+    );
+  }
+
+  // Topbar Style
+  if (headerStyle === 'topbar') {
+    return (
+      <header className="sticky top-0 z-50 bg-white dark:bg-slate-900">
+        {/* Topbar */}
+        {topbarConfig.show !== false && (
+          <div className="px-4 py-2 text-xs" style={{ backgroundColor: brandColor }}>
+            <div className="max-w-7xl mx-auto flex items-center justify-between text-white">
+              <div className="flex items-center gap-4">
+                {topbarConfig.hotline && (
+                  <a href={`tel:${topbarConfig.hotline}`} className="flex items-center gap-1 hover:opacity-80">
+                    <Phone size={12} />
+                    <span>{topbarConfig.hotline}</span>
+                  </a>
+                )}
+                {topbarConfig.email && (
+                  <a href={`mailto:${topbarConfig.email}`} className="hidden sm:flex items-center gap-1 hover:opacity-80">
+                    <Mail size={12} />
+                    <span>{topbarConfig.email}</span>
+                  </a>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                {topbarConfig.showTrackOrder && (
+                  <>
+                    <Link href={topbarConfig.trackOrderUrl || '/orders/tracking'} className="hover:underline hidden sm:inline">Theo dõi đơn hàng</Link>
+                    {topbarConfig.showStoreSystem && <span className="hidden sm:inline">|</span>}
+                  </>
+                )}
+                {topbarConfig.showStoreSystem && (
+                  <>
+                    <Link href={topbarConfig.storeSystemUrl || '/stores'} className="hover:underline hidden sm:inline">Hệ thống cửa hàng</Link>
+                    {config.login?.show && <span className="hidden sm:inline">|</span>}
+                  </>
+                )}
+                {config.login?.show && (
+                  <Link href={config.login.url || '/login'} className="hover:underline flex items-center gap-1">
+                    <User size={12} />
+                    {config.login.text || 'Đăng nhập'}
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Header */}
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+              {logo ? (
+                <Image src={logo} alt={displayName} width={36} height={36} className="h-9 w-auto" />
+              ) : (
+                <div 
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold" 
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {displayName.charAt(0)}
+                </div>
+              )}
+              <span className="font-bold text-lg text-slate-900 dark:text-white">{displayName}</span>
+            </Link>
+
+            {/* Search Bar */}
+            {config.search?.show && (
+              <div className="hidden md:block flex-1 max-w-md">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder={config.search.placeholder || 'Tìm kiếm...'}
+                    className="w-full pl-4 pr-10 py-2 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none text-slate-700 dark:text-slate-300"
+                  />
+                  <button 
+                    className="absolute right-1 top-1/2 -translate-y-1/2 p-2 rounded-full text-white" 
+                    style={{ backgroundColor: brandColor }}
+                  >
+                    <Search size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              {/* Mobile: Search + Cart */}
+              <div className="flex lg:hidden items-center gap-1">
+                {config.search?.show && (
+                  <button className="p-2 text-slate-600 dark:text-slate-400">
+                    <Search size={20} />
+                  </button>
+                )}
+                {config.cart?.show && (
+                  <Link href={config.cart.url || '/cart'} className="p-2 text-slate-600 dark:text-slate-400 relative">
+                    <ShoppingCart size={20} />
+                    <span 
+                      className="absolute -top-1 -right-1 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" 
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      0
+                    </span>
+                  </Link>
+                )}
+                {renderMobileMenuButton(false)}
+              </div>
+
+              {/* Desktop: Wishlist + Cart */}
+              <div className="hidden lg:flex items-center gap-2">
+                {config.wishlist?.show && (
+                  <Link href={config.wishlist.url || '/wishlist'} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5">
+                    <Heart size={20} />
+                    <span>Yêu thích</span>
+                  </Link>
+                )}
+                {config.cart?.show && (
+                  <Link href={config.cart.url || '/cart'} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5 relative">
+                    <ShoppingCart size={20} />
+                    <span>Giỏ hàng</span>
+                    <span 
+                      className="absolute top-0 right-0 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" 
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      0
+                    </span>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Bar */}
+        <div className="hidden lg:block px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+          <nav className="max-w-7xl mx-auto flex items-center gap-1">
+            {menuTree.map((item) => (
+              <div
+                key={item._id}
+                className="relative"
+                onMouseEnter={() => handleMenuEnter(item._id)}
+                onMouseLeave={handleMenuLeave}
+              >
+                <Link
+                  href={item.url}
+                  target={item.openInNewTab ? '_blank' : undefined}
+                  className={cn(
+                    "px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1",
+                    hoveredItem === item._id
+                      ? "text-white"
+                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  )}
+                  style={hoveredItem === item._id ? { backgroundColor: brandColor } : {}}
+                >
+                  {item.label}
+                  {item.children.length > 0 && <ChevronDown size={14} />}
+                </Link>
+
+                {item.children.length > 0 && hoveredItem === item._id && (
+                  <div className="absolute top-full left-0 pt-2 z-50">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[200px]">
+                      {item.children.map((child) => (
+                        <Link 
+                          key={child._id} 
+                          href={child.url}
+                          target={child.openInNewTab ? '_blank' : undefined}
+                          className="block px-4 py-2.5 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </nav>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+            {menuTree.map((item) => (
+              <div key={item._id} className="border-b border-slate-100 dark:border-slate-800">
+                <button
+                  onClick={() => item.children.length > 0 && toggleMobileItem(item._id)}
+                  className="w-full px-4 py-3 text-left flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300"
+                >
+                  {item.label}
+                  {item.children.length > 0 && (
+                    <ChevronDown size={16} className={cn("transition-transform", expandedMobileItems.includes(item._id) && "rotate-180")} />
+                  )}
+                </button>
+                {item.children.length > 0 && expandedMobileItems.includes(item._id) && (
+                  <div className="bg-slate-50 dark:bg-slate-800/50 pb-2">
+                    {item.children.map((child) => (
+                      <Link 
+                        key={child._id} 
+                        href={child.url}
+                        target={child.openInNewTab ? '_blank' : undefined}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block px-6 py-2 text-sm text-slate-600 dark:text-slate-400"
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </header>
+    );
+  }
+
+  // Transparent Style - header với nền mờ, không có hero (hero do HomeComponents render)
+  return (
+    <header className="absolute top-0 left-0 right-0 z-50">
+      {/* Header bar với lớp phủ nền mờ */}
+      <div className="bg-black/40 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2">
+            {logo ? (
+              <Image src={logo} alt={displayName} width={36} height={36} className="h-9 w-auto" />
+            ) : (
+              <div 
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold shadow-lg" 
                 style={{ backgroundColor: brandColor }}
               >
-                Liên hệ
+                {displayName.charAt(0)}
+              </div>
+            )}
+            <span className="font-bold text-lg text-white">{displayName}</span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-1">
+            {menuTree.map((item) => (
+              <div
+                key={item._id}
+                className="relative"
+                onMouseEnter={() => handleMenuEnter(item._id)}
+                onMouseLeave={handleMenuLeave}
+              >
+                <Link
+                  href={item.url}
+                  target={item.openInNewTab ? '_blank' : undefined}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium transition-all flex items-center gap-1 rounded-lg",
+                    hoveredItem === item._id 
+                      ? "text-white bg-white/20" 
+                      : "text-white/90 hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  {item.label}
+                  {item.children.length > 0 && (
+                    <ChevronDown size={14} className={cn("transition-transform", hoveredItem === item._id && "rotate-180")} />
+                  )}
+                </Link>
+
+                {item.children.length > 0 && hoveredItem === item._id && (
+                  <div className="absolute top-full left-0 pt-2 z-50">
+                    <div className="backdrop-blur-xl bg-black/80 rounded-xl shadow-2xl border border-white/10 py-2 min-w-[200px]">
+                      {item.children.map((child) => (
+                        <Link
+                          key={child._id}
+                          href={child.url}
+                          target={child.openInNewTab ? '_blank' : undefined}
+                          className="block px-4 py-2.5 text-sm text-white/90 hover:bg-white/10 hover:text-white transition-colors"
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </nav>
+
+          {/* CTA + Mobile Button */}
+          <div className="flex items-center gap-2">
+            {config.cta?.show && (
+              <Link
+                href={config.cta.url || '/contact'}
+                className="hidden lg:inline-flex px-5 py-2 text-sm font-medium text-white rounded-full transition-all hover:scale-105 shadow-lg"
+                style={{ backgroundColor: brandColor }}
+              >
+                {config.cta.text || 'Liên hệ'}
+              </Link>
+            )}
+            {renderMobileMenuButton(true)}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden backdrop-blur-xl bg-black/80 border-t border-white/10">
+          {menuTree.map((item) => (
+            <div key={item._id}>
+              <button
+                onClick={() => item.children.length > 0 && toggleMobileItem(item._id)}
+                className="w-full px-6 py-4 text-left flex items-center justify-between text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                {item.label}
+                {item.children.length > 0 && (
+                  <ChevronDown size={16} className={cn("transition-transform", expandedMobileItems.includes(item._id) && "rotate-180")} />
+                )}
+              </button>
+              {item.children.length > 0 && expandedMobileItems.includes(item._id) && (
+                <div className="bg-white/5">
+                  {item.children.map((child) => (
+                    <Link 
+                      key={child._id} 
+                      href={child.url}
+                      target={child.openInNewTab ? '_blank' : undefined}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="block px-8 py-3 text-sm text-white/70 hover:text-white border-l-2 border-white/20 ml-6"
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          {config.cta?.show && (
+            <div className="p-4">
+              <Link 
+                href={config.cta.url || '/contact'} 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full py-3 text-sm font-medium text-white rounded-full text-center" 
+                style={{ backgroundColor: brandColor }}
+              >
+                {config.cta.text || 'Liên hệ'}
               </Link>
             </div>
-          </nav>
+          )}
         </div>
       )}
     </header>
