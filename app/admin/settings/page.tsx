@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Save, Loader2, Palette } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Save, Loader2, Palette, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../components/ui';
 import { ModuleGuard } from '../components/ModuleGuard';
+import { SettingsImageUploader } from '../components/SettingsImageUploader';
+import { useSettingsCleanup } from '../components/useSettingsCleanup';
 
 const MODULE_KEY = 'settings';
 
@@ -82,6 +84,10 @@ function SettingsContent() {
   const [form, setForm] = useState<Record<string, string>>({});
   const [initialForm, setInitialForm] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
+
+  // Hooks
+  const { cleanupUnusedImages } = useSettingsCleanup();
 
   // Queries
   const settingsData = useQuery(api.settings.listAll);
@@ -207,6 +213,22 @@ function SettingsContent() {
       setIsSaving(false);
     }
   };
+
+  // Cleanup unused images
+  const handleCleanup = useCallback(async () => {
+    setIsCleaning(true);
+    try {
+      // Get all image field values that are being used
+      const imageFields = fieldsData?.filter(f => f.type === 'image' && f.enabled) || [];
+      const usedUrls = imageFields
+        .map(f => form[f.fieldKey])
+        .filter((url): url is string => !!url && url.startsWith('/uploads/'));
+
+      await cleanupUnusedImages('settings', usedUrls);
+    } finally {
+      setIsCleaning(false);
+    }
+  }, [fieldsData, form, cleanupUnusedImages]);
 
   // Render field based on type
   const renderField = (field: NonNullable<typeof fieldsData>[number]) => {
@@ -368,18 +390,13 @@ function SettingsContent() {
       case 'image':
         return (
           <div className="space-y-2" key={key}>
-            <Label>{field.name}</Label>
-            <Input
+            <SettingsImageUploader
+              label={field.name}
               value={value}
-              onChange={(e) => updateField(key, e.target.value)}
-              placeholder="URL hình ảnh..."
+              onChange={(url) => updateField(key, url || '')}
+              folder="settings"
+              previewSize={key.includes('favicon') ? 'sm' : 'md'}
             />
-            {value && (
-              <div className="mt-2 w-20 h-20 rounded border border-slate-200 dark:border-slate-700 overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={value} alt={field.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-              </div>
-            )}
           </div>
         );
 
@@ -496,24 +513,40 @@ function SettingsContent() {
           )}
 
           {/* Save button */}
-          <div className="flex justify-end gap-3">
-            {hasChanges && (
-              <span className="text-sm text-amber-600 dark:text-amber-400 self-center">
-                Có thay đổi chưa lưu
-              </span>
-            )}
+          <div className="flex justify-between items-center gap-3">
             <Button
-              variant="accent"
-              onClick={handleSave}
-              disabled={isSaving || !hasChanges}
+              variant="ghost"
+              onClick={handleCleanup}
+              disabled={isCleaning}
+              className="text-slate-500 hover:text-red-500"
+              title="Xóa ảnh không sử dụng trong thư mục settings"
             >
-              {isSaving ? (
+              {isCleaning ? (
                 <Loader2 size={16} className="mr-2 animate-spin" />
               ) : (
-                <Save size={16} className="mr-2" />
+                <Trash2 size={16} className="mr-2" />
               )}
-              Lưu thay đổi
+              Dọn dẹp ảnh
             </Button>
+            <div className="flex items-center gap-3">
+              {hasChanges && (
+                <span className="text-sm text-amber-600 dark:text-amber-400">
+                  Có thay đổi chưa lưu
+                </span>
+              )}
+              <Button
+                variant="accent"
+                onClick={handleSave}
+                disabled={isSaving || !hasChanges}
+              >
+                {isSaving ? (
+                  <Loader2 size={16} className="mr-2 animate-spin" />
+                ) : (
+                  <Save size={16} className="mr-2" />
+                )}
+                Lưu thay đổi
+              </Button>
+            </div>
           </div>
         </div>
       </div>
