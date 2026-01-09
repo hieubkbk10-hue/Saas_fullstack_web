@@ -175,3 +175,39 @@ export const cleanupOrphanedImages = mutation({
     return { deleted: toDelete.length, hasMore: remaining !== null };
   },
 });
+
+// Cleanup settings images - compare with used URLs from settings
+export const cleanupSettingsImages = mutation({
+  args: { usedUrls: v.array(v.string()) },
+  returns: v.object({ deleted: v.number() }),
+  handler: async (ctx, args) => {
+    const images = await ctx.db
+      .query("images")
+      .withIndex("by_folder", q => q.eq("folder", "settings"))
+      .take(100);
+
+    if (images.length === 0) {
+      return { deleted: 0 };
+    }
+
+    // Get URLs for all images
+    const imageUrls = await Promise.all(
+      images.map(async (img) => ({
+        image: img,
+        url: await ctx.storage.getUrl(img.storageId),
+      }))
+    );
+
+    // Find orphaned images (not in usedUrls)
+    const usedUrlSet = new Set(args.usedUrls);
+    const toDelete = imageUrls.filter(({ url }) => url && !usedUrlSet.has(url));
+
+    // Delete orphaned images
+    await Promise.all(toDelete.map(async ({ image }) => {
+      await ctx.storage.delete(image.storageId);
+      await ctx.db.delete(image._id);
+    }));
+
+    return { deleted: toDelete.length };
+  },
+});

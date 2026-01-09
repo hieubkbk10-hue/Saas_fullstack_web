@@ -1,11 +1,69 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { Upload, Trash2, Loader2, Link, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Input, cn } from './ui';
 
 type InputMode = 'upload' | 'url';
+
+const WEBP_QUALITY = 0.85;
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim() || 'image';
+}
+
+function generateFilename(originalName: string): string {
+  const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
+  const slugified = slugify(nameWithoutExt);
+  const timestamp = Date.now();
+  return `${slugified}-${timestamp}.webp`;
+}
+
+// Convert image to WebP using Canvas
+async function convertToWebP(file: File, quality: number = WEBP_QUALITY): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvas context not available'));
+        return;
+      }
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            // Fallback to original if WebP not supported
+            resolve(file);
+          }
+        },
+        'image/webp',
+        quality
+      );
+    };
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
+  });
+}
 
 interface SettingsImageUploaderProps {
   value?: string;
@@ -13,7 +71,6 @@ interface SettingsImageUploaderProps {
   folder?: string;
   className?: string;
   label?: string;
-  aspectRatio?: 'square' | 'video' | 'auto';
   previewSize?: 'sm' | 'md' | 'lg';
 }
 
@@ -23,7 +80,6 @@ export function SettingsImageUploader({
   folder = 'settings',
   className,
   label,
-  aspectRatio = 'auto',
   previewSize = 'md',
 }: SettingsImageUploaderProps) {
   const [mode, setMode] = useState<InputMode>('upload');
@@ -31,12 +87,18 @@ export function SettingsImageUploader({
   const [isDragging, setIsDragging] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [preview, setPreview] = useState<string | undefined>(value);
+  const [currentStorageId, setCurrentStorageId] = useState<string | undefined>();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Convex mutations
+  const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
+  const saveImage = useMutation(api.storage.saveImage);
+  const deleteImage = useMutation(api.storage.deleteImage);
 
   useEffect(() => {
     setPreview(value);
     // If value is external URL, set to URL mode
-    if (value && !value.startsWith('/uploads/')) {
+    if (value && !value.includes('convex.cloud')) {
       setMode('url');
       setUrlInput(value);
     }
@@ -56,23 +118,48 @@ export function SettingsImageUploader({
     setIsUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('folder', folder);
+      // Convert to WebP
+      const webpBlob = await convertToWebP(file, WEBP_QUALITY);
+      const filename = generateFilename(file.name);
+      const webpFile = new File([webpBlob], filename, { type: 'image/webp' });
 
-      const response = await fetch('/api/upload', {
+      // Get upload URL from Convex
+      const uploadUrl = await generateUploadUrl();
+
+      // Upload to Convex storage
+      const response = await fetch(uploadUrl, {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': webpFile.type },
+        body: webpFile,
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
+        throw new Error('Upload failed');
       }
 
-      const result = await response.json();
-      setPreview(result.url);
-      onChange(result.url);
+      const { storageId } = await response.json();
+
+      // Get image dimensions
+      const img = new Image();
+      const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
+        img.onload = () => resolve({ width: img.width, height: img.height });
+        img.src = URL.createObjectURL(webpFile);
+      });
+
+      // Save to database
+      const result = await saveImage({
+        storageId: storageId as Id<"_storage">,
+        filename,
+        mimeType: 'image/webp',
+        size: webpFile.size,
+        width: dimensions.width,
+        height: dimensions.height,
+        folder,
+      });
+
+      setPreview(result.url || undefined);
+      setCurrentStorageId(storageId);
+      onChange(result.url || undefined);
       toast.success('Tải ảnh lên thành công (WebP 85%)');
     } catch (error) {
       console.error('Upload error:', error);
@@ -80,7 +167,7 @@ export function SettingsImageUploader({
     } finally {
       setIsUploading(false);
     }
-  }, [folder, onChange]);
+  }, [generateUploadUrl, saveImage, folder, onChange]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -106,12 +193,11 @@ export function SettingsImageUploader({
 
   const handleUrlSubmit = useCallback(() => {
     if (!urlInput.trim()) return;
-    
+
     // Basic URL validation
     try {
       new URL(urlInput);
     } catch {
-      // Allow relative URLs
       if (!urlInput.startsWith('/')) {
         toast.error('URL không hợp lệ');
         return;
@@ -119,29 +205,34 @@ export function SettingsImageUploader({
     }
 
     setPreview(urlInput);
+    setCurrentStorageId(undefined);
     onChange(urlInput);
     toast.success('Đã cập nhật URL');
   }, [urlInput, onChange]);
 
-  const handleRemove = useCallback(() => {
+  const handleRemove = useCallback(async () => {
+    // Delete from Convex storage if it's a Convex URL
+    if (currentStorageId) {
+      try {
+        await deleteImage({ storageId: currentStorageId as Id<"_storage"> });
+      } catch (error) {
+        console.error('Delete error:', error);
+      }
+    }
+
     setPreview(undefined);
     setUrlInput('');
+    setCurrentStorageId(undefined);
     onChange(undefined);
     if (inputRef.current) {
       inputRef.current.value = '';
     }
-  }, [onChange]);
+  }, [currentStorageId, deleteImage, onChange]);
 
   const previewSizes = {
     sm: 'w-16 h-16',
     md: 'w-24 h-24',
     lg: 'w-32 h-32',
-  };
-
-  const aspectClasses = {
-    square: 'aspect-square',
-    video: 'aspect-video',
-    auto: 'min-h-[120px]',
   };
 
   return (
@@ -240,8 +331,7 @@ export function SettingsImageUploader({
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               className={cn(
-                'border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all',
-                aspectClasses[aspectRatio],
+                'border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all min-h-[120px]',
                 isDragging
                   ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/30'
                   : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800',

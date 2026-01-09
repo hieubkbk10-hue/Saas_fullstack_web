@@ -222,9 +222,9 @@ function SettingsContent() {
       const imageFields = fieldsData?.filter(f => f.type === 'image' && f.enabled) || [];
       const usedUrls = imageFields
         .map(f => form[f.fieldKey])
-        .filter((url): url is string => !!url && url.startsWith('/uploads/'));
+        .filter((url): url is string => !!url);
 
-      await cleanupUnusedImages('settings', usedUrls);
+      await cleanupUnusedImages(usedUrls);
     } finally {
       setIsCleaning(false);
     }
