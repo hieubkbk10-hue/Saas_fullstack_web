@@ -1228,118 +1228,197 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
 };
 
 // ============ BLOG PREVIEW ============
+// Modern News Feed UI/UX - 3 Variants from modern-news-feed
 export type BlogStyle = 'grid' | 'list' | 'featured';
 export const BlogPreview = ({ brandColor, postCount, selectedStyle, onStyleChange }: { brandColor: string; postCount: number; selectedStyle?: BlogStyle; onStyleChange?: (style: BlogStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'grid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as BlogStyle);
-  const styles = [{ id: 'grid', label: 'Grid' }, { id: 'list', label: 'List' }, { id: 'featured', label: 'Featured' }];
-  const mockPosts = Array.from({ length: Math.max(postCount, 3) }, (_, i) => ({ id: i + 1, title: `Bài viết mẫu ${i + 1}`, excerpt: 'Mô tả ngắn về nội dung bài viết...', date: '01/01/2024', category: 'Tin tức' }));
+  const styles = [{ id: 'grid', label: 'Lưới' }, { id: 'list', label: 'Danh sách' }, { id: 'featured', label: 'Nổi bật' }];
+  
+  const mockPosts = Array.from({ length: Math.max(postCount, 5) }, (_, i) => ({ 
+    id: i + 1, 
+    title: i === 0 ? 'Xu hướng thiết kế UI/UX nổi bật năm 2024' : 
+           i === 1 ? 'Tối ưu hóa hiệu năng React Application' :
+           i === 2 ? 'AI và tương lai của thị trường lao động' :
+           `Bài viết chất lượng cao số ${i + 1}`,
+    excerpt: 'Khám phá những phong cách thiết kế đang thống trị thế giới công nghệ hiện đại.',
+    date: `${12 - i}/05/2024`,
+    category: i % 3 === 0 ? 'Thiết kế' : i % 3 === 1 ? 'Lập trình' : 'Công nghệ',
+    readTime: `${5 + i} phút đọc`
+  }));
   const showViewAll = postCount > 3;
 
-  const ViewAllButton = () => showViewAll ? (
-    <div className="text-center mt-6">
-      <button className="px-6 py-2.5 rounded-lg font-medium text-sm transition-colors" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-        Xem tất cả
-      </button>
-    </div>
-  ) : null;
-
+  // Style 1: Grid - Professional card grid với hover lift
   const renderGridStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h2 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-xl' : 'text-2xl')}>Tin tức mới nhất</h2>
-      <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+    <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
+      <h2 className={cn("font-bold tracking-tighter text-left mb-6 md:mb-8", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>
+        Bài viết
+      </h2>
+      <div className={cn("grid gap-4 md:gap-6", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
         {mockPosts.slice(0, device === 'mobile' ? 2 : 3).map((post) => (
-          <div key={post.id} className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border group hover:shadow-md transition-shadow">
-            <div className="aspect-video bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><FileText size={32} className="text-slate-300" /></div>
-            <div className="p-4">
-              <span className="text-xs font-medium" style={{ color: brandColor }}>{post.category}</span>
-              <h4 className="font-semibold mt-1 mb-2 line-clamp-2">{post.title}</h4>
-              <p className="text-xs text-slate-500 line-clamp-2">{post.excerpt}</p>
-              <div className="flex items-center justify-between mt-3 text-xs text-slate-400">
-                <span>{post.date}</span>
-                <span style={{ color: brandColor }}>Đọc thêm →</span>
+          <article 
+            key={post.id} 
+            className="group flex flex-col overflow-hidden rounded-xl border border-slate-200/60 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+          >
+            {/* Image */}
+            <div className="relative aspect-[16/10] overflow-hidden">
+              <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-600 dark:to-slate-700 flex items-center justify-center">
+                <FileText size={32} className="text-slate-400" />
+              </div>
+              <div className="absolute left-3 top-3">
+                <span className="px-2 py-1 text-xs font-medium rounded bg-white/90 dark:bg-slate-800/90 shadow-sm backdrop-blur-sm">
+                  {post.category}
+                </span>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-      <ViewAllButton />
-    </div>
-  );
 
-  const renderListStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h2 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-xl' : 'text-2xl')}>Bài viết gần đây</h2>
-      <div className="max-w-3xl mx-auto space-y-4">
-        {mockPosts.slice(0, 4).map((post) => (
-          <div key={post.id} className={cn("bg-white dark:bg-slate-800 rounded-xl overflow-hidden border flex hover:shadow-md transition-shadow", device === 'mobile' ? 'flex-col' : 'items-center')}>
-            <div className={cn("bg-slate-100 dark:bg-slate-700 flex items-center justify-center", device === 'mobile' ? 'aspect-video w-full' : 'w-40 h-24 flex-shrink-0')}><FileText size={24} className="text-slate-300" /></div>
-            <div className="p-4 flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category}</span>
-                <span className="text-xs text-slate-400">{post.date}</span>
+            {/* Content */}
+            <div className="flex flex-1 flex-col p-4">
+              <h3 className="mb-2 text-base md:text-lg font-bold leading-tight tracking-tight text-slate-900 dark:text-slate-100 group-hover:text-opacity-80 transition-colors line-clamp-2">
+                {post.title}
+              </h3>
+              <div className="mt-auto pt-2">
+                <time className="text-xs text-slate-500 dark:text-slate-400">{post.date}</time>
               </div>
-              <h4 className="font-semibold">{post.title}</h4>
-              <p className="text-xs text-slate-500 mt-1">{post.excerpt}</p>
             </div>
-          </div>
+          </article>
         ))}
       </div>
-      <ViewAllButton />
-    </div>
-  );
-
-  const renderFeaturedStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: brandColor }}>Blog</p>
-          <h2 className={cn("font-bold", device === 'mobile' ? 'text-xl' : 'text-2xl')}>Tin nổi bật</h2>
+      
+      {/* View All */}
+      {showViewAll && (
+        <div className="flex justify-center pt-6 md:pt-8">
+          <button className="group flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+            Xem tất cả
+            <span className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5">↗</span>
+          </button>
         </div>
+      )}
+    </section>
+  );
+
+  // Style 2: List - Horizontal cards với image trái
+  const renderListStyle = () => (
+    <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
+      <h2 className={cn("font-bold tracking-tighter text-left mb-6 md:mb-8", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>
+        Bài viết
+      </h2>
+      <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-1 max-w-4xl mx-auto')}>
+        {mockPosts.slice(0, 4).map((post) => (
+          <article 
+            key={post.id} 
+            className={cn(
+              "group flex w-full overflow-hidden rounded-lg border border-slate-200/60 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/80 transition-all",
+              device === 'mobile' ? 'flex-col' : 'flex-row'
+            )}
+          >
+            {/* Image */}
+            <div className={cn(
+              "overflow-hidden flex-shrink-0",
+              device === 'mobile' ? 'aspect-[16/9] w-full' : 'aspect-[4/3] w-[220px]'
+            )}>
+              <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-600 dark:to-slate-700 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
+                <FileText size={24} className="text-slate-400" />
+              </div>
+            </div>
+            
+            {/* Content */}
+            <div className="flex flex-1 flex-col justify-center p-4 md:px-6">
+              <div className="mb-2">
+                <span className="text-xs font-semibold" style={{ color: brandColor }}>{post.category}</span>
+              </div>
+              <h3 className="mb-2 text-base md:text-lg font-bold leading-snug text-slate-900 dark:text-slate-100 group-hover:text-opacity-80 transition-colors line-clamp-2">
+                {post.title}
+              </h3>
+              <time className="text-xs text-slate-500 dark:text-slate-400">{post.date}</time>
+            </div>
+          </article>
+        ))}
+      </div>
+      
+      {/* View All */}
+      {showViewAll && (
+        <div className="flex justify-center pt-6 md:pt-8">
+          <button className="group flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+            Xem tất cả
+            <span className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5">↗</span>
+          </button>
+        </div>
+      )}
+    </section>
+  );
+
+  // Style 3: Featured - Hero card + sidebar compact list
+  const renderFeaturedStyle = () => (
+    <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
+      <div className="flex items-center justify-between mb-6 md:mb-8">
+        <h2 className={cn("font-bold tracking-tighter", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>
+          Bài viết
+        </h2>
         {showViewAll && (
-          <button className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all" style={{ color: brandColor }}>
-            Xem tất cả <span>→</span>
+          <button className="group flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+            Xem tất cả
+            <span className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5">↗</span>
           </button>
         )}
       </div>
-      <div className={cn("grid gap-5", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-3')}>
-        {/* Main Featured Post - 2/3 width */}
-        <div className={cn("group", device === 'mobile' ? '' : 'col-span-2')}>
-          <div className="relative rounded-2xl overflow-hidden bg-slate-900">
-            <div className="aspect-[16/10] bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
-              <FileText size={64} className="text-slate-600" />
+      
+      <div className={cn("grid gap-6 md:gap-8", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-12')}>
+        {/* Main Hero Card - 8 columns */}
+        <div className={cn(device === 'mobile' ? '' : 'col-span-8')}>
+          <article className="group relative flex h-full min-h-[300px] md:min-h-[400px] flex-col justify-end overflow-hidden rounded-xl bg-slate-900 text-white shadow-md hover:shadow-xl transition-all">
+            {/* Background */}
+            <div className="absolute inset-0 z-0">
+              <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-900 opacity-60 group-hover:opacity-50 group-hover:scale-105 transition-all duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent" />
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-              <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium mb-3" style={{ backgroundColor: brandColor }}>{mockPosts[0].category}</span>
-              <h3 className={cn("font-bold mb-2 group-hover:underline", device === 'mobile' ? 'text-lg' : 'text-xl')}>{mockPosts[0].title}</h3>
-              <p className="text-sm text-white/80 line-clamp-2 mb-3">{mockPosts[0].excerpt}</p>
-              <div className="flex items-center gap-3 text-xs text-white/60">
-                <span>{mockPosts[0].date}</span>
-                <span>•</span>
-                <span>5 phút đọc</span>
+
+            {/* Content */}
+            <div className="relative z-10 p-5 md:p-8">
+              <div className="mb-3 flex items-center space-x-3">
+                <span 
+                  className="px-2.5 py-1 text-xs font-medium rounded backdrop-blur-md"
+                  style={{ backgroundColor: `${brandColor}40`, color: 'white' }}
+                >
+                  {mockPosts[0].category}
+                </span>
               </div>
+              
+              <h3 className={cn(
+                "mb-2 font-bold leading-tight tracking-tight text-white",
+                device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
+              )}>
+                {mockPosts[0].title}
+              </h3>
+              
+              <time className="text-sm font-medium text-slate-300">{mockPosts[0].date}</time>
             </div>
-          </div>
+          </article>
         </div>
-        {/* Secondary Posts - 1/3 width, stacked */}
-        <div className="flex flex-col gap-4">
-          {mockPosts.slice(1, 3).map((post) => (
-            <div key={post.id} className="bg-white dark:bg-slate-800 rounded-xl border overflow-hidden flex-1 flex flex-col group hover:shadow-md transition-shadow">
-              <div className="h-24 bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-                <FileText size={24} className="text-slate-300" />
+
+        {/* Sidebar List - 4 columns */}
+        <div className={cn("flex flex-col gap-4", device === 'mobile' ? '' : 'col-span-4')}>
+          <h3 className="font-semibold text-base md:text-lg mb-1 px-1 text-slate-700 dark:text-slate-300">Đáng chú ý khác</h3>
+          {mockPosts.slice(1, 5).map((post) => (
+            <article key={post.id} className="group flex items-center space-x-4 rounded-lg p-2 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors">
+              <div className="relative h-14 w-14 md:h-16 md:w-16 shrink-0 overflow-hidden rounded-md border border-slate-200 dark:border-slate-700">
+                <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-600 dark:to-slate-700 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <FileText size={16} className="text-slate-400" />
+                </div>
               </div>
-              <div className="p-4 flex-1 flex flex-col">
-                <span className="text-xs font-medium" style={{ color: brandColor }}>{post.category}</span>
-                <h4 className="font-semibold text-sm mt-1 line-clamp-2 group-hover:underline flex-1">{post.title}</h4>
-                <span className="text-xs text-slate-400 mt-2">{post.date}</span>
+              <div className="flex flex-col flex-1 min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: brandColor }}>{post.category}</span>
+                <h4 className="text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100 line-clamp-2 group-hover:text-opacity-80 transition-colors">
+                  {post.title}
+                </h4>
+                <time className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">{post.date}</time>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 
   return (
