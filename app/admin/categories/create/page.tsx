@@ -14,9 +14,10 @@ const MODULE_KEY = 'productCategories';
 
 export default function CategoryCreatePage() {
   const router = useRouter();
-  const categoriesData = useQuery(api.productCategories.listAll);
+  const categoriesData = useQuery(api.productCategories.listAll, {});
   const createCategory = useMutation(api.productCategories.create);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
+  void fieldsData; // mark as intentionally unused for now
 
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');

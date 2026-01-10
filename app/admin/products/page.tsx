@@ -147,7 +147,7 @@ function ProductsContent() {
   const toggleSelectItem = (id: Id<"products">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
 
   const openFrontend = (slug: string) => {
-    window.open(`/product/${slug}`, '_blank');
+    window.open(`/products/${slug}`, '_blank');
   };
 
   const handleDelete = async (id: Id<"products">) => {

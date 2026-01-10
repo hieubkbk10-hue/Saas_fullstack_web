@@ -14,10 +14,11 @@ const categoryDoc = v.object({
 });
 
 export const listAll = query({
-  args: {},
+  args: { limit: v.optional(v.number()) },
   returns: v.array(categoryDoc),
-  handler: async (ctx) => {
-    return await ctx.db.query("productCategories").collect();
+  handler: async (ctx, args) => {
+    const maxLimit = args.limit ?? 100;
+    return await ctx.db.query("productCategories").take(maxLimit);
   },
 });
 

@@ -5,14 +5,14 @@ import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Package, FolderTree, Tag, DollarSign, Box, Image, Loader2, Database, Trash2, RefreshCw, MessageSquare, Settings } from 'lucide-react';
+import { Package, FolderTree, Tag, DollarSign, Box, Image, Loader2, Database, Trash2, RefreshCw, MessageSquare, Settings, Palette, Eye, Monitor, Tablet, Smartphone, ShoppingCart } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
 import { 
   ModuleHeader, ModuleStatus, ConventionNote, Code,
   SettingsCard, SettingInput, SettingSelect,
   FeaturesCard, FieldsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Card, CardContent, CardHeader, CardTitle, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, cn } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'products';
 const CATEGORY_MODULE_KEY = 'productCategories';
@@ -26,7 +26,34 @@ const FEATURES_CONFIG = [
 
 type FeaturesState = Record<string, boolean>;
 type SettingsState = { productsPerPage: number; defaultStatus: string; lowStockThreshold: number };
-type TabType = 'config' | 'data';
+type TabType = 'config' | 'data' | 'appearance';
+type ProductsListStyle = 'grid' | 'list' | 'catalog';
+type ProductsDetailStyle = 'classic' | 'modern' | 'minimal';
+type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
+
+const LIST_STYLES: { id: ProductsListStyle; label: string; description: string }[] = [
+  { id: 'grid', label: 'Grid', description: 'Lưới sản phẩm với filter bar, phổ biến nhất' },
+  { id: 'list', label: 'List', description: 'Danh sách dọc với ảnh thumbnail, phù hợp so sánh' },
+  { id: 'catalog', label: 'Catalog', description: 'Kiểu catalog với sidebar danh mục' },
+];
+
+const DETAIL_STYLES: { id: ProductsDetailStyle; label: string; description: string }[] = [
+  { id: 'classic', label: 'Classic', description: 'Layout 2 cột với gallery và info' },
+  { id: 'modern', label: 'Modern', description: 'Full-width hero, landing page style' },
+  { id: 'minimal', label: 'Minimal', description: 'Tối giản, tập trung sản phẩm' },
+];
+
+const deviceWidths = {
+  desktop: 'w-full',
+  tablet: 'w-[768px] max-w-full',
+  mobile: 'w-[375px] max-w-full'
+};
+
+const devices = [
+  { id: 'desktop' as const, icon: Monitor, label: 'Desktop' },
+  { id: 'tablet' as const, icon: Tablet, label: 'Tablet' },
+  { id: 'mobile' as const, icon: Smartphone, label: 'Mobile' }
+];
 
 export default function ProductsModuleConfigPage() {
   const [activeTab, setActiveTab] = useState<TabType>('config');
@@ -36,11 +63,9 @@ export default function ProductsModuleConfigPage() {
   const categoryFieldsData = useQuery(api.admin.modules.listModuleFields, { moduleKey: CATEGORY_MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
 
-  // FIX #6: Use stats instead of listAll for counts
   const productStats = useQuery(api.products.getStats);
   const categoryStats = useQuery(api.productCategories.listActive);
   
-  // Data tab queries with pagination
   const { results: productsData, status: productsStatus, loadMore: loadMoreProducts } = usePaginatedQuery(
     api.products.list,
     {},
@@ -60,6 +85,12 @@ export default function ProductsModuleConfigPage() {
   const seedComments = useMutation(api.seed.seedComments);
   const clearComments = useMutation(api.seed.clearComments);
   const initStats = useMutation(api.products.initStats);
+  const setMultipleSettings = useMutation(api.settings.setMultiple);
+
+  // Appearance tab queries
+  const listStyleSetting = useQuery(api.settings.getByKey, { key: 'products_list_style' });
+  const detailStyleSetting = useQuery(api.settings.getByKey, { key: 'products_detail_style' });
+  const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
 
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localProductFields, setLocalProductFields] = useState<FieldConfig[]>([]);
@@ -67,10 +98,18 @@ export default function ProductsModuleConfigPage() {
   const [localSettings, setLocalSettings] = useState<SettingsState>({ productsPerPage: 12, defaultStatus: 'Draft', lowStockThreshold: 10 });
   const [isSaving, setIsSaving] = useState(false);
 
+  // Appearance tab states
+  const [listStyle, setListStyle] = useState<ProductsListStyle>('grid');
+  const [detailStyle, setDetailStyle] = useState<ProductsDetailStyle>('classic');
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
+  const [activePreview, setActivePreview] = useState<'list' | 'detail'>('list');
+  const [appearanceHasChanges, setAppearanceHasChanges] = useState(false);
+
+  const brandColor = (brandColorSetting?.value as string) || '#f97316';
+
   const isLoading = moduleData === undefined || featuresData === undefined || 
                     fieldsData === undefined || categoryFieldsData === undefined || settingsData === undefined;
 
-  // Sync features
   useEffect(() => {
     if (featuresData) {
       const features: FeaturesState = {};
@@ -79,7 +118,6 @@ export default function ProductsModuleConfigPage() {
     }
   }, [featuresData]);
 
-  // Sync product fields
   useEffect(() => {
     if (fieldsData) {
       setLocalProductFields(fieldsData.map(f => ({
@@ -95,7 +133,6 @@ export default function ProductsModuleConfigPage() {
     }
   }, [fieldsData]);
 
-  // Sync category fields
   useEffect(() => {
     if (categoryFieldsData) {
       setLocalCategoryFields(categoryFieldsData.map(f => ({
@@ -110,7 +147,6 @@ export default function ProductsModuleConfigPage() {
     }
   }, [categoryFieldsData]);
 
-  // Sync settings
   useEffect(() => {
     if (settingsData) {
       const productsPerPage = settingsData.find(s => s.settingKey === 'productsPerPage')?.value as number ?? 12;
@@ -120,7 +156,16 @@ export default function ProductsModuleConfigPage() {
     }
   }, [settingsData]);
 
-  // Server state for comparison
+  // Sync appearance settings
+  useEffect(() => {
+    if (listStyleSetting?.value) {
+      setListStyle(listStyleSetting.value as ProductsListStyle);
+    }
+    if (detailStyleSetting?.value) {
+      setDetailStyle(detailStyleSetting.value as ProductsDetailStyle);
+    }
+  }, [listStyleSetting, detailStyleSetting]);
+
   const serverFeatures = useMemo(() => {
     const result: FeaturesState = {};
     featuresData?.forEach(f => { result[f.featureKey] = f.enabled; });
@@ -142,7 +187,6 @@ export default function ProductsModuleConfigPage() {
     return { productsPerPage, defaultStatus, lowStockThreshold };
   }, [settingsData]);
 
-  // Check for changes
   const hasChanges = useMemo(() => {
     const featuresChanged = Object.keys(localFeatures).some(key => localFeatures[key] !== serverFeatures[key]);
     const productFieldsChanged = localProductFields.some(f => {
@@ -194,7 +238,6 @@ export default function ProductsModuleConfigPage() {
     setLocalCategoryFields(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
   };
 
-  // QA FIX: Batch save với Promise.all
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -234,7 +277,6 @@ export default function ProductsModuleConfigPage() {
     }
   };
 
-  // Data tab handlers
   const handleSeedAll = async () => {
     toast.loading('Đang tạo dữ liệu mẫu...');
     await seedProductsModule();
@@ -266,6 +308,36 @@ export default function ProductsModuleConfigPage() {
     toast.success('Đã reset dữ liệu thành công!');
   };
 
+  // Appearance tab handlers
+  const handleListStyleChange = (style: ProductsListStyle) => {
+    setListStyle(style);
+    setAppearanceHasChanges(true);
+  };
+
+  const handleDetailStyleChange = (style: ProductsDetailStyle) => {
+    setDetailStyle(style);
+    setAppearanceHasChanges(true);
+  };
+
+  const handleSaveAppearance = async () => {
+    setIsSaving(true);
+    try {
+      await setMultipleSettings({
+        settings: [
+          { key: 'products_list_style', value: listStyle, group: 'products' },
+          { key: 'products_detail_style', value: detailStyle, group: 'products' },
+        ]
+      });
+      setAppearanceHasChanges(false);
+      toast.success('Đã lưu cài đặt giao diện!');
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error('Có lỗi khi lưu cài đặt');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -274,7 +346,6 @@ export default function ProductsModuleConfigPage() {
     );
   }
 
-  // Build category map for lookup (O(1))
   const categoryMap: Record<string, string> = {};
   categoryStats?.forEach(cat => { categoryMap[cat._id] = cat.name; });
 
@@ -289,8 +360,8 @@ export default function ProductsModuleConfigPage() {
         iconBgClass="bg-orange-500/10"
         iconTextClass="text-orange-600 dark:text-orange-400"
         buttonClass="bg-orange-600 hover:bg-orange-500"
-        onSave={activeTab === 'config' ? handleSave : undefined}
-        hasChanges={activeTab === 'config' ? hasChanges : false}
+        onSave={activeTab === 'config' ? handleSave : activeTab === 'appearance' ? handleSaveAppearance : undefined}
+        hasChanges={activeTab === 'config' ? hasChanges : activeTab === 'appearance' ? appearanceHasChanges : false}
         isSaving={isSaving}
       />
 
@@ -298,23 +369,36 @@ export default function ProductsModuleConfigPage() {
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
           onClick={() => setActiveTab('config')}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
             activeTab === 'config'
-              ? 'border-orange-500 text-orange-600 dark:text-orange-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-          }`}
+              ? "border-orange-500 text-orange-600 dark:text-orange-400"
+              : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          )}
         >
           <Settings size={16} /> Cấu hình
         </button>
         <button
           onClick={() => setActiveTab('data')}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
             activeTab === 'data'
-              ? 'border-orange-500 text-orange-600 dark:text-orange-400'
-              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-          }`}
+              ? "border-orange-500 text-orange-600 dark:text-orange-400"
+              : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          )}
         >
           <Database size={16} /> Dữ liệu
+        </button>
+        <button
+          onClick={() => setActiveTab('appearance')}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
+            activeTab === 'appearance'
+              ? "border-orange-500 text-orange-600 dark:text-orange-400"
+              : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+          )}
+        >
+          <Palette size={16} /> Giao diện
         </button>
       </div>
 
@@ -382,7 +466,6 @@ export default function ProductsModuleConfigPage() {
 
       {activeTab === 'data' && (
         <div className="space-y-6">
-          {/* Action buttons */}
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -403,7 +486,6 @@ export default function ProductsModuleConfigPage() {
             </div>
           </Card>
 
-          {/* Statistics - FIX #6: Use stats queries instead of counting all */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="p-4">
               <div className="flex items-center gap-3">
@@ -440,7 +522,6 @@ export default function ProductsModuleConfigPage() {
             </Card>
           </div>
 
-          {/* Products Table - Using paginated data */}
           <Card>
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
               <Package className="w-5 h-5 text-orange-500" />
@@ -496,7 +577,6 @@ export default function ProductsModuleConfigPage() {
             )}
           </Card>
 
-          {/* Categories Table */}
           <Card>
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
               <FolderTree className="w-5 h-5 text-amber-500" />
@@ -531,7 +611,6 @@ export default function ProductsModuleConfigPage() {
             </Table>
           </Card>
 
-          {/* Reviews Table - Using paginated data */}
           <Card>
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-blue-500" />
@@ -576,6 +655,395 @@ export default function ProductsModuleConfigPage() {
           </Card>
         </div>
       )}
+
+      {activeTab === 'appearance' && (
+        <div className="space-y-6">
+          {/* Compact Style Selectors */}
+          <div className="grid md:grid-cols-2 gap-4">
+            <Card className="p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-shrink-0">
+                  <h3 className="font-medium text-sm text-slate-900 dark:text-slate-100">Trang danh sách</h3>
+                  <p className="text-xs text-slate-500">/products</p>
+                </div>
+                <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                  {LIST_STYLES.map((style) => (
+                    <button
+                      key={style.id}
+                      onClick={() => {
+                        handleListStyleChange(style.id);
+                        setActivePreview('list');
+                      }}
+                      title={style.description}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                        listStyle === style.id 
+                          ? "bg-orange-500 text-white shadow-sm" 
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                      )}
+                    >
+                      {style.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-shrink-0">
+                  <h3 className="font-medium text-sm text-slate-900 dark:text-slate-100">Trang chi tiết</h3>
+                  <p className="text-xs text-slate-500">/products/[slug]</p>
+                </div>
+                <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                  {DETAIL_STYLES.map((style) => (
+                    <button
+                      key={style.id}
+                      onClick={() => {
+                        handleDetailStyleChange(style.id);
+                        setActivePreview('detail');
+                      }}
+                      title={style.description}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                        detailStyle === style.id 
+                          ? "bg-orange-500 text-white shadow-sm" 
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                      )}
+                    >
+                      {style.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Full Width Preview */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Eye size={18} /> Preview
+                </CardTitle>
+                <div className="flex items-center gap-4">
+                  <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                    <button
+                      onClick={() => setActivePreview('list')}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                        activePreview === 'list' ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-500"
+                      )}
+                    >
+                      Danh sách
+                    </button>
+                    <button
+                      onClick={() => setActivePreview('detail')}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                        activePreview === 'detail' ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-500"
+                      )}
+                    >
+                      Chi tiết
+                    </button>
+                  </div>
+                  <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                    {devices.map((d) => (
+                      <button
+                        key={d.id}
+                        onClick={() => setPreviewDevice(d.id)}
+                        title={d.label}
+                        className={cn(
+                          "p-1.5 rounded-md transition-all",
+                          previewDevice === d.id ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                        )}
+                      >
+                        <d.icon size={16} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className={cn("mx-auto transition-all duration-300", deviceWidths[previewDevice])}>
+                <BrowserFrame>
+                  {activePreview === 'list' 
+                    ? <ListPreview style={listStyle} brandColor={brandColor} device={previewDevice} />
+                    : <DetailPreview style={detailStyle} brandColor={brandColor} device={previewDevice} />
+                  }
+                </BrowserFrame>
+              </div>
+              <div className="mt-3 text-xs text-slate-500 text-center">
+                {activePreview === 'list' ? 'Trang /products' : 'Trang /products/[slug]'}
+                {' • '}Style: <strong>{activePreview === 'list' ? LIST_STYLES.find(s => s.id === listStyle)?.label : DETAIL_STYLES.find(s => s.id === detailStyle)?.label}</strong>
+                {' • '}{previewDevice === 'desktop' ? '1920px' : previewDevice === 'tablet' ? '768px' : '375px'}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Browser Frame Component
+function BrowserFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="border rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-lg">
+      <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 flex items-center gap-2 border-b">
+        <div className="flex gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-red-400"></div>
+          <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+          <div className="w-3 h-3 rounded-full bg-green-400"></div>
+        </div>
+        <div className="flex-1 ml-4">
+          <div className="bg-white dark:bg-slate-700 rounded-md px-3 py-1 text-xs text-slate-400 max-w-xs">yoursite.com/products</div>
+        </div>
+      </div>
+      <div className="max-h-[500px] overflow-y-auto">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// List Preview Component
+function ListPreview({ style, brandColor, device }: { style: ProductsListStyle; brandColor: string; device: PreviewDevice }) {
+  const mockProducts = [
+    { id: 1, name: 'iPhone 15 Pro Max 256GB', category: 'Điện thoại', price: 29990000, salePrice: 27990000 },
+    { id: 2, name: 'MacBook Air M2 13 inch', category: 'Laptop', price: 27990000, salePrice: null },
+    { id: 3, name: 'AirPods Pro 2', category: 'Phụ kiện', price: 5990000, salePrice: 4990000 },
+    { id: 4, name: 'Apple Watch Series 9', category: 'Đồng hồ', price: 11990000, salePrice: null },
+  ];
+  const categories = ['Tất cả', 'Điện thoại', 'Laptop', 'Phụ kiện', 'Đồng hồ'];
+  const formatPrice = (p: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
+
+  if (style === 'grid') {
+    return (
+      <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')}>
+        <h2 className={cn("font-bold text-center mb-4", device === 'mobile' ? 'text-lg' : 'text-xl')}>Sản phẩm</h2>
+        <div className="bg-white border rounded-lg p-3 mb-4">
+          <div className={cn("flex gap-2 items-center", device === 'mobile' ? 'flex-col' : '')}>
+            <div className="flex-1 relative">
+              <input type="text" placeholder="Tìm kiếm sản phẩm..." className="w-full px-3 py-1.5 border rounded-lg text-xs bg-slate-50" />
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {categories.slice(0, device === 'mobile' ? 3 : 4).map((cat, i) => (
+                <span key={cat} className={cn("px-2 py-1 rounded-full text-xs cursor-pointer", i === 0 ? "text-white" : "bg-slate-100")} style={i === 0 ? { backgroundColor: brandColor } : undefined}>
+                  {cat}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-2' : 'grid-cols-4')}>
+          {mockProducts.slice(0, device === 'mobile' ? 4 : 4).map((product) => (
+            <div key={product.id} className="bg-white border rounded-lg overflow-hidden">
+              <div className="aspect-square bg-slate-100 flex items-center justify-center relative">
+                <Package size={24} className="text-slate-300" />
+                {product.salePrice && (
+                  <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-red-500 text-white text-xs font-bold rounded">
+                    -{Math.round((1 - product.salePrice / product.price) * 100)}%
+                  </span>
+                )}
+              </div>
+              <div className="p-2">
+                <span className="text-xs text-slate-400">{product.category}</span>
+                <h3 className="font-medium text-xs mt-0.5 line-clamp-2">{product.name}</h3>
+                <div className="flex items-center gap-1 mt-1">
+                  <span className="font-bold text-xs" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>
+                  {product.salePrice && (
+                    <span className="text-xs text-slate-400 line-through">{formatPrice(product.price)}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (style === 'list') {
+    return (
+      <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')}>
+        <h2 className={cn("font-bold text-center mb-4", device === 'mobile' ? 'text-lg' : 'text-xl')}>Sản phẩm</h2>
+        <div className="space-y-3">
+          {mockProducts.slice(0, 3).map((product) => (
+            <div key={product.id} className="bg-white border rounded-lg overflow-hidden flex">
+              <div className={cn("bg-slate-100 flex items-center justify-center flex-shrink-0 relative", device === 'mobile' ? 'w-20 h-20' : 'w-28 h-24')}>
+                <Package size={20} className="text-slate-300" />
+                {product.salePrice && (
+                  <span className="absolute top-1 left-1 px-1 py-0.5 bg-red-500 text-white text-xs font-bold rounded">
+                    -{Math.round((1 - product.salePrice / product.price) * 100)}%
+                  </span>
+                )}
+              </div>
+              <div className="p-3 flex-1 flex flex-col justify-center">
+                <span className="text-xs text-slate-400">{product.category}</span>
+                <h3 className="font-medium text-sm line-clamp-1">{product.name}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="font-bold text-sm" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>
+                  {product.salePrice && (
+                    <span className="text-xs text-slate-400 line-through">{formatPrice(product.price)}</span>
+                  )}
+                </div>
+              </div>
+              {device !== 'mobile' && (
+                <div className="p-3 flex items-center">
+                  <button className="p-2 rounded-full border" style={{ borderColor: brandColor, color: brandColor }}>
+                    <ShoppingCart size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Catalog Layout
+  return (
+    <div className={cn("p-4 flex gap-4", device === 'mobile' ? 'p-3 flex-col' : '')}>
+      <div className={cn("space-y-3", device === 'mobile' ? 'order-2' : 'w-1/4')}>
+        <div className="bg-slate-50 rounded-lg p-3">
+          <h4 className="font-medium text-xs mb-2">Danh mục</h4>
+          <div className="space-y-1">
+            {categories.map((cat, i) => (
+              <div key={cat} className={cn("px-2 py-1.5 rounded text-xs cursor-pointer", i === 0 ? "" : "text-slate-600 hover:bg-slate-100")} style={i === 0 ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}>
+                {cat}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-slate-50 rounded-lg p-3">
+          <h4 className="font-medium text-xs mb-2">Khoảng giá</h4>
+          <div className="space-y-1 text-xs text-slate-600">
+            <div className="flex items-center gap-2"><input type="checkbox" /> Dưới 5 triệu</div>
+            <div className="flex items-center gap-2"><input type="checkbox" /> 5 - 15 triệu</div>
+            <div className="flex items-center gap-2"><input type="checkbox" /> Trên 15 triệu</div>
+          </div>
+        </div>
+      </div>
+      <div className={cn("flex-1", device === 'mobile' ? 'order-1' : '')}>
+        <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-2' : 'grid-cols-3')}>
+          {mockProducts.slice(0, device === 'mobile' ? 4 : 3).map((product) => (
+            <div key={product.id} className="bg-white border rounded-lg overflow-hidden">
+              <div className="aspect-square bg-slate-100 flex items-center justify-center relative">
+                <Package size={20} className="text-slate-300" />
+                {product.salePrice && (
+                  <span className="absolute top-1 left-1 px-1 py-0.5 bg-red-500 text-white text-xs font-bold rounded">
+                    Sale
+                  </span>
+                )}
+              </div>
+              <div className="p-2">
+                <h3 className="font-medium text-xs line-clamp-2">{product.name}</h3>
+                <span className="font-bold text-xs block mt-1" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Detail Preview Component
+function DetailPreview({ style, brandColor, device }: { style: ProductsDetailStyle; brandColor: string; device: PreviewDevice }) {
+  const formatPrice = (p: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
+
+  if (style === 'classic') {
+    return (
+      <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')}>
+        <div className="text-xs text-slate-400 mb-3">Trang chủ › Sản phẩm › Chi tiết</div>
+        <div className={cn("flex gap-4", device === 'mobile' ? 'flex-col' : '')}>
+          <div className={cn(device === 'mobile' ? '' : 'w-1/2')}>
+            <div className="aspect-square bg-slate-100 rounded-lg flex items-center justify-center relative">
+              <Package size={48} className="text-slate-300" />
+              <span className="absolute top-2 left-2 px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded">-7%</span>
+            </div>
+            <div className="flex gap-2 mt-2">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="w-12 h-12 bg-slate-100 rounded flex items-center justify-center">
+                  <Package size={12} className="text-slate-300" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className={cn(device === 'mobile' ? '' : 'w-1/2')}>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Điện thoại</span>
+            <h1 className="font-bold text-lg mt-2">iPhone 15 Pro Max 256GB</h1>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xl font-bold" style={{ color: brandColor }}>{formatPrice(27990000)}</span>
+              <span className="text-sm text-slate-400 line-through">{formatPrice(29990000)}</span>
+            </div>
+            <div className="flex items-center gap-2 mt-3 text-xs text-green-600">
+              <span className="w-2 h-2 bg-green-500 rounded-full" />
+              Còn hàng
+            </div>
+            <div className="mt-4 flex gap-2">
+              <button className="flex-1 py-2 rounded-lg text-white text-sm font-medium flex items-center justify-center gap-2" style={{ backgroundColor: brandColor }}>
+                <ShoppingCart size={16} /> Thêm vào giỏ
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (style === 'modern') {
+    return (
+      <div className="bg-white">
+        <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')} style={{ backgroundColor: `${brandColor}08` }}>
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: brandColor }}>Điện thoại</span>
+          <h1 className={cn("font-bold text-slate-900 leading-tight mt-1", device === 'mobile' ? 'text-lg' : 'text-xl')}>
+            iPhone 15 Pro Max 256GB
+          </h1>
+          <div className="flex items-center gap-3 mt-2">
+            <span className="text-2xl font-bold" style={{ color: brandColor }}>{formatPrice(27990000)}</span>
+            <span className="text-sm text-slate-400 line-through">{formatPrice(29990000)}</span>
+            <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-medium rounded">-7%</span>
+          </div>
+          <button className="mt-4 px-6 py-2.5 rounded-full text-white text-sm font-medium flex items-center gap-2" style={{ backgroundColor: brandColor }}>
+            <ShoppingCart size={16} /> Mua ngay
+          </button>
+        </div>
+        <div className="p-4">
+          <div className="aspect-[16/9] bg-slate-100 rounded-lg flex items-center justify-center">
+            <Package size={32} className="text-slate-300" />
+          </div>
+        </div>
+        <div className={cn("px-4 pb-4 space-y-2", device === 'mobile' ? 'px-3 pb-3' : '')}>
+          <div className="h-3 bg-slate-100 rounded w-full"></div>
+          <div className="h-3 bg-slate-100 rounded w-5/6"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Minimal
+  return (
+    <div className={cn("p-6", device === 'mobile' ? 'p-4' : '')}>
+      <div className="text-center mb-4">
+        <span className="text-xs font-medium uppercase tracking-wider" style={{ color: brandColor }}>Điện thoại</span>
+        <h1 className="font-bold text-lg mt-2">iPhone 15 Pro Max 256GB</h1>
+        <div className="flex items-center justify-center gap-2 mt-2">
+          <span className="text-xl font-bold" style={{ color: brandColor }}>{formatPrice(27990000)}</span>
+          <span className="text-sm text-slate-400 line-through">{formatPrice(29990000)}</span>
+        </div>
+      </div>
+      <div className="aspect-square bg-slate-100 rounded-lg mb-4 flex items-center justify-center max-w-xs mx-auto">
+        <Package size={48} className="text-slate-300" />
+      </div>
+      <div className="text-center">
+        <button className="px-8 py-3 rounded-full text-white font-medium" style={{ backgroundColor: brandColor }}>
+          Thêm vào giỏ hàng
+        </button>
+      </div>
     </div>
   );
 }

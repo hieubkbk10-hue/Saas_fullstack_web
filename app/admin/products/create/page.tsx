@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../components/ui';
 import { LexicalEditor } from '../../components/LexicalEditor';
 import { ImageUpload } from '../../components/ImageUpload';
+import { ModuleGuard } from '../../components/ModuleGuard';
 
 function QuickCreateCategoryModal({ 
   isOpen, 
@@ -95,9 +96,16 @@ function QuickCreateCategoryModal({
 const MODULE_KEY = 'products';
 
 export default function ProductCreatePage() {
+  return (
+    <ModuleGuard moduleKey="products">
+      <ProductCreateContent />
+    </ModuleGuard>
+  );
+}
+
+function ProductCreateContent() {
   const router = useRouter();
-  // FIX #8: Use listActive instead of listAll
-const categoriesData = useQuery(api.productCategories.listActive);
+  const categoriesData = useQuery(api.productCategories.listActive);
   const createProduct = useMutation(api.products.create);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });

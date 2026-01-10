@@ -164,6 +164,161 @@ export const listBestSellers = query({
 });
 
 // ============================================================
+// PUBLIC QUERIES (for frontend)
+// ============================================================
+
+// Search active products with filters
+export const searchPublished = query({
+  args: {
+    search: v.optional(v.string()),
+    categoryId: v.optional(v.id("productCategories")),
+    sortBy: v.optional(
+      v.union(
+        v.literal("newest"),
+        v.literal("oldest"),
+        v.literal("popular"),
+        v.literal("price_asc"),
+        v.literal("price_desc"),
+        v.literal("name")
+      )
+    ),
+    limit: v.optional(v.number()),
+  },
+  returns: v.array(productDoc),
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 20, 100);
+    let products;
+
+    if (args.categoryId) {
+      products = await ctx.db
+        .query("products")
+        .withIndex("by_category_status", (q) =>
+          q.eq("categoryId", args.categoryId!).eq("status", "Active")
+        )
+        .take(limit * 2);
+    } else {
+      products = await ctx.db
+        .query("products")
+        .withIndex("by_status_order", (q) => q.eq("status", "Active"))
+        .take(limit * 2);
+    }
+
+    // Client-side search filter
+    if (args.search) {
+      const searchLower = args.search.toLowerCase();
+      products = products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchLower) ||
+          p.sku.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Sort
+    const sortBy = args.sortBy ?? "newest";
+    switch (sortBy) {
+      case "newest":
+        products.sort((a, b) => b._creationTime - a._creationTime);
+        break;
+      case "oldest":
+        products.sort((a, b) => a._creationTime - b._creationTime);
+        break;
+      case "popular":
+        products.sort((a, b) => b.sales - a.sales);
+        break;
+      case "price_asc":
+        products.sort((a, b) => (a.salePrice ?? a.price) - (b.salePrice ?? b.price));
+        break;
+      case "price_desc":
+        products.sort((a, b) => (b.salePrice ?? b.price) - (a.salePrice ?? a.price));
+        break;
+      case "name":
+        products.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+    }
+
+    return products.slice(0, limit);
+  },
+});
+
+// Count published products
+export const countPublished = query({
+  args: {
+    categoryId: v.optional(v.id("productCategories")),
+  },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    if (args.categoryId) {
+      const products = await ctx.db
+        .query("products")
+        .withIndex("by_category_status", (q) =>
+          q.eq("categoryId", args.categoryId!).eq("status", "Active")
+        )
+        .take(1001);
+      return products.length;
+    }
+    const stats = await ctx.db
+      .query("productStats")
+      .withIndex("by_key", (q) => q.eq("key", "Active"))
+      .unique();
+    return stats?.count ?? 0;
+  },
+});
+
+// Featured products (best sellers)
+export const listFeatured = query({
+  args: { limit: v.optional(v.number()) },
+  returns: v.array(productDoc),
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 8, 20);
+    return await ctx.db
+      .query("products")
+      .withIndex("by_status_sales", (q) => q.eq("status", "Active"))
+      .order("desc")
+      .take(limit);
+  },
+});
+
+// Recent products
+export const listRecent = query({
+  args: { limit: v.optional(v.number()) },
+  returns: v.array(productDoc),
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 8, 20);
+    return await ctx.db
+      .query("products")
+      .withIndex("by_status_order", (q) => q.eq("status", "Active"))
+      .order("desc")
+      .take(limit);
+  },
+});
+
+// Popular products (by sales)
+export const listPopular = query({
+  args: { limit: v.optional(v.number()) },
+  returns: v.array(productDoc),
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 8, 20);
+    return await ctx.db
+      .query("products")
+      .withIndex("by_status_sales", (q) => q.eq("status", "Active"))
+      .order("desc")
+      .take(limit);
+  },
+});
+
+// Increment views
+export const incrementViews = mutation({
+  args: { id: v.id("products") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const product = await ctx.db.get(args.id);
+    if (!product) return null;
+    // Note: products schema doesn't have views field, using sales as proxy or skip
+    return null;
+  },
+});
+
+// ============================================================
 // MUTATIONS
 // ============================================================
 

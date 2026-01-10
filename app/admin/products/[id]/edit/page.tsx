@@ -11,15 +11,24 @@ import { toast } from 'sonner';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../../components/ui';
 import { LexicalEditor } from '../../../components/LexicalEditor';
 import { ImageUpload } from '../../../components/ImageUpload';
+import { ModuleGuard } from '../../../components/ModuleGuard';
 
 const MODULE_KEY = 'products';
 
 export default function ProductEditPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <ModuleGuard moduleKey="products">
+      <ProductEditContent params={params} />
+    </ModuleGuard>
+  );
+}
+
+function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
 
   const productData = useQuery(api.products.getById, { id: id as Id<"products"> });
-  const categoriesData = useQuery(api.productCategories.listAll);
+  const categoriesData = useQuery(api.productCategories.listActive);
   const updateProduct = useMutation(api.products.update);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
 
@@ -213,10 +222,8 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
                   <option value="">-- Chọn danh mục --</option>
-                  {categoriesData?.filter(cat => cat.active || cat._id === productData?.categoryId).map(cat => (
-                    <option key={cat._id} value={cat._id}>
-                      {cat.name}{!cat.active ? ' (Đã ẩn)' : ''}
-                    </option>
+                  {categoriesData?.map(cat => (
+                    <option key={cat._id} value={cat._id}>{cat.name}</option>
                   ))}
                 </select>
               </div>

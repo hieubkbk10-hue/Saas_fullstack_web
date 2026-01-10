@@ -67,7 +67,6 @@ export default function ServiceCategoryEditPage({ params }: { params: Promise<{ 
         active,
       });
       toast.success("Đã cập nhật danh mục");
-      router.push('/admin/service-categories');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể cập nhật danh mục");
     } finally {

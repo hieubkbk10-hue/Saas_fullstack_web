@@ -17,7 +17,7 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
   const router = useRouter();
 
   const categoryData = useQuery(api.productCategories.getById, { id: id as Id<"productCategories"> });
-  const categoriesData = useQuery(api.productCategories.listAll);
+  const categoriesData = useQuery(api.productCategories.listAll, {});
   const productsData = useQuery(api.products.listAll, {});
   const updateCategory = useMutation(api.productCategories.update);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
