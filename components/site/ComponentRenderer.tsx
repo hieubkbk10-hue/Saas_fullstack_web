@@ -230,39 +230,67 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
 }
 
 // ============ STATS SECTION ============
+// Professional Stats UI/UX - 3 Variants from professional-stats-components
 type StatsStyle = 'horizontal' | 'cards' | 'icons';
 function StatsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ value: string; label: string }>) || [];
   const style = (config.style as StatsStyle) || 'horizontal';
 
-  // Style 1: Horizontal (thanh ngang)
+  // Style 1: Thanh ngang - Full width bar với dividers
   if (style === 'horizontal') {
     return (
-      <section className="py-16 px-4" style={{ backgroundColor: brandColor }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-white">
-            {items.map((item, idx) => (
-              <div key={idx}>
-                <div className="text-3xl md:text-4xl font-bold mb-2">{item.value}</div>
-                <div className="text-sm opacity-80">{item.label}</div>
-              </div>
-            ))}
+      <section className="py-12 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div 
+            className="w-full rounded-lg shadow-md overflow-hidden"
+            style={{ backgroundColor: brandColor, boxShadow: `0 4px 6px -1px ${brandColor}20` }}
+          >
+            <div className="flex flex-col md:flex-row items-center justify-between divide-y md:divide-y-0 md:divide-x divide-white/10">
+              {items.map((item, idx) => (
+                <div 
+                  key={idx} 
+                  className="flex-1 w-full py-6 px-4 flex flex-col items-center justify-center text-center text-white hover:bg-white/5 transition-colors duration-200 cursor-default"
+                >
+                  <span className="text-3xl md:text-4xl font-bold tracking-tight tabular-nums leading-none mb-1">
+                    {item.value}
+                  </span>
+                  <h3 className="text-xs font-medium uppercase tracking-wider opacity-85">
+                    {item.label}
+                  </h3>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
     );
   }
 
-  // Style 2: Cards
+  // Style 2: Cards - Grid cards với hover effects và accent line
   if (style === 'cards') {
     return (
-      <section className="py-16 px-4" style={{ backgroundColor: `${brandColor}08` }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <section className="py-12 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {items.map((item, idx) => (
-              <div key={idx} className="bg-white rounded-xl p-6 shadow-sm border border-slate-100 text-center">
-                <div className="text-3xl font-bold mb-2" style={{ color: brandColor }}>{item.value}</div>
-                <div className="text-sm text-slate-500">{item.label}</div>
+              <div 
+                key={idx}
+                className="group bg-white border border-slate-100 rounded-xl p-5 flex flex-col items-center text-center shadow-sm hover:shadow-md hover:border-slate-200 transition-all duration-200"
+              >
+                <span 
+                  className="text-3xl font-bold mb-1 tracking-tight tabular-nums group-hover:scale-105 transition-transform duration-200"
+                  style={{ color: brandColor }}
+                >
+                  {item.value}
+                </span>
+                <h3 className="text-sm font-semibold text-slate-700">
+                  {item.label}
+                </h3>
+                {/* Minimal accent line */}
+                <div 
+                  className="w-8 h-0.5 bg-slate-100 rounded-full mt-3 group-hover:opacity-50 transition-colors duration-200"
+                  style={{ backgroundColor: brandColor + '30' }}
+                />
               </div>
             ))}
           </div>
@@ -271,17 +299,28 @@ function StatsSection({ config, brandColor, title }: { config: Record<string, un
     );
   }
 
-  // Style 3: Icons (circles)
+  // Style 3: Icon Grid - Circle containers với shadow và hover scale
   return (
-    <section className="py-16 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+    <section className="py-12 px-4">
+      <div className="max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {items.map((item, idx) => (
-            <div key={idx} className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4 text-white text-2xl font-bold" style={{ backgroundColor: brandColor }}>
-                {item.value}
+            <div key={idx} className="flex flex-col items-center group">
+              {/* Circle Container with shadow and border */}
+              <div 
+                className="relative w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center mb-3 group-hover:scale-105 transition-all duration-300 ease-out border-[3px] border-white ring-1 ring-slate-100"
+                style={{ 
+                  backgroundColor: brandColor,
+                  boxShadow: `0 10px 15px -3px ${brandColor}30, 0 4px 6px -4px ${brandColor}20`
+                }}
+              >
+                <span className="text-2xl md:text-3xl font-bold text-white tracking-tight z-10 tabular-nums">
+                  {item.value}
+                </span>
               </div>
-              <div className="text-sm text-slate-600">{item.label}</div>
+              <h3 className="text-base font-semibold text-slate-800 group-hover:text-opacity-80 transition-colors">
+                {item.label}
+              </h3>
             </div>
           ))}
         </div>

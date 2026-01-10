@@ -377,6 +377,7 @@ export const HeroBannerPreview = ({
 };
 
 // ============ STATS PREVIEW ============
+// Professional Stats UI/UX - 3 Variants from professional-stats-components
 type StatsItem = { value: string; label: string };
 export type StatsStyle = 'horizontal' | 'cards' | 'icons';
 export const StatsPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: StatsItem[]; brandColor: string; selectedStyle?: StatsStyle; onStyleChange?: (style: StatsStyle) => void }) => {
@@ -385,43 +386,104 @@ export const StatsPreview = ({ items, brandColor, selectedStyle, onStyleChange }
   const setPreviewStyle = (s: string) => onStyleChange?.(s as StatsStyle);
   const styles = [{ id: 'horizontal', label: 'Thanh ngang' }, { id: 'cards', label: 'Cards' }, { id: 'icons', label: 'Icon Grid' }];
 
+  // Style 1: Thanh ngang - Full width bar với dividers
   const renderHorizontalStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')} style={{ backgroundColor: brandColor }}>
-      <div className={cn("flex items-center justify-center gap-8", device === 'mobile' ? 'flex-col gap-6' : device === 'tablet' ? 'gap-6' : 'gap-12')}>
+    <section className="w-full rounded-lg shadow-md overflow-hidden" style={{ backgroundColor: brandColor, boxShadow: `0 4px 6px -1px ${brandColor}20` }}>
+      <div className={cn(
+        "flex items-center justify-between",
+        device === 'mobile' ? 'flex-col divide-y' : 'flex-row divide-x',
+        "divide-white/10"
+      )}>
         {items.slice(0, device === 'mobile' ? 2 : 4).map((item, idx) => (
-          <div key={idx} className="text-center text-white">
-            <div className={cn("font-bold", device === 'mobile' ? 'text-2xl' : 'text-3xl')}>{item.value || '0'}</div>
-            <div className={cn("opacity-80", device === 'mobile' ? 'text-xs' : 'text-sm')}>{item.label || 'Label'}</div>
+          <div 
+            key={idx} 
+            className={cn(
+              "flex-1 w-full flex flex-col items-center justify-center text-center text-white hover:bg-white/5 transition-colors duration-200 cursor-default",
+              device === 'mobile' ? 'py-5 px-4' : 'py-6 px-4'
+            )}
+          >
+            <span className={cn(
+              "font-bold tracking-tight tabular-nums leading-none mb-1",
+              device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl'
+            )}>
+              {item.value || '0'}
+            </span>
+            <h3 className="text-xs font-medium uppercase tracking-wider opacity-85">
+              {item.label || 'Label'}
+            </h3>
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 
+  // Style 2: Cards - Grid cards với hover effects và accent line
   const renderCardsStyle = () => (
-    <div className={cn("p-6", device === 'mobile' ? 'p-4' : '')} style={{ backgroundColor: `${brandColor}08` }}>
+    <section className={cn("w-full", device === 'mobile' ? 'p-3' : 'p-4')}>
       <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-2' : 'grid-cols-4')}>
         {items.slice(0, 4).map((item, idx) => (
-          <div key={idx} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 text-center">
-            <div className={cn("font-bold mb-1", device === 'mobile' ? 'text-xl' : 'text-2xl')} style={{ color: brandColor }}>{item.value || '0'}</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">{item.label || 'Label'}</div>
+          <div 
+            key={idx}
+            className="group bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl p-5 flex flex-col items-center text-center shadow-sm hover:shadow-md hover:border-opacity-50 transition-all duration-200"
+            style={{ '--hover-border-color': `${brandColor}30` } as React.CSSProperties}
+          >
+            <span 
+              className={cn(
+                "font-bold mb-1 tracking-tight tabular-nums group-hover:scale-105 transition-transform duration-200",
+                device === 'mobile' ? 'text-2xl' : 'text-3xl'
+              )} 
+              style={{ color: brandColor }}
+            >
+              {item.value || '0'}
+            </span>
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {item.label || 'Label'}
+            </h3>
+            {/* Minimal accent line */}
+            <div className="w-8 h-0.5 bg-slate-100 dark:bg-slate-700 rounded-full mt-3 group-hover:bg-opacity-50 transition-colors duration-200" style={{ '--hover-bg': `${brandColor}50` } as React.CSSProperties} />
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 
+  // Style 3: Icon Grid - Circle containers với shadow và hover scale
   const renderIconsStyle = () => (
-    <div className={cn("p-8", device === 'mobile' ? 'p-4' : '')}>
-      <div className={cn("grid gap-6", device === 'mobile' ? 'grid-cols-2 gap-4' : 'grid-cols-4')}>
+    <section className={cn("w-full", device === 'mobile' ? 'py-4 px-3' : 'py-6 px-4')}>
+      <div className={cn("grid gap-6", device === 'mobile' ? 'grid-cols-2 gap-4' : 'grid-cols-4 md:gap-8')}>
         {items.slice(0, 4).map((item, idx) => (
-          <div key={idx} className="flex flex-col items-center text-center">
-            <div className={cn("rounded-full flex items-center justify-center mb-3 font-bold text-white", device === 'mobile' ? 'w-14 h-14 text-lg' : 'w-20 h-20 text-2xl')} style={{ backgroundColor: brandColor }}>{item.value || '0'}</div>
-            <div className={cn("text-slate-600 dark:text-slate-300", device === 'mobile' ? 'text-xs' : 'text-sm')}>{item.label || 'Label'}</div>
+          <div key={idx} className="flex flex-col items-center group">
+            {/* Circle Container with shadow and border */}
+            <div 
+              className={cn(
+                "relative rounded-full flex items-center justify-center mb-3 group-hover:scale-105 transition-all duration-300 ease-out border-[3px] border-white ring-1 ring-slate-100 dark:ring-slate-700",
+                device === 'mobile' ? 'w-20 h-20' : 'w-24 h-24 md:w-28 md:h-28'
+              )}
+              style={{ 
+                backgroundColor: brandColor,
+                boxShadow: `0 10px 15px -3px ${brandColor}30, 0 4px 6px -4px ${brandColor}20`
+              }}
+            >
+              <span className={cn(
+                "font-bold text-white tracking-tight z-10 tabular-nums",
+                device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
+              )}>
+                {item.value || '0'}
+              </span>
+            </div>
+            <h3 
+              className={cn(
+                "font-semibold text-slate-800 dark:text-slate-200 group-hover:transition-colors",
+                device === 'mobile' ? 'text-sm' : 'text-base'
+              )}
+              style={{ '--hover-color': brandColor } as React.CSSProperties}
+            >
+              {item.label || 'Label'}
+            </h3>
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 
   return (
