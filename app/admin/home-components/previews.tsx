@@ -899,13 +899,16 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
 };
 
 // ============ PRODUCT/SERVICE LIST PREVIEW ============
+// Professional Product Showcase UI/UX - 3 Variants from elegant-product-showcase
 export type ProductListStyle = 'grid' | 'list' | 'carousel';
 export interface ProductListPreviewItem {
   id: string | number;
   name: string;
   image?: string;
   price?: string;
+  originalPrice?: string;
   description?: string;
+  tag?: 'new' | 'hot' | 'sale';
 }
 
 // Helper to strip HTML tags from description
@@ -913,6 +916,25 @@ const stripHtml = (html?: string) => {
   if (!html) return '';
   return html.replace(/<[^>]*>/g, '').trim();
 };
+
+// Badge component for product tags
+const ProductBadge = ({ tag, discount }: { tag?: 'new' | 'hot' | 'sale'; discount?: string }) => {
+  if (!tag && !discount) return null;
+  return (
+    <div className="absolute top-2 left-2 z-10 flex flex-col gap-1.5">
+      {tag === 'new' && (
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500 text-white rounded">Mới</span>
+      )}
+      {tag === 'hot' && (
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-orange-500 text-white rounded">Hot</span>
+      )}
+      {discount && (
+        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-red-500 text-white rounded">{discount}</span>
+      )}
+    </div>
+  );
+};
+
 export const ProductListPreview = ({ brandColor, itemCount, componentType, selectedStyle, onStyleChange, items }: { 
   brandColor: string; 
   itemCount: number; 
@@ -933,103 +955,265 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
     ? items 
     : Array.from({ length: Math.max(itemCount, 4) }, (_, i) => ({ 
         id: i + 1, 
-        name: isProduct ? `Sản phẩm ${i + 1}` : `Dịch vụ ${i + 1}`, 
-        price: isProduct ? `${(i + 1) * 100}.000đ` : '', 
-        description: 'Mô tả ngắn...' 
+        name: isProduct ? `Tai nghe Bluetooth Pro ${i + 1}` : `Dịch vụ ${i + 1}`, 
+        price: isProduct ? `${(i + 1) * 250}.000đ` : '', 
+        originalPrice: i % 2 === 0 ? `${(i + 1) * 320}.000đ` : undefined,
+        description: 'Sản phẩm chất lượng cao, được tin dùng bởi hàng nghìn khách hàng.',
+        tag: i === 0 ? 'hot' : i === 1 ? 'new' : i === 2 ? 'sale' : undefined
       }));
   const showViewAll = displayItems.length > 3;
 
-  const ViewAllButton = () => showViewAll ? (
-    <div className="text-center mt-6">
-      <button className="px-6 py-2.5 rounded-lg font-medium text-sm transition-colors" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-        Xem tất cả
-      </button>
-    </div>
-  ) : null;
+  // Calculate discount percentage
+  const getDiscount = (price?: string, originalPrice?: string) => {
+    if (!price || !originalPrice) return null;
+    const p = parseInt(price.replace(/\D/g, ''));
+    const op = parseInt(originalPrice.replace(/\D/g, ''));
+    if (op <= p) return null;
+    return `-${Math.round(((op - p) / op) * 100)}%`;
+  };
 
+  // Style 1: Grid - Professional cards với hover effects
   const renderGridStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h2 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{title}</h2>
-      <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-2 gap-3' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4')}>
-        {displayItems.slice(0, 4).map((item) => (
-          <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border group">
-            <div className="aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
-              {item.image ? (
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-              ) : (
-                <Package size={32} className="text-slate-300" />
-              )}
+    <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
+      <h2 className={cn("font-bold tracking-tight text-center mb-6 md:mb-8", device === 'mobile' ? 'text-xl' : 'text-2xl sm:text-3xl')}>{title}</h2>
+      <div className={cn("grid gap-3 md:gap-6", device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4')}>
+        {displayItems.slice(0, 4).map((item) => {
+          const discount = getDiscount(item.price, item.originalPrice);
+          return (
+            <div 
+              key={item.id} 
+              className="group relative bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200/60 dark:border-slate-700 hover:border-opacity-30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-full"
+              style={{ '--hover-border': `${brandColor}30` } as React.CSSProperties}
+            >
+              <ProductBadge tag={item.tag} discount={discount || undefined} />
+              
+              {/* Image Container */}
+              <div className="relative aspect-square overflow-hidden bg-slate-100/50 dark:bg-slate-700/50">
+                {item.image ? (
+                  <img 
+                    src={item.image} 
+                    alt={item.name} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package size={32} className="text-slate-300" />
+                  </div>
+                )}
+              </div>
+              
+              {/* Content */}
+              <div className={cn("flex-1 flex flex-col", device === 'mobile' ? 'p-2.5' : 'p-3 md:p-4')}>
+                <h4 className={cn(
+                  "font-semibold text-slate-900 dark:text-slate-100 group-hover:text-opacity-80 transition-colors line-clamp-2 leading-tight",
+                  device === 'mobile' ? 'text-sm' : 'text-sm md:text-base'
+                )}>
+                  {item.name}
+                </h4>
+                
+                {/* Price */}
+                <div className="flex items-center mt-1.5">
+                  <span className={cn("font-bold", device === 'mobile' ? 'text-sm' : 'text-base md:text-lg')} style={{ color: brandColor }}>
+                    {item.price || '0đ'}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Footer Action */}
+              <div className={cn("", device === 'mobile' ? 'p-2.5 pt-0' : 'p-3 pt-0 md:p-4 md:pt-0')}>
+                <button 
+                  className={cn(
+                    "w-full gap-1.5 font-medium shadow-none rounded-md transition-all duration-200",
+                    device === 'mobile' ? 'h-8 text-xs' : 'h-8 md:h-9 text-xs md:text-sm',
+                    "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:text-white"
+                  )}
+                  style={{ '--hover-bg': brandColor } as React.CSSProperties}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = brandColor; e.currentTarget.style.color = 'white'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = ''; }}
+                >
+                  <span className="flex items-center justify-center gap-1.5">
+                    <Package size={14} />
+                    {isProduct ? 'Mua ngay' : 'Xem chi tiết'}
+                  </span>
+                </button>
+              </div>
             </div>
-            <div className="p-3">
-              <h4 className={cn("font-semibold line-clamp-2", device === 'mobile' ? 'text-sm' : '')}>{item.name}</h4>
-              {item.price && <p className="text-sm font-bold mt-1" style={{ color: brandColor }}>{item.price}</p>}
-              <button className={cn("w-full mt-2 py-1.5 rounded-lg text-white text-xs")} style={{ backgroundColor: brandColor }}>{isProduct ? 'Mua ngay' : 'Xem chi tiết'}</button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
-      <ViewAllButton />
-    </div>
-  );
-
-  const renderListStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h2 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{title}</h2>
-      <div className="max-w-3xl mx-auto space-y-3">
-        {displayItems.slice(0, 4).map((item) => (
-          <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl border flex items-center p-3 gap-4">
-            <div className={cn("bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden", device === 'mobile' ? 'w-16 h-16' : 'w-20 h-20')}>
-              {item.image ? (
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-              ) : (
-                <Package size={24} className="text-slate-300" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="font-semibold line-clamp-1">{item.name}</h4>
-              {item.description && <p className="text-xs text-slate-500 line-clamp-1">{stripHtml(item.description)}</p>}
-              {item.price && <p className="text-sm font-bold mt-1" style={{ color: brandColor }}>{item.price}</p>}
-            </div>
-            <button className="px-4 py-2 rounded-lg text-white text-sm flex-shrink-0" style={{ backgroundColor: brandColor }}>{isProduct ? 'Mua' : 'Xem'}</button>
-          </div>
-        ))}
-      </div>
-      <ViewAllButton />
-    </div>
-  );
-
-  const renderCarouselStyle = () => (
-    <div className={cn("py-8", device === 'mobile' ? 'py-6' : '')}>
-      <div className="flex items-center justify-between mb-6 px-4">
-        <h2 className={cn("font-bold", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{title}</h2>
-        {showViewAll && (
-          <button className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all" style={{ color: brandColor }}>
-            Xem tất cả <span>→</span>
+      
+      {/* View All Button */}
+      {showViewAll && (
+        <div className="flex justify-center pt-6 md:pt-8">
+          <button 
+            className="group flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg font-medium text-sm hover:border-slate-300 transition-all"
+          >
+            Xem toàn bộ
+            <span className="transition-transform group-hover:translate-x-1">→</span>
           </button>
-        )}
-      </div>
-      <div className="relative px-4">
-        <div className={cn("flex gap-4 overflow-hidden", device === 'mobile' ? 'gap-3' : '')}>
-          {displayItems.slice(0, 4).map((item) => (
-            <div key={item.id} className={cn("flex-shrink-0 bg-white dark:bg-slate-800 rounded-xl overflow-hidden border", device === 'mobile' ? 'w-40' : 'w-52')}>
-              <div className="aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+        </div>
+      )}
+    </section>
+  );
+
+  // Style 2: List - Horizontal cards với 2 columns
+  const renderListStyle = () => (
+    <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
+      <h2 className={cn("font-bold tracking-tight text-center mb-6 md:mb-8", device === 'mobile' ? 'text-xl' : 'text-2xl sm:text-3xl')}>{title}</h2>
+      <div className={cn("grid gap-3 md:gap-4", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
+        {displayItems.slice(0, 4).map((item) => {
+          const discount = getDiscount(item.price, item.originalPrice);
+          return (
+            <div 
+              key={item.id} 
+              className={cn(
+                "group relative bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200/60 dark:border-slate-700 hover:border-opacity-30 hover:shadow-md transition-all duration-300 flex",
+                device === 'mobile' ? 'h-28' : 'h-32 md:h-40'
+              )}
+            >
+              {/* Badges */}
+              <div className="absolute top-2 left-2 z-10 flex flex-row gap-1.5">
+                {item.tag === 'new' && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500 text-white rounded">Mới</span>}
+                {item.tag === 'hot' && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-orange-500 text-white rounded">Hot</span>}
+                {discount && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-red-500 text-white rounded">{discount}</span>}
+              </div>
+              
+              {/* Image */}
+              <div className={cn("relative overflow-hidden bg-slate-100/50 dark:bg-slate-700/50 flex-shrink-0", device === 'mobile' ? 'w-24' : 'w-28')}>
                 {item.image ? (
                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                 ) : (
-                  <Package size={32} className="text-slate-300" />
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package size={24} className="text-slate-300" />
+                  </div>
                 )}
               </div>
-              <div className="p-3">
-                <h4 className="font-semibold text-sm line-clamp-2">{item.name}</h4>
-                {item.price && <p className="text-sm font-bold" style={{ color: brandColor }}>{item.price}</p>}
+              
+              {/* Content */}
+              <div className="flex flex-col flex-1 min-w-0 justify-between">
+                <div className={cn("flex-1", device === 'mobile' ? 'p-2.5 pr-3' : 'p-3 pr-4')}>
+                  <h4 className={cn(
+                    "font-semibold text-slate-900 dark:text-slate-100 group-hover:text-opacity-80 transition-colors line-clamp-2",
+                    device === 'mobile' ? 'text-sm' : 'text-sm md:text-base'
+                  )}>
+                    {item.name}
+                  </h4>
+                  <div className="flex items-center mt-1">
+                    <span className={cn("font-bold", device === 'mobile' ? 'text-sm' : 'text-base')} style={{ color: brandColor }}>
+                      {item.price || '0đ'}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Action */}
+                <div className={cn("", device === 'mobile' ? 'p-2.5 pt-0 flex justify-end' : 'p-3 pt-0 flex justify-end')}>
+                  <button 
+                    className="px-3 h-8 text-xs font-medium rounded-md text-white transition-all"
+                    style={{ backgroundColor: brandColor }}
+                  >
+                    {isProduct ? 'Mua ngay' : 'Xem'}
+                  </button>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-        <button className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center"><ChevronLeft size={20} /></button>
-        <button className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-white shadow-lg rounded-full flex items-center justify-center"><ChevronRight size={20} /></button>
+          );
+        })}
       </div>
-    </div>
+      
+      {/* View All */}
+      {showViewAll && (
+        <div className="flex justify-center pt-6 md:pt-8">
+          <button className="group flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg font-medium text-sm hover:border-slate-300 transition-all">
+            Xem toàn bộ
+            <span className="transition-transform group-hover:translate-x-1">→</span>
+          </button>
+        </div>
+      )}
+    </section>
+  );
+
+  // Style 3: Carousel - Drag to scroll với snap
+  const renderCarouselStyle = () => (
+    <section className={cn("py-8 md:py-12 relative group/carousel")}>
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 md:mb-8 px-4">
+        <h2 className={cn("font-bold tracking-tight", device === 'mobile' ? 'text-xl' : 'text-2xl sm:text-3xl')}>{title}</h2>
+      </div>
+      
+      {/* Navigation Buttons (Desktop) */}
+      {device === 'desktop' && (
+        <>
+          <button className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-white dark:bg-slate-800 shadow-md items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity -ml-2">
+            <ChevronLeft size={20} />
+          </button>
+          <button className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-white dark:bg-slate-800 shadow-md items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity -mr-2">
+            <ChevronRight size={20} />
+          </button>
+        </>
+      )}
+      
+      {/* Carousel Container */}
+      <div 
+        className={cn(
+          "flex overflow-x-auto gap-3 md:gap-6 pb-4 -mx-4 px-4 scrollbar-hide cursor-grab snap-x snap-mandatory"
+        )}
+      >
+        {displayItems.slice(0, 5).map((item) => {
+          const discount = getDiscount(item.price, item.originalPrice);
+          return (
+            <div 
+              key={item.id} 
+              className={cn(
+                "flex-shrink-0 snap-center select-none",
+                device === 'mobile' ? 'min-w-[180px]' : 'min-w-[200px] md:min-w-[280px]'
+              )}
+            >
+              <div className="group relative bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200/60 dark:border-slate-700 hover:border-opacity-30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-full">
+                <ProductBadge tag={item.tag} discount={discount || undefined} />
+                
+                {/* Image */}
+                <div className={cn(
+                  "relative overflow-hidden bg-slate-100/50 dark:bg-slate-700/50",
+                  device === 'mobile' ? 'aspect-square' : 'h-[200px] md:h-[280px]'
+                )}>
+                  {item.image ? (
+                    <img 
+                      src={item.image} 
+                      alt={item.name} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      draggable={false}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package size={32} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+                
+                {/* Content */}
+                <div className="p-3 space-y-1.5">
+                  <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100 line-clamp-2 leading-tight">
+                    {item.name}
+                  </h4>
+                  <div className="flex items-center">
+                    <span className="font-bold text-base" style={{ color: brandColor }}>
+                      {item.price || '0đ'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      
+      {/* View All */}
+      <div className="flex justify-center pt-6 md:pt-8">
+        <button className="group flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg font-medium text-sm hover:border-slate-300 transition-all min-w-[160px] justify-center">
+          Xem toàn bộ
+          <span className="transition-transform group-hover:translate-x-1">→</span>
+        </button>
+      </div>
+    </section>
   );
 
   return (
