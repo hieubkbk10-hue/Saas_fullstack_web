@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, Suspense } from 'react';
 import { useQuery } from 'convex/react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { api } from '@/convex/_generated/api';
@@ -20,14 +20,12 @@ type PostsListLayout = 'fullwidth' | 'sidebar' | 'magazine';
 function usePostsLayout(): PostsListLayout {
   const setting = useQuery(api.settings.getByKey, { key: 'posts_list_style' });
   const value = setting?.value as string;
-  // Map old values to new layout types
   if (value === 'grid' || value === 'list') return 'fullwidth';
   if (value === 'sidebar') return 'sidebar';
   if (value === 'magazine') return 'magazine';
-  return 'fullwidth'; // default
+  return 'fullwidth';
 }
 
-// Hook để lấy danh sách các fields đang bật cho posts module
 function useEnabledPostFields(): Set<string> {
   const fields = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'posts' });
   return useMemo(() => {
@@ -36,7 +34,49 @@ function useEnabledPostFields(): Set<string> {
   }, [fields]);
 }
 
+function PostsListSkeleton() {
+  return (
+    <div className="py-8 md:py-12 px-4 animate-pulse">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-8">
+          <div className="h-10 w-64 bg-slate-200 rounded mx-auto" />
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="h-10 flex-1 max-w-xs bg-slate-200 rounded-lg" />
+            <div className="flex gap-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-8 w-20 bg-slate-200 rounded-full" />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-white rounded-xl overflow-hidden border border-slate-100">
+              <div className="aspect-video bg-slate-200" />
+              <div className="p-5 space-y-3">
+                <div className="h-5 w-20 bg-slate-200 rounded-full" />
+                <div className="h-6 w-full bg-slate-200 rounded" />
+                <div className="h-4 w-3/4 bg-slate-200 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PostsPage() {
+  return (
+    <Suspense fallback={<PostsListSkeleton />}>
+      <PostsContent />
+    </Suspense>
+  );
+}
+
+function PostsContent() {
   const brandColor = useBrandColor();
   const layout = usePostsLayout();
   const enabledFields = useEnabledPostFields();
@@ -220,50 +260,6 @@ export default function PostsPage() {
             </button>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-// Skeleton Loading Component
-function PostsListSkeleton() {
-  return (
-    <div className="py-8 md:py-12 px-4 animate-pulse">
-      <div className="max-w-7xl mx-auto">
-        {/* Header skeleton */}
-        <div className="text-center mb-8">
-          <div className="h-10 w-64 bg-slate-200 rounded mx-auto" />
-        </div>
-
-        {/* Filter skeleton */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="h-10 flex-1 max-w-xs bg-slate-200 rounded-lg" />
-            <div className="flex gap-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-8 w-20 bg-slate-200 rounded-full" />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Grid skeleton */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-white rounded-xl overflow-hidden border border-slate-100">
-              <div className="aspect-video bg-slate-200" />
-              <div className="p-5 space-y-3">
-                <div className="h-5 w-20 bg-slate-200 rounded-full" />
-                <div className="h-6 w-full bg-slate-200 rounded" />
-                <div className="h-4 w-3/4 bg-slate-200 rounded" />
-                <div className="flex justify-between pt-3 border-t border-slate-100">
-                  <div className="h-3 w-24 bg-slate-200 rounded" />
-                  <div className="h-3 w-16 bg-slate-200 rounded" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
