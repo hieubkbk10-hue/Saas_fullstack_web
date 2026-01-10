@@ -86,8 +86,8 @@ export const fieldType = v.union(
   v.literal("color")
 );
 
-// Target type for polymorphic relations
-export const targetType = v.union(v.literal("post"), v.literal("product"));
+// Target type for polymorphic relations - SVC-011: Added "service"
+export const targetType = v.union(v.literal("post"), v.literal("product"), v.literal("service"));
 
 // Dependency type
 export const dependencyType = v.union(v.literal("all"), v.literal("any"));

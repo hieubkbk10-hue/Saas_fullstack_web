@@ -32,6 +32,7 @@ export const seedModules = mutation({
       { key: "notifications", name: "Thông báo", description: "Gửi thông báo cho người dùng", icon: "Bell", category: "marketing" as const, enabled: true, isCore: false, order: 14 },
       { key: "promotions", name: "Khuyến mãi", description: "Quản lý mã giảm giá, voucher", icon: "Megaphone", category: "marketing" as const, enabled: false, isCore: false, dependencies: ["products", "orders"], dependencyType: "all" as const, order: 15 },
       { key: "analytics", name: "Thống kê", description: "Báo cáo và phân tích dữ liệu", icon: "BarChart3", category: "marketing" as const, enabled: true, isCore: false, order: 16 },
+      { key: "services", name: "Dịch vụ", description: "Quản lý dịch vụ và danh mục dịch vụ", icon: "Briefcase", category: "content" as const, enabled: true, isCore: false, order: 17 },
     ];
 
     for (const mod of modules) {
@@ -491,6 +492,7 @@ export const seedAll = mutation({
         { key: "notifications", name: "Thông báo", description: "Gửi thông báo cho người dùng", icon: "Bell", category: "marketing" as const, enabled: true, isCore: false, order: 14 },
         { key: "promotions", name: "Khuyến mãi", description: "Quản lý mã giảm giá, voucher", icon: "Megaphone", category: "marketing" as const, enabled: false, isCore: false, dependencies: ["products", "orders"], dependencyType: "all" as const, order: 15 },
         { key: "analytics", name: "Thống kê", description: "Báo cáo và phân tích dữ liệu", icon: "BarChart3", category: "marketing" as const, enabled: true, isCore: false, order: 16 },
+        { key: "services", name: "Dịch vụ", description: "Quản lý dịch vụ và danh mục dịch vụ", icon: "Briefcase", category: "content" as const, enabled: true, isCore: false, order: 17 },
       ];
       for (const mod of modules) {
         await ctx.db.insert("adminModules", mod);
@@ -2621,6 +2623,176 @@ export const clearPromotionsConfig = mutation({
     await Promise.all([
       ...features.map(f => ctx.db.delete(f._id)),
       ...fields.map(f => ctx.db.delete(f._id)),
+      ...settings.map(s => ctx.db.delete(s._id)),
+    ]);
+    return null;
+  },
+});
+
+// ============ SERVICES MODULE ============
+
+// Thêm module services vào danh sách adminModules (chỉ chạy 1 lần)
+export const addServicesModuleToList = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const existing = await ctx.db.query("adminModules").withIndex("by_key", q => q.eq("key", "services")).first();
+    if (existing) {
+      return null;
+    }
+    await ctx.db.insert("adminModules", {
+      key: "services",
+      name: "Dịch vụ",
+      description: "Quản lý dịch vụ và danh mục dịch vụ",
+      icon: "Briefcase",
+      category: "content" as const,
+      enabled: true,
+      isCore: false,
+      order: 17,
+    });
+    return null;
+  },
+});
+
+export const seedServicesModule = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    // 1. Seed service categories
+    const existingCategories = await ctx.db.query("serviceCategories").first();
+    if (!existingCategories) {
+      const categories = [
+        { name: "Tư vấn", slug: "tu-van", description: "Dịch vụ tư vấn chuyên nghiệp", order: 0, active: true },
+        { name: "Thiết kế", slug: "thiet-ke", description: "Dịch vụ thiết kế sáng tạo", order: 1, active: true },
+        { name: "Phát triển", slug: "phat-trien", description: "Dịch vụ phát triển phần mềm", order: 2, active: true },
+        { name: "Marketing", slug: "marketing", description: "Dịch vụ marketing số", order: 3, active: true },
+        { name: "Hỗ trợ", slug: "ho-tro", description: "Dịch vụ hỗ trợ kỹ thuật", order: 4, active: false },
+      ];
+      for (const cat of categories) {
+        await ctx.db.insert("serviceCategories", cat);
+      }
+    }
+
+    // 2. Seed services
+    const existingServices = await ctx.db.query("services").first();
+    if (!existingServices) {
+      const tuVanCat = await ctx.db.query("serviceCategories").withIndex("by_slug", q => q.eq("slug", "tu-van")).first();
+      const thietKeCat = await ctx.db.query("serviceCategories").withIndex("by_slug", q => q.eq("slug", "thiet-ke")).first();
+      const phatTrienCat = await ctx.db.query("serviceCategories").withIndex("by_slug", q => q.eq("slug", "phat-trien")).first();
+      const marketingCat = await ctx.db.query("serviceCategories").withIndex("by_slug", q => q.eq("slug", "marketing")).first();
+      
+      if (tuVanCat && thietKeCat && phatTrienCat && marketingCat) {
+        const services = [
+          { title: "Tư vấn chiến lược kinh doanh", slug: "tu-van-chien-luoc-kinh-doanh", content: "<p>Dịch vụ tư vấn chiến lược kinh doanh toàn diện, giúp doanh nghiệp xây dựng lộ trình phát triển bền vững...</p>", excerpt: "Xây dựng chiến lược kinh doanh hiệu quả", thumbnail: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400", categoryId: tuVanCat._id, price: 15000000, duration: "3-5 ngày", status: "Published" as const, views: 850, publishedAt: Date.now() - 86400000, order: 0, featured: true },
+          { title: "Thiết kế website chuyên nghiệp", slug: "thiet-ke-website-chuyen-nghiep", content: "<p>Thiết kế website hiện đại, responsive, tối ưu SEO và trải nghiệm người dùng...</p>", excerpt: "Website đẹp, chuẩn SEO, tốc độ nhanh", thumbnail: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=400", categoryId: thietKeCat._id, price: 25000000, duration: "2-4 tuần", status: "Published" as const, views: 1200, publishedAt: Date.now() - 172800000, order: 1, featured: true },
+          { title: "Phát triển ứng dụng mobile", slug: "phat-trien-ung-dung-mobile", content: "<p>Phát triển ứng dụng di động iOS và Android với công nghệ React Native, Flutter...</p>", excerpt: "App native chất lượng cao", thumbnail: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400", categoryId: phatTrienCat._id, price: 50000000, duration: "2-3 tháng", status: "Published" as const, views: 680, publishedAt: Date.now() - 259200000, order: 2, featured: true },
+          { title: "Quảng cáo Google Ads", slug: "quang-cao-google-ads", content: "<p>Quản lý và tối ưu chiến dịch quảng cáo Google Ads, đạt hiệu quả tối đa với chi phí tối thiểu...</p>", excerpt: "Tiếp cận khách hàng mục tiêu hiệu quả", thumbnail: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400", categoryId: marketingCat._id, price: 5000000, duration: "Hàng tháng", status: "Published" as const, views: 920, publishedAt: Date.now() - 345600000, order: 3, featured: false },
+          { title: "Thiết kế logo & nhận diện thương hiệu", slug: "thiet-ke-logo-nhan-dien-thuong-hieu", content: "<p>Xây dựng bộ nhận diện thương hiệu độc đáo, chuyên nghiệp, ghi dấu ấn trong tâm trí khách hàng...</p>", excerpt: "Bộ nhận diện thương hiệu trọn gói", thumbnail: "https://images.unsplash.com/photo-1626785774625-0b1c2c4eab67?w=400", categoryId: thietKeCat._id, price: 8000000, duration: "1-2 tuần", status: "Published" as const, views: 450, publishedAt: Date.now() - 432000000, order: 4, featured: false },
+          { title: "SEO tổng thể website", slug: "seo-tong-the-website", content: "<p>Dịch vụ SEO toàn diện giúp website lên top Google, tăng traffic organic bền vững...</p>", excerpt: "Tăng thứ hạng tìm kiếm tự nhiên", thumbnail: "https://images.unsplash.com/photo-1432888622747-4eb9a8f5c5a8?w=400", categoryId: marketingCat._id, price: 10000000, duration: "3-6 tháng", status: "Draft" as const, views: 0, order: 5, featured: false },
+        ];
+        for (const service of services) {
+          await ctx.db.insert("services", service);
+        }
+      }
+    }
+
+    // 3. Seed module features
+    const existingFeatures = await ctx.db.query("moduleFeatures").withIndex("by_module", q => q.eq("moduleKey", "services")).first();
+    if (!existingFeatures) {
+      const features = [
+        { moduleKey: "services", featureKey: "enablePrice", name: "Hiển thị giá", description: "Hiển thị giá dịch vụ", enabled: true, linkedFieldKey: "price" },
+        { moduleKey: "services", featureKey: "enableDuration", name: "Thời gian thực hiện", description: "Hiển thị thời gian hoàn thành dịch vụ", enabled: true, linkedFieldKey: "duration" },
+        { moduleKey: "services", featureKey: "enableFeatured", name: "Nổi bật", description: "Đánh dấu dịch vụ nổi bật", enabled: true, linkedFieldKey: "featured" },
+      ];
+      for (const feature of features) {
+        await ctx.db.insert("moduleFeatures", feature);
+      }
+    }
+
+    // 4. Seed module fields
+    const existingFields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "services")).first();
+    if (!existingFields) {
+      const serviceFields = [
+        { moduleKey: "services", fieldKey: "title", name: "Tiêu đề", type: "text" as const, required: true, enabled: true, isSystem: true, order: 0 },
+        { moduleKey: "services", fieldKey: "slug", name: "Slug", type: "text" as const, required: true, enabled: true, isSystem: true, order: 1 },
+        { moduleKey: "services", fieldKey: "content", name: "Nội dung", type: "richtext" as const, required: true, enabled: true, isSystem: true, order: 2 },
+        { moduleKey: "services", fieldKey: "order", name: "Thứ tự", type: "number" as const, required: true, enabled: true, isSystem: true, order: 3 },
+        { moduleKey: "services", fieldKey: "status", name: "Trạng thái", type: "select" as const, required: true, enabled: true, isSystem: true, order: 4 },
+        { moduleKey: "services", fieldKey: "excerpt", name: "Mô tả ngắn", type: "textarea" as const, required: false, enabled: true, isSystem: false, order: 5 },
+        { moduleKey: "services", fieldKey: "thumbnail", name: "Ảnh đại diện", type: "image" as const, required: false, enabled: true, isSystem: false, order: 6 },
+        { moduleKey: "services", fieldKey: "categoryId", name: "Danh mục", type: "select" as const, required: true, enabled: true, isSystem: true, order: 7 },
+        { moduleKey: "services", fieldKey: "price", name: "Giá dịch vụ", type: "price" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enablePrice", order: 8 },
+        { moduleKey: "services", fieldKey: "duration", name: "Thời gian", type: "text" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableDuration", order: 9 },
+        { moduleKey: "services", fieldKey: "featured", name: "Nổi bật", type: "boolean" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableFeatured", order: 10 },
+      ];
+      for (const field of serviceFields) {
+        await ctx.db.insert("moduleFields", field);
+      }
+
+      // Category fields
+      const categoryFields = [
+        { moduleKey: "serviceCategories", fieldKey: "name", name: "Tên", type: "text" as const, required: true, enabled: true, isSystem: true, order: 0 },
+        { moduleKey: "serviceCategories", fieldKey: "slug", name: "Slug", type: "text" as const, required: true, enabled: true, isSystem: true, order: 1 },
+        { moduleKey: "serviceCategories", fieldKey: "order", name: "Thứ tự", type: "number" as const, required: true, enabled: true, isSystem: true, order: 2 },
+        { moduleKey: "serviceCategories", fieldKey: "active", name: "Trạng thái", type: "boolean" as const, required: true, enabled: true, isSystem: true, order: 3 },
+        { moduleKey: "serviceCategories", fieldKey: "description", name: "Mô tả", type: "textarea" as const, required: false, enabled: true, isSystem: false, order: 4 },
+        { moduleKey: "serviceCategories", fieldKey: "thumbnail", name: "Ảnh đại diện", type: "image" as const, required: false, enabled: false, isSystem: false, order: 5 },
+      ];
+      for (const field of categoryFields) {
+        await ctx.db.insert("moduleFields", field);
+      }
+    }
+
+    // 5. Seed module settings
+    const existingSettings = await ctx.db.query("moduleSettings").withIndex("by_module", q => q.eq("moduleKey", "services")).first();
+    if (!existingSettings) {
+      await ctx.db.insert("moduleSettings", { moduleKey: "services", settingKey: "servicesPerPage", value: 10 });
+      await ctx.db.insert("moduleSettings", { moduleKey: "services", settingKey: "defaultStatus", value: "draft" });
+    }
+
+    return null;
+  },
+});
+
+// Clear services DATA only (services, categories) - keeps config
+export const clearServicesData = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    // Delete images in services folder
+    const serviceImages = await ctx.db.query("images").withIndex("by_folder", q => q.eq("folder", "services")).collect();
+    for (const img of serviceImages) {
+      try { await ctx.storage.delete(img.storageId); } catch {}
+      await ctx.db.delete(img._id);
+    }
+    
+    // Delete services
+    const services = await ctx.db.query("services").collect();
+    await Promise.all(services.map(s => ctx.db.delete(s._id)));
+
+    // Delete service categories
+    const categories = await ctx.db.query("serviceCategories").collect();
+    await Promise.all(categories.map(cat => ctx.db.delete(cat._id)));
+
+    return null;
+  },
+});
+
+// Clear services module CONFIG (features, fields, settings)
+export const clearServicesConfig = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const [features, fields, catFields, settings] = await Promise.all([
+      ctx.db.query("moduleFeatures").withIndex("by_module", q => q.eq("moduleKey", "services")).collect(),
+      ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "services")).collect(),
+      ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "serviceCategories")).collect(),
+      ctx.db.query("moduleSettings").withIndex("by_module", q => q.eq("moduleKey", "services")).collect(),
+    ]);
+    await Promise.all([
+      ...features.map(f => ctx.db.delete(f._id)),
+      ...fields.map(f => ctx.db.delete(f._id)),
+      ...catFields.map(f => ctx.db.delete(f._id)),
       ...settings.map(s => ctx.db.delete(s._id)),
     ]);
     return null;

@@ -6,14 +6,14 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, FileText, ShoppingCart, Image as ImageIcon, 
   Users, Globe, Settings, ChevronRight, X, LogOut,
-  ChevronsLeft, ChevronsRight, Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Loader2, ShoppingBag, Bell, Ticket
+  ChevronsLeft, ChevronsRight, Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Loader2, ShoppingBag, Bell, Ticket, Briefcase
 } from 'lucide-react';
 import { cn, Button } from './ui';
 import { useAdminModules } from '../context/AdminModulesContext';
 
 const iconMap: Record<string, React.ElementType> = {
   LayoutDashboard, FileText, ShoppingCart, ImageIcon, Users, Globe, Settings,
-  Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Image: ImageIcon, ShoppingBag, Bell, Ticket
+  Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Image: ImageIcon, ShoppingBag, Bell, Ticket, Briefcase
 };
 
 interface SidebarItemProps {
@@ -164,6 +164,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
   const showPostsSection = isModuleEnabled('posts');
   // Comments trong posts section chỉ hiện khi cả posts VÀ comments đều bật
   const showPostComments = isModuleEnabled('posts') && isModuleEnabled('comments');
+  // Services section
+  const showServicesSection = isModuleEnabled('services');
   const showCommerceSection = isModuleEnabled('products') || isModuleEnabled('customers') || isModuleEnabled('orders') || isModuleEnabled('wishlist');
   // Product reviews chỉ hiện khi products VÀ comments đều bật  
   const showProductReviews = isModuleEnabled('products') && isModuleEnabled('comments');
@@ -245,6 +247,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                     { label: 'Tất cả bài viết', href: '/admin/posts', moduleKey: 'posts' },
                     { label: 'Danh mục bài viết', href: '/admin/post-categories', moduleKey: 'posts' },
                     ...(showPostComments ? [{ label: 'Bình luận', href: '/admin/comments' }] : []),
+                  ]}
+                />
+              </div>
+            )}
+
+            {/* Services Section */}
+            {showServicesSection && (
+              <div className="space-y-1">
+                {!isSidebarCollapsed && !showPostsSection && <div className="px-3 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Nội dung</div>}
+                <SidebarItem 
+                  icon={Briefcase} 
+                  label="Dịch vụ" 
+                  href="/admin/services" 
+                  active={isActive('/admin/services') || isActive('/admin/service-categories')}
+                  isCollapsed={isSidebarCollapsed}
+                  isExpanded={expandedMenu === 'Dịch vụ'}
+                  onToggle={() => handleMenuToggle('Dịch vụ')}
+                  pathname={pathname}
+                  isModuleEnabled={isModuleEnabled}
+                  subItems={[
+                    { label: 'Tất cả dịch vụ', href: '/admin/services', moduleKey: 'services' },
+                    { label: 'Danh mục dịch vụ', href: '/admin/service-categories', moduleKey: 'services' },
                   ]}
                 />
               </div>

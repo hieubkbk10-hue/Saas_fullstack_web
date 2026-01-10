@@ -31,7 +31,8 @@ import {
   Download,
   ExternalLink,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  Briefcase
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -115,7 +116,8 @@ const CascadeConfirmDialog: React.FC<{
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FileText, Image, MessageSquare, Package, ShoppingCart, ShoppingBag, Heart, 
-  Users, UserCog, Shield, Settings, Menu, LayoutGrid, Bell, Megaphone, BarChart3
+  Users, UserCog, Shield, Settings, Menu, LayoutGrid, Bell, Megaphone, BarChart3,
+  Briefcase
 };
 
 const categoryColors: Record<string, string> = {
@@ -138,6 +140,7 @@ const moduleConfigRoutes: Record<string, string> = {
   posts: '/system/modules/posts',
   comments: '/system/modules/comments',
   media: '/system/modules/media',
+  services: '/system/modules/services',
   products: '/system/modules/products',
   cart: '/system/modules/cart',
   wishlist: '/system/modules/wishlist',

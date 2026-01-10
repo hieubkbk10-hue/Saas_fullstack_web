@@ -324,13 +324,13 @@ export default defineSchema({
     .index("by_status_publishedAt", ["status", "publishedAt"])
     .index("by_status_views", ["status", "views"]),
 
-  // 13. comments - Bình luận (Polymorphic)
+  // 13. comments - Bình luận (Polymorphic) - SVC-011: Added "service" targetType
   comments: defineTable({
     content: v.string(),
     authorName: v.string(),
     authorEmail: v.optional(v.string()),
     authorIp: v.optional(v.string()),
-    targetType: v.union(v.literal("post"), v.literal("product")),
+    targetType: v.union(v.literal("post"), v.literal("product"), v.literal("service")),
     targetId: v.string(),
     parentId: v.optional(v.id("comments")),
     status: v.union(
@@ -571,7 +571,49 @@ export default defineSchema({
     .index("by_path", ["path"])
     .index("by_session", ["sessionId"]),
 
-  // 26. promotions - Khuyến mãi & Voucher
+  // 26. serviceCategories - Danh mục dịch vụ (Hierarchical)
+  serviceCategories: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    parentId: v.optional(v.id("serviceCategories")),
+    description: v.optional(v.string()),
+    thumbnail: v.optional(v.string()),
+    order: v.number(),
+    active: v.boolean(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_parent", ["parentId"])
+    .index("by_parent_order", ["parentId", "order"])
+    .index("by_active", ["active"]),
+
+  // 27. services - Dịch vụ
+  services: defineTable({
+    title: v.string(),
+    slug: v.string(),
+    content: v.string(),
+    excerpt: v.optional(v.string()),
+    thumbnail: v.optional(v.string()),
+    categoryId: v.id("serviceCategories"),
+    price: v.optional(v.number()),
+    duration: v.optional(v.string()),
+    status: v.union(
+      v.literal("Published"),
+      v.literal("Draft"),
+      v.literal("Archived")
+    ),
+    views: v.number(),
+    publishedAt: v.optional(v.number()),
+    order: v.number(),
+    featured: v.optional(v.boolean()),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_category_status", ["categoryId", "status"])
+    .index("by_status_publishedAt", ["status", "publishedAt"])
+    .index("by_status_views", ["status", "views"])
+    .index("by_status_order", ["status", "order"])
+    .index("by_status_featured", ["status", "featured"]), // SVC-012: Index for featured services
+
+  // 28. promotions - Khuyến mãi & Voucher
   promotions: defineTable({
     name: v.string(),
     code: v.string(),

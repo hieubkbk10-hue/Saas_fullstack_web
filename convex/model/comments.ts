@@ -7,7 +7,8 @@ import { Doc, Id } from "../_generated/dataModel";
 
 const MAX_ITEMS_LIMIT = 100;
 
-type TargetType = "post" | "product";
+// SVC-011: Added "service" to target types
+type TargetType = "post" | "product" | "service";
 type CommentStatus = "Pending" | "Approved" | "Spam";
 
 /**
