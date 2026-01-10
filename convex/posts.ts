@@ -20,13 +20,18 @@ const postDoc = v.object({
   order: v.number(),
 });
 
+// Pagination result validator - includes new Convex pagination fields
+const paginatedPosts = v.object({
+  page: v.array(postDoc),
+  isDone: v.boolean(),
+  continueCursor: v.string(),
+  pageStatus: v.optional(v.union(v.literal("SplitRecommended"), v.literal("SplitRequired"), v.null())),
+  splitCursor: v.optional(v.union(v.string(), v.null())),
+});
+
 export const list = query({
   args: { paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(postDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
+  returns: paginatedPosts,
   handler: async (ctx, args) => {
     return await ctx.db.query("posts").paginate(args.paginationOpts);
   },
@@ -88,11 +93,7 @@ export const listByCategory = query({
     status: v.optional(contentStatus),
     paginationOpts: paginationOptsValidator,
   },
-  returns: v.object({
-    page: v.array(postDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
+  returns: paginatedPosts,
   handler: async (ctx, args) => {
     if (args.status) {
       return await ctx.db
@@ -115,11 +116,7 @@ export const listByAuthor = query({
     status: v.optional(contentStatus),
     paginationOpts: paginationOptsValidator,
   },
-  returns: v.object({
-    page: v.array(postDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
+  returns: paginatedPosts,
   handler: async (ctx, args) => {
     if (args.status) {
       return await ctx.db
@@ -138,11 +135,7 @@ export const listByAuthor = query({
 
 export const listPublished = query({
   args: { paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(postDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
+  returns: paginatedPosts,
   handler: async (ctx, args) => {
     return await ctx.db
       .query("posts")
@@ -154,11 +147,7 @@ export const listPublished = query({
 
 export const listMostViewed = query({
   args: { paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(postDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
+  returns: paginatedPosts,
   handler: async (ctx, args) => {
     return await ctx.db
       .query("posts")

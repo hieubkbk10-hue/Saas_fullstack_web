@@ -5,14 +5,14 @@ import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { FileText, FolderTree, Tag, Star, Clock, Loader2, Database, Trash2, RefreshCw, MessageSquare, Settings } from 'lucide-react';
+import { FileText, FolderTree, Tag, Star, Clock, Loader2, Database, Trash2, RefreshCw, MessageSquare, Settings, Palette, Eye, Monitor, Tablet, Smartphone, ArrowLeft, Save } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
 import { 
   ModuleHeader, ModuleStatus, ConventionNote, Code,
   SettingsCard, SettingInput, SettingSelect,
   FeaturesCard, FieldsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Card, CardContent, CardHeader, CardTitle, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, cn } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'posts';
 const CATEGORY_MODULE_KEY = 'postCategories';
@@ -25,7 +25,34 @@ const FEATURES_CONFIG = [
 
 type FeaturesState = Record<string, boolean>;
 type SettingsState = { postsPerPage: number; defaultStatus: string };
-type TabType = 'config' | 'data';
+type TabType = 'config' | 'data' | 'appearance';
+type PostsListStyle = 'grid' | 'list' | 'magazine';
+type PostsDetailStyle = 'classic' | 'modern' | 'minimal';
+type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
+
+const LIST_STYLES: { id: PostsListStyle; label: string; description: string }[] = [
+  { id: 'grid', label: 'Grid', description: 'Hiển thị dạng lưới với cards đều nhau' },
+  { id: 'list', label: 'List', description: 'Hiển thị dạng danh sách ngang' },
+  { id: 'magazine', label: 'Magazine', description: 'Bài đầu tiên lớn + grid các bài còn lại' },
+];
+
+const DETAIL_STYLES: { id: PostsDetailStyle; label: string; description: string }[] = [
+  { id: 'classic', label: 'Classic', description: 'Truyền thống với sidebar bài liên quan' },
+  { id: 'modern', label: 'Modern', description: 'Hero lớn, full-width, hiện đại' },
+  { id: 'minimal', label: 'Minimal', description: 'Tối giản, tập trung vào nội dung' },
+];
+
+const deviceWidths = {
+  desktop: 'w-full',
+  tablet: 'w-[768px] max-w-full',
+  mobile: 'w-[375px] max-w-full'
+};
+
+const devices = [
+  { id: 'desktop' as const, icon: Monitor, label: 'Desktop' },
+  { id: 'tablet' as const, icon: Tablet, label: 'Tablet' },
+  { id: 'mobile' as const, icon: Smartphone, label: 'Mobile' }
+];
 
 export default function PostsModuleConfigPage() {
   const [activeTab, setActiveTab] = useState<TabType>('config');
@@ -55,12 +82,27 @@ export default function PostsModuleConfigPage() {
   const clearPostsData = useMutation(api.seed.clearPostsData);
   const seedComments = useMutation(api.seed.seedComments);
   const clearComments = useMutation(api.seed.clearComments);
+  const setMultipleSettings = useMutation(api.settings.setMultiple);
+
+  // Appearance tab queries
+  const listStyleSetting = useQuery(api.settings.getByKey, { key: 'posts_list_style' });
+  const detailStyleSetting = useQuery(api.settings.getByKey, { key: 'posts_detail_style' });
+  const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
 
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localPostFields, setLocalPostFields] = useState<FieldConfig[]>([]);
   const [localCategoryFields, setLocalCategoryFields] = useState<FieldConfig[]>([]);
   const [localSettings, setLocalSettings] = useState<SettingsState>({ postsPerPage: 10, defaultStatus: 'draft' });
   const [isSaving, setIsSaving] = useState(false);
+
+  // Appearance tab states
+  const [listStyle, setListStyle] = useState<PostsListStyle>('grid');
+  const [detailStyle, setDetailStyle] = useState<PostsDetailStyle>('classic');
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
+  const [activePreview, setActivePreview] = useState<'list' | 'detail'>('list');
+  const [appearanceHasChanges, setAppearanceHasChanges] = useState(false);
+
+  const brandColor = (brandColorSetting?.value as string) || '#3b82f6';
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
                     fieldsData === undefined || categoryFieldsData === undefined || settingsData === undefined;
@@ -113,6 +155,16 @@ export default function PostsModuleConfigPage() {
       setLocalSettings({ postsPerPage, defaultStatus });
     }
   }, [settingsData]);
+
+  // Sync appearance settings
+  useEffect(() => {
+    if (listStyleSetting?.value) {
+      setListStyle(listStyleSetting.value as PostsListStyle);
+    }
+    if (detailStyleSetting?.value) {
+      setDetailStyle(detailStyleSetting.value as PostsDetailStyle);
+    }
+  }, [listStyleSetting, detailStyleSetting]);
 
   // Server state for comparison
   const serverFeatures = useMemo(() => {
@@ -263,6 +315,36 @@ export default function PostsModuleConfigPage() {
     toast.success('Đã reset dữ liệu thành công!');
   };
 
+  // Appearance tab handlers
+  const handleListStyleChange = (style: PostsListStyle) => {
+    setListStyle(style);
+    setAppearanceHasChanges(true);
+  };
+
+  const handleDetailStyleChange = (style: PostsDetailStyle) => {
+    setDetailStyle(style);
+    setAppearanceHasChanges(true);
+  };
+
+  const handleSaveAppearance = async () => {
+    setIsSaving(true);
+    try {
+      await setMultipleSettings({
+        settings: [
+          { key: 'posts_list_style', value: listStyle, group: 'posts' },
+          { key: 'posts_detail_style', value: detailStyle, group: 'posts' },
+        ]
+      });
+      setAppearanceHasChanges(false);
+      toast.success('Đã lưu cài đặt giao diện!');
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error('Có lỗi khi lưu cài đặt');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -284,8 +366,8 @@ export default function PostsModuleConfigPage() {
         iconBgClass="bg-cyan-500/10"
         iconTextClass="text-cyan-600 dark:text-cyan-400"
         buttonClass="bg-cyan-600 hover:bg-cyan-500"
-        onSave={activeTab === 'config' ? handleSave : undefined}
-        hasChanges={activeTab === 'config' ? hasChanges : false}
+        onSave={activeTab === 'config' ? handleSave : activeTab === 'appearance' ? handleSaveAppearance : undefined}
+        hasChanges={activeTab === 'config' ? hasChanges : activeTab === 'appearance' ? appearanceHasChanges : false}
         isSaving={isSaving}
       />
 
@@ -310,6 +392,16 @@ export default function PostsModuleConfigPage() {
           }`}
         >
           <Database size={16} /> Dữ liệu
+        </button>
+        <button
+          onClick={() => setActiveTab('appearance')}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'appearance'
+              ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          <Palette size={16} /> Giao diện
         </button>
       </div>
 
@@ -560,6 +652,350 @@ export default function PostsModuleConfigPage() {
           </Card>
         </div>
       )}
+
+      {activeTab === 'appearance' && (
+        <div className="space-y-6">
+          {/* Compact Style Selectors */}
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* List Style Selector */}
+            <Card className="p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-shrink-0">
+                  <h3 className="font-medium text-sm text-slate-900 dark:text-slate-100">Trang danh sách</h3>
+                  <p className="text-xs text-slate-500">/posts</p>
+                </div>
+                <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                  {LIST_STYLES.map((style) => (
+                    <button
+                      key={style.id}
+                      onClick={() => {
+                        handleListStyleChange(style.id);
+                        setActivePreview('list');
+                      }}
+                      title={style.description}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                        listStyle === style.id 
+                          ? "bg-cyan-500 text-white shadow-sm" 
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                      )}
+                    >
+                      {style.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Card>
+
+            {/* Detail Style Selector */}
+            <Card className="p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-shrink-0">
+                  <h3 className="font-medium text-sm text-slate-900 dark:text-slate-100">Trang chi tiết</h3>
+                  <p className="text-xs text-slate-500">/posts/[slug]</p>
+                </div>
+                <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                  {DETAIL_STYLES.map((style) => (
+                    <button
+                      key={style.id}
+                      onClick={() => {
+                        handleDetailStyleChange(style.id);
+                        setActivePreview('detail');
+                      }}
+                      title={style.description}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                        detailStyle === style.id 
+                          ? "bg-cyan-500 text-white shadow-sm" 
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                      )}
+                    >
+                      {style.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Full Width Preview */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Eye size={18} /> Preview
+                </CardTitle>
+                <div className="flex items-center gap-4">
+                  {/* Page toggle */}
+                  <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                    <button
+                      onClick={() => setActivePreview('list')}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                        activePreview === 'list' ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-500"
+                      )}
+                    >
+                      Danh sách
+                    </button>
+                    <button
+                      onClick={() => setActivePreview('detail')}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                        activePreview === 'detail' ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-500"
+                      )}
+                    >
+                      Chi tiết
+                    </button>
+                  </div>
+                  {/* Device selector */}
+                  <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                    {devices.map((d) => (
+                      <button
+                        key={d.id}
+                        onClick={() => setPreviewDevice(d.id)}
+                        title={d.label}
+                        className={cn(
+                          "p-1.5 rounded-md transition-all",
+                          previewDevice === d.id ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                        )}
+                      >
+                        <d.icon size={16} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className={cn("mx-auto transition-all duration-300", deviceWidths[previewDevice])}>
+                <BrowserFrame>
+                  {activePreview === 'list' 
+                    ? <ListPreview style={listStyle} brandColor={brandColor} device={previewDevice} />
+                    : <DetailPreview style={detailStyle} brandColor={brandColor} device={previewDevice} />
+                  }
+                </BrowserFrame>
+              </div>
+              <div className="mt-3 text-xs text-slate-500 text-center">
+                {activePreview === 'list' ? 'Trang /posts' : 'Trang /posts/[slug]'}
+                {' • '}Style: <strong>{activePreview === 'list' ? LIST_STYLES.find(s => s.id === listStyle)?.label : DETAIL_STYLES.find(s => s.id === detailStyle)?.label}</strong>
+                {' • '}{previewDevice === 'desktop' ? '1920px' : previewDevice === 'tablet' ? '768px' : '375px'}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Browser Frame Component
+function BrowserFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="border rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-lg">
+      <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 flex items-center gap-2 border-b">
+        <div className="flex gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-red-400"></div>
+          <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+          <div className="w-3 h-3 rounded-full bg-green-400"></div>
+        </div>
+        <div className="flex-1 ml-4">
+          <div className="bg-white dark:bg-slate-700 rounded-md px-3 py-1 text-xs text-slate-400 max-w-xs">yoursite.com/posts</div>
+        </div>
+      </div>
+      <div className="max-h-[500px] overflow-y-auto">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// List Preview Component
+function ListPreview({ style, brandColor, device }: { style: PostsListStyle; brandColor: string; device: PreviewDevice }) {
+  const mockPosts = [
+    { id: 1, title: 'Bài viết nổi bật số 1', category: 'Tin tức', date: '10/01/2026', views: 1234 },
+    { id: 2, title: 'Hướng dẫn sử dụng sản phẩm', category: 'Hướng dẫn', date: '09/01/2026', views: 567 },
+    { id: 3, title: 'Cập nhật tính năng mới', category: 'Tin tức', date: '08/01/2026', views: 890 },
+    { id: 4, title: 'Tips và tricks hữu ích', category: 'Tips', date: '07/01/2026', views: 432 },
+  ];
+
+  if (style === 'grid') {
+    return (
+      <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')}>
+        <h2 className={cn("font-bold text-center mb-4", device === 'mobile' ? 'text-lg' : 'text-xl')}>Tin tức & Bài viết</h2>
+        <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
+          {mockPosts.slice(0, device === 'mobile' ? 2 : 4).map((post) => (
+            <div key={post.id} className="bg-white border rounded-lg overflow-hidden">
+              <div className="aspect-video bg-slate-100 flex items-center justify-center">
+                <FileText size={24} className="text-slate-300" />
+              </div>
+              <div className="p-3">
+                <span className="text-xs font-medium" style={{ color: brandColor }}>{post.category}</span>
+                <h3 className="font-medium text-sm mt-1 line-clamp-2">{post.title}</h3>
+                <div className="flex items-center justify-between mt-2 text-xs text-slate-400">
+                  <span>{post.date}</span>
+                  <span>{post.views} views</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (style === 'list') {
+    return (
+      <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')}>
+        <h2 className={cn("font-bold text-center mb-4", device === 'mobile' ? 'text-lg' : 'text-xl')}>Tin tức & Bài viết</h2>
+        <div className="space-y-3">
+          {mockPosts.slice(0, 3).map((post) => (
+            <div key={post.id} className={cn("bg-white border rounded-lg overflow-hidden flex", device === 'mobile' ? 'flex-col' : '')}>
+              <div className={cn("bg-slate-100 flex items-center justify-center", device === 'mobile' ? 'aspect-video' : 'w-32 h-20')}>
+                <FileText size={20} className="text-slate-300" />
+              </div>
+              <div className="p-3 flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category}</span>
+                  <span className="text-xs text-slate-400">{post.date}</span>
+                </div>
+                <h3 className="font-medium text-sm">{post.title}</h3>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Magazine
+  return (
+    <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')}>
+      {/* Featured */}
+      <div className="relative rounded-xl overflow-hidden bg-slate-900 mb-4">
+        <div className="aspect-video bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
+          <FileText size={32} className="text-slate-600" />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2" style={{ backgroundColor: brandColor }}>
+            {mockPosts[0].category}
+          </span>
+          <h3 className="font-bold text-sm">{mockPosts[0].title}</h3>
+        </div>
+      </div>
+      {/* Grid */}
+      <div className="grid grid-cols-2 gap-3">
+        {mockPosts.slice(1, 3).map((post) => (
+          <div key={post.id} className="bg-white border rounded-lg overflow-hidden">
+            <div className="aspect-video bg-slate-100 flex items-center justify-center">
+              <FileText size={16} className="text-slate-300" />
+            </div>
+            <div className="p-2">
+              <span className="text-xs" style={{ color: brandColor }}>{post.category}</span>
+              <h4 className="font-medium text-xs line-clamp-2">{post.title}</h4>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Detail Preview Component
+function DetailPreview({ style, brandColor, device }: { style: PostsDetailStyle; brandColor: string; device: PreviewDevice }) {
+  if (style === 'classic') {
+    return (
+      <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')}>
+        {/* Breadcrumb */}
+        <div className="text-xs text-slate-400 mb-3">Trang chủ › Bài viết › Chi tiết</div>
+        <div className={cn("flex gap-4", device === 'mobile' ? 'flex-col' : '')}>
+          {/* Content */}
+          <div className="flex-1">
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Tin tức</span>
+            <h1 className="font-bold text-lg mt-2 mb-3">Tiêu đề bài viết mẫu</h1>
+            <div className="aspect-video bg-slate-100 rounded-lg mb-3 flex items-center justify-center">
+              <FileText size={32} className="text-slate-300" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-3 bg-slate-100 rounded w-full"></div>
+              <div className="h-3 bg-slate-100 rounded w-5/6"></div>
+              <div className="h-3 bg-slate-100 rounded w-4/6"></div>
+            </div>
+          </div>
+          {/* Sidebar */}
+          {device !== 'mobile' && (
+            <div className="w-1/3">
+              <div className="bg-slate-50 rounded-lg p-3">
+                <h4 className="font-medium text-sm mb-2">Bài liên quan</h4>
+                <div className="space-y-2">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="flex gap-2">
+                      <div className="w-12 h-10 bg-slate-200 rounded"></div>
+                      <div className="flex-1">
+                        <div className="h-2 bg-slate-200 rounded w-full mb-1"></div>
+                        <div className="h-2 bg-slate-200 rounded w-3/4"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (style === 'modern') {
+    return (
+      <div>
+        {/* Hero */}
+        <div className="relative bg-slate-900">
+          <div className="aspect-video bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
+            <FileText size={32} className="text-slate-600" />
+          </div>
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute bottom-0 left-0 right-0 p-4 text-white text-center">
+            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2" style={{ backgroundColor: brandColor }}>Tin tức</span>
+            <h1 className="font-bold text-lg">Tiêu đề bài viết mẫu</h1>
+            <div className="flex items-center justify-center gap-3 text-xs text-white/60 mt-2">
+              <span>10/01/2026</span>
+              <span>•</span>
+              <span>1,234 views</span>
+            </div>
+          </div>
+        </div>
+        {/* Content */}
+        <div className="p-4 space-y-2">
+          <div className="h-3 bg-slate-100 rounded w-full"></div>
+          <div className="h-3 bg-slate-100 rounded w-5/6"></div>
+          <div className="h-3 bg-slate-100 rounded w-4/6"></div>
+          <div className="h-3 bg-slate-100 rounded w-full"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Minimal
+  return (
+    <div className={cn("p-6", device === 'mobile' ? 'p-4' : '')}>
+      <div className="flex items-center gap-1 text-xs text-slate-400 mb-4">
+        <ArrowLeft size={12} />
+        Tất cả bài viết
+      </div>
+      <div className="text-center mb-4">
+        <span className="text-xs font-medium uppercase tracking-wider" style={{ color: brandColor }}>Tin tức</span>
+        <h1 className="font-bold text-lg mt-2">Tiêu đề bài viết mẫu</h1>
+        <div className="text-xs text-slate-400 mt-1">10/01/2026 · 5 phút đọc</div>
+      </div>
+      <div className="aspect-[2/1] bg-slate-100 rounded-lg mb-4 flex items-center justify-center">
+        <FileText size={32} className="text-slate-300" />
+      </div>
+      <div className="space-y-2">
+        <div className="h-3 bg-slate-100 rounded w-full"></div>
+        <div className="h-3 bg-slate-100 rounded w-5/6"></div>
+        <div className="h-3 bg-slate-100 rounded w-4/6"></div>
+      </div>
     </div>
   );
 }
