@@ -127,7 +127,17 @@ export function MenuPreview({ items }: MenuPreviewProps) {
     }
     if (headerConfigSetting?.value) {
       const savedConfig = headerConfigSetting.value as Partial<HeaderConfig>;
-      setConfig(prev => ({ ...prev, ...savedConfig }));
+      // Deep merge to preserve default values for nested objects
+      setConfig(prev => ({
+        ...prev,
+        ...savedConfig,
+        topbar: { ...prev.topbar, ...(savedConfig.topbar || {}) },
+        search: { ...prev.search, ...(savedConfig.search || {}) },
+        cta: { ...prev.cta, ...(savedConfig.cta || {}) },
+        cart: { ...prev.cart, ...(savedConfig.cart || {}) },
+        wishlist: { ...prev.wishlist, ...(savedConfig.wishlist || {}) },
+        login: { ...prev.login, ...(savedConfig.login || {}) },
+      }));
     }
   }, [headerStyleSetting, headerConfigSetting]);
 
