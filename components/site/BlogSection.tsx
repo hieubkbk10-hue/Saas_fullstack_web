@@ -4,9 +4,10 @@ import React from 'react';
 import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { FileText, Calendar, Eye, Loader2 } from 'lucide-react';
+import { FileText, Calendar, Eye, Loader2, ArrowRight } from 'lucide-react';
 
 type BlogStyle = 'grid' | 'list' | 'featured';
+type PostsLayoutStyle = 'fullwidth' | 'sidebar' | 'magazine';
 
 interface BlogSectionProps {
   config: Record<string, unknown>;
@@ -14,11 +15,20 @@ interface BlogSectionProps {
   title: string;
 }
 
+function usePostsLayoutStyle(): PostsLayoutStyle {
+  const setting = useQuery(api.settings.getByKey, { key: 'posts_list_style' });
+  const value = setting?.value as string;
+  if (value === 'sidebar') return 'sidebar';
+  if (value === 'magazine') return 'magazine';
+  return 'fullwidth';
+}
+
 
 
 export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
   const style = (config.style as BlogStyle) || 'grid';
   const itemCount = (config.itemCount as number) || 6;
+  const postsLayoutStyle = usePostsLayoutStyle();
   
   // Query real posts from database
   const postsData = useQuery(api.posts.listPublished, { 
@@ -33,6 +43,15 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
     if (!categories) return new Map<string, string>();
     return new Map(categories.map(c => [c._id, c.name]));
   }, [categories]);
+  
+  // Get layout description for CTA
+  const layoutDescription = React.useMemo(() => {
+    switch (postsLayoutStyle) {
+      case 'sidebar': return 'Khám phá với bộ lọc thông minh';
+      case 'magazine': return 'Xem phong cách editorial';
+      default: return 'Xem tất cả bài viết';
+    }
+  }, [postsLayoutStyle]);
 
   // Loading state
   if (postsData === undefined) {
@@ -112,10 +131,11 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
             <div className="text-center mt-8">
               <Link 
                 href="/posts" 
-                className="inline-flex px-6 py-3 rounded-lg font-medium transition-colors hover:opacity-80" 
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all hover:gap-3 group" 
                 style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
               >
-                Xem tất cả
+                {layoutDescription}
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           )}
@@ -172,10 +192,11 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
             <div className="text-center mt-8">
               <Link 
                 href="/posts" 
-                className="inline-flex px-6 py-3 rounded-lg font-medium transition-colors hover:opacity-80" 
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all hover:gap-3 group" 
                 style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
               >
-                Xem tất cả
+                {layoutDescription}
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           )}
@@ -198,10 +219,11 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
           {showViewAll && (
             <Link 
               href="/posts" 
-              className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all" 
+              className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all group" 
               style={{ color: brandColor }}
             >
-              Xem tất cả <span>→</span>
+              {layoutDescription}
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           )}
         </div>

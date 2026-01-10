@@ -26,14 +26,14 @@ const FEATURES_CONFIG = [
 type FeaturesState = Record<string, boolean>;
 type SettingsState = { postsPerPage: number; defaultStatus: string };
 type TabType = 'config' | 'data' | 'appearance';
-type PostsListStyle = 'grid' | 'list' | 'magazine';
+type PostsListStyle = 'fullwidth' | 'sidebar' | 'magazine';
 type PostsDetailStyle = 'classic' | 'modern' | 'minimal';
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
 
 const LIST_STYLES: { id: PostsListStyle; label: string; description: string }[] = [
-  { id: 'grid', label: 'Grid', description: 'Hiển thị dạng lưới với cards đều nhau' },
-  { id: 'list', label: 'List', description: 'Hiển thị dạng danh sách ngang' },
-  { id: 'magazine', label: 'Magazine', description: 'Bài đầu tiên lớn + grid các bài còn lại' },
+  { id: 'fullwidth', label: 'Full Width', description: 'Horizontal filter bar + grid/list toggle, tối ưu mobile' },
+  { id: 'sidebar', label: 'Sidebar', description: 'Classic blog với sidebar filters, categories, recent posts' },
+  { id: 'magazine', label: 'Magazine', description: 'Hero slider + category tabs, phong cách editorial' },
 ];
 
 const DETAIL_STYLES: { id: PostsDetailStyle; label: string; description: string }[] = [
@@ -96,7 +96,7 @@ export default function PostsModuleConfigPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   // Appearance tab states
-  const [listStyle, setListStyle] = useState<PostsListStyle>('grid');
+  const [listStyle, setListStyle] = useState<PostsListStyle>('fullwidth');
   const [detailStyle, setDetailStyle] = useState<PostsDetailStyle>('classic');
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
   const [activePreview, setActivePreview] = useState<'list' | 'detail'>('list');
@@ -817,11 +817,39 @@ function ListPreview({ style, brandColor, device }: { style: PostsListStyle; bra
     { id: 3, title: 'Cập nhật tính năng mới', category: 'Tin tức', date: '08/01/2026', views: 890 },
     { id: 4, title: 'Tips và tricks hữu ích', category: 'Tips', date: '07/01/2026', views: 432 },
   ];
+  const categories = ['Tất cả', 'Tin tức', 'Hướng dẫn', 'Tips'];
 
-  if (style === 'grid') {
+  // Full Width Layout - Horizontal filter bar + grid
+  if (style === 'fullwidth') {
     return (
       <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')}>
         <h2 className={cn("font-bold text-center mb-4", device === 'mobile' ? 'text-lg' : 'text-xl')}>Tin tức & Bài viết</h2>
+        {/* Filter Bar */}
+        <div className="bg-white border rounded-lg p-3 mb-4">
+          <div className={cn("flex gap-2 items-center", device === 'mobile' ? 'flex-col' : '')}>
+            <div className="flex-1 relative">
+              <input 
+                type="text" 
+                placeholder="Tìm kiếm..." 
+                className="w-full px-3 py-1.5 border rounded-lg text-xs bg-slate-50"
+              />
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {categories.slice(0, device === 'mobile' ? 3 : 4).map((cat, i) => (
+                <span 
+                  key={cat} 
+                  className={cn("px-2 py-1 rounded-full text-xs cursor-pointer", i === 0 ? "text-white" : "bg-slate-100")}
+                  style={i === 0 ? { backgroundColor: brandColor } : undefined}
+                >
+                  {cat}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        {/* Results */}
+        <div className="text-xs text-slate-500 mb-3">4 bài viết</div>
+        {/* Grid */}
         <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
           {mockPosts.slice(0, device === 'mobile' ? 2 : 4).map((post) => (
             <div key={post.id} className="bg-white border rounded-lg overflow-hidden">
@@ -843,22 +871,56 @@ function ListPreview({ style, brandColor, device }: { style: PostsListStyle; bra
     );
   }
 
-  if (style === 'list') {
+  // Sidebar Layout - Classic blog
+  if (style === 'sidebar') {
     return (
-      <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')}>
-        <h2 className={cn("font-bold text-center mb-4", device === 'mobile' ? 'text-lg' : 'text-xl')}>Tin tức & Bài viết</h2>
-        <div className="space-y-3">
-          {mockPosts.slice(0, 3).map((post) => (
-            <div key={post.id} className={cn("bg-white border rounded-lg overflow-hidden flex", device === 'mobile' ? 'flex-col' : '')}>
-              <div className={cn("bg-slate-100 flex items-center justify-center", device === 'mobile' ? 'aspect-video' : 'w-32 h-20')}>
-                <FileText size={20} className="text-slate-300" />
-              </div>
-              <div className="p-3 flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category}</span>
-                  <span className="text-xs text-slate-400">{post.date}</span>
+      <div className={cn("p-4 flex gap-4", device === 'mobile' ? 'p-3 flex-col' : '')}>
+        {/* Sidebar */}
+        <div className={cn("space-y-3", device === 'mobile' ? 'order-2' : 'w-1/3')}>
+          {/* Search */}
+          <div className="bg-slate-50 rounded-lg p-3">
+            <h4 className="font-medium text-xs mb-2">Tìm kiếm</h4>
+            <input type="text" placeholder="Nhập từ khóa..." className="w-full px-2 py-1.5 border rounded text-xs" />
+          </div>
+          {/* Categories */}
+          <div className="bg-slate-50 rounded-lg p-3">
+            <h4 className="font-medium text-xs mb-2">Danh mục</h4>
+            <div className="space-y-1">
+              {categories.map((cat, i) => (
+                <div 
+                  key={cat} 
+                  className={cn("px-2 py-1 rounded text-xs cursor-pointer", i === 0 ? "" : "text-slate-600")}
+                  style={i === 0 ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}
+                >
+                  {cat}
                 </div>
-                <h3 className="font-medium text-sm">{post.title}</h3>
+              ))}
+            </div>
+          </div>
+          {/* Recent Posts */}
+          <div className="bg-slate-50 rounded-lg p-3">
+            <h4 className="font-medium text-xs mb-2">Bài mới nhất</h4>
+            <div className="space-y-2">
+              {mockPosts.slice(0, 2).map((post) => (
+                <div key={post.id} className="flex gap-2">
+                  <div className="w-10 h-8 bg-slate-200 rounded flex-shrink-0"></div>
+                  <div className="text-xs line-clamp-2">{post.title}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        {/* Main Content */}
+        <div className={cn("flex-1 space-y-3", device === 'mobile' ? 'order-1' : '')}>
+          {mockPosts.slice(0, 3).map((post) => (
+            <div key={post.id} className="bg-white border rounded-lg overflow-hidden flex">
+              <div className="w-24 h-16 bg-slate-100 flex items-center justify-center flex-shrink-0">
+                <FileText size={16} className="text-slate-300" />
+              </div>
+              <div className="p-2 flex-1">
+                <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category}</span>
+                <h3 className="font-medium text-xs mt-1 line-clamp-1">{post.title}</h3>
+                <span className="text-xs text-slate-400">{post.date}</span>
               </div>
             </div>
           ))}
@@ -867,35 +929,87 @@ function ListPreview({ style, brandColor, device }: { style: PostsListStyle; bra
     );
   }
 
-  // Magazine
+  // Magazine Layout - Featured Stories Widget + Trending + Clean Grid
   return (
-    <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')}>
-      {/* Featured */}
-      <div className="relative rounded-xl overflow-hidden bg-slate-900 mb-4">
-        <div className="aspect-video bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
-          <FileText size={32} className="text-slate-600" />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2" style={{ backgroundColor: brandColor }}>
-            {mockPosts[0].category}
-          </span>
-          <h3 className="font-bold text-sm">{mockPosts[0].title}</h3>
-        </div>
-      </div>
-      {/* Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {mockPosts.slice(1, 3).map((post) => (
-          <div key={post.id} className="bg-white border rounded-lg overflow-hidden">
-            <div className="aspect-video bg-slate-100 flex items-center justify-center">
-              <FileText size={16} className="text-slate-300" />
+    <div className={cn("p-4 space-y-4", device === 'mobile' ? 'p-3' : '')}>
+      {/* Featured Section - 2 column layout */}
+      <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-3')}>
+        {/* Main Featured */}
+        <div className={cn("relative rounded-xl overflow-hidden bg-slate-900", device === 'mobile' ? '' : 'col-span-2 row-span-2')}>
+          <div className={cn("bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center", device === 'mobile' ? 'aspect-video' : 'h-full min-h-[180px]')}>
+            <FileText size={32} className="text-slate-600" />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-2 py-0.5 rounded text-xs font-medium text-white" style={{ backgroundColor: brandColor }}>Nổi bật</span>
+              <span className="text-xs text-white/60">5 phút đọc</span>
             </div>
-            <div className="p-2">
-              <span className="text-xs" style={{ color: brandColor }}>{post.category}</span>
-              <h4 className="font-medium text-xs line-clamp-2">{post.title}</h4>
+            <h3 className="font-bold text-sm text-white">{mockPosts[0].title}</h3>
+          </div>
+        </div>
+        {/* Secondary Featured */}
+        {device !== 'mobile' && mockPosts.slice(1, 3).map((post) => (
+          <div key={post.id} className="relative rounded-lg overflow-hidden bg-slate-800">
+            <div className="aspect-[16/10] bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center">
+              <FileText size={16} className="text-slate-500" />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-2">
+              <span className="text-xs text-white/80 font-medium">{post.category}</span>
+              <h4 className="font-semibold text-xs text-white line-clamp-2">{post.title}</h4>
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Category Pills */}
+      <div className="flex gap-2 overflow-x-auto pb-1 border-b border-slate-200">
+        {categories.map((cat, i) => (
+          <span 
+            key={cat} 
+            className={cn("px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap", i === 0 ? "text-white" : "text-slate-600 hover:bg-slate-100")}
+            style={i === 0 ? { backgroundColor: brandColor } : undefined}
+          >
+            {cat}
+          </span>
+        ))}
+      </div>
+
+      {/* Trending Section */}
+      {device !== 'mobile' && (
+        <div className="bg-slate-50 rounded-lg p-3">
+          <div className="text-xs font-semibold text-slate-700 mb-2">Đang thịnh hành</div>
+          <div className="grid grid-cols-2 gap-3">
+            {mockPosts.slice(0, 2).map((post, i) => (
+              <div key={post.id} className="flex gap-2">
+                <span className="text-lg font-bold opacity-20" style={{ color: brandColor }}>{String(i + 1).padStart(2, '0')}</span>
+                <div>
+                  <div className="text-xs font-medium line-clamp-2">{post.title}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{post.date}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Clean Grid */}
+      <div>
+        <div className="text-xs font-semibold text-slate-700 mb-2">Bài viết mới nhất</div>
+        <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
+          {mockPosts.slice(0, device === 'mobile' ? 2 : 2).map((post) => (
+            <div key={post.id} className="flex gap-3">
+              <div className="w-16 h-12 rounded bg-slate-100 flex items-center justify-center flex-shrink-0">
+                <FileText size={14} className="text-slate-300" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: brandColor }}>{post.category}</span>
+                <h4 className="font-medium text-xs line-clamp-2 mt-0.5">{post.title}</h4>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -947,30 +1061,51 @@ function DetailPreview({ style, brandColor, device }: { style: PostsDetailStyle;
   }
 
   if (style === 'modern') {
+    // Modern - Medium/Substack inspired - Clean typography focused
     return (
-      <div>
-        {/* Hero */}
-        <div className="relative bg-slate-900">
-          <div className="aspect-video bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
-            <FileText size={32} className="text-slate-600" />
-          </div>
-          <div className="absolute inset-0 bg-black/50" />
-          <div className="absolute bottom-0 left-0 right-0 p-4 text-white text-center">
-            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2" style={{ backgroundColor: brandColor }}>Tin tức</span>
-            <h1 className="font-bold text-lg">Tiêu đề bài viết mẫu</h1>
-            <div className="flex items-center justify-center gap-3 text-xs text-white/60 mt-2">
-              <span>10/01/2026</span>
-              <span>•</span>
-              <span>1,234 views</span>
+      <div className="bg-white">
+        {/* Clean Header */}
+        <div className={cn("border-b border-slate-100", device === 'mobile' ? 'p-3' : 'p-4')}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1 text-xs text-slate-400">
+              <ArrowLeft size={10} />
+              <span>Tất cả bài viết</span>
             </div>
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: brandColor }}>Tin tức</span>
+          </div>
+          <h1 className={cn("font-bold text-slate-900 leading-tight", device === 'mobile' ? 'text-base' : 'text-lg')}>
+            Tiêu đề bài viết mẫu với typography tối ưu
+          </h1>
+          <p className="text-xs text-slate-500 mt-2 italic">
+            Đoạn mô tả ngắn về nội dung bài viết...
+          </p>
+          <div className="flex items-center gap-3 text-xs text-slate-400 mt-3">
+            <span>10/01/2026</span>
+            <span className="w-1 h-1 rounded-full bg-slate-300" />
+            <span>5 phút đọc</span>
+            <span className="w-1 h-1 rounded-full bg-slate-300" />
+            <span>1,234 views</span>
           </div>
         </div>
-        {/* Content */}
-        <div className="p-4 space-y-2">
+        {/* Featured Image */}
+        <div className="p-4">
+          <div className="aspect-[16/9] bg-slate-100 rounded-lg flex items-center justify-center">
+            <FileText size={24} className="text-slate-300" />
+          </div>
+        </div>
+        {/* Content - Typography optimized */}
+        <div className={cn("space-y-3", device === 'mobile' ? 'px-3 pb-3' : 'px-4 pb-4')}>
           <div className="h-3 bg-slate-100 rounded w-full"></div>
           <div className="h-3 bg-slate-100 rounded w-5/6"></div>
-          <div className="h-3 bg-slate-100 rounded w-4/6"></div>
           <div className="h-3 bg-slate-100 rounded w-full"></div>
+          <div className="h-3 bg-slate-100 rounded w-4/6"></div>
+        </div>
+        {/* Bottom CTA */}
+        <div className="border-t border-slate-100 p-3 text-center">
+          <div className="text-xs text-slate-500 mb-2">Bạn thấy bài viết hữu ích?</div>
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-white px-3 py-1.5 rounded-full" style={{ backgroundColor: brandColor }}>
+            Khám phá thêm
+          </span>
         </div>
       </div>
     );

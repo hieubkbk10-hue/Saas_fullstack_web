@@ -243,115 +243,141 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
   );
 }
 
-// Style 2: Modern - Hero lớn, full-width
+// Style 2: Modern - Medium/Substack inspired - Focus on typography and reading experience
 function ModernStyle({ post, brandColor, relatedPosts }: StyleProps) {
+  const readingTime = Math.ceil(post.content.length / 1000);
+  
   return (
-    <div>
-      {/* Hero Section */}
-      <div className="relative bg-slate-900">
-        {post.thumbnail && (
-          <>
-            <div 
-              className="absolute inset-0 scale-105"
-              style={{ 
-                backgroundImage: `url(${post.thumbnail})`, 
-                backgroundSize: 'cover', 
-                backgroundPosition: 'center',
-                filter: 'blur(20px)'
-              }} 
-            />
-            <div className="absolute inset-0 bg-black/60" />
-          </>
-        )}
-        <div className="relative max-w-4xl mx-auto px-4 py-16 md:py-24 text-center">
-          <Link 
-            href="/posts"
-            className="inline-flex items-center gap-1 text-white/70 hover:text-white text-sm mb-6 transition-colors"
-          >
-            <ArrowLeft size={14} />
-            Quay lại
-          </Link>
-          <span 
-            className="inline-block text-xs font-medium px-3 py-1 rounded-full mb-4 text-white"
-            style={{ backgroundColor: brandColor }}
-          >
-            {post.categoryName}
-          </span>
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-6">
+    <div className="bg-white">
+      {/* Clean Header - Medium style */}
+      <header className="border-b border-slate-100">
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          {/* Back & Category */}
+          <div className="flex items-center justify-between mb-8">
+            <Link 
+              href="/posts"
+              className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 text-sm transition-colors group"
+            >
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+              <span>Tất cả bài viết</span>
+            </Link>
+            <span 
+              className="text-xs font-semibold uppercase tracking-wider"
+              style={{ color: brandColor }}
+            >
+              {post.categoryName}
+            </span>
+          </div>
+          
+          {/* Title - Large, bold, readable */}
+          <h1 className="text-3xl md:text-[2.75rem] leading-tight md:leading-[1.2] font-bold text-slate-900 mb-6 tracking-tight">
             {post.title}
           </h1>
-          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-white/70">
-            <span className="flex items-center gap-1">
-              <Calendar size={14} />
-              {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN', { 
-                year: 'numeric', month: 'long', day: 'numeric' 
-              }) : ''}
-            </span>
-            <span>•</span>
+          
+          {/* Excerpt if available */}
+          {post.excerpt && (
+            <p className="text-xl md:text-2xl text-slate-600 leading-relaxed mb-8 font-serif">
+              {post.excerpt}
+            </p>
+          )}
+          
+          {/* Meta info - Clean horizontal layout */}
+          <div className="flex items-center gap-6 text-sm text-slate-500">
+            <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN', { 
+              year: 'numeric', month: 'long', day: 'numeric' 
+            }) : ''}</span>
+            <span className="w-1 h-1 rounded-full bg-slate-300" />
+            <span>{readingTime} phút đọc</span>
+            <span className="w-1 h-1 rounded-full bg-slate-300" />
             <span className="flex items-center gap-1">
               <Eye size={14} />
-              {post.views} lượt xem
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <Clock size={14} />
-              {Math.ceil(post.content.length / 1000)} phút đọc
+              {post.views.toLocaleString()}
             </span>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Featured Image - Overlapping */}
+      {/* Featured Image - Full width, no overlap */}
       {post.thumbnail && (
-        <div className="max-w-4xl mx-auto px-4 -mt-8">
-          <div className="aspect-video rounded-2xl overflow-hidden shadow-2xl">
+        <figure className="max-w-4xl mx-auto px-4 py-8">
+          <div className="aspect-[16/9] rounded-lg overflow-hidden bg-slate-100">
             <img 
               src={post.thumbnail} 
               alt={post.title}
               className="w-full h-full object-cover"
             />
           </div>
-        </div>
+        </figure>
       )}
 
-      {/* Content */}
-      <div className="max-w-3xl mx-auto px-4 py-12">
+      {/* Article Content - Optimized typography */}
+      <article className="max-w-3xl mx-auto px-4 py-8">
         <div 
-          className="prose prose-lg prose-slate max-w-none prose-headings:font-bold prose-a:text-blue-600 prose-img:rounded-xl"
+          className="prose prose-lg prose-slate max-w-none
+            prose-p:text-slate-700 prose-p:leading-[1.8] prose-p:text-[1.125rem]
+            prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-slate-900
+            prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-4
+            prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
+            prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+            prose-blockquote:border-l-4 prose-blockquote:italic prose-blockquote:text-slate-600
+            prose-img:rounded-lg prose-img:my-8
+            prose-li:text-slate-700
+            prose-strong:text-slate-900
+            prose-code:text-sm prose-code:bg-slate-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded"
+          style={{ 
+            '--tw-prose-quote-borders': brandColor,
+          } as React.CSSProperties}
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
+      </article>
 
-        {/* Share & Tags */}
-        <div className="mt-12 pt-8 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Tag size={16} className="text-slate-400" />
-            <span 
-              className="text-sm font-medium px-3 py-1 rounded-full"
-              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+      {/* Bottom Section - Engagement */}
+      <div className="border-t border-slate-100">
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          {/* Category Tag & Share */}
+          <div className="flex flex-wrap items-center justify-between gap-4 pb-8 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-500">Chủ đề:</span>
+              <span 
+                className="text-sm font-medium px-4 py-1.5 rounded-full"
+                style={{ backgroundColor: `${brandColor}10`, color: brandColor }}
+              >
+                {post.categoryName}
+              </span>
+            </div>
+            <button 
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors"
             >
-              {post.categoryName}
-            </span>
+              <Share2 size={16} />
+              Chia sẻ bài viết
+            </button>
           </div>
-          <button 
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm"
-            style={{ backgroundColor: brandColor }}
-          >
-            <Share2 size={16} />
-            Chia sẻ
-          </button>
+
+          {/* Author/CTA Section - Substack style */}
+          <div className="py-8 text-center">
+            <p className="text-slate-500 mb-4">Bạn thấy bài viết hữu ích?</p>
+            <Link 
+              href="/posts"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-medium transition-all hover:opacity-90"
+              style={{ backgroundColor: brandColor }}
+            >
+              Khám phá thêm bài viết
+              <ChevronRight size={18} />
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Related Posts */}
+      {/* Related Posts - Horizontal scroll on mobile, grid on desktop */}
       {relatedPosts.length > 0 && (
-        <div className="bg-slate-50 py-16 px-4">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center">Bài viết liên quan</h2>
+        <div className="bg-slate-50 py-12 px-4">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-lg font-bold text-slate-900 mb-6">Bài viết cùng chủ đề</h2>
             <div className="grid md:grid-cols-3 gap-6">
               {relatedPosts.map((p) => (
                 <Link key={p._id} href={`/posts/${p.slug}`} className="group">
-                  <article className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all">
-                    <div className="aspect-video bg-slate-100 overflow-hidden">
+                  <article className="flex md:flex-col gap-4">
+                    <div className="w-24 h-20 md:w-full md:h-auto md:aspect-[16/10] rounded-lg overflow-hidden bg-slate-200 flex-shrink-0">
                       {p.thumbnail ? (
                         <img 
                           src={p.thumbnail} 
@@ -360,12 +386,12 @@ function ModernStyle({ post, brandColor, relatedPosts }: StyleProps) {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <FileText size={32} className="text-slate-300" />
+                          <FileText size={24} className="text-slate-400" />
                         </div>
                       )}
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-slate-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-slate-900 line-clamp-2 group-hover:text-slate-600 transition-colors text-sm md:text-base">
                         {p.title}
                       </h3>
                       <span className="text-xs text-slate-400 mt-2 block">

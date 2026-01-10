@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { contentStatus } from "./lib/validators";
 import * as PostsModel from "./model/posts";
+import { Doc } from "./_generated/dataModel";
 
 const postDoc = v.object({
   _id: v.id("posts"),
@@ -154,6 +155,119 @@ export const listMostViewed = query({
       .withIndex("by_status_views", (q) => q.eq("status", "Published"))
       .order("desc")
       .paginate(args.paginationOpts);
+  },
+});
+
+// Search and filter published posts
+export const searchPublished = query({
+  args: {
+    search: v.optional(v.string()),
+    categoryId: v.optional(v.id("postCategories")),
+    sortBy: v.optional(v.union(
+      v.literal("newest"),
+      v.literal("oldest"),
+      v.literal("popular"),
+      v.literal("title")
+    )),
+    limit: v.optional(v.number()),
+  },
+  returns: v.array(postDoc),
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 20, 100);
+    const sortBy = args.sortBy ?? "newest";
+    
+    let posts: Doc<"posts">[] = [];
+    
+    // Filter by category if provided
+    if (args.categoryId) {
+      posts = await ctx.db
+        .query("posts")
+        .withIndex("by_category_status", (q) => 
+          q.eq("categoryId", args.categoryId!).eq("status", "Published")
+        )
+        .take(limit * 2); // Get more for client-side filtering
+    } else {
+      // Get all published posts
+      if (sortBy === "popular") {
+        posts = await ctx.db
+          .query("posts")
+          .withIndex("by_status_views", (q) => q.eq("status", "Published"))
+          .order("desc")
+          .take(limit * 2);
+      } else {
+        posts = await ctx.db
+          .query("posts")
+          .withIndex("by_status_publishedAt", (q) => q.eq("status", "Published"))
+          .order(sortBy === "oldest" ? "asc" : "desc")
+          .take(limit * 2);
+      }
+    }
+    
+    // Client-side text search (Convex doesn't have full-text search built-in)
+    if (args.search && args.search.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      posts = posts.filter(post => 
+        post.title.toLowerCase().includes(searchLower) ||
+        (post.excerpt?.toLowerCase().includes(searchLower))
+      );
+    }
+    
+    // Sort if needed (after category filter)
+    if (args.categoryId) {
+      switch (sortBy) {
+        case "oldest":
+          posts.sort((a, b) => (a.publishedAt ?? 0) - (b.publishedAt ?? 0));
+          break;
+        case "popular":
+          posts.sort((a, b) => b.views - a.views);
+          break;
+        case "title":
+          posts.sort((a, b) => a.title.localeCompare(b.title, 'vi'));
+          break;
+        default: // newest
+          posts.sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
+      }
+    } else if (sortBy === "title") {
+      posts.sort((a, b) => a.title.localeCompare(b.title, 'vi'));
+    }
+    
+    return posts.slice(0, limit);
+  },
+});
+
+// Get featured posts (most viewed)
+export const listFeatured = query({
+  args: { limit: v.optional(v.number()) },
+  returns: v.array(postDoc),
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 5, 20);
+    return await ctx.db
+      .query("posts")
+      .withIndex("by_status_views", (q) => q.eq("status", "Published"))
+      .order("desc")
+      .take(limit);
+  },
+});
+
+// Count published posts (for result display)
+export const countPublished = query({
+  args: { categoryId: v.optional(v.id("postCategories")) },
+  returns: v.number(),
+  handler: async (ctx, args) => {
+    if (args.categoryId) {
+      const posts = await ctx.db
+        .query("posts")
+        .withIndex("by_category_status", (q) => 
+          q.eq("categoryId", args.categoryId!).eq("status", "Published")
+        )
+        .take(1000);
+      return posts.length;
+    }
+    const posts = await ctx.db
+      .query("posts")
+      .withIndex("by_status_publishedAt", (q) => q.eq("status", "Published"))
+      .take(1000);
+    return posts.length;
   },
 });
 
