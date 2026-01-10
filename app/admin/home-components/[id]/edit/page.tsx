@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect, use, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
@@ -9,7 +9,8 @@ import { Id } from '@/convex/_generated/dataModel';
 import { 
   Grid, LayoutTemplate, AlertCircle, Package, Briefcase, FileText, 
   Users, MousePointerClick, HelpCircle, User as UserIcon, Check, 
-  Star, Award, Tag, Image as ImageIcon, Phone, Plus, Trash2, Loader2
+  Star, Award, Tag, Image as ImageIcon, Phone, Plus, Trash2, Loader2,
+  Search, GripVertical, X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
@@ -73,6 +74,8 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   
   const component = useQuery(api.homeComponents.getById, { id: id as Id<"homeComponents"> });
   const updateMutation = useMutation(api.homeComponents.update);
+  // Query posts for Blog manual selection
+  const postsData = useQuery(api.posts.listAll, { limit: 100 });
   
   const [title, setTitle] = useState('');
   const [active, setActive] = useState(true);
@@ -105,6 +108,29 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
   const [productListStyle, setProductListStyle] = useState<ProductListStyle>('grid');
   const [blogStyle, setBlogStyle] = useState<BlogStyle>('grid');
+  // Blog manual selection states
+  const [blogSelectionMode, setBlogSelectionMode] = useState<'auto' | 'manual'>('auto');
+  const [selectedPostIds, setSelectedPostIds] = useState<string[]>([]);
+  const [postSearchTerm, setPostSearchTerm] = useState('');
+
+  // Filter posts for search and get selected posts data
+  const filteredPosts = useMemo(() => {
+    if (!postsData) return [];
+    return postsData
+      .filter(post => post.status === 'Published')
+      .filter(post => 
+        !postSearchTerm || 
+        post.title.toLowerCase().includes(postSearchTerm.toLowerCase())
+      );
+  }, [postsData, postSearchTerm]);
+
+  const selectedPosts = useMemo(() => {
+    if (!postsData || selectedPostIds.length === 0) return [];
+    const postMap = new Map(postsData.map(p => [p._id, p]));
+    return selectedPostIds
+      .map(id => postMap.get(id as Id<"posts">))
+      .filter((p): p is NonNullable<typeof p> => p !== undefined);
+  }, [postsData, selectedPostIds]);
 
   // Initialize form with component data
   useEffect(() => {
@@ -178,6 +204,8 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         case 'Blog':
           setProductListConfig({ itemCount: config.itemCount || 8, sortBy: config.sortBy || 'newest' });
           setBlogStyle((config.style as BlogStyle) || 'grid');
+          setBlogSelectionMode(config.selectionMode || 'auto');
+          setSelectedPostIds(config.selectedPostIds || []);
           break;
       }
       
@@ -237,7 +265,12 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'ServiceList':
         return { ...productListConfig, style: productListStyle };
       case 'Blog':
-        return { ...productListConfig, style: blogStyle };
+        return { 
+          ...productListConfig, 
+          style: blogStyle, 
+          selectionMode: blogSelectionMode,
+          selectedPostIds: blogSelectionMode === 'manual' ? selectedPostIds : [],
+        };
       default:
         return {};
     }
@@ -620,25 +653,174 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
             <Card className="mb-6">
               <CardHeader><CardTitle className="text-base">Nguồn dữ liệu</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Số lượng hiển thị</Label>
-                    <Input type="number" value={productListConfig.itemCount} onChange={(e) => setProductListConfig({...productListConfig, itemCount: parseInt(e.target.value) || 8})} />
+                {/* Selection Mode Toggle */}
+                <div className="space-y-2">
+                  <Label>Chế độ chọn bài viết</Label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setBlogSelectionMode('auto')}
+                      className={cn(
+                        "flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-all",
+                        blogSelectionMode === 'auto'
+                          ? "border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                          : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                      )}
+                    >
+                      Tự động
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBlogSelectionMode('manual')}
+                      className={cn(
+                        "flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-all",
+                        blogSelectionMode === 'manual'
+                          ? "border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                          : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                      )}
+                    >
+                      Chọn thủ công
+                    </button>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Sắp xếp theo</Label>
-                    <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={productListConfig.sortBy} onChange={(e) => setProductListConfig({...productListConfig, sortBy: e.target.value})}>
-                      <option value="newest">Mới nhất</option>
-                      <option value="bestseller">Bán chạy nhất</option>
-                      <option value="random">Ngẫu nhiên</option>
-                    </select>
-                  </div>
+                  <p className="text-xs text-slate-500">
+                    {blogSelectionMode === 'auto' 
+                      ? 'Hiển thị bài viết tự động theo số lượng và sắp xếp' 
+                      : 'Chọn từng bài viết cụ thể để hiển thị'}
+                  </p>
                 </div>
+
+                {/* Auto mode settings */}
+                {blogSelectionMode === 'auto' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Số lượng hiển thị</Label>
+                      <Input type="number" value={productListConfig.itemCount} onChange={(e) => setProductListConfig({...productListConfig, itemCount: parseInt(e.target.value) || 8})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Sắp xếp theo</Label>
+                      <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={productListConfig.sortBy} onChange={(e) => setProductListConfig({...productListConfig, sortBy: e.target.value})}>
+                        <option value="newest">Mới nhất</option>
+                        <option value="popular">Xem nhiều nhất</option>
+                        <option value="random">Ngẫu nhiên</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Manual mode - Post selector */}
+                {blogSelectionMode === 'manual' && (
+                  <div className="space-y-4">
+                    {/* Selected posts list */}
+                    {selectedPosts.length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Bài viết đã chọn ({selectedPosts.length})</Label>
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                          {selectedPosts.map((post, index) => (
+                            <div 
+                              key={post._id} 
+                              className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg group"
+                            >
+                              <div className="text-slate-400 cursor-move">
+                                <GripVertical size={16} />
+                              </div>
+                              <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white text-xs rounded-full font-medium">
+                                {index + 1}
+                              </span>
+                              {post.thumbnail ? (
+                                <img src={post.thumbnail} alt="" className="w-12 h-12 object-cover rounded" />
+                              ) : (
+                                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
+                                  <FileText size={16} className="text-slate-400" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{post.title}</p>
+                                <p className="text-xs text-slate-500">{new Date(post._creationTime).toLocaleDateString('vi-VN')}</p>
+                              </div>
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-slate-400 hover:text-red-500"
+                                onClick={() => setSelectedPostIds(ids => ids.filter(id => id !== post._id))}
+                              >
+                                <X size={16} />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Search and add posts */}
+                    <div className="space-y-2">
+                      <Label>Thêm bài viết</Label>
+                      <div className="relative">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Input 
+                          placeholder="Tìm kiếm bài viết..." 
+                          className="pl-9"
+                          value={postSearchTerm}
+                          onChange={(e) => setPostSearchTerm(e.target.value)}
+                        />
+                      </div>
+                      <div className="border border-slate-200 dark:border-slate-700 rounded-lg max-h-[250px] overflow-y-auto">
+                        {filteredPosts.length === 0 ? (
+                          <div className="p-4 text-center text-sm text-slate-500">
+                            {postsData === undefined ? 'Đang tải...' : 'Không tìm thấy bài viết'}
+                          </div>
+                        ) : (
+                          filteredPosts.map(post => {
+                            const isSelected = selectedPostIds.includes(post._id);
+                            return (
+                              <div 
+                                key={post._id}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedPostIds(ids => ids.filter(id => id !== post._id));
+                                  } else {
+                                    setSelectedPostIds(ids => [...ids, post._id]);
+                                  }
+                                }}
+                                className={cn(
+                                  "flex items-center gap-3 p-3 cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors",
+                                  isSelected 
+                                    ? "bg-blue-50 dark:bg-blue-500/10" 
+                                    : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                                )}
+                              >
+                                <div className={cn(
+                                  "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                                  isSelected 
+                                    ? "border-blue-500 bg-blue-500" 
+                                    : "border-slate-300 dark:border-slate-600"
+                                )}>
+                                  {isSelected && <Check size={12} className="text-white" />}
+                                </div>
+                                {post.thumbnail ? (
+                                  <img src={post.thumbnail} alt="" className="w-10 h-10 object-cover rounded" />
+                                ) : (
+                                  <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center">
+                                    <FileText size={14} className="text-slate-400" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">{post.title}</p>
+                                  <p className="text-xs text-slate-500">{post.views} lượt xem</p>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
             <BlogPreview 
               brandColor={brandColor}
-              postCount={productListConfig.itemCount}
+              postCount={blogSelectionMode === 'manual' ? selectedPostIds.length : productListConfig.itemCount}
               selectedStyle={blogStyle}
               onStyleChange={setBlogStyle}
             />
