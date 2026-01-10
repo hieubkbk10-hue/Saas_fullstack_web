@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { Header } from '@/components/site/Header';
-import { Footer } from '@/components/site/Footer';
+import { DynamicFooter } from '@/components/site/DynamicFooter';
 import { getSiteSettings, getSEOSettings } from '@/lib/getSettings';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -53,7 +53,7 @@ export default function SiteLayout({
       <main className="flex-1">
         {children}
       </main>
-      <Footer />
+      <DynamicFooter />
     </div>
   );
 }

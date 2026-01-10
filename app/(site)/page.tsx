@@ -33,8 +33,10 @@ export default function HomePage() {
     );
   }
 
-  // Sort theo order
-  const sortedComponents = [...components].sort((a, b) => a.order - b.order);
+  // Sort theo order, filter bỏ Footer (Footer được render từ layout)
+  const sortedComponents = [...components]
+    .filter((c) => c.type !== 'Footer')
+    .sort((a, b) => a.order - b.order);
 
   return (
     <>
