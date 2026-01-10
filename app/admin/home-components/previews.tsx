@@ -378,9 +378,11 @@ export const HeroBannerPreview = ({
 
 // ============ STATS PREVIEW ============
 type StatsItem = { value: string; label: string };
-export const StatsPreview = ({ items, brandColor }: { items: StatsItem[]; brandColor: string }) => {
+export type StatsStyle = 'horizontal' | 'cards' | 'icons';
+export const StatsPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: StatsItem[]; brandColor: string; selectedStyle?: StatsStyle; onStyleChange?: (style: StatsStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('horizontal');
+  const previewStyle = selectedStyle || 'horizontal';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as StatsStyle);
   const styles = [{ id: 'horizontal', label: 'Thanh ngang' }, { id: 'cards', label: 'Cards' }, { id: 'icons', label: 'Icon Grid' }];
 
   const renderHorizontalStyle = () => (
@@ -435,9 +437,11 @@ export const StatsPreview = ({ items, brandColor }: { items: StatsItem[]; brandC
 
 // ============ FAQ PREVIEW ============
 type FaqItem = { id: number; question: string; answer: string };
-export const FaqPreview = ({ items, brandColor }: { items: FaqItem[]; brandColor: string }) => {
+export type FaqStyle = 'accordion' | 'cards' | 'two-column';
+export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: FaqItem[]; brandColor: string; selectedStyle?: FaqStyle; onStyleChange?: (style: FaqStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('accordion');
+  const previewStyle = selectedStyle || 'accordion';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as FaqStyle);
   const [openIndex, setOpenIndex] = useState(0);
   const styles = [{ id: 'accordion', label: 'Accordion' }, { id: 'cards', label: 'Cards' }, { id: 'two-column', label: '2 Cột' }];
 
@@ -511,9 +515,11 @@ export const FaqPreview = ({ items, brandColor }: { items: FaqItem[]; brandColor
 
 // ============ TESTIMONIALS PREVIEW ============
 type TestimonialItem = { id: number; name: string; role: string; content: string; avatar: string; rating: number };
-export const TestimonialsPreview = ({ items, brandColor }: { items: TestimonialItem[]; brandColor: string }) => {
+export type TestimonialsStyle = 'cards' | 'slider' | 'masonry';
+export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: TestimonialItem[]; brandColor: string; selectedStyle?: TestimonialsStyle; onStyleChange?: (style: TestimonialsStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('cards');
+  const previewStyle = selectedStyle || 'cards';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as TestimonialsStyle);
   const [currentSlide, setCurrentSlide] = useState(0);
   const styles = [{ id: 'cards', label: 'Cards' }, { id: 'slider', label: 'Slider' }, { id: 'masonry', label: 'Masonry' }];
 
@@ -609,9 +615,11 @@ export const TestimonialsPreview = ({ items, brandColor }: { items: TestimonialI
 
 // ============ PRICING PREVIEW ============
 type PricingPlan = { id: number; name: string; price: string; period: string; features: string[]; isPopular: boolean; buttonText: string; buttonLink: string };
-export const PricingPreview = ({ plans, brandColor }: { plans: PricingPlan[]; brandColor: string }) => {
+export type PricingStyle = 'cards' | 'horizontal' | 'minimal';
+export const PricingPreview = ({ plans, brandColor, selectedStyle, onStyleChange }: { plans: PricingPlan[]; brandColor: string; selectedStyle?: PricingStyle; onStyleChange?: (style: PricingStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('cards');
+  const previewStyle = selectedStyle || 'cards';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as PricingStyle);
   const styles = [{ id: 'cards', label: 'Cards' }, { id: 'horizontal', label: 'Ngang' }, { id: 'minimal', label: 'Minimal' }];
 
   const renderCardsStyle = () => (
@@ -692,9 +700,11 @@ export const PricingPreview = ({ plans, brandColor }: { plans: PricingPlan[]; br
 
 // ============ GALLERY PREVIEW ============
 type GalleryItem = { id: number; url: string; link: string };
-export const GalleryPreview = ({ items, brandColor, componentType }: { items: GalleryItem[]; brandColor: string; componentType: 'Partners' | 'Gallery' | 'TrustBadges' }) => {
+export type GalleryStyle = 'slider' | 'grid' | 'marquee';
+export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle, onStyleChange }: { items: GalleryItem[]; brandColor: string; componentType: 'Partners' | 'Gallery' | 'TrustBadges'; selectedStyle?: GalleryStyle; onStyleChange?: (style: GalleryStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('slider');
+  const previewStyle = selectedStyle || 'slider';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as GalleryStyle);
   const styles = [{ id: 'slider', label: 'Slider' }, { id: 'grid', label: 'Grid' }, { id: 'marquee', label: 'Split' }];
   const titles = { Partners: 'Đối tác tin cậy', Gallery: 'Thư viện ảnh', TrustBadges: 'Chứng nhận & Giải thưởng' };
 
@@ -760,9 +770,11 @@ export const GalleryPreview = ({ items, brandColor, componentType }: { items: Ga
 
 // ============ SERVICES/BENEFITS PREVIEW ============
 type ServiceItem = { id: number; icon: string; title: string; description: string };
-export const ServicesPreview = ({ items, brandColor, componentType }: { items: ServiceItem[]; brandColor: string; componentType: 'Services' | 'Benefits' }) => {
+export type ServicesStyle = 'grid' | 'list' | 'icons';
+export const ServicesPreview = ({ items, brandColor, componentType, selectedStyle, onStyleChange }: { items: ServiceItem[]; brandColor: string; componentType: 'Services' | 'Benefits'; selectedStyle?: ServicesStyle; onStyleChange?: (style: ServicesStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('grid');
+  const previewStyle = selectedStyle || 'grid';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as ServicesStyle);
   const styles = [{ id: 'grid', label: 'Grid' }, { id: 'list', label: 'List' }, { id: 'icons', label: 'Icon Center' }];
   const titles = { Services: 'Dịch vụ của chúng tôi', Benefits: 'Tại sao chọn chúng tôi' };
 
@@ -825,9 +837,11 @@ export const ServicesPreview = ({ items, brandColor, componentType }: { items: S
 };
 
 // ============ PRODUCT/SERVICE LIST PREVIEW ============
-export const ProductListPreview = ({ brandColor, itemCount, componentType }: { brandColor: string; itemCount: number; componentType: 'ProductList' | 'ServiceList' }) => {
+export type ProductListStyle = 'grid' | 'list' | 'carousel';
+export const ProductListPreview = ({ brandColor, itemCount, componentType, selectedStyle, onStyleChange }: { brandColor: string; itemCount: number; componentType: 'ProductList' | 'ServiceList'; selectedStyle?: ProductListStyle; onStyleChange?: (style: ProductListStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('grid');
+  const previewStyle = selectedStyle || 'grid';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as ProductListStyle);
   const styles = [{ id: 'grid', label: 'Grid' }, { id: 'list', label: 'List' }, { id: 'carousel', label: 'Carousel' }];
   const isProduct = componentType === 'ProductList';
   const title = isProduct ? 'Sản phẩm nổi bật' : 'Dịch vụ của chúng tôi';
@@ -903,18 +917,29 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType }: { b
 };
 
 // ============ BLOG PREVIEW ============
-export const BlogPreview = ({ brandColor, postCount }: { brandColor: string; postCount: number }) => {
+export type BlogStyle = 'grid' | 'list' | 'featured';
+export const BlogPreview = ({ brandColor, postCount, selectedStyle, onStyleChange }: { brandColor: string; postCount: number; selectedStyle?: BlogStyle; onStyleChange?: (style: BlogStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('grid');
+  const previewStyle = selectedStyle || 'grid';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as BlogStyle);
   const styles = [{ id: 'grid', label: 'Grid' }, { id: 'list', label: 'List' }, { id: 'featured', label: 'Featured' }];
   const mockPosts = Array.from({ length: Math.max(postCount, 3) }, (_, i) => ({ id: i + 1, title: `Bài viết mẫu ${i + 1}`, excerpt: 'Mô tả ngắn về nội dung bài viết...', date: '01/01/2024', category: 'Tin tức' }));
+  const showViewAll = postCount > 3;
+
+  const ViewAllButton = () => showViewAll ? (
+    <div className="text-center mt-6">
+      <button className="px-6 py-2.5 rounded-lg font-medium text-sm transition-colors" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+        Xem tất cả
+      </button>
+    </div>
+  ) : null;
 
   const renderGridStyle = () => (
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
       <h2 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-xl' : 'text-2xl')}>Tin tức mới nhất</h2>
       <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
         {mockPosts.slice(0, device === 'mobile' ? 2 : 3).map((post) => (
-          <div key={post.id} className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border group">
+          <div key={post.id} className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border group hover:shadow-md transition-shadow">
             <div className="aspect-video bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><FileText size={32} className="text-slate-300" /></div>
             <div className="p-4">
               <span className="text-xs font-medium" style={{ color: brandColor }}>{post.category}</span>
@@ -928,6 +953,7 @@ export const BlogPreview = ({ brandColor, postCount }: { brandColor: string; pos
           </div>
         ))}
       </div>
+      <ViewAllButton />
     </div>
   );
 
@@ -936,7 +962,7 @@ export const BlogPreview = ({ brandColor, postCount }: { brandColor: string; pos
       <h2 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-xl' : 'text-2xl')}>Bài viết gần đây</h2>
       <div className="max-w-3xl mx-auto space-y-4">
         {mockPosts.slice(0, 4).map((post) => (
-          <div key={post.id} className={cn("bg-white dark:bg-slate-800 rounded-xl overflow-hidden border flex", device === 'mobile' ? 'flex-col' : 'items-center')}>
+          <div key={post.id} className={cn("bg-white dark:bg-slate-800 rounded-xl overflow-hidden border flex hover:shadow-md transition-shadow", device === 'mobile' ? 'flex-col' : 'items-center')}>
             <div className={cn("bg-slate-100 dark:bg-slate-700 flex items-center justify-center", device === 'mobile' ? 'aspect-video w-full' : 'w-40 h-24 flex-shrink-0')}><FileText size={24} className="text-slate-300" /></div>
             <div className="p-4 flex-1">
               <div className="flex items-center gap-2 mb-1">
@@ -949,31 +975,58 @@ export const BlogPreview = ({ brandColor, postCount }: { brandColor: string; pos
           </div>
         ))}
       </div>
+      <ViewAllButton />
     </div>
   );
 
   const renderFeaturedStyle = () => (
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h2 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-xl' : 'text-2xl')}>Tin nổi bật</h2>
-      <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
-        <div className={cn("bg-white dark:bg-slate-800 rounded-xl overflow-hidden border group", device === 'mobile' ? '' : 'row-span-2')}>
-          <div className="aspect-video bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><FileText size={48} className="text-slate-300" /></div>
-          <div className="p-5">
-            <span className="text-xs font-medium" style={{ color: brandColor }}>{mockPosts[0].category}</span>
-            <h3 className={cn("font-bold mt-1 mb-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>{mockPosts[0].title}</h3>
-            <p className="text-sm text-slate-500">{mockPosts[0].excerpt}</p>
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: brandColor }}>Blog</p>
+          <h2 className={cn("font-bold", device === 'mobile' ? 'text-xl' : 'text-2xl')}>Tin nổi bật</h2>
         </div>
-        {mockPosts.slice(1, 3).map((post) => (
-          <div key={post.id} className="bg-white dark:bg-slate-800 rounded-xl p-4 border flex items-center gap-4">
-            <div className="w-20 h-20 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0"><FileText size={24} className="text-slate-300" /></div>
-            <div>
-              <span className="text-xs font-medium" style={{ color: brandColor }}>{post.category}</span>
-              <h4 className="font-semibold text-sm mt-1">{post.title}</h4>
-              <span className="text-xs text-slate-400">{post.date}</span>
+        {showViewAll && (
+          <button className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all" style={{ color: brandColor }}>
+            Xem tất cả <span>→</span>
+          </button>
+        )}
+      </div>
+      <div className={cn("grid gap-5", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-3')}>
+        {/* Main Featured Post - 2/3 width */}
+        <div className={cn("group", device === 'mobile' ? '' : 'col-span-2')}>
+          <div className="relative rounded-2xl overflow-hidden bg-slate-900">
+            <div className="aspect-[16/10] bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
+              <FileText size={64} className="text-slate-600" />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+              <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium mb-3" style={{ backgroundColor: brandColor }}>{mockPosts[0].category}</span>
+              <h3 className={cn("font-bold mb-2 group-hover:underline", device === 'mobile' ? 'text-lg' : 'text-xl')}>{mockPosts[0].title}</h3>
+              <p className="text-sm text-white/80 line-clamp-2 mb-3">{mockPosts[0].excerpt}</p>
+              <div className="flex items-center gap-3 text-xs text-white/60">
+                <span>{mockPosts[0].date}</span>
+                <span>•</span>
+                <span>5 phút đọc</span>
+              </div>
             </div>
           </div>
-        ))}
+        </div>
+        {/* Secondary Posts - 1/3 width, stacked */}
+        <div className="flex flex-col gap-4">
+          {mockPosts.slice(1, 3).map((post) => (
+            <div key={post.id} className="bg-white dark:bg-slate-800 rounded-xl border overflow-hidden flex-1 flex flex-col group hover:shadow-md transition-shadow">
+              <div className="h-24 bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                <FileText size={24} className="text-slate-300" />
+              </div>
+              <div className="p-4 flex-1 flex flex-col">
+                <span className="text-xs font-medium" style={{ color: brandColor }}>{post.category}</span>
+                <h4 className="font-semibold text-sm mt-1 line-clamp-2 group-hover:underline flex-1">{post.title}</h4>
+                <span className="text-xs text-slate-400 mt-2">{post.date}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -991,9 +1044,11 @@ export const BlogPreview = ({ brandColor, postCount }: { brandColor: string; pos
 
 // ============ FOOTER PREVIEW ============
 type FooterConfig = { logo: string; description: string; columns: Array<{ id: number; title: string; links: Array<{ label: string; url: string }> }>; copyright: string; showSocialLinks: boolean };
-export const FooterPreview = ({ config, brandColor }: { config: FooterConfig; brandColor: string }) => {
+export type FooterStyle = 'columns' | 'centered' | 'minimal';
+export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange }: { config: FooterConfig; brandColor: string; selectedStyle?: FooterStyle; onStyleChange?: (style: FooterStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('columns');
+  const previewStyle = selectedStyle || 'columns';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as FooterStyle);
   const styles = [{ id: 'columns', label: 'Columns' }, { id: 'centered', label: 'Centered' }, { id: 'minimal', label: 'Minimal' }];
 
   const renderColumnsStyle = () => (
@@ -1076,9 +1131,11 @@ export const FooterPreview = ({ config, brandColor }: { config: FooterConfig; br
 
 // ============ CTA PREVIEW ============
 type CTAConfig = { title: string; description: string; buttonText: string; buttonLink: string; secondaryButtonText: string; secondaryButtonLink: string };
-export const CTAPreview = ({ config, brandColor }: { config: CTAConfig; brandColor: string }) => {
+export type CTAStyle = 'banner' | 'centered' | 'split';
+export const CTAPreview = ({ config, brandColor, selectedStyle, onStyleChange }: { config: CTAConfig; brandColor: string; selectedStyle?: CTAStyle; onStyleChange?: (style: CTAStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('banner');
+  const previewStyle = selectedStyle || 'banner';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as CTAStyle);
   const styles = [{ id: 'banner', label: 'Banner' }, { id: 'centered', label: 'Centered' }, { id: 'split', label: 'Split' }];
 
   const renderBannerStyle = () => (
@@ -1143,9 +1200,11 @@ type AboutConfig = {
   buttonText: string;
   buttonLink: string;
 };
-export const AboutPreview = ({ config, brandColor }: { config: AboutConfig; brandColor: string }) => {
+export type AboutStyle = 'split' | 'center' | 'overlay';
+export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange }: { config: AboutConfig; brandColor: string; selectedStyle?: AboutStyle; onStyleChange?: (style: AboutStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('split');
+  const previewStyle = selectedStyle || 'split';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as AboutStyle);
   const styles = [{ id: 'split', label: 'Split' }, { id: 'center', label: 'Cards' }, { id: 'overlay', label: 'Overlay' }];
 
   const renderSplitStyle = () => (
@@ -1228,9 +1287,11 @@ export const AboutPreview = ({ config, brandColor }: { config: AboutConfig; bran
 
 // ============ BENEFITS PREVIEW (Why Choose Us) ============
 type BenefitItem = { id: number; icon: string; title: string; description: string };
-export const BenefitsPreview = ({ items, brandColor }: { items: BenefitItem[]; brandColor: string }) => {
+export type BenefitsStyle = 'timeline' | 'comparison' | 'highlights';
+export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: BenefitItem[]; brandColor: string; selectedStyle?: BenefitsStyle; onStyleChange?: (style: BenefitsStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('timeline');
+  const previewStyle = selectedStyle || 'timeline';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as BenefitsStyle);
   const styles = [{ id: 'timeline', label: 'Timeline' }, { id: 'comparison', label: 'Zigzag' }, { id: 'highlights', label: 'Checklist' }];
 
   const renderTimelineStyle = () => (
@@ -1320,9 +1381,11 @@ export const BenefitsPreview = ({ items, brandColor }: { items: BenefitItem[]; b
 
 // ============ CASE STUDY / PROJECTS PREVIEW ============
 type ProjectItem = { id: number; title: string; category: string; image: string; description: string; link: string };
-export const CaseStudyPreview = ({ projects, brandColor }: { projects: ProjectItem[]; brandColor: string }) => {
+export type CaseStudyStyle = 'grid' | 'featured' | 'list';
+export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleChange }: { projects: ProjectItem[]; brandColor: string; selectedStyle?: CaseStudyStyle; onStyleChange?: (style: CaseStudyStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('grid');
+  const previewStyle = selectedStyle || 'grid';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as CaseStudyStyle);
   const styles = [{ id: 'grid', label: 'Grid' }, { id: 'featured', label: 'Featured' }, { id: 'list', label: 'List' }];
 
   const renderGridStyle = () => (
@@ -1411,9 +1474,11 @@ export const CaseStudyPreview = ({ projects, brandColor }: { projects: ProjectIt
 
 // ============ CAREER PREVIEW ============
 type JobPosition = { id: number; title: string; department: string; location: string; type: string; salary: string; description: string };
-export const CareerPreview = ({ jobs, brandColor }: { jobs: JobPosition[]; brandColor: string }) => {
+export type CareerStyle = 'cards' | 'list' | 'minimal';
+export const CareerPreview = ({ jobs, brandColor, selectedStyle, onStyleChange }: { jobs: JobPosition[]; brandColor: string; selectedStyle?: CareerStyle; onStyleChange?: (style: CareerStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('cards');
+  const previewStyle = selectedStyle || 'cards';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as CareerStyle);
   const styles = [{ id: 'cards', label: 'Cards' }, { id: 'list', label: 'List' }, { id: 'minimal', label: 'Minimal' }];
 
   const renderCardsStyle = () => (
@@ -1514,9 +1579,11 @@ type ContactConfig = {
   formFields: string[];
   socialLinks: Array<{ id: number; platform: string; url: string }>;
 };
-export const ContactPreview = ({ config, brandColor }: { config: ContactConfig; brandColor: string }) => {
+export type ContactStyle = 'split' | 'centered' | 'cards';
+export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChange }: { config: ContactConfig; brandColor: string; selectedStyle?: ContactStyle; onStyleChange?: (style: ContactStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('split');
+  const previewStyle = selectedStyle || 'split';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as ContactStyle);
   const styles = [{ id: 'split', label: 'Split' }, { id: 'centered', label: 'Centered' }, { id: 'cards', label: 'Cards' }];
 
   const renderSplitStyle = () => (

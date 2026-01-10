@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { FooterPreview } from '../../previews';
+import { FooterPreview, type FooterStyle } from '../../previews';
 
 export default function FooterCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Footer', 'Footer');
@@ -19,9 +19,10 @@ export default function FooterCreatePage() {
     copyright: '© 2024 VietAdmin. All rights reserved.',
     showSocialLinks: true
   });
+  const [style, setStyle] = useState<FooterStyle>('columns');
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, footerConfig);
+    handleSubmit(e, { ...footerConfig, style });
   };
 
   return (
@@ -68,7 +69,7 @@ export default function FooterCreatePage() {
         </CardContent>
       </Card>
 
-      <FooterPreview config={footerConfig} brandColor={brandColor} />
+      <FooterPreview config={footerConfig} brandColor={brandColor} selectedStyle={style} onStyleChange={setStyle} />
     </ComponentFormWrapper>
   );
 }

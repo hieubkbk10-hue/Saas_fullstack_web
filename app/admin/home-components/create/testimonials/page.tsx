@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2, Star } from 'lucide-react';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { TestimonialsPreview } from '../../previews';
+import { TestimonialsPreview, type TestimonialsStyle } from '../../previews';
 
 export default function TestimonialsCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Đánh giá / Review', 'Testimonials');
@@ -15,11 +15,12 @@ export default function TestimonialsCreatePage() {
     { id: 2, name: 'Trần Thị B', role: 'Manager, XYZ Ltd', content: 'Chất lượng vượt mong đợi.', avatar: '', rating: 5 }
   ]);
 
+  const [style, setStyle] = useState<TestimonialsStyle>('cards');
   const handleAddTestimonial = () => setTestimonials([...testimonials, { id: Date.now(), name: '', role: '', content: '', avatar: '', rating: 5 }]);
   const handleRemoveTestimonial = (id: number) => testimonials.length > 1 && setTestimonials(testimonials.filter(t => t.id !== id));
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { items: testimonials.map(t => ({ name: t.name, role: t.role, content: t.content, avatar: t.avatar, rating: t.rating })) });
+    handleSubmit(e, { items: testimonials.map(t => ({ name: t.name, role: t.role, content: t.content, avatar: t.avatar, rating: t.rating })), style });
   };
 
   return (
@@ -82,7 +83,7 @@ export default function TestimonialsCreatePage() {
         </CardContent>
       </Card>
 
-      <TestimonialsPreview items={testimonials} brandColor={brandColor} />
+      <TestimonialsPreview items={testimonials} brandColor={brandColor} selectedStyle={style} onStyleChange={setStyle} />
     </ComponentFormWrapper>
   );
 }

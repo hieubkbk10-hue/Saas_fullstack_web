@@ -4,7 +4,7 @@ import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { GalleryPreview } from '../../previews';
+import { GalleryPreview, type GalleryStyle } from '../../previews';
 import { MultiImageUploader, ImageItem } from '../../../components/MultiImageUploader';
 
 interface GalleryItem extends ImageItem {
@@ -36,9 +36,10 @@ function GalleryCreateContent() {
     { id: 'item-1', url: '', link: '' },
     { id: 'item-2', url: '', link: '' }
   ]);
+  const [style, setStyle] = useState<GalleryStyle>('grid');
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { items: galleryItems.map(g => ({ url: g.url, link: g.link })) });
+    handleSubmit(e, { items: galleryItems.map(g => ({ url: g.url, link: g.link })), style });
   };
 
   return (
@@ -82,7 +83,9 @@ function GalleryCreateContent() {
       <GalleryPreview 
         items={galleryItems.map((item, idx) => ({ id: idx + 1, url: item.url, link: item.link }))} 
         brandColor={brandColor} 
-        componentType={type} 
+        componentType={type}
+        selectedStyle={style}
+        onStyleChange={setStyle}
       />
     </ComponentFormWrapper>
   );

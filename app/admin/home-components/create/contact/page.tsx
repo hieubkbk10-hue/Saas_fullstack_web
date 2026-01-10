@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { ContactPreview } from '../../previews';
+import { ContactPreview, type ContactStyle } from '../../previews';
 
 export default function ContactCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Liên hệ', 'Contact');
@@ -22,9 +22,10 @@ export default function ContactCreatePage() {
       { id: 2, platform: 'zalo', url: '' }
     ]
   });
+  const [style, setStyle] = useState<ContactStyle>('split');
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, contactConfig);
+    handleSubmit(e, { ...contactConfig, style });
   };
 
   return (
@@ -90,7 +91,7 @@ export default function ContactCreatePage() {
         </CardContent>
       </Card>
 
-      <ContactPreview config={contactConfig} brandColor={brandColor} />
+      <ContactPreview config={contactConfig} brandColor={brandColor} selectedStyle={style} onStyleChange={setStyle} />
     </ComponentFormWrapper>
   );
 }

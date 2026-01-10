@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { ServicesPreview } from '../../previews';
+import { BenefitsPreview, type BenefitsStyle } from '../../previews';
 
 export default function BenefitsCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Lợi ích', 'Benefits');
@@ -15,9 +15,10 @@ export default function BenefitsCreatePage() {
     { id: 2, icon: 'Clock', title: 'Tiết kiệm thời gian', description: 'Giao hàng trong 24h' },
     { id: 3, icon: 'Shield', title: 'An toàn bảo mật', description: 'Thanh toán được mã hóa' }
   ]);
+  const [style, setStyle] = useState<BenefitsStyle>('timeline');
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { items: benefitsItems.map(b => ({ icon: b.icon, title: b.title, description: b.description })) });
+    handleSubmit(e, { items: benefitsItems.map(b => ({ icon: b.icon, title: b.title, description: b.description })), style });
   };
 
   return (
@@ -73,7 +74,7 @@ export default function BenefitsCreatePage() {
         </CardContent>
       </Card>
 
-      <ServicesPreview items={benefitsItems} brandColor={brandColor} componentType="Benefits" />
+      <BenefitsPreview items={benefitsItems} brandColor={brandColor} selectedStyle={style} onStyleChange={setStyle} />
     </ComponentFormWrapper>
   );
 }

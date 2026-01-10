@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { CTAPreview } from '../../previews';
+import { CTAPreview, type CTAStyle } from '../../previews';
 
 export default function CTACreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Kêu gọi hành động (CTA)', 'CTA');
@@ -17,9 +17,10 @@ export default function CTACreatePage() {
     secondaryButtonText: 'Tìm hiểu thêm',
     secondaryButtonLink: '/about'
   });
+  const [style, setStyle] = useState<CTAStyle>('banner');
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, ctaConfig);
+    handleSubmit(e, { ...ctaConfig, style });
   };
 
   return (
@@ -93,7 +94,7 @@ export default function CTACreatePage() {
         </CardContent>
       </Card>
 
-      <CTAPreview config={ctaConfig} brandColor={brandColor} />
+      <CTAPreview config={ctaConfig} brandColor={brandColor} selectedStyle={style} onStyleChange={setStyle} />
     </ComponentFormWrapper>
   );
 }

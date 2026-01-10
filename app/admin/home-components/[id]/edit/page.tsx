@@ -14,7 +14,19 @@ import {
 import { toast } from 'sonner';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { MultiImageUploader, ImageItem } from '../../../components/MultiImageUploader';
-import { HeroBannerPreview, HeroStyle } from '../../previews';
+import { 
+  HeroBannerPreview, HeroStyle,
+  StatsPreview, StatsStyle,
+  FaqPreview, FaqStyle,
+  CTAPreview, CTAStyle,
+  ServicesPreview, ServicesStyle,
+  BenefitsPreview, BenefitsStyle,
+  GalleryPreview, GalleryStyle,
+  ContactPreview, ContactStyle,
+  BlogPreview, BlogStyle,
+  ProductListPreview, ProductListStyle,
+  FooterPreview, FooterStyle
+} from '../../previews';
 import { useBrandColor } from '../../create/shared';
 
 const COMPONENT_TYPES = [
@@ -71,18 +83,28 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
   const [heroStyle, setHeroStyle] = useState<HeroStyle>('slider');
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+  const [galleryStyle, setGalleryStyle] = useState<GalleryStyle>('slider');
   const [statsItems, setStatsItems] = useState<{id: number, value: string, label: string}[]>([]);
+  const [statsStyle, setStatsStyle] = useState<StatsStyle>('horizontal');
   const [ctaConfig, setCtaConfig] = useState({ title: '', description: '', buttonText: '', buttonLink: '', secondaryButtonText: '', secondaryButtonLink: '' });
+  const [ctaStyle, setCtaStyle] = useState<CTAStyle>('banner');
   const [faqItems, setFaqItems] = useState<{id: number, question: string, answer: string}[]>([]);
+  const [faqStyle, setFaqStyle] = useState<FaqStyle>('accordion');
   const [aboutConfig, setAboutConfig] = useState({ subHeading: '', heading: '', description: '', image: '', buttonText: '', buttonLink: '', stats: [] as {id: number, value: string, label: string}[] });
   const [footerConfig, setFooterConfig] = useState({ description: '', copyright: '', showSocialLinks: true });
+  const [footerStyle, setFooterStyle] = useState<FooterStyle>('columns');
   const [servicesItems, setServicesItems] = useState<{id: number, icon: string, title: string, description: string}[]>([]);
+  const [servicesStyle, setServicesStyle] = useState<ServicesStyle>('grid');
+  const [benefitsStyle, setBenefitsStyle] = useState<BenefitsStyle>('timeline');
   const [testimonialsItems, setTestimonialsItems] = useState<{id: number, name: string, role: string, content: string, avatar: string, rating: number}[]>([]);
   const [pricingPlans, setPricingPlans] = useState<{id: number, name: string, price: string, period: string, features: string[], isPopular: boolean, buttonText: string, buttonLink: string}[]>([]);
   const [caseStudyProjects, setCaseStudyProjects] = useState<{id: number, title: string, category: string, image: string, description: string, link: string}[]>([]);
   const [careerJobs, setCareerJobs] = useState<{id: number, title: string, department: string, location: string, type: string, salary: string, description: string}[]>([]);
   const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true });
+  const [contactStyle, setContactStyle] = useState<ContactStyle>('split');
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
+  const [productListStyle, setProductListStyle] = useState<ProductListStyle>('grid');
+  const [blogStyle, setBlogStyle] = useState<BlogStyle>('grid');
 
   // Initialize form with component data
   useEffect(() => {
@@ -103,27 +125,34 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         case 'Partners':
         case 'TrustBadges':
           setGalleryItems(config.items?.map((item: {url: string, link: string}, i: number) => ({ id: `item-${i}`, url: item.url, link: item.link || '' })) || [{ id: 'item-1', url: '', link: '' }]);
+          setGalleryStyle((config.style as GalleryStyle) || 'slider');
           break;
         case 'Stats':
           setStatsItems(config.items?.map((item: {value: string, label: string}, i: number) => ({ id: i, value: item.value, label: item.label })) || [{ id: 1, value: '', label: '' }]);
+          setStatsStyle((config.style as StatsStyle) || 'horizontal');
           break;
         case 'CTA':
           setCtaConfig({ title: config.title || '', description: config.description || '', buttonText: config.buttonText || '', buttonLink: config.buttonLink || '', secondaryButtonText: config.secondaryButtonText || '', secondaryButtonLink: config.secondaryButtonLink || '' });
+          setCtaStyle((config.style as CTAStyle) || 'banner');
           break;
         case 'FAQ':
           setFaqItems(config.items?.map((item: {question: string, answer: string}, i: number) => ({ id: i, question: item.question, answer: item.answer })) || [{ id: 1, question: '', answer: '' }]);
+          setFaqStyle((config.style as FaqStyle) || 'accordion');
           break;
         case 'About':
           setAboutConfig({ ...config, stats: config.stats?.map((s: {value: string, label: string}, i: number) => ({ id: i, value: s.value, label: s.label })) || [] });
           break;
         case 'Footer':
           setFooterConfig({ description: config.description || '', copyright: config.copyright || '', showSocialLinks: config.showSocialLinks ?? true });
+          setFooterStyle((config.style as FooterStyle) || 'columns');
           break;
         case 'Services':
           setServicesItems(config.items?.map((item: {icon: string, title: string, description: string}, i: number) => ({ id: i, icon: item.icon, title: item.title, description: item.description })) || []);
+          setServicesStyle((config.style as ServicesStyle) || 'grid');
           break;
         case 'Benefits':
           setServicesItems(config.items?.map((item: {icon: string, title: string, description: string}, i: number) => ({ id: i, icon: item.icon, title: item.title, description: item.description })) || []);
+          setBenefitsStyle((config.style as BenefitsStyle) || 'timeline');
           break;
         case 'Testimonials':
           setTestimonialsItems(config.items?.map((item: {name: string, role: string, content: string, avatar: string, rating: number}, i: number) => ({ id: i, ...item })) || []);
@@ -139,11 +168,16 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           break;
         case 'Contact':
           setContactConfig({ address: config.address || '', phone: config.phone || '', email: config.email || '', workingHours: config.workingHours || '', showMap: config.showMap ?? true });
+          setContactStyle((config.style as ContactStyle) || 'split');
           break;
         case 'ProductList':
         case 'ServiceList':
+          setProductListConfig({ itemCount: config.itemCount || 8, sortBy: config.sortBy || 'newest' });
+          setProductListStyle((config.style as ProductListStyle) || 'grid');
+          break;
         case 'Blog':
           setProductListConfig({ itemCount: config.itemCount || 8, sortBy: config.sortBy || 'newest' });
+          setBlogStyle((config.style as BlogStyle) || 'grid');
           break;
       }
       
@@ -174,20 +208,21 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'Gallery':
       case 'Partners':
       case 'TrustBadges':
-        return { items: galleryItems.map(g => ({ url: g.url, link: g.link })) };
+        return { items: galleryItems.map(g => ({ url: g.url, link: g.link })), style: galleryStyle };
       case 'Stats':
-        return { items: statsItems.map(s => ({ value: s.value, label: s.label })) };
+        return { items: statsItems.map(s => ({ value: s.value, label: s.label })), style: statsStyle };
       case 'CTA':
-        return ctaConfig;
+        return { ...ctaConfig, style: ctaStyle };
       case 'FAQ':
-        return { items: faqItems.map(f => ({ question: f.question, answer: f.answer })) };
+        return { items: faqItems.map(f => ({ question: f.question, answer: f.answer })), style: faqStyle };
       case 'About':
         return aboutConfig;
       case 'Footer':
-        return footerConfig;
+        return { ...footerConfig, style: footerStyle };
       case 'Services':
+        return { items: servicesItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })), style: servicesStyle };
       case 'Benefits':
-        return { items: servicesItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })) };
+        return { items: servicesItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })), style: benefitsStyle };
       case 'Testimonials':
         return { items: testimonialsItems.map(t => ({ name: t.name, role: t.role, content: t.content, avatar: t.avatar, rating: t.rating })) };
       case 'Pricing':
@@ -197,11 +232,12 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'Career':
         return { jobs: careerJobs.map(j => ({ title: j.title, department: j.department, location: j.location, type: j.type, salary: j.salary, description: j.description })) };
       case 'Contact':
-        return contactConfig;
+        return { ...contactConfig, style: contactStyle };
       case 'ProductList':
       case 'ServiceList':
+        return { ...productListConfig, style: productListStyle };
       case 'Blog':
-        return productListConfig;
+        return { ...productListConfig, style: blogStyle };
       default:
         return {};
     }
@@ -307,178 +343,306 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
 
         {/* Gallery / Partners / TrustBadges */}
         {(component.type === 'Gallery' || component.type === 'Partners' || component.type === 'TrustBadges') && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-base">
-                {component.type === 'Partners' ? 'Logo đối tác' : component.type === 'TrustBadges' ? 'Chứng nhận' : 'Thư viện ảnh'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <MultiImageUploader<GalleryItem>
-                items={galleryItems}
-                onChange={setGalleryItems}
-                folder={component.type.toLowerCase()}
-                imageKey="url"
-                extraFields={component.type === 'Partners' ? [{ key: 'link', placeholder: 'Link website đối tác', type: 'url' }] : []}
-                minItems={1}
-                maxItems={20}
-                aspectRatio={component.type === 'Partners' ? 'video' : 'square'}
-                columns={component.type === 'Gallery' ? 3 : 4}
-                showReorder={true}
-                addButtonText={component.type === 'Partners' ? 'Thêm logo' : 'Thêm ảnh'}
-              />
-            </CardContent>
-          </Card>
+          <>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base">
+                  {component.type === 'Partners' ? 'Logo đối tác' : component.type === 'TrustBadges' ? 'Chứng nhận' : 'Thư viện ảnh'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MultiImageUploader<GalleryItem>
+                  items={galleryItems}
+                  onChange={setGalleryItems}
+                  folder={component.type.toLowerCase()}
+                  imageKey="url"
+                  extraFields={component.type === 'Partners' ? [{ key: 'link', placeholder: 'Link website đối tác', type: 'url' }] : []}
+                  minItems={1}
+                  maxItems={20}
+                  aspectRatio={component.type === 'Partners' ? 'video' : 'square'}
+                  columns={component.type === 'Gallery' ? 3 : 4}
+                  showReorder={true}
+                  addButtonText={component.type === 'Partners' ? 'Thêm logo' : 'Thêm ảnh'}
+                />
+              </CardContent>
+            </Card>
+            <GalleryPreview 
+              items={galleryItems.map((g, idx) => ({ id: idx + 1, url: g.url, link: g.link }))} 
+              brandColor={brandColor}
+              componentType={component.type as 'Gallery' | 'Partners' | 'TrustBadges'}
+              selectedStyle={galleryStyle}
+              onStyleChange={setGalleryStyle}
+            />
+          </>
         )}
 
         {/* Stats */}
         {component.type === 'Stats' && (
-          <Card className="mb-6">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Số liệu thống kê</CardTitle>
-              <Button type="button" variant="outline" size="sm" onClick={() => setStatsItems([...statsItems, { id: Date.now(), value: '', label: '' }])} className="gap-2">
-                <Plus size={14} /> Thêm
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {statsItems.map((item, idx) => (
-                <div key={item.id} className="flex gap-3 items-center">
-                  <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm font-medium text-slate-500">{idx + 1}</div>
-                  <Input placeholder="Số liệu (VD: 1000+)" value={item.value} onChange={(e) => setStatsItems(statsItems.map(s => s.id === item.id ? {...s, value: e.target.value} : s))} className="flex-1" />
-                  <Input placeholder="Nhãn (VD: Khách hàng)" value={item.label} onChange={(e) => setStatsItems(statsItems.map(s => s.id === item.id ? {...s, label: e.target.value} : s))} className="flex-1" />
-                  <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => statsItems.length > 1 && setStatsItems(statsItems.filter(s => s.id !== item.id))}><Trash2 size={14} /></Button>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          <>
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Số liệu thống kê</CardTitle>
+                <Button type="button" variant="outline" size="sm" onClick={() => setStatsItems([...statsItems, { id: Date.now(), value: '', label: '' }])} className="gap-2">
+                  <Plus size={14} /> Thêm
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {statsItems.map((item, idx) => (
+                  <div key={item.id} className="flex gap-3 items-center">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm font-medium text-slate-500">{idx + 1}</div>
+                    <Input placeholder="Số liệu (VD: 1000+)" value={item.value} onChange={(e) => setStatsItems(statsItems.map(s => s.id === item.id ? {...s, value: e.target.value} : s))} className="flex-1" />
+                    <Input placeholder="Nhãn (VD: Khách hàng)" value={item.label} onChange={(e) => setStatsItems(statsItems.map(s => s.id === item.id ? {...s, label: e.target.value} : s))} className="flex-1" />
+                    <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => statsItems.length > 1 && setStatsItems(statsItems.filter(s => s.id !== item.id))}><Trash2 size={14} /></Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+            <StatsPreview 
+              items={statsItems.map(s => ({ value: s.value, label: s.label }))} 
+              brandColor={brandColor}
+              selectedStyle={statsStyle}
+              onStyleChange={setStatsStyle}
+            />
+          </>
         )}
 
         {/* CTA */}
         {component.type === 'CTA' && (
-          <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">Nội dung CTA</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Tiêu đề CTA</Label>
-                <Input value={ctaConfig.title} onChange={(e) => setCtaConfig({...ctaConfig, title: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <Label>Mô tả</Label>
-                <textarea value={ctaConfig.description} onChange={(e) => setCtaConfig({...ctaConfig, description: e.target.value})} className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Text nút chính</Label><Input value={ctaConfig.buttonText} onChange={(e) => setCtaConfig({...ctaConfig, buttonText: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Liên kết</Label><Input value={ctaConfig.buttonLink} onChange={(e) => setCtaConfig({...ctaConfig, buttonLink: e.target.value})} /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Text nút phụ</Label><Input value={ctaConfig.secondaryButtonText} onChange={(e) => setCtaConfig({...ctaConfig, secondaryButtonText: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Liên kết nút phụ</Label><Input value={ctaConfig.secondaryButtonLink} onChange={(e) => setCtaConfig({...ctaConfig, secondaryButtonLink: e.target.value})} /></div>
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <Card className="mb-6">
+              <CardHeader><CardTitle className="text-base">Nội dung CTA</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Tiêu đề CTA</Label>
+                  <Input value={ctaConfig.title} onChange={(e) => setCtaConfig({...ctaConfig, title: e.target.value})} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Mô tả</Label>
+                  <textarea value={ctaConfig.description} onChange={(e) => setCtaConfig({...ctaConfig, description: e.target.value})} className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label>Text nút chính</Label><Input value={ctaConfig.buttonText} onChange={(e) => setCtaConfig({...ctaConfig, buttonText: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Liên kết</Label><Input value={ctaConfig.buttonLink} onChange={(e) => setCtaConfig({...ctaConfig, buttonLink: e.target.value})} /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label>Text nút phụ</Label><Input value={ctaConfig.secondaryButtonText} onChange={(e) => setCtaConfig({...ctaConfig, secondaryButtonText: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Liên kết nút phụ</Label><Input value={ctaConfig.secondaryButtonLink} onChange={(e) => setCtaConfig({...ctaConfig, secondaryButtonLink: e.target.value})} /></div>
+                </div>
+              </CardContent>
+            </Card>
+            <CTAPreview 
+              config={ctaConfig} 
+              brandColor={brandColor}
+              selectedStyle={ctaStyle}
+              onStyleChange={setCtaStyle}
+            />
+          </>
         )}
 
         {/* FAQ */}
         {component.type === 'FAQ' && (
-          <Card className="mb-6">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Câu hỏi thường gặp</CardTitle>
-              <Button type="button" variant="outline" size="sm" onClick={() => setFaqItems([...faqItems, { id: Date.now(), question: '', answer: '' }])} className="gap-2"><Plus size={14} /> Thêm</Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {faqItems.map((item, idx) => (
-                <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label>Câu hỏi {idx + 1}</Label>
-                    <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => faqItems.length > 1 && setFaqItems(faqItems.filter(f => f.id !== item.id))}><Trash2 size={14} /></Button>
+          <>
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Câu hỏi thường gặp</CardTitle>
+                <Button type="button" variant="outline" size="sm" onClick={() => setFaqItems([...faqItems, { id: Date.now(), question: '', answer: '' }])} className="gap-2"><Plus size={14} /> Thêm</Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {faqItems.map((item, idx) => (
+                  <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Câu hỏi {idx + 1}</Label>
+                      <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => faqItems.length > 1 && setFaqItems(faqItems.filter(f => f.id !== item.id))}><Trash2 size={14} /></Button>
+                    </div>
+                    <Input placeholder="Nhập câu hỏi..." value={item.question} onChange={(e) => setFaqItems(faqItems.map(f => f.id === item.id ? {...f, question: e.target.value} : f))} />
+                    <textarea placeholder="Nhập câu trả lời..." value={item.answer} onChange={(e) => setFaqItems(faqItems.map(f => f.id === item.id ? {...f, answer: e.target.value} : f))} className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" />
                   </div>
-                  <Input placeholder="Nhập câu hỏi..." value={item.question} onChange={(e) => setFaqItems(faqItems.map(f => f.id === item.id ? {...f, question: e.target.value} : f))} />
-                  <textarea placeholder="Nhập câu trả lời..." value={item.answer} onChange={(e) => setFaqItems(faqItems.map(f => f.id === item.id ? {...f, answer: e.target.value} : f))} className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                ))}
+              </CardContent>
+            </Card>
+            <FaqPreview 
+              items={faqItems} 
+              brandColor={brandColor}
+              selectedStyle={faqStyle}
+              onStyleChange={setFaqStyle}
+            />
+          </>
         )}
 
         {/* Footer */}
         {component.type === 'Footer' && (
-          <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">Cấu hình Footer</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2"><Label>Mô tả công ty</Label><textarea value={footerConfig.description} onChange={(e) => setFooterConfig({...footerConfig, description: e.target.value})} className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" /></div>
-              <div className="space-y-2"><Label>Copyright</Label><Input value={footerConfig.copyright} onChange={(e) => setFooterConfig({...footerConfig, copyright: e.target.value})} /></div>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" checked={footerConfig.showSocialLinks} onChange={(e) => setFooterConfig({...footerConfig, showSocialLinks: e.target.checked})} className="w-4 h-4 rounded" />
-                <Label>Hiển thị social links</Label>
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <Card className="mb-6">
+              <CardHeader><CardTitle className="text-base">Cấu hình Footer</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2"><Label>Mô tả công ty</Label><textarea value={footerConfig.description} onChange={(e) => setFooterConfig({...footerConfig, description: e.target.value})} className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" /></div>
+                <div className="space-y-2"><Label>Copyright</Label><Input value={footerConfig.copyright} onChange={(e) => setFooterConfig({...footerConfig, copyright: e.target.value})} /></div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" checked={footerConfig.showSocialLinks} onChange={(e) => setFooterConfig({...footerConfig, showSocialLinks: e.target.checked})} className="w-4 h-4 rounded" />
+                  <Label>Hiển thị social links</Label>
+                </div>
+              </CardContent>
+            </Card>
+            <FooterPreview 
+              config={{ ...footerConfig, logo: '', columns: [] }} 
+              brandColor={brandColor}
+              selectedStyle={footerStyle}
+              onStyleChange={setFooterStyle}
+            />
+          </>
         )}
 
-        {/* Services / Benefits */}
-        {(component.type === 'Services' || component.type === 'Benefits') && (
-          <Card className="mb-6">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">{component.type === 'Services' ? 'Dịch vụ' : 'Lợi ích'}</CardTitle>
-              <Button type="button" variant="outline" size="sm" onClick={() => setServicesItems([...servicesItems, { id: Date.now(), icon: 'Star', title: '', description: '' }])} className="gap-2"><Plus size={14} /> Thêm</Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {servicesItems.map((item, idx) => (
-                <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label>Mục {idx + 1}</Label>
-                    <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => servicesItems.length > 1 && setServicesItems(servicesItems.filter(s => s.id !== item.id))}><Trash2 size={14} /></Button>
+        {/* Services */}
+        {component.type === 'Services' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Dịch vụ</CardTitle>
+                <Button type="button" variant="outline" size="sm" onClick={() => setServicesItems([...servicesItems, { id: Date.now(), icon: 'Star', title: '', description: '' }])} className="gap-2"><Plus size={14} /> Thêm</Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {servicesItems.map((item, idx) => (
+                  <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Mục {idx + 1}</Label>
+                      <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => servicesItems.length > 1 && setServicesItems(servicesItems.filter(s => s.id !== item.id))}><Trash2 size={14} /></Button>
+                    </div>
+                    <Input placeholder="Tiêu đề" value={item.title} onChange={(e) => setServicesItems(servicesItems.map(s => s.id === item.id ? {...s, title: e.target.value} : s))} />
+                    <Input placeholder="Mô tả ngắn" value={item.description} onChange={(e) => setServicesItems(servicesItems.map(s => s.id === item.id ? {...s, description: e.target.value} : s))} />
                   </div>
-                  <Input placeholder="Tiêu đề" value={item.title} onChange={(e) => setServicesItems(servicesItems.map(s => s.id === item.id ? {...s, title: e.target.value} : s))} />
-                  <Input placeholder="Mô tả ngắn" value={item.description} onChange={(e) => setServicesItems(servicesItems.map(s => s.id === item.id ? {...s, description: e.target.value} : s))} />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                ))}
+              </CardContent>
+            </Card>
+            <ServicesPreview 
+              items={servicesItems} 
+              brandColor={brandColor}
+              componentType="Services"
+              selectedStyle={servicesStyle}
+              onStyleChange={setServicesStyle}
+            />
+          </>
+        )}
+
+        {/* Benefits */}
+        {component.type === 'Benefits' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Lợi ích</CardTitle>
+                <Button type="button" variant="outline" size="sm" onClick={() => setServicesItems([...servicesItems, { id: Date.now(), icon: 'Star', title: '', description: '' }])} className="gap-2"><Plus size={14} /> Thêm</Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {servicesItems.map((item, idx) => (
+                  <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Mục {idx + 1}</Label>
+                      <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => servicesItems.length > 1 && setServicesItems(servicesItems.filter(s => s.id !== item.id))}><Trash2 size={14} /></Button>
+                    </div>
+                    <Input placeholder="Tiêu đề" value={item.title} onChange={(e) => setServicesItems(servicesItems.map(s => s.id === item.id ? {...s, title: e.target.value} : s))} />
+                    <Input placeholder="Mô tả ngắn" value={item.description} onChange={(e) => setServicesItems(servicesItems.map(s => s.id === item.id ? {...s, description: e.target.value} : s))} />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+            <BenefitsPreview 
+              items={servicesItems} 
+              brandColor={brandColor}
+              selectedStyle={benefitsStyle}
+              onStyleChange={setBenefitsStyle}
+            />
+          </>
         )}
 
         {/* Contact */}
         {component.type === 'Contact' && (
-          <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">Thông tin liên hệ</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Địa chỉ</Label><Input value={contactConfig.address} onChange={(e) => setContactConfig({...contactConfig, address: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Số điện thoại</Label><Input value={contactConfig.phone} onChange={(e) => setContactConfig({...contactConfig, phone: e.target.value})} /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Email</Label><Input value={contactConfig.email} onChange={(e) => setContactConfig({...contactConfig, email: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Giờ làm việc</Label><Input value={contactConfig.workingHours} onChange={(e) => setContactConfig({...contactConfig, workingHours: e.target.value})} /></div>
-              </div>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" checked={contactConfig.showMap} onChange={(e) => setContactConfig({...contactConfig, showMap: e.target.checked})} className="w-4 h-4 rounded" />
-                <Label>Hiển thị bản đồ</Label>
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <Card className="mb-6">
+              <CardHeader><CardTitle className="text-base">Thông tin liên hệ</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label>Địa chỉ</Label><Input value={contactConfig.address} onChange={(e) => setContactConfig({...contactConfig, address: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Số điện thoại</Label><Input value={contactConfig.phone} onChange={(e) => setContactConfig({...contactConfig, phone: e.target.value})} /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label>Email</Label><Input value={contactConfig.email} onChange={(e) => setContactConfig({...contactConfig, email: e.target.value})} /></div>
+                  <div className="space-y-2"><Label>Giờ làm việc</Label><Input value={contactConfig.workingHours} onChange={(e) => setContactConfig({...contactConfig, workingHours: e.target.value})} /></div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" checked={contactConfig.showMap} onChange={(e) => setContactConfig({...contactConfig, showMap: e.target.checked})} className="w-4 h-4 rounded" />
+                  <Label>Hiển thị bản đồ</Label>
+                </div>
+              </CardContent>
+            </Card>
+            <ContactPreview 
+              config={{ ...contactConfig, mapEmbed: '', formFields: [], socialLinks: [] }} 
+              brandColor={brandColor}
+              selectedStyle={contactStyle}
+              onStyleChange={setContactStyle}
+            />
+          </>
         )}
 
-        {/* ProductList/Blog */}
-        {(component.type === 'ProductList' || component.type === 'ServiceList' || component.type === 'Blog') && (
-          <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">Nguồn dữ liệu</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Số lượng hiển thị</Label>
-                  <Input type="number" value={productListConfig.itemCount} onChange={(e) => setProductListConfig({...productListConfig, itemCount: parseInt(e.target.value) || 8})} />
+        {/* ProductList/ServiceList */}
+        {(component.type === 'ProductList' || component.type === 'ServiceList') && (
+          <>
+            <Card className="mb-6">
+              <CardHeader><CardTitle className="text-base">Nguồn dữ liệu</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Số lượng hiển thị</Label>
+                    <Input type="number" value={productListConfig.itemCount} onChange={(e) => setProductListConfig({...productListConfig, itemCount: parseInt(e.target.value) || 8})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sắp xếp theo</Label>
+                    <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={productListConfig.sortBy} onChange={(e) => setProductListConfig({...productListConfig, sortBy: e.target.value})}>
+                      <option value="newest">Mới nhất</option>
+                      <option value="bestseller">Bán chạy nhất</option>
+                      <option value="random">Ngẫu nhiên</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Sắp xếp theo</Label>
-                  <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={productListConfig.sortBy} onChange={(e) => setProductListConfig({...productListConfig, sortBy: e.target.value})}>
-                    <option value="newest">Mới nhất</option>
-                    <option value="bestseller">Bán chạy nhất</option>
-                    <option value="random">Ngẫu nhiên</option>
-                  </select>
+              </CardContent>
+            </Card>
+            <ProductListPreview 
+              brandColor={brandColor}
+              itemCount={productListConfig.itemCount}
+              componentType={component.type as 'ProductList' | 'ServiceList'}
+              selectedStyle={productListStyle}
+              onStyleChange={setProductListStyle}
+            />
+          </>
+        )}
+
+        {/* Blog */}
+        {component.type === 'Blog' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader><CardTitle className="text-base">Nguồn dữ liệu</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Số lượng hiển thị</Label>
+                    <Input type="number" value={productListConfig.itemCount} onChange={(e) => setProductListConfig({...productListConfig, itemCount: parseInt(e.target.value) || 8})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sắp xếp theo</Label>
+                    <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={productListConfig.sortBy} onChange={(e) => setProductListConfig({...productListConfig, sortBy: e.target.value})}>
+                      <option value="newest">Mới nhất</option>
+                      <option value="bestseller">Bán chạy nhất</option>
+                      <option value="random">Ngẫu nhiên</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+            <BlogPreview 
+              brandColor={brandColor}
+              postCount={productListConfig.itemCount}
+              selectedStyle={blogStyle}
+              onStyleChange={setBlogStyle}
+            />
+          </>
         )}
 
         <div className="flex justify-end gap-3">

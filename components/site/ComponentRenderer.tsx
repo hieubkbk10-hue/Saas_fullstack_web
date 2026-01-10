@@ -4,7 +4,7 @@ import React from 'react';
 import { useBrandColor } from './hooks';
 import { 
   LayoutTemplate, Package, FileText, HelpCircle, MousePointerClick, 
-  Users, Star, Phone, Briefcase, Image as ImageIcon
+  Users, Star, Phone, Briefcase, Image as ImageIcon, Check
 } from 'lucide-react';
 
 interface HomeComponent {
@@ -33,8 +33,9 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
     case 'About':
       return <AboutSection config={config} brandColor={brandColor} title={title} />;
     case 'Services':
-    case 'Benefits':
       return <ServicesSection config={config} brandColor={brandColor} title={title} />;
+    case 'Benefits':
+      return <BenefitsSection config={config} brandColor={brandColor} title={title} />;
     case 'FAQ':
       return <FAQSection config={config} brandColor={brandColor} title={title} />;
     case 'CTA':
@@ -51,8 +52,9 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
       return <PricingSection config={config} brandColor={brandColor} title={title} />;
     case 'ProductList':
     case 'ServiceList':
-    case 'Blog':
       return <ProductListSection config={config} brandColor={brandColor} title={title} type={type} />;
+    case 'Blog':
+      return <BlogSection config={config} brandColor={brandColor} title={title} />;
     case 'Career':
       return <CareerSection config={config} brandColor={brandColor} title={title} />;
     case 'CaseStudy':
@@ -224,17 +226,58 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
 }
 
 // ============ STATS SECTION ============
+type StatsStyle = 'horizontal' | 'cards' | 'icons';
 function StatsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ value: string; label: string }>) || [];
+  const style = (config.style as StatsStyle) || 'horizontal';
 
+  // Style 1: Horizontal (thanh ngang)
+  if (style === 'horizontal') {
+    return (
+      <section className="py-16 px-4" style={{ backgroundColor: brandColor }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-white">
+            {items.map((item, idx) => (
+              <div key={idx}>
+                <div className="text-3xl md:text-4xl font-bold mb-2">{item.value}</div>
+                <div className="text-sm opacity-80">{item.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Cards
+  if (style === 'cards') {
+    return (
+      <section className="py-16 px-4" style={{ backgroundColor: `${brandColor}08` }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {items.map((item, idx) => (
+              <div key={idx} className="bg-white rounded-xl p-6 shadow-sm border border-slate-100 text-center">
+                <div className="text-3xl font-bold mb-2" style={{ color: brandColor }}>{item.value}</div>
+                <div className="text-sm text-slate-500">{item.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Icons (circles)
   return (
-    <section className="py-16 px-4" style={{ backgroundColor: brandColor }}>
+    <section className="py-16 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-white">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {items.map((item, idx) => (
-            <div key={idx}>
-              <div className="text-3xl md:text-4xl font-bold mb-2">{item.value}</div>
-              <div className="text-sm opacity-80">{item.label}</div>
+            <div key={idx} className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4 text-white text-2xl font-bold" style={{ backgroundColor: brandColor }}>
+                {item.value}
+              </div>
+              <div className="text-sm text-slate-600">{item.label}</div>
             </div>
           ))}
         </div>
@@ -303,26 +346,158 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
 }
 
 // ============ SERVICES SECTION ============
+type ServicesStyle = 'grid' | 'list' | 'icons';
 function ServicesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
+  const style = (config.style as ServicesStyle) || 'grid';
 
+  // Style 1: Grid
+  if (style === 'grid') {
+    return (
+      <section className="py-16 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {items.map((item, idx) => (
+              <div key={idx} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}15` }}>
+                  <Briefcase size={24} style={{ color: brandColor }} />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-slate-900">{item.title}</h3>
+                <p className="text-slate-600 text-sm">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: List
+  if (style === 'list') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="space-y-6">
+            {items.map((item, idx) => (
+              <div key={idx} className="flex gap-4 items-start p-4 rounded-xl hover:bg-slate-50 transition-colors">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold" style={{ backgroundColor: brandColor }}>{idx + 1}</div>
+                <div>
+                  <h4 className="font-semibold mb-1 text-slate-900">{item.title}</h4>
+                  <p className="text-sm text-slate-500">{item.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Icons center
   return (
-    <section className="py-16 px-4 bg-slate-50">
+    <section className="py-16 px-4" style={{ backgroundColor: `${brandColor}05` }}>
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {items.map((item, idx) => (
-            <div key={idx} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-              <div 
-                className="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
-                style={{ backgroundColor: `${brandColor}15` }}
-              >
-                <Briefcase size={24} style={{ color: brandColor }} />
+            <div key={idx} className="text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: brandColor }}>
+                <Briefcase size={28} className="text-white" />
               </div>
-              <h3 className="text-lg font-semibold mb-2 text-slate-900">{item.title}</h3>
-              <p className="text-slate-600 text-sm">{item.description}</p>
+              <h4 className="font-semibold mb-1 text-slate-900">{item.title}</h4>
+              <p className="text-xs text-slate-500">{item.description}</p>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============ BENEFITS SECTION ============
+type BenefitsStyle = 'timeline' | 'comparison' | 'highlights';
+function BenefitsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
+  const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
+  const style = (config.style as BenefitsStyle) || 'timeline';
+
+  // Style 1: Timeline
+  if (style === 'timeline') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="relative">
+            <div className="absolute left-6 top-0 bottom-0 w-0.5" style={{ backgroundColor: `${brandColor}30` }}></div>
+            <div className="space-y-8">
+              {items.map((item, idx) => (
+                <div key={idx} className="relative flex gap-6 pl-2">
+                  <div className="relative z-10 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>{idx + 1}</div>
+                  </div>
+                  <div className="flex-1 bg-white rounded-xl p-5 border shadow-sm">
+                    <h4 className="font-semibold mb-2 text-slate-900">{item.title}</h4>
+                    <p className="text-sm text-slate-500">{item.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Comparison (Zigzag)
+  if (style === 'comparison') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="space-y-8">
+            {items.map((item, idx) => (
+              <div key={idx} className={`flex items-center gap-8 ${idx % 2 === 1 ? 'flex-row-reverse' : ''}`}>
+                <div className="flex-shrink-0 w-24 h-24 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
+                  <Star size={40} style={{ color: brandColor }} />
+                </div>
+                <div className={`flex-1 ${idx % 2 === 1 ? 'text-right' : ''}`}>
+                  <h4 className="text-xl font-semibold mb-2 text-slate-900">{item.title}</h4>
+                  <p className="text-slate-500">{item.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Highlights (Checklist)
+  return (
+    <section className="py-16 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="rounded-2xl overflow-hidden flex flex-col md:flex-row">
+          <div className="p-8 text-white md:w-2/5" style={{ backgroundColor: brandColor }}>
+            <p className="text-sm opacity-80 mb-2">TẠI SAO CHỌN</p>
+            <h2 className="text-3xl font-bold mb-4">{title}</h2>
+            <p className="opacity-80">Những lý do khiến bạn tin tưởng lựa chọn dịch vụ của chúng tôi</p>
+          </div>
+          <div className="bg-white p-8 flex-1">
+            <ul className="space-y-4">
+              {items.map((item, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: `${brandColor}15` }}>
+                    <Check size={14} style={{ color: brandColor }} />
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">{item.title}</h4>
+                    <p className="text-sm text-slate-500 mt-0.5">{item.description}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </section>
@@ -330,36 +505,81 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
 }
 
 // ============ FAQ SECTION ============
+type FaqStyle = 'accordion' | 'cards' | 'two-column';
 function FAQSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ question: string; answer: string }>) || [];
+  const style = (config.style as FaqStyle) || 'accordion';
   const [openIndex, setOpenIndex] = React.useState<number | null>(0);
 
+  // Style 1: Accordion
+  if (style === 'accordion') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="space-y-4">
+            {items.map((item, idx) => (
+              <div key={idx} className="border border-slate-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
+                  className="w-full px-6 py-4 text-left flex items-center justify-between font-medium text-slate-900 hover:bg-slate-50"
+                >
+                  {item.question}
+                  <span className={`transition-transform ${openIndex === idx ? 'rotate-180' : ''}`} style={{ color: brandColor }}>▼</span>
+                </button>
+                {openIndex === idx && (
+                  <div className="px-6 py-4 bg-slate-50 text-slate-600 border-t">{item.answer}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Cards
+  if (style === 'cards') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            {items.map((item, idx) => (
+              <div key={idx} className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold" style={{ backgroundColor: brandColor }}>?</div>
+                  <div>
+                    <h4 className="font-semibold mb-2 text-slate-900">{item.question}</h4>
+                    <p className="text-sm text-slate-500">{item.answer}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Two Column
   return (
     <section className="py-16 px-4">
-      <div className="max-w-3xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-        <div className="space-y-4">
-          {items.map((item, idx) => (
-            <div key={idx} className="border border-slate-200 rounded-lg overflow-hidden">
-              <button
-                onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
-                className="w-full px-6 py-4 text-left flex items-center justify-between font-medium text-slate-900 hover:bg-slate-50"
-              >
-                {item.question}
-                <span 
-                  className={`transition-transform ${openIndex === idx ? 'rotate-180' : ''}`}
-                  style={{ color: brandColor }}
-                >
-                  ▼
-                </span>
-              </button>
-              {openIndex === idx && (
-                <div className="px-6 py-4 bg-slate-50 text-slate-600 border-t">
-                  {item.answer}
-                </div>
-              )}
-            </div>
-          ))}
+      <div className="max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-12">
+          <div>
+            <h2 className="text-3xl font-bold mb-4 text-slate-900" style={{ color: brandColor }}>{title}</h2>
+            <p className="text-slate-500 mb-6">Tìm câu trả lời cho các thắc mắc phổ biến của bạn</p>
+            <button className="px-6 py-3 rounded-lg text-white" style={{ backgroundColor: brandColor }}>Liên hệ hỗ trợ</button>
+          </div>
+          <div className="space-y-6">
+            {items.map((item, idx) => (
+              <div key={idx} className="border-b border-slate-200 pb-4">
+                <h4 className="font-semibold mb-2 text-slate-900">{item.question}</h4>
+                <p className="text-sm text-slate-500">{item.answer}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -367,38 +587,72 @@ function FAQSection({ config, brandColor, title }: { config: Record<string, unkn
 }
 
 // ============ CTA SECTION ============
+type CTAStyle = 'banner' | 'centered' | 'split';
 function CTASection({ config, brandColor }: { config: Record<string, unknown>; brandColor: string }) {
-  const { title, description, buttonText, buttonLink, secondaryButtonText, secondaryButtonLink } = config as {
+  const { title, description, buttonText, buttonLink, secondaryButtonText, secondaryButtonLink, style: ctaStyle } = config as {
     title?: string;
     description?: string;
     buttonText?: string;
     buttonLink?: string;
     secondaryButtonText?: string;
     secondaryButtonLink?: string;
+    style?: CTAStyle;
   };
+  const style = ctaStyle || 'banner';
 
+  // Style 1: Banner (default)
+  if (style === 'banner') {
+    return (
+      <section className="py-16 px-4" style={{ backgroundColor: brandColor }}>
+        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="text-white text-center md:text-left">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
+            <p className="opacity-90">{description}</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4">
+            {buttonText && (
+              <a href={buttonLink || '#'} className="px-8 py-3 bg-white rounded-lg font-medium hover:bg-slate-100 transition-colors" style={{ color: brandColor }}>{buttonText}</a>
+            )}
+            {secondaryButtonText && (
+              <a href={secondaryButtonLink || '#'} className="px-8 py-3 border-2 border-white/50 text-white rounded-lg font-medium hover:bg-white/10">{secondaryButtonText}</a>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Centered
+  if (style === 'centered') {
+    return (
+      <section className="py-20 px-4" style={{ backgroundColor: `${brandColor}10` }}>
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: brandColor }}>{title || 'Sẵn sàng bắt đầu?'}</h2>
+          <p className="text-slate-600 text-lg mb-8">{description}</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {buttonText && (
+              <a href={buttonLink || '#'} className="px-8 py-3 rounded-lg font-medium text-white" style={{ backgroundColor: brandColor }}>{buttonText}</a>
+            )}
+            {secondaryButtonText && (
+              <a href={secondaryButtonLink || '#'} className="px-8 py-3 border-2 rounded-lg font-medium" style={{ borderColor: brandColor, color: brandColor }}>{secondaryButtonText}</a>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Split
   return (
-    <section className="py-16 px-4" style={{ backgroundColor: brandColor }}>
-      <div className="max-w-4xl mx-auto text-center text-white">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4">{title || 'Sẵn sàng bắt đầu?'}</h2>
-        <p className="text-lg opacity-90 mb-8">{description}</p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+    <section className="py-16 px-4" style={{ background: `linear-gradient(135deg, ${brandColor} 50%, ${brandColor}dd 100%)` }}>
+      <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+        <div className="text-white text-center md:text-left">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
+          <p className="opacity-90">{description}</p>
+        </div>
+        <div className="flex justify-center md:justify-end">
           {buttonText && (
-            <a
-              href={buttonLink || '#'}
-              className="px-8 py-3 bg-white rounded-lg font-medium hover:bg-slate-100 transition-colors"
-              style={{ color: brandColor }}
-            >
-              {buttonText}
-            </a>
-          )}
-          {secondaryButtonText && (
-            <a
-              href={secondaryButtonLink || '#'}
-              className="px-8 py-3 border-2 border-white rounded-lg font-medium hover:bg-white/10 transition-colors"
-            >
-              {secondaryButtonText}
-            </a>
+            <a href={buttonLink || '#'} className="px-8 py-3 bg-white rounded-lg font-medium shadow-lg" style={{ color: brandColor }}>{buttonText}</a>
           )}
         </div>
       </div>
@@ -448,64 +702,122 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
 }
 
 // ============ CONTACT SECTION ============
+type ContactStyle = 'split' | 'centered' | 'cards';
 function ContactSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const { address, phone, email, workingHours } = config as {
+  const { address, phone, email, workingHours, style: contactStyle } = config as {
     address?: string;
     phone?: string;
     email?: string;
     workingHours?: string;
+    style?: ContactStyle;
   };
+  const style = contactStyle || 'split';
 
+  // Style 1: Split (form bên phải)
+  if (style === 'split') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="grid md:grid-cols-2 gap-12">
+            <div className="space-y-6">
+              {phone && (
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}><Phone size={24} style={{ color: brandColor }} /></div>
+                  <div><div className="text-sm text-slate-500">Điện thoại</div><div className="font-medium">{phone}</div></div>
+                </div>
+              )}
+              {email && (
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}><Phone size={24} style={{ color: brandColor }} /></div>
+                  <div><div className="text-sm text-slate-500">Email</div><div className="font-medium">{email}</div></div>
+                </div>
+              )}
+              {address && (
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}><Phone size={24} style={{ color: brandColor }} /></div>
+                  <div><div className="text-sm text-slate-500">Địa chỉ</div><div className="font-medium">{address}</div></div>
+                </div>
+              )}
+            </div>
+            <div className="bg-slate-100 rounded-xl p-8">
+              <form className="space-y-4">
+                <input type="text" placeholder="Họ tên" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2" />
+                <input type="email" placeholder="Email" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2" />
+                <textarea placeholder="Nội dung" rows={4} className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2"></textarea>
+                <button type="submit" className="w-full py-3 text-white rounded-lg font-medium hover:opacity-90" style={{ backgroundColor: brandColor }}>Gửi tin nhắn</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Centered
+  if (style === 'centered') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-4 text-slate-900">{title}</h2>
+          <p className="text-slate-500 mb-8">Chúng tôi luôn sẵn sàng hỗ trợ bạn</p>
+          <div className="bg-white rounded-2xl p-8 border shadow-sm">
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              {phone && (
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: `${brandColor}15` }}><Phone size={20} style={{ color: brandColor }} /></div>
+                  <h4 className="font-medium text-sm mb-1">Điện thoại</h4>
+                  <p className="text-xs text-slate-500">{phone}</p>
+                </div>
+              )}
+              {email && (
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: `${brandColor}15` }}><Phone size={20} style={{ color: brandColor }} /></div>
+                  <h4 className="font-medium text-sm mb-1">Email</h4>
+                  <p className="text-xs text-slate-500">{email}</p>
+                </div>
+              )}
+              {address && (
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: `${brandColor}15` }}><Phone size={20} style={{ color: brandColor }} /></div>
+                  <h4 className="font-medium text-sm mb-1">Địa chỉ</h4>
+                  <p className="text-xs text-slate-500">{address}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Cards
   return (
     <section className="py-16 px-4">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-        <div className="grid md:grid-cols-2 gap-12">
-          <div className="space-y-6">
-            {phone && (
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
-                  <Phone size={24} style={{ color: brandColor }} />
-                </div>
-                <div>
-                  <div className="text-sm text-slate-500">Điện thoại</div>
-                  <div className="font-medium">{phone}</div>
-                </div>
-              </div>
-            )}
-            {email && (
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
-                  <Phone size={24} style={{ color: brandColor }} />
-                </div>
-                <div>
-                  <div className="text-sm text-slate-500">Email</div>
-                  <div className="font-medium">{email}</div>
-                </div>
-              </div>
-            )}
-            {address && (
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
-                  <Phone size={24} style={{ color: brandColor }} />
-                </div>
-                <div>
-                  <div className="text-sm text-slate-500">Địa chỉ</div>
-                  <div className="font-medium">{address}</div>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="bg-slate-100 rounded-xl p-8">
-            <form className="space-y-4">
-              <input type="text" placeholder="Họ tên" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2" style={{ '--tw-ring-color': brandColor } as React.CSSProperties} />
-              <input type="email" placeholder="Email" className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2" />
-              <textarea placeholder="Nội dung" rows={4} className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2"></textarea>
-              <button type="submit" className="w-full py-3 text-white rounded-lg font-medium hover:opacity-90" style={{ backgroundColor: brandColor }}>
-                Gửi tin nhắn
-              </button>
-            </form>
-          </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {phone && (
+            <div className="bg-white rounded-xl p-6 border text-center">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${brandColor}15` }}><Phone size={20} style={{ color: brandColor }} /></div>
+              <h4 className="font-medium mb-1">Điện thoại</h4>
+              <p className="text-sm text-slate-500">{phone}</p>
+            </div>
+          )}
+          {email && (
+            <div className="bg-white rounded-xl p-6 border text-center">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${brandColor}15` }}><Phone size={20} style={{ color: brandColor }} /></div>
+              <h4 className="font-medium mb-1">Email</h4>
+              <p className="text-sm text-slate-500">{email}</p>
+            </div>
+          )}
+          {address && (
+            <div className="bg-white rounded-xl p-6 border text-center">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${brandColor}15` }}><Phone size={20} style={{ color: brandColor }} /></div>
+              <h4 className="font-medium mb-1">Địa chỉ</h4>
+              <p className="text-sm text-slate-500">{address}</p>
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -513,26 +825,68 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
 }
 
 // ============ GALLERY SECTION ============
+type GalleryStyle = 'slider' | 'grid' | 'marquee';
 function GallerySection({ config, brandColor, title, type }: { config: Record<string, unknown>; brandColor: string; title: string; type: string }) {
   const items = (config.items as Array<{ url: string; link?: string }>) || [];
-  const cols = type === 'Partners' ? 'grid-cols-3 md:grid-cols-6' : 'grid-cols-2 md:grid-cols-4';
+  const style = (config.style as GalleryStyle) || 'grid';
+  const [currentIndex, setCurrentIndex] = React.useState(0);
 
+  // Style 1: Slider
+  if (style === 'slider') {
+    return (
+      <section className="py-16 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="relative">
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+              {items.map((item, idx) => (
+                <a key={idx} href={item.link || '#'} className="flex-shrink-0 w-32 h-20 bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow flex items-center justify-center p-2 border">
+                  {item.url ? <img src={item.url} alt="" className="max-w-full max-h-full object-contain" /> : <ImageIcon size={24} className="text-slate-300" />}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Grid (default)
+  if (style === 'grid') {
+    const cols = type === 'Partners' ? 'grid-cols-3 md:grid-cols-6' : 'grid-cols-2 md:grid-cols-4';
+    return (
+      <section className="py-16 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className={`grid ${cols} gap-6`}>
+            {items.map((item, idx) => (
+              <a key={idx} href={item.link || '#'} className="block aspect-video bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                {item.url ? <img src={item.url} alt="" className="w-full h-full object-contain p-4" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon size={32} className="text-slate-300" /></div>}
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Split/Marquee
   return (
-    <section className="py-16 px-4 bg-slate-50">
+    <section className="py-16 px-4" style={{ backgroundColor: `${brandColor}05` }}>
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-        <div className={`grid ${cols} gap-6`}>
-          {items.map((item, idx) => (
-            <a key={idx} href={item.link || '#'} className="block aspect-video bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              {item.url ? (
-                <img src={item.url} alt="" className="w-full h-full object-contain p-4" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <ImageIcon size={32} className="text-slate-300" />
-                </div>
-              )}
-            </a>
-          ))}
+        <div className="flex flex-col md:flex-row gap-8 items-center">
+          <div className="md:w-1/3 text-center md:text-left">
+            <p className="text-sm font-semibold uppercase tracking-wider mb-2" style={{ color: brandColor }}>{type === 'Partners' ? 'Đối tác' : type === 'TrustBadges' ? 'Chứng nhận' : 'Bộ sưu tập'}</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-3">{title}</h2>
+            <p className="text-sm text-slate-500">Được tin tưởng bởi các thương hiệu hàng đầu</p>
+          </div>
+          <div className="flex-1 grid grid-cols-3 gap-4">
+            {items.slice(0, 6).map((item, idx) => (
+              <a key={idx} href={item.link || '#'} className="aspect-[3/2] bg-white rounded-xl border flex items-center justify-center p-3 group">
+                {item.url ? <img src={item.url} alt="" className="max-w-full max-h-full object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all" /> : <ImageIcon size={22} className="text-slate-300" />}
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -587,29 +941,219 @@ function PricingSection({ config, brandColor, title }: { config: Record<string, 
   );
 }
 
-// ============ PRODUCT LIST SECTION (Placeholder) ============
+// ============ PRODUCT LIST SECTION ============
+type ProductListStyle = 'grid' | 'list' | 'carousel';
 function ProductListSection({ config, brandColor, title, type }: { config: Record<string, unknown>; brandColor: string; title: string; type: string }) {
+  const style = (config.style as ProductListStyle) || 'grid';
+  const itemCount = (config.itemCount as number) || 4;
+  const mockItems = Array.from({ length: Math.min(itemCount, 8) }, (_, i) => ({ id: i + 1 }));
+
+  // Style 1: Grid
+  if (style === 'grid') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {mockItems.map(item => (
+              <div key={item.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div className="aspect-square bg-slate-100 flex items-center justify-center">
+                  <Package size={48} className="text-slate-300" />
+                </div>
+                <div className="p-4">
+                  <div className="h-4 bg-slate-200 rounded mb-2"></div>
+                  <div className="h-3 bg-slate-100 rounded w-2/3"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <a href="#" className="inline-flex px-6 py-3 rounded-lg font-medium" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Xem tất cả</a>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: List
+  if (style === 'list') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="space-y-4">
+            {mockItems.map(item => (
+              <div key={item.id} className="bg-white rounded-xl border flex items-center p-4 gap-4">
+                <div className="w-20 h-20 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Package size={24} className="text-slate-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="h-4 bg-slate-200 rounded mb-2 w-1/2"></div>
+                  <div className="h-3 bg-slate-100 rounded w-3/4"></div>
+                </div>
+                <button className="px-4 py-2 rounded-lg text-white text-sm flex-shrink-0" style={{ backgroundColor: brandColor }}>Mua</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Carousel
   return (
     <section className="py-16 px-4">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map(idx => (
-            <div key={idx} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+          {mockItems.map(item => (
+            <div key={item.id} className="flex-shrink-0 w-52 bg-white rounded-xl overflow-hidden shadow-sm">
               <div className="aspect-square bg-slate-100 flex items-center justify-center">
-                <Package size={48} className="text-slate-300" />
+                <Package size={32} className="text-slate-300" />
               </div>
-              <div className="p-4">
+              <div className="p-3">
                 <div className="h-4 bg-slate-200 rounded mb-2"></div>
                 <div className="h-3 bg-slate-100 rounded w-2/3"></div>
               </div>
             </div>
           ))}
         </div>
-        <div className="text-center mt-8">
-          <a href="#" className="inline-flex px-6 py-3 rounded-lg font-medium" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-            Xem tất cả
-          </a>
+      </div>
+    </section>
+  );
+}
+
+// ============ BLOG SECTION ============
+type BlogStyle = 'grid' | 'list' | 'featured';
+function BlogSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
+  const style = (config.style as BlogStyle) || 'grid';
+  const itemCount = (config.itemCount as number) || 6;
+  const mockPosts = Array.from({ length: Math.min(itemCount, 6) }, (_, i) => ({ 
+    id: i + 1, 
+    title: `Bài viết mẫu ${i + 1}`, 
+    excerpt: 'Mô tả ngắn về nội dung bài viết...', 
+    date: '01/01/2024', 
+    category: 'Tin tức' 
+  }));
+  const showViewAll = itemCount > 3;
+
+  // Style 1: Grid
+  if (style === 'grid') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {mockPosts.slice(0, 3).map(post => (
+              <div key={post.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border">
+                <div className="aspect-video bg-slate-100 flex items-center justify-center">
+                  <FileText size={48} className="text-slate-300" />
+                </div>
+                <div className="p-4">
+                  <span className="text-xs font-medium" style={{ color: brandColor }}>{post.category}</span>
+                  <h4 className="font-semibold mt-1 mb-2 line-clamp-2">{post.title}</h4>
+                  <p className="text-sm text-slate-500 line-clamp-2">{post.excerpt}</p>
+                  <div className="flex items-center justify-between mt-3 text-xs text-slate-400">
+                    <span>{post.date}</span>
+                    <span style={{ color: brandColor }}>Đọc thêm →</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {showViewAll && (
+            <div className="text-center mt-8">
+              <a href="#" className="inline-flex px-6 py-3 rounded-lg font-medium" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Xem tất cả</a>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: List
+  if (style === 'list') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="space-y-4">
+            {mockPosts.slice(0, 4).map(post => (
+              <div key={post.id} className="bg-white rounded-xl overflow-hidden border flex flex-col md:flex-row md:items-center hover:shadow-md transition-shadow">
+                <div className="aspect-video md:w-40 md:h-24 bg-slate-100 flex items-center justify-center flex-shrink-0">
+                  <FileText size={24} className="text-slate-300" />
+                </div>
+                <div className="p-4 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category}</span>
+                    <span className="text-xs text-slate-400">{post.date}</span>
+                  </div>
+                  <h4 className="font-semibold">{post.title}</h4>
+                  <p className="text-sm text-slate-500 mt-1">{post.excerpt}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {showViewAll && (
+            <div className="text-center mt-8">
+              <a href="#" className="inline-flex px-6 py-3 rounded-lg font-medium" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Xem tất cả</a>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Featured (modern hero + grid layout)
+  return (
+    <section className="py-16 px-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-wider mb-1" style={{ color: brandColor }}>Blog</p>
+            <h2 className="text-3xl font-bold text-slate-900">{title}</h2>
+          </div>
+          {showViewAll && (
+            <a href="#" className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all" style={{ color: brandColor }}>
+              Xem tất cả <span>→</span>
+            </a>
+          )}
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {/* Main Featured Post - chiếm 2/3 */}
+          <div className="md:col-span-2 group">
+            <div className="relative rounded-2xl overflow-hidden bg-slate-900">
+              <div className="aspect-[16/10] bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
+                <FileText size={64} className="text-slate-600" />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+              <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-medium mb-3" style={{ backgroundColor: brandColor }}>{mockPosts[0].category}</span>
+                <h3 className="text-2xl font-bold mb-2 group-hover:underline">{mockPosts[0].title}</h3>
+                <p className="text-white/80 line-clamp-2 mb-3">{mockPosts[0].excerpt}</p>
+                <div className="flex items-center gap-3 text-sm text-white/60">
+                  <span>{mockPosts[0].date}</span>
+                  <span>•</span>
+                  <span>5 phút đọc</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Secondary Posts - chiếm 1/3, xếp dọc */}
+          <div className="flex flex-col gap-4">
+            {mockPosts.slice(1, 3).map(post => (
+              <div key={post.id} className="bg-white rounded-xl border overflow-hidden flex-1 flex flex-col group hover:shadow-md transition-shadow">
+                <div className="h-28 bg-slate-100 flex items-center justify-center">
+                  <FileText size={32} className="text-slate-300" />
+                </div>
+                <div className="p-4 flex-1 flex flex-col">
+                  <span className="text-xs font-medium" style={{ color: brandColor }}>{post.category}</span>
+                  <h4 className="font-semibold mt-1 line-clamp-2 group-hover:underline flex-1">{post.title}</h4>
+                  <span className="text-xs text-slate-400 mt-2">{post.date}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

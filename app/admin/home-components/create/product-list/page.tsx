@@ -4,7 +4,7 @@ import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { ProductListPreview, BlogPreview } from '../../previews';
+import { ProductListPreview, BlogPreview, type BlogStyle, type ProductListStyle } from '../../previews';
 
 function ProductListCreateContent() {
   const searchParams = useSearchParams();
@@ -21,9 +21,12 @@ function ProductListCreateContent() {
   
   const [itemCount, setItemCount] = useState(8);
   const [sortBy, setSortBy] = useState('newest');
+  const [blogStyle, setBlogStyle] = useState<BlogStyle>('grid');
+  const [productStyle, setProductStyle] = useState<ProductListStyle>('grid');
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { itemCount, sortBy });
+    const style = type === 'Blog' ? blogStyle : productStyle;
+    handleSubmit(e, { itemCount, sortBy, style });
   };
 
   return (
@@ -67,9 +70,9 @@ function ProductListCreateContent() {
       </Card>
 
       {type === 'Blog' ? (
-        <BlogPreview brandColor={brandColor} postCount={itemCount} />
+        <BlogPreview brandColor={brandColor} postCount={itemCount} selectedStyle={blogStyle} onStyleChange={setBlogStyle} />
       ) : (
-        <ProductListPreview brandColor={brandColor} itemCount={itemCount} componentType={type as 'ProductList' | 'ServiceList'} />
+        <ProductListPreview brandColor={brandColor} itemCount={itemCount} componentType={type as 'ProductList' | 'ServiceList'} selectedStyle={productStyle} onStyleChange={setProductStyle} />
       )}
     </ComponentFormWrapper>
   );

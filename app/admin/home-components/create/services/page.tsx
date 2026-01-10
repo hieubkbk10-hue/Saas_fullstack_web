@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { ServicesPreview } from '../../previews';
+import { ServicesPreview, type ServicesStyle } from '../../previews';
 
 export default function ServicesCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Dịch vụ chi tiết', 'Services');
@@ -15,12 +15,13 @@ export default function ServicesCreatePage() {
     { id: 2, icon: 'Shield', title: 'Bảo hành trọn đời', description: 'Cam kết chất lượng sản phẩm' },
     { id: 3, icon: 'Truck', title: 'Giao hàng nhanh', description: 'Miễn phí vận chuyển toàn quốc' }
   ]);
+  const [style, setStyle] = useState<ServicesStyle>('grid');
 
   const handleAddService = () => setServicesItems([...servicesItems, { id: Date.now(), icon: 'Star', title: '', description: '' }]);
   const handleRemoveService = (id: number) => servicesItems.length > 1 && setServicesItems(servicesItems.filter(s => s.id !== id));
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { items: servicesItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })) });
+    handleSubmit(e, { items: servicesItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })), style });
   };
 
   return (
@@ -64,7 +65,7 @@ export default function ServicesCreatePage() {
         </CardContent>
       </Card>
 
-      <ServicesPreview items={servicesItems} brandColor={brandColor} componentType="Services" />
+      <ServicesPreview items={servicesItems} brandColor={brandColor} componentType="Services" selectedStyle={style} onStyleChange={setStyle} />
     </ComponentFormWrapper>
   );
 }

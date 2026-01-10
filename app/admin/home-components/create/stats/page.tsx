@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { StatsPreview } from '../../previews';
+import { StatsPreview, type StatsStyle } from '../../previews';
 
 export default function StatsCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Thống kê', 'Stats');
@@ -16,9 +16,10 @@ export default function StatsCreatePage() {
     { id: 3, value: '99%', label: 'Hài lòng' },
     { id: 4, value: '24/7', label: 'Hỗ trợ' }
   ]);
+  const [style, setStyle] = useState<StatsStyle>('horizontal');
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { items: statsItems.map(s => ({ value: s.value, label: s.label })) });
+    handleSubmit(e, { items: statsItems.map(s => ({ value: s.value, label: s.label })), style });
   };
 
   return (
@@ -76,7 +77,7 @@ export default function StatsCreatePage() {
         </CardContent>
       </Card>
 
-      <StatsPreview items={statsItems} brandColor={brandColor} />
+      <StatsPreview items={statsItems} brandColor={brandColor} selectedStyle={style} onStyleChange={setStyle} />
     </ComponentFormWrapper>
   );
 }

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { FaqPreview } from '../../previews';
+import { FaqPreview, type FaqStyle } from '../../previews';
 
 export default function FaqCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Câu hỏi thường gặp', 'FAQ');
@@ -14,12 +14,13 @@ export default function FaqCreatePage() {
     { id: 1, question: 'Làm thế nào để đặt hàng?', answer: 'Bạn có thể đặt hàng trực tuyến qua website hoặc gọi hotline.' },
     { id: 2, question: 'Chính sách đổi trả ra sao?', answer: 'Chúng tôi hỗ trợ đổi trả trong vòng 30 ngày.' }
   ]);
+  const [style, setStyle] = useState<FaqStyle>('accordion');
 
   const handleAddFaq = () => setFaqItems([...faqItems, { id: Date.now(), question: '', answer: '' }]);
   const handleRemoveFaq = (id: number) => faqItems.length > 1 && setFaqItems(faqItems.filter(f => f.id !== id));
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { items: faqItems.map(f => ({ question: f.question, answer: f.answer })) });
+    handleSubmit(e, { items: faqItems.map(f => ({ question: f.question, answer: f.answer })), style });
   };
 
   return (
@@ -64,7 +65,7 @@ export default function FaqCreatePage() {
         </CardContent>
       </Card>
 
-      <FaqPreview items={faqItems} brandColor={brandColor} />
+      <FaqPreview items={faqItems} brandColor={brandColor} selectedStyle={style} onStyleChange={setStyle} />
     </ComponentFormWrapper>
   );
 }
