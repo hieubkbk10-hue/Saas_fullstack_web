@@ -28,17 +28,51 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Scrollbar styles */
+/* ============================================
+   Custom Scrollbar - Best Practice
+   - Brand color, auto-hide when idle
+   - Desktop & Mobile unified experience
+   ============================================ */
+
+:root {
+  --scrollbar-color: #3b82f6;
+}
+
+/* Base scrollbar - 2px, 60% opacity brand color */
+::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--scrollbar-color) 60%, transparent);
+  border-radius: 1px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-color);
+}
+
+/* Firefox */
+@supports (scrollbar-color: auto) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--scrollbar-color) 60%, transparent) transparent;
+  }
+}
+
+/* Utility class */
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
 }
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-}
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: #e2e8f0;
+  background: var(--scrollbar-color);
   border-radius: 3px;
 }
-.dark .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: #334155;
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
 }
