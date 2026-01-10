@@ -4,6 +4,7 @@ import { api } from "@/convex/_generated/api";
 export interface SiteSettings {
   site_name: string;
   site_tagline: string;
+  site_url: string;
   site_logo: string;
   site_favicon: string;
   site_brand_color: string;
@@ -29,6 +30,7 @@ const SETTINGS_KEYS = {
   site: [
     "site_name",
     "site_tagline",
+    "site_url",
     "site_logo",
     "site_favicon",
     "site_brand_color",
@@ -48,6 +50,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   return {
     site_name: (settings.site_name as string) || "VietAdmin",
     site_tagline: (settings.site_tagline as string) || "",
+    site_url: (settings.site_url as string) || "",
     site_logo: (settings.site_logo as string) || "",
     site_favicon: (settings.site_favicon as string) || "",
     site_brand_color: (settings.site_brand_color as string) || "#3b82f6",

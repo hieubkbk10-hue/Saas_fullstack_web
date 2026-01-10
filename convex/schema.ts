@@ -269,6 +269,9 @@ export default defineSchema({
     sales: v.number(),
     description: v.optional(v.string()),
     order: v.number(),
+    // SEO fields
+    metaTitle: v.optional(v.string()),
+    metaDescription: v.optional(v.string()),
   })
     .index("by_sku", ["sku"])
     .index("by_slug", ["slug"])
@@ -317,6 +320,9 @@ export default defineSchema({
     views: v.number(),
     publishedAt: v.optional(v.number()),
     order: v.number(),
+    // SEO fields
+    metaTitle: v.optional(v.string()),
+    metaDescription: v.optional(v.string()),
   })
     .index("by_slug", ["slug"])
     .index("by_category_status", ["categoryId", "status"])
@@ -605,6 +611,9 @@ export default defineSchema({
     publishedAt: v.optional(v.number()),
     order: v.number(),
     featured: v.optional(v.boolean()),
+    // SEO fields
+    metaTitle: v.optional(v.string()),
+    metaDescription: v.optional(v.string()),
   })
     .index("by_slug", ["slug"])
     .index("by_category_status", ["categoryId", "status"])

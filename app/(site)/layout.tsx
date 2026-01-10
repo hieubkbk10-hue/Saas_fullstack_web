@@ -1,13 +1,16 @@
 import { Metadata } from "next";
 import { Header } from '@/components/site/Header';
 import { DynamicFooter } from '@/components/site/DynamicFooter';
-import { getSiteSettings, getSEOSettings } from '@/lib/getSettings';
+import { getSiteSettings, getSEOSettings, getContactSettings } from '@/lib/getSettings';
+import { JsonLd, generateOrganizationSchema, generateWebsiteSchema } from '@/components/seo/JsonLd';
 
 export async function generateMetadata(): Promise<Metadata> {
   const [site, seo] = await Promise.all([
     getSiteSettings(),
     getSEOSettings(),
   ]);
+
+  const baseUrl = site.site_url || process.env.NEXT_PUBLIC_SITE_URL || '';
 
   const title = seo.seo_title || site.site_name || "VietAdmin";
   const description = seo.seo_description || site.site_tagline || "";
@@ -39,16 +42,46 @@ export async function generateMetadata(): Promise<Metadata> {
       index: true,
       follow: true,
     },
+    metadataBase: baseUrl ? new URL(baseUrl) : undefined,
+    alternates: {
+      canonical: baseUrl || undefined,
+    },
   };
 }
 
-export default function SiteLayout({
+export default async function SiteLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [site, seo, contact] = await Promise.all([
+    getSiteSettings(),
+    getSEOSettings(),
+    getContactSettings(),
+  ]);
+
+  const baseUrl = site.site_url || process.env.NEXT_PUBLIC_SITE_URL || '';
+
+  const organizationSchema = generateOrganizationSchema({
+    name: site.site_name,
+    url: baseUrl,
+    logo: site.site_logo,
+    description: seo.seo_description,
+    email: contact.contact_email,
+    phone: contact.contact_phone,
+    address: contact.contact_address,
+  });
+
+  const websiteSchema = generateWebsiteSchema({
+    name: site.site_name,
+    url: baseUrl,
+    description: seo.seo_description,
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
+      <JsonLd data={organizationSchema} />
+      <JsonLd data={websiteSchema} />
       <Header />
       <main className="flex-1">
         {children}

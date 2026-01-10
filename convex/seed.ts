@@ -1845,6 +1845,7 @@ export const seedSettingsModule = mutation({
         // Site settings
         { key: "site_name", value: "VietAdmin", group: "site" },
         { key: "site_tagline", value: "Hệ thống quản trị website", group: "site" },
+        { key: "site_url", value: "", group: "site" },
         { key: "site_logo", value: "", group: "site" },
         { key: "site_favicon", value: "", group: "site" },
         { key: "site_timezone", value: "Asia/Ho_Chi_Minh", group: "site" },
@@ -1859,6 +1860,7 @@ export const seedSettingsModule = mutation({
         
         // SEO settings
         { key: "seo_title", value: "VietAdmin - Hệ thống quản trị website", group: "seo" },
+        { key: "seo_robots", value: "User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /system/\nDisallow: /api/", group: "seo" },
         { key: "seo_description", value: "VietAdmin là hệ thống quản trị website hiện đại, dễ sử dụng", group: "seo" },
         { key: "seo_keywords", value: "admin, quản trị, website, cms", group: "seo" },
         { key: "seo_og_image", value: "", group: "seo" },
@@ -1904,11 +1906,12 @@ export const seedSettingsModule = mutation({
         // Site fields
         { moduleKey: "settings", fieldKey: "site_name", name: "Tên website", type: "text" as const, required: true, enabled: true, isSystem: true, group: "site", order: 0 },
         { moduleKey: "settings", fieldKey: "site_tagline", name: "Slogan", type: "text" as const, required: false, enabled: true, isSystem: false, group: "site", order: 1 },
-        { moduleKey: "settings", fieldKey: "site_logo", name: "Logo", type: "image" as const, required: false, enabled: true, isSystem: true, group: "site", order: 2 },
-        { moduleKey: "settings", fieldKey: "site_favicon", name: "Favicon", type: "image" as const, required: false, enabled: true, isSystem: true, group: "site", order: 3 },
-        { moduleKey: "settings", fieldKey: "site_timezone", name: "Múi giờ", type: "select" as const, required: false, enabled: true, isSystem: false, group: "site", order: 4 },
-        { moduleKey: "settings", fieldKey: "site_language", name: "Ngôn ngữ", type: "select" as const, required: false, enabled: true, isSystem: false, group: "site", order: 5 },
-        { moduleKey: "settings", fieldKey: "site_brand_color", name: "Màu thương hiệu", type: "color" as const, required: false, enabled: true, isSystem: false, group: "site", order: 6 },
+        { moduleKey: "settings", fieldKey: "site_url", name: "URL Website", type: "text" as const, required: false, enabled: true, isSystem: true, group: "site", order: 2 },
+        { moduleKey: "settings", fieldKey: "site_logo", name: "Logo", type: "image" as const, required: false, enabled: true, isSystem: true, group: "site", order: 3 },
+        { moduleKey: "settings", fieldKey: "site_favicon", name: "Favicon", type: "image" as const, required: false, enabled: true, isSystem: true, group: "site", order: 4 },
+        { moduleKey: "settings", fieldKey: "site_timezone", name: "Múi giờ", type: "select" as const, required: false, enabled: true, isSystem: false, group: "site", order: 5 },
+        { moduleKey: "settings", fieldKey: "site_language", name: "Ngôn ngữ", type: "select" as const, required: false, enabled: true, isSystem: false, group: "site", order: 6 },
+        { moduleKey: "settings", fieldKey: "site_brand_color", name: "Màu thương hiệu", type: "color" as const, required: false, enabled: true, isSystem: false, group: "site", order: 7 },
         // Contact fields
         { moduleKey: "settings", fieldKey: "contact_email", name: "Email", type: "email" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableContact", group: "contact", order: 6 },
         { moduleKey: "settings", fieldKey: "contact_phone", name: "Số điện thoại", type: "phone" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableContact", group: "contact", order: 7 },
@@ -1919,6 +1922,7 @@ export const seedSettingsModule = mutation({
         { moduleKey: "settings", fieldKey: "seo_description", name: "Meta Description", type: "textarea" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableSEO", group: "seo", order: 11 },
         { moduleKey: "settings", fieldKey: "seo_keywords", name: "Keywords", type: "tags" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableSEO", group: "seo", order: 12 },
         { moduleKey: "settings", fieldKey: "seo_og_image", name: "OG Image", type: "image" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableSEO", group: "seo", order: 13 },
+        { moduleKey: "settings", fieldKey: "seo_robots", name: "Robots.txt", type: "textarea" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableSEO", group: "seo", order: 14 },
         // Social fields
         { moduleKey: "settings", fieldKey: "social_facebook", name: "Facebook", type: "text" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableSocial", group: "social", order: 14 },
         { moduleKey: "settings", fieldKey: "social_instagram", name: "Instagram", type: "text" as const, required: false, enabled: true, isSystem: false, linkedFeature: "enableSocial", group: "social", order: 15 },
