@@ -76,6 +76,10 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const updateMutation = useMutation(api.homeComponents.update);
   // Query posts for Blog manual selection
   const postsData = useQuery(api.posts.listAll, { limit: 100 });
+  // Query services for ServiceList manual selection
+  const servicesData = useQuery(api.services.listAll, { limit: 100 });
+  // Query products for ProductList manual selection
+  const productsData = useQuery(api.products.listAll, { limit: 100 });
   
   const [title, setTitle] = useState('');
   const [active, setActive] = useState(true);
@@ -112,6 +116,14 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [blogSelectionMode, setBlogSelectionMode] = useState<'auto' | 'manual'>('auto');
   const [selectedPostIds, setSelectedPostIds] = useState<string[]>([]);
   const [postSearchTerm, setPostSearchTerm] = useState('');
+  // ServiceList manual selection states
+  const [serviceSelectionMode, setServiceSelectionMode] = useState<'auto' | 'manual'>('auto');
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [serviceSearchTerm, setServiceSearchTerm] = useState('');
+  // ProductList manual selection states
+  const [productSelectionMode, setProductSelectionMode] = useState<'auto' | 'manual'>('auto');
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [productSearchTerm, setProductSearchTerm] = useState('');
 
   // Filter posts for search and get selected posts data
   const filteredPosts = useMemo(() => {
@@ -131,6 +143,44 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       .map(id => postMap.get(id as Id<"posts">))
       .filter((p): p is NonNullable<typeof p> => p !== undefined);
   }, [postsData, selectedPostIds]);
+
+  // Filter services for search and get selected services data
+  const filteredServices = useMemo(() => {
+    if (!servicesData) return [];
+    return servicesData
+      .filter(service => service.status === 'Published')
+      .filter(service => 
+        !serviceSearchTerm || 
+        service.title.toLowerCase().includes(serviceSearchTerm.toLowerCase())
+      );
+  }, [servicesData, serviceSearchTerm]);
+
+  const selectedServices = useMemo(() => {
+    if (!servicesData || selectedServiceIds.length === 0) return [];
+    const serviceMap = new Map(servicesData.map(s => [s._id, s]));
+    return selectedServiceIds
+      .map(id => serviceMap.get(id as Id<"services">))
+      .filter((s): s is NonNullable<typeof s> => s !== undefined);
+  }, [servicesData, selectedServiceIds]);
+
+  // Filter products for search and get selected products data
+  const filteredProducts = useMemo(() => {
+    if (!productsData) return [];
+    return productsData
+      .filter(product => product.status === 'Active')
+      .filter(product => 
+        !productSearchTerm || 
+        product.name.toLowerCase().includes(productSearchTerm.toLowerCase())
+      );
+  }, [productsData, productSearchTerm]);
+
+  const selectedProducts = useMemo(() => {
+    if (!productsData || selectedProductIds.length === 0) return [];
+    const productMap = new Map(productsData.map(p => [p._id, p]));
+    return selectedProductIds
+      .map(id => productMap.get(id as Id<"products">))
+      .filter((p): p is NonNullable<typeof p> => p !== undefined);
+  }, [productsData, selectedProductIds]);
 
   // Initialize form with component data
   useEffect(() => {
@@ -197,9 +247,16 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setContactStyle((config.style as ContactStyle) || 'split');
           break;
         case 'ProductList':
+          setProductListConfig({ itemCount: config.itemCount || 8, sortBy: config.sortBy || 'newest' });
+          setProductListStyle((config.style as ProductListStyle) || 'grid');
+          setProductSelectionMode(config.selectionMode || 'auto');
+          setSelectedProductIds(config.selectedProductIds || []);
+          break;
         case 'ServiceList':
           setProductListConfig({ itemCount: config.itemCount || 8, sortBy: config.sortBy || 'newest' });
           setProductListStyle((config.style as ProductListStyle) || 'grid');
+          setServiceSelectionMode(config.selectionMode || 'auto');
+          setSelectedServiceIds(config.selectedServiceIds || []);
           break;
         case 'Blog':
           setProductListConfig({ itemCount: config.itemCount || 8, sortBy: config.sortBy || 'newest' });
@@ -262,8 +319,19 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'Contact':
         return { ...contactConfig, style: contactStyle };
       case 'ProductList':
+        return { 
+          ...productListConfig, 
+          style: productListStyle, 
+          selectionMode: productSelectionMode,
+          selectedProductIds: productSelectionMode === 'manual' ? selectedProductIds : [],
+        };
       case 'ServiceList':
-        return { ...productListConfig, style: productListStyle };
+        return { 
+          ...productListConfig, 
+          style: productListStyle, 
+          selectionMode: serviceSelectionMode,
+          selectedServiceIds: serviceSelectionMode === 'manual' ? selectedServiceIds : [],
+        };
       case 'Blog':
         return { 
           ...productListConfig, 
@@ -615,34 +683,372 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           </>
         )}
 
-        {/* ProductList/ServiceList */}
-        {(component.type === 'ProductList' || component.type === 'ServiceList') && (
+        {/* ProductList */}
+        {component.type === 'ProductList' && (
           <>
             <Card className="mb-6">
               <CardHeader><CardTitle className="text-base">Nguồn dữ liệu</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Số lượng hiển thị</Label>
-                    <Input type="number" value={productListConfig.itemCount} onChange={(e) => setProductListConfig({...productListConfig, itemCount: parseInt(e.target.value) || 8})} />
+                {/* Selection Mode Toggle */}
+                <div className="space-y-2">
+                  <Label>Chế độ chọn sản phẩm</Label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setProductSelectionMode('auto')}
+                      className={cn(
+                        "flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-all",
+                        productSelectionMode === 'auto'
+                          ? "border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                          : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                      )}
+                    >
+                      Tự động
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProductSelectionMode('manual')}
+                      className={cn(
+                        "flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-all",
+                        productSelectionMode === 'manual'
+                          ? "border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                          : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                      )}
+                    >
+                      Chọn thủ công
+                    </button>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Sắp xếp theo</Label>
-                    <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={productListConfig.sortBy} onChange={(e) => setProductListConfig({...productListConfig, sortBy: e.target.value})}>
-                      <option value="newest">Mới nhất</option>
-                      <option value="bestseller">Bán chạy nhất</option>
-                      <option value="random">Ngẫu nhiên</option>
-                    </select>
-                  </div>
+                  <p className="text-xs text-slate-500">
+                    {productSelectionMode === 'auto' 
+                      ? 'Hiển thị sản phẩm tự động theo số lượng và sắp xếp' 
+                      : 'Chọn từng sản phẩm cụ thể để hiển thị'}
+                  </p>
                 </div>
+
+                {/* Auto mode settings */}
+                {productSelectionMode === 'auto' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Số lượng hiển thị</Label>
+                      <Input type="number" value={productListConfig.itemCount} onChange={(e) => setProductListConfig({...productListConfig, itemCount: parseInt(e.target.value) || 8})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Sắp xếp theo</Label>
+                      <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={productListConfig.sortBy} onChange={(e) => setProductListConfig({...productListConfig, sortBy: e.target.value})}>
+                        <option value="newest">Mới nhất</option>
+                        <option value="bestseller">Bán chạy nhất</option>
+                        <option value="random">Ngẫu nhiên</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Manual mode - Product selector */}
+                {productSelectionMode === 'manual' && (
+                  <div className="space-y-4">
+                    {/* Selected products list */}
+                    {selectedProducts.length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Sản phẩm đã chọn ({selectedProducts.length})</Label>
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                          {selectedProducts.map((product, index) => (
+                            <div 
+                              key={product._id} 
+                              className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg group"
+                            >
+                              <div className="text-slate-400 cursor-move">
+                                <GripVertical size={16} />
+                              </div>
+                              <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white text-xs rounded-full font-medium">
+                                {index + 1}
+                              </span>
+                              {product.image ? (
+                                <img src={product.image} alt="" className="w-12 h-12 object-cover rounded" />
+                              ) : (
+                                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
+                                  <Package size={16} className="text-slate-400" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{product.name}</p>
+                                <p className="text-xs text-slate-500">{product.price?.toLocaleString('vi-VN')}đ</p>
+                              </div>
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-slate-400 hover:text-red-500"
+                                onClick={() => setSelectedProductIds(ids => ids.filter(id => id !== product._id))}
+                              >
+                                <X size={16} />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Search and add products */}
+                    <div className="space-y-2">
+                      <Label>Thêm sản phẩm</Label>
+                      <div className="relative">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Input 
+                          placeholder="Tìm kiếm sản phẩm..." 
+                          className="pl-9"
+                          value={productSearchTerm}
+                          onChange={(e) => setProductSearchTerm(e.target.value)}
+                        />
+                      </div>
+                      <div className="border border-slate-200 dark:border-slate-700 rounded-lg max-h-[250px] overflow-y-auto">
+                        {filteredProducts.length === 0 ? (
+                          <div className="p-4 text-center text-sm text-slate-500">
+                            {productsData === undefined ? 'Đang tải...' : 'Không tìm thấy sản phẩm'}
+                          </div>
+                        ) : (
+                          filteredProducts.map(product => {
+                            const isSelected = selectedProductIds.includes(product._id);
+                            return (
+                              <div 
+                                key={product._id}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedProductIds(ids => ids.filter(id => id !== product._id));
+                                  } else {
+                                    setSelectedProductIds(ids => [...ids, product._id]);
+                                  }
+                                }}
+                                className={cn(
+                                  "flex items-center gap-3 p-3 cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors",
+                                  isSelected 
+                                    ? "bg-blue-50 dark:bg-blue-500/10" 
+                                    : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                                )}
+                              >
+                                <div className={cn(
+                                  "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                                  isSelected 
+                                    ? "border-blue-500 bg-blue-500" 
+                                    : "border-slate-300 dark:border-slate-600"
+                                )}>
+                                  {isSelected && <Check size={12} className="text-white" />}
+                                </div>
+                                {product.image ? (
+                                  <img src={product.image} alt="" className="w-10 h-10 object-cover rounded" />
+                                ) : (
+                                  <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center">
+                                    <Package size={14} className="text-slate-400" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">{product.name}</p>
+                                  <p className="text-xs text-slate-500">{product.price?.toLocaleString('vi-VN')}đ</p>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
             <ProductListPreview 
               brandColor={brandColor}
-              itemCount={productListConfig.itemCount}
-              componentType={component.type as 'ProductList' | 'ServiceList'}
+              itemCount={productSelectionMode === 'manual' ? selectedProductIds.length : productListConfig.itemCount}
+              componentType="ProductList"
               selectedStyle={productListStyle}
               onStyleChange={setProductListStyle}
+              items={productSelectionMode === 'manual' && selectedProducts.length > 0 
+                ? selectedProducts.map(p => ({ id: p._id, name: p.name, image: p.image, price: p.price?.toLocaleString('vi-VN') + 'đ', description: p.description }))
+                : filteredProducts.slice(0, productListConfig.itemCount).map(p => ({ id: p._id, name: p.name, image: p.image, price: p.price?.toLocaleString('vi-VN') + 'đ', description: p.description }))
+              }
+            />
+          </>
+        )}
+
+        {/* ServiceList */}
+        {component.type === 'ServiceList' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader><CardTitle className="text-base">Nguồn dữ liệu</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                {/* Selection Mode Toggle */}
+                <div className="space-y-2">
+                  <Label>Chế độ chọn dịch vụ</Label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setServiceSelectionMode('auto')}
+                      className={cn(
+                        "flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-all",
+                        serviceSelectionMode === 'auto'
+                          ? "border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                          : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                      )}
+                    >
+                      Tự động
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setServiceSelectionMode('manual')}
+                      className={cn(
+                        "flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-all",
+                        serviceSelectionMode === 'manual'
+                          ? "border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                          : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                      )}
+                    >
+                      Chọn thủ công
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    {serviceSelectionMode === 'auto' 
+                      ? 'Hiển thị dịch vụ tự động theo số lượng và sắp xếp' 
+                      : 'Chọn từng dịch vụ cụ thể để hiển thị'}
+                  </p>
+                </div>
+
+                {/* Auto mode settings */}
+                {serviceSelectionMode === 'auto' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Số lượng hiển thị</Label>
+                      <Input type="number" value={productListConfig.itemCount} onChange={(e) => setProductListConfig({...productListConfig, itemCount: parseInt(e.target.value) || 8})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Sắp xếp theo</Label>
+                      <select className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={productListConfig.sortBy} onChange={(e) => setProductListConfig({...productListConfig, sortBy: e.target.value})}>
+                        <option value="newest">Mới nhất</option>
+                        <option value="popular">Xem nhiều nhất</option>
+                        <option value="random">Ngẫu nhiên</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Manual mode - Service selector */}
+                {serviceSelectionMode === 'manual' && (
+                  <div className="space-y-4">
+                    {/* Selected services list */}
+                    {selectedServices.length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Dịch vụ đã chọn ({selectedServices.length})</Label>
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                          {selectedServices.map((service, index) => (
+                            <div 
+                              key={service._id} 
+                              className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg group"
+                            >
+                              <div className="text-slate-400 cursor-move">
+                                <GripVertical size={16} />
+                              </div>
+                              <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white text-xs rounded-full font-medium">
+                                {index + 1}
+                              </span>
+                              {service.thumbnail ? (
+                                <img src={service.thumbnail} alt="" className="w-12 h-12 object-cover rounded" />
+                              ) : (
+                                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
+                                  <Briefcase size={16} className="text-slate-400" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{service.title}</p>
+                                <p className="text-xs text-slate-500">{service.views} lượt xem</p>
+                              </div>
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-slate-400 hover:text-red-500"
+                                onClick={() => setSelectedServiceIds(ids => ids.filter(id => id !== service._id))}
+                              >
+                                <X size={16} />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Search and add services */}
+                    <div className="space-y-2">
+                      <Label>Thêm dịch vụ</Label>
+                      <div className="relative">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Input 
+                          placeholder="Tìm kiếm dịch vụ..." 
+                          className="pl-9"
+                          value={serviceSearchTerm}
+                          onChange={(e) => setServiceSearchTerm(e.target.value)}
+                        />
+                      </div>
+                      <div className="border border-slate-200 dark:border-slate-700 rounded-lg max-h-[250px] overflow-y-auto">
+                        {filteredServices.length === 0 ? (
+                          <div className="p-4 text-center text-sm text-slate-500">
+                            {servicesData === undefined ? 'Đang tải...' : 'Không tìm thấy dịch vụ'}
+                          </div>
+                        ) : (
+                          filteredServices.map(service => {
+                            const isSelected = selectedServiceIds.includes(service._id);
+                            return (
+                              <div 
+                                key={service._id}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedServiceIds(ids => ids.filter(id => id !== service._id));
+                                  } else {
+                                    setSelectedServiceIds(ids => [...ids, service._id]);
+                                  }
+                                }}
+                                className={cn(
+                                  "flex items-center gap-3 p-3 cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors",
+                                  isSelected 
+                                    ? "bg-blue-50 dark:bg-blue-500/10" 
+                                    : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                                )}
+                              >
+                                <div className={cn(
+                                  "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                                  isSelected 
+                                    ? "border-blue-500 bg-blue-500" 
+                                    : "border-slate-300 dark:border-slate-600"
+                                )}>
+                                  {isSelected && <Check size={12} className="text-white" />}
+                                </div>
+                                {service.thumbnail ? (
+                                  <img src={service.thumbnail} alt="" className="w-10 h-10 object-cover rounded" />
+                                ) : (
+                                  <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center">
+                                    <Briefcase size={14} className="text-slate-400" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">{service.title}</p>
+                                  <p className="text-xs text-slate-500">{service.views} lượt xem</p>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <ProductListPreview 
+              brandColor={brandColor}
+              itemCount={serviceSelectionMode === 'manual' ? selectedServiceIds.length : productListConfig.itemCount}
+              componentType="ServiceList"
+              selectedStyle={productListStyle}
+              onStyleChange={setProductListStyle}
+              items={serviceSelectionMode === 'manual' && selectedServices.length > 0 
+                ? selectedServices.map(s => ({ id: s._id, name: s.title, image: s.thumbnail, price: s.price ? s.price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ', description: s.excerpt }))
+                : filteredServices.slice(0, productListConfig.itemCount).map(s => ({ id: s._id, name: s.title, image: s.thumbnail, price: s.price ? s.price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ', description: s.excerpt }))
+              }
             />
           </>
         )}

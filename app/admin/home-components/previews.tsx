@@ -838,30 +838,75 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
 
 // ============ PRODUCT/SERVICE LIST PREVIEW ============
 export type ProductListStyle = 'grid' | 'list' | 'carousel';
-export const ProductListPreview = ({ brandColor, itemCount, componentType, selectedStyle, onStyleChange }: { brandColor: string; itemCount: number; componentType: 'ProductList' | 'ServiceList'; selectedStyle?: ProductListStyle; onStyleChange?: (style: ProductListStyle) => void }) => {
+export interface ProductListPreviewItem {
+  id: string | number;
+  name: string;
+  image?: string;
+  price?: string;
+  description?: string;
+}
+
+// Helper to strip HTML tags from description
+const stripHtml = (html?: string) => {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').trim();
+};
+export const ProductListPreview = ({ brandColor, itemCount, componentType, selectedStyle, onStyleChange, items }: { 
+  brandColor: string; 
+  itemCount: number; 
+  componentType: 'ProductList' | 'ServiceList'; 
+  selectedStyle?: ProductListStyle; 
+  onStyleChange?: (style: ProductListStyle) => void;
+  items?: ProductListPreviewItem[];
+}) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'grid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ProductListStyle);
   const styles = [{ id: 'grid', label: 'Grid' }, { id: 'list', label: 'List' }, { id: 'carousel', label: 'Carousel' }];
   const isProduct = componentType === 'ProductList';
   const title = isProduct ? 'Sản phẩm nổi bật' : 'Dịch vụ của chúng tôi';
-  const mockItems = Array.from({ length: Math.max(itemCount, 4) }, (_, i) => ({ id: i + 1, name: isProduct ? `Sản phẩm ${i + 1}` : `Dịch vụ ${i + 1}`, price: isProduct ? `${(i + 1) * 100}.000đ` : '', description: 'Mô tả ngắn...' }));
+  
+  // Use real items if provided, otherwise fallback to mock
+  const displayItems: ProductListPreviewItem[] = items && items.length > 0 
+    ? items 
+    : Array.from({ length: Math.max(itemCount, 4) }, (_, i) => ({ 
+        id: i + 1, 
+        name: isProduct ? `Sản phẩm ${i + 1}` : `Dịch vụ ${i + 1}`, 
+        price: isProduct ? `${(i + 1) * 100}.000đ` : '', 
+        description: 'Mô tả ngắn...' 
+      }));
+  const showViewAll = displayItems.length > 3;
+
+  const ViewAllButton = () => showViewAll ? (
+    <div className="text-center mt-6">
+      <button className="px-6 py-2.5 rounded-lg font-medium text-sm transition-colors" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+        Xem tất cả
+      </button>
+    </div>
+  ) : null;
 
   const renderGridStyle = () => (
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
       <h2 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{title}</h2>
       <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-2 gap-3' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4')}>
-        {mockItems.slice(0, 4).map((item) => (
+        {displayItems.slice(0, 4).map((item) => (
           <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border group">
-            <div className="aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><Package size={32} className="text-slate-300" /></div>
+            <div className="aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+              {item.image ? (
+                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+              ) : (
+                <Package size={32} className="text-slate-300" />
+              )}
+            </div>
             <div className="p-3">
-              <h4 className={cn("font-semibold", device === 'mobile' ? 'text-sm' : '')}>{item.name}</h4>
-              {isProduct && <p className="text-sm font-bold mt-1" style={{ color: brandColor }}>{item.price}</p>}
+              <h4 className={cn("font-semibold line-clamp-2", device === 'mobile' ? 'text-sm' : '')}>{item.name}</h4>
+              {item.price && <p className="text-sm font-bold mt-1" style={{ color: brandColor }}>{item.price}</p>}
               <button className={cn("w-full mt-2 py-1.5 rounded-lg text-white text-xs")} style={{ backgroundColor: brandColor }}>{isProduct ? 'Mua ngay' : 'Xem chi tiết'}</button>
             </div>
           </div>
         ))}
       </div>
+      <ViewAllButton />
     </div>
   );
 
@@ -869,32 +914,52 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
       <h2 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{title}</h2>
       <div className="max-w-3xl mx-auto space-y-3">
-        {mockItems.slice(0, 4).map((item) => (
+        {displayItems.slice(0, 4).map((item) => (
           <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl border flex items-center p-3 gap-4">
-            <div className={cn("bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0", device === 'mobile' ? 'w-16 h-16' : 'w-20 h-20')}><Package size={24} className="text-slate-300" /></div>
+            <div className={cn("bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden", device === 'mobile' ? 'w-16 h-16' : 'w-20 h-20')}>
+              {item.image ? (
+                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+              ) : (
+                <Package size={24} className="text-slate-300" />
+              )}
+            </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-semibold">{item.name}</h4>
-              <p className="text-xs text-slate-500 line-clamp-1">{item.description}</p>
-              {isProduct && <p className="text-sm font-bold mt-1" style={{ color: brandColor }}>{item.price}</p>}
+              <h4 className="font-semibold line-clamp-1">{item.name}</h4>
+              {item.description && <p className="text-xs text-slate-500 line-clamp-1">{stripHtml(item.description)}</p>}
+              {item.price && <p className="text-sm font-bold mt-1" style={{ color: brandColor }}>{item.price}</p>}
             </div>
             <button className="px-4 py-2 rounded-lg text-white text-sm flex-shrink-0" style={{ backgroundColor: brandColor }}>{isProduct ? 'Mua' : 'Xem'}</button>
           </div>
         ))}
       </div>
+      <ViewAllButton />
     </div>
   );
 
   const renderCarouselStyle = () => (
     <div className={cn("py-8", device === 'mobile' ? 'py-6' : '')}>
-      <h2 className={cn("font-bold text-center mb-6 px-4", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{title}</h2>
+      <div className="flex items-center justify-between mb-6 px-4">
+        <h2 className={cn("font-bold", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{title}</h2>
+        {showViewAll && (
+          <button className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all" style={{ color: brandColor }}>
+            Xem tất cả <span>→</span>
+          </button>
+        )}
+      </div>
       <div className="relative px-4">
         <div className={cn("flex gap-4 overflow-hidden", device === 'mobile' ? 'gap-3' : '')}>
-          {mockItems.slice(0, 4).map((item) => (
+          {displayItems.slice(0, 4).map((item) => (
             <div key={item.id} className={cn("flex-shrink-0 bg-white dark:bg-slate-800 rounded-xl overflow-hidden border", device === 'mobile' ? 'w-40' : 'w-52')}>
-              <div className="aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><Package size={32} className="text-slate-300" /></div>
+              <div className="aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+                {item.image ? (
+                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                ) : (
+                  <Package size={32} className="text-slate-300" />
+                )}
+              </div>
               <div className="p-3">
-                <h4 className="font-semibold text-sm">{item.name}</h4>
-                {isProduct && <p className="text-sm font-bold" style={{ color: brandColor }}>{item.price}</p>}
+                <h4 className="font-semibold text-sm line-clamp-2">{item.name}</h4>
+                {item.price && <p className="text-sm font-bold" style={{ color: brandColor }}>{item.price}</p>}
               </div>
             </div>
           ))}

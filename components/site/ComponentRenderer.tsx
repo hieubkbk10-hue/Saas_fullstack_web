@@ -3,6 +3,8 @@
 import React from 'react';
 import { useBrandColor } from './hooks';
 import { BlogSection } from './BlogSection';
+import { ProductListSection } from './ProductListSection';
+import { ServiceListSection } from './ServiceListSection';
 import { 
   LayoutTemplate, Package, FileText, HelpCircle, MousePointerClick, 
   Users, Star, Phone, Briefcase, Image as ImageIcon, Check
@@ -52,8 +54,9 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
     case 'Pricing':
       return <PricingSection config={config} brandColor={brandColor} title={title} />;
     case 'ProductList':
+      return <ProductListSection config={config} brandColor={brandColor} title={title} />;
     case 'ServiceList':
-      return <ProductListSection config={config} brandColor={brandColor} title={title} type={type} />;
+      return <ServiceListSection config={config} brandColor={brandColor} title={title} />;
     case 'Blog':
       return <BlogSection config={config} brandColor={brandColor} title={title} />;
     case 'Career':
@@ -934,88 +937,6 @@ function PricingSection({ config, brandColor, title }: { config: Record<string, 
               >
                 {plan.buttonText}
               </a>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ============ PRODUCT LIST SECTION ============
-type ProductListStyle = 'grid' | 'list' | 'carousel';
-function ProductListSection({ config, brandColor, title, type }: { config: Record<string, unknown>; brandColor: string; title: string; type: string }) {
-  const style = (config.style as ProductListStyle) || 'grid';
-  const itemCount = (config.itemCount as number) || 4;
-  const mockItems = Array.from({ length: Math.min(itemCount, 8) }, (_, i) => ({ id: i + 1 }));
-
-  // Style 1: Grid
-  if (style === 'grid') {
-    return (
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {mockItems.map(item => (
-              <div key={item.id} className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                <div className="aspect-square bg-slate-100 flex items-center justify-center">
-                  <Package size={48} className="text-slate-300" />
-                </div>
-                <div className="p-4">
-                  <div className="h-4 bg-slate-200 rounded mb-2"></div>
-                  <div className="h-3 bg-slate-100 rounded w-2/3"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-8">
-            <a href="#" className="inline-flex px-6 py-3 rounded-lg font-medium" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Xem tất cả</a>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // Style 2: List
-  if (style === 'list') {
-    return (
-      <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-          <div className="space-y-4">
-            {mockItems.map(item => (
-              <div key={item.id} className="bg-white rounded-xl border flex items-center p-4 gap-4">
-                <div className="w-20 h-20 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Package size={24} className="text-slate-300" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="h-4 bg-slate-200 rounded mb-2 w-1/2"></div>
-                  <div className="h-3 bg-slate-100 rounded w-3/4"></div>
-                </div>
-                <button className="px-4 py-2 rounded-lg text-white text-sm flex-shrink-0" style={{ backgroundColor: brandColor }}>Mua</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // Style 3: Carousel
-  return (
-    <section className="py-16 px-4">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-          {mockItems.map(item => (
-            <div key={item.id} className="flex-shrink-0 w-52 bg-white rounded-xl overflow-hidden shadow-sm">
-              <div className="aspect-square bg-slate-100 flex items-center justify-center">
-                <Package size={32} className="text-slate-300" />
-              </div>
-              <div className="p-3">
-                <div className="h-4 bg-slate-200 rounded mb-2"></div>
-                <div className="h-3 bg-slate-100 rounded w-2/3"></div>
-              </div>
             </div>
           ))}
         </div>
