@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { HeroBannerPreview } from '../../previews';
+import { HeroBannerPreview, HeroStyle } from '../../previews';
 import { MultiImageUploader, ImageItem } from '../../../components/MultiImageUploader';
 
 interface HeroSlide extends ImageItem {
@@ -20,6 +20,7 @@ export default function HeroCreatePage() {
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([
     { id: 'slide-1', url: '', image: '', link: '' }
   ]);
+  const [heroStyle, setHeroStyle] = useState<HeroStyle>('slider');
 
   const handleSlidesChange = (slides: HeroSlide[]) => {
     setHeroSlides(slides.map(s => ({ ...s, image: s.url })));
@@ -32,7 +33,7 @@ export default function HeroCreatePage() {
   }));
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { slides: heroSlides.map(s => ({ image: s.url || s.image, link: s.link })) });
+    handleSubmit(e, { slides: heroSlides.map(s => ({ image: s.url || s.image, link: s.link })), style: heroStyle });
   };
 
   return (
@@ -69,7 +70,12 @@ export default function HeroCreatePage() {
         </CardContent>
       </Card>
 
-      <HeroBannerPreview slides={previewSlides} brandColor={brandColor} />
+      <HeroBannerPreview 
+        slides={previewSlides} 
+        brandColor={brandColor}
+        selectedStyle={heroStyle}
+        onStyleChange={setHeroStyle}
+      />
     </ComponentFormWrapper>
   );
 }

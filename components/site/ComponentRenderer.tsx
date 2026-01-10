@@ -63,17 +63,22 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
 }
 
 // ============ HERO SECTION ============
+// Best Practice: Blurred Background Fill - fills letterbox gaps with blurred version of same image
+// Supports 3 styles: slider, fade (with thumbnails), bento (grid)
+type HeroStyle = 'slider' | 'fade' | 'bento';
+
 function HeroSection({ config, brandColor }: { config: Record<string, unknown>; brandColor: string }) {
   const slides = (config.slides as Array<{ image: string; link: string }>) || [];
+  const style = (config.style as HeroStyle) || 'slider';
   const [currentSlide, setCurrentSlide] = React.useState(0);
 
   React.useEffect(() => {
-    if (slides.length <= 1) return;
+    if (slides.length <= 1 || style === 'bento') return;
     const timer = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [slides.length, style]);
 
   if (slides.length === 0) {
     return (
@@ -86,38 +91,136 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
     );
   }
 
-  return (
-    <section className="relative h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden">
-      {slides.map((slide, idx) => (
-        <div
-          key={idx}
-          className={`absolute inset-0 transition-opacity duration-700 ${idx === currentSlide ? 'opacity-100' : 'opacity-0'}`}
-        >
-          {slide.image ? (
-            <a href={slide.link || '#'} className="block w-full h-full">
-              <img src={slide.image} alt="" className="w-full h-full object-cover" />
-            </a>
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900" />
+  // Helper: Render slide với blurred background
+  const renderSlideWithBlur = (slide: { image: string; link: string }, idx: number) => (
+    <a href={slide.link || '#'} className="block w-full h-full relative">
+      <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(30px)' }} />
+      <div className="absolute inset-0 bg-black/20" />
+      <img src={slide.image} alt="" className="relative w-full h-full object-contain z-10" />
+    </a>
+  );
+
+  // Style 1: Slider
+  if (style === 'slider') {
+    return (
+      <section className="relative w-full bg-slate-900 overflow-hidden">
+        <div className="relative w-full aspect-[16/9] md:aspect-[21/9] max-h-[400px] md:max-h-[550px]">
+          {slides.map((slide, idx) => (
+            <div key={idx} className={`absolute inset-0 transition-opacity duration-700 ${idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              {slide.image ? renderSlideWithBlur(slide, idx) : <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900" />}
+            </div>
+          ))}
+          {slides.length > 1 && (
+            <>
+              <button onClick={() => setCurrentSlide(prev => prev === 0 ? slides.length - 1 : prev - 1)} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all z-20" style={{ opacity: 0.7 }}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <button onClick={() => setCurrentSlide(prev => (prev + 1) % slides.length)} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all z-20" style={{ opacity: 0.7 }}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </button>
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                {slides.map((_, idx) => (
+                  <button key={idx} onClick={() => setCurrentSlide(idx)} className={`w-3 h-3 rounded-full transition-all ${idx === currentSlide ? 'w-8' : 'bg-white/50'}`} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
+                ))}
+              </div>
+            </>
           )}
         </div>
-      ))}
-      
-      {/* Dots */}
-      {slides.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-          {slides.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentSlide(idx)}
-              className={`w-3 h-3 rounded-full transition-all ${idx === currentSlide ? 'w-8' : 'bg-white/50'}`}
-              style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
-            />
+      </section>
+    );
+  }
+
+  // Style 2: Fade with Thumbnails
+  if (style === 'fade') {
+    return (
+      <section className="relative w-full bg-slate-900 overflow-hidden">
+        <div className="relative w-full aspect-[16/9] md:aspect-[21/9] max-h-[450px] md:max-h-[600px]">
+          {slides.map((slide, idx) => (
+            <div key={idx} className={`absolute inset-0 transition-opacity duration-700 ${idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              {slide.image ? renderSlideWithBlur(slide, idx) : <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900" />}
+            </div>
           ))}
+          {slides.length > 1 && (
+            <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-center gap-2 bg-gradient-to-t from-black/60 to-transparent z-20">
+              {slides.map((slide, idx) => (
+                <button key={idx} onClick={() => setCurrentSlide(idx)} className={`rounded overflow-hidden transition-all border-2 w-16 h-10 md:w-20 md:h-12 ${idx === currentSlide ? 'border-white scale-105' : 'border-transparent opacity-70 hover:opacity-100'}`}>
+                  {slide.image ? <img src={slide.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ backgroundColor: brandColor }} />}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      )}
-    </section>
-  );
+      </section>
+    );
+  }
+
+  // Style 3: Bento Grid
+  if (style === 'bento') {
+    const bentoSlides = slides.slice(0, 4);
+    return (
+      <section className="relative w-full bg-slate-900 overflow-hidden p-2 md:p-4">
+        <div className="max-h-[400px] md:max-h-[550px]">
+          {/* Mobile: 2x2 grid */}
+          <div className="grid grid-cols-2 gap-2 md:hidden" style={{ height: '320px' }}>
+            {bentoSlides.slice(0, 4).map((slide, idx) => (
+              <a key={idx} href={slide.link || '#'} className="relative rounded-xl overflow-hidden">
+                {slide.image ? (
+                  <div className="w-full h-full relative">
+                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px)' }} />
+                    <div className="absolute inset-0 bg-black/20" />
+                    <img src={slide.image} alt="" className="relative w-full h-full object-contain z-10" />
+                  </div>
+                ) : (
+                  <div className="w-full h-full bg-slate-800" />
+                )}
+              </a>
+            ))}
+          </div>
+          {/* Desktop: Bento layout */}
+          <div className="hidden md:grid grid-cols-4 grid-rows-2 gap-3" style={{ height: '500px' }}>
+            <a href={bentoSlides[0]?.link || '#'} className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden">
+              {bentoSlides[0]?.image ? (
+                <div className="w-full h-full relative">
+                  <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[0].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(25px)' }} />
+                  <div className="absolute inset-0 bg-black/20" />
+                  <img src={bentoSlides[0].image} alt="" className="relative w-full h-full object-contain z-10" />
+                </div>
+              ) : <div className="w-full h-full bg-slate-800" />}
+            </a>
+            <a href={bentoSlides[1]?.link || '#'} className="col-span-2 relative rounded-2xl overflow-hidden">
+              {bentoSlides[1]?.image ? (
+                <div className="w-full h-full relative">
+                  <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[1].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px)' }} />
+                  <div className="absolute inset-0 bg-black/20" />
+                  <img src={bentoSlides[1].image} alt="" className="relative w-full h-full object-contain z-10" />
+                </div>
+              ) : <div className="w-full h-full bg-slate-800" />}
+            </a>
+            <a href={bentoSlides[2]?.link || '#'} className="relative rounded-2xl overflow-hidden">
+              {bentoSlides[2]?.image ? (
+                <div className="w-full h-full relative">
+                  <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[2].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px)' }} />
+                  <div className="absolute inset-0 bg-black/20" />
+                  <img src={bentoSlides[2].image} alt="" className="relative w-full h-full object-contain z-10" />
+                </div>
+              ) : <div className="w-full h-full bg-slate-800" />}
+            </a>
+            <a href={bentoSlides[3]?.link || '#'} className="relative rounded-2xl overflow-hidden">
+              {bentoSlides[3]?.image ? (
+                <div className="w-full h-full relative">
+                  <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[3].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px)' }} />
+                  <div className="absolute inset-0 bg-black/20" />
+                  <img src={bentoSlides[3].image} alt="" className="relative w-full h-full object-contain z-10" />
+                </div>
+              ) : <div className="w-full h-full bg-slate-800" />}
+            </a>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return null;
 }
 
 // ============ STATS SECTION ============

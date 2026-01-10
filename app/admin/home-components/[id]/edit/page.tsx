@@ -14,6 +14,8 @@ import {
 import { toast } from 'sonner';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { MultiImageUploader, ImageItem } from '../../../components/MultiImageUploader';
+import { HeroBannerPreview, HeroStyle } from '../../previews';
+import { useBrandColor } from '../../create/shared';
 
 const COMPONENT_TYPES = [
   { value: 'Hero', label: 'Hero Banner', icon: LayoutTemplate },
@@ -55,6 +57,7 @@ interface GalleryItem extends ImageItem {
 export default function HomeComponentEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const brandColor = useBrandColor();
   
   const component = useQuery(api.homeComponents.getById, { id: id as Id<"homeComponents"> });
   const updateMutation = useMutation(api.homeComponents.update);
@@ -66,6 +69,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
 
   // Config states for different component types
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
+  const [heroStyle, setHeroStyle] = useState<HeroStyle>('slider');
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [statsItems, setStatsItems] = useState<{id: number, value: string, label: string}[]>([]);
   const [ctaConfig, setCtaConfig] = useState({ title: '', description: '', buttonText: '', buttonLink: '', secondaryButtonText: '', secondaryButtonLink: '' });
@@ -93,6 +97,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         case 'Hero':
         case 'Banner':
           setHeroSlides(config.slides?.map((s: {image: string, link: string}, i: number) => ({ id: `slide-${i}`, url: s.image, link: s.link || '' })) || [{ id: 'slide-1', url: '', link: '' }]);
+          setHeroStyle((config.style as HeroStyle) || 'slider');
           break;
         case 'Gallery':
         case 'Partners':
@@ -165,7 +170,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
     switch (component.type) {
       case 'Hero':
       case 'Banner':
-        return { slides: heroSlides.map(s => ({ image: s.url, link: s.link })) };
+        return { slides: heroSlides.map(s => ({ image: s.url, link: s.link })), style: heroStyle };
       case 'Gallery':
       case 'Partners':
       case 'TrustBadges':
@@ -215,7 +220,6 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         config: buildConfig(),
       });
       toast.success('Đã cập nhật component');
-      router.push('/admin/home-components');
     } catch (error) {
       toast.error('Lỗi khi cập nhật');
       console.error(error);
@@ -271,26 +275,34 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
 
         {/* Hero/Banner slides */}
         {(component.type === 'Banner' || component.type === 'Hero') && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-base">Danh sách Banner (Slider)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <MultiImageUploader<HeroSlide>
-                items={heroSlides}
-                onChange={setHeroSlides}
-                folder="hero-banners"
-                imageKey="url"
-                extraFields={[{ key: 'link', placeholder: 'URL liên kết (khi click vào banner)', type: 'url' }]}
-                minItems={1}
-                maxItems={10}
-                aspectRatio="banner"
-                columns={1}
-                showReorder={true}
-                addButtonText="Thêm Banner"
-              />
-            </CardContent>
-          </Card>
+          <>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base">Danh sách Banner (Slider)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MultiImageUploader<HeroSlide>
+                  items={heroSlides}
+                  onChange={setHeroSlides}
+                  folder="hero-banners"
+                  imageKey="url"
+                  extraFields={[{ key: 'link', placeholder: 'URL liên kết (khi click vào banner)', type: 'url' }]}
+                  minItems={1}
+                  maxItems={10}
+                  aspectRatio="banner"
+                  columns={1}
+                  showReorder={true}
+                  addButtonText="Thêm Banner"
+                />
+              </CardContent>
+            </Card>
+            <HeroBannerPreview 
+              slides={heroSlides.map((s, idx) => ({ id: idx + 1, image: s.url, link: s.link }))} 
+              brandColor={brandColor}
+              selectedStyle={heroStyle}
+              onStyleChange={setHeroStyle}
+            />
+          </>
         )}
 
         {/* Gallery / Partners / TrustBadges */}

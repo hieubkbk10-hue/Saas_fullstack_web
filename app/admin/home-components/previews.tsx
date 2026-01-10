@@ -103,163 +103,276 @@ const PreviewWrapper = ({
 );
 
 // ============ HERO BANNER PREVIEW ============
+// Admin chọn style -> lưu vào config -> trang chủ render theo style đã chọn
+// Tất cả styles đều tuân thủ best practice: blurred background + object-contain + max-height
+export type HeroStyle = 'slider' | 'fade' | 'bento';
+
 export const HeroBannerPreview = ({ 
   slides, 
-  brandColor 
+  brandColor,
+  selectedStyle = 'slider',
+  onStyleChange
 }: { 
   slides: Array<{ id: number; image: string; link: string }>; 
   brandColor: string;
+  selectedStyle?: HeroStyle;
+  onStyleChange?: (style: HeroStyle) => void;
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [previewStyle, setPreviewStyle] = useState('fullwidth');
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const styles = [
-    { id: 'fullwidth', label: 'Slider' },
-    { id: 'overlay', label: 'Fade + Thumbs' },
-    { id: 'split', label: 'Bento Grid' }
+    { id: 'slider' as const, label: 'Slider' },
+    { id: 'fade' as const, label: 'Fade + Thumbs' },
+    { id: 'bento' as const, label: 'Bento Grid' }
   ];
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
-  const renderFullwidthStyle = () => (
-    <div className={cn(
-      "relative overflow-hidden",
-      device === 'desktop' ? 'aspect-[1920/600]' : device === 'tablet' ? 'aspect-[768/400]' : 'aspect-[375/450]'
-    )}>
-      {slides.length > 0 ? (
-        <>
-          {slides.map((slide, idx) => (
-            <div key={slide.id} className={cn(
-              "absolute inset-0 transition-transform duration-500 ease-in-out",
-              idx === currentSlide ? "translate-x-0" : idx < currentSlide ? "-translate-x-full" : "translate-x-full"
-            )}>
-              {slide.image ? (
-                <img src={slide.image} alt={`Slide ${idx + 1}`} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
-                  <div className="w-16 h-16 rounded-xl flex items-center justify-center mb-3" style={{ backgroundColor: `${brandColor}25` }}>
-                    <ImageIcon size={32} style={{ color: brandColor }} />
-                  </div>
-                  <div className="text-sm font-medium text-slate-500">Banner #{idx + 1}</div>
-                  <div className="text-xs text-slate-400 mt-1">1920x600px</div>
+  // Helper: Render slide với blurred background (best practice)
+  const renderSlideWithBlur = (slide: { image: string }, idx: number) => (
+    <div className="block w-full h-full relative">
+      {/* Blurred background layer - fills letterbox gaps */}
+      <div 
+        className="absolute inset-0 scale-110"
+        style={{
+          backgroundImage: `url(${slide.image})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'blur(30px)',
+        }}
+      />
+      {/* Dark overlay to soften blur */}
+      <div className="absolute inset-0 bg-black/20" />
+      {/* Main image - object-contain to show full image */}
+      <img 
+        src={slide.image} 
+        alt={`Slide ${idx + 1}`}
+        className="relative w-full h-full object-contain z-10"
+      />
+    </div>
+  );
+
+  // Helper: Render placeholder khi chưa có ảnh
+  const renderPlaceholder = (idx: number) => (
+    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
+      <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-2" style={{ backgroundColor: `${brandColor}25` }}>
+        <ImageIcon size={24} style={{ color: brandColor }} />
+      </div>
+      <div className="text-sm font-medium text-slate-400">Banner #{idx + 1}</div>
+      <div className="text-xs text-slate-500 mt-1">Khuyến nghị: 1920x600px</div>
+    </div>
+  );
+
+  // Style 1: Slider - slide ngang với dots
+  const renderSliderStyle = () => (
+    <section className="relative w-full bg-slate-900 overflow-hidden">
+      <div className={cn(
+        "relative w-full",
+        device === 'mobile' ? 'aspect-[16/9] max-h-[200px]' : device === 'tablet' ? 'aspect-[16/9] max-h-[250px]' : 'aspect-[21/9] max-h-[280px]'
+      )}>
+        {slides.length > 0 ? (
+          <>
+            {slides.map((slide, idx) => (
+              <div key={slide.id} className={cn("absolute inset-0 transition-opacity duration-700", idx === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none")}>
+                {slide.image ? renderSlideWithBlur(slide, idx) : renderPlaceholder(idx)}
+              </div>
+            ))}
+            {slides.length > 1 && (
+              <>
+                <button type="button" onClick={prevSlide} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all z-20" style={{ opacity: 0.7 }}>
+                  <ChevronLeft size={14} />
+                </button>
+                <button type="button" onClick={nextSlide} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all z-20" style={{ opacity: 0.7 }}>
+                  <ChevronRight size={14} />
+                </button>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                  {slides.map((_, idx) => (
+                    <button key={idx} type="button" onClick={() => setCurrentSlide(idx)} className={cn("w-2 h-2 rounded-full transition-all", idx === currentSlide ? "w-6" : "bg-white/50")} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
+                  ))}
                 </div>
-              )}
-            </div>
-          ))}
-          {slides.length > 1 && (
-            <>
-              <button type="button" onClick={prevSlide} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 shadow-lg flex items-center justify-center hover:bg-white">
-                <ChevronLeft size={16} />
-              </button>
-              <button type="button" onClick={nextSlide} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 shadow-lg flex items-center justify-center hover:bg-white">
-                <ChevronRight size={16} />
-              </button>
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                {slides.map((_, idx) => (
+              </>
+            )}
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-slate-800"><span className="text-slate-400 text-sm">Chưa có banner</span></div>
+        )}
+      </div>
+    </section>
+  );
+
+  // Style 2: Fade + Thumbnails - fade với thumbnail navigation
+  const renderFadeStyle = () => (
+    <section className="relative w-full bg-slate-900 overflow-hidden">
+      <div className={cn(
+        "relative w-full",
+        device === 'mobile' ? 'aspect-[16/9] max-h-[220px]' : device === 'tablet' ? 'aspect-[16/9] max-h-[270px]' : 'aspect-[21/9] max-h-[300px]'
+      )}>
+        {slides.length > 0 ? (
+          <>
+            {slides.map((slide, idx) => (
+              <div key={slide.id} className={cn("absolute inset-0 transition-opacity duration-700", idx === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none")}>
+                {slide.image ? renderSlideWithBlur(slide, idx) : renderPlaceholder(idx)}
+              </div>
+            ))}
+            {slides.length > 1 && (
+              <div className="absolute bottom-0 left-0 right-0 p-2 flex justify-center gap-2 bg-gradient-to-t from-black/60 to-transparent z-20">
+                {slides.map((slide, idx) => (
                   <button key={idx} type="button" onClick={() => setCurrentSlide(idx)}
-                    className={cn("w-2 h-2 rounded-full transition-all", idx === currentSlide ? "w-6" : "bg-white/50 hover:bg-white/80")}
-                    style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
+                    className={cn("rounded overflow-hidden transition-all border-2", idx === currentSlide ? "border-white scale-105" : "border-transparent opacity-70 hover:opacity-100", device === 'mobile' ? 'w-10 h-7' : 'w-14 h-9')}>
+                    {slide.image ? <img src={slide.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ backgroundColor: brandColor }}></div>}
+                  </button>
                 ))}
               </div>
-            </>
-          )}
-        </>
-      ) : (
-        <div className="w-full h-full flex items-center justify-center bg-slate-50"><span className="text-slate-400 text-sm">Chưa có banner</span></div>
-      )}
-    </div>
-  );
-
-  const renderFadeStyle = () => (
-    <div className={cn(
-      "relative overflow-hidden",
-      device === 'desktop' ? 'aspect-[1920/650]' : device === 'tablet' ? 'aspect-[768/450]' : 'aspect-[375/500]'
-    )}>
-      <div className="absolute inset-0">
-        {slides.map((slide, idx) => (
-          <div key={slide.id} className={cn("absolute inset-0 transition-opacity duration-700", idx === currentSlide ? "opacity-100" : "opacity-0")}>
-            {slide.image ? (
-              <img src={slide.image} alt={`Slide ${idx + 1}`} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}20 0%, ${brandColor}40 100%)` }}>
-                <div className="w-full h-full flex flex-col items-center justify-center">
-                  <ImageIcon size={32} style={{ color: brandColor }} />
-                  <div className="text-sm font-medium text-slate-500 mt-2">Banner #{idx + 1}</div>
-                </div>
-              </div>
             )}
-          </div>
-        ))}
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-slate-800"><span className="text-slate-400 text-sm">Chưa có banner</span></div>
+        )}
       </div>
-      {slides.length > 1 && (
-        <div className={cn("absolute bottom-0 left-0 right-0 p-3 flex justify-center gap-2", "bg-gradient-to-t from-black/50 to-transparent")}>
-          {slides.map((slide, idx) => (
-            <button key={idx} type="button" onClick={() => setCurrentSlide(idx)}
-              className={cn("rounded overflow-hidden transition-all border-2", idx === currentSlide ? "border-white scale-105" : "border-transparent opacity-70 hover:opacity-100", device === 'mobile' ? 'w-10 h-7' : 'w-14 h-9')}>
-              {slide.image ? <img src={slide.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ backgroundColor: brandColor }}></div>}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    </section>
   );
 
+  // Style 3: Bento Grid - layout dạng grid
   const renderBentoStyle = () => {
     const bentoSlides = slides.slice(0, 4);
     return (
-      <div className={cn("relative overflow-hidden p-4", device === 'desktop' ? 'aspect-[1920/600]' : device === 'tablet' ? 'aspect-[768/500]' : 'aspect-[375/600]')}>
-        {device === 'mobile' ? (
-          <div className="grid grid-cols-2 gap-3 h-full">
-            {bentoSlides.slice(0, 4).map((slide, idx) => (
-              <div key={slide.id} className="relative rounded-2xl overflow-hidden group cursor-pointer">
-                {slide.image ? <img src={slide.image} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" /> : 
-                <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}${10 + idx * 5}` }}><ImageIcon size={24} className="text-white/50" /></div>}
+      <section className="relative w-full bg-slate-900 overflow-hidden p-2">
+        <div className={cn(
+          "relative w-full",
+          device === 'mobile' ? 'max-h-[240px]' : device === 'tablet' ? 'max-h-[280px]' : 'max-h-[300px]'
+        )}>
+          {device === 'mobile' ? (
+            <div className="grid grid-cols-2 gap-2 h-full">
+              {bentoSlides.slice(0, 4).map((slide, idx) => (
+                <div key={slide.id} className="relative rounded-xl overflow-hidden aspect-video">
+                  {slide.image ? (
+                    <div className="w-full h-full relative">
+                      <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px)' }} />
+                      <div className="absolute inset-0 bg-black/20" />
+                      <img src={slide.image} alt="" className="relative w-full h-full object-contain z-10" />
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}${15 + idx * 5}` }}><ImageIcon size={20} className="text-white/50" /></div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 grid-rows-2 gap-2 h-full" style={{ height: device === 'desktop' ? '280px' : '260px' }}>
+              <div className="col-span-2 row-span-2 relative rounded-xl overflow-hidden">
+                {bentoSlides[0]?.image ? (
+                  <div className="w-full h-full relative">
+                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[0].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(25px)' }} />
+                    <div className="absolute inset-0 bg-black/20" />
+                    <img src={bentoSlides[0].image} alt="" className="relative w-full h-full object-contain z-10" />
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
+                    <ImageIcon size={28} style={{ color: brandColor }} /><span className="text-xs text-slate-400 mt-1">Banner chính</span>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-4 grid-rows-2 gap-3 h-full">
-            <div className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden group cursor-pointer">
-              {bentoSlides[0]?.image ? <img src={bentoSlides[0].image} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" /> :
-              <div className="w-full h-full flex flex-col items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
-                <ImageIcon size={32} style={{ color: brandColor }} /><span className="text-sm text-slate-400 mt-2">Banner chính</span>
-              </div>}
+              <div className="col-span-2 relative rounded-xl overflow-hidden">
+                {bentoSlides[1]?.image ? (
+                  <div className="w-full h-full relative">
+                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[1].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px)' }} />
+                    <div className="absolute inset-0 bg-black/20" />
+                    <img src={bentoSlides[1].image} alt="" className="relative w-full h-full object-contain z-10" />
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}20` }}><ImageIcon size={20} className="text-white/50" /></div>
+                )}
+              </div>
+              <div className="relative rounded-xl overflow-hidden">
+                {bentoSlides[2]?.image ? (
+                  <div className="w-full h-full relative">
+                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[2].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px)' }} />
+                    <div className="absolute inset-0 bg-black/20" />
+                    <img src={bentoSlides[2].image} alt="" className="relative w-full h-full object-contain z-10" />
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}25` }}><ImageIcon size={16} className="text-white/50" /></div>
+                )}
+              </div>
+              <div className="relative rounded-xl overflow-hidden">
+                {bentoSlides[3]?.image ? (
+                  <div className="w-full h-full relative">
+                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[3].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px)' }} />
+                    <div className="absolute inset-0 bg-black/20" />
+                    <img src={bentoSlides[3].image} alt="" className="relative w-full h-full object-contain z-10" />
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}30` }}><ImageIcon size={16} className="text-white/50" /></div>
+                )}
+              </div>
             </div>
-            <div className="col-span-2 relative rounded-2xl overflow-hidden group cursor-pointer">
-              {bentoSlides[1]?.image ? <img src={bentoSlides[1].image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}20` }}><ImageIcon size={24} className="text-white/50" /></div>}
-            </div>
-            <div className="relative rounded-2xl overflow-hidden group cursor-pointer">
-              {bentoSlides[2]?.image ? <img src={bentoSlides[2].image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}25` }}><ImageIcon size={20} className="text-white/50" /></div>}
-            </div>
-            <div className="relative rounded-2xl overflow-hidden group cursor-pointer">
-              {bentoSlides[3]?.image ? <img src={bentoSlides[3].image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}30` }}><ImageIcon size={20} className="text-white/50" /></div>}
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </section>
     );
   };
 
   return (
-    <PreviewWrapper title="Preview Hero" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`Slide ${currentSlide + 1} / ${slides.length || 1}`}>
-      <BrowserFrame url="yoursite.com">
-        <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: brandColor }}></div>
-            <div className="w-20 h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
+    <Card className="mt-6">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Eye size={18} /> Preview Hero
+          </CardTitle>
+          <div className="flex items-center gap-4">
+            {/* Style selector - admin chọn style để lưu */}
+            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+              {styles.map((s) => (
+                <button key={s.id} type="button" onClick={() => onStyleChange?.(s.id)}
+                  className={cn("px-3 py-1 text-xs font-medium rounded-md transition-all",
+                    selectedStyle === s.id ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            {/* Device selector */}
+            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+              {devices.map((d) => (
+                <button key={d.id} type="button" onClick={() => setDevice(d.id)} title={d.label}
+                  className={cn("p-1.5 rounded-md transition-all",
+                    device === d.id ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-400 hover:text-slate-600")}>
+                  <d.icon size={16} />
+                </button>
+              ))}
+            </div>
           </div>
-          {device !== 'mobile' && <div className="flex gap-4">{[1,2,3,4].map(i => (<div key={i} className="w-12 h-2 bg-slate-100 dark:bg-slate-800 rounded"></div>))}</div>}
         </div>
-        {previewStyle === 'fullwidth' && renderFullwidthStyle()}
-        {previewStyle === 'overlay' && renderFadeStyle()}
-        {previewStyle === 'split' && renderBentoStyle()}
-        <div className="p-4 space-y-3">
-          <div className="flex gap-3">{[1,2,3,4].slice(0, device === 'mobile' ? 2 : 4).map(i => (<div key={i} className="flex-1 h-20 bg-slate-100 dark:bg-slate-800 rounded-lg"></div>))}</div>
+      </CardHeader>
+      <CardContent>
+        <div className={cn("mx-auto transition-all duration-300", deviceWidths[device])}>
+          <BrowserFrame url="yoursite.com">
+            {/* Fake header */}
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: brandColor }}></div>
+                <div className="w-20 h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
+              </div>
+              {device !== 'mobile' && <div className="flex gap-4">{[1,2,3,4].map(i => (<div key={i} className="w-12 h-2 bg-slate-100 dark:bg-slate-800 rounded"></div>))}</div>}
+            </div>
+            {/* Hero section - render theo style đã chọn */}
+            {selectedStyle === 'slider' && renderSliderStyle()}
+            {selectedStyle === 'fade' && renderFadeStyle()}
+            {selectedStyle === 'bento' && renderBentoStyle()}
+            {/* Fake content bên dưới */}
+            <div className="p-4 space-y-3">
+              <div className="flex gap-3">{[1,2,3,4].slice(0, device === 'mobile' ? 2 : 4).map(i => (<div key={i} className="flex-1 h-16 bg-slate-100 dark:bg-slate-800 rounded-lg"></div>))}</div>
+            </div>
+          </BrowserFrame>
         </div>
-      </BrowserFrame>
-    </PreviewWrapper>
+        <div className="mt-3 text-xs text-slate-500">
+          Style: <strong className="text-slate-700 dark:text-slate-300">{styles.find(s => s.id === selectedStyle)?.label}</strong>
+          {' • '}{device === 'desktop' && 'Desktop (1920px)'}{device === 'tablet' && 'Tablet (768px)'}{device === 'mobile' && 'Mobile (375px)'}
+          {selectedStyle !== 'bento' && ` • Slide ${currentSlide + 1} / ${slides.length || 1}`}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

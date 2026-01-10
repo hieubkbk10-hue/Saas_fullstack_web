@@ -4,7 +4,7 @@ import React, { useState, useRef, useCallback, DragEvent } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Upload, Trash2, Loader2, Link, Image as ImageIcon, ArrowUp, ArrowDown, Plus, GripVertical } from 'lucide-react';
+import { Upload, Trash2, Loader2, Link, Image as ImageIcon, Plus, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Input, cn } from './ui';
 
@@ -100,6 +100,8 @@ export function MultiImageUploader<T extends ImageItem>({
   const [urlModeIds, setUrlModeIds] = useState<Set<string | number>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
   const [dragOverItemId, setDragOverItemId] = useState<string | number | null>(null);
+  const [draggedItemId, setDraggedItemId] = useState<string | number | null>(null);
+  const [fileDragOverItemId, setFileDragOverItemId] = useState<string | number | null>(null); // For file drops on specific items
   const inputRefs = useRef<Map<string | number, HTMLInputElement>>(new Map());
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
@@ -271,6 +273,7 @@ export function MultiImageUploader<T extends ImageItem>({
     e.stopPropagation();
     setIsDragging(false);
     setDragOverItemId(null);
+    setFileDragOverItemId(null);
     
     const files = e.dataTransfer.files;
     if (!files.length) return;
@@ -283,6 +286,43 @@ export function MultiImageUploader<T extends ImageItem>({
       handleMultipleFiles(files);
     }
   }, [handleFileUpload, handleMultipleFiles]);
+
+  // File drag handlers for individual items
+  const handleItemFileDragEnter = useCallback((e: React.DragEvent, itemId: string | number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only trigger if dragging files, not dragging items for reorder
+    if (e.dataTransfer.types.includes('Files')) {
+      setFileDragOverItemId(itemId);
+    }
+  }, []);
+
+  const handleItemFileDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFileDragOverItemId(null);
+  }, []);
+
+  const handleItemFileDragOver = useCallback((e: React.DragEvent, itemId: string | number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes('Files')) {
+      e.dataTransfer.dropEffect = 'copy';
+      setFileDragOverItemId(itemId);
+    }
+  }, []);
+
+  const handleItemFileDrop = useCallback((e: React.DragEvent, itemId: string | number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setFileDragOverItemId(null);
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0 && files[0]) {
+      handleFileUpload(itemId, files[0]);
+    }
+  }, [handleFileUpload]);
 
   const handleUrlChange = useCallback((itemId: string | number, url: string) => {
     onChange(items.map(item => 
@@ -314,13 +354,48 @@ export function MultiImageUploader<T extends ImageItem>({
     onChange(items.filter(i => i.id !== itemId));
   }, [items, minItems, deleteImage, onChange]);
 
-  const handleMove = useCallback((index: number, direction: 'up' | 'down') => {
-    if ((direction === 'up' && index === 0) || (direction === 'down' && index === items.length - 1)) return;
+  const handleItemDragStart = useCallback((e: React.DragEvent, itemId: string | number) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(itemId));
+    setDraggedItemId(itemId);
+  }, []);
+
+  const handleItemDragEnd = useCallback(() => {
+    setDraggedItemId(null);
+    setDragOverItemId(null);
+  }, []);
+
+  const handleItemDragOver = useCallback((e: React.DragEvent, targetId: string | number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (draggedItemId && draggedItemId !== targetId) {
+      setDragOverItemId(targetId);
+    }
+  }, [draggedItemId]);
+
+  const handleItemDrop = useCallback((e: React.DragEvent, targetId: string | number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!draggedItemId || draggedItemId === targetId) {
+      setDraggedItemId(null);
+      setDragOverItemId(null);
+      return;
+    }
+
+    const dragIndex = items.findIndex(item => item.id === draggedItemId);
+    const dropIndex = items.findIndex(item => item.id === targetId);
+
+    if (dragIndex === -1 || dropIndex === -1) return;
+
     const newItems = [...items];
-    const swapIndex = direction === 'up' ? index - 1 : index + 1;
-    [newItems[index], newItems[swapIndex]] = [newItems[swapIndex], newItems[index]];
+    const [draggedItem] = newItems.splice(dragIndex, 1);
+    newItems.splice(dropIndex, 0, draggedItem);
     onChange(newItems);
-  }, [items, onChange]);
+
+    setDraggedItemId(null);
+    setDragOverItemId(null);
+  }, [draggedItemId, items, onChange]);
 
   const handleAdd = useCallback(() => {
     if (items.length >= maxItems) {
@@ -386,62 +461,65 @@ export function MultiImageUploader<T extends ImageItem>({
       {/* Items grid */}
       {items.length > 0 ? (
         <div className={cn('grid gap-4', columnClasses[columns])}>
-          {items.map((item, index) => {
+          {items.map((item) => {
             const imageUrl = item[imageKey] as string;
             const isUploading = uploadingIds.has(item.id);
             const isUrlMode = urlModeIds.has(item.id);
+            const isDraggedItem = draggedItemId === item.id;
+            const isDragOverItem = dragOverItemId === item.id && draggedItemId !== null;
+            const isFileDragOver = fileDragOverItemId === item.id;
 
             return (
               <div
                 key={item.id}
+                draggable={showReorder}
+                onDragStart={(e) => handleItemDragStart(e, item.id)}
+                onDragEnd={handleItemDragEnd}
+                onDragOver={(e) => handleItemDragOver(e, item.id)}
+                onDrop={(e) => handleItemDrop(e, item.id)}
                 className={cn(
                   "bg-slate-50 dark:bg-slate-800 rounded-lg p-3 space-y-3 transition-all duration-200",
-                  dragOverItemId === item.id && "ring-2 ring-blue-500 ring-offset-2 scale-[1.02]"
+                  isDragOverItem && "ring-2 ring-blue-500 ring-offset-2 scale-[1.02]",
+                  isDraggedItem && "opacity-50 scale-95",
+                  showReorder && "cursor-grab active:cursor-grabbing"
                 )}
-                onDrop={(e) => handleDrop(e, item.id)}
-                onDragOver={(e) => handleDragOver(e, item.id)}
-                onDragLeave={() => setDragOverItemId(null)}
               >
                 {/* Image preview / upload area */}
                 <div className="flex gap-3">
                   {showReorder && (
-                    <div className="flex flex-col justify-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        disabled={index === 0}
-                        onClick={() => handleMove(index, 'up')}
-                      >
-                        <ArrowUp size={12} />
-                      </Button>
-                      <GripVertical size={14} className="mx-auto text-slate-400" />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        disabled={index === items.length - 1}
-                        onClick={() => handleMove(index, 'down')}
-                      >
-                        <ArrowDown size={12} />
-                      </Button>
+                    <div className="flex flex-col justify-center">
+                      <GripVertical size={18} className="text-slate-400 hover:text-slate-600" />
                     </div>
                   )}
 
+                  {/* Image drop zone - supports drag & drop files */}
                   <div
                     className={cn(
-                      'relative flex-shrink-0 w-32 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 cursor-pointer',
-                      aspectClasses[aspectRatio]
+                      'relative flex-shrink-0 w-32 rounded-lg overflow-hidden border-2 transition-all duration-200',
+                      isFileDragOver 
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 scale-105 shadow-lg' 
+                        : 'border-slate-200 dark:border-slate-700',
+                      aspectClasses[aspectRatio],
+                      !isUrlMode && 'cursor-pointer hover:border-blue-400'
                     )}
-                    onClick={() => !isUploading && inputRefs.current.get(item.id)?.click()}
+                    onClick={() => !isUploading && !isUrlMode && inputRefs.current.get(item.id)?.click()}
+                    onDragEnter={(e) => handleItemFileDragEnter(e, item.id)}
+                    onDragLeave={handleItemFileDragLeave}
+                    onDragOver={(e) => handleItemFileDragOver(e, item.id)}
+                    onDrop={(e) => handleItemFileDrop(e, item.id)}
                   >
                     {imageUrl ? (
-                      <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+                      <img src={imageUrl} alt="" className={cn("w-full h-full object-cover transition-opacity", isFileDragOver && "opacity-50")} />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-700">
                         <ImageIcon size={24} className="text-slate-400" />
+                      </div>
+                    )}
+                    {/* File drag overlay */}
+                    {isFileDragOver && (
+                      <div className="absolute inset-0 bg-blue-500/20 flex flex-col items-center justify-center">
+                        <Upload size={20} className="text-blue-600 mb-1" />
+                        <span className="text-xs font-medium text-blue-600">Thả ảnh</span>
                       </div>
                     )}
                     {isUploading && (
@@ -463,20 +541,20 @@ export function MultiImageUploader<T extends ImageItem>({
                     <div className="flex gap-2 mb-2">
                       <button
                         type="button"
-                        onClick={() => !isUrlMode && toggleUrlMode(item.id)}
+                        onClick={() => isUrlMode && toggleUrlMode(item.id)}
                         className={cn(
-                          'flex items-center gap-1 px-2 py-1 text-xs rounded',
-                          !isUrlMode ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-500 dark:bg-slate-700'
+                          'flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors',
+                          !isUrlMode ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'
                         )}
                       >
                         <Upload size={12} /> Upload
                       </button>
                       <button
                         type="button"
-                        onClick={() => isUrlMode || toggleUrlMode(item.id)}
+                        onClick={() => !isUrlMode && toggleUrlMode(item.id)}
                         className={cn(
-                          'flex items-center gap-1 px-2 py-1 text-xs rounded',
-                          isUrlMode ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-500 dark:bg-slate-700'
+                          'flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors',
+                          isUrlMode ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'
                         )}
                       >
                         <Link size={12} /> URL
