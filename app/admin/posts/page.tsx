@@ -127,7 +127,7 @@ function PostsContent() {
   };
 
   const openFrontend = (slug: string) => {
-    window.open(`/post/${slug}`, '_blank');
+    window.open(`/posts/${slug}`, '_blank');
   };
 
   if (isLoading) {

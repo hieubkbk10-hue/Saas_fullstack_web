@@ -1,95 +1,17 @@
 'use client';
 
-import React, { useState, use, useEffect, useMemo } from 'react';
-import Link from 'next/link';
+import React, { useState, use, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Loader2, Plus, X } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../../components/ui';
 import { LexicalEditor } from '../../../components/LexicalEditor';
 import { ImageUploader } from '../../../components/ImageUploader';
-
-function QuickCreateCategoryModal({ 
-  isOpen, 
-  onClose, 
-  onCreated 
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  onCreated: (id: string) => void;
-}) {
-  const createCategory = useMutation(api.postCategories.create);
-  const [name, setName] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-
-    setIsSubmitting(true);
-    try {
-      const slug = name.toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/[đĐ]/g, "d")
-        .replace(/[^a-z0-9\s]/g, '')
-        .replace(/\s+/g, '-');
-      
-      const id = await createCategory({
-        name: name.trim(),
-        slug,
-      });
-      toast.success('Tạo danh mục thành công');
-      onCreated(id);
-      setName('');
-      onClose();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Không thể tạo danh mục');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Tạo danh mục nhanh</h3>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600">
-            <X size={20} />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Tên danh mục <span className="text-red-500">*</span></Label>
-              <Input 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                required 
-                placeholder="VD: Tin tức, Hướng dẫn..." 
-                autoFocus 
-              />
-              <p className="text-xs text-slate-500">Slug sẽ được tạo tự động từ tên</p>
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 mt-6">
-            <Button type="button" variant="ghost" onClick={onClose}>Hủy</Button>
-            <Button type="submit" variant="accent" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
-              Tạo danh mục
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
+import { useFormShortcuts } from '../../../components/useKeyboardShortcuts';
+import { QuickCreateCategoryModal } from '../../../components/QuickCreateCategoryModal';
 
 const MODULE_KEY = 'posts';
 
@@ -111,6 +33,23 @@ export default function PostEditPage({ params }: { params: Promise<{ id: string 
   const [status, setStatus] = useState<'Draft' | 'Published' | 'Archived'>('Draft');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+
+  // Keyboard shortcuts
+  const handleSaveShortcut = useCallback(() => {
+    const form = document.querySelector('form');
+    if (form && title.trim()) {
+      form.requestSubmit();
+    }
+  }, [title]);
+
+  const handleCancelShortcut = useCallback(() => {
+    router.push('/admin/posts');
+  }, [router]);
+
+  useFormShortcuts({
+    onSave: handleSaveShortcut,
+    onCancel: handleCancelShortcut,
+  });
 
   // Check which fields are enabled
   const enabledFields = useMemo(() => {
@@ -269,10 +208,11 @@ export default function PostEditPage({ params }: { params: Promise<{ id: string 
       </div>
 
       <div className="fixed bottom-0 left-0 lg:left-[280px] right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center z-10">
-        <Button type="button" variant="ghost" onClick={() => router.push('/admin/posts')}>Hủy bỏ</Button>
+        <Button type="button" variant="ghost" onClick={() => router.push('/admin/posts')} title="Hủy (Esc)">Hủy bỏ</Button>
         <div className="flex gap-2">
+          <span className="text-xs text-slate-400 self-center hidden sm:block">Ctrl+S để lưu</span>
           <Button type="button" variant="secondary" onClick={() => setStatus('Draft')}>Lưu nháp</Button>
-          <Button type="submit" variant="accent" disabled={isSubmitting}>
+          <Button type="submit" variant="accent" disabled={isSubmitting} title="Lưu (Ctrl+S)">
             {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
             Cập nhật
           </Button>

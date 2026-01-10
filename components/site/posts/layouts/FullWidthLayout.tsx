@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { FileText, Calendar, Eye } from 'lucide-react';
+import { FileText, Eye } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 
 interface Post {
@@ -21,9 +21,11 @@ interface FullWidthLayoutProps {
   brandColor: string;
   categoryMap: Map<string, string>;
   viewMode: 'grid' | 'list';
+  enabledFields: Set<string>;
 }
 
-export function FullWidthLayout({ posts, brandColor, categoryMap, viewMode }: FullWidthLayoutProps) {
+export function FullWidthLayout({ posts, brandColor, categoryMap, viewMode, enabledFields }: FullWidthLayoutProps) {
+  const showExcerpt = enabledFields.has('excerpt');
   if (posts.length === 0) {
     return (
       <div className="text-center py-16">
@@ -36,54 +38,45 @@ export function FullWidthLayout({ posts, brandColor, categoryMap, viewMode }: Fu
 
   if (viewMode === 'list') {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         {posts.map((post) => (
           <Link key={post._id} href={`/posts/${post.slug}`} className="group block">
-            <article className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-slate-100 flex flex-col md:flex-row">
-              <div className="md:w-64 lg:w-72 flex-shrink-0">
-                <div className="aspect-video md:aspect-[4/3] md:h-full bg-slate-100 overflow-hidden relative">
+            <article className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100 flex flex-col sm:flex-row">
+              <div className="sm:w-48 md:w-56 flex-shrink-0">
+                <div className="aspect-video sm:aspect-[4/3] sm:h-full bg-slate-100 overflow-hidden">
                   {post.thumbnail ? (
                     <img 
                       src={post.thumbnail} 
                       alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <FileText size={40} className="text-slate-300" />
+                      <FileText size={32} className="text-slate-300" />
                     </div>
                   )}
                 </div>
               </div>
-              <div className="p-5 flex-1 flex flex-col justify-center">
-                <div className="flex items-center gap-3 mb-2">
+              <div className="p-4 flex-1 flex flex-col justify-center">
+                <div className="flex items-center gap-2 mb-1.5">
                   <span 
-                    className="text-xs font-medium px-2.5 py-1 rounded-full"
+                    className="text-xs font-medium px-2 py-0.5 rounded"
                     style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
                   >
                     {categoryMap.get(post.categoryId) || 'Tin tức'}
                   </span>
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
-                    <Calendar size={12} />
-                    {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}
-                  </span>
+                  <span className="text-xs text-slate-400">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
                 </div>
-                <h2 className="text-lg font-semibold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                <h2 className="text-base font-semibold text-slate-900 group-hover:opacity-70 transition-opacity duration-200 line-clamp-2">
                   {post.title}
                 </h2>
-                {post.excerpt && (
-                  <p className="text-sm text-slate-500 line-clamp-2 mb-3">{post.excerpt}</p>
+                {showExcerpt && post.excerpt && (
+                  <p className="text-sm text-slate-500 line-clamp-1 mt-1">{post.excerpt}</p>
                 )}
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="flex items-center gap-1 text-slate-400">
-                    <Eye size={14} />
-                    {post.views.toLocaleString()} lượt xem
-                  </span>
-                  <span 
-                    className="font-medium group-hover:gap-2 transition-all flex items-center gap-1" 
-                    style={{ color: brandColor }}
-                  >
-                    Đọc tiếp <span className="group-hover:translate-x-1 transition-transform">→</span>
+                <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <Eye size={12} />
+                    {post.views.toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -96,47 +89,44 @@ export function FullWidthLayout({ posts, brandColor, categoryMap, viewMode }: Fu
 
   // Grid view
   return (
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {posts.map((post) => (
         <Link key={post._id} href={`/posts/${post.slug}`} className="group">
-          <article className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-100 h-full flex flex-col">
-            <div className="aspect-video bg-slate-100 overflow-hidden relative">
+          <article className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100 h-full flex flex-col">
+            <div className="aspect-[16/10] bg-slate-100 overflow-hidden">
               {post.thumbnail ? (
                 <img 
                   src={post.thumbnail} 
                   alt={post.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <FileText size={48} className="text-slate-300" />
+                  <FileText size={40} className="text-slate-300" />
                 </div>
               )}
             </div>
-            <div className="p-5 flex-1 flex flex-col">
-              <div className="flex items-center gap-2 mb-3">
+            <div className="p-4 flex-1 flex flex-col">
+              <div className="flex items-center gap-2 mb-2">
                 <span 
-                  className="text-xs font-medium px-2.5 py-1 rounded-full"
+                  className="text-xs font-medium px-2 py-0.5 rounded"
                   style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
                 >
                   {categoryMap.get(post.categoryId) || 'Tin tức'}
                 </span>
               </div>
-              <h2 className="text-lg font-semibold text-slate-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors flex-1">
+              <h2 className="text-base font-semibold text-slate-900 line-clamp-2 group-hover:opacity-70 transition-opacity duration-200 flex-1">
                 {post.title}
               </h2>
-              {post.excerpt && (
-                <p className="text-sm text-slate-500 line-clamp-2 mb-4">{post.excerpt}</p>
+              {showExcerpt && post.excerpt && (
+                <p className="text-sm text-slate-500 line-clamp-2 mt-2">{post.excerpt}</p>
               )}
-              <div className="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-100">
-                <div className="flex items-center gap-1">
-                  <Calendar size={12} />
-                  <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
-                </div>
-                <div className="flex items-center gap-1">
+              <div className="flex items-center justify-between text-xs text-slate-400 mt-3 pt-3 border-t border-slate-100">
+                <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
+                <span className="flex items-center gap-1">
                   <Eye size={12} />
-                  <span>{post.views.toLocaleString()}</span>
-                </div>
+                  {post.views.toLocaleString()}
+                </span>
               </div>
             </div>
           </article>

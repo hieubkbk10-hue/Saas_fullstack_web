@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useQuery } from 'convex/react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { Loader2, LayoutGrid, List } from 'lucide-react';
+import { LayoutGrid, List } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 import {
   PostsFilter,
@@ -26,9 +27,21 @@ function usePostsLayout(): PostsListLayout {
   return 'fullwidth'; // default
 }
 
+// Hook để lấy danh sách các fields đang bật cho posts module
+function useEnabledPostFields(): Set<string> {
+  const fields = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'posts' });
+  return useMemo(() => {
+    if (!fields) return new Set<string>();
+    return new Set(fields.map(f => f.fieldKey));
+  }, [fields]);
+}
+
 export default function PostsPage() {
   const brandColor = useBrandColor();
   const layout = usePostsLayout();
+  const enabledFields = useEnabledPostFields();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState<Id<"postCategories"> | null>(null);
@@ -38,6 +51,17 @@ export default function PostsPage() {
 
   // Queries
   const categories = useQuery(api.postCategories.listActive, { limit: 20 });
+  
+  // Sync category from URL query param
+  useEffect(() => {
+    const catSlug = searchParams.get('catpost');
+    if (catSlug && categories) {
+      const matchedCategory = categories.find(c => c.slug === catSlug);
+      if (matchedCategory) {
+        setSelectedCategory(matchedCategory._id);
+      }
+    }
+  }, [searchParams, categories]);
   const posts = useQuery(api.posts.searchPublished, {
     search: searchQuery || undefined,
     categoryId: selectedCategory ?? undefined,
@@ -60,7 +84,21 @@ export default function PostsPage() {
   // Handlers
   const handleCategoryChange = useCallback((categoryId: Id<"postCategories"> | null) => {
     setSelectedCategory(categoryId);
-  }, []);
+    
+    // Update URL query param
+    const params = new URLSearchParams(searchParams.toString());
+    if (categoryId && categories) {
+      const category = categories.find(c => c._id === categoryId);
+      if (category) {
+        params.set('catpost', category.slug);
+      }
+    } else {
+      params.delete('catpost');
+    }
+    
+    const newUrl = params.toString() ? `/posts?${params.toString()}` : '/posts';
+    router.push(newUrl, { scroll: false });
+  }, [searchParams, categories, router]);
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
@@ -72,11 +110,7 @@ export default function PostsPage() {
 
   // Loading state
   if (posts === undefined || categories === undefined) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-      </div>
-    );
+    return <PostsListSkeleton />;
   }
 
   return (
@@ -84,18 +118,9 @@ export default function PostsPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <p
-            className="text-sm font-medium uppercase tracking-wider mb-2"
-            style={{ color: brandColor }}
-          >
-            Blog
-          </p>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
             Tin tức & Bài viết
           </h1>
-          <p className="text-slate-500 max-w-2xl mx-auto">
-            Cập nhật những tin tức mới nhất và các bài viết hữu ích từ chúng tôi
-          </p>
         </div>
 
         {/* Layout based rendering */}
@@ -150,6 +175,7 @@ export default function PostsPage() {
               brandColor={brandColor}
               categoryMap={categoryMap}
               viewMode={viewMode}
+              enabledFields={enabledFields}
             />
           </>
         )}
@@ -166,6 +192,7 @@ export default function PostsPage() {
             onSearchChange={handleSearchChange}
             recentPosts={recentPosts ?? []}
             popularPosts={popularPosts ?? []}
+            enabledFields={enabledFields}
           />
         )}
 
@@ -178,6 +205,7 @@ export default function PostsPage() {
             selectedCategory={selectedCategory}
             onCategoryChange={handleCategoryChange}
             featuredPosts={featuredPosts ?? []}
+            enabledFields={enabledFields}
           />
         )}
 
@@ -185,13 +213,57 @@ export default function PostsPage() {
         {posts.length >= 24 && (
           <div className="text-center mt-8">
             <button
-              className="px-6 py-3 rounded-lg font-medium transition-colors"
+              className="px-6 py-3 rounded-lg font-medium transition-colors duration-200 hover:opacity-80"
               style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
             >
               Xem thêm bài viết
             </button>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Skeleton Loading Component
+function PostsListSkeleton() {
+  return (
+    <div className="py-8 md:py-12 px-4 animate-pulse">
+      <div className="max-w-7xl mx-auto">
+        {/* Header skeleton */}
+        <div className="text-center mb-8">
+          <div className="h-10 w-64 bg-slate-200 rounded mx-auto" />
+        </div>
+
+        {/* Filter skeleton */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="h-10 flex-1 max-w-xs bg-slate-200 rounded-lg" />
+            <div className="flex gap-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-8 w-20 bg-slate-200 rounded-full" />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Grid skeleton */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-white rounded-xl overflow-hidden border border-slate-100">
+              <div className="aspect-video bg-slate-200" />
+              <div className="p-5 space-y-3">
+                <div className="h-5 w-20 bg-slate-200 rounded-full" />
+                <div className="h-6 w-full bg-slate-200 rounded" />
+                <div className="h-4 w-3/4 bg-slate-200 rounded" />
+                <div className="flex justify-between pt-3 border-t border-slate-100">
+                  <div className="h-3 w-24 bg-slate-200 rounded" />
+                  <div className="h-3 w-16 bg-slate-200 rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
