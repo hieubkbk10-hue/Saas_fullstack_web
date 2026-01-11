@@ -662,20 +662,12 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
                   style={{ background: `linear-gradient(to right, ${brandColor}66, ${brandColor})` }}
                 />
                 
-                <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-3 tracking-tight">
+                <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-2 tracking-tight">
                   {item.title}
                 </h3>
                 <p className="text-slate-500 leading-relaxed text-sm">
                   {item.description}
                 </p>
-                
-                {/* Footer action */}
-                <div className="mt-4 pt-4 border-t border-dashed border-slate-200 flex items-center text-sm font-medium" style={{ color: brandColor }}>
-                  Chi tiết 
-                  <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </div>
               </div>
             ))}
           </div>

@@ -875,23 +875,14 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
             />
             
             <h3 className={cn(
-              "font-bold text-slate-900 dark:text-slate-100 mb-3 tracking-tight transition-colors",
+              "font-bold text-slate-900 dark:text-slate-100 mb-2 tracking-tight",
               device === 'mobile' ? 'text-lg' : 'text-xl'
-            )}
-            style={{ '--hover-color': brandColor } as React.CSSProperties}
-            onMouseEnter={(e) => (e.currentTarget.style.color = brandColor)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '')}
-            >
+            )}>
               {item.title || 'Tiêu đề'}
             </h3>
             <p className="text-slate-500 dark:text-slate-400 leading-relaxed text-sm">
               {item.description || 'Mô tả dịch vụ...'}
             </p>
-            
-            {/* Footer action */}
-            <div className="mt-4 pt-4 border-t border-dashed border-slate-200 dark:border-slate-600 flex items-center text-sm font-medium cursor-pointer" style={{ color: brandColor }}>
-              Chi tiết <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-            </div>
           </div>
         ))}
       </div>
