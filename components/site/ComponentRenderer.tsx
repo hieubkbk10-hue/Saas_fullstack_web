@@ -333,24 +333,35 @@ function StatsSection({ config, brandColor, title }: { config: Record<string, un
 // Brand Story UI/UX - 3 Variants: classic, bento, minimal
 type AboutStyle = 'classic' | 'bento' | 'minimal';
 
-// Badge Component for About
-const AboutBadge = ({ text, variant = 'default', brandColor }: { text: string; variant?: 'default' | 'outline' | 'minimal'; brandColor?: string }) => {
+// Badge Component for About - Monochromatic with brandColor
+const AboutBadge = ({ text, variant = 'default', brandColor }: { text: string; variant?: 'default' | 'outline' | 'minimal'; brandColor: string }) => {
+  const baseStyles = "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold uppercase tracking-wider w-fit";
+  
   if (variant === 'outline') {
     return (
-      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold uppercase tracking-wider w-fit bg-transparent text-slate-700 border-slate-300 font-medium">
+      <div 
+        className={`${baseStyles} bg-transparent font-medium`}
+        style={{ borderColor: `${brandColor}40`, color: brandColor }}
+      >
         {text}
       </div>
     );
   }
   if (variant === 'minimal') {
     return (
-      <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md text-xs font-medium w-fit bg-slate-100 text-slate-600 border-transparent normal-case tracking-normal">
+      <div 
+        className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md text-xs font-medium w-fit border-transparent normal-case tracking-normal"
+        style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+      >
         {text}
       </div>
     );
   }
   return (
-    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold uppercase tracking-wider w-fit" style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderColor: `${brandColor}20` }}>
+    <div 
+      className={baseStyles}
+      style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderColor: `${brandColor}20` }}
+    >
       {text}
     </div>
   );
@@ -380,8 +391,11 @@ const AboutStatBox = ({ stat, variant = 'classic', brandColor }: {
 
   if (variant === 'minimal') {
     return (
-      <div className="flex flex-col border-l-2 border-slate-200 pl-6 py-1">
-        <span className="text-3xl font-bold text-slate-900 tracking-tight">{stat.value || '0'}</span>
+      <div 
+        className="flex flex-col border-l-2 pl-6 py-1"
+        style={{ borderColor: `${brandColor}30` }}
+      >
+        <span className="text-3xl font-bold tracking-tight" style={{ color: brandColor }}>{stat.value || '0'}</span>
         <span className="text-sm text-slate-500 font-medium">{stat.label || 'Label'}</span>
       </div>
     );
@@ -584,8 +598,8 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
                   <div>
                     <a 
                       href={buttonLink || '#'}
-                      className="inline-flex h-12 px-6 rounded-md font-medium transition-colors items-center justify-center"
-                      style={{ backgroundColor: '#1f2937', color: 'white' }}
+                      className="inline-flex h-12 px-6 rounded-md font-medium transition-colors items-center justify-center hover:opacity-90"
+                      style={{ backgroundColor: brandColor, color: 'white' }}
                     >
                       {buttonText}
                     </a>

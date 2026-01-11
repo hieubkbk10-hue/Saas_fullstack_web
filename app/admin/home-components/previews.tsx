@@ -2000,15 +2000,42 @@ type AboutConfig = {
 };
 export type AboutStyle = 'classic' | 'bento' | 'minimal';
 
-// Badge Component for About
-const AboutBadge = ({ text, variant = 'default' }: { text: string; variant?: 'default' | 'outline' | 'minimal' }) => {
+// Badge Component for About - Monochromatic with brandColor
+const AboutBadge = ({ text, variant = 'default', brandColor }: { text: string; variant?: 'default' | 'outline' | 'minimal'; brandColor: string }) => {
   const baseStyles = "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold uppercase tracking-wider w-fit";
-  const variants = {
-    default: "bg-primary/10 text-primary border-primary/20",
-    outline: "bg-transparent text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 font-medium",
-    minimal: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent px-2.5 py-0.5 rounded-md normal-case tracking-normal font-medium"
-  };
-  return <div className={cn(baseStyles, variants[variant])}>{text}</div>;
+  
+  // Monochromatic variants using brandColor tints/shades
+  if (variant === 'outline') {
+    return (
+      <div 
+        className={cn(baseStyles, "bg-transparent font-medium")}
+        style={{ borderColor: `${brandColor}40`, color: brandColor }}
+      >
+        {text}
+      </div>
+    );
+  }
+  
+  if (variant === 'minimal') {
+    return (
+      <div 
+        className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md text-xs font-medium w-fit border-transparent normal-case tracking-normal"
+        style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+      >
+        {text}
+      </div>
+    );
+  }
+  
+  // Default variant
+  return (
+    <div 
+      className={cn(baseStyles)}
+      style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderColor: `${brandColor}20` }}
+    >
+      {text}
+    </div>
+  );
 };
 
 // StatBox Component for About - 3 variants
@@ -2035,8 +2062,11 @@ const AboutStatBox = ({ stat, variant = 'classic', brandColor }: {
 
   if (variant === 'minimal') {
     return (
-      <div className="flex flex-col border-l-2 border-slate-200 dark:border-slate-700 pl-6 py-1">
-        <span className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{stat.value || '0'}</span>
+      <div 
+        className="flex flex-col border-l-2 pl-6 py-1"
+        style={{ borderColor: `${brandColor}30` }}
+      >
+        <span className="text-3xl font-bold tracking-tight" style={{ color: brandColor }}>{stat.value || '0'}</span>
         <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">{stat.label || 'Label'}</span>
       </div>
     );
@@ -2087,7 +2117,7 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
         <div className={cn("flex flex-col justify-center space-y-8 md:space-y-10", device === 'mobile' ? 'order-1' : 'order-2')}>
           <div className="space-y-4 md:space-y-6">
             {config.subHeading && (
-              <AboutBadge text={config.subHeading} variant="outline" />
+              <AboutBadge text={config.subHeading} variant="outline" brandColor={brandColor} />
             )}
             <h2 className={cn(
               "font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-[1.1]",
@@ -2227,7 +2257,7 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
         )}>
           <div className="max-w-xl space-y-6 md:space-y-8">
             {config.subHeading && (
-              <AboutBadge text={config.subHeading} variant="minimal" />
+              <AboutBadge text={config.subHeading} variant="minimal" brandColor={brandColor} />
             )}
             
             <div className="space-y-3 md:space-y-4">
@@ -2257,8 +2287,8 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
             {config.buttonText && (
               <div>
                 <button 
-                  className="h-12 px-6 rounded-md font-medium transition-colors"
-                  style={{ backgroundColor: '#1f2937', color: 'white' }}
+                  className="h-12 px-6 rounded-md font-medium transition-colors hover:opacity-90"
+                  style={{ backgroundColor: brandColor, color: 'white' }}
                 >
                   {config.buttonText}
                 </button>
