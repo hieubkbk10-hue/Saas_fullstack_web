@@ -631,12 +631,13 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
 
 // ============ SERVICES SECTION ============
 // Professional Services UI/UX - 3 Variants: Elegant Grid, Modern List, Big Number
+// No hover effects - mobile friendly
 type ServicesStyle = 'elegantGrid' | 'modernList' | 'bigNumber';
 function ServicesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
   const style = (config.style as ServicesStyle) || 'elegantGrid';
 
-  // Style 1: Elegant Grid - Clean cards with top accent line, hover lift
+  // Style 1: Elegant Grid - Clean cards with top accent line
   if (style === 'elegantGrid') {
     return (
       <section className="py-12 md:py-16 px-4">
@@ -653,15 +654,15 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
             {items.map((item, idx) => (
               <div 
                 key={idx} 
-                className="group bg-white p-6 pt-8 rounded-xl shadow-sm border border-slate-200/60 relative overflow-hidden transition-all hover:shadow-md hover:-translate-y-1"
+                className="bg-white p-6 pt-8 rounded-xl shadow-sm border border-slate-200/60 relative overflow-hidden"
               >
                 {/* Top Accent Line with gradient */}
                 <div 
-                  className="absolute top-0 left-0 right-0 h-1.5 w-full group-hover:h-2 transition-all"
+                  className="absolute top-0 left-0 right-0 h-1.5 w-full"
                   style={{ background: `linear-gradient(to right, ${brandColor}66, ${brandColor})` }}
                 />
                 
-                <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-3 tracking-tight group-hover:opacity-80 transition-colors">
+                <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-3 tracking-tight">
                   {item.title}
                 </h3>
                 <p className="text-slate-500 leading-relaxed text-sm">
@@ -669,9 +670,9 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
                 </p>
                 
                 {/* Footer action */}
-                <div className="mt-4 pt-4 border-t border-dashed border-slate-200 flex items-center text-sm font-medium cursor-pointer" style={{ color: brandColor }}>
+                <div className="mt-4 pt-4 border-t border-dashed border-slate-200 flex items-center text-sm font-medium" style={{ color: brandColor }}>
                   Chi tiết 
-                  <svg className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
                 </div>
@@ -700,14 +701,20 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
             {items.map((item, idx) => (
               <div 
                 key={idx}
-                className="group py-5 flex flex-col md:flex-row md:items-start gap-3 md:gap-8 hover:bg-slate-50/50 transition-colors px-4 -mx-4 rounded-lg md:rounded-none"
+                className="py-5 flex flex-col md:flex-row md:items-start gap-3 md:gap-8"
               >
                 {/* Left: Number + Title */}
                 <div className="md:w-[30%] flex-shrink-0">
-                  <span className="text-xs font-bold text-slate-400 mb-1 block uppercase tracking-widest">
+                  <span 
+                    className="text-xs font-bold mb-1 block uppercase tracking-widest"
+                    style={{ color: `${brandColor}80` }}
+                  >
                     0{idx + 1}
                   </span>
-                  <h3 className="text-base md:text-lg font-bold text-slate-900 group-hover:opacity-80 transition-colors">
+                  <h3 
+                    className="text-base md:text-lg font-bold"
+                    style={{ color: brandColor }}
+                  >
                     {item.title}
                   </h3>
                 </div>
@@ -722,20 +729,13 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
                 {/* Right: Action Icon */}
                 <div className="hidden md:flex items-center justify-end flex-shrink-0">
                   <div 
-                    className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center text-slate-400 group-hover:border-current group-hover:text-white transition-all"
-                    style={{ '--hover-bg': brandColor } as React.CSSProperties}
-                    onMouseEnter={(e) => { 
-                      (e.currentTarget.style.borderColor = brandColor); 
-                      (e.currentTarget.style.backgroundColor = brandColor); 
-                      (e.currentTarget.style.color = 'white'); 
-                    }}
-                    onMouseLeave={(e) => { 
-                      (e.currentTarget.style.borderColor = ''); 
-                      (e.currentTarget.style.backgroundColor = ''); 
-                      (e.currentTarget.style.color = ''); 
+                    className="w-8 h-8 rounded-full border flex items-center justify-center"
+                    style={{ 
+                      borderColor: `${brandColor}40`,
+                      color: brandColor
                     }}
                   >
-                    <svg className="w-4 h-4 -rotate-45 group-hover:rotate-0 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
                   </div>
@@ -766,15 +766,15 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
             return (
               <div 
                 key={idx} 
-                className={`relative overflow-hidden rounded-xl p-6 min-h-[180px] flex flex-col justify-end group border transition-colors ${
+                className={`relative overflow-hidden rounded-xl p-6 min-h-[180px] flex flex-col justify-end border ${
                   isHighlighted 
                     ? 'text-white border-transparent' 
-                    : 'bg-slate-100/50 text-slate-900 hover:bg-slate-100 border-slate-200/50'
+                    : 'bg-slate-100/50 text-slate-900 border-slate-200/50'
                 }`}
                 style={isHighlighted ? { backgroundColor: brandColor } : {}}
               >
                 {/* Giant Number Watermark */}
-                <span className={`absolute -top-6 -right-3 text-[8rem] font-black leading-none select-none pointer-events-none transition-transform group-hover:scale-105 duration-500 ${
+                <span className={`absolute -top-6 -right-3 text-[8rem] font-black leading-none select-none pointer-events-none ${
                   isHighlighted ? 'text-white opacity-[0.15]' : 'text-slate-900 opacity-[0.07]'
                 }`}>
                   {idx + 1}

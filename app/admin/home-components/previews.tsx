@@ -920,17 +920,18 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
           >
             {/* Left: Number + Title */}
             <div className="md:w-[30%] flex-shrink-0">
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-1 block uppercase tracking-widest">
+              <span 
+                className="text-xs font-bold mb-1 block uppercase tracking-widest"
+                style={{ color: `${brandColor}80` }}
+              >
                 0{index + 1}
               </span>
               <h3 
                 className={cn(
-                  "font-bold text-slate-900 dark:text-slate-100 transition-colors",
+                  "font-bold transition-colors",
                   device === 'mobile' ? 'text-base' : 'text-lg'
                 )}
-                style={{ '--hover-color': brandColor } as React.CSSProperties}
-                onMouseEnter={(e) => (e.currentTarget.style.color = brandColor)}
-                onMouseLeave={(e) => (e.currentTarget.style.color = '')}
+                style={{ color: brandColor }}
               >
                 {item.title || 'Tiêu đề'}
               </h3>
@@ -946,12 +947,10 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
             {/* Right: Action Icon */}
             <div className="hidden md:flex items-center justify-end flex-shrink-0">
               <div 
-                className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-opacity-100 transition-all"
-                style={{ '--hover-border': brandColor, '--hover-bg': brandColor } as React.CSSProperties}
-                onMouseEnter={(e) => { 
-                  (e.currentTarget.style.borderColor = brandColor); 
-                  (e.currentTarget.style.backgroundColor = brandColor); 
-                  (e.currentTarget.style.color = 'white'); 
+                className="w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-300"
+                style={{ 
+                  borderColor: `${brandColor}40`,
+                  color: brandColor
                 }}
               >
                 <ArrowRight size={16} className="-rotate-45 group-hover:rotate-0 transition-transform duration-300" />
