@@ -1548,9 +1548,9 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
     </section>
   );
 
-  // Style 4: Carousel - Horizontal scroll với snap và navigation
+  // Style 4: Carousel - Horizontal scroll với snap (best practice: wider cards, snap-start, smooth scroll)
   const renderCarouselStyle = () => (
-    <section className="py-6 md:py-8 relative group/carousel">
+    <section className="py-6 md:py-8">
       {/* Header */}
       <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 dark:border-slate-700/40 pb-3 mb-4 px-3 md:px-6">
         <h2 className="text-xl md:text-2xl font-light tracking-tight text-slate-900 dark:text-slate-100">
@@ -1562,32 +1562,20 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
         </button>
       </div>
       
-      {/* Navigation Buttons */}
-      {device !== 'mobile' && (
-        <>
-          <button className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-sm text-slate-900 dark:text-slate-100 disabled:opacity-0 disabled:pointer-events-none transition-all hover:bg-white dark:hover:bg-slate-800 focus:outline-none">
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-sm text-slate-900 dark:text-slate-100 disabled:opacity-0 disabled:pointer-events-none transition-all hover:bg-white dark:hover:bg-slate-800 focus:outline-none">
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </>
-      )}
-      
-      {/* Carousel */}
+      {/* Carousel Container */}
       <div 
-        className="flex gap-4 overflow-x-auto pb-4 pt-2 px-3 md:px-6 snap-x snap-mandatory scrollbar-hide touch-pan-x"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        className="flex gap-4 overflow-x-auto pb-4 px-3 md:px-6 snap-x snap-mandatory scroll-smooth"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
       >
-        {displayItems.map((item) => (
+        {displayItems.map((item, idx) => (
           <div 
             key={item.id} 
             className={cn(
-              "snap-center flex-shrink-0",
-              device === 'mobile' ? 'min-w-[60vw]' : 'min-w-[320px]'
+              "snap-start flex-shrink-0",
+              device === 'mobile' ? 'w-[75vw]' : 'w-[280px]'
             )}
           >
-            <div className="group cursor-pointer relative bg-white dark:bg-slate-800 flex flex-col hover:-translate-y-1 transition-all duration-300 h-full select-none">
+            <div className="group cursor-pointer relative bg-white dark:bg-slate-800 flex flex-col hover:-translate-y-1 transition-all duration-300 h-full">
               {/* Badge */}
               {item.tag && (
                 <div className="absolute z-20 top-3 left-3">
@@ -1602,7 +1590,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                     src={item.image} 
                     alt={item.name}
                     draggable={false}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out select-none"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
@@ -1613,7 +1601,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
 
               {/* Content */}
               <div className="flex flex-col justify-between flex-shrink-0 pt-1">
-                <h3 className="font-medium text-base text-slate-900 dark:text-slate-100 leading-tight group-hover:opacity-70 transition-colors">
+                <h3 className="font-medium text-base text-slate-900 dark:text-slate-100 leading-tight group-hover:opacity-70 transition-colors line-clamp-2">
                   {item.name}
                 </h3>
 
@@ -1627,6 +1615,8 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
             </div>
           </div>
         ))}
+        {/* Spacer at end for last item visibility */}
+        <div className="snap-start flex-shrink-0 w-3 md:w-6" aria-hidden="true" />
       </div>
     </section>
   );

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Briefcase, Loader2, ArrowRight, ChevronLeft, ChevronRight, ArrowUpRight, Plus } from 'lucide-react';
+import { Briefcase, Loader2, ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
 
 // Luxury Services Gallery UI/UX - 4 Variants from luxury-services-gallery
 type ServiceListStyle = 'grid' | 'bento' | 'list' | 'carousel';
@@ -346,9 +346,9 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
     );
   }
 
-  // Style 4: Carousel - Horizontal scroll với snap và navigation
+  // Style 4: Carousel - Horizontal scroll với snap (best practice: wider cards, snap-start, smooth scroll)
   return (
-    <section className="py-12 md:py-16 relative group/carousel">
+    <section className="py-12 md:py-16">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 pb-3 mb-6 px-3 md:px-6">
@@ -366,26 +366,18 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
           )}
         </div>
         
-        {/* Navigation Buttons */}
-        <button className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm text-slate-900 disabled:opacity-0 disabled:pointer-events-none transition-all hover:bg-white focus:outline-none opacity-0 group-hover/carousel:opacity-100">
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <button className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm text-slate-900 disabled:opacity-0 disabled:pointer-events-none transition-all hover:bg-white focus:outline-none opacity-0 group-hover/carousel:opacity-100">
-          <ChevronRight className="w-5 h-5" />
-        </button>
-        
-        {/* Carousel */}
+        {/* Carousel Container */}
         <div 
-          className="flex gap-4 overflow-x-auto pb-4 pt-2 px-3 md:px-6 snap-x snap-mandatory touch-pan-x"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="flex gap-4 overflow-x-auto pb-4 px-3 md:px-6 snap-x snap-mandatory scroll-smooth"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
         >
           {services.slice(0, 8).map((service, idx) => (
             <Link 
               key={service._id} 
               href={`/services/${service.slug}`}
-              className="snap-center flex-shrink-0 min-w-[60vw] sm:min-w-[320px]"
+              className="snap-start flex-shrink-0 w-[75vw] sm:w-[280px]"
             >
-              <article className="group cursor-pointer relative bg-white flex flex-col hover:-translate-y-1 transition-all duration-300 h-full select-none">
+              <article className="group cursor-pointer relative bg-white flex flex-col hover:-translate-y-1 transition-all duration-300 h-full">
                 {/* Badge */}
                 {idx < 2 && (
                   <div className="absolute z-20 top-3 left-3">
@@ -400,7 +392,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                       src={service.thumbnail} 
                       alt={service.title}
                       draggable={false}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out select-none"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
                     />
                   ) : (
@@ -426,6 +418,8 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
               </article>
             </Link>
           ))}
+          {/* Spacer at end for last item visibility */}
+          <div className="snap-start flex-shrink-0 w-3 md:w-6" aria-hidden="true" />
         </div>
       </div>
     </section>
