@@ -26,6 +26,7 @@ import {
   ContactPreview, ContactStyle,
   BlogPreview, BlogStyle,
   ProductListPreview, ProductListStyle,
+  ServiceListPreview, ServiceListStyle,
   FooterPreview, FooterStyle
 } from '../../previews';
 import { useBrandColor } from '../../create/shared';
@@ -111,6 +112,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [contactStyle, setContactStyle] = useState<ContactStyle>('split');
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
   const [productListStyle, setProductListStyle] = useState<ProductListStyle>('grid');
+  const [serviceListStyle, setServiceListStyle] = useState<ServiceListStyle>('grid');
   const [blogStyle, setBlogStyle] = useState<BlogStyle>('grid');
   // Blog manual selection states
   const [blogSelectionMode, setBlogSelectionMode] = useState<'auto' | 'manual'>('auto');
@@ -254,7 +256,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           break;
         case 'ServiceList':
           setProductListConfig({ itemCount: config.itemCount || 8, sortBy: config.sortBy || 'newest' });
-          setProductListStyle((config.style as ProductListStyle) || 'grid');
+          setServiceListStyle((config.style as ServiceListStyle) || 'grid');
           setServiceSelectionMode(config.selectionMode || 'auto');
           setSelectedServiceIds(config.selectedServiceIds || []);
           break;
@@ -328,7 +330,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'ServiceList':
         return { 
           ...productListConfig, 
-          style: productListStyle, 
+          style: serviceListStyle, 
           selectionMode: serviceSelectionMode,
           selectedServiceIds: serviceSelectionMode === 'manual' ? selectedServiceIds : [],
         };
@@ -1039,12 +1041,11 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                 )}
               </CardContent>
             </Card>
-            <ProductListPreview 
+            <ServiceListPreview 
               brandColor={brandColor}
               itemCount={serviceSelectionMode === 'manual' ? selectedServiceIds.length : productListConfig.itemCount}
-              componentType="ServiceList"
-              selectedStyle={productListStyle}
-              onStyleChange={setProductListStyle}
+              selectedStyle={serviceListStyle}
+              onStyleChange={setServiceListStyle}
               items={serviceSelectionMode === 'manual' && selectedServices.length > 0 
                 ? selectedServices.map(s => ({ id: s._id, name: s.title, image: s.thumbnail, price: s.price ? s.price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ', description: s.excerpt }))
                 : filteredServices.slice(0, productListConfig.itemCount).map(s => ({ id: s._id, name: s.title, image: s.thumbnail, price: s.price ? s.price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ', description: s.excerpt }))

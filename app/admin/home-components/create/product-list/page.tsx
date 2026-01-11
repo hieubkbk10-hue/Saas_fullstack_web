@@ -4,7 +4,7 @@ import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { ProductListPreview, BlogPreview, type BlogStyle, type ProductListStyle } from '../../previews';
+import { ProductListPreview, ServiceListPreview, BlogPreview, type BlogStyle, type ProductListStyle, type ServiceListStyle } from '../../previews';
 
 function ProductListCreateContent() {
   const searchParams = useSearchParams();
@@ -23,9 +23,10 @@ function ProductListCreateContent() {
   const [sortBy, setSortBy] = useState('newest');
   const [blogStyle, setBlogStyle] = useState<BlogStyle>('grid');
   const [productStyle, setProductStyle] = useState<ProductListStyle>('grid');
+  const [serviceStyle, setServiceStyle] = useState<ServiceListStyle>('grid');
 
   const onSubmit = (e: React.FormEvent) => {
-    const style = type === 'Blog' ? blogStyle : productStyle;
+    const style = type === 'Blog' ? blogStyle : type === 'ServiceList' ? serviceStyle : productStyle;
     handleSubmit(e, { itemCount, sortBy, style });
   };
 
@@ -71,8 +72,10 @@ function ProductListCreateContent() {
 
       {type === 'Blog' ? (
         <BlogPreview brandColor={brandColor} postCount={itemCount} selectedStyle={blogStyle} onStyleChange={setBlogStyle} />
+      ) : type === 'ServiceList' ? (
+        <ServiceListPreview brandColor={brandColor} itemCount={itemCount} selectedStyle={serviceStyle} onStyleChange={setServiceStyle} />
       ) : (
-        <ProductListPreview brandColor={brandColor} itemCount={itemCount} componentType={type as 'ProductList' | 'ServiceList'} selectedStyle={productStyle} onStyleChange={setProductStyle} />
+        <ProductListPreview brandColor={brandColor} itemCount={itemCount} componentType="ProductList" selectedStyle={productStyle} onStyleChange={setProductStyle} />
       )}
     </ComponentFormWrapper>
   );
