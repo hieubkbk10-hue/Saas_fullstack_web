@@ -900,12 +900,12 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
 
   // Style 2: Modern List - Clean horizontal layout with big numbers
   const renderModernListStyle = () => (
-    <div className="w-full max-w-5xl mx-auto space-y-8 py-8 px-4">
+    <div className="w-full max-w-5xl mx-auto space-y-5 py-6 px-4">
       {/* Header */}
-      <div className="border-b border-slate-200 dark:border-slate-700 pb-4">
+      <div className="border-b border-slate-200 dark:border-slate-700 pb-3">
         <h2 className={cn(
           "font-bold tracking-tight text-slate-900 dark:text-slate-100",
-          device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl'
+          device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
         )}>
           {titles[componentType]}
         </h2>
@@ -916,13 +916,13 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
         {items.slice(0, device === 'mobile' ? 4 : 6).map((item, index) => (
           <div 
             key={item.id}
-            className="flex items-baseline gap-4 md:gap-6 py-5 border-b border-slate-100 dark:border-slate-800 last:border-b-0"
+            className="flex items-baseline gap-3 md:gap-4 py-3 border-b border-slate-100 dark:border-slate-800 last:border-b-0"
           >
             {/* Number */}
             <span 
               className={cn(
                 "font-bold tabular-nums flex-shrink-0",
-                device === 'mobile' ? 'text-2xl w-10' : 'text-3xl md:text-4xl w-12 md:w-16'
+                device === 'mobile' ? 'text-xl w-8' : 'text-2xl w-10'
               )}
               style={{ color: brandColor }}
             >
@@ -932,14 +932,14 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
             {/* Content */}
             <div className="flex-1 min-w-0">
               <h3 className={cn(
-                "font-semibold text-slate-900 dark:text-slate-100 mb-1",
-                device === 'mobile' ? 'text-base' : 'text-lg md:text-xl'
+                "font-semibold text-slate-900 dark:text-slate-100 mb-0.5",
+                device === 'mobile' ? 'text-sm' : 'text-base'
               )}>
                 {item.title || 'Tiêu đề'}
               </h3>
               <p className={cn(
                 "text-slate-500 dark:text-slate-400 leading-relaxed",
-                device === 'mobile' ? 'text-sm' : 'text-sm md:text-base'
+                device === 'mobile' ? 'text-xs' : 'text-sm'
               )}>
                 {item.description || 'Mô tả dịch vụ...'}
               </p>

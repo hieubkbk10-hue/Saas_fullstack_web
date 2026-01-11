@@ -687,10 +687,10 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
   // Style 2: Modern List - Clean horizontal layout
   if (style === 'modernList') {
     return (
-      <section className="py-12 md:py-16 px-4">
-        <div className="max-w-5xl mx-auto space-y-10">
+      <section className="py-10 md:py-12 px-4">
+        <div className="max-w-5xl mx-auto space-y-6">
           {/* Header */}
-          <div className="border-b border-slate-200 pb-4">
+          <div className="border-b border-slate-200 pb-3">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
               {title}
             </h2>
@@ -701,11 +701,11 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
             {items.map((item, idx) => (
               <div 
                 key={idx}
-                className="flex items-baseline gap-4 md:gap-6 py-6 border-b border-slate-100 last:border-b-0"
+                className="flex items-baseline gap-3 md:gap-5 py-4 border-b border-slate-100 last:border-b-0"
               >
                 {/* Number */}
                 <span 
-                  className="text-3xl md:text-4xl font-bold tabular-nums flex-shrink-0 w-12 md:w-16"
+                  className="text-2xl md:text-3xl font-bold tabular-nums flex-shrink-0 w-10 md:w-12"
                   style={{ color: brandColor }}
                 >
                   {String(idx + 1).padStart(2, '0')}
@@ -713,10 +713,10 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
                 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg md:text-xl font-semibold text-slate-900 mb-1">
+                  <h3 className="text-base md:text-lg font-semibold text-slate-900 mb-0.5">
                     {item.title}
                   </h3>
-                  <p className="text-slate-500 text-sm md:text-base leading-relaxed">
+                  <p className="text-slate-500 text-sm leading-relaxed">
                     {item.description}
                   </p>
                 </div>
