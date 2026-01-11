@@ -4,22 +4,22 @@ import React, { useState } from 'react';
 import { 
   Monitor, Tablet, Smartphone, Eye, ChevronLeft, ChevronRight, 
   Image as ImageIcon, Star, Check, ExternalLink, Globe, Mail, 
-  Phone, Package, FileText, Users, MapPin, Tag
+  Phone, Package, FileText, Users, MapPin, Tag, ArrowUpRight, Briefcase, Plus, ArrowRight
 } from 'lucide-react';
 import { cn, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
 
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
 
 const deviceWidths = {
-  desktop: 'w-full',
+  desktop: 'w-full max-w-7xl',
   tablet: 'w-[768px] max-w-full',
   mobile: 'w-[375px] max-w-full'
 };
 
 const devices = [
-  { id: 'desktop' as const, icon: Monitor, label: 'Desktop' },
-  { id: 'tablet' as const, icon: Tablet, label: 'Tablet' },
-  { id: 'mobile' as const, icon: Smartphone, label: 'Mobile' }
+  { id: 'desktop' as const, icon: Monitor, label: 'Desktop (max-w-7xl)' },
+  { id: 'tablet' as const, icon: Tablet, label: 'Tablet (768px)' },
+  { id: 'mobile' as const, icon: Smartphone, label: 'Mobile (375px)' }
 ];
 
 // Browser Frame Component
@@ -94,7 +94,7 @@ const PreviewWrapper = ({
       {info && (
         <div className="mt-3 text-xs text-slate-500">
           Style: <strong className="text-slate-700 dark:text-slate-300">{styles.find(s => s.id === previewStyle)?.label}</strong>
-          {' • '}{device === 'desktop' && '1920px'}{device === 'tablet' && '768px'}{device === 'mobile' && '375px'}
+          {' • '}{device === 'desktop' && 'max-w-7xl (1280px)'}{device === 'tablet' && '768px'}{device === 'mobile' && '375px'}
           {info && ` • ${info}`}
         </div>
       )}
@@ -368,7 +368,7 @@ export const HeroBannerPreview = ({
         </div>
         <div className="mt-3 text-xs text-slate-500">
           Style: <strong className="text-slate-700 dark:text-slate-300">{styles.find(s => s.id === selectedStyle)?.label}</strong>
-          {' • '}{device === 'desktop' && 'Desktop (1920px)'}{device === 'tablet' && 'Tablet (768px)'}{device === 'mobile' && 'Mobile (375px)'}
+          {' • '}{device === 'desktop' && 'Desktop max-w-7xl (1280px)'}{device === 'tablet' && 'Tablet (768px)'}{device === 'mobile' && 'Mobile (375px)'}
           {selectedStyle !== 'bento' && ` • Slide ${currentSlide + 1} / ${slides.length || 1}`}
         </div>
       </CardContent>
@@ -510,7 +510,7 @@ export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange }: 
   const renderAccordionStyle = () => (
     <div className={cn("p-6", device === 'mobile' ? 'p-4' : '')}>
       <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Câu hỏi thường gặp</h3>
-      <div className="space-y-2 max-w-2xl mx-auto">
+      <div className="space-y-2 max-w-3xl mx-auto">
         {items.map((item, idx) => (
           <div key={item.id} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
             <button type="button" onClick={() => setOpenIndex(openIndex === idx ? -1 : idx)}
@@ -617,7 +617,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
     return (
       <div className={cn("py-12 px-4 relative overflow-hidden", device === 'mobile' ? 'py-8' : '')}>
         <div className="absolute top-4 left-1/2 -translate-x-1/2 text-[120px] leading-none font-serif opacity-5 pointer-events-none" style={{ color: brandColor }}>"</div>
-        <div className="max-w-3xl mx-auto relative">
+        <div className="max-w-6xl mx-auto relative">
           <div className={cn("bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 text-center relative", device === 'mobile' ? 'p-5' : '')} style={{ borderTop: `4px solid ${brandColor}` }}>
             <div className="flex justify-center mb-4">{renderStars(current?.rating || 5)}</div>
             <p className={cn("text-slate-700 dark:text-slate-200 leading-relaxed mb-6", device === 'mobile' ? 'text-base' : 'text-lg')}>"{current?.content || 'Nội dung đánh giá...'}"</p>
@@ -731,7 +731,7 @@ export const PricingPreview = ({ plans, brandColor, selectedStyle, onStyleChange
   const renderMinimalStyle = () => (
     <div className={cn("py-10 px-4", device === 'mobile' ? 'py-6' : '')}>
       <h3 className={cn("font-bold text-center mb-8", device === 'mobile' ? 'text-lg' : 'text-xl')}>Bảng giá dịch vụ</h3>
-      <div className={cn("max-w-3xl mx-auto", device === 'mobile' ? '' : 'border rounded-2xl overflow-hidden')}>
+      <div className={cn("max-w-6xl mx-auto", device === 'mobile' ? '' : 'border rounded-2xl overflow-hidden')}>
         {plans.slice(0, 3).map((plan, idx) => (
           <div key={plan.id} className={cn("flex items-center gap-4 p-5 bg-white dark:bg-slate-800 transition-all", device === 'mobile' ? 'flex-col text-center rounded-xl border mb-3' : '', device !== 'mobile' && idx !== plans.slice(0, 3).length - 1 && 'border-b')} style={plan.isPopular ? { backgroundColor: `${brandColor}08` } : {}}>
             {plan.isPopular && <div className={cn("absolute px-3 py-1 rounded-full text-xs font-medium text-white", device === 'mobile' ? '-top-2 left-1/2 -translate-x-1/2' : 'top-2 right-4')} style={{ backgroundColor: brandColor }}>Phổ biến</div>}
@@ -858,7 +858,7 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
   const renderListStyle = () => (
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
       <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>{titles[componentType]}</h3>
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="max-w-3xl mx-auto space-y-4">
         {items.slice(0, 4).map((item, idx) => (
           <div key={item.id} className="flex gap-4 items-start p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
             <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold" style={{ backgroundColor: brandColor }}>{idx + 1}</div>
@@ -1220,6 +1220,422 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
     <PreviewWrapper title={`Preview ${componentType}`} device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles}>
       <BrowserFrame url={`yoursite.com/${isProduct ? 'products' : 'services'}`}>
         {previewStyle === 'grid' && renderGridStyle()}
+        {previewStyle === 'list' && renderListStyle()}
+        {previewStyle === 'carousel' && renderCarouselStyle()}
+      </BrowserFrame>
+    </PreviewWrapper>
+  );
+};
+
+// ============ SERVICE LIST PREVIEW ============
+// Luxury Services Gallery UI/UX - 4 Variants from luxury-services-gallery
+export type ServiceListStyle = 'grid' | 'bento' | 'list' | 'carousel';
+export interface ServiceListPreviewItem {
+  id: string | number;
+  name: string;
+  image?: string;
+  price?: string;
+  description?: string;
+  tag?: 'new' | 'hot';
+}
+
+// Badge component for service tags (monochromatic style)
+const ServiceBadge = ({ tag }: { tag?: 'new' | 'hot' }) => {
+  if (!tag) return null;
+  return (
+    <span className={cn(
+      "inline-flex items-center rounded-sm px-2 py-1 text-[10px] font-medium uppercase tracking-widest transition-colors",
+      tag === 'hot' 
+        ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900" 
+        : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+    )}>
+      {tag === 'hot' ? 'Hot' : 'New'}
+    </span>
+  );
+};
+
+// Format price helper
+const formatServicePrice = (price?: string | number) => {
+  if (!price) return 'Liên hệ';
+  if (typeof price === 'string') {
+    const num = parseInt(price.replace(/\D/g, ''));
+    if (isNaN(num) || num === 0) return 'Liên hệ';
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(num);
+  }
+  if (price === 0) return 'Liên hệ';
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(price);
+};
+
+export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onStyleChange, items }: { 
+  brandColor: string; 
+  itemCount: number; 
+  selectedStyle?: ServiceListStyle; 
+  onStyleChange?: (style: ServiceListStyle) => void;
+  items?: ServiceListPreviewItem[];
+}) => {
+  const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const previewStyle = selectedStyle || 'grid';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as ServiceListStyle);
+  const styles = [
+    { id: 'grid', label: 'Grid' }, 
+    { id: 'bento', label: 'Bento' }, 
+    { id: 'list', label: 'List' }, 
+    { id: 'carousel', label: 'Carousel' }
+  ];
+  const title = 'Dịch vụ';
+  
+  // Use real items if provided, otherwise fallback to mock (luxury services)
+  const displayItems: ServiceListPreviewItem[] = items && items.length > 0 
+    ? items 
+    : [
+        { id: 1, name: 'Thiết kế Nội thất Penthouse', description: 'Phong cách hiện đại, tối giản với vật liệu cao cấp nhập khẩu từ Ý.', price: '0', tag: 'hot' as const },
+        { id: 2, name: 'Kiến trúc Xanh Vertical', description: 'Giải pháp bền vững cho đô thị.', price: '15000000', tag: 'new' as const },
+        { id: 3, name: 'Cảnh quan Sân vườn Zen', description: 'Không gian thiền định tại gia.', price: '8500000' },
+        { id: 4, name: 'Smart Home Hub', description: 'Tự động hóa toàn diện.', price: '25000000' },
+        { id: 5, name: 'Biệt thự Cổ', description: 'Phục dựng di sản.', price: '0' },
+        { id: 6, name: 'Lighting Art', description: 'Nghệ thuật ánh sáng.', price: '12000000', tag: 'new' as const }
+      ].slice(0, Math.max(itemCount, 6));
+
+  // Style 1: Grid - Clean cards với hover lift và arrow icon
+  const renderGridStyle = () => (
+    <section className="py-6 md:py-8 px-3 md:px-6">
+      {/* Header */}
+      <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 dark:border-slate-700/40 pb-3 mb-4">
+        <h2 className="text-xl md:text-2xl font-light tracking-tight text-slate-900 dark:text-slate-100">
+          {title}
+        </h2>
+        <button className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+          Xem tất cả 
+          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+        </button>
+      </div>
+      
+      {/* Grid */}
+      <div className={cn(
+        "grid gap-4",
+        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+      )}>
+        {displayItems.slice(0, device === 'mobile' ? 3 : 6).map((item) => (
+          <div 
+            key={item.id} 
+            className="group cursor-pointer relative bg-white dark:bg-slate-800 flex flex-col hover:-translate-y-1 transition-all duration-300 h-full"
+          >
+            {/* Badge */}
+            {item.tag && (
+              <div className="absolute z-20 top-3 left-3">
+                <ServiceBadge tag={item.tag} />
+              </div>
+            )}
+
+            {/* Image Container */}
+            <div className="relative overflow-hidden bg-slate-100 dark:bg-slate-700 mb-3 rounded-lg aspect-[4/3] w-full">
+              {item.image ? (
+                <img 
+                  src={item.image} 
+                  alt={item.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Briefcase size={32} className="text-slate-300 dark:text-slate-500" />
+                </div>
+              )}
+            </div>
+
+            {/* Content */}
+            <div className="flex flex-col justify-between flex-shrink-0 pt-1">
+              <h3 className="font-medium text-base text-slate-900 dark:text-slate-100 leading-tight group-hover:opacity-70 transition-colors">
+                {item.name}
+              </h3>
+
+              <div className="flex items-end justify-between mt-3">
+                <span className="text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-300">
+                  {formatServicePrice(item.price)}
+                </span>
+                <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+
+  // Style 2: Bento - Asymmetric grid với featured large card
+  const renderBentoStyle = () => {
+    const bentoItems = displayItems.slice(0, 4);
+    const remainingCount = displayItems.length - 4;
+    
+    return (
+      <section className="py-6 md:py-8 px-3 md:px-6">
+        {/* Header */}
+        <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 dark:border-slate-700/40 pb-3 mb-4">
+          <h2 className="text-xl md:text-2xl font-light tracking-tight text-slate-900 dark:text-slate-100">
+            {title}
+          </h2>
+          <button className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+            Xem tất cả 
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </button>
+        </div>
+        
+        {/* Bento Grid */}
+        {device === 'mobile' ? (
+          <div className="grid grid-cols-2 gap-3">
+            {bentoItems.map((item, i) => (
+              <div key={item.id} className="group cursor-pointer h-[160px] relative">
+                <div className="h-full border border-slate-200/40 dark:border-slate-700 rounded-xl p-3 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all flex flex-col">
+                  {item.tag && (
+                    <div className="absolute z-20 top-4 left-4">
+                      <ServiceBadge tag={item.tag} />
+                    </div>
+                  )}
+                  <div className="flex-1 rounded-md overflow-hidden bg-slate-100 dark:bg-slate-700 min-h-[80px] mb-2">
+                    {item.image ? (
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Briefcase size={20} className="text-slate-300" />
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="text-sm font-medium leading-tight line-clamp-1">{item.name}</h3>
+                  <span className="text-xs text-slate-500 mt-1">{formatServicePrice(item.price)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className={cn(
+            "grid gap-4 auto-rows-[300px]",
+            device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4'
+          )}>
+            {bentoItems.map((item, i) => {
+              const isLastItem = i === 3;
+              
+              return (
+                <div 
+                  key={item.id}
+                  className={cn(
+                    "h-full min-h-[240px] relative group/bento",
+                    i === 0 ? "col-span-2 row-span-2" : "",
+                    i === 3 ? "col-span-2" : ""
+                  )}
+                >
+                  <div className="h-full border border-slate-200/40 dark:border-slate-700 rounded-xl p-4 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all flex flex-col cursor-pointer">
+                    {item.tag && (
+                      <div className="absolute z-20 top-6 left-6">
+                        <ServiceBadge tag={item.tag} />
+                      </div>
+                    )}
+                    
+                    {/* Image */}
+                    <div className="flex-1 min-h-[160px] w-full rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 mb-3">
+                      {item.image ? (
+                        <img 
+                          src={item.image} 
+                          alt={item.name}
+                          className="w-full h-full object-cover group-hover/bento:scale-105 transition-transform duration-700 ease-out"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Briefcase size={i === 0 ? 48 : 28} className="text-slate-300" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="space-y-1">
+                      <h3 className={cn(
+                        "font-medium text-slate-900 dark:text-slate-100 leading-tight group-hover/bento:opacity-70 transition-colors",
+                        i === 0 ? 'text-lg' : 'text-base'
+                      )}>
+                        {item.name}
+                      </h3>
+                      {i === 0 && item.description && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">
+                          {item.description}
+                        </p>
+                      )}
+                      <div className="flex items-end justify-between mt-2">
+                        <span className="text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-300">
+                          {formatServicePrice(item.price)}
+                        </span>
+                        <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover/bento:opacity-100 group-hover/bento:translate-x-0 transition-all duration-300" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* "+N more" overlay on last item */}
+                  {isLastItem && remainingCount > 0 && (
+                    <div className="absolute inset-0 bg-slate-900/90 dark:bg-slate-100/90 backdrop-blur-[2px] rounded-xl flex items-center justify-center cursor-pointer transition-opacity opacity-100 md:opacity-0 md:group-hover/bento:opacity-100 z-30">
+                      <div className="text-white dark:text-slate-900 text-center">
+                        <span className="text-4xl font-light flex items-center justify-center gap-1">
+                          <Plus className="w-8 h-8" />{remainingCount}
+                        </span>
+                        <p className="text-sm font-medium mt-1">Dịch vụ khác</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    );
+  };
+
+  // Style 3: List - Horizontal row layout với divider
+  const renderListStyle = () => (
+    <section className="py-6 md:py-8 px-3 md:px-6">
+      {/* Header */}
+      <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 dark:border-slate-700/40 pb-3 mb-4">
+        <h2 className="text-xl md:text-2xl font-light tracking-tight text-slate-900 dark:text-slate-100">
+          {title}
+        </h2>
+        <button className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+          Xem tất cả 
+          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+        </button>
+      </div>
+      
+      {/* List */}
+      <div className="flex flex-col gap-2 max-w-4xl mx-auto">
+        {displayItems.slice(0, device === 'mobile' ? 4 : 6).map((item) => (
+          <div 
+            key={item.id}
+            className="group cursor-pointer flex flex-row items-center gap-4 md:gap-6 py-4 border-b border-slate-200/40 dark:border-slate-700/40 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-2 rounded-lg transition-all"
+          >
+            {/* Image */}
+            <div className={cn(
+              "flex-shrink-0 rounded-md overflow-hidden bg-slate-100 dark:bg-slate-700",
+              device === 'mobile' ? 'w-20 h-20' : 'w-24 h-24'
+            )}>
+              {item.image ? (
+                <img 
+                  src={item.image} 
+                  alt={item.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Briefcase size={24} className="text-slate-300" />
+                </div>
+              )}
+            </div>
+            
+            {/* Content */}
+            <div className="py-1 flex-1">
+              {item.tag && (
+                <div className="mb-1">
+                  <ServiceBadge tag={item.tag} />
+                </div>
+              )}
+              <h3 className="font-medium text-base md:text-lg text-slate-900 dark:text-slate-100 leading-tight group-hover:opacity-70 transition-colors">
+                {item.name}
+              </h3>
+              <div className="flex items-end justify-between mt-2">
+                <span className="text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-300">
+                  {formatServicePrice(item.price)}
+                </span>
+                <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+
+  // Style 4: Carousel - Horizontal scroll với snap và navigation
+  const renderCarouselStyle = () => (
+    <section className="py-6 md:py-8 relative group/carousel">
+      {/* Header */}
+      <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 dark:border-slate-700/40 pb-3 mb-4 px-3 md:px-6">
+        <h2 className="text-xl md:text-2xl font-light tracking-tight text-slate-900 dark:text-slate-100">
+          {title}
+        </h2>
+        <button className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+          Xem tất cả 
+          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+        </button>
+      </div>
+      
+      {/* Navigation Buttons */}
+      {device !== 'mobile' && (
+        <>
+          <button className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-sm text-slate-900 dark:text-slate-100 disabled:opacity-0 disabled:pointer-events-none transition-all hover:bg-white dark:hover:bg-slate-800 focus:outline-none">
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-sm text-slate-900 dark:text-slate-100 disabled:opacity-0 disabled:pointer-events-none transition-all hover:bg-white dark:hover:bg-slate-800 focus:outline-none">
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </>
+      )}
+      
+      {/* Carousel */}
+      <div 
+        className="flex gap-4 overflow-x-auto pb-4 pt-2 px-3 md:px-6 snap-x snap-mandatory scrollbar-hide touch-pan-x"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {displayItems.map((item) => (
+          <div 
+            key={item.id} 
+            className={cn(
+              "snap-center flex-shrink-0",
+              device === 'mobile' ? 'min-w-[60vw]' : 'min-w-[320px]'
+            )}
+          >
+            <div className="group cursor-pointer relative bg-white dark:bg-slate-800 flex flex-col hover:-translate-y-1 transition-all duration-300 h-full select-none">
+              {/* Badge */}
+              {item.tag && (
+                <div className="absolute z-20 top-3 left-3">
+                  <ServiceBadge tag={item.tag} />
+                </div>
+              )}
+
+              {/* Image Container */}
+              <div className="relative overflow-hidden bg-slate-100 dark:bg-slate-700 mb-3 rounded-lg aspect-[4/3] w-full">
+                {item.image ? (
+                  <img 
+                    src={item.image} 
+                    alt={item.name}
+                    draggable={false}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out select-none"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Briefcase size={32} className="text-slate-300 dark:text-slate-500" />
+                  </div>
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="flex flex-col justify-between flex-shrink-0 pt-1">
+                <h3 className="font-medium text-base text-slate-900 dark:text-slate-100 leading-tight group-hover:opacity-70 transition-colors">
+                  {item.name}
+                </h3>
+
+                <div className="flex items-end justify-between mt-3">
+                  <span className="text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-300">
+                    {formatServicePrice(item.price)}
+                  </span>
+                  <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+
+  return (
+    <PreviewWrapper title="Preview Dịch vụ" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`${displayItems.length} dịch vụ`}>
+      <BrowserFrame url="yoursite.com/services">
+        {previewStyle === 'grid' && renderGridStyle()}
+        {previewStyle === 'bento' && renderBentoStyle()}
         {previewStyle === 'list' && renderListStyle()}
         {previewStyle === 'carousel' && renderCarouselStyle()}
       </BrowserFrame>
@@ -1625,7 +2041,7 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
 
   const renderCardsStyle = () => (
     <div className={cn("py-10 px-4", device === 'mobile' ? 'py-6' : '')} style={{ backgroundColor: `${brandColor}05` }}>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className={cn("text-center mb-8", device === 'mobile' ? 'mb-6' : '')}>
           {config.subHeading && <p className="text-sm font-medium mb-2" style={{ color: brandColor }}>{config.subHeading}</p>}
           <h2 className={cn("font-bold", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{config.heading || 'Về chúng tôi'}</h2>
@@ -1690,7 +2106,7 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
         <p className="text-sm font-medium mb-2" style={{ color: brandColor }}>TẠI SAO CHỌN CHÚNG TÔI</p>
         <h3 className={cn("font-bold", device === 'mobile' ? 'text-lg' : 'text-2xl')}>Hành trình cùng bạn</h3>
       </div>
-      <div className="relative max-w-2xl mx-auto">
+      <div className="relative max-w-3xl mx-auto">
         <div className="absolute left-6 top-0 bottom-0 w-0.5" style={{ backgroundColor: `${brandColor}30` }}></div>
         <div className="space-y-6">
           {items.slice(0, 4).map((item, idx) => (
@@ -1715,7 +2131,7 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
         <p className="text-sm font-medium mb-2" style={{ color: brandColor }}>TẠI SAO CHỌN CHÚNG TÔI</p>
         <h3 className={cn("font-bold", device === 'mobile' ? 'text-lg' : 'text-2xl')}>Lợi ích khi hợp tác</h3>
       </div>
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
         {items.slice(0, 4).map((item, idx) => (
           <div key={item.id} className={cn("flex items-center gap-6", device === 'mobile' ? 'flex-col text-center' : idx % 2 === 1 ? 'flex-row-reverse' : '')}>
             <div className={cn("flex-shrink-0 rounded-2xl flex items-center justify-center", device === 'mobile' ? 'w-16 h-16' : 'w-24 h-24')} style={{ backgroundColor: `${brandColor}15` }}>
@@ -1832,7 +2248,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
   const renderListStyle = () => (
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
       <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Danh sách dự án</h3>
-      <div className="max-w-3xl mx-auto space-y-4">
+      <div className="max-w-6xl mx-auto space-y-4">
         {projects.slice(0, 4).map((project) => (
           <div key={project.id} className={cn("bg-white dark:bg-slate-800 rounded-xl overflow-hidden border flex", device === 'mobile' ? 'flex-col' : 'items-center')}>
             <div className={cn("bg-slate-100 dark:bg-slate-700 flex items-center justify-center", device === 'mobile' ? 'aspect-video w-full' : 'w-40 h-24 flex-shrink-0')}>
@@ -1901,7 +2317,7 @@ export const CareerPreview = ({ jobs, brandColor, selectedStyle, onStyleChange }
       <div className="text-center mb-6">
         <h3 className={cn("font-bold", device === 'mobile' ? 'text-lg' : 'text-xl')}>Vị trí đang tuyển</h3>
       </div>
-      <div className="max-w-3xl mx-auto space-y-3">
+      <div className="max-w-4xl mx-auto space-y-3">
         {jobs.slice(0, 4).map((job) => (
           <div key={job.id} className={cn("bg-white dark:bg-slate-800 rounded-xl p-4 border flex items-center justify-between", device === 'mobile' ? 'flex-col gap-3 text-center' : '')}>
             <div>
@@ -1979,7 +2395,7 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
   const renderSplitStyle = () => (
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
       <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Liên hệ với chúng tôi</h3>
-      <div className={cn("grid gap-8 max-w-4xl mx-auto", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
+      <div className={cn("grid gap-8 max-w-6xl mx-auto", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
         <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border space-y-4">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
@@ -2026,7 +2442,7 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
         <h3 className={cn("font-bold", device === 'mobile' ? 'text-lg' : 'text-2xl')}>Liên hệ</h3>
         <p className="text-sm text-slate-500 mt-2">Chúng tôi luôn sẵn sàng hỗ trợ bạn</p>
       </div>
-      <div className={cn("max-w-xl mx-auto bg-white dark:bg-slate-800 rounded-2xl p-6 border shadow-sm")}>
+      <div className={cn("max-w-3xl mx-auto bg-white dark:bg-slate-800 rounded-2xl p-6 border shadow-sm")}>
         <div className={cn("grid gap-6", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-3')}>
           <div className="text-center">
             <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: `${brandColor}15` }}>
@@ -2064,7 +2480,7 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
   const renderCardsStyle = () => (
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
       <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Thông tin liên hệ</h3>
-      <div className={cn("grid gap-4 max-w-4xl mx-auto", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-3')}>
+      <div className={cn("grid gap-4 max-w-6xl mx-auto", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-3')}>
         <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border text-center">
           <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: `${brandColor}15` }}>
             <MapPin size={20} style={{ color: brandColor }} />
@@ -2088,7 +2504,7 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
         </div>
       </div>
       {config.showMap && (
-        <div className="max-w-4xl mx-auto mt-6 aspect-[21/9] bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden border">
+        <div className="max-w-6xl mx-auto mt-6 aspect-[21/9] bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden border">
           <div className="w-full h-full flex items-center justify-center text-slate-400">
             <Globe size={48} />
           </div>

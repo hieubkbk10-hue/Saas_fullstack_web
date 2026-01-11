@@ -5,7 +5,16 @@ import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Briefcase, Loader2, ArrowRight, Eye } from 'lucide-react';
+import { Briefcase, Loader2, ArrowRight, ChevronLeft, ChevronRight, ArrowUpRight, Plus } from 'lucide-react';
+
+// Luxury Services Gallery UI/UX - 4 Variants from luxury-services-gallery
+type ServiceListStyle = 'grid' | 'bento' | 'list' | 'carousel';
+
+interface ServiceListSectionProps {
+  config: Record<string, unknown>;
+  brandColor: string;
+  title: string;
+}
 
 // Helper to strip HTML tags from description
 const stripHtml = (html?: string) => {
@@ -13,13 +22,28 @@ const stripHtml = (html?: string) => {
   return html.replace(/<[^>]*>/g, '').trim();
 };
 
-type ServiceListStyle = 'grid' | 'list' | 'carousel';
+// Format price helper (monochromatic style)
+const formatServicePrice = (price?: number) => {
+  if (!price || price === 0) return 'Liên hệ';
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(price);
+};
 
-interface ServiceListSectionProps {
-  config: Record<string, unknown>;
-  brandColor: string;
-  title: string;
-}
+// Badge component for service status (monochromatic style)
+const ServiceBadge = ({ isNew, isHot }: { isNew?: boolean; isHot?: boolean }) => {
+  if (!isNew && !isHot) return null;
+  if (isHot) {
+    return (
+      <span className="inline-flex items-center rounded-sm px-2 py-1 text-[10px] font-medium uppercase tracking-widest bg-slate-900 text-white">
+        Hot
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center rounded-sm px-2 py-1 text-[10px] font-medium uppercase tracking-widest bg-slate-200 text-slate-700">
+      New
+    </span>
+  );
+};
 
 export function ServiceListSection({ config, brandColor, title }: ServiceListSectionProps) {
   const style = (config.style as ServiceListStyle) || 'grid';
@@ -61,8 +85,8 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
   // Loading state
   if (servicesData === undefined) {
     return (
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-center min-h-[200px]">
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-center min-h-[200px]">
           <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
         </div>
       </section>
@@ -72,100 +96,222 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
   // No services state
   if (services.length === 0) {
     return (
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">{title}</h2>
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-2xl md:text-3xl font-light tracking-tight text-slate-900 mb-4">{title}</h2>
           <p className="text-slate-500">Chưa có dịch vụ nào.</p>
         </div>
       </section>
     );
   }
 
-  // Format price
-  const formatPrice = (price?: number) => {
-    if (!price) return 'Liên hệ';
-    return price.toLocaleString('vi-VN') + 'đ';
-  };
-
-  // Style 1: Grid
+  // Style 1: Grid - Clean cards với hover lift và arrow icon
   if (style === 'grid') {
     return (
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {services.slice(0, 8).map((service) => (
+      <section className="py-12 md:py-16 px-3 md:px-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 pb-3 mb-6">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-light tracking-tight text-slate-900">
+              {title}
+            </h2>
+            {showViewAll && (
+              <Link 
+                href="/services" 
+                className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+              >
+                Xem tất cả 
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            )}
+          </div>
+          
+          {/* Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {services.slice(0, 6).map((service, idx) => (
               <Link key={service._id} href={`/services/${service.slug}`} className="group">
-                <article className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border h-full flex flex-col">
-                  <div className="aspect-video bg-slate-100 overflow-hidden">
+                <article className="cursor-pointer relative bg-white flex flex-col hover:-translate-y-1 transition-all duration-300 h-full">
+                  {/* Badge */}
+                  {idx < 2 && (
+                    <div className="absolute z-20 top-3 left-3">
+                      <ServiceBadge isHot={idx === 0} isNew={idx === 1} />
+                    </div>
+                  )}
+
+                  {/* Image Container */}
+                  <div className="relative overflow-hidden bg-slate-100 mb-3 rounded-lg aspect-[4/3] w-full">
                     {service.thumbnail ? (
                       <img 
                         src={service.thumbnail} 
                         alt={service.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                        loading="lazy"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Briefcase size={48} className="text-slate-300" />
+                        <Briefcase size={32} className="text-slate-300" />
                       </div>
                     )}
                   </div>
-                  <div className="p-4 flex-1 flex flex-col">
-                    <span className="text-xs text-slate-500 mb-1">
-                      {categoryMap.get(service.categoryId) || 'Dịch vụ'}
-                    </span>
-                    <h4 className="font-semibold text-sm line-clamp-2 flex-1 group-hover:text-blue-600 transition-colors">
+
+                  {/* Content */}
+                  <div className="flex flex-col justify-between flex-shrink-0 pt-1">
+                    <h3 className="font-medium text-base text-slate-900 leading-tight group-hover:opacity-70 transition-colors line-clamp-2">
                       {service.title}
-                    </h4>
-                    {service.excerpt && (
-                      <p className="text-xs text-slate-500 line-clamp-2 mt-1">{stripHtml(service.excerpt)}</p>
-                    )}
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="font-bold text-sm" style={{ color: brandColor }}>
-                        {formatPrice(service.price)}
+                    </h3>
+
+                    <div className="flex items-end justify-between mt-3">
+                      <span className="text-sm font-semibold tracking-wide text-slate-700">
+                        {formatServicePrice(service.price)}
                       </span>
-                      {service.duration && (
-                        <span className="text-xs text-slate-400">{service.duration}</span>
-                      )}
+                      <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                     </div>
                   </div>
                 </article>
               </Link>
             ))}
           </div>
-          {showViewAll && (
-            <div className="text-center mt-8">
-              <Link 
-                href="/services" 
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all hover:gap-3 group" 
-                style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-              >
-                Xem tất cả
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-          )}
         </div>
       </section>
     );
   }
 
-  // Style 2: List
+  // Style 2: Bento - Asymmetric grid với featured large card
+  if (style === 'bento') {
+    const bentoServices = services.slice(0, 4);
+    const remainingCount = services.length - 4;
+    
+    return (
+      <section className="py-12 md:py-16 px-3 md:px-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 pb-3 mb-6">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-light tracking-tight text-slate-900">
+              {title}
+            </h2>
+            {showViewAll && (
+              <Link 
+                href="/services" 
+                className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+              >
+                Xem tất cả 
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            )}
+          </div>
+          
+          {/* Bento Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:auto-rows-[300px]">
+            {bentoServices.map((service, i) => {
+              const isLastItem = i === 3;
+              
+              return (
+                <Link 
+                  key={service._id}
+                  href={`/services/${service.slug}`}
+                  className={`h-full min-h-[200px] md:min-h-0 relative group/bento ${
+                    i === 0 ? 'md:col-span-2 md:row-span-2' : ''
+                  } ${i === 3 ? 'md:col-span-2' : ''}`}
+                >
+                  <article className="h-full border border-slate-200/40 rounded-xl p-3 md:p-4 hover:shadow-md hover:border-slate-300 transition-all flex flex-col cursor-pointer">
+                    {/* Badge */}
+                    {i < 2 && (
+                      <div className="absolute z-20 top-5 left-5 md:top-6 md:left-6">
+                        <ServiceBadge isHot={i === 0} isNew={i === 1} />
+                      </div>
+                    )}
+                    
+                    {/* Image */}
+                    <div className="flex-1 min-h-[100px] md:min-h-[160px] w-full rounded-lg overflow-hidden bg-slate-100 mb-3">
+                      {service.thumbnail ? (
+                        <img 
+                          src={service.thumbnail} 
+                          alt={service.title}
+                          className="w-full h-full object-cover group-hover/bento:scale-105 transition-transform duration-700 ease-out"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Briefcase size={i === 0 ? 48 : 28} className="text-slate-300" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="space-y-1">
+                      <h3 className={`font-medium text-slate-900 leading-tight group-hover/bento:opacity-70 transition-colors line-clamp-2 ${
+                        i === 0 ? 'text-base md:text-lg' : 'text-sm md:text-base'
+                      }`}>
+                        {service.title}
+                      </h3>
+                      {i === 0 && service.excerpt && (
+                        <p className="text-sm text-slate-500 line-clamp-2 mt-1 hidden md:block">
+                          {stripHtml(service.excerpt)}
+                        </p>
+                      )}
+                      <div className="flex items-end justify-between mt-2">
+                        <span className="text-sm font-semibold tracking-wide text-slate-700">
+                          {formatServicePrice(service.price)}
+                        </span>
+                        <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover/bento:opacity-100 group-hover/bento:translate-x-0 transition-all duration-300" />
+                      </div>
+                    </div>
+                  </article>
+                  
+                  {/* "+N more" overlay on last item */}
+                  {isLastItem && remainingCount > 0 && (
+                    <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-[2px] rounded-xl flex items-center justify-center cursor-pointer transition-opacity opacity-100 md:opacity-0 md:group-hover/bento:opacity-100 z-30">
+                      <div className="text-white text-center">
+                        <span className="text-3xl md:text-4xl font-light flex items-center justify-center gap-1">
+                          <Plus className="w-6 h-6 md:w-8 md:h-8" />{remainingCount}
+                        </span>
+                        <p className="text-sm font-medium mt-1">Dịch vụ khác</p>
+                      </div>
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: List - Horizontal row layout với divider
   if (style === 'list') {
     return (
-      <section className="py-16 px-4">
+      <section className="py-12 md:py-16 px-3 md:px-6">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-          <div className="space-y-4">
-            {services.slice(0, 6).map((service) => (
+          {/* Header */}
+          <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 pb-3 mb-6">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-light tracking-tight text-slate-900">
+              {title}
+            </h2>
+            {showViewAll && (
+              <Link 
+                href="/services" 
+                className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+              >
+                Xem tất cả 
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            )}
+          </div>
+          
+          {/* List */}
+          <div className="flex flex-col gap-2">
+            {services.slice(0, 6).map((service, idx) => (
               <Link key={service._id} href={`/services/${service.slug}`} className="group block">
-                <article className="bg-white rounded-xl border flex items-center p-4 gap-4 hover:shadow-md transition-shadow">
-                  <div className="w-24 h-16 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0">
+                <article className="cursor-pointer flex flex-row items-center gap-4 md:gap-6 py-4 border-b border-slate-200/40 hover:bg-slate-50 px-2 rounded-lg transition-all">
+                  {/* Image */}
+                  <div className="flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-md overflow-hidden bg-slate-100">
                     {service.thumbnail ? (
                       <img 
                         src={service.thumbnail} 
                         alt={service.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -173,73 +319,89 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-xs text-slate-500">
-                      {categoryMap.get(service.categoryId) || 'Dịch vụ'}
-                    </span>
-                    <h4 className="font-semibold group-hover:text-blue-600 transition-colors line-clamp-1">
+                  
+                  {/* Content */}
+                  <div className="py-1 flex-1">
+                    {idx < 2 && (
+                      <div className="mb-1">
+                        <ServiceBadge isHot={idx === 0} isNew={idx === 1} />
+                      </div>
+                    )}
+                    <h3 className="font-medium text-base md:text-lg text-slate-900 leading-tight group-hover:opacity-70 transition-colors line-clamp-2">
                       {service.title}
-                    </h4>
-                    {service.excerpt && (
-                      <p className="text-sm text-slate-500 line-clamp-1 mt-0.5">{stripHtml(service.excerpt)}</p>
-                    )}
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="font-bold" style={{ color: brandColor }}>
-                      {formatPrice(service.price)}
+                    </h3>
+                    <div className="flex items-end justify-between mt-2">
+                      <span className="text-sm font-semibold tracking-wide text-slate-700">
+                        {formatServicePrice(service.price)}
+                      </span>
+                      <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                     </div>
-                    {service.duration && (
-                      <div className="text-xs text-slate-400">{service.duration}</div>
-                    )}
                   </div>
                 </article>
               </Link>
             ))}
           </div>
-          {showViewAll && (
-            <div className="text-center mt-8">
-              <Link 
-                href="/services" 
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all hover:gap-3 group" 
-                style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-              >
-                Xem tất cả
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-          )}
         </div>
       </section>
     );
   }
 
-  // Style 3: Carousel
+  // Style 4: Carousel - Horizontal scroll với snap và navigation
   return (
-    <section className="py-16 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold text-slate-900">{title}</h2>
+    <section className="py-12 md:py-16 relative group/carousel">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 pb-3 mb-6 px-3 md:px-6">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-light tracking-tight text-slate-900">
+            {title}
+          </h2>
           {showViewAll && (
             <Link 
               href="/services" 
-              className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all group" 
-              style={{ color: brandColor }}
+              className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors"
             >
-              Xem tất cả
-              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+              Xem tất cả 
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Link>
           )}
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-          {services.slice(0, 8).map((service) => (
-            <Link key={service._id} href={`/services/${service.slug}`} className="group flex-shrink-0 w-64">
-              <article className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border">
-                <div className="aspect-video bg-slate-100 overflow-hidden">
+        
+        {/* Navigation Buttons */}
+        <button className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm text-slate-900 disabled:opacity-0 disabled:pointer-events-none transition-all hover:bg-white focus:outline-none opacity-0 group-hover/carousel:opacity-100">
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <button className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm text-slate-900 disabled:opacity-0 disabled:pointer-events-none transition-all hover:bg-white focus:outline-none opacity-0 group-hover/carousel:opacity-100">
+          <ChevronRight className="w-5 h-5" />
+        </button>
+        
+        {/* Carousel */}
+        <div 
+          className="flex gap-4 overflow-x-auto pb-4 pt-2 px-3 md:px-6 snap-x snap-mandatory touch-pan-x"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {services.slice(0, 8).map((service, idx) => (
+            <Link 
+              key={service._id} 
+              href={`/services/${service.slug}`}
+              className="snap-center flex-shrink-0 min-w-[60vw] sm:min-w-[320px]"
+            >
+              <article className="group cursor-pointer relative bg-white flex flex-col hover:-translate-y-1 transition-all duration-300 h-full select-none">
+                {/* Badge */}
+                {idx < 2 && (
+                  <div className="absolute z-20 top-3 left-3">
+                    <ServiceBadge isHot={idx === 0} isNew={idx === 1} />
+                  </div>
+                )}
+
+                {/* Image Container */}
+                <div className="relative overflow-hidden bg-slate-100 mb-3 rounded-lg aspect-[4/3] w-full">
                   {service.thumbnail ? (
                     <img 
                       src={service.thumbnail} 
                       alt={service.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      draggable={false}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out select-none"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -247,21 +409,18 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                     </div>
                   )}
                 </div>
-                <div className="p-4">
-                  <h4 className="font-semibold line-clamp-2 group-hover:text-blue-600 transition-colors">
+
+                {/* Content */}
+                <div className="flex flex-col justify-between flex-shrink-0 pt-1">
+                  <h3 className="font-medium text-base text-slate-900 leading-tight group-hover:opacity-70 transition-colors line-clamp-2">
                     {service.title}
-                  </h4>
-                  {service.excerpt && (
-                    <p className="text-sm text-slate-500 line-clamp-2 mt-1">{stripHtml(service.excerpt)}</p>
-                  )}
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="font-bold" style={{ color: brandColor }}>
-                      {formatPrice(service.price)}
+                  </h3>
+
+                  <div className="flex items-end justify-between mt-3">
+                    <span className="text-sm font-semibold tracking-wide text-slate-700">
+                      {formatServicePrice(service.price)}
                     </span>
-                    <span className="text-xs text-slate-400 flex items-center gap-1">
-                      <Eye size={12} />
-                      {service.views}
-                    </span>
+                    <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
                   </div>
                 </div>
               </article>
