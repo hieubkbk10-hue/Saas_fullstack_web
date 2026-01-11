@@ -630,25 +630,51 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
 }
 
 // ============ SERVICES SECTION ============
-type ServicesStyle = 'grid' | 'list' | 'icons';
+// Professional Services UI/UX - 3 Variants: Elegant Grid, Modern List, Big Number
+type ServicesStyle = 'elegantGrid' | 'modernList' | 'bigNumber';
 function ServicesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
-  const style = (config.style as ServicesStyle) || 'grid';
+  const style = (config.style as ServicesStyle) || 'elegantGrid';
 
-  // Style 1: Grid
-  if (style === 'grid') {
+  // Style 1: Elegant Grid - Clean cards with top accent line, hover lift
+  if (style === 'elegantGrid') {
     return (
-      <section className="py-16 px-4 bg-slate-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-          <div className="grid md:grid-cols-3 gap-8">
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto space-y-10">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+              {title}
+            </h2>
+          </div>
+
+          {/* Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item, idx) => (
-              <div key={idx} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}15` }}>
-                  <Briefcase size={24} style={{ color: brandColor }} />
+              <div 
+                key={idx} 
+                className="group bg-white p-6 pt-8 rounded-xl shadow-sm border border-slate-200/60 relative overflow-hidden transition-all hover:shadow-md hover:-translate-y-1"
+              >
+                {/* Top Accent Line with gradient */}
+                <div 
+                  className="absolute top-0 left-0 right-0 h-1.5 w-full group-hover:h-2 transition-all"
+                  style={{ background: `linear-gradient(to right, ${brandColor}66, ${brandColor})` }}
+                />
+                
+                <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-3 tracking-tight group-hover:opacity-80 transition-colors">
+                  {item.title}
+                </h3>
+                <p className="text-slate-500 leading-relaxed text-sm">
+                  {item.description}
+                </p>
+                
+                {/* Footer action */}
+                <div className="mt-4 pt-4 border-t border-dashed border-slate-200 flex items-center text-sm font-medium cursor-pointer" style={{ color: brandColor }}>
+                  Chi tiết 
+                  <svg className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
                 </div>
-                <h3 className="text-lg font-semibold mb-2 text-slate-900">{item.title}</h3>
-                <p className="text-slate-600 text-sm">{item.description}</p>
               </div>
             ))}
           </div>
@@ -657,19 +683,62 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 2: List
-  if (style === 'list') {
+  // Style 2: Modern List - Horizontal split layout with number prefix
+  if (style === 'modernList') {
     return (
-      <section className="py-16 px-4">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-          <div className="space-y-6">
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto space-y-10">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+              {title}
+            </h2>
+          </div>
+
+          {/* List */}
+          <div className="flex flex-col divide-y divide-slate-200/60 border-t border-b border-slate-200/60">
             {items.map((item, idx) => (
-              <div key={idx} className="flex gap-4 items-start p-4 rounded-xl hover:bg-slate-50 transition-colors">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold" style={{ backgroundColor: brandColor }}>{idx + 1}</div>
-                <div>
-                  <h4 className="font-semibold mb-1 text-slate-900">{item.title}</h4>
-                  <p className="text-sm text-slate-500">{item.description}</p>
+              <div 
+                key={idx}
+                className="group py-5 flex flex-col md:flex-row md:items-start gap-3 md:gap-8 hover:bg-slate-50/50 transition-colors px-4 -mx-4 rounded-lg md:rounded-none"
+              >
+                {/* Left: Number + Title */}
+                <div className="md:w-[30%] flex-shrink-0">
+                  <span className="text-xs font-bold text-slate-400 mb-1 block uppercase tracking-widest">
+                    0{idx + 1}
+                  </span>
+                  <h3 className="text-base md:text-lg font-bold text-slate-900 group-hover:opacity-80 transition-colors">
+                    {item.title}
+                  </h3>
+                </div>
+                
+                {/* Middle: Description */}
+                <div className="md:w-[60%] flex flex-col gap-2">
+                  <p className="text-slate-500 text-sm leading-snug">
+                    {item.description}
+                  </p>
+                </div>
+                
+                {/* Right: Action Icon */}
+                <div className="hidden md:flex items-center justify-end flex-shrink-0">
+                  <div 
+                    className="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center text-slate-400 group-hover:border-current group-hover:text-white transition-all"
+                    style={{ '--hover-bg': brandColor } as React.CSSProperties}
+                    onMouseEnter={(e) => { 
+                      (e.currentTarget.style.borderColor = brandColor); 
+                      (e.currentTarget.style.backgroundColor = brandColor); 
+                      (e.currentTarget.style.color = 'white'); 
+                    }}
+                    onMouseLeave={(e) => { 
+                      (e.currentTarget.style.borderColor = ''); 
+                      (e.currentTarget.style.backgroundColor = ''); 
+                      (e.currentTarget.style.color = ''); 
+                    }}
+                  >
+                    <svg className="w-4 h-4 -rotate-45 group-hover:rotate-0 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             ))}
@@ -679,21 +748,56 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 3: Icons center
+  // Style 3: Big Number Tiles - Bento/Typographic style with giant numbers
   return (
-    <section className="py-16 px-4" style={{ backgroundColor: `${brandColor}05` }}>
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-          {items.map((item, idx) => (
-            <div key={idx} className="text-center">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: brandColor }}>
-                <Briefcase size={28} className="text-white" />
+    <section className="py-12 md:py-16 px-4">
+      <div className="max-w-6xl mx-auto space-y-10">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
+            {title}
+          </h2>
+        </div>
+
+        {/* Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {items.map((item, idx) => {
+            const isHighlighted = idx === 1;
+            return (
+              <div 
+                key={idx} 
+                className={`relative overflow-hidden rounded-xl p-6 min-h-[180px] flex flex-col justify-end group border transition-colors ${
+                  isHighlighted 
+                    ? 'text-white border-transparent' 
+                    : 'bg-slate-100/50 text-slate-900 hover:bg-slate-100 border-slate-200/50'
+                }`}
+                style={isHighlighted ? { backgroundColor: brandColor } : {}}
+              >
+                {/* Giant Number Watermark */}
+                <span className={`absolute -top-6 -right-3 text-[8rem] font-black leading-none select-none pointer-events-none transition-transform group-hover:scale-105 duration-500 ${
+                  isHighlighted ? 'text-white opacity-[0.15]' : 'text-slate-900 opacity-[0.07]'
+                }`}>
+                  {idx + 1}
+                </span>
+
+                <div className="relative z-10 space-y-2">
+                  {/* Accent bar */}
+                  <div 
+                    className="w-6 h-1 mb-3 opacity-50 rounded-full"
+                    style={{ backgroundColor: isHighlighted ? 'white' : brandColor }}
+                  />
+                  <h3 className="text-lg md:text-xl font-bold tracking-tight">
+                    {item.title}
+                  </h3>
+                  <p className={`text-sm leading-relaxed ${
+                    isHighlighted ? 'text-white/90' : 'text-slate-500'
+                  }`}>
+                    {item.description}
+                  </p>
+                </div>
               </div>
-              <h4 className="font-semibold mb-1 text-slate-900">{item.title}</h4>
-              <p className="text-xs text-slate-500">{item.description}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

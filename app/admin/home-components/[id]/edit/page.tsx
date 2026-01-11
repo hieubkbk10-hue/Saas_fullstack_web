@@ -104,7 +104,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [footerConfig, setFooterConfig] = useState({ description: '', copyright: '', showSocialLinks: true });
   const [footerStyle, setFooterStyle] = useState<FooterStyle>('columns');
   const [servicesItems, setServicesItems] = useState<{id: number, icon: string, title: string, description: string}[]>([]);
-  const [servicesStyle, setServicesStyle] = useState<ServicesStyle>('grid');
+  const [servicesStyle, setServicesStyle] = useState<ServicesStyle>('elegantGrid');
   const [benefitsStyle, setBenefitsStyle] = useState<BenefitsStyle>('timeline');
   const [testimonialsItems, setTestimonialsItems] = useState<{id: number, name: string, role: string, content: string, avatar: string, rating: number}[]>([]);
   const [pricingPlans, setPricingPlans] = useState<{id: number, name: string, price: string, period: string, features: string[], isPopular: boolean, buttonText: string, buttonLink: string}[]>([]);
@@ -237,7 +237,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           break;
         case 'Services':
           setServicesItems(config.items?.map((item: {icon: string, title: string, description: string}, i: number) => ({ id: i, icon: item.icon, title: item.title, description: item.description })) || []);
-          setServicesStyle((config.style as ServicesStyle) || 'grid');
+          setServicesStyle((config.style as ServicesStyle) || 'elegantGrid');
           break;
         case 'Benefits':
           setServicesItems(config.items?.map((item: {icon: string, title: string, description: string}, i: number) => ({ id: i, icon: item.icon, title: item.title, description: item.description })) || []);

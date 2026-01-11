@@ -15,7 +15,7 @@ export default function ServicesCreatePage() {
     { id: 2, icon: 'Shield', title: 'Bảo hành trọn đời', description: 'Cam kết chất lượng sản phẩm' },
     { id: 3, icon: 'Truck', title: 'Giao hàng nhanh', description: 'Miễn phí vận chuyển toàn quốc' }
   ]);
-  const [style, setStyle] = useState<ServicesStyle>('grid');
+  const [style, setStyle] = useState<ServicesStyle>('elegantGrid');
 
   const handleAddService = () => setServicesItems([...servicesItems, { id: Date.now(), icon: 'Star', title: '', description: '' }]);
   const handleRemoveService = (id: number) => servicesItems.length > 1 && setServicesItems(servicesItems.filter(s => s.id !== id));

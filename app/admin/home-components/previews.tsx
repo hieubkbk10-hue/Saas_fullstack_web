@@ -831,40 +831,66 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
 };
 
 // ============ SERVICES/BENEFITS PREVIEW ============
+// Professional Services UI/UX - 3 Variants: Elegant Grid, Modern List, Big Number
 type ServiceItem = { id: number; icon: string; title: string; description: string };
-export type ServicesStyle = 'grid' | 'list' | 'icons';
+export type ServicesStyle = 'elegantGrid' | 'modernList' | 'bigNumber';
 export const ServicesPreview = ({ items, brandColor, componentType, selectedStyle, onStyleChange }: { items: ServiceItem[]; brandColor: string; componentType: 'Services' | 'Benefits'; selectedStyle?: ServicesStyle; onStyleChange?: (style: ServicesStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'grid';
+  const previewStyle = selectedStyle || 'elegantGrid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ServicesStyle);
-  const styles = [{ id: 'grid', label: 'Grid' }, { id: 'list', label: 'List' }, { id: 'icons', label: 'Icon Center' }];
+  const styles = [
+    { id: 'elegantGrid', label: 'Elegant Grid' }, 
+    { id: 'modernList', label: 'Modern List' }, 
+    { id: 'bigNumber', label: 'Big Number' }
+  ];
   const titles = { Services: 'Dịch vụ của chúng tôi', Benefits: 'Tại sao chọn chúng tôi' };
 
-  const renderGridStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>{titles[componentType]}</h3>
-      <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
-        {items.slice(0, device === 'mobile' ? 3 : 6).map((item) => (
-          <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl p-5 border hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}15` }}><Star size={24} style={{ color: brandColor }} /></div>
-            <h4 className="font-semibold mb-2">{item.title || 'Tiêu đề'}</h4>
-            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{item.description || 'Mô tả dịch vụ...'}</p>
-          </div>
-        ))}
+  // Style 1: Elegant Grid - Clean cards with top accent line, hover lift
+  const renderElegantGridStyle = () => (
+    <div className="w-full max-w-6xl mx-auto space-y-8 py-8 px-4">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-700 pb-4">
+        <h2 className={cn(
+          "font-bold tracking-tight text-slate-900 dark:text-slate-100",
+          device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl'
+        )}>
+          {titles[componentType]}
+        </h2>
       </div>
-    </div>
-  );
 
-  const renderListStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>{titles[componentType]}</h3>
-      <div className="max-w-3xl mx-auto space-y-4">
-        {items.slice(0, 4).map((item, idx) => (
-          <div key={item.id} className="flex gap-4 items-start p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold" style={{ backgroundColor: brandColor }}>{idx + 1}</div>
-            <div>
-              <h4 className="font-semibold mb-1">{item.title || 'Tiêu đề'}</h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{item.description || 'Mô tả...'}</p>
+      {/* Grid */}
+      <div className={cn(
+        "grid gap-6",
+        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+      )}>
+        {items.slice(0, device === 'mobile' ? 3 : 6).map((item) => (
+          <div 
+            key={item.id} 
+            className="group bg-white dark:bg-slate-800 p-6 pt-8 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-700 relative overflow-hidden transition-all hover:shadow-md hover:-translate-y-1"
+          >
+            {/* Top Accent Line with gradient */}
+            <div 
+              className="absolute top-0 left-0 right-0 h-1.5 w-full group-hover:h-2 transition-all"
+              style={{ background: `linear-gradient(to right, ${brandColor}66, ${brandColor})` }}
+            />
+            
+            <h3 className={cn(
+              "font-bold text-slate-900 dark:text-slate-100 mb-3 tracking-tight transition-colors",
+              device === 'mobile' ? 'text-lg' : 'text-xl'
+            )}
+            style={{ '--hover-color': brandColor } as React.CSSProperties}
+            onMouseEnter={(e) => (e.currentTarget.style.color = brandColor)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '')}
+            >
+              {item.title || 'Tiêu đề'}
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400 leading-relaxed text-sm">
+              {item.description || 'Mô tả dịch vụ...'}
+            </p>
+            
+            {/* Footer action */}
+            <div className="mt-4 pt-4 border-t border-dashed border-slate-200 dark:border-slate-600 flex items-center text-sm font-medium cursor-pointer" style={{ color: brandColor }}>
+              Chi tiết <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
             </div>
           </div>
         ))}
@@ -872,17 +898,134 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
     </div>
   );
 
-  const renderIconsStyle = () => (
-    <div className={cn("py-10 px-4", device === 'mobile' ? 'py-6' : '')} style={{ backgroundColor: `${brandColor}05` }}>
-      <h3 className={cn("font-bold text-center mb-8", device === 'mobile' ? 'text-lg' : 'text-xl')}>{titles[componentType]}</h3>
-      <div className={cn("grid gap-8", device === 'mobile' ? 'grid-cols-2 gap-4' : 'grid-cols-4')}>
-        {items.slice(0, 4).map((item) => (
-          <div key={item.id} className="text-center">
-            <div className={cn("rounded-full flex items-center justify-center mx-auto mb-3", device === 'mobile' ? 'w-12 h-12' : 'w-16 h-16')} style={{ backgroundColor: brandColor }}><Star size={device === 'mobile' ? 20 : 28} className="text-white" /></div>
-            <h4 className={cn("font-semibold mb-1", device === 'mobile' ? 'text-sm' : '')}>{item.title || 'Tiêu đề'}</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{item.description || 'Mô tả...'}</p>
+  // Style 2: Modern List - Horizontal split layout with number prefix
+  const renderModernListStyle = () => (
+    <div className="w-full max-w-6xl mx-auto space-y-8 py-8 px-4">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-700 pb-4">
+        <h2 className={cn(
+          "font-bold tracking-tight text-slate-900 dark:text-slate-100",
+          device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl'
+        )}>
+          {titles[componentType]}
+        </h2>
+      </div>
+
+      {/* List */}
+      <div className="flex flex-col divide-y divide-slate-200/60 dark:divide-slate-700 border-t border-b border-slate-200/60 dark:border-slate-700">
+        {items.slice(0, device === 'mobile' ? 4 : 6).map((item, index) => (
+          <div 
+            key={item.id}
+            className="group py-4 flex flex-col md:flex-row md:items-start gap-3 md:gap-6 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors px-3 -mx-3 rounded-lg md:rounded-none"
+          >
+            {/* Left: Number + Title */}
+            <div className="md:w-[30%] flex-shrink-0">
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-1 block uppercase tracking-widest">
+                0{index + 1}
+              </span>
+              <h3 
+                className={cn(
+                  "font-bold text-slate-900 dark:text-slate-100 transition-colors",
+                  device === 'mobile' ? 'text-base' : 'text-lg'
+                )}
+                style={{ '--hover-color': brandColor } as React.CSSProperties}
+                onMouseEnter={(e) => (e.currentTarget.style.color = brandColor)}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '')}
+              >
+                {item.title || 'Tiêu đề'}
+              </h3>
+            </div>
+            
+            {/* Middle: Description */}
+            <div className="md:w-[60%] flex flex-col gap-2">
+              <p className="text-slate-500 dark:text-slate-400 text-sm leading-snug">
+                {item.description || 'Mô tả dịch vụ...'}
+              </p>
+            </div>
+            
+            {/* Right: Action Icon */}
+            <div className="hidden md:flex items-center justify-end flex-shrink-0">
+              <div 
+                className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-600 flex items-center justify-center text-slate-400 group-hover:text-white group-hover:bg-opacity-100 transition-all"
+                style={{ '--hover-border': brandColor, '--hover-bg': brandColor } as React.CSSProperties}
+                onMouseEnter={(e) => { 
+                  (e.currentTarget.style.borderColor = brandColor); 
+                  (e.currentTarget.style.backgroundColor = brandColor); 
+                  (e.currentTarget.style.color = 'white'); 
+                }}
+              >
+                <ArrowRight size={16} className="-rotate-45 group-hover:rotate-0 transition-transform duration-300" />
+              </div>
+            </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+
+  // Style 3: Big Number Tiles - Bento/Typographic style with giant numbers
+  const renderBigNumberStyle = () => (
+    <div className="w-full max-w-6xl mx-auto space-y-8 py-8 px-4">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-700 pb-4">
+        <h2 className={cn(
+          "font-bold tracking-tight text-slate-900 dark:text-slate-100",
+          device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl'
+        )}>
+          {titles[componentType]}
+        </h2>
+      </div>
+
+      {/* Grid */}
+      <div className={cn(
+        "grid gap-3",
+        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+      )}>
+        {items.slice(0, device === 'mobile' ? 3 : 6).map((item, index) => {
+          const isHighlighted = index === 1;
+          return (
+            <div 
+              key={item.id} 
+              className={cn(
+                "relative overflow-hidden rounded-xl p-5 flex flex-col justify-end group border transition-colors",
+                device === 'mobile' ? 'min-h-[150px]' : 'min-h-[180px]',
+                isHighlighted 
+                  ? "text-white border-transparent" 
+                  : "bg-slate-100/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200/50 dark:border-slate-700"
+              )}
+              style={isHighlighted ? { backgroundColor: brandColor } : {}}
+            >
+              {/* Giant Number Watermark */}
+              <span className={cn(
+                "absolute -top-6 -right-3 font-black leading-none select-none pointer-events-none transition-transform group-hover:scale-105 duration-500",
+                device === 'mobile' ? 'text-[6rem]' : 'text-[8rem]',
+                isHighlighted ? "text-white opacity-[0.15]" : "text-slate-900 dark:text-slate-100 opacity-[0.07]"
+              )}>
+                {index + 1}
+              </span>
+
+              <div className="relative z-10 space-y-2">
+                {/* Accent bar */}
+                <div 
+                  className="w-6 h-1 mb-3 opacity-50 rounded-full"
+                  style={{ backgroundColor: isHighlighted ? 'white' : brandColor }}
+                />
+                <h3 className={cn(
+                  "font-bold tracking-tight",
+                  device === 'mobile' ? 'text-lg' : 'text-xl'
+                )}>
+                  {item.title || 'Tiêu đề'}
+                </h3>
+                <p className={cn(
+                  "text-sm leading-relaxed",
+                  isHighlighted ? "text-white/90" : "text-slate-500 dark:text-slate-400"
+                )}>
+                  {item.description || 'Mô tả dịch vụ...'}
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -890,9 +1033,9 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
   return (
     <PreviewWrapper title={`Preview ${componentType}`} device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`${items.length} mục`}>
       <BrowserFrame>
-        {previewStyle === 'grid' && renderGridStyle()}
-        {previewStyle === 'list' && renderListStyle()}
-        {previewStyle === 'icons' && renderIconsStyle()}
+        {previewStyle === 'elegantGrid' && renderElegantGridStyle()}
+        {previewStyle === 'modernList' && renderModernListStyle()}
+        {previewStyle === 'bigNumber' && renderBigNumberStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );
