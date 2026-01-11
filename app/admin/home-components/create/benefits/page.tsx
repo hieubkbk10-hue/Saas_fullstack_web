@@ -11,11 +11,12 @@ export default function BenefitsCreatePage() {
   const brandColor = useBrandColor();
   
   const [benefitsItems, setBenefitsItems] = useState([
-    { id: 1, icon: 'Check', title: 'Chất lượng đảm bảo', description: 'Sản phẩm chính hãng 100%' },
-    { id: 2, icon: 'Clock', title: 'Tiết kiệm thời gian', description: 'Giao hàng trong 24h' },
-    { id: 3, icon: 'Shield', title: 'An toàn bảo mật', description: 'Thanh toán được mã hóa' }
+    { id: 1, icon: 'Check', title: 'Chất lượng đảm bảo', description: 'Sản phẩm chính hãng 100%, nguồn gốc xuất xứ rõ ràng.' },
+    { id: 2, icon: 'Clock', title: 'Tiết kiệm thời gian', description: 'Giao hàng hỏa tốc trong 24h, quy trình xử lý đơn hàng tối ưu.' },
+    { id: 3, icon: 'Shield', title: 'An toàn bảo mật', description: 'Thanh toán được mã hóa SSL, bảo vệ tuyệt đối thông tin cá nhân.' },
+    { id: 4, icon: 'Star', title: 'Hỗ trợ tận tâm', description: 'Đội ngũ CSKH hoạt động 24/7, giải quyết khiếu nại trong 1h.' }
   ]);
-  const [style, setStyle] = useState<BenefitsStyle>('timeline');
+  const [style, setStyle] = useState<BenefitsStyle>('cards');
 
   const onSubmit = (e: React.FormEvent) => {
     handleSubmit(e, { items: benefitsItems.map(b => ({ icon: b.icon, title: b.title, description: b.description })), style });

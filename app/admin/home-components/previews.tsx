@@ -262,7 +262,7 @@ export const HeroBannerPreview = ({
             </div>
           ) : (
             <div className="grid grid-cols-4 grid-rows-2 gap-2 h-full" style={{ height: device === 'desktop' ? '280px' : '260px' }}>
-              <div className="col-span-2 row-span-2 relative rounded-xl overflow-hidden ring-2 ring-offset-1 ring-offset-slate-900" style={{ ringColor: `${brandColor}60` }}>
+              <div className="col-span-2 row-span-2 relative rounded-xl overflow-hidden ring-2 ring-offset-1 ring-offset-slate-900" style={{ '--tw-ring-color': `${brandColor}60` } as React.CSSProperties}>
                 {bentoSlides[0]?.image ? (
                   <div className="w-full h-full relative">
                     <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[0].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(25px)' }} />
@@ -2454,54 +2454,116 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
 };
 
 // ============ BENEFITS PREVIEW (Why Choose Us) ============
+// 4 Professional Styles: Solid Cards, Accent List, Bold Bento, Icon Row
 type BenefitItem = { id: number; icon: string; title: string; description: string };
-export type BenefitsStyle = 'timeline' | 'comparison' | 'highlights';
+export type BenefitsStyle = 'cards' | 'list' | 'bento' | 'row';
 export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: BenefitItem[]; brandColor: string; selectedStyle?: BenefitsStyle; onStyleChange?: (style: BenefitsStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'timeline';
+  const previewStyle = selectedStyle || 'cards';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as BenefitsStyle);
-  const styles = [{ id: 'timeline', label: 'Timeline' }, { id: 'comparison', label: 'Zigzag' }, { id: 'highlights', label: 'Checklist' }];
+  const styles = [
+    { id: 'cards', label: 'Solid Cards' }, 
+    { id: 'list', label: 'Accent List' }, 
+    { id: 'bento', label: 'Bold Bento' },
+    { id: 'row', label: 'Icon Row' }
+  ];
 
-  const renderTimelineStyle = () => (
-    <div className={cn("py-10 px-6", device === 'mobile' ? 'py-6 px-4' : '')}>
-      <div className="text-center mb-8">
-        <p className="text-sm font-medium mb-2" style={{ color: brandColor }}>TẠI SAO CHỌN CHÚNG TÔI</p>
-        <h3 className={cn("font-bold", device === 'mobile' ? 'text-lg' : 'text-2xl')}>Hành trình cùng bạn</h3>
-      </div>
-      <div className="relative max-w-3xl mx-auto">
-        <div className="absolute left-6 top-0 bottom-0 w-0.5" style={{ backgroundColor: `${brandColor}30` }}></div>
-        <div className="space-y-6">
-          {items.slice(0, 4).map((item, idx) => (
-            <div key={item.id} className="relative flex gap-6 pl-2">
-              <div className="relative z-10 flex-shrink-0">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: brandColor }}>{idx + 1}</div>
-              </div>
-              <div className="flex-1 bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
-                <h4 className="font-semibold mb-1">{item.title || `Bước ${idx + 1}`}</h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{item.description || 'Mô tả lợi ích...'}</p>
-              </div>
-            </div>
-          ))}
+  // Style 1: Corporate Cards - Solid background với icon đậm màu chủ đạo
+  const renderCardsStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-6" style={{ borderColor: `${brandColor}20` }}>
+        <div className="space-y-2">
+          <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+            Vì sao chọn chúng tôi?
+          </div>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+            Giá trị cốt lõi
+          </h2>
         </div>
+      </div>
+      
+      {/* Grid */}
+      <div className={cn(
+        "grid gap-4 md:gap-6",
+        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'
+      )}>
+        {items.slice(0, 4).map((item) => (
+          <div 
+            key={item.id} 
+            className="rounded-xl p-5 md:p-6 shadow-sm flex flex-col items-start border"
+            style={{ backgroundColor: `${brandColor}08`, borderColor: `${brandColor}20` }}
+          >
+            {/* Icon luôn hiển thị trạng thái active */}
+            <div 
+              className="w-11 h-11 md:w-12 md:h-12 rounded-lg flex items-center justify-center mb-4 text-white"
+              style={{ backgroundColor: brandColor, boxShadow: `0 4px 6px -1px ${brandColor}30` }}
+            >
+              <Check size={18} strokeWidth={3} />
+            </div>
+            
+            <h3 className="font-bold text-base md:text-lg mb-2" style={{ color: brandColor }}>
+              {item.title || 'Tiêu đề'}
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              {item.description || 'Mô tả lợi ích...'}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );
 
-  const renderZigzagStyle = () => (
-    <div className={cn("py-10 px-6", device === 'mobile' ? 'py-6 px-4' : '')}>
-      <div className="text-center mb-8">
-        <p className="text-sm font-medium mb-2" style={{ color: brandColor }}>TẠI SAO CHỌN CHÚNG TÔI</p>
-        <h3 className={cn("font-bold", device === 'mobile' ? 'text-lg' : 'text-2xl')}>Lợi ích khi hợp tác</h3>
+  // Style 2: Modern List - Thanh màu bên trái nhấn mạnh
+  const renderListStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-6" style={{ borderColor: `${brandColor}20` }}>
+        <div className="space-y-2">
+          <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+            Vì sao chọn chúng tôi?
+          </div>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+            Giá trị cốt lõi
+          </h2>
+        </div>
       </div>
-      <div className="max-w-4xl mx-auto space-y-6">
-        {items.slice(0, 4).map((item, idx) => (
-          <div key={item.id} className={cn("flex items-center gap-6", device === 'mobile' ? 'flex-col text-center' : idx % 2 === 1 ? 'flex-row-reverse' : '')}>
-            <div className={cn("flex-shrink-0 rounded-2xl flex items-center justify-center", device === 'mobile' ? 'w-16 h-16' : 'w-24 h-24')} style={{ backgroundColor: `${brandColor}15` }}>
-              <Star size={device === 'mobile' ? 28 : 40} style={{ color: brandColor }} />
-            </div>
-            <div className={cn("flex-1", device !== 'mobile' && idx % 2 === 1 ? 'text-right' : '')}>
-              <h4 className="font-semibold text-lg mb-2">{item.title || `Lợi ích ${idx + 1}`}</h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{item.description || 'Mô tả chi tiết lợi ích...'}</p>
+      
+      {/* List */}
+      <div className="flex flex-col gap-3 max-w-4xl mx-auto">
+        {items.slice(0, 4).map((item, index) => (
+          <div 
+            key={item.id} 
+            className="relative bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 rounded-lg p-4 md:p-5 pl-5 md:pl-6 overflow-hidden shadow-sm"
+          >
+            {/* Thanh màu chủ đạo nhấn mạnh bên trái */}
+            <div className="absolute top-0 bottom-0 left-0 w-1.5" style={{ backgroundColor: brandColor }} />
+            
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-3">
+              <div className="flex items-start gap-3 md:gap-4">
+                <div className="flex-shrink-0 mt-0.5">
+                  <div 
+                    className="w-6 h-6 rounded-full flex items-center justify-center border"
+                    style={{ backgroundColor: `${brandColor}15`, borderColor: `${brandColor}30` }}
+                  >
+                    <span className="text-[11px] font-bold" style={{ color: brandColor }}>{index + 1}</span>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm md:text-base">
+                    {item.title || 'Tiêu đề'}
+                  </h3>
+                  <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 md:mt-1.5 leading-normal">
+                    {item.description || 'Mô tả lợi ích...'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="hidden md:block">
+                <svg className="w-[18px] h-[18px] opacity-60" style={{ color: brandColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
             </div>
           </div>
         ))}
@@ -2509,28 +2571,113 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
     </div>
   );
 
-  const renderChecklistStyle = () => (
-    <div className={cn("py-10 px-6", device === 'mobile' ? 'py-6 px-4' : '')}>
-      <div className={cn("max-w-4xl mx-auto rounded-2xl overflow-hidden", device === 'mobile' ? '' : 'flex')}>
-        <div className={cn("p-6 text-white", device === 'mobile' ? 'text-center' : 'w-2/5')} style={{ backgroundColor: brandColor }}>
-          <p className="text-sm opacity-80 mb-2">TẠI SAO CHỌN</p>
-          <h3 className={cn("font-bold mb-4", device === 'mobile' ? 'text-xl' : 'text-2xl')}>Chúng tôi?</h3>
-          <p className="text-sm opacity-80">Những lý do khiến bạn tin tưởng lựa chọn dịch vụ của chúng tôi</p>
+  // Style 3: Trust Bento - Typography focused với layout 2-1 / 1-2
+  const renderBentoStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-6" style={{ borderColor: `${brandColor}20` }}>
+        <div className="space-y-2">
+          <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+            Vì sao chọn chúng tôi?
+          </div>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+            Giá trị cốt lõi
+          </h2>
         </div>
-        <div className={cn("bg-white dark:bg-slate-800 p-6", device === 'mobile' ? '' : 'flex-1')}>
-          <ul className="space-y-4">
-            {items.slice(0, 5).map((item, idx) => (
-              <li key={item.id} className="flex items-start gap-3 group">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" style={{ backgroundColor: `${brandColor}15` }}>
-                  <Check size={14} style={{ color: brandColor }} />
-                </div>
-                <div>
-                  <h4 className="font-medium">{item.title || `Lợi ích ${idx + 1}`}</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{item.description || 'Mô tả...'}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+      </div>
+      
+      {/* Bento Grid */}
+      <div className={cn(
+        "grid gap-3 md:gap-4",
+        device === 'mobile' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'
+      )}>
+        {items.slice(0, 4).map((item, index) => {
+          // Layout: Item 0 span 2, Item 3 span 2, Items 1 & 2 span 1
+          const isWide = index === 0 || index === 3;
+          const isPrimary = index === 0;
+          
+          return (
+            <div 
+              key={item.id} 
+              className={cn(
+                "flex flex-col justify-between p-5 md:p-6 lg:p-8 rounded-2xl transition-colors min-h-[160px] md:min-h-[180px]",
+                device !== 'mobile' && isWide ? "md:col-span-2" : device !== 'mobile' ? "md:col-span-1" : "",
+                isPrimary 
+                  ? "text-white border border-transparent" 
+                  : "bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700"
+              )}
+              style={isPrimary ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}30` } : {}}
+            >
+              {/* Header: Number Index */}
+              <div className="flex justify-between items-start mb-3 md:mb-4">
+                <span className={cn(
+                  "text-xs font-bold uppercase tracking-widest px-2 py-1 rounded",
+                  isPrimary ? "bg-white/20 text-white" : ""
+                )} style={!isPrimary ? { backgroundColor: `${brandColor}15`, color: brandColor } : {}}>
+                  0{index + 1}
+                </span>
+              </div>
+
+              {/* Content: Pure Typography */}
+              <div>
+                <h3 className={cn(
+                  "font-bold mb-2 md:mb-3 tracking-tight",
+                  device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl',
+                  isPrimary ? "text-white" : "text-slate-900 dark:text-slate-100"
+                )}>
+                  {item.title || 'Tiêu đề'}
+                </h3>
+                <p className={cn(
+                  "text-sm md:text-base leading-relaxed font-medium",
+                  isPrimary ? "text-white/90" : "text-slate-500 dark:text-slate-400"
+                )}>
+                  {item.description || 'Mô tả lợi ích...'}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // Style 4: Minimal Row - Icon to với dividers
+  const renderRowStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-6" style={{ borderColor: `${brandColor}20` }}>
+        <div className="space-y-2">
+          <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+            Vì sao chọn chúng tôi?
+          </div>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+            Giá trị cốt lõi
+          </h2>
+        </div>
+      </div>
+      
+      {/* Row */}
+      <div className="bg-white dark:bg-slate-800 border-y-2 rounded-lg overflow-hidden" style={{ borderColor: `${brandColor}15` }}>
+        <div className={cn(
+          "flex items-center justify-between",
+          device === 'mobile' ? 'flex-col divide-y' : 'flex-row divide-x',
+        )} style={{ '--tw-divide-opacity': '1', borderColor: `${brandColor}15` } as React.CSSProperties}>
+          {items.slice(0, 4).map((item) => (
+            <div key={item.id} className="flex-1 w-full p-5 md:p-6 lg:p-8 flex flex-col items-center text-center">
+              <div 
+                className="mb-3 md:mb-4 p-3 rounded-full"
+                style={{ 
+                  backgroundColor: `${brandColor}15`, 
+                  color: brandColor,
+                  boxShadow: `0 0 0 4px ${brandColor}08`
+                }}
+              >
+                <Check size={22} md-size={24} strokeWidth={3} />
+              </div>
+              <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1.5 md:mb-2 text-sm md:text-base">{item.title || 'Tiêu đề'}</h3>
+              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{item.description || 'Mô tả lợi ích...'}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -2539,9 +2686,10 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
   return (
     <PreviewWrapper title="Preview Lợi ích" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`${items.length} lợi ích`}>
       <BrowserFrame url="yoursite.com/why-us">
-        {previewStyle === 'timeline' && renderTimelineStyle()}
-        {previewStyle === 'comparison' && renderZigzagStyle()}
-        {previewStyle === 'highlights' && renderChecklistStyle()}
+        {previewStyle === 'cards' && renderCardsStyle()}
+        {previewStyle === 'list' && renderListStyle()}
+        {previewStyle === 'bento' && renderBentoStyle()}
+        {previewStyle === 'row' && renderRowStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );
