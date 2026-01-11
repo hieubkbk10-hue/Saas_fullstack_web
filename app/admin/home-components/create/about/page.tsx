@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { AboutPreview, AboutStyle } from '../../previews';
+import { ImageFieldWithUpload } from '../../../components/ImageFieldWithUpload';
 
 export default function AboutCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Về chúng tôi', 'About');
@@ -70,14 +71,15 @@ export default function AboutCreatePage() {
               className="w-full min-h-[100px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" 
             />
           </div>
-          <div className="space-y-2">
-            <Label>URL Hình ảnh</Label>
-            <Input 
-              value={aboutConfig.image} 
-              onChange={(e) => setAboutConfig({...aboutConfig, image: e.target.value})} 
-              placeholder="https://..." 
-            />
-          </div>
+          <ImageFieldWithUpload
+            label="Hình ảnh"
+            value={aboutConfig.image}
+            onChange={(url) => setAboutConfig({...aboutConfig, image: url})}
+            folder="home-components"
+            aspectRatio="video"
+            quality={0.85}
+            placeholder="https://example.com/about-image.jpg"
+          />
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Text nút bấm</Label>
