@@ -181,11 +181,11 @@ export const HeroBannerPreview = ({
             ))}
             {slides.length > 1 && (
               <>
-                <button type="button" onClick={prevSlide} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all z-20" style={{ opacity: 0.7 }}>
-                  <ChevronLeft size={14} />
+                <button type="button" onClick={prevSlide} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all z-20 border-2 border-transparent hover:scale-105" style={{ borderColor: `${brandColor}40` }}>
+                  <ChevronLeft size={14} style={{ color: brandColor }} />
                 </button>
-                <button type="button" onClick={nextSlide} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all z-20" style={{ opacity: 0.7 }}>
-                  <ChevronRight size={14} />
+                <button type="button" onClick={nextSlide} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all z-20 border-2 border-transparent hover:scale-105" style={{ borderColor: `${brandColor}40` }}>
+                  <ChevronRight size={14} style={{ color: brandColor }} />
                 </button>
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
                   {slides.map((_, idx) => (
@@ -220,7 +220,8 @@ export const HeroBannerPreview = ({
               <div className="absolute bottom-0 left-0 right-0 p-2 flex justify-center gap-2 bg-gradient-to-t from-black/60 to-transparent z-20">
                 {slides.map((slide, idx) => (
                   <button key={idx} type="button" onClick={() => setCurrentSlide(idx)}
-                    className={cn("rounded overflow-hidden transition-all border-2", idx === currentSlide ? "border-white scale-105" : "border-transparent opacity-70 hover:opacity-100", device === 'mobile' ? 'w-10 h-7' : 'w-14 h-9')}>
+                    className={cn("rounded overflow-hidden transition-all border-2", idx === currentSlide ? "scale-105" : "border-transparent opacity-70 hover:opacity-100", device === 'mobile' ? 'w-10 h-7' : 'w-14 h-9')}
+                    style={idx === currentSlide ? { borderColor: brandColor } : {}}>
                     {slide.image ? <img src={slide.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ backgroundColor: brandColor }}></div>}
                   </button>
                 ))}
@@ -261,7 +262,7 @@ export const HeroBannerPreview = ({
             </div>
           ) : (
             <div className="grid grid-cols-4 grid-rows-2 gap-2 h-full" style={{ height: device === 'desktop' ? '280px' : '260px' }}>
-              <div className="col-span-2 row-span-2 relative rounded-xl overflow-hidden">
+              <div className="col-span-2 row-span-2 relative rounded-xl overflow-hidden ring-2 ring-offset-1 ring-offset-slate-900" style={{ ringColor: `${brandColor}60` }}>
                 {bentoSlides[0]?.image ? (
                   <div className="w-full h-full relative">
                     <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[0].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(25px)' }} />
@@ -348,8 +349,10 @@ export const HeroBannerPreview = ({
       <CardContent>
         <div className={cn("mx-auto transition-all duration-300", deviceWidths[device])}>
           <BrowserFrame url="yoursite.com">
-            {/* Fake header */}
-            <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            {/* Fake header với accent line */}
+            <div className="relative px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              {/* Subtle top accent line */}
+              <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: brandColor, opacity: 0.6 }} />
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: brandColor }}></div>
                 <div className="w-20 h-3 bg-slate-200 dark:bg-slate-700 rounded"></div>
