@@ -2,16 +2,16 @@
 
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { AboutPreview } from '../../previews';
+import { AboutPreview, AboutStyle } from '../../previews';
 
 export default function AboutCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Về chúng tôi', 'About');
   const brandColor = useBrandColor();
   
   const [aboutConfig, setAboutConfig] = useState({
-    layout: 'split-left',
+    style: 'bento' as AboutStyle,
     subHeading: 'Câu chuyện thương hiệu',
     heading: 'Mang đến giá trị thực',
     description: 'Chúng tôi là đội ngũ chuyên gia với hơn 10 năm kinh nghiệm trong lĩnh vực...',
@@ -138,7 +138,12 @@ export default function AboutCreatePage() {
         </CardContent>
       </Card>
 
-      <AboutPreview config={aboutConfig} brandColor={brandColor} />
+      <AboutPreview 
+        config={aboutConfig} 
+        brandColor={brandColor}
+        selectedStyle={aboutConfig.style}
+        onStyleChange={(style) => setAboutConfig({...aboutConfig, style})}
+      />
     </ComponentFormWrapper>
   );
 }

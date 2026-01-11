@@ -1986,8 +1986,9 @@ export const CTAPreview = ({ config, brandColor, selectedStyle, onStyleChange }:
 };
 
 // ============ ABOUT PREVIEW ============
+// Brand Story UI/UX - 3 Variants from brand-story-component: classic, bento, minimal
 type AboutConfig = {
-  layout: string;
+  layout?: string;
   subHeading: string;
   heading: string;
   description: string;
@@ -1995,87 +1996,304 @@ type AboutConfig = {
   stats: Array<{ id: number; value: string; label: string }>;
   buttonText: string;
   buttonLink: string;
+  style?: AboutStyle;
 };
-export type AboutStyle = 'split' | 'center' | 'overlay';
+export type AboutStyle = 'classic' | 'bento' | 'minimal';
+
+// Badge Component for About
+const AboutBadge = ({ text, variant = 'default' }: { text: string; variant?: 'default' | 'outline' | 'minimal' }) => {
+  const baseStyles = "inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold uppercase tracking-wider w-fit";
+  const variants = {
+    default: "bg-primary/10 text-primary border-primary/20",
+    outline: "bg-transparent text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 font-medium",
+    minimal: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent px-2.5 py-0.5 rounded-md normal-case tracking-normal font-medium"
+  };
+  return <div className={cn(baseStyles, variants[variant])}>{text}</div>;
+};
+
+// StatBox Component for About - 3 variants
+const AboutStatBox = ({ stat, variant = 'classic', brandColor }: { 
+  stat: { value: string; label: string }; 
+  variant?: 'classic' | 'bento' | 'minimal';
+  brandColor: string;
+}) => {
+  if (variant === 'bento') {
+    return (
+      <div className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-sm flex flex-col items-start justify-end h-full hover:border-slate-300 dark:hover:border-slate-600 transition-colors group">
+        <span 
+          className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 group-hover:scale-105 transition-transform origin-left"
+          style={{ color: brandColor }}
+        >
+          {stat.value || '0'}
+        </span>
+        <span className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+          {stat.label || 'Label'}
+        </span>
+      </div>
+    );
+  }
+
+  if (variant === 'minimal') {
+    return (
+      <div className="flex flex-col border-l-2 border-slate-200 dark:border-slate-700 pl-6 py-1">
+        <span className="text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{stat.value || '0'}</span>
+        <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">{stat.label || 'Label'}</span>
+      </div>
+    );
+  }
+
+  // Classic variant
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-5xl font-extrabold tracking-tighter" style={{ color: brandColor }}>{stat.value || '0'}</span>
+      <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{stat.label || 'Label'}</span>
+    </div>
+  );
+};
+
 export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange }: { config: AboutConfig; brandColor: string; selectedStyle?: AboutStyle; onStyleChange?: (style: AboutStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'split';
+  const previewStyle = selectedStyle || config.style || 'bento';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as AboutStyle);
-  const styles = [{ id: 'split', label: 'Split' }, { id: 'center', label: 'Cards' }, { id: 'overlay', label: 'Overlay' }];
+  const styles = [
+    { id: 'classic', label: 'Classic' }, 
+    { id: 'bento', label: 'Bento Grid' }, 
+    { id: 'minimal', label: 'Minimal' }
+  ];
 
-  const renderSplitStyle = () => (
-    <div className={cn("flex gap-8", device === 'mobile' ? 'flex-col p-4' : 'p-8')}>
-      <div className={cn("flex-1", device === 'mobile' ? 'order-2' : '')}>
-        {config.subHeading && <p className="text-sm font-medium mb-2" style={{ color: brandColor }}>{config.subHeading}</p>}
-        <h2 className={cn("font-bold mb-4", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{config.heading || 'Về chúng tôi'}</h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-4">{config.description || 'Mô tả về công ty...'}</p>
-        {config.stats.length > 0 && (
-          <div className={cn("flex gap-6 mb-4", device === 'mobile' ? 'gap-4' : '')}>
-            {config.stats.slice(0, 3).map((stat) => (
-              <div key={stat.id}>
-                <div className="font-bold text-xl" style={{ color: brandColor }}>{stat.value}</div>
-                <div className="text-xs text-slate-500">{stat.label}</div>
-              </div>
-            ))}
+  // Style 1: Classic - Open Layout, Image Left, Typography Focused
+  const renderClassicStyle = () => (
+    <section className={cn("py-10 md:py-16", device === 'mobile' ? 'px-4' : 'px-6 md:px-8')}>
+      <div className={cn(
+        "grid gap-8 md:gap-12 lg:gap-20 items-center",
+        device === 'mobile' ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'
+      )}>
+        {/* Image Side (Left on desktop) */}
+        <div className={cn("relative rounded-2xl overflow-hidden shadow-2xl", device === 'mobile' ? 'order-2 aspect-[4/3]' : 'order-1 aspect-[4/3]')}>
+          {config.image ? (
+            <img 
+              src={config.image} 
+              alt="Brand Story" 
+              className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" 
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+              <ImageIcon size={48} className="text-slate-300" />
+            </div>
+          )}
+        </div>
+
+        {/* Text Side (Right on desktop) */}
+        <div className={cn("flex flex-col justify-center space-y-8 md:space-y-10", device === 'mobile' ? 'order-1' : 'order-2')}>
+          <div className="space-y-4 md:space-y-6">
+            {config.subHeading && (
+              <AboutBadge text={config.subHeading} variant="outline" />
+            )}
+            <h2 className={cn(
+              "font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-[1.1]",
+              device === 'mobile' ? 'text-3xl' : 'text-4xl md:text-5xl lg:text-6xl'
+            )}>
+              {config.heading || 'Mang đến giá trị thực'}
+            </h2>
+            <p className={cn(
+              "text-slate-600 dark:text-slate-400 leading-relaxed",
+              device === 'mobile' ? 'text-base' : 'text-lg md:text-xl'
+            )}>
+              {config.description || 'Mô tả về công ty...'}
+            </p>
           </div>
-        )}
-        {config.buttonText && <button className="px-5 py-2 rounded-lg text-white text-sm" style={{ backgroundColor: brandColor }}>{config.buttonText}</button>}
-      </div>
-      <div className={cn("flex-1", device === 'mobile' ? 'order-1' : '')}>
-        <div className="aspect-video rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
-          {config.image ? <img src={config.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon size={32} className="text-slate-300" /></div>}
+          
+          {/* Stats - Horizontal row */}
+          {config.stats.length > 0 && (
+            <div className={cn(
+              "flex flex-row gap-8 md:gap-12 border-t border-slate-200 dark:border-slate-700 pt-6 md:pt-8",
+              device === 'mobile' ? 'gap-6' : ''
+            )}>
+              {config.stats.slice(0, 2).map((stat) => (
+                <AboutStatBox key={stat.id} stat={stat} variant="classic" brandColor={brandColor} />
+              ))}
+            </div>
+          )}
+
+          {config.buttonText && (
+            <div>
+              <button 
+                className="inline-flex items-center gap-2 p-0 h-auto text-lg font-semibold hover:opacity-80 transition-opacity group"
+                style={{ color: brandColor }}
+              >
+                {config.buttonText} 
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </section>
   );
 
-  const renderCardsStyle = () => (
-    <div className={cn("py-10 px-4", device === 'mobile' ? 'py-6' : '')} style={{ backgroundColor: `${brandColor}05` }}>
-      <div className="max-w-6xl mx-auto">
-        <div className={cn("text-center mb-8", device === 'mobile' ? 'mb-6' : '')}>
-          {config.subHeading && <p className="text-sm font-medium mb-2" style={{ color: brandColor }}>{config.subHeading}</p>}
-          <h2 className={cn("font-bold", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{config.heading || 'Về chúng tôi'}</h2>
-        </div>
-        <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-3')}>
-          <div className={cn("rounded-2xl overflow-hidden", device === 'mobile' ? 'aspect-video' : 'col-span-2 row-span-2')}>
-            {config.image ? <img src={config.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}><ImageIcon size={48} style={{ color: brandColor }} className="opacity-50" /></div>}
-          </div>
-          {config.stats.slice(0, 2).map((stat) => (
-            <div key={stat.id} className={cn("bg-white dark:bg-slate-800 rounded-2xl p-5 flex flex-col justify-center", device === 'mobile' ? 'text-center' : '')} style={{ borderLeft: `4px solid ${brandColor}` }}>
-              <div className={cn("font-bold mb-1", device === 'mobile' ? 'text-2xl' : 'text-3xl')} style={{ color: brandColor }}>{stat.value || '0'}</div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">{stat.label || 'Label'}</div>
+  // Style 2: Bento Grid - Modern Tech Grid
+  const renderBentoStyle = () => (
+    <section className={cn(
+      "rounded-3xl",
+      device === 'mobile' ? 'p-3' : 'p-4 md:p-8'
+    )} style={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
+      <div className={cn(
+        "grid gap-3 md:gap-6",
+        device === 'mobile' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'
+      )}>
+        {/* Cell 1: Main Content */}
+        <div className={cn(
+          "bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-8 lg:p-12 border border-slate-200/50 dark:border-slate-700/50 shadow-sm flex flex-col justify-center space-y-4 md:space-y-6",
+          device === 'mobile' ? '' : 'md:col-span-2'
+        )}>
+          <div className="space-y-3 md:space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+              <span className="text-sm font-semibold uppercase tracking-wide" style={{ color: brandColor }}>
+                {config.subHeading || 'Câu chuyện thương hiệu'}
+              </span>
             </div>
+            <h2 className={cn(
+              "font-bold text-slate-900 dark:text-slate-100",
+              device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl lg:text-5xl'
+            )}>
+              {config.heading || 'Mang đến giá trị thực'}
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400">
+              {config.description || 'Mô tả về công ty...'}
+            </p>
+          </div>
+          {config.buttonText && (
+            <div className="pt-2 md:pt-4">
+              <button 
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border-2 font-medium transition-colors hover:text-white"
+                style={{ borderColor: brandColor, color: brandColor }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = brandColor; e.currentTarget.style.color = 'white'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = brandColor; }}
+              >
+                {config.buttonText} <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Cell 2 & 3: Stats Stacked */}
+        <div className={cn(
+          "grid gap-3 md:gap-6",
+          device === 'mobile' ? 'grid-cols-2' : 'grid-cols-1'
+        )}>
+          {config.stats.slice(0, 2).map((stat) => (
+            <AboutStatBox key={stat.id} stat={stat} variant="bento" brandColor={brandColor} />
           ))}
         </div>
-        <div className={cn("mt-6 text-center", device === 'mobile' ? 'mt-4' : '')}>
-          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-4">{config.description || 'Mô tả về công ty...'}</p>
-          {config.buttonText && <button className="px-6 py-2.5 rounded-full text-white font-medium" style={{ backgroundColor: brandColor }}>{config.buttonText}</button>}
+
+        {/* Cell 4: Wide Image */}
+        <div className={cn(
+          "h-48 md:h-64 lg:h-80 rounded-2xl overflow-hidden relative group",
+          device === 'mobile' ? '' : 'md:col-span-3'
+        )}>
+          {config.image ? (
+            <img 
+              src={config.image} 
+              alt="Office" 
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+            />
+          ) : (
+            <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <ImageIcon size={48} className="text-slate-300" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6 md:p-8">
+            <p className="text-white font-medium text-base md:text-lg">
+              Kiến tạo không gian làm việc hiện đại & bền vững.
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 
-  const renderOverlayStyle = () => (
-    <div className="relative">
-      <div className={cn("aspect-[21/9]", device === 'mobile' ? 'aspect-[4/3]' : '')}>
-        {config.image ? <img src={config.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ backgroundColor: `${brandColor}20` }}></div>}
-        <div className="absolute inset-0 bg-black/50"></div>
+  // Style 3: Minimal - Safe/Boring Design, Boxed Layout
+  const renderMinimalStyle = () => (
+    <section className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+      <div className={cn(
+        "flex h-full min-h-[400px] md:min-h-[500px]",
+        device === 'mobile' ? 'flex-col' : 'flex-col lg:flex-row'
+      )}>
+        {/* Left: Content */}
+        <div className={cn(
+          "flex-1 p-6 md:p-10 lg:p-16 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-700",
+          device === 'mobile' ? '' : ''
+        )}>
+          <div className="max-w-xl space-y-6 md:space-y-8">
+            {config.subHeading && (
+              <AboutBadge text={config.subHeading} variant="minimal" />
+            )}
+            
+            <div className="space-y-3 md:space-y-4">
+              <h2 className={cn(
+                "font-semibold tracking-tight text-slate-900 dark:text-slate-100",
+                device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl'
+              )}>
+                {config.heading || 'Mang đến giá trị thực'}
+              </h2>
+              <p className={cn(
+                "text-slate-600 dark:text-slate-400 leading-relaxed",
+                device === 'mobile' ? 'text-base' : 'text-lg'
+              )}>
+                {config.description || 'Mô tả về công ty...'}
+              </p>
+            </div>
+
+            {/* Stats with vertical bar */}
+            {config.stats.length > 0 && (
+              <div className={cn("flex gap-6 md:gap-8 py-4", device === 'mobile' ? 'gap-4' : '')}>
+                {config.stats.slice(0, 2).map((stat) => (
+                  <AboutStatBox key={stat.id} stat={stat} variant="minimal" brandColor={brandColor} />
+                ))}
+              </div>
+            )}
+
+            {config.buttonText && (
+              <div>
+                <button 
+                  className="h-12 px-6 rounded-md font-medium transition-colors"
+                  style={{ backgroundColor: '#1f2937', color: 'white' }}
+                >
+                  {config.buttonText}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Image */}
+        <div className={cn(
+          "relative bg-slate-100 dark:bg-slate-900",
+          device === 'mobile' ? 'h-64' : 'lg:w-[45%] h-64 lg:h-auto'
+        )}>
+          {config.image ? (
+            <img 
+              src={config.image} 
+              alt="Brand" 
+              className="absolute inset-0 w-full h-full object-cover" 
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <ImageIcon size={48} className="text-slate-300" />
+            </div>
+          )}
+        </div>
       </div>
-      <div className={cn("absolute inset-0 flex flex-col justify-center text-white", device === 'mobile' ? 'p-4 text-center' : 'p-12')}>
-        {config.subHeading && <p className="text-sm font-medium mb-2 opacity-80">{config.subHeading}</p>}
-        <h2 className={cn("font-bold mb-4", device === 'mobile' ? 'text-xl' : 'text-3xl')}>{config.heading || 'Về chúng tôi'}</h2>
-        <p className={cn("text-sm opacity-80 mb-4", device === 'mobile' ? '' : 'max-w-lg')}>{config.description || 'Mô tả...'}</p>
-        {config.buttonText && <div><button className="px-5 py-2 rounded-lg text-white border border-white/30 hover:bg-white/10 transition-colors text-sm">{config.buttonText}</button></div>}
-      </div>
-    </div>
+    </section>
   );
 
   return (
     <PreviewWrapper title="Preview About" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles}>
       <BrowserFrame url="yoursite.com/about">
-        {previewStyle === 'split' && renderSplitStyle()}
-        {previewStyle === 'center' && renderCardsStyle()}
-        {previewStyle === 'overlay' && renderOverlayStyle()}
+        {previewStyle === 'classic' && renderClassicStyle()}
+        {previewStyle === 'bento' && renderBentoStyle()}
+        {previewStyle === 'minimal' && renderMinimalStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );

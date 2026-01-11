@@ -330,8 +330,74 @@ function StatsSection({ config, brandColor, title }: { config: Record<string, un
 }
 
 // ============ ABOUT SECTION ============
+// Brand Story UI/UX - 3 Variants: classic, bento, minimal
+type AboutStyle = 'classic' | 'bento' | 'minimal';
+
+// Badge Component for About
+const AboutBadge = ({ text, variant = 'default', brandColor }: { text: string; variant?: 'default' | 'outline' | 'minimal'; brandColor?: string }) => {
+  if (variant === 'outline') {
+    return (
+      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold uppercase tracking-wider w-fit bg-transparent text-slate-700 border-slate-300 font-medium">
+        {text}
+      </div>
+    );
+  }
+  if (variant === 'minimal') {
+    return (
+      <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md text-xs font-medium w-fit bg-slate-100 text-slate-600 border-transparent normal-case tracking-normal">
+        {text}
+      </div>
+    );
+  }
+  return (
+    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold uppercase tracking-wider w-fit" style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderColor: `${brandColor}20` }}>
+      {text}
+    </div>
+  );
+};
+
+// StatBox Component for About - 3 variants
+const AboutStatBox = ({ stat, variant = 'classic', brandColor }: { 
+  stat: { value: string; label: string }; 
+  variant?: 'classic' | 'bento' | 'minimal';
+  brandColor: string;
+}) => {
+  if (variant === 'bento') {
+    return (
+      <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200/50 shadow-sm flex flex-col items-start justify-end h-full hover:border-slate-300 transition-colors group">
+        <span 
+          className="text-4xl md:text-5xl font-bold tracking-tighter mb-2 group-hover:scale-105 transition-transform origin-left"
+          style={{ color: brandColor }}
+        >
+          {stat.value || '0'}
+        </span>
+        <span className="text-sm font-medium text-slate-500 uppercase tracking-wide">
+          {stat.label || 'Label'}
+        </span>
+      </div>
+    );
+  }
+
+  if (variant === 'minimal') {
+    return (
+      <div className="flex flex-col border-l-2 border-slate-200 pl-6 py-1">
+        <span className="text-3xl font-bold text-slate-900 tracking-tight">{stat.value || '0'}</span>
+        <span className="text-sm text-slate-500 font-medium">{stat.label || 'Label'}</span>
+      </div>
+    );
+  }
+
+  // Classic variant
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-5xl font-extrabold tracking-tighter" style={{ color: brandColor }}>{stat.value || '0'}</span>
+      <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">{stat.label || 'Label'}</span>
+    </div>
+  );
+};
+
 function AboutSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const { subHeading, heading, description, image, buttonText, buttonLink, stats } = config as {
+  const { subHeading, heading, description, image, buttonText, buttonLink, stats, style } = config as {
     subHeading?: string;
     heading?: string;
     description?: string;
@@ -339,48 +405,209 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
     buttonText?: string;
     buttonLink?: string;
     stats?: Array<{ value: string; label: string }>;
+    style?: AboutStyle;
   };
 
-  return (
-    <section className="py-16 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            {subHeading && (
-              <p className="text-sm font-medium mb-2" style={{ color: brandColor }}>{subHeading}</p>
-            )}
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900">{heading || title}</h2>
-            <p className="text-slate-600 mb-6">{description}</p>
-            
-            {stats && stats.length > 0 && (
-              <div className="flex gap-8 mb-6">
-                {stats.map((stat, idx) => (
-                  <div key={idx}>
-                    <div className="text-2xl font-bold" style={{ color: brandColor }}>{stat.value}</div>
-                    <div className="text-sm text-slate-500">{stat.label}</div>
+  const aboutStyle = style || 'bento';
+
+  // Style 1: Classic - Open Layout, Image Left, Typography Focused
+  if (aboutStyle === 'classic') {
+    return (
+      <section className="py-12 md:py-20 px-4 md:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-20 items-center">
+            {/* Image Side (Left on desktop) */}
+            <div className="order-2 lg:order-1 relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
+              {image ? (
+                <img 
+                  src={image} 
+                  alt="Brand Story" 
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" 
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-slate-100">
+                  <ImageIcon size={48} className="text-slate-300" />
+                </div>
+              )}
+            </div>
+
+            {/* Text Side (Right on desktop) */}
+            <div className="order-1 lg:order-2 flex flex-col justify-center space-y-8 md:space-y-10">
+              <div className="space-y-4 md:space-y-6">
+                {subHeading && (
+                  <AboutBadge text={subHeading} variant="outline" brandColor={brandColor} />
+                )}
+                <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 tracking-tight leading-[1.1]">
+                  {heading || title}
+                </h2>
+                <p className="text-base md:text-lg lg:text-xl text-slate-600 leading-relaxed">
+                  {description}
+                </p>
+              </div>
+              
+              {/* Stats - Horizontal row */}
+              {stats && stats.length > 0 && (
+                <div className="flex flex-row gap-8 md:gap-12 border-t border-slate-200 pt-6 md:pt-8">
+                  {stats.slice(0, 2).map((stat, idx) => (
+                    <AboutStatBox key={idx} stat={stat} variant="classic" brandColor={brandColor} />
+                  ))}
+                </div>
+              )}
+
+              {buttonText && (
+                <div>
+                  <a 
+                    href={buttonLink || '#'}
+                    className="inline-flex items-center gap-2 p-0 h-auto text-lg font-semibold hover:opacity-80 transition-opacity group"
+                    style={{ color: brandColor }}
+                  >
+                    {buttonText} 
+                    <svg className="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Bento Grid - Modern Tech Grid
+  if (aboutStyle === 'bento') {
+    return (
+      <section className="py-8 md:py-12 px-4 md:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-slate-50/50 rounded-3xl p-4 md:p-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+              {/* Cell 1: Main Content */}
+              <div className="md:col-span-2 bg-white rounded-2xl p-6 md:p-8 lg:p-12 border border-slate-200/50 shadow-sm flex flex-col justify-center space-y-4 md:space-y-6">
+                <div className="space-y-3 md:space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                    <span className="text-sm font-semibold uppercase tracking-wide" style={{ color: brandColor }}>
+                      {subHeading || 'Câu chuyện thương hiệu'}
+                    </span>
                   </div>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900">
+                    {heading || title}
+                  </h2>
+                  <p className="text-slate-600">
+                    {description}
+                  </p>
+                </div>
+                {buttonText && (
+                  <div className="pt-2 md:pt-4">
+                    <a 
+                      href={buttonLink || '#'}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border-2 font-medium transition-colors hover:text-white"
+                      style={{ borderColor: brandColor, color: brandColor }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = brandColor; (e.currentTarget as HTMLElement).style.color = 'white'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = brandColor; }}
+                    >
+                      {buttonText}
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Cell 2 & 3: Stats Stacked */}
+              <div className="grid grid-cols-2 md:grid-cols-1 gap-4 md:gap-6">
+                {stats && stats.slice(0, 2).map((stat, idx) => (
+                  <AboutStatBox key={idx} stat={stat} variant="bento" brandColor={brandColor} />
                 ))}
               </div>
-            )}
-            
-            {buttonText && (
-              <a
-                href={buttonLink || '#'}
-                className="inline-flex px-6 py-3 text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: brandColor }}
-              >
-                {buttonText}
-              </a>
-            )}
-          </div>
-          <div>
-            {image ? (
-              <img src={image} alt="" className="w-full rounded-xl shadow-lg" />
-            ) : (
-              <div className="aspect-video bg-slate-200 rounded-xl flex items-center justify-center">
-                <ImageIcon size={48} className="text-slate-400" />
+
+              {/* Cell 4: Wide Image */}
+              <div className="md:col-span-3 h-48 md:h-64 lg:h-80 rounded-2xl overflow-hidden relative group">
+                {image ? (
+                  <img 
+                    src={image} 
+                    alt="Office" 
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                  />
+                ) : (
+                  <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                    <ImageIcon size={48} className="text-slate-300" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6 md:p-8">
+                  <p className="text-white font-medium text-base md:text-lg">
+                    Kiến tạo không gian làm việc hiện đại & bền vững.
+                  </p>
+                </div>
               </div>
-            )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Minimal - Safe/Boring Design, Boxed Layout
+  return (
+    <section className="py-8 md:py-12 px-4 md:px-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <div className="flex flex-col lg:flex-row h-full min-h-[400px] md:min-h-[500px]">
+            {/* Left: Content */}
+            <div className="flex-1 p-6 md:p-10 lg:p-16 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-slate-200">
+              <div className="max-w-xl space-y-6 md:space-y-8">
+                {subHeading && (
+                  <AboutBadge text={subHeading} variant="minimal" brandColor={brandColor} />
+                )}
+                
+                <div className="space-y-3 md:space-y-4">
+                  <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight text-slate-900">
+                    {heading || title}
+                  </h2>
+                  <p className="text-base md:text-lg text-slate-600 leading-relaxed">
+                    {description}
+                  </p>
+                </div>
+
+                {/* Stats with vertical bar */}
+                {stats && stats.length > 0 && (
+                  <div className="flex gap-6 md:gap-8 py-4">
+                    {stats.slice(0, 2).map((stat, idx) => (
+                      <AboutStatBox key={idx} stat={stat} variant="minimal" brandColor={brandColor} />
+                    ))}
+                  </div>
+                )}
+
+                {buttonText && (
+                  <div>
+                    <a 
+                      href={buttonLink || '#'}
+                      className="inline-flex h-12 px-6 rounded-md font-medium transition-colors items-center justify-center"
+                      style={{ backgroundColor: '#1f2937', color: 'white' }}
+                    >
+                      {buttonText}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Image */}
+            <div className="relative bg-slate-100 h-64 lg:h-auto lg:w-[45%]">
+              {image ? (
+                <img 
+                  src={image} 
+                  alt="Brand" 
+                  className="absolute inset-0 w-full h-full object-cover" 
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <ImageIcon size={48} className="text-slate-300" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -27,7 +27,8 @@ import {
   BlogPreview, BlogStyle,
   ProductListPreview, ProductListStyle,
   ServiceListPreview, ServiceListStyle,
-  FooterPreview, FooterStyle
+  FooterPreview, FooterStyle,
+  AboutPreview, AboutStyle
 } from '../../previews';
 import { useBrandColor } from '../../create/shared';
 
@@ -98,7 +99,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [ctaStyle, setCtaStyle] = useState<CTAStyle>('banner');
   const [faqItems, setFaqItems] = useState<{id: number, question: string, answer: string}[]>([]);
   const [faqStyle, setFaqStyle] = useState<FaqStyle>('accordion');
-  const [aboutConfig, setAboutConfig] = useState({ subHeading: '', heading: '', description: '', image: '', buttonText: '', buttonLink: '', stats: [] as {id: number, value: string, label: string}[] });
+  const [aboutConfig, setAboutConfig] = useState({ style: 'bento' as AboutStyle, subHeading: '', heading: '', description: '', image: '', buttonText: '', buttonLink: '', stats: [] as {id: number, value: string, label: string}[] });
   const [footerConfig, setFooterConfig] = useState({ description: '', copyright: '', showSocialLinks: true });
   const [footerStyle, setFooterStyle] = useState<FooterStyle>('columns');
   const [servicesItems, setServicesItems] = useState<{id: number, icon: string, title: string, description: string}[]>([]);
@@ -218,7 +219,16 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setFaqStyle((config.style as FaqStyle) || 'accordion');
           break;
         case 'About':
-          setAboutConfig({ ...config, stats: config.stats?.map((s: {value: string, label: string}, i: number) => ({ id: i, value: s.value, label: s.label })) || [] });
+          setAboutConfig({ 
+            style: (config.style as AboutStyle) || 'bento',
+            subHeading: config.subHeading || '',
+            heading: config.heading || '',
+            description: config.description || '',
+            image: config.image || '',
+            buttonText: config.buttonText || '',
+            buttonLink: config.buttonLink || '',
+            stats: config.stats?.map((s: {value: string, label: string}, i: number) => ({ id: i, value: s.value, label: s.label })) || [] 
+          });
           break;
         case 'Footer':
           setFooterConfig({ description: config.description || '', copyright: config.copyright || '', showSocialLinks: config.showSocialLinks ?? true });
@@ -681,6 +691,117 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               brandColor={brandColor}
               selectedStyle={contactStyle}
               onStyleChange={setContactStyle}
+            />
+          </>
+        )}
+
+        {/* About */}
+        {component.type === 'About' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base">Cấu hình Về chúng tôi</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Tiêu đề nhỏ (Sub-heading)</Label>
+                    <Input 
+                      value={aboutConfig.subHeading} 
+                      onChange={(e) => setAboutConfig({...aboutConfig, subHeading: e.target.value})} 
+                      placeholder="Về chúng tôi" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Tiêu đề chính (Heading)</Label>
+                    <Input 
+                      value={aboutConfig.heading} 
+                      onChange={(e) => setAboutConfig({...aboutConfig, heading: e.target.value})} 
+                      placeholder="Mang đến giá trị thực" 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Mô tả</Label>
+                  <textarea 
+                    value={aboutConfig.description} 
+                    onChange={(e) => setAboutConfig({...aboutConfig, description: e.target.value})} 
+                    placeholder="Mô tả về công ty..."
+                    className="w-full min-h-[100px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>URL Hình ảnh</Label>
+                  <Input 
+                    value={aboutConfig.image} 
+                    onChange={(e) => setAboutConfig({...aboutConfig, image: e.target.value})} 
+                    placeholder="https://..." 
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Text nút bấm</Label>
+                    <Input 
+                      value={aboutConfig.buttonText} 
+                      onChange={(e) => setAboutConfig({...aboutConfig, buttonText: e.target.value})} 
+                      placeholder="Xem thêm" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Liên kết</Label>
+                    <Input 
+                      value={aboutConfig.buttonLink} 
+                      onChange={(e) => setAboutConfig({...aboutConfig, buttonLink: e.target.value})} 
+                      placeholder="/about" 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Số liệu nổi bật</Label>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setAboutConfig({...aboutConfig, stats: [...aboutConfig.stats, { id: Date.now(), value: '', label: '' }]})} 
+                      className="gap-2"
+                    >
+                      <Plus size={14} /> Thêm
+                    </Button>
+                  </div>
+                  {aboutConfig.stats.map((stat) => (
+                    <div key={stat.id} className="flex gap-3 items-center">
+                      <Input 
+                        placeholder="Số liệu" 
+                        value={stat.value} 
+                        onChange={(e) => setAboutConfig({...aboutConfig, stats: aboutConfig.stats.map(s => s.id === stat.id ? {...s, value: e.target.value} : s)})} 
+                        className="flex-1" 
+                      />
+                      <Input 
+                        placeholder="Nhãn" 
+                        value={stat.label} 
+                        onChange={(e) => setAboutConfig({...aboutConfig, stats: aboutConfig.stats.map(s => s.id === stat.id ? {...s, label: e.target.value} : s)})} 
+                        className="flex-1" 
+                      />
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-red-500 h-8 w-8" 
+                        onClick={() => aboutConfig.stats.length > 1 && setAboutConfig({...aboutConfig, stats: aboutConfig.stats.filter(s => s.id !== stat.id)})}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            <AboutPreview 
+              config={aboutConfig} 
+              brandColor={brandColor}
+              selectedStyle={aboutConfig.style}
+              onStyleChange={(style) => setAboutConfig({...aboutConfig, style})}
             />
           </>
         )}
