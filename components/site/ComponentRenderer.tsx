@@ -684,61 +684,41 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 2: Modern List - Horizontal split layout with number prefix
+  // Style 2: Modern List - Clean horizontal layout
   if (style === 'modernList') {
     return (
       <section className="py-12 md:py-16 px-4">
-        <div className="max-w-6xl mx-auto space-y-10">
+        <div className="max-w-5xl mx-auto space-y-10">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-4">
+          <div className="border-b border-slate-200 pb-4">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
               {title}
             </h2>
           </div>
 
           {/* List */}
-          <div className="flex flex-col divide-y divide-slate-200/60 border-t border-b border-slate-200/60">
+          <div className="space-y-0">
             {items.map((item, idx) => (
               <div 
                 key={idx}
-                className="py-5 flex flex-col md:flex-row md:items-start gap-3 md:gap-8"
+                className="flex items-baseline gap-4 md:gap-6 py-6 border-b border-slate-100 last:border-b-0"
               >
-                {/* Left: Number + Title */}
-                <div className="md:w-[30%] flex-shrink-0">
-                  <span 
-                    className="text-xs font-bold mb-1 block uppercase tracking-widest"
-                    style={{ color: `${brandColor}80` }}
-                  >
-                    0{idx + 1}
-                  </span>
-                  <h3 
-                    className="text-base md:text-lg font-bold"
-                    style={{ color: brandColor }}
-                  >
+                {/* Number */}
+                <span 
+                  className="text-3xl md:text-4xl font-bold tabular-nums flex-shrink-0 w-12 md:w-16"
+                  style={{ color: brandColor }}
+                >
+                  {String(idx + 1).padStart(2, '0')}
+                </span>
+                
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg md:text-xl font-semibold text-slate-900 mb-1">
                     {item.title}
                   </h3>
-                </div>
-                
-                {/* Middle: Description */}
-                <div className="md:w-[60%] flex flex-col gap-2">
-                  <p className="text-slate-500 text-sm leading-snug">
+                  <p className="text-slate-500 text-sm md:text-base leading-relaxed">
                     {item.description}
                   </p>
-                </div>
-                
-                {/* Right: Action Icon */}
-                <div className="hidden md:flex items-center justify-end flex-shrink-0">
-                  <div 
-                    className="w-8 h-8 rounded-full border flex items-center justify-center"
-                    style={{ 
-                      borderColor: `${brandColor}40`,
-                      color: brandColor
-                    }}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </div>
                 </div>
               </div>
             ))}

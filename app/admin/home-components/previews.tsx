@@ -898,11 +898,11 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
     </div>
   );
 
-  // Style 2: Modern List - Horizontal split layout with number prefix
+  // Style 2: Modern List - Clean horizontal layout with big numbers
   const renderModernListStyle = () => (
-    <div className="w-full max-w-6xl mx-auto space-y-8 py-8 px-4">
+    <div className="w-full max-w-5xl mx-auto space-y-8 py-8 px-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-700 pb-4">
+      <div className="border-b border-slate-200 dark:border-slate-700 pb-4">
         <h2 className={cn(
           "font-bold tracking-tight text-slate-900 dark:text-slate-100",
           device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl'
@@ -912,49 +912,37 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
       </div>
 
       {/* List */}
-      <div className="flex flex-col divide-y divide-slate-200/60 dark:divide-slate-700 border-t border-b border-slate-200/60 dark:border-slate-700">
+      <div className="space-y-0">
         {items.slice(0, device === 'mobile' ? 4 : 6).map((item, index) => (
           <div 
             key={item.id}
-            className="group py-4 flex flex-col md:flex-row md:items-start gap-3 md:gap-6 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors px-3 -mx-3 rounded-lg md:rounded-none"
+            className="flex items-baseline gap-4 md:gap-6 py-5 border-b border-slate-100 dark:border-slate-800 last:border-b-0"
           >
-            {/* Left: Number + Title */}
-            <div className="md:w-[30%] flex-shrink-0">
-              <span 
-                className="text-xs font-bold mb-1 block uppercase tracking-widest"
-                style={{ color: `${brandColor}80` }}
-              >
-                0{index + 1}
-              </span>
-              <h3 
-                className={cn(
-                  "font-bold transition-colors",
-                  device === 'mobile' ? 'text-base' : 'text-lg'
-                )}
-                style={{ color: brandColor }}
-              >
+            {/* Number */}
+            <span 
+              className={cn(
+                "font-bold tabular-nums flex-shrink-0",
+                device === 'mobile' ? 'text-2xl w-10' : 'text-3xl md:text-4xl w-12 md:w-16'
+              )}
+              style={{ color: brandColor }}
+            >
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <h3 className={cn(
+                "font-semibold text-slate-900 dark:text-slate-100 mb-1",
+                device === 'mobile' ? 'text-base' : 'text-lg md:text-xl'
+              )}>
                 {item.title || 'Tiêu đề'}
               </h3>
-            </div>
-            
-            {/* Middle: Description */}
-            <div className="md:w-[60%] flex flex-col gap-2">
-              <p className="text-slate-500 dark:text-slate-400 text-sm leading-snug">
+              <p className={cn(
+                "text-slate-500 dark:text-slate-400 leading-relaxed",
+                device === 'mobile' ? 'text-sm' : 'text-sm md:text-base'
+              )}>
                 {item.description || 'Mô tả dịch vụ...'}
               </p>
-            </div>
-            
-            {/* Right: Action Icon */}
-            <div className="hidden md:flex items-center justify-end flex-shrink-0">
-              <div 
-                className="w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-300"
-                style={{ 
-                  borderColor: `${brandColor}40`,
-                  color: brandColor
-                }}
-              >
-                <ArrowRight size={16} className="-rotate-45 group-hover:rotate-0 transition-transform duration-300" />
-              </div>
             </div>
           </div>
         ))}
