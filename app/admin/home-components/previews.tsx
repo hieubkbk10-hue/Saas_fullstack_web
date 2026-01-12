@@ -3648,9 +3648,14 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
         </div>
         {config.showMap && (
           <div className="aspect-video bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden border">
-            <div className="w-full h-full flex items-center justify-center text-slate-400">
-              <Globe size={32} />
-            </div>
+            {config.mapEmbed ? (
+              <iframe src={config.mapEmbed} className="w-full h-full border-0" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                <Globe size={32} />
+                <span className="text-xs mt-2">Chưa có URL bản đồ</span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -3689,9 +3694,14 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
         </div>
         {config.showMap && (
           <div className="mt-6 aspect-video bg-slate-100 dark:bg-slate-700 rounded-xl overflow-hidden">
-            <div className="w-full h-full flex items-center justify-center text-slate-400">
-              <Globe size={32} />
-            </div>
+            {config.mapEmbed ? (
+              <iframe src={config.mapEmbed} className="w-full h-full border-0" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                <Globe size={32} />
+                <span className="text-xs mt-2">Chưa có URL bản đồ</span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -3726,9 +3736,14 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
       </div>
       {config.showMap && (
         <div className="max-w-6xl mx-auto mt-6 aspect-[21/9] bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden border">
-          <div className="w-full h-full flex items-center justify-center text-slate-400">
-            <Globe size={48} />
-          </div>
+          {config.mapEmbed ? (
+            <iframe src={config.mapEmbed} className="w-full h-full border-0" allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+              <Globe size={48} />
+              <span className="text-xs mt-2">Chưa có URL bản đồ</span>
+            </div>
+          )}
         </div>
       )}
     </div>

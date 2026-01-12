@@ -134,7 +134,8 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [caseStudyProjects, setCaseStudyProjects] = useState<{id: number, title: string, category: string, image: string, description: string, link: string}[]>([]);
   const [caseStudyStyle, setCaseStudyStyle] = useState<CaseStudyStyle>('grid');
   const [careerJobs, setCareerJobs] = useState<{id: number, title: string, department: string, location: string, type: string, salary: string, description: string}[]>([]);
-  const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true });
+  const [careerStyle, setCareerStyle] = useState<CareerStyle>('cards');
+  const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true, mapEmbed: '' });
   const [contactStyle, setContactStyle] = useState<ContactStyle>('split');
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
   const [productListStyle, setProductListStyle] = useState<ProductListStyle>('commerce');
@@ -300,9 +301,10 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           break;
         case 'Career':
           setCareerJobs(config.jobs?.map((j: {title: string, department: string, location: string, type: string, salary: string, description: string}, i: number) => ({ id: i, ...j })) || []);
+          setCareerStyle((config.style as CareerStyle) || 'cards');
           break;
         case 'Contact':
-          setContactConfig({ address: config.address || '', phone: config.phone || '', email: config.email || '', workingHours: config.workingHours || '', showMap: config.showMap ?? true });
+          setContactConfig({ address: config.address || '', phone: config.phone || '', email: config.email || '', workingHours: config.workingHours || '', showMap: config.showMap ?? true, mapEmbed: config.mapEmbed || '' });
           setContactStyle((config.style as ContactStyle) || 'split');
           break;
         case 'ProductList':
@@ -383,7 +385,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'CaseStudy':
         return { projects: caseStudyProjects.map(p => ({ title: p.title, category: p.category, image: p.image, description: p.description, link: p.link })), style: caseStudyStyle };
       case 'Career':
-        return { jobs: careerJobs.map(j => ({ title: j.title, department: j.department, location: j.location, type: j.type, salary: j.salary, description: j.description })) };
+        return { jobs: careerJobs.map(j => ({ title: j.title, department: j.department, location: j.location, type: j.type, salary: j.salary, description: j.description })), style: careerStyle };
       case 'Contact':
         return { ...contactConfig, style: contactStyle };
       case 'ProductList':
@@ -1172,10 +1174,17 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                   <input type="checkbox" checked={contactConfig.showMap} onChange={(e) => setContactConfig({...contactConfig, showMap: e.target.checked})} className="w-4 h-4 rounded" />
                   <Label>Hiển thị bản đồ</Label>
                 </div>
+                {contactConfig.showMap && (
+                  <div className="space-y-2">
+                    <Label>Google Maps Embed URL</Label>
+                    <Input value={contactConfig.mapEmbed} onChange={(e) => setContactConfig({...contactConfig, mapEmbed: e.target.value})} placeholder="https://www.google.com/maps/embed?pb=..." />
+                    <p className="text-xs text-muted-foreground">Lấy từ Google Maps: Chia sẻ → Nhúng bản đồ → Copy URL trong src của iframe</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
             <ContactPreview 
-              config={{ ...contactConfig, mapEmbed: '', formFields: [], socialLinks: [] }} 
+              config={{ ...contactConfig, formFields: [], socialLinks: [] }} 
               brandColor={brandColor}
               selectedStyle={contactStyle}
               onStyleChange={setContactStyle}
@@ -1951,6 +1960,84 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               brandColor={brandColor}
               selectedStyle={caseStudyStyle}
               onStyleChange={setCaseStudyStyle}
+            />
+          </>
+        )}
+
+        {/* Career */}
+        {component.type === 'Career' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Vị trí tuyển dụng</CardTitle>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCareerJobs([...careerJobs, { id: Date.now(), title: '', department: '', location: '', type: 'Full-time', salary: '', description: '' }])} 
+                  className="gap-2"
+                >
+                  <Plus size={14} /> Thêm vị trí
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {careerJobs.map((job, idx) => (
+                  <div key={job.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Vị trí {idx + 1}</Label>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-red-500 h-8 w-8" 
+                        onClick={() => careerJobs.length > 1 && setCareerJobs(careerJobs.filter(j => j.id !== job.id))}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input 
+                        placeholder="Vị trí tuyển dụng" 
+                        value={job.title} 
+                        onChange={(e) => setCareerJobs(careerJobs.map(j => j.id === job.id ? {...j, title: e.target.value} : j))} 
+                      />
+                      <Input 
+                        placeholder="Phòng ban" 
+                        value={job.department} 
+                        onChange={(e) => setCareerJobs(careerJobs.map(j => j.id === job.id ? {...j, department: e.target.value} : j))} 
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <Input 
+                        placeholder="Địa điểm" 
+                        value={job.location} 
+                        onChange={(e) => setCareerJobs(careerJobs.map(j => j.id === job.id ? {...j, location: e.target.value} : j))} 
+                      />
+                      <select 
+                        className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
+                        value={job.type} 
+                        onChange={(e) => setCareerJobs(careerJobs.map(j => j.id === job.id ? {...j, type: e.target.value} : j))}
+                      >
+                        <option>Full-time</option>
+                        <option>Part-time</option>
+                        <option>Contract</option>
+                        <option>Internship</option>
+                      </select>
+                      <Input 
+                        placeholder="Mức lương" 
+                        value={job.salary} 
+                        onChange={(e) => setCareerJobs(careerJobs.map(j => j.id === job.id ? {...j, salary: e.target.value} : j))} 
+                      />
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+            <CareerPreview 
+              jobs={careerJobs} 
+              brandColor={brandColor}
+              selectedStyle={careerStyle}
+              onStyleChange={setCareerStyle}
             />
           </>
         )}
