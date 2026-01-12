@@ -118,9 +118,9 @@ export function DynamicFooter() {
               </p>
               {config.showSocialLinks !== false && (
                 <div className="flex gap-3">
-                  {socials.map((s) => (
+                  {socials.map((s, idx) => (
                     <a 
-                      key={s.id} 
+                      key={s.id || `social-${idx}`} 
                       href={s.url || '#'} 
                       target="_blank"
                       rel="noopener noreferrer"
@@ -205,9 +205,9 @@ export function DynamicFooter() {
           {/* Socials */}
           {config.showSocialLinks !== false && (
             <div className="flex gap-6">
-              {socials.map((s) => (
+              {socials.map((s, idx) => (
                 <a 
-                  key={s.id} 
+                  key={s.id || `social-${idx}`} 
                   href={s.url || '#'} 
                   target="_blank"
                   rel="noopener noreferrer"
@@ -248,9 +248,9 @@ export function DynamicFooter() {
             </Link>
             {config.showSocialLinks !== false && (
               <div className="flex gap-4">
-                {socials.map((s) => (
+                {socials.map((s, idx) => (
                   <a 
-                    key={s.id} 
+                    key={s.id || `social-${idx}`} 
                     href={s.url || '#'} 
                     target="_blank"
                     rel="noopener noreferrer"
@@ -320,9 +320,9 @@ export function DynamicFooter() {
           {/* Right: Socials only */}
           {config.showSocialLinks !== false && (
             <div className="flex gap-5">
-              {socials.map((s) => (
+              {socials.map((s, idx) => (
                 <a 
-                  key={s.id} 
+                  key={s.id || `social-${idx}`} 
                   href={s.url || '#'} 
                   target="_blank"
                   rel="noopener noreferrer"
