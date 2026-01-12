@@ -1023,8 +1023,9 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
 };
 
 // ============ PRODUCT/SERVICE LIST PREVIEW ============
-// Professional Product Showcase UI/UX - 3 Variants from elegant-product-showcase
-export type ProductListStyle = 'grid' | 'list' | 'carousel';
+// Professional Product Showcase UI/UX - 3 Variants from featured-products-component
+// Style: Luxury Minimal, Commerce Card, Bento Grid
+export type ProductListStyle = 'minimal' | 'commerce' | 'bento';
 export interface ProductListPreviewItem {
   id: string | number;
   name: string;
@@ -1032,6 +1033,7 @@ export interface ProductListPreviewItem {
   price?: string;
   originalPrice?: string;
   description?: string;
+  category?: string;
   tag?: 'new' | 'hot' | 'sale';
 }
 
@@ -1039,24 +1041,6 @@ export interface ProductListPreviewItem {
 const stripHtml = (html?: string) => {
   if (!html) return '';
   return html.replace(/<[^>]*>/g, '').trim();
-};
-
-// Badge component for product tags
-const ProductBadge = ({ tag, discount }: { tag?: 'new' | 'hot' | 'sale'; discount?: string }) => {
-  if (!tag && !discount) return null;
-  return (
-    <div className="absolute top-2 left-2 z-10 flex flex-col gap-1.5">
-      {tag === 'new' && (
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500 text-white rounded">Mới</span>
-      )}
-      {tag === 'hot' && (
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-orange-500 text-white rounded">Hot</span>
-      )}
-      {discount && (
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-red-500 text-white rounded">{discount}</span>
-      )}
-    </div>
-  );
 };
 
 export const ProductListPreview = ({ brandColor, itemCount, componentType, selectedStyle, onStyleChange, items }: { 
@@ -1068,24 +1052,28 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
   items?: ProductListPreviewItem[];
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'grid';
+  const previewStyle = selectedStyle || 'commerce';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ProductListStyle);
-  const styles = [{ id: 'grid', label: 'Grid' }, { id: 'list', label: 'List' }, { id: 'carousel', label: 'Carousel' }];
+  const styles = [
+    { id: 'commerce', label: 'Commerce Card' },
+    { id: 'minimal', label: 'Luxury Minimal' },
+    { id: 'bento', label: 'Bento Grid' }
+  ];
   const isProduct = componentType === 'ProductList';
-  const title = isProduct ? 'Sản phẩm nổi bật' : 'Dịch vụ của chúng tôi';
   
-  // Use real items if provided, otherwise fallback to mock
-  const displayItems: ProductListPreviewItem[] = items && items.length > 0 
-    ? items 
-    : Array.from({ length: Math.max(itemCount, 4) }, (_, i) => ({ 
-        id: i + 1, 
-        name: isProduct ? `Tai nghe Bluetooth Pro ${i + 1}` : `Dịch vụ ${i + 1}`, 
-        price: isProduct ? `${(i + 1) * 250}.000đ` : '', 
-        originalPrice: i % 2 === 0 ? `${(i + 1) * 320}.000đ` : undefined,
-        description: 'Sản phẩm chất lượng cao, được tin dùng bởi hàng nghìn khách hàng.',
-        tag: i === 0 ? 'hot' : i === 1 ? 'new' : i === 2 ? 'sale' : undefined
-      }));
-  const showViewAll = displayItems.length > 3;
+  // Mock data with realistic product info
+  const mockProducts: ProductListPreviewItem[] = [
+    { id: 1, name: 'iPhone 15 Pro Max', category: 'Smartphone', price: '34.990.000đ', originalPrice: '36.990.000đ', tag: 'new', image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=500&h=500&fit=crop&q=80' },
+    { id: 2, name: 'MacBook Pro M3', category: 'Laptop', price: '45.990.000đ', image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca4?w=500&h=500&fit=crop&q=80' },
+    { id: 3, name: 'Sony WH-1000XM5', category: 'Audio', price: '8.490.000đ', originalPrice: '9.290.000đ', tag: 'sale', image: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=500&h=500&fit=crop&q=80' },
+    { id: 4, name: 'Apple Watch Ultra 2', category: 'Wearable', price: '21.990.000đ', tag: 'new', image: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=500&h=500&fit=crop&q=80' },
+    { id: 5, name: 'iPad Air 5 M1', category: 'Tablet', price: '14.990.000đ', originalPrice: '16.500.000đ', tag: 'sale', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&h=500&fit=crop&q=80' },
+    { id: 6, name: 'Marshall Stanmore III', category: 'Audio', price: '9.890.000đ', image: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&h=500&fit=crop&q=80' },
+    { id: 7, name: 'Logitech MX Master 3S', category: 'Accessories', price: '2.490.000đ', image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&h=500&fit=crop&q=80' },
+    { id: 8, name: 'Fujifilm X-T5', category: 'Camera', price: '42.990.000đ', originalPrice: '45.000.000đ', tag: 'hot', image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=500&h=500&fit=crop&q=80' }
+  ];
+  
+  const displayItems: ProductListPreviewItem[] = items && items.length > 0 ? items : mockProducts.slice(0, Math.max(itemCount, 8));
 
   // Calculate discount percentage
   const getDiscount = (price?: string, originalPrice?: string) => {
@@ -1096,256 +1084,353 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
     return `-${Math.round(((op - p) / op) * 100)}%`;
   };
 
-  // Style 1: Grid - Professional cards với hover effects
-  const renderGridStyle = () => (
-    <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
-      <h2 className={cn("font-bold tracking-tight text-center mb-6 md:mb-8", device === 'mobile' ? 'text-xl' : 'text-2xl sm:text-3xl')}>{title}</h2>
-      <div className={cn("grid gap-3 md:gap-6", device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4')}>
-        {displayItems.slice(0, 4).map((item) => {
+  // Style 1: Luxury Minimal - Clean grid với hover effects và view details button
+  const renderMinimalStyle = () => (
+    <section className={cn("py-8 md:py-10", device === 'mobile' ? 'px-3' : 'px-4 md:px-6')}>
+      {/* Section Header */}
+      <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between md:mb-10">
+        <div className="flex items-end justify-between w-full md:w-auto">
+          <div className="space-y-1 md:space-y-2">
+            <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
+              <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
+              Bộ sưu tập
+            </div>
+            <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-2xl md:text-4xl')}>
+              Sản phẩm nổi bật
+            </h2>
+          </div>
+          {/* Mobile View All */}
+          <button className="md:hidden p-0 h-auto font-semibold mb-1 gap-1 flex items-center" style={{ color: brandColor }}>
+            Xem tất cả <ArrowRight size={16} />
+          </button>
+        </div>
+        {/* Desktop View All */}
+        <button className="hidden md:flex gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 pl-6 border-l border-slate-200 dark:border-slate-700 transition-colors items-center">
+          Xem tất cả <ArrowRight size={16} />
+        </button>
+      </div>
+
+      {/* Grid */}
+      <div className={cn(
+        "grid gap-x-6 gap-y-10",
+        device === 'mobile' ? 'grid-cols-2 gap-x-3 gap-y-6' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4'
+      )}>
+        {displayItems.slice(0, device === 'mobile' ? 4 : 4).map((item) => {
+          const discount = getDiscount(item.price, item.originalPrice);
+          return (
+            <div key={item.id} className="group cursor-pointer">
+              {/* Image Container */}
+              <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800 mb-4 border border-transparent transition-all" style={{ '--hover-border': `${brandColor}20` } as React.CSSProperties}>
+                {item.image ? (
+                  <img 
+                    src={item.image} 
+                    alt={item.name}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center">
+                    <Package size={48} className="text-slate-300" />
+                  </div>
+                )}
+                
+                {/* Discount / New Badge */}
+                <div className="absolute top-3 left-3 flex flex-col gap-1">
+                  {discount && (
+                    <span className="px-2 py-1 text-[10px] font-bold text-white rounded shadow-sm" style={{ backgroundColor: brandColor, boxShadow: `0 2px 4px ${brandColor}20` }}>
+                      {discount}
+                    </span>
+                  )}
+                  {item.tag === 'new' && !discount && (
+                    <span className="px-2 py-1 text-[10px] font-bold bg-white/90 backdrop-blur-sm rounded shadow-sm" style={{ color: brandColor }}>
+                      NEW
+                    </span>
+                  )}
+                </div>
+
+                {/* View Details Button (Hover) */}
+                <div className="absolute inset-x-4 bottom-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 opacity-0 group-hover:opacity-100">
+                  <button className="w-full bg-white/95 hover:bg-white backdrop-blur-md shadow-lg border-0 font-bold py-2 px-4 rounded-lg text-sm" style={{ color: brandColor }}>
+                    Xem chi tiết
+                  </button>
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="space-y-1">
+                <h3 className="font-medium text-slate-900 dark:text-slate-100 text-base truncate group-hover:opacity-80 transition-colors">
+                  {item.name}
+                </h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="font-bold text-slate-900 dark:text-slate-100">{item.price}</span>
+                  {item.originalPrice && (
+                    <span className="text-xs text-slate-400 line-through">
+                      {item.originalPrice}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+
+  // Style 2: Commerce Card - Cards với button Xem chi tiết và hover effects
+  const renderCommerceStyle = () => (
+    <section className={cn("py-8 md:py-10", device === 'mobile' ? 'px-3' : 'px-4 md:px-6')}>
+      {/* Section Header */}
+      <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between md:mb-10">
+        <div className="flex items-end justify-between w-full md:w-auto">
+          <div className="space-y-1 md:space-y-2">
+            <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
+              <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
+              Bộ sưu tập
+            </div>
+            <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-2xl md:text-4xl')}>
+              Sản phẩm nổi bật
+            </h2>
+          </div>
+          <button className="md:hidden p-0 h-auto font-semibold mb-1 gap-1 flex items-center" style={{ color: brandColor }}>
+            Xem tất cả <ArrowRight size={16} />
+          </button>
+        </div>
+        <button className="hidden md:flex gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 pl-6 border-l border-slate-200 dark:border-slate-700 transition-colors items-center">
+          Xem tất cả <ArrowRight size={16} />
+        </button>
+      </div>
+
+      {/* Grid */}
+      <div className={cn(
+        "grid gap-6",
+        device === 'mobile' ? 'grid-cols-1 sm:grid-cols-2 gap-4' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-4'
+      )}>
+        {displayItems.slice(0, device === 'mobile' ? 4 : 4).map((item) => {
           const discount = getDiscount(item.price, item.originalPrice);
           return (
             <div 
               key={item.id} 
-              className="group relative bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200/60 dark:border-slate-700 hover:border-opacity-30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-full"
-              style={{ '--hover-border': `${brandColor}30` } as React.CSSProperties}
+              className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
+              style={{ '--hover-shadow': `0 10px 15px -3px ${brandColor}10`, '--hover-border': `${brandColor}30` } as React.CSSProperties}
             >
-              <ProductBadge tag={item.tag} discount={discount || undefined} />
-              
-              {/* Image Container */}
-              <div className="relative aspect-square overflow-hidden bg-slate-100/50 dark:bg-slate-700/50">
+              {/* Image */}
+              <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-700 overflow-hidden">
                 {item.image ? (
                   <img 
                     src={item.image} 
-                    alt={item.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                    alt={item.name}
+                    className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package size={32} className="text-slate-300" />
+                  <div className="h-full w-full flex items-center justify-center">
+                    <Package size={40} className="text-slate-300" />
+                  </div>
+                )}
+                {discount && (
+                  <div className="absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded text-white shadow-sm" style={{ backgroundColor: brandColor, boxShadow: `0 2px 4px ${brandColor}20` }}>
+                    {discount}
                   </div>
                 )}
               </div>
-              
+
               {/* Content */}
-              <div className={cn("flex-1 flex flex-col", device === 'mobile' ? 'p-2.5' : 'p-3 md:p-4')}>
-                <h4 className={cn(
-                  "font-semibold text-slate-900 dark:text-slate-100 group-hover:text-opacity-80 transition-colors line-clamp-2 leading-tight",
-                  device === 'mobile' ? 'text-sm' : 'text-sm md:text-base'
-                )}>
+              <div className="p-4 flex flex-col flex-1">
+                <h3 className="font-bold text-slate-900 dark:text-slate-100 line-clamp-1 mb-1 group-hover:opacity-80 transition-colors cursor-pointer">
                   {item.name}
-                </h4>
+                </h3>
                 
-                {/* Price */}
-                <div className="flex items-center mt-1.5">
-                  <span className={cn("font-bold", device === 'mobile' ? 'text-sm' : 'text-base md:text-lg')} style={{ color: brandColor }}>
-                    {item.price || '0đ'}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Footer Action */}
-              <div className={cn("", device === 'mobile' ? 'p-2.5 pt-0' : 'p-3 pt-0 md:p-4 md:pt-0')}>
-                <button 
-                  className={cn(
-                    "w-full gap-1.5 font-medium shadow-none rounded-md transition-all duration-200",
-                    device === 'mobile' ? 'h-8 text-xs' : 'h-8 md:h-9 text-xs md:text-sm',
-                    "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:text-white"
+                <div className="flex items-baseline gap-2 mb-4 mt-auto pt-2">
+                  <span className="text-base font-bold text-slate-900 dark:text-slate-100 group-hover:opacity-80 transition-colors">{item.price}</span>
+                  {item.originalPrice && (
+                    <span className="text-xs text-slate-400 line-through">
+                      {item.originalPrice}
+                    </span>
                   )}
-                  style={{ '--hover-bg': brandColor } as React.CSSProperties}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = brandColor; e.currentTarget.style.color = 'white'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = ''; }}
+                </div>
+
+                <button 
+                  className="w-full gap-2 border-2 py-2 px-4 rounded-lg font-medium text-sm flex items-center justify-center transition-colors"
+                  style={{ borderColor: `${brandColor}20`, color: brandColor }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = brandColor; e.currentTarget.style.backgroundColor = `${brandColor}08`; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}20`; e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
-                  <span className="flex items-center justify-center gap-1.5">
-                    <Package size={14} />
-                    {isProduct ? 'Mua ngay' : 'Xem chi tiết'}
-                  </span>
+                  Xem chi tiết
+                  <ArrowRight size={14} />
                 </button>
               </div>
             </div>
           );
         })}
       </div>
-      
-      {/* View All Button */}
-      {showViewAll && (
-        <div className="flex justify-center pt-6 md:pt-8">
-          <button 
-            className="group flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg font-medium text-sm hover:border-slate-300 transition-all"
-          >
-            Xem toàn bộ
-            <span className="transition-transform group-hover:translate-x-1">→</span>
-          </button>
-        </div>
-      )}
     </section>
   );
 
-  // Style 2: List - Horizontal cards với 2 columns
-  const renderListStyle = () => (
-    <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
-      <h2 className={cn("font-bold tracking-tight text-center mb-6 md:mb-8", device === 'mobile' ? 'text-xl' : 'text-2xl sm:text-3xl')}>{title}</h2>
-      <div className={cn("grid gap-3 md:gap-4", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
-        {displayItems.slice(0, 4).map((item) => {
-          const discount = getDiscount(item.price, item.originalPrice);
-          return (
-            <div 
-              key={item.id} 
-              className={cn(
-                "group relative bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200/60 dark:border-slate-700 hover:border-opacity-30 hover:shadow-md transition-all duration-300 flex",
-                device === 'mobile' ? 'h-28' : 'h-32 md:h-40'
-              )}
-            >
-              {/* Badges */}
-              <div className="absolute top-2 left-2 z-10 flex flex-row gap-1.5">
-                {item.tag === 'new' && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500 text-white rounded">Mới</span>}
-                {item.tag === 'hot' && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-orange-500 text-white rounded">Hot</span>}
-                {discount && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-red-500 text-white rounded">{discount}</span>}
+  // Style 3: Bento Grid - Asymmetric layout với hero card lớn
+  const renderBentoStyle = () => {
+    const featured = displayItems[displayItems.length > 7 ? 7 : displayItems.length - 1] || displayItems[0]; // Fujifilm X-T5 or last item
+    const others = displayItems.slice(0, 4);
+    const discount = getDiscount(featured?.price, featured?.originalPrice);
+
+    return (
+      <section className={cn("py-8 md:py-10", device === 'mobile' ? 'px-3' : 'px-4 md:px-6')}>
+        {/* Section Header */}
+        <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between md:mb-10">
+          <div className="flex items-end justify-between w-full md:w-auto">
+            <div className="space-y-1 md:space-y-2">
+              <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
+                <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
+                Bộ sưu tập
               </div>
-              
-              {/* Image */}
-              <div className={cn("relative overflow-hidden bg-slate-100/50 dark:bg-slate-700/50 flex-shrink-0", device === 'mobile' ? 'w-24' : 'w-28')}>
-                {item.image ? (
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package size={24} className="text-slate-300" />
+              <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-2xl md:text-4xl')}>
+                Sản phẩm nổi bật
+              </h2>
+            </div>
+            <button className="md:hidden p-0 h-auto font-semibold mb-1 gap-1 flex items-center" style={{ color: brandColor }}>
+              Xem tất cả <ArrowRight size={16} />
+            </button>
+          </div>
+          <button className="hidden md:flex gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 pl-6 border-l border-slate-200 dark:border-slate-700 transition-colors items-center">
+            Xem tất cả <ArrowRight size={16} />
+          </button>
+        </div>
+
+        {/* Bento Grid */}
+        {device === 'mobile' ? (
+          // Mobile: 2x2 simple grid
+          <div className="grid grid-cols-2 gap-3">
+            {others.slice(0, 4).map((item) => {
+              const itemDiscount = getDiscount(item.price, item.originalPrice);
+              return (
+                <div key={item.id} className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 flex flex-col cursor-pointer hover:shadow-md transition-all">
+                  <div className="relative aspect-square w-full rounded-lg bg-slate-100 dark:bg-slate-700 overflow-hidden mb-2">
+                    {item.image ? (
+                      <img src={item.image} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" alt={item.name} />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center"><Package size={24} className="text-slate-300" /></div>
+                    )}
+                    {itemDiscount && (
+                      <span className="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: brandColor }}>
+                        {itemDiscount}
+                      </span>
+                    )}
                   </div>
-                )}
-              </div>
-              
-              {/* Content */}
-              <div className="flex flex-col flex-1 min-w-0 justify-between">
-                <div className={cn("flex-1", device === 'mobile' ? 'p-2.5 pr-3' : 'p-3 pr-4')}>
-                  <h4 className={cn(
-                    "font-semibold text-slate-900 dark:text-slate-100 group-hover:text-opacity-80 transition-colors line-clamp-2",
-                    device === 'mobile' ? 'text-sm' : 'text-sm md:text-base'
-                  )}>
-                    {item.name}
-                  </h4>
-                  <div className="flex items-center mt-1">
-                    <span className={cn("font-bold", device === 'mobile' ? 'text-sm' : 'text-base')} style={{ color: brandColor }}>
-                      {item.price || '0đ'}
-                    </span>
-                  </div>
+                  <h4 className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate group-hover:opacity-80 transition-colors">{item.name}</h4>
+                  <span className="text-sm font-bold mt-1" style={{ color: brandColor }}>{item.price}</span>
                 </div>
+              );
+            })}
+          </div>
+        ) : (
+          // Desktop/Tablet: Bento layout
+          <div className={cn(
+            "grid gap-4 h-auto",
+            device === 'tablet' ? 'grid-cols-3 grid-rows-2' : 'grid-cols-4 grid-rows-2'
+          )}>
+            {/* Hero Item (Span 2x2) */}
+            <div className="col-span-2 row-span-2 relative group rounded-2xl overflow-hidden cursor-pointer min-h-[400px] border border-transparent transition-colors" style={{ backgroundColor: `${brandColor}10`, '--hover-border': `${brandColor}50` } as React.CSSProperties}>
+              {featured?.image ? (
+                <img 
+                  src={featured.image} 
+                  alt={featured.name} 
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+              ) : (
+                <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+                  <Package size={64} className="text-slate-300" />
+                </div>
+              )}
+              {/* Overlay gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+              
+              {/* Discount Badge */}
+              {discount && (
+                <div className="absolute top-4 right-4 font-bold px-3 py-1 rounded-full text-sm shadow-lg text-white" style={{ backgroundColor: brandColor, boxShadow: `0 4px 6px ${brandColor}30` }}>
+                  {discount}
+                </div>
+              )}
+
+              <div className="absolute bottom-0 left-0 p-6 md:p-8 w-full">
+                <h3 className="text-2xl md:text-4xl font-bold mb-3 leading-tight text-white">{featured?.name}</h3>
                 
-                {/* Action */}
-                <div className={cn("", device === 'mobile' ? 'p-2.5 pt-0 flex justify-end' : 'p-3 pt-0 flex justify-end')}>
-                  <button 
-                    className="px-3 h-8 text-xs font-medium rounded-md text-white transition-all"
-                    style={{ backgroundColor: brandColor }}
-                  >
-                    {isProduct ? 'Mua ngay' : 'Xem'}
+                <div className="flex flex-row items-center justify-between gap-4 mt-2">
+                  <span className="text-2xl font-bold text-white">{featured?.price}</span>
+                  
+                  <button className="rounded-full px-6 py-2 text-white border-0 shadow-lg transition-all hover:scale-105" style={{ backgroundColor: brandColor, boxShadow: `0 4px 6px ${brandColor}20` }}>
+                    Xem chi tiết
                   </button>
                 </div>
               </div>
             </div>
-          );
-        })}
-      </div>
-      
-      {/* View All */}
-      {showViewAll && (
-        <div className="flex justify-center pt-6 md:pt-8">
-          <button className="group flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg font-medium text-sm hover:border-slate-300 transition-all">
-            Xem toàn bộ
-            <span className="transition-transform group-hover:translate-x-1">→</span>
-          </button>
-        </div>
-      )}
-    </section>
-  );
 
-  // Style 3: Carousel - Drag to scroll với snap
-  const renderCarouselStyle = () => (
-    <section className={cn("py-8 md:py-12 relative group/carousel")}>
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 md:mb-8 px-4">
-        <h2 className={cn("font-bold tracking-tight", device === 'mobile' ? 'text-xl' : 'text-2xl sm:text-3xl')}>{title}</h2>
-      </div>
-      
-      {/* Navigation Buttons (Desktop) */}
-      {device === 'desktop' && (
-        <>
-          <button className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-white dark:bg-slate-800 shadow-md items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity -ml-2">
-            <ChevronLeft size={20} />
-          </button>
-          <button className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 rounded-full bg-white dark:bg-slate-800 shadow-md items-center justify-center opacity-0 group-hover/carousel:opacity-100 transition-opacity -mr-2">
-            <ChevronRight size={20} />
-          </button>
-        </>
-      )}
-      
-      {/* Carousel Container */}
-      <div 
-        className={cn(
-          "flex overflow-x-auto gap-3 md:gap-6 pb-4 -mx-4 px-4 scrollbar-hide cursor-grab snap-x snap-mandatory"
-        )}
-      >
-        {displayItems.slice(0, 5).map((item) => {
-          const discount = getDiscount(item.price, item.originalPrice);
-          return (
-            <div 
-              key={item.id} 
-              className={cn(
-                "flex-shrink-0 snap-center select-none",
-                device === 'mobile' ? 'min-w-[180px]' : 'min-w-[200px] md:min-w-[280px]'
-              )}
-            >
-              <div className="group relative bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200/60 dark:border-slate-700 hover:border-opacity-30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-full">
-                <ProductBadge tag={item.tag} discount={discount || undefined} />
-                
-                {/* Image */}
-                <div className={cn(
-                  "relative overflow-hidden bg-slate-100/50 dark:bg-slate-700/50",
-                  device === 'mobile' ? 'aspect-square' : 'h-[200px] md:h-[280px]'
-                )}>
-                  {item.image ? (
-                    <img 
-                      src={item.image} 
-                      alt={item.name} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      draggable={false}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package size={32} className="text-slate-300" />
+            {/* Small Grid Items */}
+            {others.slice(0, 4).map((item) => {
+              const itemDiscount = getDiscount(item.price, item.originalPrice);
+              return (
+                <div 
+                  key={item.id} 
+                  className="col-span-1 row-span-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 flex flex-col group hover:shadow-lg transition-all cursor-pointer relative overflow-hidden"
+                  style={{ '--hover-border': `${brandColor}40` } as React.CSSProperties}
+                >
+                  {/* Image Area */}
+                  <div className="relative aspect-square w-full rounded-xl overflow-hidden mb-3" style={{ backgroundColor: `${brandColor}08` }}>
+                    {item.image ? (
+                      <img 
+                        src={item.image} 
+                        className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-110" 
+                        alt={item.name} 
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center">
+                        <Package size={32} className="text-slate-300" />
+                      </div>
+                    )}
+                    
+                    {/* Discount Badge */}
+                    {itemDiscount && (
+                      <span className="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: brandColor }}>
+                        {itemDiscount}
+                      </span>
+                    )}
+
+                    {/* Hover Action Button */}
+                    <div className="absolute bottom-2 right-2 translate-y-10 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                      <div className="text-white p-2 rounded-full shadow-lg" style={{ backgroundColor: brandColor }}>
+                        <ArrowRight size={16} />
+                      </div>
                     </div>
-                  )}
-                </div>
-                
-                {/* Content */}
-                <div className="p-3 space-y-1.5">
-                  <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100 line-clamp-2 leading-tight">
-                    {item.name}
-                  </h4>
-                  <div className="flex items-center">
-                    <span className="font-bold text-base" style={{ color: brandColor }}>
-                      {item.price || '0đ'}
-                    </span>
+                  </div>
+
+                  {/* Info Area */}
+                  <div className="mt-auto px-1">
+                    <h4 className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate group-hover:opacity-80 transition-colors">
+                      {item.name}
+                    </h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm font-bold" style={{ color: brandColor }}>
+                        {item.price}
+                      </span>
+                      {item.originalPrice && (
+                        <span className="text-[10px] text-slate-400 line-through opacity-70">
+                          {item.originalPrice}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      
-      {/* View All */}
-      <div className="flex justify-center pt-6 md:pt-8">
-        <button className="group flex items-center gap-2 px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg font-medium text-sm hover:border-slate-300 transition-all min-w-[160px] justify-center">
-          Xem toàn bộ
-          <span className="transition-transform group-hover:translate-x-1">→</span>
-        </button>
-      </div>
-    </section>
-  );
+              );
+            })}
+          </div>
+        )}
+      </section>
+    );
+  };
 
   return (
-    <PreviewWrapper title={`Preview ${componentType}`} device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles}>
+    <PreviewWrapper title={`Preview ${isProduct ? 'Sản phẩm' : 'Dịch vụ'}`} device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles}>
       <BrowserFrame url={`yoursite.com/${isProduct ? 'products' : 'services'}`}>
-        {previewStyle === 'grid' && renderGridStyle()}
-        {previewStyle === 'list' && renderListStyle()}
-        {previewStyle === 'carousel' && renderCarouselStyle()}
+        {previewStyle === 'minimal' && renderMinimalStyle()}
+        {previewStyle === 'commerce' && renderCommerceStyle()}
+        {previewStyle === 'bento' && renderBentoStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );

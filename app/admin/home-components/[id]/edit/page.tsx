@@ -113,7 +113,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true });
   const [contactStyle, setContactStyle] = useState<ContactStyle>('split');
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
-  const [productListStyle, setProductListStyle] = useState<ProductListStyle>('grid');
+  const [productListStyle, setProductListStyle] = useState<ProductListStyle>('commerce');
   const [serviceListStyle, setServiceListStyle] = useState<ServiceListStyle>('grid');
   const [blogStyle, setBlogStyle] = useState<BlogStyle>('grid');
   // Blog manual selection states
@@ -261,7 +261,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           break;
         case 'ProductList':
           setProductListConfig({ itemCount: config.itemCount || 8, sortBy: config.sortBy || 'newest' });
-          setProductListStyle((config.style as ProductListStyle) || 'grid');
+          setProductListStyle((config.style as ProductListStyle) || 'commerce');
           setProductSelectionMode(config.selectionMode || 'auto');
           setSelectedProductIds(config.selectedProductIds || []);
           break;

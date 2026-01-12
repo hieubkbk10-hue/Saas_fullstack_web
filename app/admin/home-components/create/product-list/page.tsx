@@ -22,7 +22,7 @@ function ProductListCreateContent() {
   const [itemCount, setItemCount] = useState(8);
   const [sortBy, setSortBy] = useState('newest');
   const [blogStyle, setBlogStyle] = useState<BlogStyle>('grid');
-  const [productStyle, setProductStyle] = useState<ProductListStyle>('grid');
+  const [productStyle, setProductStyle] = useState<ProductListStyle>('commerce');
   const [serviceStyle, setServiceStyle] = useState<ServiceListStyle>('grid');
 
   const onSubmit = (e: React.FormEvent) => {

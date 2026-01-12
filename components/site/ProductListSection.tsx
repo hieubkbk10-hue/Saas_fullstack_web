@@ -5,15 +5,11 @@ import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Package, Loader2, ArrowRight, ShoppingCart } from 'lucide-react';
+import { Package, Loader2, ArrowRight } from 'lucide-react';
 
-// Helper to strip HTML tags from description
-const stripHtml = (html?: string) => {
-  if (!html) return '';
-  return html.replace(/<[^>]*>/g, '').trim();
-};
-
-type ProductListStyle = 'grid' | 'list' | 'carousel';
+// 3 Styles mới theo mẫu BrandStory.tsx
+// 'minimal' = Luxury Minimal, 'commerce' = Commerce Card, 'bento' = Bento Grid
+type ProductListStyle = 'minimal' | 'commerce' | 'bento';
 
 interface ProductListSectionProps {
   config: Record<string, unknown>;
@@ -21,31 +17,8 @@ interface ProductListSectionProps {
   title: string;
 }
 
-// Badge component for product tags
-const ProductBadge = ({ 
-  isNew, 
-  isSale, 
-  discount 
-}: { 
-  isNew?: boolean; 
-  isSale?: boolean; 
-  discount?: number;
-}) => {
-  if (!isNew && !isSale && !discount) return null;
-  return (
-    <div className="absolute top-2 left-2 z-10 flex flex-col gap-1.5">
-      {isNew && (
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-500 text-white rounded">Mới</span>
-      )}
-      {discount && discount > 0 && (
-        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-red-500 text-white rounded">-{discount}%</span>
-      )}
-    </div>
-  );
-};
-
 export function ProductListSection({ config, brandColor, title }: ProductListSectionProps) {
-  const style = (config.style as ProductListStyle) || 'grid';
+  const style = (config.style as ProductListStyle) || 'commerce';
   const itemCount = (config.itemCount as number) || 8;
   const selectionMode = (config.selectionMode as 'auto' | 'manual') || 'auto';
   const selectedProductIds = (config.selectedProductIds as string[]) || [];
@@ -112,231 +85,310 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
 
   // Calculate discount
   const getDiscount = (price?: number, salePrice?: number) => {
-    if (!price || !salePrice || salePrice >= price) return 0;
-    return Math.round(((price - salePrice) / price) * 100);
+    if (!price || !salePrice || salePrice >= price) return null;
+    return `-${Math.round(((price - salePrice) / price) * 100)}%`;
   };
 
-  // Style 1: Grid - Professional cards với hover effects
-  if (style === 'grid') {
+  // Common Header Component - Giữ nhất quán cho cả 3 styles
+  const SectionHeader = () => (
+    <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between md:mb-10">
+      <div className="flex items-end justify-between w-full md:w-auto">
+        <div className="space-y-1 md:space-y-2">
+          <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
+            <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
+            Bộ sưu tập
+          </div>
+          <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-slate-900">
+            {title}
+          </h2>
+        </div>
+        {/* Mobile View All */}
+        {showViewAll && (
+          <Link href="/products" className="md:hidden p-0 h-auto font-semibold mb-1 gap-1 flex items-center" style={{ color: brandColor }}>
+            Xem tất cả <ArrowRight size={16} />
+          </Link>
+        )}
+      </div>
+      {/* Desktop View All */}
+      {showViewAll && (
+        <Link href="/products" className="hidden md:flex gap-2 text-slate-500 hover:text-slate-900 pl-6 border-l border-slate-200 transition-colors items-center">
+          Xem tất cả <ArrowRight size={16} />
+        </Link>
+      )}
+    </div>
+  );
+
+  // Style 1: Luxury Minimal - Clean grid với hover effects và view details button
+  if (style === 'minimal') {
     return (
-      <section className="py-12 md:py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-center mb-8 md:mb-12 text-slate-900">{title}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
-            {products.slice(0, 8).map((product) => {
+      <section className="py-10 md:py-16 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeader />
+          
+          {/* Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-6 md:gap-x-6 md:gap-y-10">
+            {products.slice(0, 4).map((product) => {
               const discount = getDiscount(product.price, product.salePrice);
               return (
-                <Link key={product._id} href={`/products/${product.slug}`} className="group">
-                  <article className="relative bg-white rounded-xl overflow-hidden border border-slate-200/60 hover:border-slate-300/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 h-full flex flex-col">
-                    <ProductBadge discount={discount} />
-                    
-                    {/* Image */}
-                    <div className="relative aspect-square overflow-hidden bg-slate-100/50">
-                      {product.image ? (
-                        <img 
-                          src={product.image} 
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package size={48} className="text-slate-300" />
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Content */}
-                    <div className="p-3 md:p-4 flex-1 flex flex-col">
-                      <h4 className="font-semibold text-sm md:text-base text-slate-900 line-clamp-2 leading-tight group-hover:text-opacity-80 transition-colors flex-1">
-                        {product.name}
-                      </h4>
-                      
-                      {/* Price */}
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className="font-bold text-base md:text-lg" style={{ color: brandColor }}>
-                          {formatPrice(product.salePrice || product.price)}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    {/* Action Button */}
-                    <div className="p-3 md:p-4 pt-0">
-                      <button 
-                        className="w-full h-8 md:h-9 flex items-center justify-center gap-1.5 font-medium text-xs md:text-sm rounded-md bg-slate-100 text-slate-700 hover:text-white transition-all duration-200"
-                        style={{ '--hover-bg': brandColor } as React.CSSProperties}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = brandColor; e.currentTarget.style.color = 'white'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = ''; e.currentTarget.style.color = ''; }}
-                      >
-                        <ShoppingCart size={14} />
-                        Mua ngay
-                      </button>
-                    </div>
-                  </article>
-                </Link>
-              );
-            })}
-          </div>
-          {showViewAll && (
-            <div className="flex justify-center pt-8 md:pt-10">
-              <Link 
-                href="/products" 
-                className="group inline-flex items-center gap-2 px-5 py-2.5 border border-slate-200 rounded-lg font-medium text-sm hover:border-slate-300 transition-all"
-              >
-                Xem toàn bộ
-                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
-    );
-  }
-
-  // Style 2: List - Horizontal cards với 2 columns
-  if (style === 'list') {
-    return (
-      <section className="py-12 md:py-16 px-4">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-center mb-8 md:mb-12 text-slate-900">{title}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            {products.slice(0, 6).map((product) => {
-              const discount = getDiscount(product.price, product.salePrice);
-              return (
-                <Link key={product._id} href={`/products/${product.slug}`} className="group block">
-                  <article className="relative bg-white rounded-xl border border-slate-200/60 hover:border-slate-300/50 hover:shadow-md transition-all duration-300 flex h-32 md:h-40 overflow-hidden">
-                    {/* Badges */}
-                    <div className="absolute top-2 left-2 z-10 flex flex-row gap-1.5">
-                      {discount > 0 && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-red-500 text-white rounded">-{discount}%</span>
-                      )}
-                    </div>
-                    
-                    {/* Image */}
-                    <div className="relative w-28 md:w-32 flex-shrink-0 overflow-hidden bg-slate-100/50">
-                      {product.image ? (
-                        <img 
-                          src={product.image} 
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package size={24} className="text-slate-300" />
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Content */}
-                    <div className="flex flex-col flex-1 min-w-0 justify-between">
-                      <div className="flex-1 p-3 md:p-4 pr-3">
-                        <h4 className="font-semibold text-sm md:text-base text-slate-900 line-clamp-2 group-hover:text-opacity-80 transition-colors">
-                          {product.name}
-                        </h4>
-                        <div className="flex items-center mt-1.5 gap-2">
-                          <span className="font-bold text-base" style={{ color: brandColor }}>
-                            {formatPrice(product.salePrice || product.price)}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {/* Action */}
-                      <div className="p-3 md:p-4 pt-0 flex justify-end">
-                        <span 
-                          className="px-3 py-1.5 text-xs font-medium rounded-md text-white transition-all"
-                          style={{ backgroundColor: brandColor }}
-                        >
-                          Mua ngay
-                        </span>
-                      </div>
-                    </div>
-                  </article>
-                </Link>
-              );
-            })}
-          </div>
-          {showViewAll && (
-            <div className="flex justify-center pt-8 md:pt-10">
-              <Link 
-                href="/products" 
-                className="group inline-flex items-center gap-2 px-5 py-2.5 border border-slate-200 rounded-lg font-medium text-sm hover:border-slate-300 transition-all"
-              >
-                Xem toàn bộ
-                <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
-    );
-  }
-
-  // Style 3: Carousel - Drag to scroll với snap
-  return (
-    <section className="py-12 md:py-16 relative group/carousel">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 md:mb-10 px-4">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
-        </div>
-        
-        {/* Carousel Container */}
-        <div className="flex overflow-x-auto gap-3 md:gap-6 pb-4 px-4 scrollbar-hide cursor-grab snap-x snap-mandatory">
-          {products.slice(0, 8).map((product) => {
-            const discount = getDiscount(product.price, product.salePrice);
-            return (
-              <Link 
-                key={product._id} 
-                href={`/products/${product.slug}`} 
-                className="group flex-shrink-0 snap-center select-none min-w-[180px] md:min-w-[280px]"
-                draggable={false}
-              >
-                <article className="relative bg-white rounded-xl overflow-hidden border border-slate-200/60 hover:border-slate-300/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col h-full">
-                  <ProductBadge discount={discount} />
-                  
-                  {/* Image */}
-                  <div className="relative aspect-square md:h-[280px] overflow-hidden bg-slate-100/50">
+                <Link key={product._id} href={`/products/${product.slug}`} className="group cursor-pointer">
+                  {/* Image Container */}
+                  <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 mb-4 border border-transparent hover:border-slate-200 transition-all">
                     {product.image ? (
                       <img 
                         src={product.image} 
                         alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        draggable={false}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package size={32} className="text-slate-300" />
+                      <div className="h-full w-full flex items-center justify-center">
+                        <Package size={48} className="text-slate-300" />
                       </div>
                     )}
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="p-3 space-y-1.5">
-                    <h4 className="font-semibold text-sm text-slate-900 line-clamp-2 leading-tight">
-                      {product.name}
-                    </h4>
-                    <div className="flex items-center">
-                      <span className="font-bold text-base" style={{ color: brandColor }}>
-                        {formatPrice(product.salePrice || product.price)}
+                    
+                    {/* Discount / New Badge */}
+                    <div className="absolute top-3 left-3 flex flex-col gap-1">
+                      {discount && (
+                        <span className="px-2 py-1 text-[10px] font-bold text-white rounded shadow-sm" style={{ backgroundColor: brandColor, boxShadow: `0 2px 4px ${brandColor}20` }}>
+                          {discount}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* View Details Button (Hover) */}
+                    <div className="absolute inset-x-4 bottom-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 opacity-0 group-hover:opacity-100">
+                      <span className="block w-full bg-white/95 hover:bg-white backdrop-blur-md shadow-lg font-bold py-2 px-4 rounded-lg text-sm text-center" style={{ color: brandColor }}>
+                        Xem chi tiết
                       </span>
                     </div>
                   </div>
-                </article>
+
+                  {/* Info */}
+                  <div className="space-y-1">
+                    <h3 className="font-medium text-slate-900 text-base truncate group-hover:opacity-80 transition-colors">
+                      {product.name}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-bold text-slate-900">{formatPrice(product.salePrice || product.price)}</span>
+                      {product.salePrice && product.price && product.salePrice < product.price && (
+                        <span className="text-xs text-slate-400 line-through">
+                          {formatPrice(product.price)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Commerce Card - Cards với button Xem chi tiết và hover effects
+  if (style === 'commerce') {
+    return (
+      <section className="py-10 md:py-16 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeader />
+          
+          {/* Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {products.slice(0, 4).map((product) => {
+              const discount = getDiscount(product.price, product.salePrice);
+              return (
+                <Link 
+                  key={product._id} 
+                  href={`/products/${product.slug}`}
+                  className="group bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg hover:border-slate-300 transition-all duration-300 flex flex-col"
+                >
+                  {/* Image */}
+                  <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
+                    {product.image ? (
+                      <img 
+                        src={product.image} 
+                        alt={product.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center">
+                        <Package size={40} className="text-slate-300" />
+                      </div>
+                    )}
+                    {discount && (
+                      <div className="absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded text-white shadow-sm" style={{ backgroundColor: brandColor, boxShadow: `0 2px 4px ${brandColor}20` }}>
+                        {discount}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4 flex flex-col flex-1">
+                    <h3 className="font-bold text-slate-900 line-clamp-1 mb-1 group-hover:opacity-80 transition-colors">
+                      {product.name}
+                    </h3>
+                    
+                    <div className="flex items-baseline gap-2 mb-4 mt-auto pt-2">
+                      <span className="text-base font-bold text-slate-900 group-hover:opacity-80 transition-colors">{formatPrice(product.salePrice || product.price)}</span>
+                      {product.salePrice && product.price && product.salePrice < product.price && (
+                        <span className="text-xs text-slate-400 line-through">
+                          {formatPrice(product.price)}
+                        </span>
+                      )}
+                    </div>
+
+                    <span 
+                      className="w-full gap-2 border-2 py-2 px-4 rounded-lg font-medium text-sm flex items-center justify-center transition-colors hover:bg-opacity-10"
+                      style={{ borderColor: `${brandColor}30`, color: brandColor }}
+                    >
+                      Xem chi tiết
+                      <ArrowRight size={14} />
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Bento Grid - Asymmetric layout với hero card lớn
+  const featured = products[products.length - 1] || products[0];
+  const others = products.slice(0, 4);
+  const featuredDiscount = getDiscount(featured?.price, featured?.salePrice);
+
+  return (
+    <section className="py-10 md:py-16 px-4 md:px-6">
+      <div className="max-w-7xl mx-auto">
+        <SectionHeader />
+        
+        {/* Bento Grid - Desktop */}
+        <div className="hidden md:grid grid-cols-4 grid-rows-2 gap-4 h-auto">
+          {/* Hero Item (Span 2x2) */}
+          <Link 
+            href={`/products/${featured?.slug}`}
+            className="col-span-2 row-span-2 relative group rounded-2xl overflow-hidden cursor-pointer min-h-[400px] border border-transparent hover:border-slate-300 transition-colors"
+            style={{ backgroundColor: `${brandColor}10` }}
+          >
+            {featured?.image ? (
+              <img 
+                src={featured.image} 
+                alt={featured.name} 
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+            ) : (
+              <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-slate-100">
+                <Package size={64} className="text-slate-300" />
+              </div>
+            )}
+            {/* Overlay gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+            
+            {/* Discount Badge */}
+            {featuredDiscount && (
+              <div className="absolute top-4 right-4 font-bold px-3 py-1 rounded-full text-sm shadow-lg text-white" style={{ backgroundColor: brandColor, boxShadow: `0 4px 6px ${brandColor}30` }}>
+                {featuredDiscount}
+              </div>
+            )}
+
+            <div className="absolute bottom-0 left-0 p-6 md:p-8 w-full">
+              <h3 className="text-2xl md:text-4xl font-bold mb-3 leading-tight text-white">{featured?.name}</h3>
+              
+              <div className="flex flex-row items-center justify-between gap-4 mt-2">
+                <span className="text-2xl font-bold text-white">{formatPrice(featured?.salePrice || featured?.price)}</span>
+                
+                <span className="rounded-full px-6 py-2 text-white border-0 shadow-lg" style={{ backgroundColor: brandColor, boxShadow: `0 4px 6px ${brandColor}20` }}>
+                  Xem chi tiết
+                </span>
+              </div>
+            </div>
+          </Link>
+
+          {/* Small Grid Items */}
+          {others.slice(0, 4).map((product) => {
+            const discount = getDiscount(product.price, product.salePrice);
+            return (
+              <Link 
+                key={product._id}
+                href={`/products/${product.slug}`}
+                className="col-span-1 row-span-1 bg-white border border-slate-200 rounded-2xl p-3 flex flex-col group hover:shadow-lg hover:border-slate-300 transition-all cursor-pointer relative overflow-hidden"
+              >
+                {/* Image Area */}
+                <div className="relative aspect-square w-full rounded-xl overflow-hidden mb-3" style={{ backgroundColor: `${brandColor}08` }}>
+                  {product.image ? (
+                    <img 
+                      src={product.image} 
+                      className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-110" 
+                      alt={product.name} 
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center">
+                      <Package size={32} className="text-slate-300" />
+                    </div>
+                  )}
+                  
+                  {/* Discount Badge */}
+                  {discount && (
+                    <span className="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: brandColor }}>
+                      {discount}
+                    </span>
+                  )}
+
+                  {/* Hover Action Button */}
+                  <div className="absolute bottom-2 right-2 translate-y-10 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                    <div className="text-white p-2 rounded-full shadow-lg" style={{ backgroundColor: brandColor }}>
+                      <ArrowRight size={16} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Info Area */}
+                <div className="mt-auto px-1">
+                  <h4 className="font-medium text-sm text-slate-900 truncate group-hover:opacity-80 transition-colors">
+                    {product.name}
+                  </h4>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-sm font-bold" style={{ color: brandColor }}>
+                      {formatPrice(product.salePrice || product.price)}
+                    </span>
+                    {product.salePrice && product.price && product.salePrice < product.price && (
+                      <span className="text-[10px] text-slate-400 line-through opacity-70">
+                        {formatPrice(product.price)}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </Link>
             );
           })}
         </div>
-        
-        {/* View All */}
-        {showViewAll && (
-          <div className="flex justify-center pt-6 md:pt-8 px-4">
-            <Link 
-              href="/products" 
-              className="group inline-flex items-center gap-2 px-5 py-2.5 border border-slate-200 rounded-lg font-medium text-sm hover:border-slate-300 transition-all min-w-[160px] justify-center"
-            >
-              Xem toàn bộ
-              <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-            </Link>
-          </div>
-        )}
+
+        {/* Mobile: 2x2 simple grid */}
+        <div className="grid md:hidden grid-cols-2 gap-3">
+          {products.slice(0, 4).map((product) => {
+            const discount = getDiscount(product.price, product.salePrice);
+            return (
+              <Link key={product._id} href={`/products/${product.slug}`} className="group bg-white border border-slate-200 rounded-xl p-2 flex flex-col cursor-pointer hover:shadow-md transition-all">
+                <div className="relative aspect-square w-full rounded-lg bg-slate-100 overflow-hidden mb-2">
+                  {product.image ? (
+                    <img src={product.image} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" alt={product.name} />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center"><Package size={24} className="text-slate-300" /></div>
+                  )}
+                  {discount && (
+                    <span className="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: brandColor }}>
+                      {discount}
+                    </span>
+                  )}
+                </div>
+                <h4 className="font-medium text-sm text-slate-900 truncate group-hover:opacity-80 transition-colors">{product.name}</h4>
+                <span className="text-sm font-bold mt-1" style={{ color: brandColor }}>{formatPrice(product.salePrice || product.price)}</span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
