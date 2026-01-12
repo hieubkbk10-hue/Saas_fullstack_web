@@ -37,7 +37,7 @@ function GalleryCreateContent() {
     { id: 'item-1', url: '', link: '', name: '' },
     { id: 'item-2', url: '', link: '', name: '' }
   ]);
-  const [style, setStyle] = useState<GalleryStyle>('grid');
+  const [style, setStyle] = useState<GalleryStyle>(type === 'Gallery' ? 'spotlight' : 'grid');
   const [trustBadgesStyle, setTrustBadgesStyle] = useState<TrustBadgesStyle>('cards');
 
   const onSubmit = (e: React.FormEvent) => {
@@ -76,12 +76,12 @@ function GalleryCreateContent() {
             }
             minItems={1}
             maxItems={20}
-            aspectRatio={type === 'Partners' ? 'video' : 'square'}
-            columns={type === 'TrustBadges' ? 3 : type === 'Gallery' ? 3 : 4}
+            aspectRatio={type === 'Partners' ? 'video' : type === 'Gallery' ? 'video' : 'square'}
+            columns={type === 'Gallery' ? 2 : type === 'TrustBadges' ? 3 : 4}
             showReorder={true}
             addButtonText={type === 'Partners' ? 'Thêm logo' : type === 'TrustBadges' ? 'Thêm chứng nhận' : 'Thêm ảnh'}
             emptyText="Chưa có ảnh nào"
-            layout={type === 'TrustBadges' ? 'vertical' : 'horizontal'}
+            layout={type === 'Gallery' ? 'vertical' : type === 'TrustBadges' ? 'vertical' : 'horizontal'}
           />
         </CardContent>
       </Card>

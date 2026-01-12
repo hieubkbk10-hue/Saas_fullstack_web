@@ -527,11 +527,11 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                   }
                   minItems={1}
                   maxItems={20}
-                  aspectRatio={component.type === 'Partners' ? 'video' : 'square'}
-                  columns={component.type === 'TrustBadges' ? 3 : component.type === 'Gallery' ? 3 : 4}
+                  aspectRatio={component.type === 'Partners' ? 'video' : component.type === 'Gallery' ? 'video' : 'square'}
+                  columns={component.type === 'Gallery' ? 2 : component.type === 'TrustBadges' ? 3 : 4}
                   showReorder={true}
                   addButtonText={component.type === 'Partners' ? 'Thêm logo' : component.type === 'TrustBadges' ? 'Thêm chứng nhận' : 'Thêm ảnh'}
-                  layout={component.type === 'TrustBadges' ? 'vertical' : 'horizontal'}
+                  layout={component.type === 'Gallery' ? 'vertical' : component.type === 'TrustBadges' ? 'vertical' : 'horizontal'}
                 />
               </CardContent>
             </Card>
