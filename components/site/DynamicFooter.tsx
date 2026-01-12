@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor, useSiteSettings, useSocialLinks } from './hooks';
-import { Globe, ImageIcon, ExternalLink, Star, Phone } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Twitter, Linkedin, Github, Globe } from 'lucide-react';
 
 type SocialLinkItem = { id: number; platform: string; url: string; icon: string };
 type FooterConfig = {
@@ -18,14 +18,31 @@ type FooterConfig = {
   style?: 'classic' | 'modern' | 'corporate' | 'minimal';
 };
 
+// Custom TikTok icon (Lucide không có)
+const TikTokIcon = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+  </svg>
+);
+
+// Custom Zalo icon (Lucide không có)
+const ZaloIcon = ({ size = 18 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2C6.48 2 2 6.08 2 11.08c0 2.83 1.34 5.36 3.44 7.08l-.72 3.58a.5.5 0 0 0 .72.52l3.4-1.78c.98.32 2.04.5 3.16.5 5.52 0 10-4.08 10-9.08S17.52 2 12 2zm4.5 12.5h-5l4-5h-4v-1h5l-4 5h4v1z"/>
+  </svg>
+);
+
 // Social icons based on platform
 const SocialIcon = ({ platform, size = 18 }: { platform: string; size?: number }) => {
   switch (platform) {
-    case 'facebook': return <Globe size={size} />;
-    case 'instagram': return <ImageIcon size={size} />;
-    case 'youtube': return <ExternalLink size={size} />;
-    case 'tiktok': return <Star size={size} />;
-    case 'zalo': return <Phone size={size} />;
+    case 'facebook': return <Facebook size={size} />;
+    case 'instagram': return <Instagram size={size} />;
+    case 'youtube': return <Youtube size={size} />;
+    case 'tiktok': return <TikTokIcon size={size} />;
+    case 'zalo': return <ZaloIcon size={size} />;
+    case 'twitter': return <Twitter size={size} />;
+    case 'linkedin': return <Linkedin size={size} />;
+    case 'github': return <Github size={size} />;
     default: return <Globe size={size} />;
   }
 };
