@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { 
   Monitor, Tablet, Smartphone, Eye, ChevronLeft, ChevronRight, 
   Image as ImageIcon, Star, Check, ExternalLink, Globe, Mail, 
-  Phone, Package, FileText, Users, MapPin, Tag, ArrowUpRight, Briefcase, Plus, ArrowRight
+  Phone, Package, FileText, Users, MapPin, Tag, ArrowUpRight, Briefcase, Plus, ArrowRight,
+  Medal, X, ZoomIn, Maximize2
 } from 'lucide-react';
 import { cn, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
 
@@ -3540,6 +3541,306 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
         {previewStyle === 'split' && renderSplitStyle()}
         {previewStyle === 'centered' && renderCenteredStyle()}
         {previewStyle === 'cards' && renderCardsStyle()}
+      </BrowserFrame>
+    </PreviewWrapper>
+  );
+};
+
+// ============ TRUST BADGES / CERTIFICATIONS PREVIEW ============
+// 4 Professional Styles: Grid, Cards, Marquee, Wall
+type TrustBadgeItem = { id: number; url: string; link: string; name?: string };
+export type TrustBadgesStyle = 'grid' | 'cards' | 'marquee' | 'wall';
+
+// Auto Scroll Slider cho Marquee style
+const TrustBadgesAutoScroll = ({ children, speed = 0.6, isPaused }: { children: React.ReactNode; speed?: number; isPaused?: boolean }) => {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+
+    let animationId: number;
+    let position = scroller.scrollLeft;
+
+    const step = () => {
+      if (!isPaused && scroller) {
+        position += speed;
+        if (position >= scroller.scrollWidth / 2) {
+          position = 0;
+        }
+        scroller.scrollLeft = position;
+      } else if (scroller) {
+        position = scroller.scrollLeft;
+      }
+      animationId = requestAnimationFrame(step);
+    };
+
+    animationId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animationId);
+  }, [isPaused, speed]);
+
+  return (
+    <div 
+      ref={scrollRef}
+      className="flex overflow-hidden select-none w-full cursor-grab active:cursor-grabbing"
+      style={{ 
+        maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+        WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
+      }}
+    >
+      <div className="flex shrink-0 gap-16 md:gap-20 items-center px-4">{children}</div>
+      <div className="flex shrink-0 gap-16 md:gap-20 items-center px-4">{children}</div>
+    </div>
+  );
+};
+
+export const TrustBadgesPreview = ({ 
+  items, 
+  brandColor, 
+  selectedStyle, 
+  onStyleChange 
+}: { 
+  items: TrustBadgeItem[]; 
+  brandColor: string; 
+  selectedStyle?: TrustBadgesStyle; 
+  onStyleChange?: (style: TrustBadgesStyle) => void;
+}) => {
+  const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const [isPaused, setIsPaused] = useState(false);
+  const previewStyle = selectedStyle || 'cards';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as TrustBadgesStyle);
+  
+  const styles = [
+    { id: 'grid', label: 'Grid Vuông' }, 
+    { id: 'cards', label: 'Thẻ Lớn' }, 
+    { id: 'marquee', label: 'Dải Logo' },
+    { id: 'wall', label: 'Khung Tranh' }
+  ];
+
+  // Style 1: Square Grid - Grayscale hover to color, with zoom icon
+  const renderGridStyle = () => (
+    <section className="w-full py-12 md:py-16 bg-white dark:bg-slate-900">
+      <div className="container max-w-7xl mx-auto px-4 md:px-6">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center p-3 rounded-full mb-4" style={{ backgroundColor: `${brandColor}15` }}>
+            <Medal className="w-6 h-6" style={{ color: brandColor }} />
+          </div>
+          <h2 className={cn(
+            "font-bold text-slate-900 dark:text-slate-100",
+            device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
+          )}>Chứng nhận & Giải thưởng</h2>
+        </div>
+        
+        {/* Grid */}
+        <div className={cn(
+          "grid gap-4 md:gap-6",
+          device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4'
+        )}>
+          {items.slice(0, device === 'mobile' ? 4 : 8).map((item) => (
+            <div 
+              key={item.id} 
+              className="group relative aspect-square bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center p-6 md:p-8 cursor-pointer hover:border-blue-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+            >
+              {item.url ? (
+                <img 
+                  src={item.url} 
+                  className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-70 group-hover:opacity-100 transition-all duration-300" 
+                  alt={item.name || ''} 
+                />
+              ) : (
+                <ImageIcon size={40} className="text-slate-300" />
+              )}
+              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Maximize2 className="w-5 h-5 text-blue-500" />
+              </div>
+              {item.name && (
+                <div className="absolute bottom-2 left-2 right-2 text-center">
+                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate block px-2">{item.name}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 2: Feature Cards - Large cards with image and title, hover zoom effect (BEST)
+  const renderCardsStyle = () => (
+    <section className="w-full py-12 md:py-16 bg-white dark:bg-slate-900">
+      <div className="container max-w-7xl mx-auto px-4 md:px-6">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center p-3 rounded-full mb-4" style={{ backgroundColor: `${brandColor}15` }}>
+            <Medal className="w-6 h-6" style={{ color: brandColor }} />
+          </div>
+          <h2 className={cn(
+            "font-bold text-slate-900 dark:text-slate-100",
+            device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
+          )}>Chứng nhận & Giải thưởng</h2>
+        </div>
+
+        {/* Cards Grid */}
+        <div className={cn(
+          "grid gap-6 md:gap-8",
+          device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+        )}>
+          {items.slice(0, device === 'mobile' ? 2 : 3).map((item) => (
+            <div 
+              key={item.id} 
+              className="group relative flex flex-col border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm hover:shadow-2xl hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-500 cursor-pointer h-full"
+            >
+              {/* Image Container */}
+              <div className="aspect-[5/4] bg-slate-50 dark:bg-slate-700/30 flex items-center justify-center p-8 md:p-12 relative overflow-hidden">
+                {/* Hover Background */}
+                <div className="absolute inset-0 bg-blue-50/0 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/20 transition-colors duration-300" />
+                
+                {item.url ? (
+                  <img 
+                    src={item.url} 
+                    className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" 
+                    alt={item.name || ''} 
+                  />
+                ) : (
+                  <ImageIcon size={48} className="text-slate-300" />
+                )}
+                
+                {/* Hover Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                  <span className="bg-white/90 dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-full shadow-lg font-medium flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform text-sm">
+                    <ZoomIn size={16} /> Xem chi tiết
+                  </span>
+                </div>
+              </div>
+              
+              {/* Footer with Title */}
+              <div className="py-4 px-5 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between group-hover:bg-slate-50 dark:group-hover:bg-slate-700/50 transition-colors">
+                <span className="font-semibold text-slate-700 dark:text-slate-300 truncate group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors text-sm">
+                  {item.name || 'Chứng nhận'}
+                </span>
+                <Medal size={16} className="text-amber-500 flex-shrink-0" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 3: Marquee - Auto scroll slider with tooltip
+  const renderMarqueeStyle = () => (
+    <section 
+      className="w-full py-16 md:py-20 bg-slate-50 dark:bg-slate-800/50 border-y border-slate-200 dark:border-slate-700"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* Header */}
+      <div className="container max-w-7xl mx-auto px-4 mb-10 text-center">
+        <span className="px-4 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest shadow-sm">
+          Trusted by Industry Leaders
+        </span>
+      </div>
+      
+      {/* Auto Scroll */}
+      <TrustBadgesAutoScroll speed={0.6} isPaused={isPaused}>
+        {items.map((item) => (
+          <div 
+            key={item.id} 
+            className="h-28 md:h-36 w-auto flex items-center justify-center px-4 opacity-60 hover:opacity-100 hover:scale-110 transition-all duration-300 cursor-pointer relative group"
+          >
+            {item.url ? (
+              <img src={item.url} className="h-full w-auto object-contain max-w-[250px]" alt={item.name || ''} />
+            ) : (
+              <div className="h-20 w-32 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
+                <ImageIcon size={32} className="text-slate-400" />
+              </div>
+            )}
+            {/* Tooltip on hover */}
+            {item.name && (
+              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">
+                {item.name}
+              </div>
+            )}
+          </div>
+        ))}
+      </TrustBadgesAutoScroll>
+    </section>
+  );
+
+  // Style 4: Framed Wall - Certificate frames hanging on wall
+  const renderWallStyle = () => (
+    <section className="w-full py-14 md:py-20 bg-slate-100 dark:bg-slate-800/30">
+      <div className="container max-w-7xl mx-auto px-4">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center p-3 rounded-full mb-4" style={{ backgroundColor: `${brandColor}15` }}>
+            <Medal className="w-6 h-6" style={{ color: brandColor }} />
+          </div>
+          <h2 className={cn(
+            "font-bold text-slate-900 dark:text-slate-100",
+            device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
+          )}>Chứng nhận & Giải thưởng</h2>
+        </div>
+        
+        {/* Wall of Frames */}
+        <div className={cn(
+          "flex flex-wrap justify-center gap-6 md:gap-10",
+          device === 'mobile' && 'gap-4'
+        )}>
+          {items.slice(0, device === 'mobile' ? 4 : 6).map((item) => (
+            <div 
+              key={item.id} 
+              className={cn(
+                "group relative bg-white dark:bg-slate-800 p-3 md:p-4 shadow-md rounded-sm border border-slate-200 dark:border-slate-700 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer",
+                device === 'mobile' ? 'w-36 h-48' : 'w-52 h-64'
+              )}
+            >
+              {/* Hanging Wire */}
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-12 bg-gradient-to-b from-slate-300 dark:from-slate-600 to-transparent opacity-50 z-0"></div>
+              <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600 shadow-inner z-10"></div>
+              
+              {/* Image Frame */}
+              <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-700/30 border border-slate-100 dark:border-slate-600 p-4 relative z-10 overflow-hidden">
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 dark:group-hover:bg-white/5 transition-colors z-20 pointer-events-none"></div>
+                {item.url ? (
+                  <img src={item.url} className="w-full h-full object-contain" alt={item.name || ''} />
+                ) : (
+                  <ImageIcon size={32} className="text-slate-300" />
+                )}
+              </div>
+              
+              {/* Label */}
+              <div className={cn("flex items-center justify-center relative z-10", device === 'mobile' ? 'h-8' : 'h-10')}>
+                <span className={cn(
+                  "font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors text-center truncate px-1",
+                  device === 'mobile' ? 'text-[9px]' : 'text-[10px]'
+                )}>
+                  {item.name ? (item.name.length > 20 ? item.name.substring(0, 18) + '...' : item.name) : 'Certificate'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+
+  return (
+    <PreviewWrapper 
+      title="Preview Chứng nhận" 
+      device={device} 
+      setDevice={setDevice} 
+      previewStyle={previewStyle} 
+      setPreviewStyle={setPreviewStyle} 
+      styles={styles} 
+      info={`${items.length} chứng nhận`}
+    >
+      <BrowserFrame>
+        {previewStyle === 'grid' && renderGridStyle()}
+        {previewStyle === 'cards' && renderCardsStyle()}
+        {previewStyle === 'marquee' && renderMarqueeStyle()}
+        {previewStyle === 'wall' && renderWallStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );

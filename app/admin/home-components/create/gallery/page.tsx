@@ -4,7 +4,7 @@ import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { GalleryPreview, type GalleryStyle } from '../../previews';
+import { GalleryPreview, TrustBadgesPreview, type GalleryStyle, type TrustBadgesStyle } from '../../previews';
 import { MultiImageUploader, ImageItem } from '../../../components/MultiImageUploader';
 
 interface GalleryItem extends ImageItem {
@@ -38,9 +38,11 @@ function GalleryCreateContent() {
     { id: 'item-2', url: '', link: '', name: '' }
   ]);
   const [style, setStyle] = useState<GalleryStyle>('grid');
+  const [trustBadgesStyle, setTrustBadgesStyle] = useState<TrustBadgesStyle>('cards');
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { items: galleryItems.map(g => ({ url: g.url, link: g.link, name: g.name })), style });
+    const finalStyle = type === 'TrustBadges' ? trustBadgesStyle : style;
+    handleSubmit(e, { items: galleryItems.map(g => ({ url: g.url, link: g.link, name: g.name })), style: finalStyle });
   };
 
   return (
@@ -84,13 +86,22 @@ function GalleryCreateContent() {
         </CardContent>
       </Card>
 
-      <GalleryPreview 
-        items={galleryItems.map((item, idx) => ({ id: idx + 1, url: item.url, link: item.link }))} 
-        brandColor={brandColor} 
-        componentType={type}
-        selectedStyle={style}
-        onStyleChange={setStyle}
-      />
+      {type === 'TrustBadges' ? (
+        <TrustBadgesPreview 
+          items={galleryItems.map((item, idx) => ({ id: idx + 1, url: item.url, link: item.link, name: item.name }))} 
+          brandColor={brandColor}
+          selectedStyle={trustBadgesStyle}
+          onStyleChange={setTrustBadgesStyle}
+        />
+      ) : (
+        <GalleryPreview 
+          items={galleryItems.map((item, idx) => ({ id: idx + 1, url: item.url, link: item.link }))} 
+          brandColor={brandColor} 
+          componentType={type}
+          selectedStyle={style}
+          onStyleChange={setStyle}
+        />
+      )}
     </ComponentFormWrapper>
   );
 }

@@ -7,7 +7,7 @@ import { ProductListSection } from './ProductListSection';
 import { ServiceListSection } from './ServiceListSection';
 import { 
   LayoutTemplate, Package, FileText, HelpCircle, MousePointerClick, 
-  Users, Star, Phone, Briefcase, Image as ImageIcon, Check
+  Users, Star, Phone, Briefcase, Image as ImageIcon, Check, Medal, ZoomIn, Maximize2, X
 } from 'lucide-react';
 
 interface HomeComponent {
@@ -49,8 +49,9 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
       return <ContactSection config={config} brandColor={brandColor} title={title} />;
     case 'Gallery':
     case 'Partners':
-    case 'TrustBadges':
       return <GallerySection config={config} brandColor={brandColor} title={title} type={type} />;
+    case 'TrustBadges':
+      return <TrustBadgesSection config={config} brandColor={brandColor} title={title} />;
     case 'Pricing':
       return <PricingSection config={config} brandColor={brandColor} title={title} />;
     case 'ProductList':
@@ -1467,6 +1468,295 @@ const AutoScrollSlider = ({ children, speed = 0.5 }: { children: React.ReactNode
     </div>
   );
 };
+
+// ============ TRUST BADGES / CERTIFICATIONS SECTION ============
+// 4 Styles: grid, cards, marquee, wall (matching the reference UI)
+
+type TrustBadgesStyle = 'grid' | 'cards' | 'marquee' | 'wall';
+type TrustBadgeItem = { url: string; link?: string; name?: string };
+
+// Auto Scroll component for TrustBadges Marquee
+const TrustBadgesAutoScroll = ({ children, speed = 0.6 }: { children: React.ReactNode; speed?: number }) => {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = React.useState(false);
+
+  React.useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+
+    let animationId: number;
+    let position = scroller.scrollLeft;
+
+    const step = () => {
+      if (!isPaused && scroller) {
+        position += speed;
+        if (position >= scroller.scrollWidth / 2) {
+          position = 0;
+        }
+        scroller.scrollLeft = position;
+      } else if (scroller) {
+        position = scroller.scrollLeft;
+      }
+      animationId = requestAnimationFrame(step);
+    };
+
+    animationId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animationId);
+  }, [isPaused, speed]);
+
+  return (
+    <div 
+      ref={scrollRef}
+      className="flex overflow-hidden select-none w-full cursor-grab active:cursor-grabbing"
+      style={{ 
+        maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+        WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
+      }}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      <div className="flex shrink-0 gap-16 md:gap-20 items-center px-4">{children}</div>
+      <div className="flex shrink-0 gap-16 md:gap-20 items-center px-4">{children}</div>
+    </div>
+  );
+};
+
+// Modal Lightbox for viewing certificates
+const CertificateModal = ({ 
+  item, 
+  isOpen, 
+  onClose 
+}: { 
+  item: TrustBadgeItem | null; 
+  isOpen: boolean; 
+  onClose: () => void;
+}) => {
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !item) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <button 
+        onClick={onClose}
+        className="absolute top-4 right-4 md:top-8 md:right-8 p-2 rounded-full bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all focus:outline-none z-50"
+        aria-label="Close modal"
+      >
+        <X size={32} />
+      </button>
+      <div 
+        className="relative max-w-5xl w-full max-h-[90vh] p-4 flex flex-col items-center justify-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative w-auto h-auto flex flex-col items-center">
+          <img 
+            src={item.url} 
+            alt={item.name || ''} 
+            className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl bg-white p-2 md:p-4 animate-in zoom-in-95 duration-300" 
+          />
+          {item.name && (
+            <p className="mt-4 text-white/90 text-lg md:text-xl font-medium tracking-wide text-center">
+              {item.name}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+function TrustBadgesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
+  const items = (config.items as TrustBadgeItem[]) || [];
+  const style = (config.style as TrustBadgesStyle) || 'cards';
+  const [selectedCert, setSelectedCert] = React.useState<TrustBadgeItem | null>(null);
+
+  // Style 1: Square Grid - Grayscale hover to color, clickable to lightbox
+  if (style === 'grid') {
+    return (
+      <section className="w-full py-12 md:py-16 bg-white">
+        <div className="container max-w-7xl mx-auto px-4 md:px-6">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center p-3 rounded-full mb-4" style={{ backgroundColor: `${brandColor}15` }}>
+              <Medal className="w-6 h-6" style={{ color: brandColor }} />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{title}</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {items.map((item, idx) => (
+              <div 
+                key={idx} 
+                onClick={() => setSelectedCert(item)}
+                className="group relative aspect-square bg-white border border-slate-200 rounded-xl flex items-center justify-center p-6 md:p-8 cursor-zoom-in hover:border-blue-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+              >
+                {item.url ? (
+                  <img 
+                    src={item.url} 
+                    className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-70 group-hover:opacity-100 transition-all duration-300" 
+                    alt={item.name || ''} 
+                  />
+                ) : (
+                  <ImageIcon size={40} className="text-slate-300" />
+                )}
+                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Maximize2 className="w-5 h-5 text-blue-500" />
+                </div>
+                {item.name && (
+                  <div className="absolute bottom-2 left-2 right-2 text-center">
+                    <span className="text-[10px] font-medium text-slate-500 truncate block px-2">{item.name}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+        <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
+      </section>
+    );
+  }
+
+  // Style 2: Feature Cards - Large cards with title, hover zoom (BEST)
+  if (style === 'cards') {
+    return (
+      <section className="w-full py-12 md:py-16 bg-white">
+        <div className="container max-w-7xl mx-auto px-4 md:px-6">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center p-3 rounded-full mb-4" style={{ backgroundColor: `${brandColor}15` }}>
+              <Medal className="w-6 h-6" style={{ color: brandColor }} />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{title}</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {items.map((item, idx) => (
+              <div 
+                key={idx} 
+                onClick={() => setSelectedCert(item)}
+                className="group relative flex flex-col border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-2xl hover:border-blue-200 transition-all duration-500 cursor-zoom-in h-full"
+              >
+                <div className="aspect-[5/4] bg-slate-50/50 flex items-center justify-center p-8 md:p-12 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-blue-50/0 group-hover:bg-blue-50/30 transition-colors duration-300" />
+                  {item.url ? (
+                    <img 
+                      src={item.url} 
+                      className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" 
+                      alt={item.name || ''} 
+                    />
+                  ) : (
+                    <ImageIcon size={48} className="text-slate-300" />
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                    <span className="bg-white/90 text-slate-800 px-4 py-2 rounded-full shadow-lg font-medium flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform text-sm">
+                      <ZoomIn size={16} /> Xem chi tiết
+                    </span>
+                  </div>
+                </div>
+                <div className="py-4 px-5 bg-white border-t border-slate-100 flex items-center justify-between group-hover:bg-slate-50 transition-colors">
+                  <span className="font-semibold text-slate-700 truncate group-hover:text-blue-700 transition-colors text-sm">
+                    {item.name || 'Chứng nhận'}
+                  </span>
+                  <Medal size={16} className="text-amber-500 flex-shrink-0" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
+      </section>
+    );
+  }
+
+  // Style 3: Marquee - Auto scroll slider with tooltip
+  if (style === 'marquee') {
+    return (
+      <section className="w-full py-16 md:py-20 bg-slate-50 border-y border-slate-200">
+        <div className="container max-w-7xl mx-auto px-4 mb-10 text-center">
+          <span className="px-4 py-2 rounded-full bg-white border border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-widest shadow-sm">
+            Trusted by Industry Leaders
+          </span>
+        </div>
+        <TrustBadgesAutoScroll speed={0.6}>
+          {items.map((item, idx) => (
+            <div 
+              key={idx} 
+              onClick={() => setSelectedCert(item)}
+              className="h-28 md:h-36 w-auto flex items-center justify-center px-4 opacity-60 hover:opacity-100 hover:scale-110 transition-all duration-300 cursor-zoom-in relative group"
+            >
+              {item.url ? (
+                <img src={item.url} className="h-full w-auto object-contain max-w-[250px]" alt={item.name || ''} />
+              ) : (
+                <div className="h-20 w-32 bg-slate-200 rounded flex items-center justify-center">
+                  <ImageIcon size={32} className="text-slate-400" />
+                </div>
+              )}
+              {item.name && (
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">
+                  {item.name}
+                </div>
+              )}
+            </div>
+          ))}
+        </TrustBadgesAutoScroll>
+        <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
+      </section>
+    );
+  }
+
+  // Style 4: Framed Wall - Certificate frames hanging on wall (default)
+  return (
+    <section className="w-full py-14 md:py-20 bg-slate-100">
+      <div className="container max-w-7xl mx-auto px-4">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center p-3 rounded-full mb-4" style={{ backgroundColor: `${brandColor}15` }}>
+            <Medal className="w-6 h-6" style={{ color: brandColor }} />
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{title}</h2>
+        </div>
+        <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+          {items.map((item, idx) => (
+            <div 
+              key={idx} 
+              onClick={() => setSelectedCert(item)}
+              className="group relative bg-white p-3 md:p-4 shadow-md rounded-sm border border-slate-200 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-zoom-in w-40 h-52 md:w-52 md:h-64"
+            >
+              {/* Hanging Wire */}
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-12 bg-gradient-to-b from-slate-300 to-transparent opacity-50 z-0"></div>
+              <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-slate-300 shadow-inner z-10"></div>
+              
+              <div className="flex-1 flex items-center justify-center bg-white border border-slate-100 p-4 relative z-10 overflow-hidden">
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors z-20 pointer-events-none"></div>
+                {item.url ? (
+                  <img src={item.url} className="w-full h-full object-contain" alt={item.name || ''} />
+                ) : (
+                  <ImageIcon size={32} className="text-slate-300" />
+                )}
+              </div>
+              <div className="h-8 md:h-10 flex items-center justify-center relative z-10">
+                <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors text-center truncate px-1">
+                  {item.name ? (item.name.length > 20 ? item.name.substring(0, 18) + '...' : item.name) : 'Certificate'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
+    </section>
+  );
+}
 
 function GallerySection({ config, brandColor, title, type }: { config: Record<string, unknown>; brandColor: string; title: string; type: string }) {
   const items = (config.items as Array<{ url: string; link?: string }>) || [];

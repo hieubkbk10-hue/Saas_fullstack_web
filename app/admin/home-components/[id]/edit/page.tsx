@@ -24,6 +24,7 @@ import {
   ServicesPreview, ServicesStyle,
   BenefitsPreview, BenefitsStyle,
   GalleryPreview, GalleryStyle,
+  TrustBadgesPreview, TrustBadgesStyle,
   ContactPreview, ContactStyle,
   BlogPreview, BlogStyle,
   ProductListPreview, ProductListStyle,
@@ -103,6 +104,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [heroStyle, setHeroStyle] = useState<HeroStyle>('slider');
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [galleryStyle, setGalleryStyle] = useState<GalleryStyle>('grid');
+  const [trustBadgesStyle, setTrustBadgesStyle] = useState<TrustBadgesStyle>('cards');
   const [statsItems, setStatsItems] = useState<{id: number, value: string, label: string}[]>([]);
   const [statsStyle, setStatsStyle] = useState<StatsStyle>('horizontal');
   const [ctaConfig, setCtaConfig] = useState({ title: '', description: '', buttonText: '', buttonLink: '', secondaryButtonText: '', secondaryButtonLink: '' });
@@ -220,9 +222,12 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           break;
         case 'Gallery':
         case 'Partners':
+          setGalleryItems(config.items?.map((item: {url: string, link: string, name?: string}, i: number) => ({ id: `item-${i}`, url: item.url, link: item.link || '', name: item.name || '' })) || [{ id: 'item-1', url: '', link: '', name: '' }]);
+          setGalleryStyle((config.style as GalleryStyle) || 'grid');
+          break;
         case 'TrustBadges':
           setGalleryItems(config.items?.map((item: {url: string, link: string, name?: string}, i: number) => ({ id: `item-${i}`, url: item.url, link: item.link || '', name: item.name || '' })) || [{ id: 'item-1', url: '', link: '', name: '' }]);
-          setGalleryStyle((config.style as GalleryStyle) || 'slider');
+          setTrustBadgesStyle((config.style as TrustBadgesStyle) || 'cards');
           break;
         case 'Stats':
           setStatsItems(config.items?.map((item: {value: string, label: string}, i: number) => ({ id: i, value: item.value, label: item.label })) || [{ id: 1, value: '', label: '' }]);
@@ -339,8 +344,9 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         return { slides: heroSlides.map(s => ({ image: s.url, link: s.link })), style: heroStyle };
       case 'Gallery':
       case 'Partners':
-      case 'TrustBadges':
         return { items: galleryItems.map(g => ({ url: g.url, link: g.link, name: g.name })), style: galleryStyle };
+      case 'TrustBadges':
+        return { items: galleryItems.map(g => ({ url: g.url, link: g.link, name: g.name })), style: trustBadgesStyle };
       case 'Stats':
         return { items: statsItems.map(s => ({ value: s.value, label: s.label })), style: statsStyle };
       case 'CTA':
@@ -529,13 +535,22 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                 />
               </CardContent>
             </Card>
-            <GalleryPreview 
-              items={galleryItems.map((g, idx) => ({ id: idx + 1, url: g.url, link: g.link }))} 
-              brandColor={brandColor}
-              componentType={component.type as 'Gallery' | 'Partners' | 'TrustBadges'}
-              selectedStyle={galleryStyle}
-              onStyleChange={setGalleryStyle}
-            />
+            {component.type === 'TrustBadges' ? (
+              <TrustBadgesPreview 
+                items={galleryItems.map((g, idx) => ({ id: idx + 1, url: g.url, link: g.link, name: g.name }))} 
+                brandColor={brandColor}
+                selectedStyle={trustBadgesStyle}
+                onStyleChange={setTrustBadgesStyle}
+              />
+            ) : (
+              <GalleryPreview 
+                items={galleryItems.map((g, idx) => ({ id: idx + 1, url: g.url, link: g.link }))} 
+                brandColor={brandColor}
+                componentType={component.type as 'Gallery' | 'Partners'}
+                selectedStyle={galleryStyle}
+                onStyleChange={setGalleryStyle}
+              />
+            )}
           </>
         )}
 
