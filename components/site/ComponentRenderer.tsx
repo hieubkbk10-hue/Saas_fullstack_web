@@ -1545,7 +1545,7 @@ const CertificateModal = ({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen || !item) return null;
+  if (!isOpen || !item || !item.url) return null;
 
   return (
     <div 
