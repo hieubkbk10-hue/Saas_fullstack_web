@@ -57,16 +57,6 @@ const darkenColor = (hex: string, percent: number): string => {
   return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
 };
 
-// Utility: Lighten a hex color (for borders, hover states)
-const lightenColor = (hex: string, percent: number): string => {
-  const num = parseInt(hex.replace('#', ''), 16);
-  const amt = Math.round(2.55 * percent);
-  const R = Math.min((num >> 16) + amt, 255);
-  const G = Math.min((num >> 8 & 0x00FF) + amt, 255);
-  const B = Math.min((num & 0x0000FF) + amt, 255);
-  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
-};
-
 export function DynamicFooter() {
   const brandColor = useBrandColor();
   const { siteName, logo: siteLogo } = useSiteSettings();
@@ -112,12 +102,11 @@ export function DynamicFooter() {
 
   // Fallback footer nếu không có Footer component
   const fallbackBgDark = darkenColor(brandColor, 85);
-  const fallbackTextMuted = lightenColor(brandColor, 60);
   if (!footerComponent) {
     return (
       <footer className="text-white" style={{ backgroundColor: fallbackBgDark }}>
         <div className="py-6 px-4">
-          <p className="text-center text-sm" style={{ color: fallbackTextMuted }}>
+          <p className="text-center text-sm text-slate-500">
             © {currentYear} {siteName || 'VietAdmin'}. All rights reserved.
           </p>
         </div>
@@ -131,12 +120,22 @@ export function DynamicFooter() {
   const socials = getSocials(config);
   const columns = getColumns(config);
 
-  // Monochromatic color scheme from brandColor (optimized for contrast)
+  // Background colors from brandColor, text uses neutral colors
   const bgDark = darkenColor(brandColor, 85);      // Very dark background (near black)
   const bgMedium = darkenColor(brandColor, 75);    // Medium dark for cards/sections
   const borderColor = darkenColor(brandColor, 60); // Border color (subtle)
-  const textMuted = lightenColor(brandColor, 60);  // Muted text (good contrast)
-  const textLight = lightenColor(brandColor, 80);  // Light text (high contrast)
+
+  // Social media brand colors
+  const socialColors: Record<string, string> = {
+    facebook: '#1877F2',
+    instagram: '#E4405F', 
+    youtube: '#FF0000',
+    tiktok: '#000000',
+    zalo: '#0084FF',
+    twitter: '#1DA1F2',
+    linkedin: '#0A66C2',
+    github: '#181717',
+  };
 
   // Style 1: Classic Dark - Standard layout với brand column và menu columns
   if (style === 'classic') {
@@ -159,7 +158,7 @@ export function DynamicFooter() {
                 </div>
                 <span className="text-lg font-bold tracking-tight text-white">{siteName || 'VietAdmin'}</span>
               </Link>
-              <p className="text-sm leading-relaxed max-w-sm" style={{ color: textMuted }}>
+              <p className="text-sm leading-relaxed max-w-sm text-slate-400">
                 {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
               </p>
               {config.showSocialLinks !== false && (
@@ -170,8 +169,8 @@ export function DynamicFooter() {
                       href={s.url || '#'} 
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="h-8 w-8 flex items-center justify-center rounded-full hover:text-white transition-all duration-300"
-                      style={{ backgroundColor: bgMedium, color: textMuted, border: `1px solid ${borderColor}` }}
+                      className="h-8 w-8 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
+                      style={{ backgroundColor: bgMedium, color: socialColors[s.platform] || '#94a3b8', border: `1px solid ${borderColor}` }}
                     >
                       <SocialIcon platform={s.platform} size={16} />
                     </a>
@@ -190,8 +189,7 @@ export function DynamicFooter() {
                       <li key={lIdx}>
                         <Link 
                           href={link.url || '#'} 
-                          className="text-sm hover:text-white transition-colors block"
-                          style={{ color: textMuted }}
+                          className="text-sm hover:text-white transition-colors block text-slate-400"
                         >
                           {link.label}
                         </Link>
@@ -204,7 +202,7 @@ export function DynamicFooter() {
           </div>
 
           <div className="mt-8 pt-4" style={{ borderTop: `1px solid ${borderColor}50` }}>
-            <p className="text-xs" style={{ color: textMuted }}>{config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}</p>
+            <p className="text-xs text-slate-500">{config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}</p>
           </div>
         </div>
       </footer>
@@ -229,7 +227,7 @@ export function DynamicFooter() {
               )}
             </div>
             <h2 className="text-lg font-bold text-white tracking-tight">{siteName || 'VietAdmin'}</h2>
-            <p className="max-w-md text-sm leading-relaxed opacity-80" style={{ color: textMuted }}>
+            <p className="max-w-md text-sm leading-relaxed text-slate-400">
               {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
             </p>
           </div>
@@ -240,8 +238,8 @@ export function DynamicFooter() {
               <Link 
                 key={i} 
                 href={link.url || '#'} 
-                className="text-sm font-medium hover:text-white hover:underline underline-offset-4 transition-all"
-                style={{ color: textLight, textDecorationColor: brandColor }}
+                className="text-sm font-medium hover:text-white hover:underline underline-offset-4 transition-all text-slate-300"
+                style={{ textDecorationColor: brandColor }}
               >
                 {link.label}
               </Link>
@@ -259,8 +257,8 @@ export function DynamicFooter() {
                   href={s.url || '#'} 
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white hover:scale-110 transition-transform"
-                  style={{ color: textMuted }}
+                  className="hover:scale-110 transition-transform"
+                  style={{ color: socialColors[s.platform] || '#94a3b8' }}
                 >
                   <SocialIcon platform={s.platform} size={18} />
                 </a>
@@ -269,7 +267,7 @@ export function DynamicFooter() {
           )}
 
           {/* Copyright */}
-          <div className="text-xs font-medium" style={{ color: textMuted }}>
+          <div className="text-xs font-medium text-slate-500">
             {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
           </div>
         </div>
@@ -303,8 +301,8 @@ export function DynamicFooter() {
                     href={s.url || '#'} 
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-white transition-colors"
-                    style={{ color: textMuted }}
+                    className="hover:opacity-80 transition-colors"
+                    style={{ color: socialColors[s.platform] || '#94a3b8' }}
                   >
                     <SocialIcon platform={s.platform} size={16} />
                   </a>
@@ -317,7 +315,7 @@ export function DynamicFooter() {
           <div className="py-6 grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="md:col-span-2 md:pr-6">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2">Về Công Ty</h4>
-              <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
+              <p className="text-sm leading-relaxed text-slate-400">
                 {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
               </p>
             </div>
@@ -328,7 +326,7 @@ export function DynamicFooter() {
                 <ul className="space-y-1.5">
                   {col.links.map((link, lIdx) => (
                     <li key={lIdx}>
-                      <Link href={link.url || '#'} className="text-sm hover:text-white transition-colors" style={{ color: textMuted }}>
+                      <Link href={link.url || '#'} className="text-sm hover:text-white transition-colors text-slate-400">
                         {link.label}
                       </Link>
                     </li>
@@ -339,7 +337,7 @@ export function DynamicFooter() {
           </div>
 
           {/* Bottom Row */}
-          <div className="pt-4 text-xs text-center md:text-left" style={{ color: textMuted }}>
+          <div className="pt-4 text-xs text-center md:text-left text-slate-500">
             {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
           </div>
         </div>
@@ -362,7 +360,7 @@ export function DynamicFooter() {
                 {(siteName || 'V').charAt(0)}
               </div>
             )}
-            <span className="text-xs font-medium" style={{ color: textMuted }}>
+            <span className="text-xs font-medium text-slate-500">
               {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
             </span>
           </div>
@@ -376,8 +374,8 @@ export function DynamicFooter() {
                   href={s.url || '#'} 
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white transition-colors"
-                  style={{ color: textMuted }}
+                  className="hover:opacity-80 transition-colors"
+                  style={{ color: socialColors[s.platform] || '#94a3b8' }}
                 >
                   <SocialIcon platform={s.platform} size={16} />
                 </a>

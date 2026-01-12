@@ -2250,22 +2250,22 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
     return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
   };
 
-  // Utility: Lighten a hex color
-  const lightenColor = (hex: string, percent: number): string => {
-    const num = parseInt(hex.replace('#', ''), 16);
-    const amt = Math.round(2.55 * percent);
-    const R = Math.min((num >> 16) + amt, 255);
-    const G = Math.min((num >> 8 & 0x00FF) + amt, 255);
-    const B = Math.min((num & 0x0000FF) + amt, 255);
-    return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
-  };
-
-  // Monochromatic color scheme from brandColor (optimized for contrast)
+  // Background colors from brandColor, text uses neutral colors
   const bgDark = darkenColor(brandColor, 85);      // Very dark background (near black)
   const bgMedium = darkenColor(brandColor, 75);    // Medium dark for cards/sections
   const borderColor = darkenColor(brandColor, 60); // Border color (subtle)
-  const textMuted = lightenColor(brandColor, 60);  // Muted text (good contrast)
-  const textLight = lightenColor(brandColor, 80);  // Light text (high contrast)
+
+  // Social media brand colors
+  const socialColors: Record<string, string> = {
+    facebook: '#1877F2',
+    instagram: '#E4405F',
+    youtube: '#FF0000',
+    tiktok: '#000000',
+    zalo: '#0084FF',
+    twitter: '#1DA1F2',
+    linkedin: '#0A66C2',
+    github: '#181717',
+  };
 
   // Custom Facebook icon
   const FacebookIcon = ({ size = 18 }: { size?: number }) => (
@@ -2358,13 +2358,13 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
               </div>
               <span className="text-base font-bold tracking-tight text-white">VietAdmin</span>
             </div>
-            <p className={cn("text-xs leading-relaxed", device === 'mobile' ? '' : 'max-w-sm')} style={{ color: textMuted }}>
+            <p className={cn("text-xs leading-relaxed text-slate-400", device === 'mobile' ? '' : 'max-w-sm')}>
               {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
             </p>
             {config.showSocialLinks && (
               <div className={cn("flex gap-2", device === 'mobile' ? 'justify-center' : '')}>
                 {getSocials().map((s) => (
-                  <a key={s.id} href={s.url} className="h-7 w-7 flex items-center justify-center rounded-full hover:text-white transition-all duration-300" style={{ backgroundColor: bgMedium, color: textMuted, border: `1px solid ${borderColor}` }}>
+                  <a key={s.id} href={s.url} className="h-7 w-7 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300" style={{ backgroundColor: bgMedium, color: socialColors[s.platform] || '#94a3b8', border: `1px solid ${borderColor}` }}>
                     {renderSocialIcon(s.platform, 14)}
                   </a>
                 ))}
@@ -2383,7 +2383,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
                 <ul className="space-y-1.5">
                   {col.links.map((link, lIdx) => (
                     <li key={lIdx}>
-                      <a href={link.url} className="text-xs hover:text-white transition-colors block" style={{ color: textMuted }}>
+                      <a href={link.url} className="text-xs hover:text-white transition-colors block text-slate-400">
                         {link.label}
                       </a>
                     </li>
@@ -2395,7 +2395,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         </div>
 
         <div className="mt-6 pt-3" style={{ borderTop: `1px solid ${borderColor}50` }}>
-          <p className={cn("text-[10px]", device === 'mobile' ? 'text-center' : '')} style={{ color: textMuted }}>{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</p>
+          <p className={cn("text-[10px] text-slate-500", device === 'mobile' ? 'text-center' : '')}>{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</p>
         </div>
       </div>
     </footer>
@@ -2416,7 +2416,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
             )}
           </div>
           <h2 className="text-base font-bold text-white tracking-tight">VietAdmin</h2>
-          <p className={cn("text-xs leading-relaxed opacity-80", device === 'mobile' ? 'max-w-xs' : 'max-w-md')} style={{ color: textMuted }}>
+          <p className={cn("text-xs leading-relaxed text-slate-400", device === 'mobile' ? 'max-w-xs' : 'max-w-md')}>
             {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}
           </p>
         </div>
@@ -2424,7 +2424,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         {/* Navigation (Flat) */}
         <div className={cn("flex flex-wrap justify-center gap-x-4 gap-y-1.5", device === 'mobile' ? 'gap-x-3' : '')}>
           {getColumns().flatMap(col => col.links).slice(0, device === 'mobile' ? 4 : 8).map((link, i) => (
-            <a key={i} href={link.url} className="text-xs font-medium hover:text-white hover:underline underline-offset-4 transition-all" style={{ color: textLight, textDecorationColor: brandColor }}>
+            <a key={i} href={link.url} className="text-xs font-medium hover:text-white hover:underline underline-offset-4 transition-all text-slate-300" style={{ textDecorationColor: brandColor }}>
               {link.label}
             </a>
           ))}
@@ -2436,7 +2436,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         {config.showSocialLinks && (
           <div className="flex gap-3">
             {getSocials().map((s) => (
-              <a key={s.id} href={s.url} className="hover:text-white hover:scale-110 transition-transform" style={{ color: textMuted }}>
+              <a key={s.id} href={s.url} className="hover:scale-110 transition-transform" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
                 {renderSocialIcon(s.platform, 16)}
               </a>
             ))}
@@ -2444,7 +2444,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         )}
 
         {/* Copyright */}
-        <div className="text-[10px] font-medium" style={{ color: textMuted }}>
+        <div className="text-[10px] font-medium text-slate-500">
           {config.copyright || '© 2024 VietAdmin. All rights reserved.'}
         </div>
       </div>
@@ -2472,7 +2472,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
           {config.showSocialLinks && (
             <div className="flex gap-2">
               {getSocials().map((s) => (
-                <a key={s.id} href={s.url} className="hover:text-white transition-colors" style={{ color: textMuted }}>
+                <a key={s.id} href={s.url} className="hover:opacity-80 transition-colors" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
                   {renderSocialIcon(s.platform, 14)}
                 </a>
               ))}
@@ -2487,7 +2487,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         )}>
           <div className={cn(device === 'mobile' ? '' : 'col-span-2 md:col-span-2 pr-4')}>
             <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-2">Về Công Ty</h4>
-            <p className="text-xs leading-relaxed" style={{ color: textMuted }}>{config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}</p>
+            <p className="text-xs leading-relaxed text-slate-400">{config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}</p>
           </div>
           
           {getColumns().slice(0, 2).map((col) => (
@@ -2496,7 +2496,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
               <ul className="space-y-1">
                 {col.links.map((link, lIdx) => (
                   <li key={lIdx}>
-                    <a href={link.url} className="text-xs hover:text-white transition-colors" style={{ color: textMuted }}>
+                    <a href={link.url} className="text-xs hover:text-white transition-colors text-slate-400">
                       {link.label}
                     </a>
                   </li>
@@ -2507,7 +2507,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         </div>
 
         {/* Bottom Row */}
-        <div className={cn("pt-3 text-[10px]", device === 'mobile' ? 'text-center' : '')} style={{ color: textMuted }}>
+        <div className={cn("pt-3 text-[10px] text-slate-500", device === 'mobile' ? 'text-center' : '')}>
           {config.copyright || '© 2024 VietAdmin. All rights reserved.'}
         </div>
       </div>
@@ -2530,14 +2530,14 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
             ) : (
               <div className="h-4 w-4 rounded flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: brandColor }}>V</div>
             )}
-            <span className="text-[10px] font-medium" style={{ color: textMuted }}>{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</span>
+            <span className="text-[10px] font-medium text-slate-500">{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</span>
           </div>
 
           {/* Right: Socials only */}
           {config.showSocialLinks && (
             <div className="flex gap-2">
               {getSocials().map((s) => (
-                <a key={s.id} href={s.url} className="hover:text-white transition-colors" style={{ color: textMuted }}>
+                <a key={s.id} href={s.url} className="hover:opacity-80 transition-colors" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
                   {renderSocialIcon(s.platform, 14)}
                 </a>
               ))}
