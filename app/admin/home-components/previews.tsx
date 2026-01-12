@@ -2251,9 +2251,9 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
   };
 
   // Background colors from brandColor, text uses neutral colors
-  const bgDark = darkenColor(brandColor, 85);      // Very dark background (near black)
-  const bgMedium = darkenColor(brandColor, 75);    // Medium dark for cards/sections
-  const borderColor = darkenColor(brandColor, 60); // Border color (subtle)
+  const bgDark = darkenColor(brandColor, 70);      // Dark background
+  const bgMedium = darkenColor(brandColor, 60);    // Medium dark for cards/sections
+  const borderColor = darkenColor(brandColor, 45); // Border color (subtle)
 
   // Social media brand colors
   const socialColors: Record<string, string> = {

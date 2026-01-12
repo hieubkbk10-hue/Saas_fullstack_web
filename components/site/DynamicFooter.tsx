@@ -101,7 +101,7 @@ export function DynamicFooter() {
   };
 
   // Fallback footer nếu không có Footer component
-  const fallbackBgDark = darkenColor(brandColor, 85);
+  const fallbackBgDark = darkenColor(brandColor, 70);
   if (!footerComponent) {
     return (
       <footer className="text-white" style={{ backgroundColor: fallbackBgDark }}>
@@ -121,9 +121,9 @@ export function DynamicFooter() {
   const columns = getColumns(config);
 
   // Background colors from brandColor, text uses neutral colors
-  const bgDark = darkenColor(brandColor, 85);      // Very dark background (near black)
-  const bgMedium = darkenColor(brandColor, 75);    // Medium dark for cards/sections
-  const borderColor = darkenColor(brandColor, 60); // Border color (subtle)
+  const bgDark = darkenColor(brandColor, 70);      // Dark background
+  const bgMedium = darkenColor(brandColor, 60);    // Medium dark for cards/sections
+  const borderColor = darkenColor(brandColor, 45); // Border color (subtle)
 
   // Social media brand colors
   const socialColors: Record<string, string> = {
