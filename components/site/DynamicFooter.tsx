@@ -111,8 +111,8 @@ export function DynamicFooter() {
   };
 
   // Fallback footer nếu không có Footer component
-  const fallbackBgDark = darkenColor(brandColor, 70);
-  const fallbackTextMuted = lightenColor(brandColor, 30);
+  const fallbackBgDark = darkenColor(brandColor, 85);
+  const fallbackTextMuted = lightenColor(brandColor, 60);
   if (!footerComponent) {
     return (
       <footer className="text-white" style={{ backgroundColor: fallbackBgDark }}>
@@ -131,12 +131,12 @@ export function DynamicFooter() {
   const socials = getSocials(config);
   const columns = getColumns(config);
 
-  // Monochromatic color scheme from brandColor
-  const bgDark = darkenColor(brandColor, 70);      // Very dark background
-  const bgMedium = darkenColor(brandColor, 60);    // Medium dark for cards/sections
-  const borderColor = darkenColor(brandColor, 50); // Border color
-  const textMuted = lightenColor(brandColor, 30);  // Muted text
-  const textLight = lightenColor(brandColor, 50);  // Light text
+  // Monochromatic color scheme from brandColor (optimized for contrast)
+  const bgDark = darkenColor(brandColor, 85);      // Very dark background (near black)
+  const bgMedium = darkenColor(brandColor, 75);    // Medium dark for cards/sections
+  const borderColor = darkenColor(brandColor, 60); // Border color (subtle)
+  const textMuted = lightenColor(brandColor, 60);  // Muted text (good contrast)
+  const textLight = lightenColor(brandColor, 80);  // Light text (high contrast)
 
   // Style 1: Classic Dark - Standard layout với brand column và menu columns
   if (style === 'classic') {

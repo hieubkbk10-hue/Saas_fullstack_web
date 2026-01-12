@@ -2260,12 +2260,12 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
     return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
   };
 
-  // Monochromatic color scheme from brandColor
-  const bgDark = darkenColor(brandColor, 70);
-  const bgMedium = darkenColor(brandColor, 60);
-  const borderColor = darkenColor(brandColor, 50);
-  const textMuted = lightenColor(brandColor, 30);
-  const textLight = lightenColor(brandColor, 50);
+  // Monochromatic color scheme from brandColor (optimized for contrast)
+  const bgDark = darkenColor(brandColor, 85);      // Very dark background (near black)
+  const bgMedium = darkenColor(brandColor, 75);    // Medium dark for cards/sections
+  const borderColor = darkenColor(brandColor, 60); // Border color (subtle)
+  const textMuted = lightenColor(brandColor, 60);  // Muted text (good contrast)
+  const textLight = lightenColor(brandColor, 80);  // Light text (high contrast)
 
   // Custom Facebook icon
   const FacebookIcon = ({ size = 18 }: { size?: number }) => (
