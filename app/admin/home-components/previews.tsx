@@ -765,9 +765,10 @@ export const PricingPreview = ({ plans, brandColor, selectedStyle, onStyleChange
 };
 
 // ============ GALLERY/PARTNERS PREVIEW ============
-// 4 Professional Styles from partner-&-logo-manager: Grid, Marquee, Mono, Badge
+// Gallery: 3 Professional Styles from pure-visual-gallery (Spotlight, Explore, Stories)
+// Partners: 4 Professional Styles from partner-&-logo-manager (Grid, Marquee, Mono, Badge)
 type GalleryItem = { id: number; url: string; link: string };
-export type GalleryStyle = 'grid' | 'marquee' | 'mono' | 'badge';
+export type GalleryStyle = 'spotlight' | 'explore' | 'stories' | 'grid' | 'marquee' | 'mono' | 'badge';
 
 // Auto Scroll Slider Component for Marquee/Mono styles
 const AutoScrollSlider = ({ children, className, speed = 0.5, isPaused }: { 
@@ -816,6 +817,44 @@ const AutoScrollSlider = ({ children, className, speed = 0.5, isPaused }: {
   );
 };
 
+// Lightbox Component for Gallery
+const GalleryLightbox = ({ photo, onClose }: { photo: { url: string } | null; onClose: () => void }) => {
+  React.useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    if (photo) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleEsc);
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [photo, onClose]);
+
+  if (!photo || !photo.url) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-in fade-in duration-200" 
+      onClick={onClose}
+    >
+      <button 
+        onClick={onClose}
+        className="absolute top-4 right-4 p-2 text-white/50 hover:text-white transition-colors z-[70]"
+      >
+        <X size={24} />
+      </button>
+      <div className="w-full h-full p-4 flex flex-col items-center justify-center" onClick={e => e.stopPropagation()}>
+        <img 
+          src={photo.url} 
+          alt="Lightbox" 
+          className="max-h-[90vh] max-w-full object-contain shadow-sm animate-in zoom-in-95 duration-300" 
+        />
+      </div>
+    </div>
+  );
+};
+
 export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle, onStyleChange }: { 
   items: GalleryItem[]; 
   brandColor: string; 
@@ -825,11 +864,18 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [isPaused, setIsPaused] = useState(false);
-  const previewStyle = selectedStyle || 'grid';
+  const [selectedPhoto, setSelectedPhoto] = useState<GalleryItem | null>(null);
+  const previewStyle = selectedStyle || (componentType === 'Gallery' ? 'spotlight' : 'grid');
   const setPreviewStyle = (s: string) => onStyleChange?.(s as GalleryStyle);
   
   // Styles phụ thuộc vào componentType
-  const styles = componentType === 'Partners' 
+  const styles = componentType === 'Gallery' 
+    ? [
+        { id: 'spotlight', label: 'Tiêu điểm' }, 
+        { id: 'explore', label: 'Khám phá' },
+        { id: 'stories', label: 'Câu chuyện' }
+      ]
+    : componentType === 'Partners' 
     ? [
         { id: 'grid', label: 'Grid' }, 
         { id: 'marquee', label: 'Marquee' }, 
@@ -841,7 +887,140 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
         { id: 'marquee', label: 'Marquee' }
       ];
 
-  // Style 1: Classic Grid - Hover effect, responsive grid
+  // ============ GALLERY STYLES (Spotlight, Explore, Stories) ============
+  
+  // Style 1: Tiêu điểm (Spotlight) - Featured image with 3 smaller
+  const renderSpotlightStyle = () => {
+    if (items.length === 0) return (
+      <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+        <ImageIcon size={48} className="opacity-20 mb-4" />
+        <p className="text-sm font-light">Chưa có hình ảnh nào.</p>
+      </div>
+    );
+    const featured = items[0];
+    const sub = items.slice(1, 4);
+
+    return (
+      <div className={cn(
+        "grid gap-1 bg-slate-200 dark:bg-slate-700 border border-transparent",
+        device === 'mobile' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'
+      )}>
+        <div 
+          className={cn(
+            "bg-slate-100 dark:bg-slate-800 relative group cursor-pointer overflow-hidden",
+            device === 'mobile' ? 'aspect-[4/3]' : 'md:col-span-2 aspect-[4/3] md:aspect-auto md:row-span-1'
+          )}
+          style={device !== 'mobile' ? { minHeight: '300px' } : {}}
+          onClick={() => setSelectedPhoto(featured)}
+        >
+          {featured.url ? (
+            <img src={featured.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center"><ImageIcon size={48} className="text-slate-300" /></div>
+          )}
+        </div>
+        <div className={cn(
+          "grid gap-1",
+          device === 'mobile' ? 'grid-cols-3' : 'grid-cols-1'
+        )}>
+          {sub.map((photo) => (
+            <div 
+              key={photo.id} 
+              className="aspect-square bg-slate-100 dark:bg-slate-800 relative group cursor-pointer overflow-hidden"
+              onClick={() => setSelectedPhoto(photo)}
+            >
+              {photo.url ? (
+                <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center"><ImageIcon size={24} className="text-slate-300" /></div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Style 2: Khám phá (Explore) - Instagram-like grid
+  const renderExploreStyle = () => {
+    if (items.length === 0) return (
+      <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+        <ImageIcon size={48} className="opacity-20 mb-4" />
+        <p className="text-sm font-light">Chưa có hình ảnh nào.</p>
+      </div>
+    );
+
+    return (
+      <div className={cn(
+        "grid gap-0.5 bg-slate-200 dark:bg-slate-700",
+        device === 'mobile' ? 'grid-cols-3' : device === 'tablet' ? 'grid-cols-4' : 'grid-cols-5'
+      )}>
+        {items.map((photo) => (
+          <div 
+            key={photo.id} 
+            className="aspect-square relative group cursor-pointer overflow-hidden bg-slate-100 dark:bg-slate-800"
+            onClick={() => setSelectedPhoto(photo)}
+          >
+            {photo.url ? (
+              <img 
+                src={photo.url} 
+                alt="" 
+                className="w-full h-full object-cover transition-opacity duration-300 hover:opacity-90"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center"><ImageIcon size={24} className="text-slate-300" /></div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Style 3: Câu chuyện (Stories) - Masonry-like with varying sizes
+  const renderStoriesStyle = () => {
+    if (items.length === 0) return (
+      <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+        <ImageIcon size={48} className="opacity-20 mb-4" />
+        <p className="text-sm font-light">Chưa có hình ảnh nào.</p>
+      </div>
+    );
+
+    return (
+      <div className={cn(
+        "grid gap-4",
+        device === 'mobile' ? 'grid-cols-1 auto-rows-[200px]' : 'grid-cols-1 md:grid-cols-3 auto-rows-[250px] md:auto-rows-[300px]'
+      )}>
+        {items.map((photo, i) => {
+          const isLarge = i % 4 === 0 || i % 4 === 3;
+          const colSpan = device !== 'mobile' && isLarge ? "md:col-span-2" : "md:col-span-1";
+          
+          return (
+            <div 
+              key={photo.id} 
+              className={`${colSpan} relative group cursor-pointer overflow-hidden rounded-sm`}
+              onClick={() => setSelectedPhoto(photo)}
+            >
+              {photo.url ? (
+                <img 
+                  src={photo.url} 
+                  alt="" 
+                  className="w-full h-full object-cover grayscale-[15%] group-hover:grayscale-0 transition-all duration-700"
+                />
+              ) : (
+                <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <ImageIcon size={32} className="text-slate-300" />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // ============ PARTNERS STYLES (Grid, Marquee, Mono, Badge) ============
+
+  // Style: Classic Grid - Hover effect, responsive grid
   const renderGridStyle = () => (
     <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
       <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
@@ -876,7 +1055,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     </section>
   );
 
-  // Style 2: Marquee - Auto scroll, swipeable
+  // Style: Marquee - Auto scroll, swipeable
   const renderMarqueeStyle = () => (
     <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
       <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
@@ -917,7 +1096,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     </section>
   );
 
-  // Style 3: Mono - Grayscale, hover to color
+  // Style: Mono - Grayscale, hover to color
   const renderMonoStyle = () => (
     <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
       <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
@@ -954,7 +1133,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     </section>
   );
 
-  // Style 4: Badge - Compact badges with name
+  // Style: Badge - Compact badges with name
   const renderBadgeStyle = () => (
     <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
       <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
@@ -984,9 +1163,23 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     </section>
   );
 
+  // Render Gallery styles with container and Lightbox
+  const renderGalleryContent = () => (
+    <section className="w-full bg-white dark:bg-slate-900">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-[1600px] py-8 md:py-12">
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out">
+          {previewStyle === 'spotlight' && renderSpotlightStyle()}
+          {previewStyle === 'explore' && renderExploreStyle()}
+          {previewStyle === 'stories' && renderStoriesStyle()}
+        </div>
+      </div>
+      <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+    </section>
+  );
+
   return (
     <PreviewWrapper 
-      title={`Preview ${componentType}`} 
+      title={`Preview ${componentType === 'Gallery' ? 'Thư viện ảnh' : componentType}`} 
       device={device} 
       setDevice={setDevice} 
       previewStyle={previewStyle} 
@@ -995,10 +1188,16 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
       info={`${items.length} ảnh`}
     >
       <BrowserFrame>
-        {previewStyle === 'grid' && renderGridStyle()}
-        {previewStyle === 'marquee' && renderMarqueeStyle()}
-        {previewStyle === 'mono' && renderMonoStyle()}
-        {previewStyle === 'badge' && renderBadgeStyle()}
+        {componentType === 'Gallery' ? (
+          renderGalleryContent()
+        ) : (
+          <>
+            {previewStyle === 'grid' && renderGridStyle()}
+            {previewStyle === 'marquee' && renderMarqueeStyle()}
+            {previewStyle === 'mono' && renderMonoStyle()}
+            {previewStyle === 'badge' && renderBadgeStyle()}
+          </>
+        )}
       </BrowserFrame>
     </PreviewWrapper>
   );

@@ -1419,8 +1419,9 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
 }
 
 // ============ GALLERY/PARTNERS SECTION ============
-// 4 Professional Styles from partner-&-logo-manager: Grid, Marquee, Mono, Badge
-type GalleryStyle = 'grid' | 'marquee' | 'mono' | 'badge';
+// Gallery: 3 Professional Styles from pure-visual-gallery (Spotlight, Explore, Stories)
+// Partners: 4 Professional Styles from partner-&-logo-manager (Grid, Marquee, Mono, Badge)
+type GalleryStyle = 'spotlight' | 'explore' | 'stories' | 'grid' | 'marquee' | 'mono' | 'badge';
 
 // Auto Scroll Slider Component for Marquee/Mono styles
 const AutoScrollSlider = ({ children, speed = 0.5 }: { children: React.ReactNode; speed?: number }) => {
@@ -1465,6 +1466,45 @@ const AutoScrollSlider = ({ children, speed = 0.5 }: { children: React.ReactNode
       <div className="flex shrink-0 gap-16 items-center px-4">{children}</div>
       <div className="flex shrink-0 gap-16 items-center px-4">{children}</div>
       <div className="flex shrink-0 gap-16 items-center px-4">{children}</div>
+    </div>
+  );
+};
+
+// Lightbox Component for Gallery
+const GalleryLightbox = ({ photo, onClose }: { photo: { url: string } | null; onClose: () => void }) => {
+  React.useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    if (photo) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleEsc);
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, [photo, onClose]);
+
+  if (!photo || !photo.url) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-in fade-in duration-200" 
+      onClick={onClose}
+    >
+      <button 
+        onClick={onClose}
+        className="absolute top-4 right-4 md:top-8 md:right-8 p-2 rounded-full bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-all z-50"
+        aria-label="Close"
+      >
+        <X size={32} />
+      </button>
+      <div className="w-full h-full p-4 flex flex-col items-center justify-center" onClick={e => e.stopPropagation()}>
+        <img 
+          src={photo.url} 
+          alt="Lightbox" 
+          className="max-h-[90vh] max-w-full object-contain shadow-2xl bg-white p-2 md:p-4 rounded-lg animate-in zoom-in-95 duration-300" 
+        />
+      </div>
     </div>
   );
 };
@@ -1748,9 +1788,161 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
 
 function GallerySection({ config, brandColor, title, type }: { config: Record<string, unknown>; brandColor: string; title: string; type: string }) {
   const items = (config.items as Array<{ url: string; link?: string }>) || [];
-  const style = (config.style as GalleryStyle) || 'grid';
+  const style = (config.style as GalleryStyle) || (type === 'Gallery' ? 'spotlight' : 'grid');
+  const [selectedPhoto, setSelectedPhoto] = React.useState<{ url: string; link?: string } | null>(null);
 
-  // Style 1: Classic Grid - Hover effect, responsive grid
+  // ============ GALLERY STYLES (Spotlight, Explore, Stories) - Only for type === 'Gallery' ============
+
+  // Style 1: Tiêu điểm (Spotlight) - Featured image with 3 smaller
+  if (style === 'spotlight' && type === 'Gallery') {
+    if (items.length === 0) {
+      return (
+        <section className="w-full py-12 bg-white">
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-[1600px]">
+            <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+              <ImageIcon size={48} className="opacity-20 mb-4" />
+              <p className="text-sm font-light">Chưa có hình ảnh nào.</p>
+            </div>
+          </div>
+        </section>
+      );
+    }
+    const featured = items[0];
+    const sub = items.slice(1, 4);
+
+    return (
+      <section className="w-full bg-white">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-[1600px] py-8 md:py-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-1 bg-slate-200 border border-transparent">
+            <div 
+              className="md:col-span-2 aspect-[4/3] md:aspect-auto bg-slate-100 relative group cursor-pointer overflow-hidden"
+              style={{ minHeight: '300px' }}
+              onClick={() => setSelectedPhoto(featured)}
+            >
+              {featured.url ? (
+                <img src={featured.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center"><ImageIcon size={48} className="text-slate-300" /></div>
+              )}
+            </div>
+            <div className="grid grid-cols-3 md:grid-cols-1 gap-1">
+              {sub.map((photo, idx) => (
+                <div 
+                  key={idx} 
+                  className="aspect-square bg-slate-100 relative group cursor-pointer overflow-hidden"
+                  onClick={() => setSelectedPhoto(photo)}
+                >
+                  {photo.url ? (
+                    <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><ImageIcon size={24} className="text-slate-300" /></div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+      </section>
+    );
+  }
+
+  // Style 2: Khám phá (Explore) - Instagram-like grid
+  if (style === 'explore' && type === 'Gallery') {
+    if (items.length === 0) {
+      return (
+        <section className="w-full py-12 bg-white">
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-[1600px]">
+            <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+              <ImageIcon size={48} className="opacity-20 mb-4" />
+              <p className="text-sm font-light">Chưa có hình ảnh nào.</p>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <section className="w-full bg-white">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-[1600px] py-8 md:py-12">
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-0.5 bg-slate-200">
+            {items.map((photo, idx) => (
+              <div 
+                key={idx} 
+                className="aspect-square relative group cursor-pointer overflow-hidden bg-slate-100"
+                onClick={() => setSelectedPhoto(photo)}
+              >
+                {photo.url ? (
+                  <img 
+                    src={photo.url} 
+                    alt="" 
+                    className="w-full h-full object-cover transition-opacity duration-300 hover:opacity-90"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center"><ImageIcon size={24} className="text-slate-300" /></div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+        <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+      </section>
+    );
+  }
+
+  // Style 3: Câu chuyện (Stories) - Masonry-like with varying sizes
+  if (style === 'stories' && type === 'Gallery') {
+    if (items.length === 0) {
+      return (
+        <section className="w-full py-12 bg-white">
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-[1600px]">
+            <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+              <ImageIcon size={48} className="opacity-20 mb-4" />
+              <p className="text-sm font-light">Chưa có hình ảnh nào.</p>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <section className="w-full bg-white">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-[1600px] py-8 md:py-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-[250px] md:auto-rows-[350px]">
+            {items.map((photo, i) => {
+              const isLarge = i % 4 === 0 || i % 4 === 3;
+              const colSpan = isLarge ? "md:col-span-2" : "md:col-span-1";
+              
+              return (
+                <div 
+                  key={i} 
+                  className={`${colSpan} relative group cursor-pointer overflow-hidden rounded-sm`}
+                  onClick={() => setSelectedPhoto(photo)}
+                >
+                  {photo.url ? (
+                    <img 
+                      src={photo.url} 
+                      alt="" 
+                      className="w-full h-full object-cover grayscale-[15%] group-hover:grayscale-0 transition-all duration-700"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                      <ImageIcon size={32} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+      </section>
+    );
+  }
+
+  // ============ PARTNERS STYLES (Grid, Marquee, Mono, Badge) ============
+
+  // Style: Classic Grid - Hover effect, responsive grid
   if (style === 'grid') {
     return (
       <section className="w-full py-10 bg-white border-b border-slate-200/40">
@@ -1785,7 +1977,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
     );
   }
 
-  // Style 2: Marquee - Auto scroll, swipeable
+  // Style: Marquee - Auto scroll, swipeable
   if (style === 'marquee') {
     return (
       <section className="w-full py-10 bg-white border-b border-slate-200/40">
@@ -1824,7 +2016,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
     );
   }
 
-  // Style 3: Mono - Grayscale, hover to color
+  // Style: Mono - Grayscale, hover to color
   if (style === 'mono') {
     return (
       <section className="w-full py-10 bg-white border-b border-slate-200/40">
@@ -1859,7 +2051,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
     );
   }
 
-  // Style 4: Badge - Compact badges with name (default fallback)
+  // Style: Badge - Compact badges with name (default fallback)
   return (
     <section className="w-full py-10 bg-white border-b border-slate-200/40">
       <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
