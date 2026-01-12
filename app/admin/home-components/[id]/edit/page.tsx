@@ -9,7 +9,7 @@ import { Id } from '@/convex/_generated/dataModel';
 import { 
   Grid, LayoutTemplate, AlertCircle, Package, Briefcase, FileText, 
   Users, MousePointerClick, HelpCircle, User as UserIcon, Check, 
-  Star, Award, Tag, Image as ImageIcon, Phone, Plus, Trash2, Loader2,
+  Star, Award, Tag, Image as ImageIcon, Phone, Plus, Trash2, Loader2, Download,
   Search, GripVertical, X
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -83,6 +83,13 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const servicesData = useQuery(api.services.listAll, { limit: 100 });
   // Query products for ProductList manual selection
   const productsData = useQuery(api.products.listAll, { limit: 100 });
+  // Query settings for Footer
+  const siteLogo = useQuery(api.settings.getByKey, { key: 'site_logo' });
+  const socialFacebook = useQuery(api.settings.getByKey, { key: 'social_facebook' });
+  const socialInstagram = useQuery(api.settings.getByKey, { key: 'social_instagram' });
+  const socialYoutube = useQuery(api.settings.getByKey, { key: 'social_youtube' });
+  const socialTiktok = useQuery(api.settings.getByKey, { key: 'social_tiktok' });
+  const socialZalo = useQuery(api.settings.getByKey, { key: 'social_zalo' });
   
   const [title, setTitle] = useState('');
   const [active, setActive] = useState(true);
@@ -617,6 +624,42 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         {/* Footer */}
         {component.type === 'Footer' && (
           <>
+            {/* Load from Settings Button */}
+            <div className="mb-4 flex justify-end">
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  const newSocialLinks: { id: number; platform: string; url: string; icon: string }[] = [];
+                  let idCounter = 1;
+                  if (socialFacebook?.value) {
+                    newSocialLinks.push({ id: idCounter++, platform: 'facebook', url: socialFacebook.value as string, icon: 'facebook' });
+                  }
+                  if (socialInstagram?.value) {
+                    newSocialLinks.push({ id: idCounter++, platform: 'instagram', url: socialInstagram.value as string, icon: 'instagram' });
+                  }
+                  if (socialYoutube?.value) {
+                    newSocialLinks.push({ id: idCounter++, platform: 'youtube', url: socialYoutube.value as string, icon: 'youtube' });
+                  }
+                  if (socialTiktok?.value) {
+                    newSocialLinks.push({ id: idCounter++, platform: 'tiktok', url: socialTiktok.value as string, icon: 'tiktok' });
+                  }
+                  if (socialZalo?.value) {
+                    newSocialLinks.push({ id: idCounter++, platform: 'zalo', url: socialZalo.value as string, icon: 'zalo' });
+                  }
+                  setFooterConfig(prev => ({
+                    ...prev,
+                    logo: (siteLogo?.value as string) || prev.logo,
+                    socialLinks: newSocialLinks.length > 0 ? newSocialLinks : prev.socialLinks,
+                  }));
+                  toast.success('Đã load dữ liệu từ Settings');
+                }}
+              >
+                <Download size={14} className="mr-1" /> Load từ Settings
+              </Button>
+            </div>
+
             {/* Logo & Basic Info */}
             <Card className="mb-6">
               <CardHeader>
