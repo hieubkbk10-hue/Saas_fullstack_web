@@ -69,6 +69,7 @@ interface GalleryItem extends ImageItem {
   id: string | number;
   url: string;
   link: string;
+  name?: string;
 }
 
 export default function HomeComponentEditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -220,7 +221,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         case 'Gallery':
         case 'Partners':
         case 'TrustBadges':
-          setGalleryItems(config.items?.map((item: {url: string, link: string}, i: number) => ({ id: `item-${i}`, url: item.url, link: item.link || '' })) || [{ id: 'item-1', url: '', link: '' }]);
+          setGalleryItems(config.items?.map((item: {url: string, link: string, name?: string}, i: number) => ({ id: `item-${i}`, url: item.url, link: item.link || '', name: item.name || '' })) || [{ id: 'item-1', url: '', link: '', name: '' }]);
           setGalleryStyle((config.style as GalleryStyle) || 'slider');
           break;
         case 'Stats':
@@ -339,7 +340,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'Gallery':
       case 'Partners':
       case 'TrustBadges':
-        return { items: galleryItems.map(g => ({ url: g.url, link: g.link })), style: galleryStyle };
+        return { items: galleryItems.map(g => ({ url: g.url, link: g.link, name: g.name })), style: galleryStyle };
       case 'Stats':
         return { items: statsItems.map(s => ({ value: s.value, label: s.label })), style: statsStyle };
       case 'CTA':
@@ -511,7 +512,13 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                   onChange={setGalleryItems}
                   folder={component.type.toLowerCase()}
                   imageKey="url"
-                  extraFields={component.type === 'Partners' ? [{ key: 'link', placeholder: 'Link website đối tác', type: 'url' }] : []}
+                  extraFields={
+                    component.type === 'Partners' 
+                      ? [{ key: 'link', placeholder: 'Link website đối tác', type: 'url' }] 
+                      : component.type === 'TrustBadges'
+                      ? [{ key: 'name', placeholder: 'Tên chứng nhận/bằng cấp', type: 'text' }]
+                      : []
+                  }
                   minItems={1}
                   maxItems={20}
                   aspectRatio={component.type === 'Partners' ? 'video' : 'square'}

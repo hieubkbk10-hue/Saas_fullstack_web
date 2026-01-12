@@ -11,6 +11,7 @@ interface GalleryItem extends ImageItem {
   id: string | number;
   url: string;
   link: string;
+  name?: string;
 }
 
 function GalleryCreateContent() {
@@ -33,13 +34,13 @@ function GalleryCreateContent() {
   const brandColor = useBrandColor();
   
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([
-    { id: 'item-1', url: '', link: '' },
-    { id: 'item-2', url: '', link: '' }
+    { id: 'item-1', url: '', link: '', name: '' },
+    { id: 'item-2', url: '', link: '', name: '' }
   ]);
   const [style, setStyle] = useState<GalleryStyle>('grid');
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { items: galleryItems.map(g => ({ url: g.url, link: g.link })), style });
+    handleSubmit(e, { items: galleryItems.map(g => ({ url: g.url, link: g.link, name: g.name })), style });
   };
 
   return (
@@ -67,6 +68,8 @@ function GalleryCreateContent() {
             extraFields={
               type === 'Partners' 
                 ? [{ key: 'link', placeholder: 'Link website đối tác (tùy chọn)', type: 'url' }]
+                : type === 'TrustBadges'
+                ? [{ key: 'name', placeholder: 'Tên chứng nhận/bằng cấp', type: 'text' }]
                 : []
             }
             minItems={1}
