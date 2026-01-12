@@ -2240,6 +2240,33 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
     { id: 'minimal', label: '4. Minimal' }
   ];
 
+  // Utility: Darken a hex color
+  const darkenColor = (hex: string, percent: number): string => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.max((num >> 16) - amt, 0);
+    const G = Math.max((num >> 8 & 0x00FF) - amt, 0);
+    const B = Math.max((num & 0x0000FF) - amt, 0);
+    return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+  };
+
+  // Utility: Lighten a hex color
+  const lightenColor = (hex: string, percent: number): string => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min((num >> 16) + amt, 255);
+    const G = Math.min((num >> 8 & 0x00FF) + amt, 255);
+    const B = Math.min((num & 0x0000FF) + amt, 255);
+    return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+  };
+
+  // Monochromatic color scheme from brandColor
+  const bgDark = darkenColor(brandColor, 70);
+  const bgMedium = darkenColor(brandColor, 60);
+  const borderColor = darkenColor(brandColor, 50);
+  const textMuted = lightenColor(brandColor, 30);
+  const textLight = lightenColor(brandColor, 50);
+
   // Custom Facebook icon
   const FacebookIcon = ({ size = 18 }: { size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -2312,7 +2339,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 
   // Style 1: Classic Dark - Standard layout với brand column và menu columns
   const renderClassicStyle = () => (
-    <footer className="w-full bg-slate-950 text-slate-200 py-12 md:py-16 border-t border-slate-800">
+    <footer className="w-full text-white py-12 md:py-16" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
       <div className={cn("container max-w-7xl mx-auto", device === 'mobile' ? 'px-4' : 'px-6')}>
         <div className={cn(
           "grid gap-12",
@@ -2322,7 +2349,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
           {/* Brand Column */}
           <div className={cn(device === 'mobile' ? 'text-center' : device === 'tablet' ? 'col-span-2' : 'lg:col-span-5', "space-y-6")}>
             <div className={cn("flex items-center gap-3", device === 'mobile' ? 'justify-center' : '')}>
-              <div className="bg-slate-900 p-2 rounded-lg border border-slate-800">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: bgMedium, border: `1px solid ${borderColor}` }}>
                 {config.logo ? (
                   <img src={config.logo} alt="Logo" className="h-8 w-8 object-contain brightness-110" />
                 ) : (
@@ -2331,13 +2358,13 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
               </div>
               <span className="text-xl font-bold tracking-tight text-white">VietAdmin</span>
             </div>
-            <p className={cn("text-slate-400 text-sm leading-relaxed", device === 'mobile' ? '' : 'max-w-sm')}>
+            <p className={cn("text-sm leading-relaxed", device === 'mobile' ? '' : 'max-w-sm')} style={{ color: textMuted }}>
               {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số. Chúng tôi cam kết mang lại giá trị bền vững.'}
             </p>
             {config.showSocialLinks && (
               <div className={cn("flex gap-3", device === 'mobile' ? 'justify-center' : '')}>
                 {getSocials().map((s) => (
-                  <a key={s.id} href={s.url} className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-900 text-slate-400 hover:text-white transition-all duration-300 border border-slate-800 hover:border-slate-600" style={{ '--hover-bg': brandColor } as React.CSSProperties}>
+                  <a key={s.id} href={s.url} className="h-10 w-10 flex items-center justify-center rounded-full hover:text-white transition-all duration-300" style={{ backgroundColor: bgMedium, color: textMuted, border: `1px solid ${borderColor}` }}>
                     {renderSocialIcon(s.platform, 18)}
                   </a>
                 ))}
@@ -2356,7 +2383,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
                 <ul className="space-y-4">
                   {col.links.map((link, lIdx) => (
                     <li key={lIdx}>
-                      <a href={link.url} className="text-sm text-slate-400 hover:text-white transition-colors block" style={{ '--hover-color': brandColor } as React.CSSProperties}>
+                      <a href={link.url} className="text-sm hover:text-white transition-colors block" style={{ color: textMuted }}>
                         {link.label}
                       </a>
                     </li>
@@ -2367,8 +2394,8 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
           </div>
         </div>
 
-        <div className="mt-16 pt-8 border-t border-slate-800/50">
-          <p className={cn("text-xs text-slate-500", device === 'mobile' ? 'text-center' : '')}>{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</p>
+        <div className="mt-16 pt-8" style={{ borderTop: `1px solid ${borderColor}50` }}>
+          <p className={cn("text-xs", device === 'mobile' ? 'text-center' : '')} style={{ color: textMuted }}>{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</p>
         </div>
       </div>
     </footer>
@@ -2376,12 +2403,12 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 
   // Style 2: Modern Centered - Elegant centered layout
   const renderModernStyle = () => (
-    <footer className="w-full bg-slate-900 text-slate-200 py-20">
+    <footer className="w-full text-white py-20" style={{ backgroundColor: bgDark }}>
       <div className={cn("container max-w-5xl mx-auto flex flex-col items-center text-center space-y-10", device === 'mobile' ? 'px-4 py-12 space-y-8' : 'px-6')}>
         
         {/* Brand */}
         <div className="flex flex-col items-center gap-4">
-          <div className="h-16 w-16 bg-gradient-to-tr from-slate-800 to-slate-700 rounded-2xl flex items-center justify-center shadow-2xl shadow-black/20 mb-2">
+          <div className="h-16 w-16 rounded-2xl flex items-center justify-center shadow-2xl shadow-black/20 mb-2" style={{ background: `linear-gradient(to top right, ${bgMedium}, ${borderColor})` }}>
             {config.logo ? (
               <img src={config.logo} alt="Logo" className="h-10 w-10 object-contain drop-shadow-md" />
             ) : (
@@ -2389,7 +2416,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
             )}
           </div>
           <h2 className="text-2xl font-bold text-white tracking-tight">VietAdmin</h2>
-          <p className={cn("text-slate-400 text-sm leading-relaxed opacity-80", device === 'mobile' ? 'max-w-xs' : 'max-w-md')}>
+          <p className={cn("text-sm leading-relaxed opacity-80", device === 'mobile' ? 'max-w-xs' : 'max-w-md')} style={{ color: textMuted }}>
             {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
           </p>
         </div>
@@ -2397,19 +2424,19 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         {/* Navigation (Flat) */}
         <div className={cn("flex flex-wrap justify-center gap-x-8 gap-y-3", device === 'mobile' ? 'gap-x-4 gap-y-2' : '')}>
           {getColumns().flatMap(col => col.links).slice(0, device === 'mobile' ? 4 : 8).map((link, i) => (
-            <a key={i} href={link.url} className="text-sm font-medium text-slate-300 hover:text-white hover:underline underline-offset-4 transition-all" style={{ textDecorationColor: brandColor }}>
+            <a key={i} href={link.url} className="text-sm font-medium hover:text-white hover:underline underline-offset-4 transition-all" style={{ color: textLight, textDecorationColor: brandColor }}>
               {link.label}
             </a>
           ))}
         </div>
 
-        <div className="w-24 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+        <div className="w-24 h-px" style={{ background: `linear-gradient(to right, transparent, ${borderColor}, transparent)` }}></div>
 
         {/* Socials */}
         {config.showSocialLinks && (
           <div className="flex gap-6">
             {getSocials().map((s) => (
-              <a key={s.id} href={s.url} className="text-slate-400 hover:text-white hover:scale-110 transition-transform">
+              <a key={s.id} href={s.url} className="hover:text-white hover:scale-110 transition-transform" style={{ color: textMuted }}>
                 {renderSocialIcon(s.platform, 24)}
               </a>
             ))}
@@ -2417,7 +2444,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         )}
 
         {/* Copyright */}
-        <div className="text-xs text-slate-600 font-medium">
+        <div className="text-xs font-medium" style={{ color: textMuted }}>
           {config.copyright || '© 2024 VietAdmin. All rights reserved.'}
         </div>
       </div>
@@ -2426,14 +2453,14 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 
   // Style 3: Corporate Grid - Structured professional layout
   const renderCorporateStyle = () => (
-    <footer className="w-full bg-[#0B0F19] text-gray-300 py-16 border-t border-slate-900">
+    <footer className="w-full text-white py-16" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
       <div className={cn("container max-w-7xl mx-auto", device === 'mobile' ? 'px-4' : 'px-6')}>
         
         {/* Top Row: Logo & Socials */}
         <div className={cn(
-          "flex justify-between items-start gap-6 pb-12 border-b border-slate-900",
+          "flex justify-between items-start gap-6 pb-12",
           device === 'mobile' ? 'flex-col items-center text-center' : 'md:flex-row md:items-center'
-        )}>
+        )} style={{ borderBottom: `1px solid ${borderColor}` }}>
           <div className={cn("flex items-center gap-3", device === 'mobile' ? 'justify-center' : '')}>
             {config.logo ? (
               <img src={config.logo} alt="Logo" className="h-8 w-8 object-contain" />
@@ -2445,7 +2472,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
           {config.showSocialLinks && (
             <div className="flex gap-4">
               {getSocials().map((s) => (
-                <a key={s.id} href={s.url} className="text-gray-500 hover:text-white transition-colors">
+                <a key={s.id} href={s.url} className="hover:text-white transition-colors" style={{ color: textMuted }}>
                   {renderSocialIcon(s.platform, 20)}
                 </a>
               ))}
@@ -2460,7 +2487,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         )}>
           <div className={cn(device === 'mobile' ? '' : 'col-span-2 md:col-span-2 pr-10')}>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Về Công Ty</h4>
-            <p className="text-sm text-gray-500 leading-7">{config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}</p>
+            <p className="text-sm leading-7" style={{ color: textMuted }}>{config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}</p>
           </div>
           
           {getColumns().slice(0, 2).map((col) => (
@@ -2469,7 +2496,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
               <ul className="space-y-3">
                 {col.links.map((link, lIdx) => (
                   <li key={lIdx}>
-                    <a href={link.url} className="text-sm text-gray-500 hover:text-white transition-colors" style={{ '--hover-color': brandColor } as React.CSSProperties}>
+                    <a href={link.url} className="text-sm hover:text-white transition-colors" style={{ color: textMuted }}>
                       {link.label}
                     </a>
                   </li>
@@ -2480,7 +2507,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         </div>
 
         {/* Bottom Row */}
-        <div className={cn("pt-8 text-sm text-gray-600", device === 'mobile' ? 'text-center' : '')}>
+        <div className={cn("pt-8 text-sm", device === 'mobile' ? 'text-center' : '')} style={{ color: textMuted }}>
           {config.copyright || '© 2024 VietAdmin. All rights reserved.'}
         </div>
       </div>
@@ -2489,7 +2516,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 
   // Style 4: Minimal - Compact single row
   const renderMinimalStyle = () => (
-    <footer className="w-full bg-black text-white py-8 border-t border-white/10">
+    <footer className="w-full text-white py-8" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
       <div className={cn("container max-w-7xl mx-auto", device === 'mobile' ? 'px-4' : 'px-6')}>
         <div className={cn(
           "flex items-center justify-between gap-6",
@@ -2503,14 +2530,14 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
             ) : (
               <div className="h-6 w-6 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>
             )}
-            <span className="text-sm text-neutral-400 font-medium">{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</span>
+            <span className="text-sm font-medium" style={{ color: textMuted }}>{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</span>
           </div>
 
           {/* Right: Socials only */}
           {config.showSocialLinks && (
             <div className="flex gap-5">
               {getSocials().map((s) => (
-                <a key={s.id} href={s.url} className="text-neutral-500 hover:text-white transition-colors">
+                <a key={s.id} href={s.url} className="hover:text-white transition-colors" style={{ color: textMuted }}>
                   {renderSocialIcon(s.platform, 18)}
                 </a>
               ))}
