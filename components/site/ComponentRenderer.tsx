@@ -1157,38 +1157,135 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
 }
 
 // ============ TESTIMONIALS SECTION ============
+// 3 Professional Styles: Cards, Slider, Masonry
+type TestimonialsStyle = 'cards' | 'slider' | 'masonry';
 function TestimonialsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ name: string; role: string; content: string; rating: number }>) || [];
+  const style = (config.style as TestimonialsStyle) || 'cards';
+  const [currentSlide, setCurrentSlide] = React.useState(0);
 
+  // Auto slide for slider style
+  React.useEffect(() => {
+    if (style !== 'slider' || items.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % items.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [items.length, style]);
+
+  const renderStars = (rating: number) => (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map(star => (
+        <Star key={star} size={16} className={star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-300'} />
+      ))}
+    </div>
+  );
+
+  // Style 1: Cards - Grid layout
+  if (style === 'cards') {
+    return (
+      <section className="py-16 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {items.map((item, idx) => (
+              <div key={idx} className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                {renderStars(item.rating)}
+                <p className="text-slate-600 my-4 line-clamp-4">"{item.content}"</p>
+                <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>
+                    {(item.name || 'U').charAt(0)}
+                  </div>
+                  <div>
+                    <div className="font-medium text-slate-900">{item.name}</div>
+                    <div className="text-sm text-slate-500">{item.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Slider - Single testimonial with navigation
+  if (style === 'slider') {
+    const current = items[currentSlide] || items[0];
+    if (!current) return null;
+
+    return (
+      <section className="py-16 md:py-20 px-4 bg-slate-50 relative overflow-hidden">
+        {/* Big quote decoration */}
+        <div className="absolute top-8 left-1/2 -translate-x-1/2 text-[120px] md:text-[180px] leading-none font-serif opacity-5 pointer-events-none select-none" style={{ color: brandColor }}>"</div>
+        
+        <div className="max-w-4xl mx-auto relative">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          
+          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center relative" style={{ borderTop: `4px solid ${brandColor}` }}>
+            <div className="flex justify-center mb-6">{renderStars(current.rating)}</div>
+            <p className="text-lg md:text-xl text-slate-700 leading-relaxed mb-8">"{current.content}"</p>
+            <div className="flex items-center justify-center gap-4">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg" style={{ backgroundColor: brandColor }}>
+                {(current.name || 'U').charAt(0)}
+              </div>
+              <div className="text-left">
+                <div className="font-semibold text-slate-900">{current.name}</div>
+                <div className="text-sm text-slate-500">{current.role}</div>
+              </div>
+            </div>
+          </div>
+
+          {items.length > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-8">
+              <button 
+                onClick={() => setCurrentSlide(prev => prev === 0 ? items.length - 1 : prev - 1)} 
+                className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <div className="flex gap-2">
+                {items.map((_, idx) => (
+                  <button 
+                    key={idx} 
+                    onClick={() => setCurrentSlide(idx)} 
+                    className={`h-2.5 rounded-full transition-all ${idx === currentSlide ? 'w-8' : 'w-2.5 bg-slate-300 hover:bg-slate-400'}`}
+                    style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
+                  />
+                ))}
+              </div>
+              <button 
+                onClick={() => setCurrentSlide(prev => (prev + 1) % items.length)} 
+                className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Masonry - Pinterest-like layout
   return (
     <section className="py-16 px-4 bg-slate-50">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
           {items.map((item, idx) => (
-            <div key={idx} className="bg-white p-6 rounded-xl shadow-sm">
-              <div className="flex gap-1 mb-4">
-                {[1, 2, 3, 4, 5].map(star => (
-                  <Star
-                    key={star}
-                    size={16}
-                    className={star <= item.rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-300'}
-                  />
-                ))}
-              </div>
-              <p className="text-slate-600 mb-4">"{item.content}"</p>
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                  style={{ backgroundColor: brandColor }}
-                >
-                  {item.name.charAt(0)}
+            <div key={idx} className={`break-inside-avoid mb-6 bg-white rounded-xl p-6 shadow-sm border border-slate-100 ${idx % 2 === 1 ? 'pt-8' : ''}`}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>
+                  {(item.name || 'U').charAt(0)}
                 </div>
                 <div>
                   <div className="font-medium text-slate-900">{item.name}</div>
                   <div className="text-sm text-slate-500">{item.role}</div>
                 </div>
               </div>
+              {renderStars(item.rating)}
+              <p className="mt-4 text-slate-600">"{item.content}"</p>
             </div>
           ))}
         </div>
