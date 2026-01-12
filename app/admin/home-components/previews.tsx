@@ -2218,7 +2218,15 @@ export const BlogPreview = ({ brandColor, postCount, selectedStyle, onStyleChang
 };
 
 // ============ FOOTER PREVIEW ============
-type FooterConfig = { logo: string; description: string; columns: Array<{ id: number; title: string; links: Array<{ label: string; url: string }> }>; copyright: string; showSocialLinks: boolean };
+type SocialLinkItem = { id: number; platform: string; url: string; icon: string };
+type FooterConfig = { 
+  logo: string; 
+  description: string; 
+  columns: Array<{ id: number; title: string; links: Array<{ label: string; url: string }> }>; 
+  socialLinks?: SocialLinkItem[];
+  copyright: string; 
+  showSocialLinks: boolean 
+};
 export type FooterStyle = 'columns' | 'centered' | 'minimal';
 export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange }: { config: FooterConfig; brandColor: string; selectedStyle?: FooterStyle; onStyleChange?: (style: FooterStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
@@ -2226,17 +2234,54 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
   const setPreviewStyle = (s: string) => onStyleChange?.(s as FooterStyle);
   const styles = [{ id: 'columns', label: 'Columns' }, { id: 'centered', label: 'Centered' }, { id: 'minimal', label: 'Minimal' }];
 
+  // Render social icons based on platform
+  const renderSocialIcon = (platform: string) => {
+    const iconClass = "text-slate-400";
+    switch (platform) {
+      case 'facebook': return <Globe size={14} className={iconClass} />;
+      case 'instagram': return <ImageIcon size={14} className={iconClass} />;
+      case 'youtube': return <ExternalLink size={14} className={iconClass} />;
+      case 'tiktok': return <Star size={14} className={iconClass} />;
+      case 'zalo': return <Phone size={14} className={iconClass} />;
+      default: return <Globe size={14} className={iconClass} />;
+    }
+  };
+
+  // Render social links - use config.socialLinks if available, else show default icons
+  const renderSocialLinks = (size: 'sm' | 'md' = 'sm') => {
+    const iconSize = size === 'sm' ? 'w-8 h-8' : 'w-9 h-9';
+    const hasCustomSocials = config.socialLinks && config.socialLinks.length > 0;
+    
+    if (hasCustomSocials) {
+      return config.socialLinks!.map(social => (
+        <div key={social.id} className={`${iconSize} rounded-full bg-slate-700 flex items-center justify-center`} title={social.platform}>
+          {renderSocialIcon(social.platform)}
+        </div>
+      ));
+    }
+    // Default fallback icons
+    return (
+      <>
+        <div className={`${iconSize} rounded-full bg-slate-700 flex items-center justify-center`}><Globe size={size === 'sm' ? 14 : 16} className="text-slate-400" /></div>
+        <div className={`${iconSize} rounded-full bg-slate-700 flex items-center justify-center`}><Mail size={size === 'sm' ? 14 : 16} className="text-slate-400" /></div>
+        <div className={`${iconSize} rounded-full bg-slate-700 flex items-center justify-center`}><Phone size={size === 'sm' ? 14 : 16} className="text-slate-400" /></div>
+      </>
+    );
+  };
+
   const renderColumnsStyle = () => (
     <div className={cn("py-10 px-6", device === 'mobile' ? 'py-8 px-4' : '')} style={{ backgroundColor: '#1f2937' }}>
       <div className={cn("grid gap-8", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4')}>
         <div className={device === 'mobile' ? 'text-center' : ''}>
-          <div className="w-10 h-10 rounded-lg mb-4 mx-auto md:mx-0" style={{ backgroundColor: brandColor }}></div>
+          {config.logo ? (
+            <img src={config.logo} alt="Logo" className="h-10 w-auto mb-4 mx-auto md:mx-0 object-contain" />
+          ) : (
+            <div className="w-10 h-10 rounded-lg mb-4 mx-auto md:mx-0" style={{ backgroundColor: brandColor }}></div>
+          )}
           <p className="text-sm text-slate-400">{config.description || 'Mô tả công ty...'}</p>
           {config.showSocialLinks && (
             <div className={cn("flex gap-2 mt-4", device === 'mobile' ? 'justify-center' : '')}>
-              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center"><Globe size={14} className="text-slate-400" /></div>
-              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center"><Mail size={14} className="text-slate-400" /></div>
-              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center"><Phone size={14} className="text-slate-400" /></div>
+              {renderSocialLinks('sm')}
             </div>
           )}
         </div>
@@ -2262,16 +2307,18 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 
   const renderCenteredStyle = () => (
     <div className={cn("py-10 px-6 text-center", device === 'mobile' ? 'py-8 px-4' : '')} style={{ backgroundColor: '#1f2937' }}>
-      <div className="w-12 h-12 rounded-lg mx-auto mb-4" style={{ backgroundColor: brandColor }}></div>
+      {config.logo ? (
+        <img src={config.logo} alt="Logo" className="h-12 w-auto mx-auto mb-4 object-contain" />
+      ) : (
+        <div className="w-12 h-12 rounded-lg mx-auto mb-4" style={{ backgroundColor: brandColor }}></div>
+      )}
       <p className="text-sm text-slate-400 max-w-md mx-auto mb-6">{config.description || 'Mô tả công ty...'}</p>
       <div className={cn("flex flex-wrap justify-center gap-6 mb-6", device === 'mobile' ? 'gap-4' : '')}>
         {config.columns.flatMap(col => col.links).slice(0, 5).map((link, idx) => (<a key={idx} href="#" className="text-sm text-slate-400 hover:text-white">{link.label || `Link ${idx + 1}`}</a>))}
       </div>
       {config.showSocialLinks && (
         <div className="flex justify-center gap-3 mb-6">
-          <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center"><Globe size={16} className="text-slate-400" /></div>
-          <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center"><Mail size={16} className="text-slate-400" /></div>
-          <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center"><Phone size={16} className="text-slate-400" /></div>
+          {renderSocialLinks('md')}
         </div>
       )}
       <div className="text-xs text-slate-500">{config.copyright || '© 2024 Company. All rights reserved.'}</div>
@@ -2282,11 +2329,15 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
     <div className={cn("py-6 px-6", device === 'mobile' ? 'py-4 px-4' : '')} style={{ backgroundColor: '#1f2937' }}>
       <div className={cn("flex items-center justify-between", device === 'mobile' ? 'flex-col gap-4 text-center' : '')}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: brandColor }}></div>
+          {config.logo ? (
+            <img src={config.logo} alt="Logo" className="h-8 w-auto object-contain" />
+          ) : (
+            <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: brandColor }}></div>
+          )}
           <span className="text-white font-semibold">YourBrand</span>
         </div>
         <div className={cn("flex gap-6", device === 'mobile' ? 'flex-wrap justify-center gap-4' : '')}>
-          {['Trang chủ', 'Dịch vụ', 'Liên hệ'].map((item, idx) => (<a key={idx} href="#" className="text-sm text-slate-400 hover:text-white">{item}</a>))}
+          {config.columns.flatMap(col => col.links).slice(0, 3).map((link, idx) => (<a key={idx} href="#" className="text-sm text-slate-400 hover:text-white">{link.label || `Link ${idx + 1}`}</a>))}
         </div>
         <div className="text-xs text-slate-500">{config.copyright || '© 2024'}</div>
       </div>
