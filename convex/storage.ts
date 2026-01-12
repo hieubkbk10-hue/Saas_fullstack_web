@@ -211,3 +211,83 @@ export const cleanupSettingsImages = mutation({
     return { deleted: toDelete.length };
   },
 });
+
+// Cleanup home-components images - compare with used URLs from homeComponents table
+export const cleanupHomeComponentImages = mutation({
+  args: { batchSize: v.optional(v.number()) },
+  returns: v.object({ deleted: v.number(), hasMore: v.boolean() }),
+  handler: async (ctx, args) => {
+    const maxBatch = args.batchSize ?? 50;
+    
+    // Get images in home-components folder
+    const images = await ctx.db
+      .query("images")
+      .withIndex("by_folder", q => q.eq("folder", "home-components"))
+      .take(maxBatch);
+
+    if (images.length === 0) {
+      return { deleted: 0, hasMore: false };
+    }
+
+    // Get URLs for all images
+    const imageUrls = await Promise.all(
+      images.map(async (img) => ({
+        image: img,
+        url: await ctx.storage.getUrl(img.storageId),
+      }))
+    );
+
+    // Get all home components configs to find used images
+    const homeComponents = await ctx.db.query("homeComponents").take(500);
+    
+    // Extract all used image URLs from configs
+    const usedUrls = new Set<string>();
+    for (const component of homeComponents) {
+      const config = component.config as Record<string, unknown>;
+      if (!config) continue;
+      
+      // Check common image fields
+      if (typeof config.image === 'string' && config.image) usedUrls.add(config.image);
+      if (typeof config.backgroundImage === 'string' && config.backgroundImage) usedUrls.add(config.backgroundImage);
+      if (typeof config.logo === 'string' && config.logo) usedUrls.add(config.logo);
+      
+      // Check images array
+      if (Array.isArray(config.images)) {
+        for (const img of config.images) {
+          if (typeof img === 'string' && img) usedUrls.add(img);
+          if (typeof img === 'object' && img && typeof (img as { url?: string }).url === 'string') {
+            usedUrls.add((img as { url: string }).url);
+          }
+        }
+      }
+      
+      // Check slides array (for Hero)
+      if (Array.isArray(config.slides)) {
+        for (const slide of config.slides) {
+          if (typeof slide === 'object' && slide) {
+            const s = slide as { image?: string; backgroundImage?: string };
+            if (typeof s.image === 'string' && s.image) usedUrls.add(s.image);
+            if (typeof s.backgroundImage === 'string' && s.backgroundImage) usedUrls.add(s.backgroundImage);
+          }
+        }
+      }
+    }
+
+    // Find orphaned images
+    const toDelete = imageUrls.filter(({ url }) => url && !usedUrls.has(url));
+
+    // Delete orphaned images
+    await Promise.all(toDelete.map(async ({ image }) => {
+      await ctx.storage.delete(image.storageId);
+      await ctx.db.delete(image._id);
+    }));
+
+    // Check if there are more images to process
+    const remaining = await ctx.db
+      .query("images")
+      .withIndex("by_folder", q => q.eq("folder", "home-components"))
+      .first();
+
+    return { deleted: toDelete.length, hasMore: remaining !== null };
+  },
+});

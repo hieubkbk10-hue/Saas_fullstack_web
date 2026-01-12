@@ -2,6 +2,7 @@
 Trả lời bằng Tiếng Việt
 Tuân thủ nghiêm ngặc KISS, YAGNI, DRY
 Tuân thủ Rails Convention Over Configuration
+Mọi thay đổi code khi hoàn thành đều phải commit (nhưng không được push nha)
 
 # 7 Nguyên tắc DB Bandwidth Optimization:
 * Filter ở DB, không ở JS - Không .collect()/.findAll() không filter; không fetch ALL rồi filter JS; không fetch ALL để count
