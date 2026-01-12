@@ -2365,7 +2365,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
               <div className={cn("flex gap-2", device === 'mobile' ? 'justify-center' : '')}>
                 {getSocials().map((s) => (
                   <a key={s.id} href={s.url} className="h-5 w-5 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300" style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}>
-                    {renderSocialIcon(s.platform, 10)}
+                    {renderSocialIcon(s.platform, 14)}
                   </a>
                 ))}
               </div>
@@ -2437,7 +2437,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
           <div className="flex gap-3">
             {getSocials().map((s) => (
               <a key={s.id} href={s.url} className="h-5 w-5 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300" style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}>
-                {renderSocialIcon(s.platform, 10)}
+                {renderSocialIcon(s.platform, 14)}
               </a>
             ))}
           </div>
@@ -2473,7 +2473,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
             <div className="flex gap-2">
               {getSocials().map((s) => (
                 <a key={s.id} href={s.url} className="h-4 w-4 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300" style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}>
-                  {renderSocialIcon(s.platform, 8)}
+                  {renderSocialIcon(s.platform, 12)}
                 </a>
               ))}
             </div>
@@ -2538,7 +2538,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
             <div className="flex gap-2">
               {getSocials().map((s) => (
                 <a key={s.id} href={s.url} className="h-4 w-4 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300" style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}>
-                  {renderSocialIcon(s.platform, 8)}
+                  {renderSocialIcon(s.platform, 12)}
                 </a>
               ))}
             </div>
