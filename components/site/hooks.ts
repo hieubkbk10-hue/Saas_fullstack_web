@@ -59,3 +59,28 @@ export function useContactSettings() {
     hotline: settingsMap.contact_hotline || '',
   };
 }
+
+// Hook lấy social links settings
+export function useSocialLinks() {
+  const settings = useQuery(api.settings.listByGroup, { group: 'social' });
+  
+  if (settings === undefined) {
+    return { isLoading: true };
+  }
+  
+  const settingsMap: Record<string, string> = {};
+  settings.forEach(s => {
+    settingsMap[s.key] = s.value as string;
+  });
+  
+  return {
+    isLoading: false,
+    facebook: settingsMap.social_facebook || '',
+    instagram: settingsMap.social_instagram || '',
+    youtube: settingsMap.social_youtube || '',
+    tiktok: settingsMap.social_tiktok || '',
+    zalo: settingsMap.social_zalo || '',
+    twitter: settingsMap.social_twitter || '',
+    linkedin: settingsMap.social_linkedin || '',
+  };
+}

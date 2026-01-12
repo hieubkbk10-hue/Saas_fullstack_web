@@ -102,7 +102,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [faqStyle, setFaqStyle] = useState<FaqStyle>('accordion');
   const [aboutConfig, setAboutConfig] = useState({ style: 'bento' as AboutStyle, subHeading: '', heading: '', description: '', image: '', buttonText: '', buttonLink: '', stats: [] as {id: number, value: string, label: string}[] });
   const [footerConfig, setFooterConfig] = useState({ description: '', copyright: '', showSocialLinks: true });
-  const [footerStyle, setFooterStyle] = useState<FooterStyle>('columns');
+  const [footerStyle, setFooterStyle] = useState<FooterStyle>('classic');
   const [servicesItems, setServicesItems] = useState<{id: number, icon: string, title: string, description: string}[]>([]);
   const [servicesStyle, setServicesStyle] = useState<ServicesStyle>('elegantGrid');
   const [benefitsStyle, setBenefitsStyle] = useState<BenefitsStyle>('cards');
@@ -233,7 +233,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           break;
         case 'Footer':
           setFooterConfig({ description: config.description || '', copyright: config.copyright || '', showSocialLinks: config.showSocialLinks ?? true });
-          setFooterStyle((config.style as FooterStyle) || 'columns');
+          setFooterStyle((config.style as FooterStyle) || 'classic');
           break;
         case 'Services':
           setServicesItems(config.items?.map((item: {icon: string, title: string, description: string}, i: number) => ({ id: i, icon: item.icon, title: item.title, description: item.description })) || []);

@@ -2218,6 +2218,7 @@ export const BlogPreview = ({ brandColor, postCount, selectedStyle, onStyleChang
 };
 
 // ============ FOOTER PREVIEW ============
+// 4 Professional Styles from footer reference: Classic Dark, Modern Center, Corporate, Minimal
 type SocialLinkItem = { id: number; platform: string; url: string; icon: string };
 type FooterConfig = { 
   logo: string; 
@@ -2227,128 +2228,270 @@ type FooterConfig = {
   copyright: string; 
   showSocialLinks: boolean 
 };
-export type FooterStyle = 'columns' | 'centered' | 'minimal';
+export type FooterStyle = 'classic' | 'modern' | 'corporate' | 'minimal';
 export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange }: { config: FooterConfig; brandColor: string; selectedStyle?: FooterStyle; onStyleChange?: (style: FooterStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'columns';
+  const previewStyle = selectedStyle || 'classic';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as FooterStyle);
-  const styles = [{ id: 'columns', label: 'Columns' }, { id: 'centered', label: 'Centered' }, { id: 'minimal', label: 'Minimal' }];
+  const styles = [
+    { id: 'classic', label: '1. Classic Dark' }, 
+    { id: 'modern', label: '2. Modern Center' },
+    { id: 'corporate', label: '3. Corporate' },
+    { id: 'minimal', label: '4. Minimal' }
+  ];
 
   // Render social icons based on platform
-  const renderSocialIcon = (platform: string) => {
-    const iconClass = "text-slate-400";
+  const renderSocialIcon = (platform: string, size: number = 18) => {
     switch (platform) {
-      case 'facebook': return <Globe size={14} className={iconClass} />;
-      case 'instagram': return <ImageIcon size={14} className={iconClass} />;
-      case 'youtube': return <ExternalLink size={14} className={iconClass} />;
-      case 'tiktok': return <Star size={14} className={iconClass} />;
-      case 'zalo': return <Phone size={14} className={iconClass} />;
-      default: return <Globe size={14} className={iconClass} />;
+      case 'facebook': return <Globe size={size} />;
+      case 'instagram': return <ImageIcon size={size} />;
+      case 'youtube': return <ExternalLink size={size} />;
+      case 'tiktok': return <Star size={size} />;
+      case 'zalo': return <Phone size={size} />;
+      default: return <Globe size={size} />;
     }
   };
 
-  // Render social links - use config.socialLinks if available, else show default icons
-  const renderSocialLinks = (size: 'sm' | 'md' = 'sm') => {
-    const iconSize = size === 'sm' ? 'w-8 h-8' : 'w-9 h-9';
-    const hasCustomSocials = config.socialLinks && config.socialLinks.length > 0;
-    
-    if (hasCustomSocials) {
-      return config.socialLinks!.map(social => (
-        <div key={social.id} className={`${iconSize} rounded-full bg-slate-700 flex items-center justify-center`} title={social.platform}>
-          {renderSocialIcon(social.platform)}
+  // Get socials - use config.socialLinks if available, else default
+  const getSocials = () => {
+    if (config.socialLinks && config.socialLinks.length > 0) {
+      return config.socialLinks;
+    }
+    return [
+      { id: 1, platform: 'facebook', url: '#', icon: 'facebook' },
+      { id: 2, platform: 'instagram', url: '#', icon: 'instagram' },
+      { id: 3, platform: 'youtube', url: '#', icon: 'youtube' },
+    ];
+  };
+
+  // Default columns if none provided
+  const getColumns = () => {
+    if (config.columns && config.columns.length > 0) {
+      return config.columns;
+    }
+    return [
+      { id: 1, title: 'Về chúng tôi', links: [{ label: 'Giới thiệu', url: '/about' }, { label: 'Tuyển dụng', url: '/careers' }, { label: 'Đội ngũ', url: '/team' }, { label: 'Tin tức', url: '/blog' }] },
+      { id: 2, title: 'Hỗ trợ', links: [{ label: 'FAQ', url: '/faq' }, { label: 'Liên hệ', url: '/contact' }, { label: 'Chính sách', url: '/policy' }, { label: 'Báo cáo', url: '/report' }] }
+    ];
+  };
+
+  // Style 1: Classic Dark - Standard layout với brand column và menu columns
+  const renderClassicStyle = () => (
+    <footer className="w-full bg-slate-950 text-slate-200 py-12 md:py-16 border-t border-slate-800">
+      <div className={cn("container max-w-7xl mx-auto", device === 'mobile' ? 'px-4' : 'px-6')}>
+        <div className={cn(
+          "grid gap-12",
+          device === 'mobile' ? 'grid-cols-1 gap-8' : device === 'tablet' ? 'grid-cols-2 gap-8' : 'grid-cols-12 lg:gap-8'
+        )}>
+          
+          {/* Brand Column */}
+          <div className={cn(device === 'mobile' ? 'text-center' : device === 'tablet' ? 'col-span-2' : 'lg:col-span-5', "space-y-6")}>
+            <div className={cn("flex items-center gap-3", device === 'mobile' ? 'justify-center' : '')}>
+              <div className="bg-slate-900 p-2 rounded-lg border border-slate-800">
+                {config.logo ? (
+                  <img src={config.logo} alt="Logo" className="h-8 w-8 object-contain brightness-110" />
+                ) : (
+                  <div className="h-8 w-8 rounded flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>V</div>
+                )}
+              </div>
+              <span className="text-xl font-bold tracking-tight text-white">VietAdmin</span>
+            </div>
+            <p className={cn("text-slate-400 text-sm leading-relaxed", device === 'mobile' ? '' : 'max-w-sm')}>
+              {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số. Chúng tôi cam kết mang lại giá trị bền vững.'}
+            </p>
+            {config.showSocialLinks && (
+              <div className={cn("flex gap-3", device === 'mobile' ? 'justify-center' : '')}>
+                {getSocials().map((s) => (
+                  <a key={s.id} href={s.url} className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-900 text-slate-400 hover:text-white transition-all duration-300 border border-slate-800 hover:border-slate-600" style={{ '--hover-bg': brandColor } as React.CSSProperties}>
+                    {renderSocialIcon(s.platform, 18)}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Dynamic Columns */}
+          <div className={cn(
+            "grid gap-8",
+            device === 'mobile' ? 'grid-cols-2 text-center' : device === 'tablet' ? 'grid-cols-2' : 'lg:col-span-7 grid-cols-2 md:grid-cols-3'
+          )}>
+            {getColumns().slice(0, 2).map((col) => (
+              <div key={col.id}>
+                <h3 className="font-semibold text-white tracking-wide mb-6">{col.title}</h3>
+                <ul className="space-y-4">
+                  {col.links.map((link, lIdx) => (
+                    <li key={lIdx}>
+                      <a href={link.url} className="text-sm text-slate-400 hover:text-white transition-colors block" style={{ '--hover-color': brandColor } as React.CSSProperties}>
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
-      ));
-    }
-    // Default fallback icons
-    return (
-      <>
-        <div className={`${iconSize} rounded-full bg-slate-700 flex items-center justify-center`}><Globe size={size === 'sm' ? 14 : 16} className="text-slate-400" /></div>
-        <div className={`${iconSize} rounded-full bg-slate-700 flex items-center justify-center`}><Mail size={size === 'sm' ? 14 : 16} className="text-slate-400" /></div>
-        <div className={`${iconSize} rounded-full bg-slate-700 flex items-center justify-center`}><Phone size={size === 'sm' ? 14 : 16} className="text-slate-400" /></div>
-      </>
-    );
-  };
 
-  const renderColumnsStyle = () => (
-    <div className={cn("py-10 px-6", device === 'mobile' ? 'py-8 px-4' : '')} style={{ backgroundColor: '#1f2937' }}>
-      <div className={cn("grid gap-8", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4')}>
-        <div className={device === 'mobile' ? 'text-center' : ''}>
-          {config.logo ? (
-            <img src={config.logo} alt="Logo" className="h-10 w-auto mb-4 mx-auto md:mx-0 object-contain" />
-          ) : (
-            <div className="w-10 h-10 rounded-lg mb-4 mx-auto md:mx-0" style={{ backgroundColor: brandColor }}></div>
-          )}
-          <p className="text-sm text-slate-400">{config.description || 'Mô tả công ty...'}</p>
+        <div className="mt-16 pt-8 border-t border-slate-800/50">
+          <p className={cn("text-xs text-slate-500", device === 'mobile' ? 'text-center' : '')}>{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</p>
+        </div>
+      </div>
+    </footer>
+  );
+
+  // Style 2: Modern Centered - Elegant centered layout
+  const renderModernStyle = () => (
+    <footer className="w-full bg-slate-900 text-slate-200 py-20">
+      <div className={cn("container max-w-5xl mx-auto flex flex-col items-center text-center space-y-10", device === 'mobile' ? 'px-4 py-12 space-y-8' : 'px-6')}>
+        
+        {/* Brand */}
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-16 w-16 bg-gradient-to-tr from-slate-800 to-slate-700 rounded-2xl flex items-center justify-center shadow-2xl shadow-black/20 mb-2">
+            {config.logo ? (
+              <img src={config.logo} alt="Logo" className="h-10 w-10 object-contain drop-shadow-md" />
+            ) : (
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center text-white font-bold text-xl" style={{ backgroundColor: brandColor }}>V</div>
+            )}
+          </div>
+          <h2 className="text-2xl font-bold text-white tracking-tight">VietAdmin</h2>
+          <p className={cn("text-slate-400 text-sm leading-relaxed opacity-80", device === 'mobile' ? 'max-w-xs' : 'max-w-md')}>
+            {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
+          </p>
+        </div>
+
+        {/* Navigation (Flat) */}
+        <div className={cn("flex flex-wrap justify-center gap-x-8 gap-y-3", device === 'mobile' ? 'gap-x-4 gap-y-2' : '')}>
+          {getColumns().flatMap(col => col.links).slice(0, device === 'mobile' ? 4 : 8).map((link, i) => (
+            <a key={i} href={link.url} className="text-sm font-medium text-slate-300 hover:text-white hover:underline underline-offset-4 transition-all" style={{ textDecorationColor: brandColor }}>
+              {link.label}
+            </a>
+          ))}
+        </div>
+
+        <div className="w-24 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+
+        {/* Socials */}
+        {config.showSocialLinks && (
+          <div className="flex gap-6">
+            {getSocials().map((s) => (
+              <a key={s.id} href={s.url} className="text-slate-400 hover:text-white hover:scale-110 transition-transform">
+                {renderSocialIcon(s.platform, 24)}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {/* Copyright */}
+        <div className="text-xs text-slate-600 font-medium">
+          {config.copyright || '© 2024 VietAdmin. All rights reserved.'}
+        </div>
+      </div>
+    </footer>
+  );
+
+  // Style 3: Corporate Grid - Structured professional layout
+  const renderCorporateStyle = () => (
+    <footer className="w-full bg-[#0B0F19] text-gray-300 py-16 border-t border-slate-900">
+      <div className={cn("container max-w-7xl mx-auto", device === 'mobile' ? 'px-4' : 'px-6')}>
+        
+        {/* Top Row: Logo & Socials */}
+        <div className={cn(
+          "flex justify-between items-start gap-6 pb-12 border-b border-slate-900",
+          device === 'mobile' ? 'flex-col items-center text-center' : 'md:flex-row md:items-center'
+        )}>
+          <div className={cn("flex items-center gap-3", device === 'mobile' ? 'justify-center' : '')}>
+            {config.logo ? (
+              <img src={config.logo} alt="Logo" className="h-8 w-8 object-contain" />
+            ) : (
+              <div className="h-8 w-8 rounded flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>V</div>
+            )}
+            <span className="text-lg font-bold text-white">VietAdmin</span>
+          </div>
           {config.showSocialLinks && (
-            <div className={cn("flex gap-2 mt-4", device === 'mobile' ? 'justify-center' : '')}>
-              {renderSocialLinks('sm')}
+            <div className="flex gap-4">
+              {getSocials().map((s) => (
+                <a key={s.id} href={s.url} className="text-gray-500 hover:text-white transition-colors">
+                  {renderSocialIcon(s.platform, 20)}
+                </a>
+              ))}
             </div>
           )}
         </div>
-        {config.columns.slice(0, 2).map((col) => (
-          <div key={col.id} className={device === 'mobile' ? 'text-center' : ''}>
-            <h4 className="font-semibold text-white mb-3">{col.title || 'Tiêu đề'}</h4>
-            <ul className="space-y-2">
-              {(col.links.length > 0 ? col.links : [{ label: 'Link 1', url: '#' }, { label: 'Link 2', url: '#' }]).map((link, idx) => (<li key={idx}><a href="#" className="text-sm text-slate-400 hover:text-white">{link.label}</a></li>))}
-            </ul>
+
+        {/* Middle Row: Columns */}
+        <div className={cn(
+          "py-12 grid gap-10",
+          device === 'mobile' ? 'grid-cols-1 text-center' : device === 'tablet' ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-4'
+        )}>
+          <div className={cn(device === 'mobile' ? '' : 'col-span-2 md:col-span-2 pr-10')}>
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Về Công Ty</h4>
+            <p className="text-sm text-gray-500 leading-7">{config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}</p>
           </div>
-        ))}
-        <div className={device === 'mobile' ? 'text-center' : ''}>
-          <h4 className="font-semibold text-white mb-3">Liên hệ</h4>
-          <ul className="space-y-2 text-sm text-slate-400">
-            <li>Email: contact@example.com</li>
-            <li>Hotline: 1900 1234</li>
-          </ul>
+          
+          {getColumns().slice(0, 2).map((col) => (
+            <div key={col.id}>
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">{col.title}</h4>
+              <ul className="space-y-3">
+                {col.links.map((link, lIdx) => (
+                  <li key={lIdx}>
+                    <a href={link.url} className="text-sm text-gray-500 hover:text-white transition-colors" style={{ '--hover-color': brandColor } as React.CSSProperties}>
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom Row */}
+        <div className={cn("pt-8 text-sm text-gray-600", device === 'mobile' ? 'text-center' : '')}>
+          {config.copyright || '© 2024 VietAdmin. All rights reserved.'}
         </div>
       </div>
-      <div className="border-t border-slate-700 mt-8 pt-6 text-center text-xs text-slate-500">{config.copyright || '© 2024 Company. All rights reserved.'}</div>
-    </div>
+    </footer>
   );
 
-  const renderCenteredStyle = () => (
-    <div className={cn("py-10 px-6 text-center", device === 'mobile' ? 'py-8 px-4' : '')} style={{ backgroundColor: '#1f2937' }}>
-      {config.logo ? (
-        <img src={config.logo} alt="Logo" className="h-12 w-auto mx-auto mb-4 object-contain" />
-      ) : (
-        <div className="w-12 h-12 rounded-lg mx-auto mb-4" style={{ backgroundColor: brandColor }}></div>
-      )}
-      <p className="text-sm text-slate-400 max-w-md mx-auto mb-6">{config.description || 'Mô tả công ty...'}</p>
-      <div className={cn("flex flex-wrap justify-center gap-6 mb-6", device === 'mobile' ? 'gap-4' : '')}>
-        {config.columns.flatMap(col => col.links).slice(0, 5).map((link, idx) => (<a key={idx} href="#" className="text-sm text-slate-400 hover:text-white">{link.label || `Link ${idx + 1}`}</a>))}
-      </div>
-      {config.showSocialLinks && (
-        <div className="flex justify-center gap-3 mb-6">
-          {renderSocialLinks('md')}
-        </div>
-      )}
-      <div className="text-xs text-slate-500">{config.copyright || '© 2024 Company. All rights reserved.'}</div>
-    </div>
-  );
-
+  // Style 4: Minimal - Compact single row
   const renderMinimalStyle = () => (
-    <div className={cn("py-6 px-6", device === 'mobile' ? 'py-4 px-4' : '')} style={{ backgroundColor: '#1f2937' }}>
-      <div className={cn("flex items-center justify-between", device === 'mobile' ? 'flex-col gap-4 text-center' : '')}>
-        <div className="flex items-center gap-3">
-          {config.logo ? (
-            <img src={config.logo} alt="Logo" className="h-8 w-auto object-contain" />
-          ) : (
-            <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: brandColor }}></div>
+    <footer className="w-full bg-black text-white py-8 border-t border-white/10">
+      <div className={cn("container max-w-7xl mx-auto", device === 'mobile' ? 'px-4' : 'px-6')}>
+        <div className={cn(
+          "flex items-center justify-between gap-6",
+          device === 'mobile' ? 'flex-col text-center' : 'md:flex-row'
+        )}>
+          
+          {/* Left: Logo & Copy */}
+          <div className={cn("flex items-center gap-4", device === 'mobile' ? 'flex-col' : '')}>
+            {config.logo ? (
+              <img src={config.logo} alt="Logo" className="h-6 w-6 opacity-80" />
+            ) : (
+              <div className="h-6 w-6 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>
+            )}
+            <span className="text-sm text-neutral-400 font-medium">{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</span>
+          </div>
+
+          {/* Right: Socials only */}
+          {config.showSocialLinks && (
+            <div className="flex gap-5">
+              {getSocials().map((s) => (
+                <a key={s.id} href={s.url} className="text-neutral-500 hover:text-white transition-colors">
+                  {renderSocialIcon(s.platform, 18)}
+                </a>
+              ))}
+            </div>
           )}
-          <span className="text-white font-semibold">YourBrand</span>
         </div>
-        <div className={cn("flex gap-6", device === 'mobile' ? 'flex-wrap justify-center gap-4' : '')}>
-          {config.columns.flatMap(col => col.links).slice(0, 3).map((link, idx) => (<a key={idx} href="#" className="text-sm text-slate-400 hover:text-white">{link.label || `Link ${idx + 1}`}</a>))}
-        </div>
-        <div className="text-xs text-slate-500">{config.copyright || '© 2024'}</div>
       </div>
-    </div>
+    </footer>
   );
 
   return (
     <PreviewWrapper title="Preview Footer" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles}>
       <BrowserFrame>
-        {previewStyle === 'columns' && renderColumnsStyle()}
-        {previewStyle === 'centered' && renderCenteredStyle()}
+        {previewStyle === 'classic' && renderClassicStyle()}
+        {previewStyle === 'modern' && renderModernStyle()}
+        {previewStyle === 'corporate' && renderCorporateStyle()}
         {previewStyle === 'minimal' && renderMinimalStyle()}
       </BrowserFrame>
     </PreviewWrapper>

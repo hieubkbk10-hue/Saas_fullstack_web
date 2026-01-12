@@ -45,7 +45,7 @@ export default function FooterCreatePage() {
     copyright: '© 2024 VietAdmin. All rights reserved.',
     showSocialLinks: true
   });
-  const [style, setStyle] = useState<FooterStyle>('columns');
+  const [style, setStyle] = useState<FooterStyle>('classic');
 
   // Load from Settings
   const loadFromSettings = () => {
