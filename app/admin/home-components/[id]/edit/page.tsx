@@ -101,7 +101,14 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [faqItems, setFaqItems] = useState<{id: number, question: string, answer: string}[]>([]);
   const [faqStyle, setFaqStyle] = useState<FaqStyle>('accordion');
   const [aboutConfig, setAboutConfig] = useState({ style: 'bento' as AboutStyle, subHeading: '', heading: '', description: '', image: '', buttonText: '', buttonLink: '', stats: [] as {id: number, value: string, label: string}[] });
-  const [footerConfig, setFooterConfig] = useState({ description: '', copyright: '', showSocialLinks: true });
+  const [footerConfig, setFooterConfig] = useState({
+    logo: '',
+    description: '',
+    columns: [] as { id: number; title: string; links: { label: string; url: string }[] }[],
+    socialLinks: [] as { id: number; platform: string; url: string; icon: string }[],
+    copyright: '',
+    showSocialLinks: true
+  });
   const [footerStyle, setFooterStyle] = useState<FooterStyle>('classic');
   const [servicesItems, setServicesItems] = useState<{id: number, icon: string, title: string, description: string}[]>([]);
   const [servicesStyle, setServicesStyle] = useState<ServicesStyle>('elegantGrid');
@@ -232,7 +239,23 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           });
           break;
         case 'Footer':
-          setFooterConfig({ description: config.description || '', copyright: config.copyright || '', showSocialLinks: config.showSocialLinks ?? true });
+          setFooterConfig({
+            logo: config.logo || '',
+            description: config.description || '',
+            columns: config.columns?.map((c: { title: string; links: { label: string; url: string }[] }, i: number) => ({
+              id: i + 1,
+              title: c.title,
+              links: c.links || []
+            })) || [],
+            socialLinks: config.socialLinks?.map((s: { platform: string; url: string; icon: string }, i: number) => ({
+              id: i + 1,
+              platform: s.platform,
+              url: s.url,
+              icon: s.icon
+            })) || [],
+            copyright: config.copyright || '',
+            showSocialLinks: config.showSocialLinks ?? true
+          });
           setFooterStyle((config.style as FooterStyle) || 'classic');
           break;
         case 'Services':
@@ -316,7 +339,15 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'About':
         return aboutConfig;
       case 'Footer':
-        return { ...footerConfig, style: footerStyle };
+        return {
+          logo: footerConfig.logo,
+          description: footerConfig.description,
+          columns: footerConfig.columns.map(c => ({ title: c.title, links: c.links })),
+          socialLinks: footerConfig.socialLinks.map(s => ({ platform: s.platform, url: s.url, icon: s.icon })),
+          copyright: footerConfig.copyright,
+          showSocialLinks: footerConfig.showSocialLinks,
+          style: footerStyle
+        };
       case 'Services':
         return { items: servicesItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })), style: servicesStyle };
       case 'Benefits':
@@ -586,19 +617,266 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         {/* Footer */}
         {component.type === 'Footer' && (
           <>
+            {/* Logo & Basic Info */}
             <Card className="mb-6">
-              <CardHeader><CardTitle className="text-base">Cấu hình Footer</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle className="text-base">Thông tin cơ bản</CardTitle>
+              </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2"><Label>Mô tả công ty</Label><textarea value={footerConfig.description} onChange={(e) => setFooterConfig({...footerConfig, description: e.target.value})} className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" /></div>
-                <div className="space-y-2"><Label>Copyright</Label><Input value={footerConfig.copyright} onChange={(e) => setFooterConfig({...footerConfig, copyright: e.target.value})} /></div>
+                <ImageFieldWithUpload
+                  label="Logo"
+                  value={footerConfig.logo}
+                  onChange={(url) => setFooterConfig({...footerConfig, logo: url})}
+                  folder="footer"
+                  aspectRatio="square"
+                  quality={0.9}
+                  placeholder="https://example.com/logo.png"
+                />
+                <div className="space-y-2">
+                  <Label>Mô tả công ty</Label>
+                  <textarea 
+                    value={footerConfig.description} 
+                    onChange={(e) => setFooterConfig({...footerConfig, description: e.target.value})} 
+                    placeholder="Công ty TNHH ABC - Đối tác tin cậy của bạn"
+                    className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Copyright</Label>
+                  <Input 
+                    value={footerConfig.copyright} 
+                    onChange={(e) => setFooterConfig({...footerConfig, copyright: e.target.value})} 
+                    placeholder="© 2024 Company. All rights reserved." 
+                  />
+                </div>
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" checked={footerConfig.showSocialLinks} onChange={(e) => setFooterConfig({...footerConfig, showSocialLinks: e.target.checked})} className="w-4 h-4 rounded" />
+                  <input 
+                    type="checkbox" 
+                    checked={footerConfig.showSocialLinks} 
+                    onChange={(e) => setFooterConfig({...footerConfig, showSocialLinks: e.target.checked})} 
+                    className="w-4 h-4 rounded" 
+                  />
                   <Label>Hiển thị social links</Label>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Menu Columns */}
+            <Card className="mb-6">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Cột menu ({footerConfig.columns.length})</CardTitle>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      const newId = Math.max(0, ...footerConfig.columns.map(c => c.id), 0) + 1;
+                      setFooterConfig({
+                        ...footerConfig,
+                        columns: [...footerConfig.columns, { id: newId, title: `Cột ${newId}`, links: [{ label: 'Link mới', url: '#' }] }]
+                      });
+                    }}
+                    disabled={footerConfig.columns.length >= 4}
+                  >
+                    <Plus size={14} className="mr-1" /> Thêm cột
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {footerConfig.columns.length === 0 ? (
+                  <div className="text-center py-6 text-slate-500 text-sm">
+                    Chưa có cột menu nào. Nhấn "Thêm cột" để bắt đầu.
+                  </div>
+                ) : (
+                  footerConfig.columns.map((column) => (
+                    <div key={column.id} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <Input
+                          value={column.title}
+                          onChange={(e) => setFooterConfig({
+                            ...footerConfig,
+                            columns: footerConfig.columns.map(c => c.id === column.id ? { ...c, title: e.target.value } : c)
+                          })}
+                          placeholder="Tiêu đề cột"
+                          className="flex-1"
+                        />
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setFooterConfig({
+                            ...footerConfig,
+                            columns: footerConfig.columns.filter(c => c.id !== column.id)
+                          })}
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                      
+                      {/* Links */}
+                      <div className="pl-4 space-y-2">
+                        <Label className="text-xs text-slate-500">Links ({column.links.length})</Label>
+                        {column.links.map((link, linkIdx) => (
+                          <div key={linkIdx} className="flex items-center gap-2">
+                            <Input
+                              value={link.label}
+                              onChange={(e) => setFooterConfig({
+                                ...footerConfig,
+                                columns: footerConfig.columns.map(c => 
+                                  c.id === column.id ? { 
+                                    ...c, 
+                                    links: c.links.map((l, idx) => idx === linkIdx ? { ...l, label: e.target.value } : l)
+                                  } : c
+                                )
+                              })}
+                              placeholder="Tên link"
+                              className="flex-1"
+                            />
+                            <Input
+                              value={link.url}
+                              onChange={(e) => setFooterConfig({
+                                ...footerConfig,
+                                columns: footerConfig.columns.map(c => 
+                                  c.id === column.id ? { 
+                                    ...c, 
+                                    links: c.links.map((l, idx) => idx === linkIdx ? { ...l, url: e.target.value } : l)
+                                  } : c
+                                )
+                              })}
+                              placeholder="/url"
+                              className="flex-1"
+                            />
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => setFooterConfig({
+                                ...footerConfig,
+                                columns: footerConfig.columns.map(c => 
+                                  c.id === column.id ? { ...c, links: c.links.filter((_, idx) => idx !== linkIdx) } : c
+                                )
+                              })}
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
+                              disabled={column.links.length <= 1}
+                            >
+                              <Trash2 size={12} />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setFooterConfig({
+                            ...footerConfig,
+                            columns: footerConfig.columns.map(c => 
+                              c.id === column.id ? { ...c, links: [...c.links, { label: 'Link mới', url: '#' }] } : c
+                            )
+                          })}
+                          className="text-slate-500 hover:text-slate-700"
+                        >
+                          <Plus size={12} className="mr-1" /> Thêm link
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Social Links */}
+            <Card className="mb-6">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Mạng xã hội ({footerConfig.socialLinks.length})</CardTitle>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      const platforms = ['facebook', 'instagram', 'youtube', 'tiktok', 'zalo'];
+                      const usedPlatforms = footerConfig.socialLinks.map(s => s.platform);
+                      const availablePlatform = platforms.find(p => !usedPlatforms.includes(p));
+                      if (!availablePlatform) return;
+                      const newId = Math.max(0, ...footerConfig.socialLinks.map(s => s.id), 0) + 1;
+                      setFooterConfig({
+                        ...footerConfig,
+                        socialLinks: [...footerConfig.socialLinks, { id: newId, platform: availablePlatform, url: '', icon: availablePlatform }]
+                      });
+                    }}
+                    disabled={footerConfig.socialLinks.length >= 5}
+                  >
+                    <Plus size={14} className="mr-1" /> Thêm MXH
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {footerConfig.socialLinks.length === 0 ? (
+                  <div className="text-center py-6 text-slate-500 text-sm">
+                    Chưa có mạng xã hội nào. Nhấn "Thêm MXH" để bắt đầu.
+                  </div>
+                ) : (
+                  footerConfig.socialLinks.map((social) => (
+                    <div key={social.id} className="flex items-center gap-3">
+                      <select
+                        value={social.platform}
+                        onChange={(e) => setFooterConfig({
+                          ...footerConfig,
+                          socialLinks: footerConfig.socialLinks.map(s => 
+                            s.id === social.id ? { ...s, platform: e.target.value, icon: e.target.value } : s
+                          )
+                        })}
+                        className="w-36 h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+                      >
+                        {[
+                          { key: 'facebook', label: 'Facebook' },
+                          { key: 'instagram', label: 'Instagram' },
+                          { key: 'youtube', label: 'Youtube' },
+                          { key: 'tiktok', label: 'TikTok' },
+                          { key: 'zalo', label: 'Zalo' },
+                        ].map(p => (
+                          <option 
+                            key={p.key} 
+                            value={p.key}
+                            disabled={footerConfig.socialLinks.some(s => s.platform === p.key && s.id !== social.id)}
+                          >
+                            {p.label}
+                          </option>
+                        ))}
+                      </select>
+                      <Input
+                        value={social.url}
+                        onChange={(e) => setFooterConfig({
+                          ...footerConfig,
+                          socialLinks: footerConfig.socialLinks.map(s => 
+                            s.id === social.id ? { ...s, url: e.target.value } : s
+                          )
+                        })}
+                        placeholder="https://facebook.com/yourpage"
+                        className="flex-1"
+                      />
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setFooterConfig({
+                          ...footerConfig,
+                          socialLinks: footerConfig.socialLinks.filter(s => s.id !== social.id)
+                        })}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
             <FooterPreview 
-              config={{ ...footerConfig, logo: '', columns: [] }} 
+              config={footerConfig} 
               brandColor={brandColor}
               selectedStyle={footerStyle}
               onStyleChange={setFooterStyle}
