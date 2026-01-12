@@ -29,7 +29,8 @@ import {
   ProductListPreview, ProductListStyle,
   ServiceListPreview, ServiceListStyle,
   FooterPreview, FooterStyle,
-  AboutPreview, AboutStyle
+  AboutPreview, AboutStyle,
+  TestimonialsPreview, TestimonialsStyle
 } from '../../previews';
 import { useBrandColor } from '../../create/shared';
 
@@ -121,6 +122,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [servicesStyle, setServicesStyle] = useState<ServicesStyle>('elegantGrid');
   const [benefitsStyle, setBenefitsStyle] = useState<BenefitsStyle>('cards');
   const [testimonialsItems, setTestimonialsItems] = useState<{id: number, name: string, role: string, content: string, avatar: string, rating: number}[]>([]);
+  const [testimonialsStyle, setTestimonialsStyle] = useState<TestimonialsStyle>('cards');
   const [pricingPlans, setPricingPlans] = useState<{id: number, name: string, price: string, period: string, features: string[], isPopular: boolean, buttonText: string, buttonLink: string}[]>([]);
   const [caseStudyProjects, setCaseStudyProjects] = useState<{id: number, title: string, category: string, image: string, description: string, link: string}[]>([]);
   const [careerJobs, setCareerJobs] = useState<{id: number, title: string, department: string, location: string, type: string, salary: string, description: string}[]>([]);
@@ -275,6 +277,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           break;
         case 'Testimonials':
           setTestimonialsItems(config.items?.map((item: {name: string, role: string, content: string, avatar: string, rating: number}, i: number) => ({ id: i, ...item })) || []);
+          setTestimonialsStyle((config.style as TestimonialsStyle) || 'cards');
           break;
         case 'Pricing':
           setPricingPlans(config.plans?.map((p: {name: string, price: string, period: string, features: string[], isPopular: boolean, buttonText: string, buttonLink: string}, i: number) => ({ id: i, ...p })) || []);
@@ -360,7 +363,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'Benefits':
         return { items: servicesItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })), style: benefitsStyle };
       case 'Testimonials':
-        return { items: testimonialsItems.map(t => ({ name: t.name, role: t.role, content: t.content, avatar: t.avatar, rating: t.rating })) };
+        return { items: testimonialsItems.map(t => ({ name: t.name, role: t.role, content: t.content, avatar: t.avatar, rating: t.rating })), style: testimonialsStyle };
       case 'Pricing':
         return { plans: pricingPlans.map(p => ({ name: p.name, price: p.price, period: p.period, features: p.features, isPopular: p.isPopular, buttonText: p.buttonText, buttonLink: p.buttonLink })) };
       case 'CaseStudy':
@@ -984,6 +987,55 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               brandColor={brandColor}
               selectedStyle={benefitsStyle}
               onStyleChange={setBenefitsStyle}
+            />
+          </>
+        )}
+
+        {/* Testimonials */}
+        {component.type === 'Testimonials' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Đánh giá khách hàng</CardTitle>
+                <Button type="button" variant="outline" size="sm" onClick={() => setTestimonialsItems([...testimonialsItems, { id: Date.now(), name: '', role: '', content: '', avatar: '', rating: 5 }])} className="gap-2"><Plus size={14} /> Thêm</Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {testimonialsItems.map((item, idx) => (
+                  <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Đánh giá {idx + 1}</Label>
+                      <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => testimonialsItems.length > 1 && setTestimonialsItems(testimonialsItems.filter(t => t.id !== item.id))}><Trash2 size={14} /></Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input placeholder="Tên khách hàng" value={item.name} onChange={(e) => setTestimonialsItems(testimonialsItems.map(t => t.id === item.id ? {...t, name: e.target.value} : t))} />
+                      <Input placeholder="Chức vụ / Công ty" value={item.role} onChange={(e) => setTestimonialsItems(testimonialsItems.map(t => t.id === item.id ? {...t, role: e.target.value} : t))} />
+                    </div>
+                    <textarea 
+                      placeholder="Nội dung đánh giá..." 
+                      value={item.content} 
+                      onChange={(e) => setTestimonialsItems(testimonialsItems.map(t => t.id === item.id ? {...t, content: e.target.value} : t))}
+                      className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" 
+                    />
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm">Đánh giá:</Label>
+                      {[1,2,3,4,5].map(star => (
+                        <Star 
+                          key={star} 
+                          size={20} 
+                          className={cn("cursor-pointer", star <= item.rating ? "text-yellow-400 fill-yellow-400" : "text-slate-300")}
+                          onClick={() => setTestimonialsItems(testimonialsItems.map(t => t.id === item.id ? {...t, rating: star} : t))} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+            <TestimonialsPreview 
+              items={testimonialsItems} 
+              brandColor={brandColor}
+              selectedStyle={testimonialsStyle}
+              onStyleChange={setTestimonialsStyle}
             />
           </>
         )}
