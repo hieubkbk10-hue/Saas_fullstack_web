@@ -152,8 +152,8 @@ export function DynamicFooter() {
 
             {/* Dynamic Columns */}
             <div className="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-8">
-              {columns.slice(0, 2).map((col) => (
-                <div key={col.id}>
+              {columns.slice(0, 2).map((col, colIdx) => (
+                <div key={col.id || `col-${colIdx}`}>
                   <h3 className="font-semibold text-white tracking-wide mb-6">{col.title}</h3>
                   <ul className="space-y-4">
                     {col.links.map((link, lIdx) => (
@@ -289,8 +289,8 @@ export function DynamicFooter() {
               </p>
             </div>
             
-            {columns.slice(0, 2).map((col) => (
-              <div key={col.id}>
+            {columns.slice(0, 2).map((col, colIdx) => (
+              <div key={col.id || `col-${colIdx}`}>
                 <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">{col.title}</h4>
                 <ul className="space-y-3">
                   {col.links.map((link, lIdx) => (
