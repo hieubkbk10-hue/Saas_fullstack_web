@@ -2220,32 +2220,110 @@ function PricingSection({ config, brandColor, title }: { config: Record<string, 
 }
 
 // ============ CAREER SECTION ============
+// 3 Professional Styles: Cards, List, Minimal
+type CareerStyle = 'cards' | 'list' | 'minimal';
 function CareerSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const jobs = (config.jobs as Array<{ title: string; department: string; location: string; type: string; salary: string }>) || [];
+  const style = (config.style as CareerStyle) || 'cards';
 
-  return (
-    <section className="py-16 px-4 bg-slate-50">
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-        <div className="space-y-4">
-          {jobs.map((job, idx) => (
-            <div key={idx} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg text-slate-900">{job.title}</h3>
-                <div className="flex gap-4 text-sm text-slate-500 mt-1">
-                  <span>{job.department}</span>
-                  <span>•</span>
-                  <span>{job.location}</span>
-                  <span>•</span>
-                  <span>{job.type}</span>
+  // Style 1: Cards - Grid layout với hover effects
+  if (style === 'cards') {
+    return (
+      <section className="py-16 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-slate-900">{title}</h2>
+            <p className="text-slate-500 mt-2">Tham gia đội ngũ của chúng tôi</p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {jobs.map((job, idx) => (
+              <div key={idx} className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg hover:border-slate-300 transition-all">
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-xs font-medium px-3 py-1 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                    {job.department || 'Department'}
+                  </span>
+                  <span className="text-xs text-slate-500">{job.type || 'Full-time'}</span>
+                </div>
+                <h3 className="font-semibold text-lg mb-3 text-slate-900">{job.title || 'Vị trí tuyển dụng'}</h3>
+                <div className="space-y-2 text-sm text-slate-500 mb-4">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    {job.location || 'Hà Nội'}
+                  </div>
+                  {job.salary && (
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      {job.salary}
+                    </div>
+                  )}
+                </div>
+                <button className="w-full py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ backgroundColor: brandColor }}>
+                  Ứng tuyển ngay
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: List - Compact horizontal layout
+  if (style === 'list') {
+    return (
+      <section className="py-16 px-4 bg-slate-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-slate-900">{title}</h2>
+          </div>
+          <div className="space-y-3">
+            {jobs.map((job, idx) => (
+              <div key={idx} className="bg-white rounded-xl p-5 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
+                <div>
+                  <h3 className="font-semibold text-slate-900">{job.title || 'Vị trí'}</h3>
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 mt-1">
+                    <span>{job.department || 'Department'}</span>
+                    <span className="hidden md:inline">•</span>
+                    <span>{job.location || 'Location'}</span>
+                    <span className="hidden md:inline">•</span>
+                    <span>{job.type || 'Full-time'}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  {job.salary && <span className="text-sm font-medium" style={{ color: brandColor }}>{job.salary}</span>}
+                  <button className="px-5 py-2 rounded-lg text-sm font-medium text-white whitespace-nowrap" style={{ backgroundColor: brandColor }}>
+                    Ứng tuyển
+                  </button>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="font-medium" style={{ color: brandColor }}>{job.salary}</div>
-                <a href="#" className="text-sm hover:underline" style={{ color: brandColor }}>Ứng tuyển →</a>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Minimal - Split layout with sidebar
+  return (
+    <section className="py-16 px-4" style={{ backgroundColor: `${brandColor}05` }}>
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-col md:flex-row gap-8 md:gap-12">
+          <div className="md:w-1/3 text-center md:text-left">
+            <p className="text-sm font-medium mb-2" style={{ color: brandColor }}>TUYỂN DỤNG</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">{title}</h2>
+            <p className="text-slate-500">Chúng tôi đang tìm kiếm những tài năng mới</p>
+          </div>
+          <div className="flex-1 space-y-3">
+            {jobs.map((job, idx) => (
+              <div key={idx} className="bg-white rounded-xl p-5 border border-slate-200 flex items-center justify-between hover:shadow-sm transition-shadow">
+                <div>
+                  <h3 className="font-medium text-slate-900">{job.title || 'Vị trí'}</h3>
+                  <span className="text-sm text-slate-500">{job.location} • {job.type}</span>
+                </div>
+                <a href="#" className="text-sm font-medium hover:underline" style={{ color: brandColor }}>Chi tiết →</a>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -2253,29 +2331,122 @@ function CareerSection({ config, brandColor, title }: { config: Record<string, u
 }
 
 // ============ CASE STUDY SECTION ============
+// 3 Professional Styles: Grid, Featured, List
+type CaseStudyStyle = 'grid' | 'featured' | 'list';
 function CaseStudySection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const projects = (config.projects as Array<{ title: string; category: string; image: string; description: string; link: string }>) || [];
+  const style = (config.style as CaseStudyStyle) || 'grid';
 
+  // Style 1: Grid - 3 columns grid layout
+  if (style === 'grid') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((project, idx) => (
+              <a key={idx} href={project.link || '#'} className="group block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-slate-100">
+                <div className="aspect-video bg-slate-100 overflow-hidden">
+                  {project.image ? (
+                    <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon size={32} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+                <div className="p-5">
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                    {project.category || 'Category'}
+                  </span>
+                  <h3 className="font-semibold text-slate-900 mt-2 mb-1">{project.title || 'Tên dự án'}</h3>
+                  <p className="text-slate-500 text-sm line-clamp-2">{project.description}</p>
+                  <span className="text-sm mt-3 inline-block" style={{ color: brandColor }}>Xem chi tiết →</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Featured - 1 large + 2 small layout
+  if (style === 'featured') {
+    const featured = projects[0];
+    const others = projects.slice(1, 3);
+    
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Featured large card */}
+            {featured && (
+              <a href={featured.link || '#'} className="group block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-slate-100 md:row-span-2">
+                <div className="aspect-video bg-slate-100 overflow-hidden">
+                  {featured.image ? (
+                    <img src={featured.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon size={48} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+                <div className="p-6">
+                  <span className="text-xs font-medium" style={{ color: brandColor }}>{featured.category || 'Category'}</span>
+                  <h3 className="text-xl font-bold text-slate-900 mt-1 mb-2">{featured.title || 'Dự án chính'}</h3>
+                  <p className="text-slate-500">{featured.description}</p>
+                </div>
+              </a>
+            )}
+            
+            {/* Other smaller cards */}
+            {others.map((project, idx) => (
+              <a key={idx} href={project.link || '#'} className="group block bg-white rounded-xl p-5 border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow">
+                <div className="w-24 h-24 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {project.image ? (
+                    <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <ImageIcon size={24} className="text-slate-300" />
+                  )}
+                </div>
+                <div>
+                  <span className="text-xs font-medium" style={{ color: brandColor }}>{project.category || 'Category'}</span>
+                  <h4 className="font-semibold text-slate-900 mt-1">{project.title || 'Tên dự án'}</h4>
+                  <p className="text-sm text-slate-500 mt-1 line-clamp-1">{project.description}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: List - Horizontal list layout
   return (
     <section className="py-16 px-4">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="space-y-4">
           {projects.map((project, idx) => (
-            <a key={idx} href={project.link || '#'} className="group block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              <div className="aspect-video bg-slate-100 overflow-hidden">
+            <a key={idx} href={project.link || '#'} className="group block bg-white rounded-xl overflow-hidden border border-slate-100 flex flex-col md:flex-row md:items-center hover:shadow-md transition-shadow">
+              <div className="aspect-video md:aspect-auto md:w-48 md:h-28 bg-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {project.image ? (
                   <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <ImageIcon size={48} className="text-slate-300" />
-                  </div>
+                  <ImageIcon size={24} className="text-slate-300" />
                 )}
               </div>
-              <div className="p-6">
-                <div className="text-sm font-medium mb-2" style={{ color: brandColor }}>{project.category}</div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">{project.title}</h3>
-                <p className="text-slate-600 text-sm">{project.description}</p>
+              <div className="p-5 flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                    {project.category || 'Category'}
+                  </span>
+                </div>
+                <h4 className="font-semibold text-slate-900">{project.title || 'Tên dự án'}</h4>
+                <p className="text-sm text-slate-500 mt-1">{project.description}</p>
               </div>
             </a>
           ))}
