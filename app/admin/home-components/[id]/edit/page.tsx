@@ -93,7 +93,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
   const [heroStyle, setHeroStyle] = useState<HeroStyle>('slider');
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
-  const [galleryStyle, setGalleryStyle] = useState<GalleryStyle>('slider');
+  const [galleryStyle, setGalleryStyle] = useState<GalleryStyle>('grid');
   const [statsItems, setStatsItems] = useState<{id: number, value: string, label: string}[]>([]);
   const [statsStyle, setStatsStyle] = useState<StatsStyle>('horizontal');
   const [ctaConfig, setCtaConfig] = useState({ title: '', description: '', buttonText: '', buttonLink: '', secondaryButtonText: '', secondaryButtonLink: '' });

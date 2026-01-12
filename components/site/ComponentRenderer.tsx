@@ -1320,69 +1320,196 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
   );
 }
 
-// ============ GALLERY SECTION ============
-type GalleryStyle = 'slider' | 'grid' | 'marquee';
+// ============ GALLERY/PARTNERS SECTION ============
+// 4 Professional Styles from partner-&-logo-manager: Grid, Marquee, Mono, Badge
+type GalleryStyle = 'grid' | 'marquee' | 'mono' | 'badge';
+
+// Auto Scroll Slider Component for Marquee/Mono styles
+const AutoScrollSlider = ({ children, speed = 0.5 }: { children: React.ReactNode; speed?: number }) => {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const [isPaused, setIsPaused] = React.useState(false);
+
+  React.useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+
+    let animationId: number;
+    let position = scroller.scrollLeft;
+
+    const step = () => {
+      if (!isPaused && scroller) {
+        position += speed;
+        if (position >= scroller.scrollWidth / 3) {
+          position = 0;
+        }
+        scroller.scrollLeft = position;
+      } else if (scroller) {
+        position = scroller.scrollLeft;
+      }
+      animationId = requestAnimationFrame(step);
+    };
+
+    animationId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animationId);
+  }, [isPaused, speed]);
+
+  return (
+    <div 
+      ref={scrollRef}
+      className="flex overflow-x-auto cursor-grab active:cursor-grabbing touch-pan-x"
+      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={() => setIsPaused(true)}
+      onTouchEnd={() => setIsPaused(false)}
+    >
+      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
+      <div className="flex shrink-0 gap-16 items-center px-4">{children}</div>
+      <div className="flex shrink-0 gap-16 items-center px-4">{children}</div>
+      <div className="flex shrink-0 gap-16 items-center px-4">{children}</div>
+    </div>
+  );
+};
+
 function GallerySection({ config, brandColor, title, type }: { config: Record<string, unknown>; brandColor: string; title: string; type: string }) {
   const items = (config.items as Array<{ url: string; link?: string }>) || [];
   const style = (config.style as GalleryStyle) || 'grid';
-  const [currentIndex, setCurrentIndex] = React.useState(0);
 
-  // Style 1: Slider
-  if (style === 'slider') {
+  // Style 1: Classic Grid - Hover effect, responsive grid
+  if (style === 'grid') {
     return (
-      <section className="py-16 px-4 bg-slate-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-          <div className="relative">
-            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+      <section className="w-full py-10 bg-white border-b border-slate-200/40">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
+              {title}
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-8 items-center justify-items-center">
+            {items.map((item, idx) => (
+              <a 
+                key={idx} 
+                href={item.link || '#'}
+                className="w-full flex items-center justify-center p-4 rounded-xl hover:bg-slate-100/50 transition-colors duration-300 cursor-pointer group"
+              >
+                {item.url ? (
+                  <img 
+                    src={item.url} 
+                    alt="" 
+                    className="h-8 w-auto object-contain transition-transform duration-300 group-hover:scale-110" 
+                  />
+                ) : (
+                  <ImageIcon size={32} className="text-slate-300" />
+                )}
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Marquee - Auto scroll, swipeable
+  if (style === 'marquee') {
+    return (
+      <section className="w-full py-10 bg-white border-b border-slate-200/40">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
+              {title}
+            </h2>
+          </div>
+          <div className="w-full relative group py-8">
+            {/* Fade Edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+            
+            <AutoScrollSlider speed={0.8}>
               {items.map((item, idx) => (
-                <a key={idx} href={item.link || '#'} className="flex-shrink-0 w-32 h-20 bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow flex items-center justify-center p-2 border">
-                  {item.url ? <img src={item.url} alt="" className="max-w-full max-h-full object-contain" /> : <ImageIcon size={24} className="text-slate-300" />}
+                <a key={idx} href={item.link || '#'} className="shrink-0">
+                  {item.url ? (
+                    <img 
+                      src={item.url} 
+                      alt="" 
+                      className="h-9 w-auto object-contain hover:scale-110 transition-transform duration-300 select-none" 
+                    />
+                  ) : (
+                    <div className="h-9 w-20 bg-slate-200 rounded flex items-center justify-center">
+                      <ImageIcon size={20} className="text-slate-400" />
+                    </div>
+                  )}
                 </a>
               ))}
-            </div>
+            </AutoScrollSlider>
           </div>
         </div>
       </section>
     );
   }
 
-  // Style 2: Grid (default)
-  if (style === 'grid') {
-    const cols = type === 'Partners' ? 'grid-cols-3 md:grid-cols-6' : 'grid-cols-2 md:grid-cols-4';
+  // Style 3: Mono - Grayscale, hover to color
+  if (style === 'mono') {
     return (
-      <section className="py-16 px-4 bg-slate-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-          <div className={`grid ${cols} gap-6`}>
-            {items.map((item, idx) => (
-              <a key={idx} href={item.link || '#'} className="block aspect-video bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                {item.url ? <img src={item.url} alt="" className="w-full h-full object-contain p-4" /> : <div className="w-full h-full flex items-center justify-center"><ImageIcon size={32} className="text-slate-300" /></div>}
-              </a>
-            ))}
+      <section className="w-full py-10 bg-white border-b border-slate-200/40">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
+              {title}
+            </h2>
+          </div>
+          <div className="w-full relative py-6">
+            <AutoScrollSlider speed={0.5}>
+              {items.map((item, idx) => (
+                <a key={idx} href={item.link || '#'} className="shrink-0 group">
+                  {item.url ? (
+                    <img 
+                      src={item.url} 
+                      alt="" 
+                      className="h-8 w-auto object-contain grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 select-none" 
+                    />
+                  ) : (
+                    <div className="h-8 w-20 bg-slate-200 rounded flex items-center justify-center opacity-50">
+                      <ImageIcon size={18} className="text-slate-400" />
+                    </div>
+                  )}
+                </a>
+              ))}
+            </AutoScrollSlider>
           </div>
         </div>
       </section>
     );
   }
 
-  // Style 3: Split/Marquee
+  // Style 4: Badge - Compact badges with name (default fallback)
   return (
-    <section className="py-16 px-4" style={{ backgroundColor: `${brandColor}05` }}>
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row gap-8 items-center">
-          <div className="md:w-1/3 text-center md:text-left">
-            <p className="text-sm font-semibold uppercase tracking-wider mb-2" style={{ color: brandColor }}>{type === 'Partners' ? 'Đối tác' : type === 'TrustBadges' ? 'Chứng nhận' : 'Bộ sưu tập'}</p>
-            <h2 className="text-2xl font-bold text-slate-900 mb-3">{title}</h2>
-            <p className="text-sm text-slate-500">Được tin tưởng bởi các thương hiệu hàng đầu</p>
-          </div>
-          <div className="flex-1 grid grid-cols-3 gap-4">
-            {items.slice(0, 6).map((item, idx) => (
-              <a key={idx} href={item.link || '#'} className="aspect-[3/2] bg-white rounded-xl border flex items-center justify-center p-3 group">
-                {item.url ? <img src={item.url} alt="" className="max-w-full max-h-full object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all" /> : <ImageIcon size={22} className="text-slate-300" />}
-              </a>
-            ))}
-          </div>
+    <section className="w-full py-10 bg-white border-b border-slate-200/40">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
+            {title}
+          </h2>
+        </div>
+        <div className="w-full flex flex-wrap items-center justify-center gap-3">
+          {items.slice(0, 6).map((item, idx) => (
+            <a 
+              key={idx} 
+              href={item.link || '#'}
+              className="bg-slate-100/50 hover:bg-slate-100 px-4 py-2 rounded-lg border border-transparent hover:border-slate-200/50 transition-all flex items-center gap-3 cursor-pointer"
+              style={{ borderColor: `${brandColor}10` }}
+            >
+              {item.url ? (
+                <img src={item.url} alt="" className="h-4 w-auto grayscale" />
+              ) : (
+                <ImageIcon size={16} className="text-slate-400" />
+              )}
+              <span className="text-xs font-semibold text-slate-500">Partner {idx + 1}</span>
+            </a>
+          ))}
         </div>
       </div>
     </section>

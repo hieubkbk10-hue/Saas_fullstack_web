@@ -763,71 +763,241 @@ export const PricingPreview = ({ plans, brandColor, selectedStyle, onStyleChange
   );
 };
 
-// ============ GALLERY PREVIEW ============
+// ============ GALLERY/PARTNERS PREVIEW ============
+// 4 Professional Styles from partner-&-logo-manager: Grid, Marquee, Mono, Badge
 type GalleryItem = { id: number; url: string; link: string };
-export type GalleryStyle = 'slider' | 'grid' | 'marquee';
-export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle, onStyleChange }: { items: GalleryItem[]; brandColor: string; componentType: 'Partners' | 'Gallery' | 'TrustBadges'; selectedStyle?: GalleryStyle; onStyleChange?: (style: GalleryStyle) => void }) => {
+export type GalleryStyle = 'grid' | 'marquee' | 'mono' | 'badge';
+
+// Auto Scroll Slider Component for Marquee/Mono styles
+const AutoScrollSlider = ({ children, className, speed = 0.5, isPaused }: { 
+  children: React.ReactNode; 
+  className?: string; 
+  speed?: number;
+  isPaused: boolean;
+}) => {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+
+    let animationId: number;
+    let position = scroller.scrollLeft;
+
+    const step = () => {
+      if (!isPaused && scroller) {
+        position += speed;
+        if (position >= scroller.scrollWidth / 3) {
+          position = 0;
+        }
+        scroller.scrollLeft = position;
+      } else if (scroller) {
+        position = scroller.scrollLeft;
+      }
+      animationId = requestAnimationFrame(step);
+    };
+
+    animationId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animationId);
+  }, [isPaused, speed]);
+
+  return (
+    <div 
+      ref={scrollRef}
+      className={cn("flex overflow-x-auto cursor-grab active:cursor-grabbing touch-pan-x", className)}
+      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+    >
+      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
+      <div className="flex shrink-0 gap-16 items-center px-4">{children}</div>
+      <div className="flex shrink-0 gap-16 items-center px-4">{children}</div>
+      <div className="flex shrink-0 gap-16 items-center px-4">{children}</div>
+    </div>
+  );
+};
+
+export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle, onStyleChange }: { 
+  items: GalleryItem[]; 
+  brandColor: string; 
+  componentType: 'Partners' | 'Gallery' | 'TrustBadges'; 
+  selectedStyle?: GalleryStyle; 
+  onStyleChange?: (style: GalleryStyle) => void;
+}) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'slider';
+  const [isPaused, setIsPaused] = useState(false);
+  const previewStyle = selectedStyle || 'grid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as GalleryStyle);
-  const styles = [{ id: 'slider', label: 'Slider' }, { id: 'grid', label: 'Grid' }, { id: 'marquee', label: 'Split' }];
-  const titles = { Partners: 'Đối tác tin cậy', Gallery: 'Thư viện ảnh', TrustBadges: 'Chứng nhận & Giải thưởng' };
+  
+  // Styles phụ thuộc vào componentType
+  const styles = componentType === 'Partners' 
+    ? [
+        { id: 'grid', label: 'Grid' }, 
+        { id: 'marquee', label: 'Marquee' }, 
+        { id: 'mono', label: 'Mono' },
+        { id: 'badge', label: 'Badge' }
+      ]
+    : [
+        { id: 'grid', label: 'Grid' }, 
+        { id: 'marquee', label: 'Marquee' }
+      ];
 
-  const renderSliderStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>{titles[componentType]}</h3>
-      <div className="relative">
-        <div className={cn("flex gap-4 overflow-hidden", device === 'mobile' ? 'gap-3' : '')}>
-          {items.slice(0, device === 'mobile' ? 3 : 6).map((item) => (
-            <div key={item.id} className={cn("flex-shrink-0 bg-white dark:bg-slate-800 rounded-lg border flex items-center justify-center", componentType === 'Gallery' ? 'aspect-square' : 'aspect-[3/1]', device === 'mobile' ? 'w-24 h-16' : 'w-32 h-20')}>
-              {item.url ? <img src={item.url} alt="" className="w-full h-full object-cover rounded-lg" /> : <ImageIcon size={24} className="text-slate-300" />}
-            </div>
-          ))}
-        </div>
-        <button className="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 bg-white shadow rounded-full flex items-center justify-center"><ChevronLeft size={16} /></button>
-        <button className="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 bg-white shadow rounded-full flex items-center justify-center"><ChevronRight size={16} /></button>
-      </div>
-    </div>
-  );
-
+  // Style 1: Classic Grid - Hover effect, responsive grid
   const renderGridStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>{titles[componentType]}</h3>
-      <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-3 gap-2' : 'grid-cols-6')}>
-        {items.slice(0, 6).map((item) => (
-          <div key={item.id} className={cn("bg-white dark:bg-slate-800 rounded-lg border flex items-center justify-center p-2 group hover:border-slate-300", componentType === 'Gallery' ? 'aspect-square' : 'aspect-[3/2]')}>
-            {item.url ? <img src={item.url} alt="" className="w-full h-full object-cover rounded" /> : <ImageIcon size={20} className="text-slate-300" />}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderSplitStyle = () => (
-    <div className={cn("py-10 px-6", device === 'mobile' ? 'py-6 px-4' : '')} style={{ backgroundColor: `${brandColor}03` }}>
-      <div className={cn("flex gap-8", device === 'mobile' ? 'flex-col' : 'items-center')}>
-        <div className={cn("flex-shrink-0", device === 'mobile' ? 'text-center' : 'w-1/3')}>
-          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: brandColor }}>{componentType === 'Partners' ? 'Đối tác' : componentType === 'TrustBadges' ? 'Chứng nhận' : 'Bộ sưu tập'}</p>
-          <h3 className={cn("font-bold mb-3", device === 'mobile' ? 'text-lg' : 'text-xl')}>{titles[componentType]}</h3>
-          <p className="text-sm text-slate-500">Được tin tưởng bởi các thương hiệu hàng đầu</p>
+    <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-4">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
+            {componentType === 'Partners' ? 'Đối tác' : componentType === 'TrustBadges' ? 'Chứng nhận' : 'Thư viện ảnh'}
+          </h2>
         </div>
-        <div className={cn("flex-1 grid gap-4", device === 'mobile' ? 'grid-cols-3' : 'grid-cols-3')}>
-          {items.slice(0, 6).map((item) => (
-            <div key={item.id} className={cn("bg-white dark:bg-slate-800 rounded-xl border flex items-center justify-center overflow-hidden group", componentType === 'Gallery' ? 'aspect-square' : 'aspect-[3/2] p-3')}>
-              {item.url ? <img src={item.url} alt="" className={cn("transition-all duration-300", componentType === 'Gallery' ? 'w-full h-full object-cover' : 'max-h-full max-w-full object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100')} /> : <ImageIcon size={22} className="text-slate-300" />}
+        <div className={cn(
+          "grid gap-8 items-center justify-items-center",
+          device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-4' : 'grid-cols-4 lg:grid-cols-8'
+        )}>
+          {items.slice(0, device === 'mobile' ? 4 : 8).map((item) => (
+            <div 
+              key={item.id} 
+              className="w-full flex items-center justify-center p-4 rounded-xl hover:bg-slate-100/50 dark:hover:bg-slate-800/30 transition-colors duration-300 cursor-pointer group"
+            >
+              {item.url ? (
+                <img 
+                  src={item.url} 
+                  alt="" 
+                  className="h-8 w-auto object-contain transition-transform duration-300 group-hover:scale-110" 
+                />
+              ) : (
+                <ImageIcon size={32} className="text-slate-300" />
+              )}
             </div>
           ))}
         </div>
       </div>
-    </div>
+    </section>
+  );
+
+  // Style 2: Marquee - Auto scroll, swipeable
+  const renderMarqueeStyle = () => (
+    <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-4">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
+            {componentType === 'Partners' ? 'Đối tác' : componentType === 'TrustBadges' ? 'Chứng nhận' : 'Thư viện ảnh'}
+          </h2>
+        </div>
+        <div 
+          className="w-full relative group py-8"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          {/* Fade Edges */}
+          <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none"></div>
+          
+          <AutoScrollSlider speed={0.8} isPaused={isPaused}>
+            {items.map((item) => (
+              <div key={`marquee-${item.id}`} className="shrink-0">
+                {item.url ? (
+                  <img 
+                    src={item.url} 
+                    alt="" 
+                    className="h-9 w-auto object-contain hover:scale-110 transition-transform duration-300 select-none pointer-events-none" 
+                  />
+                ) : (
+                  <div className="h-9 w-20 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
+                    <ImageIcon size={20} className="text-slate-400" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </AutoScrollSlider>
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 3: Mono - Grayscale, hover to color
+  const renderMonoStyle = () => (
+    <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-4">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
+            {componentType === 'Partners' ? 'Đối tác' : componentType === 'TrustBadges' ? 'Chứng nhận' : 'Thư viện ảnh'}
+          </h2>
+        </div>
+        <div 
+          className="w-full relative py-6"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          <AutoScrollSlider speed={0.5} isPaused={isPaused}>
+            {items.map((item) => (
+              <div key={`mono-${item.id}`} className="shrink-0 group">
+                {item.url ? (
+                  <img 
+                    src={item.url} 
+                    alt="" 
+                    className="h-8 w-auto object-contain grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 select-none pointer-events-none" 
+                  />
+                ) : (
+                  <div className="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center opacity-50">
+                    <ImageIcon size={18} className="text-slate-400" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </AutoScrollSlider>
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 4: Badge - Compact badges with name
+  const renderBadgeStyle = () => (
+    <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-4">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
+            {componentType === 'Partners' ? 'Đối tác' : componentType === 'TrustBadges' ? 'Chứng nhận' : 'Thư viện ảnh'}
+          </h2>
+        </div>
+        <div className="w-full flex flex-wrap items-center justify-center gap-3">
+          {items.slice(0, device === 'mobile' ? 4 : 6).map((item, idx) => (
+            <div 
+              key={item.id} 
+              className="bg-slate-100/50 dark:bg-slate-800/30 hover:bg-slate-100 dark:hover:bg-slate-800/60 px-4 py-2 rounded-lg border border-transparent hover:border-slate-200/50 dark:hover:border-slate-700/50 transition-all flex items-center gap-3 cursor-default"
+              style={{ borderColor: `${brandColor}10` }}
+            >
+              {item.url ? (
+                <img src={item.url} alt="" className="h-4 w-auto grayscale" />
+              ) : (
+                <ImageIcon size={16} className="text-slate-400" />
+              )}
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Partner {idx + 1}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 
   return (
-    <PreviewWrapper title={`Preview ${componentType}`} device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`${items.length} ảnh`}>
+    <PreviewWrapper 
+      title={`Preview ${componentType}`} 
+      device={device} 
+      setDevice={setDevice} 
+      previewStyle={previewStyle} 
+      setPreviewStyle={setPreviewStyle} 
+      styles={styles} 
+      info={`${items.length} ảnh`}
+    >
       <BrowserFrame>
-        {previewStyle === 'slider' && renderSliderStyle()}
         {previewStyle === 'grid' && renderGridStyle()}
-        {previewStyle === 'marquee' && renderSplitStyle()}
+        {previewStyle === 'marquee' && renderMarqueeStyle()}
+        {previewStyle === 'mono' && renderMonoStyle()}
+        {previewStyle === 'badge' && renderBadgeStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );
