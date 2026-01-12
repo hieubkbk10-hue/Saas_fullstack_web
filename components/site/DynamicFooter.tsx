@@ -170,7 +170,7 @@ export function DynamicFooter() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="h-8 w-8 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
-                      style={{ backgroundColor: bgMedium, color: socialColors[s.platform] || '#94a3b8', border: `1px solid ${borderColor}` }}
+                      style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}
                     >
                       <SocialIcon platform={s.platform} size={16} />
                     </a>

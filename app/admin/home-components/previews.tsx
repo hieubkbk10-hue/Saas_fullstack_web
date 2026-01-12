@@ -2364,7 +2364,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
             {config.showSocialLinks && (
               <div className={cn("flex gap-2", device === 'mobile' ? 'justify-center' : '')}>
                 {getSocials().map((s) => (
-                  <a key={s.id} href={s.url} className="h-7 w-7 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300" style={{ backgroundColor: bgMedium, color: socialColors[s.platform] || '#94a3b8', border: `1px solid ${borderColor}` }}>
+                  <a key={s.id} href={s.url} className="h-7 w-7 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300" style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}>
                     {renderSocialIcon(s.platform, 14)}
                   </a>
                 ))}
