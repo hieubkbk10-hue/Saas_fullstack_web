@@ -2339,33 +2339,33 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 
   // Style 1: Classic Dark - Standard layout với brand column và menu columns
   const renderClassicStyle = () => (
-    <footer className="w-full text-white py-12 md:py-16" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
-      <div className={cn("container max-w-7xl mx-auto", device === 'mobile' ? 'px-4' : 'px-6')}>
+    <footer className="w-full text-white py-6 md:py-8" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
+      <div className={cn("container max-w-7xl mx-auto", device === 'mobile' ? 'px-3' : 'px-4')}>
         <div className={cn(
-          "grid gap-12",
-          device === 'mobile' ? 'grid-cols-1 gap-8' : device === 'tablet' ? 'grid-cols-2 gap-8' : 'grid-cols-12 lg:gap-8'
+          "grid gap-6",
+          device === 'mobile' ? 'grid-cols-1 gap-4' : device === 'tablet' ? 'grid-cols-2 gap-5' : 'grid-cols-12 lg:gap-5'
         )}>
           
           {/* Brand Column */}
-          <div className={cn(device === 'mobile' ? 'text-center' : device === 'tablet' ? 'col-span-2' : 'lg:col-span-5', "space-y-6")}>
-            <div className={cn("flex items-center gap-3", device === 'mobile' ? 'justify-center' : '')}>
-              <div className="p-2 rounded-lg" style={{ backgroundColor: bgMedium, border: `1px solid ${borderColor}` }}>
+          <div className={cn(device === 'mobile' ? 'text-center' : device === 'tablet' ? 'col-span-2' : 'lg:col-span-5', "space-y-3")}>
+            <div className={cn("flex items-center gap-2", device === 'mobile' ? 'justify-center' : '')}>
+              <div className="p-1.5 rounded-lg" style={{ backgroundColor: bgMedium, border: `1px solid ${borderColor}` }}>
                 {config.logo ? (
-                  <img src={config.logo} alt="Logo" className="h-8 w-8 object-contain brightness-110" />
+                  <img src={config.logo} alt="Logo" className="h-5 w-5 object-contain brightness-110" />
                 ) : (
-                  <div className="h-8 w-8 rounded flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>V</div>
+                  <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>
                 )}
               </div>
-              <span className="text-xl font-bold tracking-tight text-white">VietAdmin</span>
+              <span className="text-base font-bold tracking-tight text-white">VietAdmin</span>
             </div>
-            <p className={cn("text-sm leading-relaxed", device === 'mobile' ? '' : 'max-w-sm')} style={{ color: textMuted }}>
-              {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số. Chúng tôi cam kết mang lại giá trị bền vững.'}
+            <p className={cn("text-xs leading-relaxed", device === 'mobile' ? '' : 'max-w-sm')} style={{ color: textMuted }}>
+              {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
             </p>
             {config.showSocialLinks && (
-              <div className={cn("flex gap-3", device === 'mobile' ? 'justify-center' : '')}>
+              <div className={cn("flex gap-2", device === 'mobile' ? 'justify-center' : '')}>
                 {getSocials().map((s) => (
-                  <a key={s.id} href={s.url} className="h-10 w-10 flex items-center justify-center rounded-full hover:text-white transition-all duration-300" style={{ backgroundColor: bgMedium, color: textMuted, border: `1px solid ${borderColor}` }}>
-                    {renderSocialIcon(s.platform, 18)}
+                  <a key={s.id} href={s.url} className="h-7 w-7 flex items-center justify-center rounded-full hover:text-white transition-all duration-300" style={{ backgroundColor: bgMedium, color: textMuted, border: `1px solid ${borderColor}` }}>
+                    {renderSocialIcon(s.platform, 14)}
                   </a>
                 ))}
               </div>
@@ -2374,16 +2374,16 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 
           {/* Dynamic Columns */}
           <div className={cn(
-            "grid gap-8",
+            "grid gap-5",
             device === 'mobile' ? 'grid-cols-2 text-center' : device === 'tablet' ? 'grid-cols-2' : 'lg:col-span-7 grid-cols-2 md:grid-cols-3'
           )}>
             {getColumns().slice(0, 2).map((col) => (
               <div key={col.id}>
-                <h3 className="font-semibold text-white tracking-wide mb-6">{col.title}</h3>
-                <ul className="space-y-4">
+                <h3 className="font-semibold text-white text-xs tracking-wide mb-2">{col.title}</h3>
+                <ul className="space-y-1.5">
                   {col.links.map((link, lIdx) => (
                     <li key={lIdx}>
-                      <a href={link.url} className="text-sm hover:text-white transition-colors block" style={{ color: textMuted }}>
+                      <a href={link.url} className="text-xs hover:text-white transition-colors block" style={{ color: textMuted }}>
                         {link.label}
                       </a>
                     </li>
@@ -2394,8 +2394,8 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
           </div>
         </div>
 
-        <div className="mt-16 pt-8" style={{ borderTop: `1px solid ${borderColor}50` }}>
-          <p className={cn("text-xs", device === 'mobile' ? 'text-center' : '')} style={{ color: textMuted }}>{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</p>
+        <div className="mt-6 pt-3" style={{ borderTop: `1px solid ${borderColor}50` }}>
+          <p className={cn("text-[10px]", device === 'mobile' ? 'text-center' : '')} style={{ color: textMuted }}>{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</p>
         </div>
       </div>
     </footer>
@@ -2403,48 +2403,48 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 
   // Style 2: Modern Centered - Elegant centered layout
   const renderModernStyle = () => (
-    <footer className="w-full text-white py-20" style={{ backgroundColor: bgDark }}>
-      <div className={cn("container max-w-5xl mx-auto flex flex-col items-center text-center space-y-10", device === 'mobile' ? 'px-4 py-12 space-y-8' : 'px-6')}>
+    <footer className="w-full text-white py-6 md:py-8" style={{ backgroundColor: bgDark }}>
+      <div className={cn("container max-w-5xl mx-auto flex flex-col items-center text-center space-y-4", device === 'mobile' ? 'px-3 space-y-3' : 'px-4')}>
         
         {/* Brand */}
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-16 w-16 rounded-2xl flex items-center justify-center shadow-2xl shadow-black/20 mb-2" style={{ background: `linear-gradient(to top right, ${bgMedium}, ${borderColor})` }}>
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-lg shadow-black/20 mb-1" style={{ background: `linear-gradient(to top right, ${bgMedium}, ${borderColor})` }}>
             {config.logo ? (
-              <img src={config.logo} alt="Logo" className="h-10 w-10 object-contain drop-shadow-md" />
+              <img src={config.logo} alt="Logo" className="h-6 w-6 object-contain drop-shadow-md" />
             ) : (
-              <div className="h-10 w-10 rounded-xl flex items-center justify-center text-white font-bold text-xl" style={{ backgroundColor: brandColor }}>V</div>
+              <div className="h-6 w-6 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: brandColor }}>V</div>
             )}
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">VietAdmin</h2>
-          <p className={cn("text-sm leading-relaxed opacity-80", device === 'mobile' ? 'max-w-xs' : 'max-w-md')} style={{ color: textMuted }}>
-            {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
+          <h2 className="text-base font-bold text-white tracking-tight">VietAdmin</h2>
+          <p className={cn("text-xs leading-relaxed opacity-80", device === 'mobile' ? 'max-w-xs' : 'max-w-md')} style={{ color: textMuted }}>
+            {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}
           </p>
         </div>
 
         {/* Navigation (Flat) */}
-        <div className={cn("flex flex-wrap justify-center gap-x-8 gap-y-3", device === 'mobile' ? 'gap-x-4 gap-y-2' : '')}>
+        <div className={cn("flex flex-wrap justify-center gap-x-4 gap-y-1.5", device === 'mobile' ? 'gap-x-3' : '')}>
           {getColumns().flatMap(col => col.links).slice(0, device === 'mobile' ? 4 : 8).map((link, i) => (
-            <a key={i} href={link.url} className="text-sm font-medium hover:text-white hover:underline underline-offset-4 transition-all" style={{ color: textLight, textDecorationColor: brandColor }}>
+            <a key={i} href={link.url} className="text-xs font-medium hover:text-white hover:underline underline-offset-4 transition-all" style={{ color: textLight, textDecorationColor: brandColor }}>
               {link.label}
             </a>
           ))}
         </div>
 
-        <div className="w-24 h-px" style={{ background: `linear-gradient(to right, transparent, ${borderColor}, transparent)` }}></div>
+        <div className="w-12 h-px" style={{ background: `linear-gradient(to right, transparent, ${borderColor}, transparent)` }}></div>
 
         {/* Socials */}
         {config.showSocialLinks && (
-          <div className="flex gap-6">
+          <div className="flex gap-3">
             {getSocials().map((s) => (
               <a key={s.id} href={s.url} className="hover:text-white hover:scale-110 transition-transform" style={{ color: textMuted }}>
-                {renderSocialIcon(s.platform, 24)}
+                {renderSocialIcon(s.platform, 16)}
               </a>
             ))}
           </div>
         )}
 
         {/* Copyright */}
-        <div className="text-xs font-medium" style={{ color: textMuted }}>
+        <div className="text-[10px] font-medium" style={{ color: textMuted }}>
           {config.copyright || '© 2024 VietAdmin. All rights reserved.'}
         </div>
       </div>
@@ -2453,27 +2453,27 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 
   // Style 3: Corporate Grid - Structured professional layout
   const renderCorporateStyle = () => (
-    <footer className="w-full text-white py-16" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
-      <div className={cn("container max-w-7xl mx-auto", device === 'mobile' ? 'px-4' : 'px-6')}>
+    <footer className="w-full text-white py-6 md:py-8" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
+      <div className={cn("container max-w-7xl mx-auto", device === 'mobile' ? 'px-3' : 'px-4')}>
         
         {/* Top Row: Logo & Socials */}
         <div className={cn(
-          "flex justify-between items-start gap-6 pb-12",
+          "flex justify-between items-start gap-3 pb-4",
           device === 'mobile' ? 'flex-col items-center text-center' : 'md:flex-row md:items-center'
         )} style={{ borderBottom: `1px solid ${borderColor}` }}>
-          <div className={cn("flex items-center gap-3", device === 'mobile' ? 'justify-center' : '')}>
+          <div className={cn("flex items-center gap-2", device === 'mobile' ? 'justify-center' : '')}>
             {config.logo ? (
-              <img src={config.logo} alt="Logo" className="h-8 w-8 object-contain" />
+              <img src={config.logo} alt="Logo" className="h-5 w-5 object-contain" />
             ) : (
-              <div className="h-8 w-8 rounded flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>V</div>
+              <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>
             )}
-            <span className="text-lg font-bold text-white">VietAdmin</span>
+            <span className="text-sm font-bold text-white">VietAdmin</span>
           </div>
           {config.showSocialLinks && (
-            <div className="flex gap-4">
+            <div className="flex gap-2">
               {getSocials().map((s) => (
                 <a key={s.id} href={s.url} className="hover:text-white transition-colors" style={{ color: textMuted }}>
-                  {renderSocialIcon(s.platform, 20)}
+                  {renderSocialIcon(s.platform, 14)}
                 </a>
               ))}
             </div>
@@ -2482,21 +2482,21 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 
         {/* Middle Row: Columns */}
         <div className={cn(
-          "py-12 grid gap-10",
+          "py-5 grid gap-5",
           device === 'mobile' ? 'grid-cols-1 text-center' : device === 'tablet' ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-4'
         )}>
-          <div className={cn(device === 'mobile' ? '' : 'col-span-2 md:col-span-2 pr-10')}>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Về Công Ty</h4>
-            <p className="text-sm leading-7" style={{ color: textMuted }}>{config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}</p>
+          <div className={cn(device === 'mobile' ? '' : 'col-span-2 md:col-span-2 pr-4')}>
+            <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-2">Về Công Ty</h4>
+            <p className="text-xs leading-relaxed" style={{ color: textMuted }}>{config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}</p>
           </div>
           
           {getColumns().slice(0, 2).map((col) => (
             <div key={col.id}>
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">{col.title}</h4>
-              <ul className="space-y-3">
+              <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-2">{col.title}</h4>
+              <ul className="space-y-1">
                 {col.links.map((link, lIdx) => (
                   <li key={lIdx}>
-                    <a href={link.url} className="text-sm hover:text-white transition-colors" style={{ color: textMuted }}>
+                    <a href={link.url} className="text-xs hover:text-white transition-colors" style={{ color: textMuted }}>
                       {link.label}
                     </a>
                   </li>
@@ -2507,7 +2507,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         </div>
 
         {/* Bottom Row */}
-        <div className={cn("pt-8 text-sm", device === 'mobile' ? 'text-center' : '')} style={{ color: textMuted }}>
+        <div className={cn("pt-3 text-[10px]", device === 'mobile' ? 'text-center' : '')} style={{ color: textMuted }}>
           {config.copyright || '© 2024 VietAdmin. All rights reserved.'}
         </div>
       </div>
@@ -2516,29 +2516,29 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 
   // Style 4: Minimal - Compact single row
   const renderMinimalStyle = () => (
-    <footer className="w-full text-white py-8" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
-      <div className={cn("container max-w-7xl mx-auto", device === 'mobile' ? 'px-4' : 'px-6')}>
+    <footer className="w-full text-white py-3 md:py-4" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
+      <div className={cn("container max-w-7xl mx-auto", device === 'mobile' ? 'px-3' : 'px-4')}>
         <div className={cn(
-          "flex items-center justify-between gap-6",
+          "flex items-center justify-between gap-3",
           device === 'mobile' ? 'flex-col text-center' : 'md:flex-row'
         )}>
           
           {/* Left: Logo & Copy */}
-          <div className={cn("flex items-center gap-4", device === 'mobile' ? 'flex-col' : '')}>
+          <div className={cn("flex items-center gap-2", device === 'mobile' ? 'flex-col' : '')}>
             {config.logo ? (
-              <img src={config.logo} alt="Logo" className="h-6 w-6 opacity-80" />
+              <img src={config.logo} alt="Logo" className="h-4 w-4 opacity-80" />
             ) : (
-              <div className="h-6 w-6 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>
+              <div className="h-4 w-4 rounded flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: brandColor }}>V</div>
             )}
-            <span className="text-sm font-medium" style={{ color: textMuted }}>{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</span>
+            <span className="text-[10px] font-medium" style={{ color: textMuted }}>{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</span>
           </div>
 
           {/* Right: Socials only */}
           {config.showSocialLinks && (
-            <div className="flex gap-5">
+            <div className="flex gap-2">
               {getSocials().map((s) => (
                 <a key={s.id} href={s.url} className="hover:text-white transition-colors" style={{ color: textMuted }}>
-                  {renderSocialIcon(s.platform, 18)}
+                  {renderSocialIcon(s.platform, 14)}
                 </a>
               ))}
             </div>

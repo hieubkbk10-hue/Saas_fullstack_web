@@ -141,39 +141,39 @@ export function DynamicFooter() {
   // Style 1: Classic Dark - Standard layout với brand column và menu columns
   if (style === 'classic') {
     return (
-      <footer className="w-full text-white py-12 md:py-16" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
+      <footer className="w-full text-white py-8 md:py-10" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
         <div className="container max-w-7xl mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 lg:gap-6">
             
             {/* Brand Column */}
-            <div className="lg:col-span-5 space-y-6">
-              <Link href="/" className="flex items-center gap-3">
-                <div className="p-2 rounded-lg" style={{ backgroundColor: bgMedium, border: `1px solid ${borderColor}` }}>
+            <div className="lg:col-span-5 space-y-4">
+              <Link href="/" className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg" style={{ backgroundColor: bgMedium, border: `1px solid ${borderColor}` }}>
                   {logo ? (
-                    <img src={logo} alt={siteName} className="h-8 w-8 object-contain brightness-110" />
+                    <img src={logo} alt={siteName} className="h-6 w-6 object-contain brightness-110" />
                   ) : (
-                    <div className="h-8 w-8 rounded flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>
+                    <div className="h-6 w-6 rounded flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: brandColor }}>
                       {(siteName || 'V').charAt(0)}
                     </div>
                   )}
                 </div>
-                <span className="text-xl font-bold tracking-tight text-white">{siteName || 'VietAdmin'}</span>
+                <span className="text-lg font-bold tracking-tight text-white">{siteName || 'VietAdmin'}</span>
               </Link>
               <p className="text-sm leading-relaxed max-w-sm" style={{ color: textMuted }}>
                 {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
               </p>
               {config.showSocialLinks !== false && (
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   {socials.map((s, idx) => (
                     <a 
                       key={s.id || `social-${idx}`} 
                       href={s.url || '#'} 
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="h-10 w-10 flex items-center justify-center rounded-full hover:text-white transition-all duration-300"
+                      className="h-8 w-8 flex items-center justify-center rounded-full hover:text-white transition-all duration-300"
                       style={{ backgroundColor: bgMedium, color: textMuted, border: `1px solid ${borderColor}` }}
                     >
-                      <SocialIcon platform={s.platform} size={18} />
+                      <SocialIcon platform={s.platform} size={16} />
                     </a>
                   ))}
                 </div>
@@ -181,11 +181,11 @@ export function DynamicFooter() {
             </div>
 
             {/* Dynamic Columns */}
-            <div className="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-8">
+            <div className="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-6">
               {columns.slice(0, 2).map((col, colIdx) => (
                 <div key={col.id || `col-${colIdx}`}>
-                  <h3 className="font-semibold text-white tracking-wide mb-6">{col.title}</h3>
-                  <ul className="space-y-4">
+                  <h3 className="font-semibold text-white text-sm tracking-wide mb-3">{col.title}</h3>
+                  <ul className="space-y-2">
                     {col.links.map((link, lIdx) => (
                       <li key={lIdx}>
                         <Link 
@@ -203,7 +203,7 @@ export function DynamicFooter() {
             </div>
           </div>
 
-          <div className="mt-16 pt-8" style={{ borderTop: `1px solid ${borderColor}50` }}>
+          <div className="mt-8 pt-4" style={{ borderTop: `1px solid ${borderColor}50` }}>
             <p className="text-xs" style={{ color: textMuted }}>{config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}</p>
           </div>
         </div>
@@ -214,28 +214,28 @@ export function DynamicFooter() {
   // Style 2: Modern Centered - Elegant centered layout
   if (style === 'modern') {
     return (
-      <footer className="w-full text-white py-16 md:py-20" style={{ backgroundColor: bgDark }}>
-        <div className="container max-w-5xl mx-auto px-4 md:px-6 flex flex-col items-center text-center space-y-8 md:space-y-10">
+      <footer className="w-full text-white py-8 md:py-10" style={{ backgroundColor: bgDark }}>
+        <div className="container max-w-5xl mx-auto px-4 md:px-6 flex flex-col items-center text-center space-y-5 md:space-y-6">
           
           {/* Brand */}
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-16 w-16 rounded-2xl flex items-center justify-center shadow-2xl shadow-black/20 mb-2" style={{ background: `linear-gradient(to top right, ${bgMedium}, ${borderColor})` }}>
+          <div className="flex flex-col items-center gap-2">
+            <div className="h-12 w-12 rounded-xl flex items-center justify-center shadow-lg shadow-black/20 mb-1" style={{ background: `linear-gradient(to top right, ${bgMedium}, ${borderColor})` }}>
               {logo ? (
-                <img src={logo} alt={siteName} className="h-10 w-10 object-contain drop-shadow-md" />
+                <img src={logo} alt={siteName} className="h-7 w-7 object-contain drop-shadow-md" />
               ) : (
-                <div className="h-10 w-10 rounded-xl flex items-center justify-center text-white font-bold text-xl" style={{ backgroundColor: brandColor }}>
+                <div className="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold text-base" style={{ backgroundColor: brandColor }}>
                   {(siteName || 'V').charAt(0)}
                 </div>
               )}
             </div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">{siteName || 'VietAdmin'}</h2>
+            <h2 className="text-lg font-bold text-white tracking-tight">{siteName || 'VietAdmin'}</h2>
             <p className="max-w-md text-sm leading-relaxed opacity-80" style={{ color: textMuted }}>
               {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
             </p>
           </div>
 
           {/* Navigation (Flat) */}
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 md:gap-x-8">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 md:gap-x-6">
             {columns.flatMap(col => col.links).slice(0, 8).map((link, i) => (
               <Link 
                 key={i} 
@@ -248,11 +248,11 @@ export function DynamicFooter() {
             ))}
           </div>
 
-          <div className="w-24 h-px" style={{ background: `linear-gradient(to right, transparent, ${borderColor}, transparent)` }}></div>
+          <div className="w-16 h-px" style={{ background: `linear-gradient(to right, transparent, ${borderColor}, transparent)` }}></div>
 
           {/* Socials */}
           {config.showSocialLinks !== false && (
-            <div className="flex gap-6">
+            <div className="flex gap-4">
               {socials.map((s, idx) => (
                 <a 
                   key={s.id || `social-${idx}`} 
@@ -262,7 +262,7 @@ export function DynamicFooter() {
                   className="hover:text-white hover:scale-110 transition-transform"
                   style={{ color: textMuted }}
                 >
-                  <SocialIcon platform={s.platform} size={24} />
+                  <SocialIcon platform={s.platform} size={18} />
                 </a>
               ))}
             </div>
@@ -280,23 +280,23 @@ export function DynamicFooter() {
   // Style 3: Corporate Grid - Structured professional layout
   if (style === 'corporate') {
     return (
-      <footer className="w-full text-white py-12 md:py-16" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
+      <footer className="w-full text-white py-8 md:py-10" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
         <div className="container max-w-7xl mx-auto px-4 md:px-6">
           
           {/* Top Row: Logo & Socials */}
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6 pb-12" style={{ borderBottom: `1px solid ${borderColor}` }}>
-            <Link href="/" className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 pb-6" style={{ borderBottom: `1px solid ${borderColor}` }}>
+            <Link href="/" className="flex items-center gap-2">
               {logo ? (
-                <img src={logo} alt={siteName} className="h-8 w-8 object-contain" />
+                <img src={logo} alt={siteName} className="h-6 w-6 object-contain" />
               ) : (
-                <div className="h-8 w-8 rounded flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>
+                <div className="h-6 w-6 rounded flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: brandColor }}>
                   {(siteName || 'V').charAt(0)}
                 </div>
               )}
-              <span className="text-lg font-bold text-white">{siteName || 'VietAdmin'}</span>
+              <span className="text-base font-bold text-white">{siteName || 'VietAdmin'}</span>
             </Link>
             {config.showSocialLinks !== false && (
-              <div className="flex gap-4">
+              <div className="flex gap-3">
                 {socials.map((s, idx) => (
                   <a 
                     key={s.id || `social-${idx}`} 
@@ -306,7 +306,7 @@ export function DynamicFooter() {
                     className="hover:text-white transition-colors"
                     style={{ color: textMuted }}
                   >
-                    <SocialIcon platform={s.platform} size={20} />
+                    <SocialIcon platform={s.platform} size={16} />
                   </a>
                 ))}
               </div>
@@ -314,18 +314,18 @@ export function DynamicFooter() {
           </div>
 
           {/* Middle Row: Columns */}
-          <div className="py-12 grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-10">
-            <div className="md:col-span-2 md:pr-10">
-              <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Về Công Ty</h4>
-              <p className="text-sm leading-7" style={{ color: textMuted }}>
+          <div className="py-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="md:col-span-2 md:pr-6">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2">Về Công Ty</h4>
+              <p className="text-sm leading-relaxed" style={{ color: textMuted }}>
                 {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
               </p>
             </div>
             
             {columns.slice(0, 2).map((col, colIdx) => (
               <div key={col.id || `col-${colIdx}`}>
-                <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">{col.title}</h4>
-                <ul className="space-y-3">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2">{col.title}</h4>
+                <ul className="space-y-1.5">
                   {col.links.map((link, lIdx) => (
                     <li key={lIdx}>
                       <Link href={link.url || '#'} className="text-sm hover:text-white transition-colors" style={{ color: textMuted }}>
@@ -339,7 +339,7 @@ export function DynamicFooter() {
           </div>
 
           {/* Bottom Row */}
-          <div className="pt-8 text-sm text-center md:text-left" style={{ color: textMuted }}>
+          <div className="pt-4 text-xs text-center md:text-left" style={{ color: textMuted }}>
             {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
           </div>
         </div>
@@ -349,27 +349,27 @@ export function DynamicFooter() {
 
   // Style 4: Minimal - Compact single row
   return (
-    <footer className="w-full text-white py-6 md:py-8" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
+    <footer className="w-full text-white py-4 md:py-5" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
       <div className="container max-w-7xl mx-auto px-4 md:px-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
           
           {/* Left: Logo & Copy */}
-          <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
+          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3">
             {logo ? (
-              <img src={logo} alt={siteName} className="h-6 w-6 opacity-80" />
+              <img src={logo} alt={siteName} className="h-5 w-5 opacity-80" />
             ) : (
-              <div className="h-6 w-6 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>
+              <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>
                 {(siteName || 'V').charAt(0)}
               </div>
             )}
-            <span className="text-sm font-medium" style={{ color: textMuted }}>
+            <span className="text-xs font-medium" style={{ color: textMuted }}>
               {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
             </span>
           </div>
 
           {/* Right: Socials only */}
           {config.showSocialLinks !== false && (
-            <div className="flex gap-5">
+            <div className="flex gap-3">
               {socials.map((s, idx) => (
                 <a 
                   key={s.id || `social-${idx}`} 
@@ -379,7 +379,7 @@ export function DynamicFooter() {
                   className="hover:text-white transition-colors"
                   style={{ color: textMuted }}
                 >
-                  <SocialIcon platform={s.platform} size={18} />
+                  <SocialIcon platform={s.platform} size={16} />
                 </a>
               ))}
             </div>
