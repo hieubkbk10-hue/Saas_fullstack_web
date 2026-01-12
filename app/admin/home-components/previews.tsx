@@ -1249,13 +1249,13 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
                 </div>
 
                 <button 
-                  className="w-full gap-2 border-2 py-2 px-4 rounded-lg font-medium text-sm flex items-center justify-center transition-colors"
-                  style={{ borderColor: `${brandColor}20`, color: brandColor }}
+                  className="w-full gap-1.5 md:gap-2 border-2 py-1.5 md:py-2 px-3 md:px-4 rounded-lg font-medium flex items-center justify-center transition-colors"
+                  style={{ borderColor: `${brandColor}20`, color: brandColor, fontSize: 'clamp(0.75rem, 2vw, 0.875rem)' }}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = brandColor; e.currentTarget.style.backgroundColor = `${brandColor}08`; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}20`; e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
                   Xem chi tiết
-                  <ArrowRight size={14} />
+                  <ArrowRight className="w-3 h-3 md:w-3.5 md:h-3.5" />
                 </button>
               </div>
             </div>
