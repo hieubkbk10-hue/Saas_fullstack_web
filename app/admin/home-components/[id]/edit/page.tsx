@@ -31,7 +31,8 @@ import {
   ServiceListPreview, ServiceListStyle,
   FooterPreview, FooterStyle,
   AboutPreview, AboutStyle,
-  TestimonialsPreview, TestimonialsStyle
+  TestimonialsPreview, TestimonialsStyle,
+  PricingPreview, PricingStyle
 } from '../../previews';
 import { useBrandColor } from '../../create/shared';
 
@@ -127,6 +128,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [testimonialsItems, setTestimonialsItems] = useState<{id: number, name: string, role: string, content: string, avatar: string, rating: number}[]>([]);
   const [testimonialsStyle, setTestimonialsStyle] = useState<TestimonialsStyle>('cards');
   const [pricingPlans, setPricingPlans] = useState<{id: number, name: string, price: string, period: string, features: string[], isPopular: boolean, buttonText: string, buttonLink: string}[]>([]);
+  const [pricingStyle, setPricingStyle] = useState<PricingStyle>('cards');
   const [caseStudyProjects, setCaseStudyProjects] = useState<{id: number, title: string, category: string, image: string, description: string, link: string}[]>([]);
   const [careerJobs, setCareerJobs] = useState<{id: number, title: string, department: string, location: string, type: string, salary: string, description: string}[]>([]);
   const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true });
@@ -287,6 +289,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           break;
         case 'Pricing':
           setPricingPlans(config.plans?.map((p: {name: string, price: string, period: string, features: string[], isPopular: boolean, buttonText: string, buttonLink: string}, i: number) => ({ id: i, ...p })) || []);
+          setPricingStyle((config.style as PricingStyle) || 'cards');
           break;
         case 'CaseStudy':
           setCaseStudyProjects(config.projects?.map((p: {title: string, category: string, image: string, description: string, link: string}, i: number) => ({ id: i, ...p })) || []);
@@ -372,7 +375,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'Testimonials':
         return { items: testimonialsItems.map(t => ({ name: t.name, role: t.role, content: t.content, avatar: t.avatar, rating: t.rating })), style: testimonialsStyle };
       case 'Pricing':
-        return { plans: pricingPlans.map(p => ({ name: p.name, price: p.price, period: p.period, features: p.features, isPopular: p.isPopular, buttonText: p.buttonText, buttonLink: p.buttonLink })) };
+        return { plans: pricingPlans.map(p => ({ name: p.name, price: p.price, period: p.period, features: p.features, isPopular: p.isPopular, buttonText: p.buttonText, buttonLink: p.buttonLink })), style: pricingStyle };
       case 'CaseStudy':
         return { projects: caseStudyProjects.map(p => ({ title: p.title, category: p.category, image: p.image, description: p.description, link: p.link })) };
       case 'Career':
@@ -1059,6 +1062,90 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               brandColor={brandColor}
               selectedStyle={testimonialsStyle}
               onStyleChange={setTestimonialsStyle}
+            />
+          </>
+        )}
+
+        {/* Pricing */}
+        {component.type === 'Pricing' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Các gói dịch vụ</CardTitle>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setPricingPlans([...pricingPlans, { id: Date.now(), name: '', price: '', period: '/tháng', features: [], isPopular: false, buttonText: 'Chọn gói', buttonLink: '' }])} 
+                  className="gap-2"
+                >
+                  <Plus size={14} /> Thêm gói
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {pricingPlans.map((plan, idx) => (
+                  <div key={plan.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Gói {idx + 1}</Label>
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-sm">
+                          <input 
+                            type="checkbox" 
+                            checked={plan.isPopular} 
+                            onChange={(e) => setPricingPlans(pricingPlans.map(p => p.id === plan.id ? {...p, isPopular: e.target.checked} : p))} 
+                            className="w-4 h-4 rounded" 
+                          />
+                          Nổi bật
+                        </label>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-red-500 h-8 w-8" 
+                          onClick={() => pricingPlans.length > 1 && setPricingPlans(pricingPlans.filter(p => p.id !== plan.id))}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input 
+                        placeholder="Tên gói" 
+                        value={plan.name} 
+                        onChange={(e) => setPricingPlans(pricingPlans.map(p => p.id === plan.id ? {...p, name: e.target.value} : p))} 
+                      />
+                      <Input 
+                        placeholder="Giá (VD: 299.000)" 
+                        value={plan.price} 
+                        onChange={(e) => setPricingPlans(pricingPlans.map(p => p.id === plan.id ? {...p, price: e.target.value} : p))} 
+                      />
+                    </div>
+                    <Input 
+                      placeholder="Tính năng (phân cách bởi dấu phẩy)" 
+                      value={plan.features.join(', ')} 
+                      onChange={(e) => setPricingPlans(pricingPlans.map(p => p.id === plan.id ? {...p, features: e.target.value.split(', ').filter(Boolean)} : p))} 
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input 
+                        placeholder="Text nút bấm" 
+                        value={plan.buttonText} 
+                        onChange={(e) => setPricingPlans(pricingPlans.map(p => p.id === plan.id ? {...p, buttonText: e.target.value} : p))} 
+                      />
+                      <Input 
+                        placeholder="Liên kết" 
+                        value={plan.buttonLink} 
+                        onChange={(e) => setPricingPlans(pricingPlans.map(p => p.id === plan.id ? {...p, buttonLink: e.target.value} : p))} 
+                      />
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+            <PricingPreview 
+              plans={pricingPlans} 
+              brandColor={brandColor}
+              selectedStyle={pricingStyle}
+              onStyleChange={setPricingStyle}
             />
           </>
         )}

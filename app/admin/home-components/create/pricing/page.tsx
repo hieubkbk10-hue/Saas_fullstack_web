@@ -4,12 +4,13 @@ import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { PricingPreview } from '../../previews';
+import { PricingPreview, PricingStyle } from '../../previews';
 
 export default function PricingCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Bảng giá', 'Pricing');
   const brandColor = useBrandColor();
   
+  const [pricingStyle, setPricingStyle] = useState<PricingStyle>('cards');
   const [pricingPlans, setPricingPlans] = useState([
     { id: 1, name: 'Cơ bản', price: '0', period: '/tháng', features: ['Tính năng A', 'Tính năng B'], isPopular: false, buttonText: 'Bắt đầu', buttonLink: '/register' },
     { id: 2, name: 'Chuyên nghiệp', price: '299.000', period: '/tháng', features: ['Tất cả Cơ bản', 'Tính năng C'], isPopular: true, buttonText: 'Mua ngay', buttonLink: '/checkout' },
@@ -17,7 +18,10 @@ export default function PricingCreatePage() {
   ]);
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { plans: pricingPlans.map(p => ({ name: p.name, price: p.price, period: p.period, features: p.features, isPopular: p.isPopular, buttonText: p.buttonText, buttonLink: p.buttonLink })) });
+    handleSubmit(e, { 
+      plans: pricingPlans.map(p => ({ name: p.name, price: p.price, period: p.period, features: p.features, isPopular: p.isPopular, buttonText: p.buttonText, buttonLink: p.buttonLink })),
+      style: pricingStyle 
+    });
   };
 
   return (
@@ -103,7 +107,12 @@ export default function PricingCreatePage() {
         </CardContent>
       </Card>
 
-      <PricingPreview plans={pricingPlans} brandColor={brandColor} />
+      <PricingPreview 
+        plans={pricingPlans} 
+        brandColor={brandColor}
+        selectedStyle={pricingStyle}
+        onStyleChange={setPricingStyle}
+      />
     </ComponentFormWrapper>
   );
 }
