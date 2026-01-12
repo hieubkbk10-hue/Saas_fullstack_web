@@ -75,10 +75,11 @@ function GalleryCreateContent() {
             minItems={1}
             maxItems={20}
             aspectRatio={type === 'Partners' ? 'video' : 'square'}
-            columns={type === 'Gallery' ? 3 : 4}
+            columns={type === 'TrustBadges' ? 3 : type === 'Gallery' ? 3 : 4}
             showReorder={true}
             addButtonText={type === 'Partners' ? 'Thêm logo' : type === 'TrustBadges' ? 'Thêm chứng nhận' : 'Thêm ảnh'}
             emptyText="Chưa có ảnh nào"
+            layout={type === 'TrustBadges' ? 'vertical' : 'horizontal'}
           />
         </CardContent>
       </Card>

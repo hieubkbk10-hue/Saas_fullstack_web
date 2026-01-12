@@ -79,6 +79,7 @@ interface MultiImageUploaderProps<T extends ImageItem> {
   showReorder?: boolean;
   addButtonText?: string;
   emptyText?: string;
+  layout?: 'horizontal' | 'vertical'; // vertical: image on top, fields below (better for cards)
 }
 
 export function MultiImageUploader<T extends ImageItem>({
@@ -95,6 +96,7 @@ export function MultiImageUploader<T extends ImageItem>({
   showReorder = true,
   addButtonText = 'Thêm ảnh',
   emptyText = 'Chưa có ảnh nào',
+  layout = 'horizontal',
 }: MultiImageUploaderProps<T>) {
   const [uploadingIds, setUploadingIds] = useState<Set<string | number>>(new Set());
   const [urlModeIds, setUrlModeIds] = useState<Set<string | number>>(new Set());
@@ -469,6 +471,131 @@ export function MultiImageUploader<T extends ImageItem>({
             const isDragOverItem = dragOverItemId === item.id && draggedItemId !== null;
             const isFileDragOver = fileDragOverItemId === item.id;
 
+            // Vertical layout - card style với ảnh trên, input bên dưới
+            if (layout === 'vertical') {
+              return (
+                <div
+                  key={item.id}
+                  draggable={showReorder}
+                  onDragStart={(e) => handleItemDragStart(e, item.id)}
+                  onDragEnd={handleItemDragEnd}
+                  onDragOver={(e) => handleItemDragOver(e, item.id)}
+                  onDrop={(e) => handleItemDrop(e, item.id)}
+                  className={cn(
+                    "bg-slate-50 dark:bg-slate-800 rounded-lg overflow-hidden transition-all duration-200",
+                    isDragOverItem && "ring-2 ring-blue-500 ring-offset-2 scale-[1.02]",
+                    isDraggedItem && "opacity-50 scale-95",
+                    showReorder && "cursor-grab active:cursor-grabbing"
+                  )}
+                >
+                  {/* Image area */}
+                  <div
+                    className={cn(
+                      'relative w-full rounded-t-lg overflow-hidden border-2 border-b-0 transition-all duration-200',
+                      isFileDragOver 
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' 
+                        : 'border-slate-200 dark:border-slate-700',
+                      aspectClasses[aspectRatio],
+                      !isUrlMode && 'cursor-pointer hover:border-blue-400'
+                    )}
+                    onClick={() => !isUploading && !isUrlMode && inputRefs.current.get(item.id)?.click()}
+                    onDragEnter={(e) => handleItemFileDragEnter(e, item.id)}
+                    onDragLeave={handleItemFileDragLeave}
+                    onDragOver={(e) => handleItemFileDragOver(e, item.id)}
+                    onDrop={(e) => handleItemFileDrop(e, item.id)}
+                  >
+                    {imageUrl ? (
+                      <img src={imageUrl} alt="" className={cn("w-full h-full object-cover transition-opacity", isFileDragOver && "opacity-50")} />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-700">
+                        <ImageIcon size={32} className="text-slate-400" />
+                      </div>
+                    )}
+                    {isFileDragOver && (
+                      <div className="absolute inset-0 bg-blue-500/20 flex flex-col items-center justify-center">
+                        <Upload size={24} className="text-blue-600 mb-1" />
+                        <span className="text-sm font-medium text-blue-600">Thả ảnh</span>
+                      </div>
+                    )}
+                    {isUploading && (
+                      <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 flex items-center justify-center">
+                        <Loader2 size={24} className="animate-spin text-blue-500" />
+                      </div>
+                    )}
+                    {/* Reorder & Delete buttons overlay */}
+                    <div className="absolute top-2 left-2 right-2 flex justify-between">
+                      {showReorder && (
+                        <div className="bg-white/90 dark:bg-slate-800/90 rounded p-1">
+                          <GripVertical size={16} className="text-slate-500" />
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 bg-white/90 dark:bg-slate-800/90 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={(e) => { e.stopPropagation(); handleRemove(item.id); }}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                    <input
+                      ref={(el) => { if (el) inputRefs.current.set(item.id, el); }}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => e.target.files?.[0] && handleFileUpload(item.id, e.target.files[0])}
+                      className="hidden"
+                    />
+                  </div>
+
+                  {/* Bottom area: fields */}
+                  <div className="p-3 space-y-2 border-2 border-t-0 border-slate-200 dark:border-slate-700 rounded-b-lg">
+                    {/* Toggle URL mode - compact */}
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => isUrlMode && toggleUrlMode(item.id)}
+                        className={cn(
+                          'flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors',
+                          !isUrlMode ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 hover:bg-slate-200'
+                        )}
+                      >
+                        <Upload size={10} /> Upload
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => !isUrlMode && toggleUrlMode(item.id)}
+                        className={cn(
+                          'flex items-center gap-1 px-2 py-1 text-xs rounded transition-colors',
+                          isUrlMode ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-700 hover:bg-slate-200'
+                        )}
+                      >
+                        <Link size={10} /> URL
+                      </button>
+                    </div>
+                    {isUrlMode && (
+                      <Input
+                        value={imageUrl}
+                        onChange={(e) => handleUrlChange(item.id, e.target.value)}
+                        placeholder="https://example.com/image.jpg"
+                        className="h-8 text-sm"
+                      />
+                    )}
+                    {extraFields.map((field) => (
+                      <Input
+                        key={String(field.key)}
+                        value={String(item[field.key] || '')}
+                        onChange={(e) => handleExtraFieldChange(item.id, field.key, e.target.value)}
+                        placeholder={field.placeholder}
+                        className="h-9 text-sm"
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
+            // Horizontal layout (default) - ảnh bên trái, fields bên phải
             return (
               <div
                 key={item.id}

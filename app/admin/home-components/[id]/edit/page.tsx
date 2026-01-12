@@ -522,9 +522,10 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                   minItems={1}
                   maxItems={20}
                   aspectRatio={component.type === 'Partners' ? 'video' : 'square'}
-                  columns={component.type === 'Gallery' ? 3 : 4}
+                  columns={component.type === 'TrustBadges' ? 3 : component.type === 'Gallery' ? 3 : 4}
                   showReorder={true}
-                  addButtonText={component.type === 'Partners' ? 'Thêm logo' : 'Thêm ảnh'}
+                  addButtonText={component.type === 'Partners' ? 'Thêm logo' : component.type === 'TrustBadges' ? 'Thêm chứng nhận' : 'Thêm ảnh'}
+                  layout={component.type === 'TrustBadges' ? 'vertical' : 'horizontal'}
                 />
               </CardContent>
             </Card>
