@@ -7,7 +7,7 @@ import { ProductListSection } from './ProductListSection';
 import { ServiceListSection } from './ServiceListSection';
 import { 
   LayoutTemplate, Package, FileText, HelpCircle, MousePointerClick, 
-  Users, Star, Phone, Briefcase, Image as ImageIcon, Check, Medal, ZoomIn, Maximize2, X
+  Users, Star, Phone, Briefcase, Image as ImageIcon, Check, ZoomIn, Maximize2, X
 } from 'lucide-react';
 
 interface HomeComponent {
@@ -1591,10 +1591,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
       <section className="w-full py-12 md:py-16 bg-white">
         <div className="container max-w-7xl mx-auto px-4 md:px-6">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center p-3 rounded-full mb-4" style={{ backgroundColor: `${brandColor}15` }}>
-              <Medal className="w-6 h-6" style={{ color: brandColor }} />
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{title}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {items.map((item, idx) => (
@@ -1635,10 +1632,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
       <section className="w-full py-12 md:py-16 bg-white">
         <div className="container max-w-7xl mx-auto px-4 md:px-6">
           <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center p-3 rounded-full mb-4" style={{ backgroundColor: `${brandColor}15` }}>
-              <Medal className="w-6 h-6" style={{ color: brandColor }} />
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{title}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {items.map((item, idx) => (
@@ -1665,10 +1659,9 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                   </div>
                 </div>
                 <div className="py-4 px-5 bg-white border-t border-slate-100 flex items-center justify-between group-hover:bg-slate-50 transition-colors">
-                  <span className="font-semibold text-slate-700 truncate group-hover:text-blue-700 transition-colors text-sm">
+                  <span className="font-semibold truncate transition-colors text-sm" style={{ color: brandColor }}>
                     {item.name || 'Chứng nhận'}
                   </span>
-                  <Medal size={16} className="text-amber-500 flex-shrink-0" />
                 </div>
               </div>
             ))}
@@ -1684,9 +1677,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
     return (
       <section className="w-full py-16 md:py-20 bg-slate-50 border-y border-slate-200">
         <div className="container max-w-7xl mx-auto px-4 mb-10 text-center">
-          <span className="px-4 py-2 rounded-full bg-white border border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-widest shadow-sm">
-            Trusted by Industry Leaders
-          </span>
+          <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
         </div>
         <TrustBadgesAutoScroll speed={0.6}>
           {items.map((item, idx) => (
@@ -1720,10 +1711,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
     <section className="w-full py-14 md:py-20 bg-slate-100">
       <div className="container max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center p-3 rounded-full mb-4" style={{ backgroundColor: `${brandColor}15` }}>
-            <Medal className="w-6 h-6" style={{ color: brandColor }} />
-          </div>
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{title}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
         </div>
         <div className="flex flex-wrap justify-center gap-6 md:gap-10">
           {items.map((item, idx) => (

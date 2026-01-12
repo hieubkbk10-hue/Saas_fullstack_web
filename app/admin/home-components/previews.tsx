@@ -5,7 +5,7 @@ import {
   Monitor, Tablet, Smartphone, Eye, ChevronLeft, ChevronRight, 
   Image as ImageIcon, Star, Check, ExternalLink, Globe, Mail, 
   Phone, Package, FileText, Users, MapPin, Tag, ArrowUpRight, Briefcase, Plus, ArrowRight,
-  Medal, X, ZoomIn, Maximize2
+  X, ZoomIn, Maximize2
 } from 'lucide-react';
 import { cn, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
 
@@ -3623,13 +3623,10 @@ export const TrustBadgesPreview = ({
       <div className="container max-w-7xl mx-auto px-4 md:px-6">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center p-3 rounded-full mb-4" style={{ backgroundColor: `${brandColor}15` }}>
-            <Medal className="w-6 h-6" style={{ color: brandColor }} />
-          </div>
           <h2 className={cn(
-            "font-bold text-slate-900 dark:text-slate-100",
+            "font-bold",
             device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
-          )}>Chứng nhận & Giải thưởng</h2>
+          )} style={{ color: brandColor }}>Chứng nhận</h2>
         </div>
         
         {/* Grid */}
@@ -3672,13 +3669,10 @@ export const TrustBadgesPreview = ({
       <div className="container max-w-7xl mx-auto px-4 md:px-6">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center p-3 rounded-full mb-4" style={{ backgroundColor: `${brandColor}15` }}>
-            <Medal className="w-6 h-6" style={{ color: brandColor }} />
-          </div>
           <h2 className={cn(
-            "font-bold text-slate-900 dark:text-slate-100",
+            "font-bold",
             device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
-          )}>Chứng nhận & Giải thưởng</h2>
+          )} style={{ color: brandColor }}>Chứng nhận</h2>
         </div>
 
         {/* Cards Grid */}
@@ -3716,10 +3710,9 @@ export const TrustBadgesPreview = ({
               
               {/* Footer with Title */}
               <div className="py-4 px-5 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between group-hover:bg-slate-50 dark:group-hover:bg-slate-700/50 transition-colors">
-                <span className="font-semibold text-slate-700 dark:text-slate-300 truncate group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors text-sm">
+                <span className="font-semibold text-slate-700 dark:text-slate-300 truncate transition-colors text-sm" style={{ color: brandColor }}>
                   {item.name || 'Chứng nhận'}
                 </span>
-                <Medal size={16} className="text-amber-500 flex-shrink-0" />
               </div>
             </div>
           ))}
@@ -3737,9 +3730,10 @@ export const TrustBadgesPreview = ({
     >
       {/* Header */}
       <div className="container max-w-7xl mx-auto px-4 mb-10 text-center">
-        <span className="px-4 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest shadow-sm">
-          Trusted by Industry Leaders
-        </span>
+        <h2 className={cn(
+          "font-bold",
+          device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
+        )} style={{ color: brandColor }}>Chứng nhận</h2>
       </div>
       
       {/* Auto Scroll */}
@@ -3774,13 +3768,10 @@ export const TrustBadgesPreview = ({
       <div className="container max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center p-3 rounded-full mb-4" style={{ backgroundColor: `${brandColor}15` }}>
-            <Medal className="w-6 h-6" style={{ color: brandColor }} />
-          </div>
           <h2 className={cn(
-            "font-bold text-slate-900 dark:text-slate-100",
+            "font-bold",
             device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
-          )}>Chứng nhận & Giải thưởng</h2>
+          )} style={{ color: brandColor }}>Chứng nhận</h2>
         </div>
         
         {/* Wall of Frames */}
