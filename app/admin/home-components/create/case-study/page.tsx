@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { CaseStudyPreview } from '../../previews';
+import { CaseStudyPreview, CaseStudyStyle } from '../../previews';
 import { SettingsImageUploader } from '../../../components/SettingsImageUploader';
 
 interface Project {
@@ -19,6 +19,7 @@ interface Project {
 export default function CaseStudyCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Dự án thực tế', 'CaseStudy');
   const brandColor = useBrandColor();
+  const [caseStudyStyle, setCaseStudyStyle] = useState<CaseStudyStyle>('grid');
   
   const [projects, setProjects] = useState<Project[]>([
     { id: 'project-1', title: 'Dự án Website ABC Corp', category: 'Website', image: '', description: 'Thiết kế và phát triển website doanh nghiệp', link: '' },
@@ -47,7 +48,10 @@ export default function CaseStudyCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { projects: projects.map(p => ({ title: p.title, category: p.category, image: p.image, description: p.description, link: p.link })) });
+    handleSubmit(e, { 
+      projects: projects.map(p => ({ title: p.title, category: p.category, image: p.image, description: p.description, link: p.link })),
+      style: caseStudyStyle
+    });
   };
 
   return (
@@ -154,7 +158,9 @@ export default function CaseStudyCreatePage() {
           description: p.description, 
           link: p.link 
         }))} 
-        brandColor={brandColor} 
+        brandColor={brandColor}
+        selectedStyle={caseStudyStyle}
+        onStyleChange={setCaseStudyStyle}
       />
     </ComponentFormWrapper>
   );

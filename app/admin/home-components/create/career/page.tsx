@@ -4,19 +4,20 @@ import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { CareerPreview } from '../../previews';
+import { CareerPreview, CareerStyle } from '../../previews';
 
 export default function CareerCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Tuyển dụng', 'Career');
   const brandColor = useBrandColor();
   
+  const [careerStyle, setCareerStyle] = useState<CareerStyle>('cards');
   const [jobPositions, setJobPositions] = useState([
     { id: 1, title: 'Frontend Developer', department: 'Engineering', location: 'Hà Nội', type: 'Full-time', salary: '15-25 triệu', description: '' },
     { id: 2, title: 'UI/UX Designer', department: 'Design', location: 'Remote', type: 'Full-time', salary: '12-20 triệu', description: '' }
   ]);
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { jobs: jobPositions.map(j => ({ title: j.title, department: j.department, location: j.location, type: j.type, salary: j.salary, description: j.description })) });
+    handleSubmit(e, { jobs: jobPositions.map(j => ({ title: j.title, department: j.department, location: j.location, type: j.type, salary: j.salary, description: j.description })), style: careerStyle });
   };
 
   return (
@@ -96,7 +97,12 @@ export default function CareerCreatePage() {
         </CardContent>
       </Card>
 
-      <CareerPreview jobs={jobPositions} brandColor={brandColor} />
+      <CareerPreview 
+        jobs={jobPositions} 
+        brandColor={brandColor}
+        selectedStyle={careerStyle}
+        onStyleChange={setCareerStyle}
+      />
     </ComponentFormWrapper>
   );
 }

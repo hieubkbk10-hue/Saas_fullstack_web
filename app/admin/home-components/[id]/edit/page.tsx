@@ -32,7 +32,9 @@ import {
   FooterPreview, FooterStyle,
   AboutPreview, AboutStyle,
   TestimonialsPreview, TestimonialsStyle,
-  PricingPreview, PricingStyle
+  PricingPreview, PricingStyle,
+  CaseStudyPreview, CaseStudyStyle,
+  CareerPreview, CareerStyle
 } from '../../previews';
 import { useBrandColor } from '../../create/shared';
 
@@ -130,6 +132,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [pricingPlans, setPricingPlans] = useState<{id: number, name: string, price: string, period: string, features: string[], isPopular: boolean, buttonText: string, buttonLink: string}[]>([]);
   const [pricingStyle, setPricingStyle] = useState<PricingStyle>('cards');
   const [caseStudyProjects, setCaseStudyProjects] = useState<{id: number, title: string, category: string, image: string, description: string, link: string}[]>([]);
+  const [caseStudyStyle, setCaseStudyStyle] = useState<CaseStudyStyle>('grid');
   const [careerJobs, setCareerJobs] = useState<{id: number, title: string, department: string, location: string, type: string, salary: string, description: string}[]>([]);
   const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true });
   const [contactStyle, setContactStyle] = useState<ContactStyle>('split');
@@ -293,6 +296,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           break;
         case 'CaseStudy':
           setCaseStudyProjects(config.projects?.map((p: {title: string, category: string, image: string, description: string, link: string}, i: number) => ({ id: i, ...p })) || []);
+          setCaseStudyStyle((config.style as CaseStudyStyle) || 'grid');
           break;
         case 'Career':
           setCareerJobs(config.jobs?.map((j: {title: string, department: string, location: string, type: string, salary: string, description: string}, i: number) => ({ id: i, ...j })) || []);
@@ -377,7 +381,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'Pricing':
         return { plans: pricingPlans.map(p => ({ name: p.name, price: p.price, period: p.period, features: p.features, isPopular: p.isPopular, buttonText: p.buttonText, buttonLink: p.buttonLink })), style: pricingStyle };
       case 'CaseStudy':
-        return { projects: caseStudyProjects.map(p => ({ title: p.title, category: p.category, image: p.image, description: p.description, link: p.link })) };
+        return { projects: caseStudyProjects.map(p => ({ title: p.title, category: p.category, image: p.image, description: p.description, link: p.link })), style: caseStudyStyle };
       case 'Career':
         return { jobs: careerJobs.map(j => ({ title: j.title, department: j.department, location: j.location, type: j.type, salary: j.salary, description: j.description })) };
       case 'Contact':
@@ -1836,6 +1840,117 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               postCount={blogSelectionMode === 'manual' ? selectedPostIds.length : productListConfig.itemCount}
               selectedStyle={blogStyle}
               onStyleChange={setBlogStyle}
+            />
+          </>
+        )}
+
+        {/* CaseStudy */}
+        {component.type === 'CaseStudy' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Dự án tiêu biểu</CardTitle>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCaseStudyProjects([...caseStudyProjects, { id: Date.now(), title: '', category: '', image: '', description: '', link: '' }])} 
+                  className="gap-2"
+                >
+                  <Plus size={14} /> Thêm dự án
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {caseStudyProjects.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500 text-sm">
+                    Chưa có dự án nào. Nhấn "Thêm dự án" để bắt đầu.
+                  </div>
+                ) : (
+                  caseStudyProjects.map((project, idx) => (
+                    <div key={project.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label>Dự án {idx + 1}</Label>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-red-500 h-8 w-8" 
+                          onClick={() => setCaseStudyProjects(caseStudyProjects.filter(p => p.id !== project.id))}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Left: Image upload */}
+                        <div>
+                          <Label className="text-sm mb-2 block">Hình ảnh dự án</Label>
+                          <ImageFieldWithUpload
+                            label=""
+                            value={project.image}
+                            onChange={(url) => setCaseStudyProjects(caseStudyProjects.map(p => p.id === project.id ? {...p, image: url} : p))}
+                            folder="case-studies"
+                            aspectRatio="video"
+                            quality={0.85}
+                            placeholder="Chọn hoặc upload ảnh dự án"
+                          />
+                        </div>
+                        
+                        {/* Right: Info fields */}
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs text-slate-500">Tên dự án</Label>
+                              <Input 
+                                placeholder="VD: Website ABC Corp" 
+                                value={project.title} 
+                                onChange={(e) => setCaseStudyProjects(caseStudyProjects.map(p => p.id === project.id ? {...p, title: e.target.value} : p))} 
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-slate-500">Danh mục</Label>
+                              <Input 
+                                placeholder="VD: Website, Mobile..." 
+                                value={project.category} 
+                                onChange={(e) => setCaseStudyProjects(caseStudyProjects.map(p => p.id === project.id ? {...p, category: e.target.value} : p))} 
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-slate-500">Mô tả ngắn</Label>
+                            <Input 
+                              placeholder="Mô tả ngắn về dự án" 
+                              value={project.description} 
+                              onChange={(e) => setCaseStudyProjects(caseStudyProjects.map(p => p.id === project.id ? {...p, description: e.target.value} : p))} 
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-slate-500">Link chi tiết</Label>
+                            <Input 
+                              placeholder="https://example.com/project" 
+                              value={project.link} 
+                              onChange={(e) => setCaseStudyProjects(caseStudyProjects.map(p => p.id === project.id ? {...p, link: e.target.value} : p))} 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+            <CaseStudyPreview 
+              projects={caseStudyProjects.map(p => ({ 
+                id: p.id, 
+                title: p.title, 
+                category: p.category, 
+                image: p.image, 
+                description: p.description, 
+                link: p.link 
+              }))} 
+              brandColor={brandColor}
+              selectedStyle={caseStudyStyle}
+              onStyleChange={setCaseStudyStyle}
             />
           </>
         )}
