@@ -863,10 +863,10 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
                 <img 
                   src={item.url} 
                   alt="" 
-                  className="h-8 w-auto object-contain transition-transform duration-300 group-hover:scale-110" 
+                  className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-110" 
                 />
               ) : (
-                <ImageIcon size={32} className="text-slate-300" />
+                <ImageIcon size={40} className="text-slate-300" />
               )}
             </div>
           ))}
@@ -901,11 +901,11 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
                   <img 
                     src={item.url} 
                     alt="" 
-                    className="h-9 w-auto object-contain hover:scale-110 transition-transform duration-300 select-none pointer-events-none" 
+                    className="h-11 w-auto object-contain hover:scale-110 transition-transform duration-300 select-none pointer-events-none" 
                   />
                 ) : (
-                  <div className="h-9 w-20 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
-                    <ImageIcon size={20} className="text-slate-400" />
+                  <div className="h-11 w-24 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
+                    <ImageIcon size={24} className="text-slate-400" />
                   </div>
                 )}
               </div>
@@ -938,11 +938,11 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
                   <img 
                     src={item.url} 
                     alt="" 
-                    className="h-8 w-auto object-contain grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 select-none pointer-events-none" 
+                    className="h-10 w-auto object-contain grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 select-none pointer-events-none" 
                   />
                 ) : (
-                  <div className="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center opacity-50">
-                    <ImageIcon size={18} className="text-slate-400" />
+                  <div className="h-10 w-24 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center opacity-50">
+                    <ImageIcon size={22} className="text-slate-400" />
                   </div>
                 )}
               </div>
@@ -971,9 +971,9 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
               style={{ borderColor: `${brandColor}10` }}
             >
               {item.url ? (
-                <img src={item.url} alt="" className="h-4 w-auto grayscale" />
+                <img src={item.url} alt="" className="h-5 w-auto grayscale" />
               ) : (
-                <ImageIcon size={16} className="text-slate-400" />
+                <ImageIcon size={20} className="text-slate-400" />
               )}
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Partner {idx + 1}</span>
             </div>
