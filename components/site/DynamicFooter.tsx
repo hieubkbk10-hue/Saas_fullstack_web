@@ -169,10 +169,10 @@ export function DynamicFooter() {
                       href={s.url || '#'} 
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="h-8 w-8 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
+                      className="h-6 w-6 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
                       style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}
                     >
-                      <SocialIcon platform={s.platform} size={16} />
+                      <SocialIcon platform={s.platform} size={12} />
                     </a>
                   ))}
                 </div>
@@ -257,10 +257,10 @@ export function DynamicFooter() {
                   href={s.url || '#'} 
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-8 w-8 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
+                  className="h-6 w-6 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
                   style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}
                 >
-                  <SocialIcon platform={s.platform} size={16} />
+                  <SocialIcon platform={s.platform} size={12} />
                 </a>
               ))}
             </div>
@@ -301,10 +301,10 @@ export function DynamicFooter() {
                     href={s.url || '#'} 
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-7 w-7 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
+                    className="h-5 w-5 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
                     style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}
                   >
-                    <SocialIcon platform={s.platform} size={14} />
+                    <SocialIcon platform={s.platform} size={10} />
                   </a>
                 ))}
               </div>
@@ -374,10 +374,10 @@ export function DynamicFooter() {
                   href={s.url || '#'} 
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-7 w-7 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
+                  className="h-5 w-5 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
                   style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}
                 >
-                  <SocialIcon platform={s.platform} size={14} />
+                  <SocialIcon platform={s.platform} size={10} />
                 </a>
               ))}
             </div>
