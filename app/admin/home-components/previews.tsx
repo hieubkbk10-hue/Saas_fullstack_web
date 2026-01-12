@@ -2358,7 +2358,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
               </div>
               <span className="text-base font-bold tracking-tight text-white">VietAdmin</span>
             </div>
-            <p className={cn("text-xs leading-relaxed text-slate-400", device === 'mobile' ? '' : 'max-w-sm')}>
+            <p className={cn("text-xs leading-relaxed text-white/80", device === 'mobile' ? '' : 'max-w-sm')}>
               {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
             </p>
             {config.showSocialLinks && (
@@ -2383,7 +2383,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
                 <ul className="space-y-1.5">
                   {col.links.map((link, lIdx) => (
                     <li key={lIdx}>
-                      <a href={link.url} className="text-xs hover:text-white transition-colors block text-slate-400">
+                      <a href={link.url} className="text-xs hover:text-white transition-colors block text-white/70">
                         {link.label}
                       </a>
                     </li>
@@ -2395,7 +2395,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         </div>
 
         <div className="mt-6 pt-3" style={{ borderTop: `1px solid ${borderColor}50` }}>
-          <p className={cn("text-[10px] text-slate-500", device === 'mobile' ? 'text-center' : '')}>{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</p>
+          <p className={cn("text-[10px] text-white/60", device === 'mobile' ? 'text-center' : '')}>{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</p>
         </div>
       </div>
     </footer>
@@ -2416,7 +2416,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
             )}
           </div>
           <h2 className="text-base font-bold text-white tracking-tight">VietAdmin</h2>
-          <p className={cn("text-xs leading-relaxed text-slate-400", device === 'mobile' ? 'max-w-xs' : 'max-w-md')}>
+          <p className={cn("text-xs leading-relaxed text-white/80", device === 'mobile' ? 'max-w-xs' : 'max-w-md')}>
             {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}
           </p>
         </div>
@@ -2424,7 +2424,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         {/* Navigation (Flat) */}
         <div className={cn("flex flex-wrap justify-center gap-x-4 gap-y-1.5", device === 'mobile' ? 'gap-x-3' : '')}>
           {getColumns().flatMap(col => col.links).slice(0, device === 'mobile' ? 4 : 8).map((link, i) => (
-            <a key={i} href={link.url} className="text-xs font-medium hover:text-white hover:underline underline-offset-4 transition-all text-slate-300" style={{ textDecorationColor: brandColor }}>
+            <a key={i} href={link.url} className="text-xs font-medium hover:text-white hover:underline underline-offset-4 transition-all text-white/70" style={{ textDecorationColor: brandColor }}>
               {link.label}
             </a>
           ))}
@@ -2444,7 +2444,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         )}
 
         {/* Copyright */}
-        <div className="text-[10px] font-medium text-slate-500">
+        <div className="text-[10px] font-medium text-white/60">
           {config.copyright || '© 2024 VietAdmin. All rights reserved.'}
         </div>
       </div>
@@ -2487,7 +2487,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         )}>
           <div className={cn(device === 'mobile' ? '' : 'col-span-2 md:col-span-2 pr-4')}>
             <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-2">Về Công Ty</h4>
-            <p className="text-xs leading-relaxed text-slate-400">{config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}</p>
+            <p className="text-xs leading-relaxed text-white/80">{config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}</p>
           </div>
           
           {getColumns().slice(0, 2).map((col) => (
@@ -2496,7 +2496,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
               <ul className="space-y-1">
                 {col.links.map((link, lIdx) => (
                   <li key={lIdx}>
-                    <a href={link.url} className="text-xs hover:text-white transition-colors text-slate-400">
+                    <a href={link.url} className="text-xs hover:text-white transition-colors text-white/70">
                       {link.label}
                     </a>
                   </li>
@@ -2507,7 +2507,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         </div>
 
         {/* Bottom Row */}
-        <div className={cn("pt-3 text-[10px] text-slate-500", device === 'mobile' ? 'text-center' : '')}>
+        <div className={cn("pt-3 text-[10px] text-white/60", device === 'mobile' ? 'text-center' : '')}>
           {config.copyright || '© 2024 VietAdmin. All rights reserved.'}
         </div>
       </div>
@@ -2530,7 +2530,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
             ) : (
               <div className="h-4 w-4 rounded flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: brandColor }}>V</div>
             )}
-            <span className="text-[10px] font-medium text-slate-500">{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</span>
+            <span className="text-[10px] font-medium text-white/60">{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</span>
           </div>
 
           {/* Right: Socials only */}

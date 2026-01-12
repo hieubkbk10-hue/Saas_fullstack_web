@@ -158,7 +158,7 @@ export function DynamicFooter() {
                 </div>
                 <span className="text-lg font-bold tracking-tight text-white">{siteName || 'VietAdmin'}</span>
               </Link>
-              <p className="text-sm leading-relaxed max-w-sm text-slate-400">
+              <p className="text-sm leading-relaxed max-w-sm text-white/80">
                 {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
               </p>
               {config.showSocialLinks !== false && (
@@ -189,7 +189,7 @@ export function DynamicFooter() {
                       <li key={lIdx}>
                         <Link 
                           href={link.url || '#'} 
-                          className="text-sm hover:text-white transition-colors block text-slate-400"
+                          className="text-sm hover:text-white transition-colors block text-white/70"
                         >
                           {link.label}
                         </Link>
@@ -202,7 +202,7 @@ export function DynamicFooter() {
           </div>
 
           <div className="mt-8 pt-4" style={{ borderTop: `1px solid ${borderColor}50` }}>
-            <p className="text-xs text-slate-500">{config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}</p>
+            <p className="text-xs text-white/60">{config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}</p>
           </div>
         </div>
       </footer>
@@ -227,7 +227,7 @@ export function DynamicFooter() {
               )}
             </div>
             <h2 className="text-lg font-bold text-white tracking-tight">{siteName || 'VietAdmin'}</h2>
-            <p className="max-w-md text-sm leading-relaxed text-slate-400">
+            <p className="max-w-md text-sm leading-relaxed text-white/80">
               {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
             </p>
           </div>
@@ -238,7 +238,7 @@ export function DynamicFooter() {
               <Link 
                 key={i} 
                 href={link.url || '#'} 
-                className="text-sm font-medium hover:text-white hover:underline underline-offset-4 transition-all text-slate-300"
+                className="text-sm font-medium hover:text-white hover:underline underline-offset-4 transition-all text-white/70"
                 style={{ textDecorationColor: brandColor }}
               >
                 {link.label}
@@ -267,7 +267,7 @@ export function DynamicFooter() {
           )}
 
           {/* Copyright */}
-          <div className="text-xs font-medium text-slate-500">
+          <div className="text-xs font-medium text-white/60">
             {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
           </div>
         </div>
@@ -315,7 +315,7 @@ export function DynamicFooter() {
           <div className="py-6 grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="md:col-span-2 md:pr-6">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2">Về Công Ty</h4>
-              <p className="text-sm leading-relaxed text-slate-400">
+              <p className="text-sm leading-relaxed text-white/80">
                 {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
               </p>
             </div>
@@ -326,7 +326,7 @@ export function DynamicFooter() {
                 <ul className="space-y-1.5">
                   {col.links.map((link, lIdx) => (
                     <li key={lIdx}>
-                      <Link href={link.url || '#'} className="text-sm hover:text-white transition-colors text-slate-400">
+                      <Link href={link.url || '#'} className="text-sm hover:text-white transition-colors text-white/70">
                         {link.label}
                       </Link>
                     </li>
@@ -337,7 +337,7 @@ export function DynamicFooter() {
           </div>
 
           {/* Bottom Row */}
-          <div className="pt-4 text-xs text-center md:text-left text-slate-500">
+          <div className="pt-4 text-xs text-center md:text-left text-white/60">
             {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
           </div>
         </div>
@@ -360,7 +360,7 @@ export function DynamicFooter() {
                 {(siteName || 'V').charAt(0)}
               </div>
             )}
-            <span className="text-xs font-medium text-slate-500">
+            <span className="text-xs font-medium text-white/60">
               {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
             </span>
           </div>
