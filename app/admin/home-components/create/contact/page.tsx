@@ -88,6 +88,19 @@ export default function ContactCreatePage() {
             />
             <Label>Hiển thị bản đồ</Label>
           </div>
+          {contactConfig.showMap && (
+            <div className="space-y-2">
+              <Label>Google Maps Embed URL</Label>
+              <Input 
+                value={contactConfig.mapEmbed} 
+                onChange={(e) => setContactConfig({...contactConfig, mapEmbed: e.target.value})} 
+                placeholder="https://www.google.com/maps/embed?pb=..." 
+              />
+              <p className="text-xs text-muted-foreground">
+                Lấy từ Google Maps: Chia sẻ → Nhúng bản đồ → Copy URL trong src của iframe
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
