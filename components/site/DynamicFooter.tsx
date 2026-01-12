@@ -257,10 +257,10 @@ export function DynamicFooter() {
                   href={s.url || '#'} 
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:scale-110 transition-transform"
-                  style={{ color: socialColors[s.platform] || '#94a3b8' }}
+                  className="h-8 w-8 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
+                  style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}
                 >
-                  <SocialIcon platform={s.platform} size={18} />
+                  <SocialIcon platform={s.platform} size={16} />
                 </a>
               ))}
             </div>
@@ -301,10 +301,10 @@ export function DynamicFooter() {
                     href={s.url || '#'} 
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:opacity-80 transition-colors"
-                    style={{ color: socialColors[s.platform] || '#94a3b8' }}
+                    className="h-7 w-7 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
+                    style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}
                   >
-                    <SocialIcon platform={s.platform} size={16} />
+                    <SocialIcon platform={s.platform} size={14} />
                   </a>
                 ))}
               </div>
@@ -367,17 +367,17 @@ export function DynamicFooter() {
 
           {/* Right: Socials only */}
           {config.showSocialLinks !== false && (
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               {socials.map((s, idx) => (
                 <a 
                   key={s.id || `social-${idx}`} 
                   href={s.url || '#'} 
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:opacity-80 transition-colors"
-                  style={{ color: socialColors[s.platform] || '#94a3b8' }}
+                  className="h-7 w-7 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
+                  style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}
                 >
-                  <SocialIcon platform={s.platform} size={16} />
+                  <SocialIcon platform={s.platform} size={14} />
                 </a>
               ))}
             </div>

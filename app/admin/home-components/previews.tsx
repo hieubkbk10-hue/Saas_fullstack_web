@@ -2436,8 +2436,8 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         {config.showSocialLinks && (
           <div className="flex gap-3">
             {getSocials().map((s) => (
-              <a key={s.id} href={s.url} className="hover:scale-110 transition-transform" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
-                {renderSocialIcon(s.platform, 16)}
+              <a key={s.id} href={s.url} className="h-7 w-7 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300" style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}>
+                {renderSocialIcon(s.platform, 14)}
               </a>
             ))}
           </div>
@@ -2472,8 +2472,8 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
           {config.showSocialLinks && (
             <div className="flex gap-2">
               {getSocials().map((s) => (
-                <a key={s.id} href={s.url} className="hover:opacity-80 transition-colors" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
-                  {renderSocialIcon(s.platform, 14)}
+                <a key={s.id} href={s.url} className="h-6 w-6 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300" style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}>
+                  {renderSocialIcon(s.platform, 12)}
                 </a>
               ))}
             </div>
@@ -2537,8 +2537,8 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
           {config.showSocialLinks && (
             <div className="flex gap-2">
               {getSocials().map((s) => (
-                <a key={s.id} href={s.url} className="hover:opacity-80 transition-colors" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
-                  {renderSocialIcon(s.platform, 14)}
+                <a key={s.id} href={s.url} className="h-6 w-6 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300" style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}>
+                  {renderSocialIcon(s.platform, 12)}
                 </a>
               ))}
             </div>
