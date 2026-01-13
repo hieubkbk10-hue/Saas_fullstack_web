@@ -2239,9 +2239,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
   };
 
   // Style 4: Carousel - Horizontal scrollable với arrows
-  const renderCarouselStyle = () => {
-    const [scrollPosition, setScrollPosition] = React.useState(0);
-    return (
+  const renderCarouselStyle = () => (
       <section className={cn("py-8 md:py-10", device === 'mobile' ? 'px-3' : 'px-4 md:px-6')}>
         {/* Section Header */}
         <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between md:mb-8">
@@ -2315,8 +2313,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
           ))}
         </div>
       </section>
-    );
-  };
+  );
 
   // Style 5: Compact - Dense grid với smaller cards, nhiều sản phẩm hơn
   const renderCompactStyle = () => (
