@@ -2622,10 +2622,14 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                         />
                       </div>
 
-                      <Input 
-                        placeholder="URL ảnh đại diện" 
-                        value={member.avatar} 
-                        onChange={(e) => setTeamMembers(teamMembers.map(m => m.id === member.id ? {...m, avatar: e.target.value} : m))} 
+                      <ImageFieldWithUpload
+                        label="Ảnh đại diện"
+                        value={member.avatar}
+                        onChange={(url) => setTeamMembers(teamMembers.map(m => m.id === member.id ? {...m, avatar: url} : m))}
+                        folder="team-avatars"
+                        aspectRatio="square"
+                        quality={0.85}
+                        placeholder="https://example.com/avatar.jpg"
                       />
 
                       <textarea 

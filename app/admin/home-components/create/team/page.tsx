@@ -5,6 +5,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { TeamPreview, type TeamStyle } from '../../previews';
+import { ImageFieldWithUpload } from '../../../components/ImageFieldWithUpload';
 
 interface TeamMember {
   id: number;
@@ -116,10 +117,14 @@ export default function TeamCreatePage() {
                 />
               </div>
 
-              <Input 
-                placeholder="URL ảnh đại diện" 
-                value={member.avatar} 
-                onChange={(e) => updateMember(member.id, 'avatar', e.target.value)} 
+              <ImageFieldWithUpload
+                label="Ảnh đại diện"
+                value={member.avatar}
+                onChange={(url) => updateMember(member.id, 'avatar', url)}
+                folder="team-avatars"
+                aspectRatio="square"
+                quality={0.85}
+                placeholder="https://example.com/avatar.jpg"
               />
 
               <textarea 
