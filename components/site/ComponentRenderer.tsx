@@ -73,6 +73,8 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
       return <ProductCategoriesSection config={config} brandColor={brandColor} title={title} />;
     case 'CategoryProducts':
       return <CategoryProductsSection config={config} brandColor={brandColor} title={title} />;
+    case 'Team':
+      return <TeamSection config={config} brandColor={brandColor} title={title} />;
     default:
       return <PlaceholderSection type={type} title={title} />;
   }
@@ -3594,6 +3596,235 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
         </section>
       ))}
     </div>
+  );
+}
+
+// ============ TEAM SECTION ============
+// 3 Professional Styles: Grid, Cards, Carousel
+type TeamStyle = 'grid' | 'cards' | 'carousel';
+
+interface TeamMember {
+  name: string;
+  role: string;
+  avatar: string;
+  bio: string;
+  facebook?: string;
+  linkedin?: string;
+  twitter?: string;
+  email?: string;
+}
+
+const SocialIcon = ({ type, url, brandColor }: { type: 'facebook' | 'linkedin' | 'twitter' | 'email'; url?: string; brandColor: string }) => {
+  if (!url) return null;
+  const icons = {
+    facebook: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>,
+    linkedin: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>,
+    twitter: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
+    email: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+  };
+  return (
+    <a 
+      href={type === 'email' ? `mailto:${url}` : url} 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
+      style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+    >
+      {icons[type]}
+    </a>
+  );
+};
+
+function TeamSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
+  const members = (config.members as TeamMember[]) || [];
+  const style = (config.style as TeamStyle) || 'grid';
+  const [currentSlide, setCurrentSlide] = React.useState(0);
+
+  // Auto slide for carousel style
+  React.useEffect(() => {
+    if (style !== 'carousel' || members.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % members.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [members.length, style]);
+
+  if (members.length === 0) {
+    return (
+      <section className="py-16 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto text-center">
+          <Users size={48} className="mx-auto mb-4 text-slate-400" />
+          <h2 className="text-2xl font-bold mb-2 text-slate-600">{title}</h2>
+          <p className="text-slate-500">Chưa có thành viên nào</p>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 1: Grid - Clean grid với hover effects
+  if (style === 'grid') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+            {members.map((member, idx) => (
+              <div key={idx} className="group text-center">
+                <div className="relative mb-4 mx-auto overflow-hidden rounded-2xl aspect-square max-w-[200px]">
+                  {member.avatar ? (
+                    <img 
+                      src={member.avatar} 
+                      alt={member.name} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                    />
+                  ) : (
+                    <div 
+                      className="w-full h-full flex items-center justify-center text-4xl font-bold text-white"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      {(member.name || 'U').charAt(0)}
+                    </div>
+                  )}
+                  {/* Social overlay on hover */}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
+                    <SocialIcon type="facebook" url={member.facebook} brandColor={brandColor} />
+                    <SocialIcon type="linkedin" url={member.linkedin} brandColor={brandColor} />
+                    <SocialIcon type="twitter" url={member.twitter} brandColor={brandColor} />
+                    <SocialIcon type="email" url={member.email} brandColor={brandColor} />
+                  </div>
+                </div>
+                <h4 className="font-semibold text-lg text-slate-900">{member.name || 'Họ và tên'}</h4>
+                <p className="text-sm mt-1" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Cards - Horizontal cards với bio
+  if (style === 'cards') {
+    return (
+      <section className="py-16 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {members.map((member, idx) => (
+              <div 
+                key={idx} 
+                className="bg-white rounded-xl p-6 shadow-sm border border-slate-100 flex gap-4 items-start group hover:shadow-md transition-shadow"
+              >
+                <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden">
+                  {member.avatar ? (
+                    <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div 
+                      className="w-full h-full flex items-center justify-center text-2xl font-bold text-white"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      {(member.name || 'U').charAt(0)}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-slate-900 truncate">{member.name || 'Họ và tên'}</h4>
+                  <p className="text-sm mb-2" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+                  <p className="text-sm text-slate-500 line-clamp-2">{member.bio || 'Giới thiệu ngắn...'}</p>
+                  <div className="flex gap-1.5 mt-3">
+                    <SocialIcon type="facebook" url={member.facebook} brandColor={brandColor} />
+                    <SocialIcon type="linkedin" url={member.linkedin} brandColor={brandColor} />
+                    <SocialIcon type="twitter" url={member.twitter} brandColor={brandColor} />
+                    <SocialIcon type="email" url={member.email} brandColor={brandColor} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Carousel - Single member spotlight với navigation
+  const current = members[currentSlide] || members[0];
+  return (
+    <section className="py-16 md:py-20 px-4 bg-slate-50">
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+        
+        <div 
+          className="bg-white rounded-2xl shadow-xl overflow-hidden"
+          style={{ borderTop: `4px solid ${brandColor}` }}
+        >
+          <div className="flex flex-col md:flex-row">
+            {/* Avatar side */}
+            <div className="flex-shrink-0 w-full md:w-1/3 aspect-square md:aspect-[3/4] max-h-[300px] md:max-h-none bg-slate-100">
+              {current.avatar ? (
+                <img src={current.avatar} alt={current.name} className="w-full h-full object-cover" />
+              ) : (
+                <div 
+                  className="w-full h-full flex items-center justify-center text-6xl font-bold text-white"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {(current.name || 'U').charAt(0)}
+                </div>
+              )}
+            </div>
+
+            {/* Info side */}
+            <div className="flex-1 p-6 md:p-10 flex flex-col justify-center">
+              <span 
+                className="text-sm font-semibold uppercase tracking-wider mb-2"
+                style={{ color: brandColor }}
+              >
+                {current.role || 'Chức vụ'}
+              </span>
+              <h4 className="text-2xl md:text-4xl font-bold text-slate-900 mb-4">
+                {current.name || 'Họ và tên'}
+              </h4>
+              <p className="text-slate-500 leading-relaxed mb-6">
+                {current.bio || 'Giới thiệu về thành viên này...'}
+              </p>
+              <div className="flex gap-3">
+                <SocialIcon type="facebook" url={current.facebook} brandColor={brandColor} />
+                <SocialIcon type="linkedin" url={current.linkedin} brandColor={brandColor} />
+                <SocialIcon type="twitter" url={current.twitter} brandColor={brandColor} />
+                <SocialIcon type="email" url={current.email} brandColor={brandColor} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        {members.length > 1 && (
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <button 
+              onClick={() => setCurrentSlide(prev => prev === 0 ? members.length - 1 : prev - 1)} 
+              className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <div className="flex gap-2">
+              {members.map((_, idx) => (
+                <button 
+                  key={idx} 
+                  onClick={() => setCurrentSlide(idx)} 
+                  className={`h-2.5 rounded-full transition-all ${idx === currentSlide ? 'w-8' : 'w-2.5 bg-slate-300 hover:bg-slate-400'}`}
+                  style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
+                />
+              ))}
+            </div>
+            <button 
+              onClick={() => setCurrentSlide(prev => (prev + 1) % members.length)} 
+              className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

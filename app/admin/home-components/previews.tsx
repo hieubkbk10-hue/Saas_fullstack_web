@@ -5378,3 +5378,241 @@ export const CategoryProductsPreview = ({
     </PreviewWrapper>
   );
 };
+
+// ============ TEAM PREVIEW ============
+// Professional Team Section UI/UX - 3 Variants: Grid, Cards, Carousel
+type TeamMember = { id: number; name: string; role: string; avatar: string; bio: string; facebook: string; linkedin: string; twitter: string; email: string };
+export type TeamStyle = 'grid' | 'cards' | 'carousel';
+
+export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange }: { 
+  members: TeamMember[]; 
+  brandColor: string; 
+  selectedStyle?: TeamStyle; 
+  onStyleChange?: (style: TeamStyle) => void 
+}) => {
+  const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const previewStyle = selectedStyle || 'grid';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as TeamStyle);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const styles = [
+    { id: 'grid', label: 'Grid' }, 
+    { id: 'cards', label: 'Cards' }, 
+    { id: 'carousel', label: 'Carousel' }
+  ];
+
+  const SocialIcon = ({ type, url }: { type: 'facebook' | 'linkedin' | 'twitter' | 'email'; url: string }) => {
+    if (!url) return null;
+    const icons = {
+      facebook: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>,
+      linkedin: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>,
+      twitter: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
+      email: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    };
+    return (
+      <a 
+        href={type === 'email' ? `mailto:${url}` : url} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
+        style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+      >
+        {icons[type]}
+      </a>
+    );
+  };
+
+  // Style 1: Grid - Clean grid với hover effects
+  const renderGridStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
+      <h3 className={cn("font-bold text-center mb-8", device === 'mobile' ? 'text-lg' : 'text-2xl')}>Đội ngũ của chúng tôi</h3>
+      <div className={cn(
+        "grid gap-6",
+        device === 'mobile' ? 'grid-cols-2 gap-4' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4'
+      )}>
+        {members.slice(0, device === 'mobile' ? 4 : 8).map((member) => (
+          <div key={member.id} className="group text-center">
+            <div className="relative mb-4 mx-auto overflow-hidden rounded-2xl aspect-square max-w-[180px]">
+              {member.avatar ? (
+                <img 
+                  src={member.avatar} 
+                  alt={member.name} 
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                />
+              ) : (
+                <div 
+                  className="w-full h-full flex items-center justify-center text-3xl font-bold text-white"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {(member.name || 'U').charAt(0)}
+                </div>
+              )}
+              {/* Social overlay on hover */}
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
+                <SocialIcon type="facebook" url={member.facebook} />
+                <SocialIcon type="linkedin" url={member.linkedin} />
+                <SocialIcon type="twitter" url={member.twitter} />
+                <SocialIcon type="email" url={member.email} />
+              </div>
+            </div>
+            <h4 className="font-semibold text-slate-900 dark:text-slate-100">{member.name || 'Họ và tên'}</h4>
+            <p className="text-sm mt-1" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Style 2: Cards - Horizontal cards với bio
+  const renderCardsStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
+      <h3 className={cn("font-bold text-center mb-8", device === 'mobile' ? 'text-lg' : 'text-2xl')}>Đội ngũ của chúng tôi</h3>
+      <div className={cn(
+        "grid gap-6",
+        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+      )}>
+        {members.slice(0, device === 'mobile' ? 3 : 6).map((member) => (
+          <div 
+            key={member.id} 
+            className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex gap-4 items-start group hover:shadow-md transition-shadow"
+          >
+            <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden">
+              {member.avatar ? (
+                <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+              ) : (
+                <div 
+                  className="w-full h-full flex items-center justify-center text-xl font-bold text-white"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {(member.name || 'U').charAt(0)}
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-semibold text-slate-900 dark:text-slate-100 truncate">{member.name || 'Họ và tên'}</h4>
+              <p className="text-sm mb-2" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{member.bio || 'Giới thiệu ngắn...'}</p>
+              <div className="flex gap-1.5 mt-3">
+                {member.facebook && <SocialIcon type="facebook" url={member.facebook} />}
+                {member.linkedin && <SocialIcon type="linkedin" url={member.linkedin} />}
+                {member.twitter && <SocialIcon type="twitter" url={member.twitter} />}
+                {member.email && <SocialIcon type="email" url={member.email} />}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Style 3: Carousel - Single member spotlight với navigation
+  const renderCarouselStyle = () => {
+    const current = members[currentSlide] || members[0];
+    if (!current) return null;
+
+    return (
+      <div className={cn("py-12 px-4 relative", device === 'mobile' ? 'py-8' : '')}>
+        <h3 className={cn("font-bold text-center mb-8", device === 'mobile' ? 'text-lg' : 'text-2xl')}>Đội ngũ của chúng tôi</h3>
+        
+        <div className="max-w-4xl mx-auto">
+          <div 
+            className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden"
+            style={{ borderTop: `4px solid ${brandColor}` }}
+          >
+            <div className={cn(
+              "flex",
+              device === 'mobile' ? 'flex-col' : 'flex-row'
+            )}>
+              {/* Avatar side */}
+              <div className={cn(
+                "flex-shrink-0 bg-slate-100 dark:bg-slate-700",
+                device === 'mobile' ? 'w-full aspect-square max-h-[250px]' : 'w-1/3 aspect-[3/4]'
+              )}>
+                {current.avatar ? (
+                  <img src={current.avatar} alt={current.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div 
+                    className="w-full h-full flex items-center justify-center text-6xl font-bold text-white"
+                    style={{ backgroundColor: brandColor }}
+                  >
+                    {(current.name || 'U').charAt(0)}
+                  </div>
+                )}
+              </div>
+
+              {/* Info side */}
+              <div className={cn("flex-1 p-8 flex flex-col justify-center", device === 'mobile' ? 'p-5' : '')}>
+                <span 
+                  className="text-xs font-semibold uppercase tracking-wider mb-2"
+                  style={{ color: brandColor }}
+                >
+                  {current.role || 'Chức vụ'}
+                </span>
+                <h4 className={cn("font-bold text-slate-900 dark:text-slate-100 mb-4", device === 'mobile' ? 'text-xl' : 'text-3xl')}>
+                  {current.name || 'Họ và tên'}
+                </h4>
+                <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
+                  {current.bio || 'Giới thiệu về thành viên này...'}
+                </p>
+                <div className="flex gap-3">
+                  {current.facebook && <SocialIcon type="facebook" url={current.facebook} />}
+                  {current.linkedin && <SocialIcon type="linkedin" url={current.linkedin} />}
+                  {current.twitter && <SocialIcon type="twitter" url={current.twitter} />}
+                  {current.email && <SocialIcon type="email" url={current.email} />}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          {members.length > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-6">
+              <button 
+                type="button"
+                onClick={() => setCurrentSlide(prev => prev === 0 ? members.length - 1 : prev - 1)} 
+                className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <div className="flex gap-2">
+                {members.map((_, idx) => (
+                  <button 
+                    key={idx} 
+                    type="button"
+                    onClick={() => setCurrentSlide(idx)} 
+                    className={cn("h-2.5 rounded-full transition-all", idx === currentSlide ? 'w-8' : 'w-2.5 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400')}
+                    style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
+                  />
+                ))}
+              </div>
+              <button 
+                type="button"
+                onClick={() => setCurrentSlide(prev => (prev + 1) % members.length)} 
+                className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <PreviewWrapper 
+      title="Preview Team" 
+      device={device} 
+      setDevice={setDevice} 
+      previewStyle={previewStyle} 
+      setPreviewStyle={setPreviewStyle} 
+      styles={styles} 
+      info={`${members.length} thành viên`}
+    >
+      <BrowserFrame>
+        {previewStyle === 'grid' && renderGridStyle()}
+        {previewStyle === 'cards' && renderCardsStyle()}
+        {previewStyle === 'carousel' && renderCarouselStyle()}
+      </BrowserFrame>
+    </PreviewWrapper>
+  );
+};
