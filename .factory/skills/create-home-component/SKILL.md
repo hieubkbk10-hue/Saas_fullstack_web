@@ -465,12 +465,266 @@ import { MultiImageUploader, ImageItem } from '../../../components/MultiImageUpl
 />
 ```
 
-### Drag & Drop Reorder
+### Drag & Drop Reorder cho Items
+
+Project đã có sẵn drag & drop trong `MultiImageUploader`. Với các items khác (FAQ, Team, Features...), implement như sau:
+
+#### Option 1: Native HTML5 Drag & Drop (Recommended)
+
 ```tsx
-// Sử dụng thư viện có sẵn trong MultiImageUploader
-// Hoặc implement đơn giản với buttons
-<Button onClick={() => moveItem(idx, idx - 1)}><ChevronUp /></Button>
-<Button onClick={() => moveItem(idx, idx + 1)}><ChevronDown /></Button>
+interface ItemType {
+  id: number;
+  title: string;
+  description: string;
+}
+
+// States cho drag & drop
+const [draggedItemId, setDraggedItemId] = useState<number | null>(null);
+const [dragOverItemId, setDragOverItemId] = useState<number | null>(null);
+
+// Drag handlers
+const handleDragStart = (e: React.DragEvent, itemId: number) => {
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', String(itemId));
+  setDraggedItemId(itemId);
+};
+
+const handleDragEnd = () => {
+  setDraggedItemId(null);
+  setDragOverItemId(null);
+};
+
+const handleDragOver = (e: React.DragEvent, targetId: number) => {
+  e.preventDefault();
+  e.stopPropagation();
+  if (draggedItemId && draggedItemId !== targetId) {
+    setDragOverItemId(targetId);
+  }
+};
+
+const handleDrop = (e: React.DragEvent, targetId: number) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  if (!draggedItemId || draggedItemId === targetId) {
+    setDraggedItemId(null);
+    setDragOverItemId(null);
+    return;
+  }
+
+  const dragIndex = items.findIndex(item => item.id === draggedItemId);
+  const dropIndex = items.findIndex(item => item.id === targetId);
+
+  if (dragIndex === -1 || dropIndex === -1) return;
+
+  // Reorder items
+  const newItems = [...items];
+  const [draggedItem] = newItems.splice(dragIndex, 1);
+  newItems.splice(dropIndex, 0, draggedItem);
+  setItems(newItems);
+
+  setDraggedItemId(null);
+  setDragOverItemId(null);
+};
+
+// JSX
+{items.map((item) => (
+  <div
+    key={item.id}
+    draggable
+    onDragStart={(e) => handleDragStart(e, item.id)}
+    onDragEnd={handleDragEnd}
+    onDragOver={(e) => handleDragOver(e, item.id)}
+    onDrop={(e) => handleDrop(e, item.id)}
+    className={cn(
+      "border rounded-lg p-4 transition-all duration-200 cursor-grab active:cursor-grabbing",
+      draggedItemId === item.id && "opacity-50 scale-95",
+      dragOverItemId === item.id && "ring-2 ring-blue-500 ring-offset-2 scale-[1.02]"
+    )}
+  >
+    {/* Drag handle icon */}
+    <div className="flex items-center gap-3">
+      <GripVertical size={18} className="text-slate-400 hover:text-slate-600 flex-shrink-0" />
+      {/* Rest of item content */}
+    </div>
+  </div>
+))}
+```
+
+#### Option 2: Simple Button Reorder (Fallback)
+
+```tsx
+// Move item helper
+const moveItem = (fromIndex: number, toIndex: number) => {
+  if (toIndex < 0 || toIndex >= items.length) return;
+  const newItems = [...items];
+  const [movedItem] = newItems.splice(fromIndex, 1);
+  newItems.splice(toIndex, 0, movedItem);
+  setItems(newItems);
+};
+
+// JSX with up/down buttons
+{items.map((item, idx) => (
+  <div key={item.id} className="flex items-center gap-2">
+    <div className="flex flex-col gap-0.5">
+      <button
+        type="button"
+        onClick={() => moveItem(idx, idx - 1)}
+        disabled={idx === 0}
+        className={cn(
+          "p-1 rounded hover:bg-slate-100",
+          idx === 0 && "opacity-30 cursor-not-allowed"
+        )}
+      >
+        <ChevronUp size={14} />
+      </button>
+      <button
+        type="button"
+        onClick={() => moveItem(idx, idx + 1)}
+        disabled={idx === items.length - 1}
+        className={cn(
+          "p-1 rounded hover:bg-slate-100",
+          idx === items.length - 1 && "opacity-30 cursor-not-allowed"
+        )}
+      >
+        <ChevronDown size={14} />
+      </button>
+    </div>
+    {/* Item content */}
+  </div>
+))}
+```
+
+#### Option 3: Reusable Hook Pattern
+
+```tsx
+// hooks/useDragReorder.ts
+import { useState, useCallback } from 'react';
+
+export function useDragReorder<T extends { id: number | string }>(
+  items: T[],
+  setItems: (items: T[]) => void
+) {
+  const [draggedId, setDraggedId] = useState<number | string | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | string | null>(null);
+
+  const handleDragStart = useCallback((e: React.DragEvent, id: number | string) => {
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggedId(id);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedId(null);
+    setDragOverId(null);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, targetId: number | string) => {
+    e.preventDefault();
+    if (draggedId && draggedId !== targetId) {
+      setDragOverId(targetId);
+    }
+  }, [draggedId]);
+
+  const handleDrop = useCallback((e: React.DragEvent, targetId: number | string) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const dragIndex = items.findIndex(item => item.id === draggedId);
+    const dropIndex = items.findIndex(item => item.id === targetId);
+
+    if (dragIndex !== -1 && dropIndex !== -1) {
+      const newItems = [...items];
+      const [draggedItem] = newItems.splice(dragIndex, 1);
+      newItems.splice(dropIndex, 0, draggedItem);
+      setItems(newItems);
+    }
+
+    setDraggedId(null);
+    setDragOverId(null);
+  }, [draggedId, items, setItems]);
+
+  const getDragProps = useCallback((id: number | string) => ({
+    draggable: true,
+    onDragStart: (e: React.DragEvent) => handleDragStart(e, id),
+    onDragEnd: handleDragEnd,
+    onDragOver: (e: React.DragEvent) => handleDragOver(e, id),
+    onDrop: (e: React.DragEvent) => handleDrop(e, id),
+  }), [handleDragStart, handleDragEnd, handleDragOver, handleDrop]);
+
+  const getItemClasses = useCallback((id: number | string) => cn(
+    draggedId === id && "opacity-50 scale-95",
+    dragOverId === id && "ring-2 ring-blue-500 ring-offset-2 scale-[1.02]"
+  ), [draggedId, dragOverId]);
+
+  return { getDragProps, getItemClasses, isDragging: draggedId !== null };
+}
+
+// Usage trong component
+const { getDragProps, getItemClasses, isDragging } = useDragReorder(items, setItems);
+
+{items.map((item) => (
+  <div
+    key={item.id}
+    {...getDragProps(item.id)}
+    className={cn(
+      "border rounded-lg p-4 cursor-grab active:cursor-grabbing",
+      getItemClasses(item.id)
+    )}
+  >
+    <GripVertical className="text-slate-400" />
+    {/* content */}
+  </div>
+))}
+```
+
+#### Visual Feedback Classes
+
+```tsx
+// Drag & Drop visual states
+const itemClasses = cn(
+  // Base
+  "border rounded-lg p-4 transition-all duration-200",
+  
+  // Draggable cursor
+  "cursor-grab active:cursor-grabbing",
+  
+  // Being dragged
+  draggedItemId === item.id && "opacity-50 scale-95 shadow-lg z-50",
+  
+  // Drop target highlight
+  dragOverItemId === item.id && draggedItemId !== item.id && [
+    "ring-2 ring-blue-500 ring-offset-2",
+    "scale-[1.02]",
+    "bg-blue-50 dark:bg-blue-900/20"
+  ]
+);
+```
+
+#### Drag Handle Component
+
+```tsx
+// Reusable drag handle
+const DragHandle = ({ className }: { className?: string }) => (
+  <div className={cn(
+    "flex-shrink-0 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700",
+    "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300",
+    "cursor-grab active:cursor-grabbing",
+    className
+  )}>
+    <GripVertical size={18} />
+  </div>
+);
+
+// Usage
+<div className="flex items-center gap-3">
+  <DragHandle />
+  <Input value={item.title} />
+  <Button variant="ghost"><Trash2 /></Button>
+</div>
 ```
 
 ## Testing Checklist
@@ -486,6 +740,8 @@ import { MultiImageUploader, ImageItem } from '../../../components/MultiImageUpl
 - [ ] Brand color được áp dụng chính xác
 - [ ] Image upload hoạt động (nếu có)
 - [ ] Form validation hoạt động
+- [ ] **Drag & drop reorder hoạt động** (nếu component có items)
+- [ ] **Order được lưu đúng vào DB** sau khi reorder
 
 ## Files cần tạo/cập nhật
 
