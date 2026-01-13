@@ -79,6 +79,8 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
       return <FeaturesSection config={config} brandColor={brandColor} title={title} />;
     case 'Process':
       return <ProcessSection config={config} brandColor={brandColor} title={title} />;
+    case 'Clients':
+      return <ClientsSection config={config} brandColor={brandColor} title={title} />;
     default:
       return <PlaceholderSection type={type} title={title} />;
   }
@@ -4623,6 +4625,362 @@ function ProcessSection({ config, brandColor, title }: { config: Record<string, 
             );
           })}
         </div>
+      </div>
+    </section>
+  );
+}
+
+// ============ CLIENTS MARQUEE SECTION ============
+// Auto-scroll Logo Marquee - 4 Styles: marquee, marqueeReverse, wave, logoWall
+type ClientsStyle = 'marquee' | 'marqueeReverse' | 'wave' | 'logoWall';
+
+function ClientsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
+  const items = (config.items as Array<{ url: string; link: string; name?: string }>) || [];
+  const style = (config.style as ClientsStyle) || 'marquee';
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  // CSS keyframes for marquee animation
+  const marqueeStyles = `
+    @keyframes clients-marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    @keyframes clients-marquee-reverse {
+      0% { transform: translateX(-50%); }
+      100% { transform: translateX(0); }
+    }
+    @keyframes clients-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+  `;
+
+  // Logo item renderer
+  const renderLogoItem = (item: { url: string; link: string; name?: string }, idx: number, grayscale = false) => {
+    const logo = item.url ? (
+      <img 
+        src={item.url} 
+        alt={item.name || `Client ${idx + 1}`}
+        className={`h-10 md:h-12 w-auto object-contain select-none pointer-events-none transition-all duration-500 ${
+          grayscale ? 'grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100' : ''
+        }`}
+      />
+    ) : (
+      <div 
+        className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center"
+        style={{ backgroundColor: `${brandColor}15` }}
+      >
+        <ImageIcon size={20} style={{ color: brandColor }} className="opacity-40" />
+      </div>
+    );
+
+    return item.link ? (
+      <a 
+        key={`logo-${idx}`}
+        href={item.link} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="shrink-0 group"
+      >
+        {logo}
+      </a>
+    ) : (
+      <div key={`logo-${idx}`} className="shrink-0 group">{logo}</div>
+    );
+  };
+
+  // Calculate animation duration based on items count
+  const baseDuration = Math.max(20, items.length * 4);
+
+  // Style 1: Simple Marquee
+  if (style === 'marquee') {
+    return (
+      <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40">
+        <style>{marqueeStyles}</style>
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }} />
+              {title}
+            </h2>
+          </div>
+          
+          <div 
+            className="relative py-6 overflow-hidden"
+            style={{ 
+              maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)'
+            }}
+          >
+            <div 
+              className="flex items-center gap-12 md:gap-16"
+              style={{ 
+                animation: `clients-marquee ${baseDuration}s linear infinite`,
+                width: 'max-content'
+              }}
+            >
+              {items.map((item, idx) => renderLogoItem(item, idx))}
+              {items.map((item, idx) => renderLogoItem(item, idx + items.length))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Dual Row Marquee
+  if (style === 'marqueeReverse') {
+    return (
+      <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40">
+        <style>{marqueeStyles}</style>
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }} />
+              {title}
+            </h2>
+          </div>
+          
+          <div className="space-y-4">
+            {/* Row 1 */}
+            <div 
+              className="relative py-4 overflow-hidden"
+              style={{ 
+                maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)',
+                WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)'
+              }}
+            >
+              <div 
+                className="flex items-center gap-12 md:gap-16"
+                style={{ 
+                  animation: `clients-marquee ${baseDuration + 5}s linear infinite`,
+                  width: 'max-content'
+                }}
+              >
+                {items.map((item, idx) => renderLogoItem(item, idx, true))}
+                {items.map((item, idx) => renderLogoItem(item, idx + items.length, true))}
+              </div>
+            </div>
+            
+            {/* Row 2 - Reverse */}
+            <div 
+              className="relative py-4 overflow-hidden"
+              style={{ 
+                maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)',
+                WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)'
+              }}
+            >
+              <div 
+                className="flex items-center gap-12 md:gap-16"
+                style={{ 
+                  animation: `clients-marquee-reverse ${baseDuration + 10}s linear infinite`,
+                  width: 'max-content'
+                }}
+              >
+                {[...items].reverse().map((item, idx) => renderLogoItem(item, idx, true))}
+                {[...items].reverse().map((item, idx) => renderLogoItem(item, idx + items.length, true))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Wave
+  if (style === 'wave') {
+    return (
+      <section className="w-full py-10 md:py-16 bg-gradient-to-b from-slate-50 to-white border-b border-slate-200/40 overflow-hidden">
+        <style>{marqueeStyles}</style>
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+          <div className="text-center space-y-2">
+            <div 
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+            >
+              Đối tác & Khách hàng
+            </div>
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">
+              {title}
+            </h2>
+          </div>
+          
+          <div 
+            className="relative py-8 overflow-hidden"
+            style={{ 
+              maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
+            }}
+          >
+            <div 
+              className="flex items-center gap-14 md:gap-20"
+              style={{ 
+                animation: `clients-marquee ${baseDuration + 15}s linear infinite`,
+                width: 'max-content'
+              }}
+            >
+              {items.map((item, idx) => (
+                <div 
+                  key={`wave-${idx}`}
+                  className="shrink-0"
+                  style={{ animation: `clients-float 3s ease-in-out infinite`, animationDelay: `${idx * 0.3}s` }}
+                >
+                  {item.url ? (
+                    <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100">
+                      <img 
+                        src={item.url} 
+                        alt={item.name || `Client ${idx + 1}`}
+                        className="h-8 md:h-10 w-auto object-contain select-none pointer-events-none"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-16 w-28 rounded-xl flex items-center justify-center bg-white shadow-sm border border-slate-100">
+                      <ImageIcon size={20} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              {items.map((item, idx) => (
+                <div 
+                  key={`wave2-${idx}`}
+                  className="shrink-0"
+                  style={{ animation: `clients-float 3s ease-in-out infinite`, animationDelay: `${(idx + items.length) * 0.3}s` }}
+                >
+                  {item.url ? (
+                    <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100">
+                      <img 
+                        src={item.url} 
+                        alt={item.name || `Client ${idx + 1}`}
+                        className="h-8 md:h-10 w-auto object-contain select-none pointer-events-none"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-16 w-28 rounded-xl flex items-center justify-center bg-white shadow-sm border border-slate-100">
+                      <ImageIcon size={20} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Stats */}
+          <div className="flex items-center justify-center gap-8 md:gap-16 pt-4 flex-wrap">
+            <div className="text-center">
+              <div className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{items.length * 10}+</div>
+              <div className="text-xs text-slate-500">Khách hàng</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>98%</div>
+              <div className="text-xs text-slate-500">Hài lòng</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>5+</div>
+              <div className="text-xs text-slate-500">Năm kinh nghiệm</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 4: Logo Wall (default) - Grid or Marquee based on items count
+  return (
+    <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40">
+      <style>{marqueeStyles}</style>
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }} />
+            {title}
+          </h2>
+        </div>
+        
+        {items.length > 8 ? (
+          /* Marquee for many logos */
+          <div 
+            className="relative py-6 overflow-hidden"
+            style={{ 
+              maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
+            }}
+          >
+            <div 
+              className="flex items-center gap-10 md:gap-14"
+              style={{ 
+                animation: `clients-marquee ${baseDuration + 20}s linear infinite`,
+                width: 'max-content'
+              }}
+            >
+              {items.map((item, idx) => (
+                <div 
+                  key={`wall-${idx}`}
+                  className="shrink-0 group p-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer"
+                >
+                  {item.url ? (
+                    <img 
+                      src={item.url} 
+                      alt={item.name || `Client ${idx + 1}`}
+                      className="h-10 md:h-12 w-auto object-contain select-none pointer-events-none grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                    />
+                  ) : (
+                    <div className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
+                      <ImageIcon size={18} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              {items.map((item, idx) => (
+                <div 
+                  key={`wall2-${idx}`}
+                  className="shrink-0 group p-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer"
+                >
+                  {item.url ? (
+                    <img 
+                      src={item.url} 
+                      alt={item.name || `Client ${idx + 1}`}
+                      className="h-10 md:h-12 w-auto object-contain select-none pointer-events-none grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                    />
+                  ) : (
+                    <div className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
+                      <ImageIcon size={18} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* Static Grid for fewer logos */
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 items-center justify-items-center py-6">
+            {items.map((item, idx) => (
+              <div 
+                key={`static-${idx}`}
+                className="group p-4 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer w-full flex flex-col items-center"
+              >
+                {item.url ? (
+                  <img 
+                    src={item.url} 
+                    alt={item.name || `Client ${idx + 1}`}
+                    className="h-10 md:h-12 w-auto object-contain select-none pointer-events-none grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                  />
+                ) : (
+                  <div className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
+                    <ImageIcon size={18} className="text-slate-300" />
+                  </div>
+                )}
+                {item.name && (
+                  <div className="text-[10px] text-slate-400 text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity truncate max-w-full">
+                    {item.name}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
