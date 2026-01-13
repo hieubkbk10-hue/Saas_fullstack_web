@@ -19,7 +19,7 @@ interface ClientItem {
 export default function ClientsCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Khách hàng của chúng tôi', 'Clients');
   const brandColor = useBrandColor();
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
   
   const [clientItems, setClientItems] = useState<ClientItem[]>([
     { id: 'item-1', url: '', link: '', name: '', inputMode: 'upload' },
