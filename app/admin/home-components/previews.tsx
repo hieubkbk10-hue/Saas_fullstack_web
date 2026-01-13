@@ -4340,3 +4340,262 @@ export const SpeedDialPreview = ({
     </PreviewWrapper>
   );
 };
+
+// ============ PRODUCT CATEGORIES PREVIEW ============
+type CategoryConfigItem = { id: number; categoryId: string; customImage?: string };
+type CategoryData = { _id: string; name: string; slug: string; image?: string; description?: string };
+export type ProductCategoriesStyle = 'grid' | 'carousel' | 'cards';
+
+export const ProductCategoriesPreview = ({ 
+  config, 
+  brandColor, 
+  selectedStyle, 
+  onStyleChange,
+  categoriesData
+}: { 
+  config: {
+    categories: CategoryConfigItem[];
+    style: ProductCategoriesStyle;
+    showProductCount: boolean;
+    columnsDesktop: number;
+    columnsMobile: number;
+  };
+  brandColor: string;
+  selectedStyle?: ProductCategoriesStyle;
+  onStyleChange?: (style: ProductCategoriesStyle) => void;
+  categoriesData: CategoryData[];
+}) => {
+  const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const previewStyle = selectedStyle || config.style || 'grid';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as ProductCategoriesStyle);
+  
+  const styles = [
+    { id: 'grid', label: 'Grid' },
+    { id: 'carousel', label: 'Carousel' },
+    { id: 'cards', label: 'Cards' },
+  ];
+
+  const categoryMap = React.useMemo(() => {
+    const map: Record<string, CategoryData> = {};
+    for (const cat of categoriesData) {
+      map[cat._id] = cat;
+    }
+    return map;
+  }, [categoriesData]);
+
+  const resolvedCategories = config.categories
+    .map(item => {
+      const cat = categoryMap[item.categoryId];
+      if (!cat) return null;
+      return {
+        ...cat,
+        displayImage: item.customImage || cat.image,
+      };
+    })
+    .filter(Boolean) as (CategoryData & { displayImage?: string })[];
+
+  const getGridCols = () => {
+    if (device === 'mobile') {
+      return config.columnsMobile === 3 ? 'grid-cols-3' : 'grid-cols-2';
+    }
+    if (device === 'tablet') {
+      return 'grid-cols-3';
+    }
+    switch (config.columnsDesktop) {
+      case 3: return 'grid-cols-3';
+      case 5: return 'grid-cols-5';
+      case 6: return 'grid-cols-6';
+      default: return 'grid-cols-4';
+    }
+  };
+
+  // Style 1: Grid - Classic grid with hover effect
+  const renderGridStyle = () => (
+    <section className="w-full py-8 md:py-12">
+      <div className="max-w-7xl mx-auto px-4">
+        <h2 className={cn(
+          "font-bold mb-6 text-center",
+          device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl'
+        )}>Danh mục sản phẩm</h2>
+        
+        {resolvedCategories.length === 0 ? (
+          <div className="text-center py-12 text-slate-400">
+            <Package size={48} className="mx-auto mb-4 opacity-30" />
+            <p className="text-sm">Chưa chọn danh mục nào</p>
+          </div>
+        ) : (
+          <div className={cn("grid gap-4", getGridCols())}>
+            {resolvedCategories.map((cat) => (
+              <div 
+                key={cat._id} 
+                className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer"
+              >
+                {cat.displayImage ? (
+                  <img 
+                    src={cat.displayImage} 
+                    alt={cat.name} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package size={32} className="text-slate-300" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 text-white">
+                  <h3 className={cn(
+                    "font-semibold truncate",
+                    device === 'mobile' ? 'text-sm' : 'text-base'
+                  )}>{cat.name}</h3>
+                  {config.showProductCount && (
+                    <p className="text-xs opacity-80 mt-0.5">12 sản phẩm</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+
+  // Style 2: Carousel - Horizontal scroll
+  const renderCarouselStyle = () => (
+    <section className="w-full py-8 md:py-12">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between px-4 mb-6">
+          <h2 className={cn(
+            "font-bold",
+            device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl'
+          )}>Danh mục sản phẩm</h2>
+          <button 
+            className="text-sm font-medium flex items-center gap-1 hover:underline"
+            style={{ color: brandColor }}
+          >
+            Xem tất cả <ChevronRight size={16} />
+          </button>
+        </div>
+        
+        {resolvedCategories.length === 0 ? (
+          <div className="text-center py-12 text-slate-400 px-4">
+            <Package size={48} className="mx-auto mb-4 opacity-30" />
+            <p className="text-sm">Chưa chọn danh mục nào</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto pb-4 px-4 scrollbar-hide">
+            <div className="flex gap-4">
+              {resolvedCategories.map((cat) => (
+                <div 
+                  key={cat._id} 
+                  className={cn(
+                    "flex-shrink-0 group cursor-pointer",
+                    device === 'mobile' ? 'w-32' : 'w-44'
+                  )}
+                >
+                  <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2">
+                    {cat.displayImage ? (
+                      <img 
+                        src={cat.displayImage} 
+                        alt={cat.name} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package size={32} className="text-slate-300" />
+                      </div>
+                    )}
+                  </div>
+                  <h3 className={cn(
+                    "font-medium text-center truncate",
+                    device === 'mobile' ? 'text-sm' : 'text-base'
+                  )}>{cat.name}</h3>
+                  {config.showProductCount && (
+                    <p className="text-xs text-slate-500 text-center">12 sản phẩm</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+
+  // Style 3: Cards - Modern cards with description
+  const renderCardsStyle = () => (
+    <section className="w-full py-8 md:py-12 bg-slate-50 dark:bg-slate-800/30">
+      <div className="max-w-7xl mx-auto px-4">
+        <h2 className={cn(
+          "font-bold mb-6 text-center",
+          device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl'
+        )}>Khám phá theo danh mục</h2>
+        
+        {resolvedCategories.length === 0 ? (
+          <div className="text-center py-12 text-slate-400">
+            <Package size={48} className="mx-auto mb-4 opacity-30" />
+            <p className="text-sm">Chưa chọn danh mục nào</p>
+          </div>
+        ) : (
+          <div className={cn("grid gap-4 md:gap-6", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+            {resolvedCategories.slice(0, device === 'mobile' ? 3 : 6).map((cat) => (
+              <div 
+                key={cat._id} 
+                className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow cursor-pointer flex"
+              >
+                <div className={cn(
+                  "flex-shrink-0 bg-slate-100 dark:bg-slate-700",
+                  device === 'mobile' ? 'w-24 h-24' : 'w-32 h-32'
+                )}>
+                  {cat.displayImage ? (
+                    <img 
+                      src={cat.displayImage} 
+                      alt={cat.name} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package size={32} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 p-4 flex flex-col justify-center">
+                  <h3 className={cn(
+                    "font-semibold mb-1",
+                    device === 'mobile' ? 'text-sm' : 'text-base'
+                  )}>{cat.name}</h3>
+                  {cat.description && (
+                    <p className="text-xs text-slate-500 line-clamp-2 mb-2">{cat.description}</p>
+                  )}
+                  <span 
+                    className="text-xs font-medium flex items-center gap-1"
+                    style={{ color: brandColor }}
+                  >
+                    Xem sản phẩm <ChevronRight size={14} />
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+
+  return (
+    <PreviewWrapper 
+      title="Preview Danh mục sản phẩm" 
+      device={device} 
+      setDevice={setDevice} 
+      previewStyle={previewStyle} 
+      setPreviewStyle={setPreviewStyle} 
+      styles={styles} 
+      info={`${resolvedCategories.length} danh mục`}
+    >
+      <BrowserFrame>
+        {previewStyle === 'grid' && renderGridStyle()}
+        {previewStyle === 'carousel' && renderCarouselStyle()}
+        {previewStyle === 'cards' && renderCardsStyle()}
+      </BrowserFrame>
+    </PreviewWrapper>
+  );
+};
