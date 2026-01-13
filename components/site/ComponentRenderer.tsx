@@ -4867,21 +4867,6 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
             </div>
           </div>
           
-          {/* Stats */}
-          <div className="flex items-center justify-center gap-8 md:gap-16 pt-4 flex-wrap">
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{items.length * 10}+</div>
-              <div className="text-xs text-slate-500">Khách hàng</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>98%</div>
-              <div className="text-xs text-slate-500">Hài lòng</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>5+</div>
-              <div className="text-xs text-slate-500">Năm kinh nghiệm</div>
-            </div>
-          </div>
         </div>
       </section>
     );
