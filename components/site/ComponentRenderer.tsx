@@ -81,6 +81,10 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
       return <ProcessSection config={config} brandColor={brandColor} title={title} />;
     case 'Clients':
       return <ClientsSection config={config} brandColor={brandColor} title={title} />;
+    case 'Video':
+      return <VideoSection config={config} brandColor={brandColor} title={title} />;
+    case 'Countdown':
+      return <CountdownSection config={config} brandColor={brandColor} title={title} />;
     default:
       return <PlaceholderSection type={type} title={title} />;
   }
@@ -4966,6 +4970,435 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
             ))}
           </div>
         )}
+      </div>
+    </section>
+  );
+}
+
+// ============ VIDEO SECTION ============
+// 3 Styles: centered, split, fullwidth
+import { Play, Video as VideoIcon } from 'lucide-react';
+
+type VideoStyle = 'centered' | 'split' | 'fullwidth';
+
+// Helper: Extract video ID and type
+const getVideoInfo = (url: string): { type: 'youtube' | 'vimeo' | 'direct'; id?: string } => {
+  if (!url) return { type: 'direct' };
+  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&?/]+)/);
+  if (ytMatch) return { type: 'youtube', id: ytMatch[1] };
+  const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeoMatch) return { type: 'vimeo', id: vimeoMatch[1] };
+  return { type: 'direct' };
+};
+
+const getYouTubeThumbnail = (videoId: string): string => `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+
+function VideoSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
+  const videoUrl = (config.videoUrl as string) || '';
+  const thumbnailUrl = (config.thumbnailUrl as string) || '';
+  const heading = (config.heading as string) || title;
+  const description = (config.description as string) || '';
+  const style = (config.style as VideoStyle) || 'centered';
+  const autoplay = config.autoplay as boolean || false;
+  const loop = config.loop as boolean || false;
+  const muted = config.muted as boolean ?? true;
+  
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const videoInfo = getVideoInfo(videoUrl);
+  const displayThumbnail = thumbnailUrl || (videoInfo.type === 'youtube' && videoInfo.id ? getYouTubeThumbnail(videoInfo.id) : '');
+
+  // Video embed component
+  const VideoEmbed = () => {
+    if (!isPlaying) return null;
+    
+    const autoplayParams = autoplay ? '&autoplay=1' : '';
+    const loopParams = loop ? '&loop=1' : '';
+    const muteParams = muted ? '&mute=1' : '';
+    
+    if (videoInfo.type === 'youtube' && videoInfo.id) {
+      return (
+        <iframe 
+          src={`https://www.youtube.com/embed/${videoInfo.id}?autoplay=1&rel=0${loopParams}${muteParams}`}
+          className="absolute inset-0 w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      );
+    }
+    
+    if (videoInfo.type === 'vimeo' && videoInfo.id) {
+      return (
+        <iframe 
+          src={`https://player.vimeo.com/video/${videoInfo.id}?autoplay=1${loopParams}${muteParams}`}
+          className="absolute inset-0 w-full h-full"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowFullScreen
+        />
+      );
+    }
+    
+    return (
+      <video 
+        src={videoUrl}
+        className="absolute inset-0 w-full h-full object-cover"
+        controls
+        autoPlay={autoplay}
+        loop={loop}
+        muted={muted}
+      />
+    );
+  };
+
+  // Play button
+  const PlayButton = ({ size = 'lg' }: { size?: 'sm' | 'lg' }) => (
+    <button 
+      onClick={() => setIsPlaying(true)}
+      className="absolute inset-0 flex items-center justify-center group transition-all bg-black/30 hover:bg-black/40"
+    >
+      <div 
+        className={`rounded-full flex items-center justify-center transition-transform group-hover:scale-110 shadow-xl ${size === 'lg' ? 'w-16 h-16 md:w-20 md:h-20' : 'w-12 h-12'}`}
+        style={{ backgroundColor: brandColor }}
+      >
+        <Play className={`text-white ml-1 ${size === 'lg' ? 'w-7 h-7 md:w-8 md:h-8' : 'w-5 h-5'}`} fill="white" />
+      </div>
+    </button>
+  );
+
+  if (!videoUrl) {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="w-full aspect-video flex flex-col items-center justify-center rounded-xl" style={{ backgroundColor: `${brandColor}10` }}>
+            <VideoIcon size={48} className="text-slate-300 mb-3" />
+            <p className="text-sm text-slate-400">Chưa cấu hình video</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 1: Centered
+  if (style === 'centered') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          {(heading || description) && (
+            <div className="text-center mb-8">
+              {heading && <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">{heading}</h2>}
+              {description && <p className="text-slate-500 max-w-2xl mx-auto">{description}</p>}
+            </div>
+          )}
+          <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl bg-slate-900">
+            {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="Video thumbnail" className="absolute inset-0 w-full h-full object-cover" />}
+            {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}20` }}><VideoIcon size={64} className="text-slate-400" /></div>}
+            {!isPlaying && <PlayButton />}
+            <VideoEmbed />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Split
+  if (style === 'split') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
+            <div className="order-1">
+              <div className="relative aspect-video rounded-xl overflow-hidden shadow-xl bg-slate-900">
+                {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="Video thumbnail" className="absolute inset-0 w-full h-full object-cover" />}
+                {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}20` }}><VideoIcon size={48} className="text-slate-400" /></div>}
+                {!isPlaying && <PlayButton size="sm" />}
+                <VideoEmbed />
+              </div>
+            </div>
+            <div className="order-2">
+              {heading && <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">{heading}</h2>}
+              {description && <p className="text-slate-500 mb-6">{description}</p>}
+              <a href="#" className="inline-block px-6 py-2.5 rounded-lg text-white font-medium text-sm transition-opacity hover:opacity-90" style={{ backgroundColor: brandColor }}>Tìm hiểu thêm</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Fullwidth
+  return (
+    <section className="relative">
+      <div className="relative overflow-hidden aspect-video md:aspect-[21/9] md:min-h-[400px]">
+        {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="Video thumbnail" className="absolute inset-0 w-full h-full object-cover" />}
+        {!isPlaying && !displayThumbnail && <div className="absolute inset-0" style={{ backgroundColor: `${brandColor}30` }} />}
+        {!isPlaying && <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />}
+        {!isPlaying && (
+          <div className="absolute inset-0 flex items-center px-4 md:px-8 lg:px-16">
+            <div className="max-w-xl">
+              {heading && <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-4">{heading}</h2>}
+              {description && <p className="text-sm md:text-lg text-white/80 mb-6">{description}</p>}
+              <button onClick={() => setIsPlaying(true)} className="flex items-center gap-3 px-6 py-3 rounded-lg text-white font-medium transition-transform hover:scale-105" style={{ backgroundColor: brandColor }}>
+                <Play className="w-5 h-5" fill="white" />Xem video
+              </button>
+            </div>
+          </div>
+        )}
+        <VideoEmbed />
+      </div>
+    </section>
+  );
+}
+
+// ============ COUNTDOWN / PROMOTION SECTION ============
+// 4 Styles: banner, floating, minimal, split
+type CountdownStyle = 'banner' | 'floating' | 'minimal' | 'split';
+
+// Countdown Timer Hook for live countdown
+const useCountdownTimer = (endDate: string) => {
+  const [timeLeft, setTimeLeft] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  React.useEffect(() => {
+    const calculateTime = () => {
+      const end = new Date(endDate).getTime();
+      const now = Date.now();
+      const diff = Math.max(0, end - now);
+
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((diff % (1000 * 60)) / 1000),
+      });
+    };
+
+    calculateTime();
+    const timer = setInterval(calculateTime, 1000);
+    return () => clearInterval(timer);
+  }, [endDate]);
+
+  return timeLeft;
+};
+
+function CountdownSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
+  const heading = (config.heading as string) || title;
+  const subHeading = (config.subHeading as string) || '';
+  const description = (config.description as string) || '';
+  const endDate = (config.endDate as string) || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const buttonText = (config.buttonText as string) || '';
+  const buttonLink = (config.buttonLink as string) || '#';
+  const backgroundImage = (config.backgroundImage as string) || '';
+  const discountText = (config.discountText as string) || '';
+  const showDays = config.showDays !== false;
+  const showHours = config.showHours !== false;
+  const showMinutes = config.showMinutes !== false;
+  const showSeconds = config.showSeconds !== false;
+  const style = (config.style as CountdownStyle) || 'banner';
+
+  const timeLeft = useCountdownTimer(endDate);
+
+  // Time Unit Component
+  const TimeUnit = ({ value, label, variant = 'default' }: { value: number; label: string; variant?: 'default' | 'light' | 'outlined' }) => {
+    if (variant === 'light') {
+      return (
+        <div className="flex flex-col items-center">
+          <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 min-w-[50px] md:min-w-[60px]">
+            <span className="text-2xl md:text-3xl font-bold text-white tabular-nums">{String(value).padStart(2, '0')}</span>
+          </div>
+          <span className="text-xs text-white/80 mt-1 uppercase tracking-wider">{label}</span>
+        </div>
+      );
+    }
+    if (variant === 'outlined') {
+      return (
+        <div className="flex flex-col items-center">
+          <div className="border-2 rounded-lg px-3 py-2 min-w-[50px] md:min-w-[60px]" style={{ borderColor: brandColor }}>
+            <span className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: brandColor }}>{String(value).padStart(2, '0')}</span>
+          </div>
+          <span className="text-xs text-slate-500 mt-1 uppercase tracking-wider">{label}</span>
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-col items-center">
+        <div className="rounded-lg px-3 py-2 min-w-[50px] md:min-w-[60px] text-white" style={{ backgroundColor: brandColor }}>
+          <span className="text-2xl md:text-3xl font-bold tabular-nums">{String(value).padStart(2, '0')}</span>
+        </div>
+        <span className="text-xs text-slate-500 mt-1 uppercase tracking-wider">{label}</span>
+      </div>
+    );
+  };
+
+  // Timer Display
+  const TimerDisplay = ({ variant = 'default' }: { variant?: 'default' | 'light' | 'outlined' }) => (
+    <div className="flex items-center gap-2 md:gap-3">
+      {showDays && (
+        <>
+          <TimeUnit value={timeLeft.days} label="Ngày" variant={variant} />
+          <span className={`text-xl font-bold ${variant === 'light' ? 'text-white/60' : 'text-slate-300'}`}>:</span>
+        </>
+      )}
+      {showHours && (
+        <>
+          <TimeUnit value={timeLeft.hours} label="Giờ" variant={variant} />
+          <span className={`text-xl font-bold ${variant === 'light' ? 'text-white/60' : 'text-slate-300'}`}>:</span>
+        </>
+      )}
+      {showMinutes && (
+        <>
+          <TimeUnit value={timeLeft.minutes} label="Phút" variant={variant} />
+          {showSeconds && <span className={`text-xl font-bold ${variant === 'light' ? 'text-white/60' : 'text-slate-300'}`}>:</span>}
+        </>
+      )}
+      {showSeconds && <TimeUnit value={timeLeft.seconds} label="Giây" variant={variant} />}
+    </div>
+  );
+
+  // Style 1: Banner
+  if (style === 'banner') {
+    return (
+      <section 
+        className="relative w-full py-10 md:py-16 px-4 overflow-hidden"
+        style={{ 
+          background: backgroundImage 
+            ? `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${backgroundImage}) center/cover`
+            : `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`
+        }}
+      >
+        <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10 blur-3xl" style={{ backgroundColor: 'white' }} />
+        <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-10 blur-3xl" style={{ backgroundColor: 'white' }} />
+        
+        <div className="max-w-5xl mx-auto text-center relative z-10">
+          {discountText && (
+            <div className="inline-block mb-4">
+              <span className="bg-yellow-400 text-yellow-900 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider animate-pulse">{discountText}</span>
+            </div>
+          )}
+          {subHeading && <p className="text-white/80 text-sm md:text-base uppercase tracking-wider mb-2">{subHeading}</p>}
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4">{heading}</h2>
+          {description && <p className="text-white/90 mb-6 max-w-2xl mx-auto">{description}</p>}
+          <div className="flex justify-center mb-6"><TimerDisplay variant="light" /></div>
+          {buttonText && (
+            <a href={buttonLink} className="inline-flex items-center gap-2 px-8 py-3 bg-white rounded-lg font-semibold transition-transform hover:scale-105" style={{ color: brandColor }}>
+              {buttonText}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+            </a>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Floating
+  if (style === 'floating') {
+    return (
+      <section className="py-8 md:py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div 
+            className="relative rounded-2xl overflow-hidden shadow-2xl"
+            style={{ 
+              background: backgroundImage 
+                ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${backgroundImage}) center/cover`
+                : `linear-gradient(135deg, ${brandColor}ee 0%, ${brandColor} 100%)`
+            }}
+          >
+            {discountText && (
+              <div className="absolute -right-12 top-6 rotate-45 bg-yellow-400 text-yellow-900 px-12 py-1 text-sm font-bold shadow-lg">{discountText}</div>
+            )}
+            <div className="p-6 md:p-10 text-center">
+              {subHeading && (
+                <div className="inline-block mb-3 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                  <span className="text-xs md:text-sm text-white font-medium uppercase tracking-wider">{subHeading}</span>
+                </div>
+              )}
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-3">{heading}</h2>
+              {description && <p className="text-white/80 mb-6 text-sm md:text-base">{description}</p>}
+              <div className="flex justify-center mb-6"><TimerDisplay variant="light" /></div>
+              {buttonText && (
+                <a href={buttonLink} className="inline-flex items-center gap-2 px-6 py-2.5 bg-white rounded-full font-semibold text-sm transition-all hover:shadow-lg hover:scale-105" style={{ color: brandColor }}>
+                  {buttonText}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Minimal
+  if (style === 'minimal') {
+    return (
+      <section className="py-10 md:py-14 px-4 bg-slate-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 md:p-10">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex-1 text-center md:text-left">
+                {discountText && (
+                  <span className="inline-block px-3 py-1 rounded-full text-xs font-bold mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{discountText}</span>
+                )}
+                {subHeading && <p className="text-sm text-slate-500 mb-1">{subHeading}</p>}
+                <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-2">{heading}</h2>
+                {description && <p className="text-slate-500 text-sm mb-4">{description}</p>}
+                {buttonText && (
+                  <a href={buttonLink} className="hidden md:inline-flex items-center gap-2 px-5 py-2 rounded-lg font-medium text-sm text-white transition-colors hover:opacity-90" style={{ backgroundColor: brandColor }}>
+                    {buttonText}
+                  </a>
+                )}
+              </div>
+              <div className="flex flex-col items-center">
+                <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">Kết thúc sau</p>
+                <TimerDisplay variant="outlined" />
+                {buttonText && (
+                  <a href={buttonLink} className="md:hidden inline-flex items-center gap-2 px-5 py-2 rounded-lg font-medium text-sm text-white mt-4 transition-colors hover:opacity-90" style={{ backgroundColor: brandColor }}>
+                    {buttonText}
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 4: Split
+  return (
+    <section className="py-8 md:py-12 px-4">
+      <div className="max-w-5xl mx-auto">
+        <div className="rounded-2xl overflow-hidden shadow-lg grid grid-cols-1 md:grid-cols-2">
+          <div 
+            className="relative flex items-center justify-center min-h-[200px] md:min-h-[300px]"
+            style={{ 
+              background: backgroundImage 
+                ? `url(${backgroundImage}) center/cover`
+                : `linear-gradient(135deg, ${brandColor}dd 0%, ${brandColor} 100%)`
+            }}
+          >
+            {!backgroundImage && (
+              <div className="text-center text-white p-6">
+                {discountText && <div className="text-5xl md:text-7xl font-black mb-2">{discountText}</div>}
+                <div className="text-lg md:text-xl font-medium opacity-90">GIẢM GIÁ</div>
+              </div>
+            )}
+            {backgroundImage && discountText && (
+              <div className="absolute top-4 left-4 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-lg font-bold text-xl">{discountText}</div>
+            )}
+          </div>
+          <div className="bg-white p-6 md:p-8 flex flex-col justify-center">
+            {subHeading && <p className="text-sm uppercase tracking-wider mb-2" style={{ color: brandColor }}>{subHeading}</p>}
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-3">{heading}</h2>
+            {description && <p className="text-slate-500 text-sm mb-5">{description}</p>}
+            <div className="mb-5">
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Còn lại</p>
+              <TimerDisplay variant="default" />
+            </div>
+            {buttonText && (
+              <a href={buttonLink} className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90 w-full md:w-auto" style={{ backgroundColor: brandColor }}>
+                {buttonText}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+              </a>
+            )}
+          </div>
+        </div>
       </div>
     </section>
   );

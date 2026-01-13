@@ -41,7 +41,9 @@ import {
   TeamPreview, TeamStyle,
   FeaturesPreview, FeaturesStyle,
   ProcessPreview, ProcessStyle,
-  ClientsPreview, ClientsStyle
+  ClientsPreview, ClientsStyle,
+  VideoPreview, VideoStyle,
+  CountdownPreview, CountdownStyle
 } from '../../previews';
 import { useBrandColor } from '../../create/shared';
 import { CategoryImageSelector } from '../../../components/CategoryImageSelector';
@@ -76,6 +78,8 @@ const COMPONENT_TYPES = [
   { value: 'Features', label: 'Tính năng', icon: Zap },
   { value: 'Process', label: 'Quy trình', icon: LayoutTemplate },
   { value: 'Clients', label: 'Khách hàng (Marquee)', icon: Users },
+  { value: 'Video', label: 'Video / Media', icon: LayoutTemplate },
+  { value: 'Countdown', label: 'Khuyến mãi / Countdown', icon: AlertCircle },
 ];
 
 interface HeroSlide extends ImageItem {
@@ -181,6 +185,15 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   // Clients states
   const [clientItems, setClientItems] = useState<GalleryItem[]>([]);
   const [clientsStyle, setClientsStyle] = useState<ClientsStyle>('marquee');
+  // Video states
+  const [videoConfig, setVideoConfig] = useState({ videoUrl: '', thumbnailUrl: '', heading: '', description: '', autoplay: false, loop: false, muted: true });
+  const [videoStyle, setVideoStyle] = useState<VideoStyle>('centered');
+  // Countdown states
+  const [countdownConfig, setCountdownConfig] = useState({
+    heading: '', subHeading: '', description: '', endDate: '', buttonText: '', buttonLink: '',
+    backgroundImage: '', discountText: '', showDays: true, showHours: true, showMinutes: true, showSeconds: true
+  });
+  const [countdownStyle, setCountdownStyle] = useState<CountdownStyle>('banner');
   const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true, mapEmbed: '' });
   const [contactStyle, setContactStyle] = useState<ContactStyle>('modern');
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
@@ -417,6 +430,35 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setClientItems(config.items?.map((item: {url: string, link: string, name?: string}, i: number) => ({ id: `item-${i}`, url: item.url, link: item.link || '', name: item.name || '' })) || []);
           setClientsStyle((config.style as ClientsStyle) || 'marquee');
           break;
+        case 'Video':
+          setVideoConfig({
+            videoUrl: config.videoUrl as string || '',
+            thumbnailUrl: config.thumbnailUrl as string || '',
+            heading: config.heading as string || '',
+            description: config.description as string || '',
+            autoplay: config.autoplay as boolean || false,
+            loop: config.loop as boolean || false,
+            muted: config.muted as boolean ?? true,
+          });
+          setVideoStyle((config.style as VideoStyle) || 'centered');
+          break;
+        case 'Countdown':
+          setCountdownConfig({
+            heading: config.heading as string || '',
+            subHeading: config.subHeading as string || '',
+            description: config.description as string || '',
+            endDate: config.endDate as string || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+            buttonText: config.buttonText as string || '',
+            buttonLink: config.buttonLink as string || '',
+            backgroundImage: config.backgroundImage as string || '',
+            discountText: config.discountText as string || '',
+            showDays: config.showDays as boolean ?? true,
+            showHours: config.showHours as boolean ?? true,
+            showMinutes: config.showMinutes as boolean ?? true,
+            showSeconds: config.showSeconds as boolean ?? true,
+          });
+          setCountdownStyle((config.style as CountdownStyle) || 'banner');
+          break;
       }
       
       setIsInitialized(true);
@@ -553,6 +595,16 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         return { 
           items: clientItems.map(c => ({ url: c.url, link: c.link, name: c.name })), 
           style: clientsStyle 
+        };
+      case 'Video':
+        return {
+          ...videoConfig,
+          style: videoStyle,
+        };
+      case 'Countdown':
+        return {
+          ...countdownConfig,
+          style: countdownStyle,
         };
       default:
         return {};
@@ -2913,6 +2965,241 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               brandColor={brandColor}
               selectedStyle={clientsStyle}
               onStyleChange={setClientsStyle}
+            />
+          </>
+        )}
+
+        {/* Video */}
+        {component.type === 'Video' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base">Video</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>URL Video <span className="text-red-500">*</span></Label>
+                  <Input 
+                    type="url"
+                    value={videoConfig.videoUrl} 
+                    onChange={(e) => setVideoConfig({...videoConfig, videoUrl: e.target.value})} 
+                    placeholder="https://www.youtube.com/watch?v=... hoặc link video trực tiếp"
+                  />
+                </div>
+                <ImageFieldWithUpload
+                  label="Thumbnail (ảnh bìa)"
+                  value={videoConfig.thumbnailUrl}
+                  onChange={(url) => setVideoConfig({...videoConfig, thumbnailUrl: url})}
+                  folder="video-thumbnails"
+                  aspectRatio="video"
+                  quality={0.85}
+                  placeholder="Để trống sẽ tự động lấy thumbnail từ YouTube/Vimeo"
+                />
+              </CardContent>
+            </Card>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base">Nội dung</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Tiêu đề</Label>
+                  <Input 
+                    value={videoConfig.heading} 
+                    onChange={(e) => setVideoConfig({...videoConfig, heading: e.target.value})} 
+                    placeholder="Tiêu đề video section"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Mô tả ngắn</Label>
+                  <textarea 
+                    value={videoConfig.description} 
+                    onChange={(e) => setVideoConfig({...videoConfig, description: e.target.value})} 
+                    placeholder="Mô tả cho video section..."
+                    className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base">Tùy chọn Video</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={videoConfig.autoplay} 
+                      onChange={(e) => setVideoConfig({...videoConfig, autoplay: e.target.checked})}
+                      className="w-4 h-4 rounded"
+                    />
+                    <span className="text-sm">Tự động phát</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={videoConfig.loop} 
+                      onChange={(e) => setVideoConfig({...videoConfig, loop: e.target.checked})}
+                      className="w-4 h-4 rounded"
+                    />
+                    <span className="text-sm">Lặp video</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={videoConfig.muted} 
+                      onChange={(e) => setVideoConfig({...videoConfig, muted: e.target.checked})}
+                      className="w-4 h-4 rounded"
+                    />
+                    <span className="text-sm">Tắt tiếng</span>
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
+            <VideoPreview 
+              config={videoConfig}
+              brandColor={brandColor}
+              selectedStyle={videoStyle}
+              onStyleChange={setVideoStyle}
+            />
+          </>
+        )}
+
+        {/* Countdown / Promotion */}
+        {component.type === 'Countdown' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base">Nội dung khuyến mãi</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Tiêu đề chính</Label>
+                    <Input 
+                      value={countdownConfig.heading} 
+                      onChange={(e) => setCountdownConfig({...countdownConfig, heading: e.target.value})} 
+                      placeholder="Flash Sale - Giảm giá sốc!" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Tiêu đề phụ</Label>
+                    <Input 
+                      value={countdownConfig.subHeading} 
+                      onChange={(e) => setCountdownConfig({...countdownConfig, subHeading: e.target.value})} 
+                      placeholder="Ưu đãi có hạn" 
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Mô tả</Label>
+                  <textarea 
+                    value={countdownConfig.description} 
+                    onChange={(e) => setCountdownConfig({...countdownConfig, description: e.target.value})} 
+                    placeholder="Nhanh tay đặt hàng trước khi hết thời gian khuyến mãi"
+                    className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" 
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Thời gian kết thúc <span className="text-red-500">*</span></Label>
+                    <Input 
+                      type="datetime-local"
+                      value={countdownConfig.endDate} 
+                      onChange={(e) => setCountdownConfig({...countdownConfig, endDate: e.target.value})} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Text giảm giá (VD: -50%)</Label>
+                    <Input 
+                      value={countdownConfig.discountText} 
+                      onChange={(e) => setCountdownConfig({...countdownConfig, discountText: e.target.value})} 
+                      placeholder="-50%" 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Text nút bấm</Label>
+                    <Input 
+                      value={countdownConfig.buttonText} 
+                      onChange={(e) => setCountdownConfig({...countdownConfig, buttonText: e.target.value})} 
+                      placeholder="Mua ngay" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Liên kết</Label>
+                    <Input 
+                      value={countdownConfig.buttonLink} 
+                      onChange={(e) => setCountdownConfig({...countdownConfig, buttonLink: e.target.value})} 
+                      placeholder="/products" 
+                    />
+                  </div>
+                </div>
+
+                <ImageFieldWithUpload
+                  label="Ảnh nền (tùy chọn)"
+                  value={countdownConfig.backgroundImage}
+                  onChange={(url) => setCountdownConfig({...countdownConfig, backgroundImage: url})}
+                  folder="countdown"
+                  aspectRatio="banner"
+                  quality={0.85}
+                  placeholder="https://example.com/banner.jpg"
+                />
+
+                <div className="space-y-2">
+                  <Label>Hiển thị đơn vị thời gian</Label>
+                  <div className="flex flex-wrap gap-4 mt-2">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input 
+                        type="checkbox" 
+                        checked={countdownConfig.showDays} 
+                        onChange={(e) => setCountdownConfig({...countdownConfig, showDays: e.target.checked})} 
+                        className="w-4 h-4 rounded" 
+                      />
+                      Ngày
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input 
+                        type="checkbox" 
+                        checked={countdownConfig.showHours} 
+                        onChange={(e) => setCountdownConfig({...countdownConfig, showHours: e.target.checked})} 
+                        className="w-4 h-4 rounded" 
+                      />
+                      Giờ
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input 
+                        type="checkbox" 
+                        checked={countdownConfig.showMinutes} 
+                        onChange={(e) => setCountdownConfig({...countdownConfig, showMinutes: e.target.checked})} 
+                        className="w-4 h-4 rounded" 
+                      />
+                      Phút
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input 
+                        type="checkbox" 
+                        checked={countdownConfig.showSeconds} 
+                        onChange={(e) => setCountdownConfig({...countdownConfig, showSeconds: e.target.checked})} 
+                        className="w-4 h-4 rounded" 
+                      />
+                      Giây
+                    </label>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <CountdownPreview 
+              config={countdownConfig}
+              brandColor={brandColor}
+              selectedStyle={countdownStyle}
+              onStyleChange={setCountdownStyle}
             />
           </>
         )}

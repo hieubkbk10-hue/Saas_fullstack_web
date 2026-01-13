@@ -40,6 +40,8 @@ export const COMPONENT_TYPES = [
   { value: 'Features', label: 'Tính năng', icon: Zap, description: 'Tính năng nổi bật với icon grid', route: 'features' },
   { value: 'Process', label: 'Quy trình', icon: LayoutTemplate, description: 'Các bước quy trình/timeline cho dịch vụ', route: 'process' },
   { value: 'Clients', label: 'Khách hàng (Marquee)', icon: Users, description: 'Logo khách hàng chạy auto-scroll', route: 'clients' },
+  { value: 'Video', label: 'Video / Media', icon: LayoutTemplate, description: 'Video giới thiệu hoặc demo sản phẩm', route: 'video' },
+  { value: 'Countdown', label: 'Khuyến mãi / Countdown', icon: AlertCircle, description: 'Banner khuyến mãi với đếm ngược thời gian', route: 'countdown' },
 ];
 
 export const DEFAULT_BRAND_COLOR = '#3b82f6';

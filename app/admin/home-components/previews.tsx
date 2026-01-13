@@ -6902,3 +6902,783 @@ export const ClientsPreview = ({
     </PreviewWrapper>
   );
 };
+
+// ============ VIDEO PREVIEW ============
+// 3 Professional Styles: Centered, Split, Fullwidth
+import { Play, Video as VideoIcon } from 'lucide-react';
+
+export type VideoStyle = 'centered' | 'split' | 'fullwidth';
+
+interface VideoConfig {
+  videoUrl: string;
+  thumbnailUrl?: string;
+  heading?: string;
+  description?: string;
+  autoplay?: boolean;
+  loop?: boolean;
+  muted?: boolean;
+}
+
+// Helper: Extract video ID and type
+const getVideoInfo = (url: string): { type: 'youtube' | 'vimeo' | 'direct'; id?: string } => {
+  if (!url) return { type: 'direct' };
+  
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&?/]+)/);
+  if (ytMatch) return { type: 'youtube', id: ytMatch[1] };
+  
+  // Vimeo
+  const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeoMatch) return { type: 'vimeo', id: vimeoMatch[1] };
+  
+  return { type: 'direct' };
+};
+
+// Helper: Get YouTube thumbnail
+const getYouTubeThumbnail = (videoId: string): string => {
+  return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+};
+
+export const VideoPreview = ({ 
+  config, 
+  brandColor, 
+  selectedStyle, 
+  onStyleChange 
+}: { 
+  config: VideoConfig; 
+  brandColor: string; 
+  selectedStyle?: VideoStyle; 
+  onStyleChange?: (style: VideoStyle) => void;
+}) => {
+  const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const previewStyle = selectedStyle || 'centered';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as VideoStyle);
+  
+  const styles = [
+    { id: 'centered', label: 'Centered' },
+    { id: 'split', label: 'Split' },
+    { id: 'fullwidth', label: 'Toàn màn hình' },
+  ];
+
+  const { videoUrl, thumbnailUrl, heading, description } = config;
+  const videoInfo = getVideoInfo(videoUrl);
+  
+  // Determine thumbnail
+  const displayThumbnail = thumbnailUrl || 
+    (videoInfo.type === 'youtube' && videoInfo.id ? getYouTubeThumbnail(videoInfo.id) : '');
+
+  // Play button component
+  const PlayButton = ({ size = 'lg' }: { size?: 'sm' | 'lg' }) => (
+    <button 
+      type="button"
+      onClick={() => setIsPlaying(true)}
+      className={cn(
+        "absolute inset-0 flex items-center justify-center group transition-all",
+        "bg-black/30 hover:bg-black/40"
+      )}
+    >
+      <div 
+        className={cn(
+          "rounded-full flex items-center justify-center transition-transform group-hover:scale-110 shadow-xl",
+          size === 'lg' ? 'w-16 h-16 md:w-20 md:h-20' : 'w-12 h-12'
+        )}
+        style={{ backgroundColor: brandColor }}
+      >
+        <Play 
+          className={cn("text-white ml-1", size === 'lg' ? 'w-7 h-7 md:w-8 md:h-8' : 'w-5 h-5')} 
+          fill="white" 
+        />
+      </div>
+    </button>
+  );
+
+  // Video embed component
+  const VideoEmbed = ({ aspectRatio = '16/9' }: { aspectRatio?: string }) => {
+    if (!isPlaying) return null;
+    
+    if (videoInfo.type === 'youtube' && videoInfo.id) {
+      return (
+        <iframe 
+          src={`https://www.youtube.com/embed/${videoInfo.id}?autoplay=1&rel=0`}
+          className="absolute inset-0 w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      );
+    }
+    
+    if (videoInfo.type === 'vimeo' && videoInfo.id) {
+      return (
+        <iframe 
+          src={`https://player.vimeo.com/video/${videoInfo.id}?autoplay=1`}
+          className="absolute inset-0 w-full h-full"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowFullScreen
+        />
+      );
+    }
+    
+    return (
+      <video 
+        src={videoUrl}
+        className="absolute inset-0 w-full h-full object-cover"
+        controls
+        autoPlay
+      />
+    );
+  };
+
+  // Empty state
+  const EmptyState = () => (
+    <div 
+      className="w-full aspect-video flex flex-col items-center justify-center rounded-xl"
+      style={{ backgroundColor: `${brandColor}10` }}
+    >
+      <VideoIcon size={48} className="text-slate-300 mb-3" />
+      <p className="text-sm text-slate-400">Chưa có video</p>
+      <p className="text-xs text-slate-300">Thêm URL video để xem preview</p>
+    </div>
+  );
+
+  // Style 1: Centered - Video ở giữa với heading/description
+  const renderCenteredStyle = () => (
+    <section className={cn("py-12 px-4", device === 'mobile' ? 'py-8' : 'py-16')}>
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        {(heading || description) && (
+          <div className="text-center mb-8">
+            {heading && (
+              <h2 className={cn(
+                "font-bold text-slate-900 mb-3",
+                device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
+              )}>
+                {heading}
+              </h2>
+            )}
+            {description && (
+              <p className={cn(
+                "text-slate-500 max-w-2xl mx-auto",
+                device === 'mobile' ? 'text-sm' : 'text-base'
+              )}>
+                {description}
+              </p>
+            )}
+          </div>
+        )}
+        
+        {/* Video */}
+        {!videoUrl ? (
+          <EmptyState />
+        ) : (
+          <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl bg-slate-900">
+            {!isPlaying && displayThumbnail && (
+              <img 
+                src={displayThumbnail} 
+                alt="Video thumbnail" 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
+            {!isPlaying && !displayThumbnail && (
+              <div 
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ backgroundColor: `${brandColor}20` }}
+              >
+                <VideoIcon size={64} className="text-slate-400" />
+              </div>
+            )}
+            {!isPlaying && <PlayButton />}
+            <VideoEmbed />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+
+  // Style 2: Split - Video bên trái, content bên phải (hoặc ngược lại trên mobile)
+  const renderSplitStyle = () => (
+    <section className={cn("py-12 px-4", device === 'mobile' ? 'py-8' : 'py-16')}>
+      <div className="max-w-6xl mx-auto">
+        <div className={cn(
+          "grid gap-8 items-center",
+          device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2 gap-12'
+        )}>
+          {/* Video */}
+          <div className={cn(device === 'mobile' ? 'order-1' : 'order-1')}>
+            {!videoUrl ? (
+              <EmptyState />
+            ) : (
+              <div className="relative aspect-video rounded-xl overflow-hidden shadow-xl bg-slate-900">
+                {!isPlaying && displayThumbnail && (
+                  <img 
+                    src={displayThumbnail} 
+                    alt="Video thumbnail" 
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                )}
+                {!isPlaying && !displayThumbnail && (
+                  <div 
+                    className="absolute inset-0 flex items-center justify-center"
+                    style={{ backgroundColor: `${brandColor}20` }}
+                  >
+                    <VideoIcon size={48} className="text-slate-400" />
+                  </div>
+                )}
+                {!isPlaying && <PlayButton size="sm" />}
+                <VideoEmbed />
+              </div>
+            )}
+          </div>
+          
+          {/* Content */}
+          <div className={cn(device === 'mobile' ? 'order-2 text-center' : 'order-2')}>
+            {heading && (
+              <h2 className={cn(
+                "font-bold text-slate-900 mb-4",
+                device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
+              )}>
+                {heading}
+              </h2>
+            )}
+            {description && (
+              <p className={cn(
+                "text-slate-500 mb-6",
+                device === 'mobile' ? 'text-sm' : 'text-base'
+              )}>
+                {description}
+              </p>
+            )}
+            <button 
+              type="button"
+              className="px-6 py-2.5 rounded-lg text-white font-medium text-sm transition-opacity hover:opacity-90"
+              style={{ backgroundColor: brandColor }}
+            >
+              Tìm hiểu thêm
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 3: Fullwidth - Video toàn màn hình với overlay text
+  const renderFullwidthStyle = () => (
+    <section className="relative">
+      {!videoUrl ? (
+        <div className="py-16 px-4">
+          <EmptyState />
+        </div>
+      ) : (
+        <div className={cn(
+          "relative overflow-hidden",
+          device === 'mobile' ? 'aspect-video' : 'aspect-[21/9] min-h-[400px]'
+        )}>
+          {/* Video/Thumbnail */}
+          {!isPlaying && displayThumbnail && (
+            <img 
+              src={displayThumbnail} 
+              alt="Video thumbnail" 
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+          {!isPlaying && !displayThumbnail && (
+            <div 
+              className="absolute inset-0"
+              style={{ backgroundColor: `${brandColor}30` }}
+            />
+          )}
+          
+          {/* Overlay gradient */}
+          {!isPlaying && (
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+          )}
+          
+          {/* Content overlay */}
+          {!isPlaying && (
+            <div className={cn(
+              "absolute inset-0 flex items-center",
+              device === 'mobile' ? 'px-4' : 'px-8 md:px-16'
+            )}>
+              <div className="max-w-xl">
+                {heading && (
+                  <h2 className={cn(
+                    "font-bold text-white mb-4",
+                    device === 'mobile' ? 'text-xl' : 'text-3xl md:text-4xl'
+                  )}>
+                    {heading}
+                  </h2>
+                )}
+                {description && (
+                  <p className={cn(
+                    "text-white/80 mb-6",
+                    device === 'mobile' ? 'text-sm' : 'text-lg'
+                  )}>
+                    {description}
+                  </p>
+                )}
+                <button 
+                  type="button"
+                  onClick={() => setIsPlaying(true)}
+                  className="flex items-center gap-3 px-6 py-3 rounded-lg text-white font-medium transition-transform hover:scale-105"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  <Play className="w-5 h-5" fill="white" />
+                  Xem video
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Center play button (alternative) */}
+          {!isPlaying && device !== 'mobile' && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div 
+                className="w-20 h-20 rounded-full flex items-center justify-center opacity-50"
+                style={{ backgroundColor: brandColor }}
+              >
+                <Play className="w-8 h-8 text-white ml-1" fill="white" />
+              </div>
+            </div>
+          )}
+          
+          <VideoEmbed />
+        </div>
+      )}
+    </section>
+  );
+
+  return (
+    <PreviewWrapper 
+      title="Preview Video" 
+      device={device} 
+      setDevice={setDevice} 
+      previewStyle={previewStyle} 
+      setPreviewStyle={setPreviewStyle} 
+      styles={styles}
+      info={videoUrl ? (videoInfo.type === 'direct' ? 'Video trực tiếp' : videoInfo.type.charAt(0).toUpperCase() + videoInfo.type.slice(1)) : 'Chưa có video'}
+    >
+      <BrowserFrame>
+        {previewStyle === 'centered' && renderCenteredStyle()}
+        {previewStyle === 'split' && renderSplitStyle()}
+        {previewStyle === 'fullwidth' && renderFullwidthStyle()}
+      </BrowserFrame>
+    </PreviewWrapper>
+  );
+};
+
+// ============ COUNTDOWN / PROMOTION PREVIEW ============
+// 4 Professional Styles: Banner, Floating, Minimal, Split
+type CountdownConfig = {
+  heading: string;
+  subHeading: string;
+  description: string;
+  endDate: string;
+  buttonText: string;
+  buttonLink: string;
+  backgroundImage: string;
+  discountText: string;
+  showDays: boolean;
+  showHours: boolean;
+  showMinutes: boolean;
+  showSeconds: boolean;
+};
+
+export type CountdownStyle = 'banner' | 'floating' | 'minimal' | 'split';
+
+// Countdown Timer Hook
+const useCountdown = (endDate: string) => {
+  const [timeLeft, setTimeLeft] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  React.useEffect(() => {
+    const calculateTime = () => {
+      const end = new Date(endDate).getTime();
+      const now = Date.now();
+      const diff = Math.max(0, end - now);
+
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((diff % (1000 * 60)) / 1000),
+      });
+    };
+
+    calculateTime();
+    const timer = setInterval(calculateTime, 1000);
+    return () => clearInterval(timer);
+  }, [endDate]);
+
+  return timeLeft;
+};
+
+export const CountdownPreview = ({ 
+  config, 
+  brandColor, 
+  selectedStyle, 
+  onStyleChange 
+}: { 
+  config: CountdownConfig;
+  brandColor: string; 
+  selectedStyle?: CountdownStyle; 
+  onStyleChange?: (style: CountdownStyle) => void;
+}) => {
+  const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const previewStyle = selectedStyle || 'banner';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as CountdownStyle);
+  const timeLeft = useCountdown(config.endDate);
+  
+  const styles = [
+    { id: 'banner', label: 'Banner' },
+    { id: 'floating', label: 'Nổi bật' },
+    { id: 'minimal', label: 'Tối giản' },
+    { id: 'split', label: 'Chia đôi' },
+  ];
+
+  // Time unit renderer
+  const TimeUnit = ({ value, label, variant = 'default' }: { value: number; label: string; variant?: 'default' | 'light' | 'outlined' }) => {
+    if (variant === 'light') {
+      return (
+        <div className="flex flex-col items-center">
+          <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 min-w-[50px] md:min-w-[60px]">
+            <span className="text-2xl md:text-3xl font-bold text-white tabular-nums">{String(value).padStart(2, '0')}</span>
+          </div>
+          <span className="text-xs text-white/80 mt-1 uppercase tracking-wider">{label}</span>
+        </div>
+      );
+    }
+    if (variant === 'outlined') {
+      return (
+        <div className="flex flex-col items-center">
+          <div 
+            className="border-2 rounded-lg px-3 py-2 min-w-[50px] md:min-w-[60px]"
+            style={{ borderColor: brandColor }}
+          >
+            <span className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: brandColor }}>{String(value).padStart(2, '0')}</span>
+          </div>
+          <span className="text-xs text-slate-500 mt-1 uppercase tracking-wider">{label}</span>
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-col items-center">
+        <div 
+          className="rounded-lg px-3 py-2 min-w-[50px] md:min-w-[60px] text-white"
+          style={{ backgroundColor: brandColor }}
+        >
+          <span className="text-2xl md:text-3xl font-bold tabular-nums">{String(value).padStart(2, '0')}</span>
+        </div>
+        <span className="text-xs text-slate-500 mt-1 uppercase tracking-wider">{label}</span>
+      </div>
+    );
+  };
+
+  // Timer Display
+  const TimerDisplay = ({ variant = 'default' }: { variant?: 'default' | 'light' | 'outlined' }) => (
+    <div className={cn("flex items-center gap-2 md:gap-3", device === 'mobile' && 'gap-1.5')}>
+      {config.showDays && (
+        <>
+          <TimeUnit value={timeLeft.days} label="Ngày" variant={variant} />
+          <span className={cn("text-xl font-bold", variant === 'light' ? 'text-white/60' : 'text-slate-300')}>:</span>
+        </>
+      )}
+      {config.showHours && (
+        <>
+          <TimeUnit value={timeLeft.hours} label="Giờ" variant={variant} />
+          <span className={cn("text-xl font-bold", variant === 'light' ? 'text-white/60' : 'text-slate-300')}>:</span>
+        </>
+      )}
+      {config.showMinutes && (
+        <>
+          <TimeUnit value={timeLeft.minutes} label="Phút" variant={variant} />
+          {config.showSeconds && <span className={cn("text-xl font-bold", variant === 'light' ? 'text-white/60' : 'text-slate-300')}>:</span>}
+        </>
+      )}
+      {config.showSeconds && (
+        <TimeUnit value={timeLeft.seconds} label="Giây" variant={variant} />
+      )}
+    </div>
+  );
+
+  // Style 1: Banner - Full width banner with gradient background
+  const renderBannerStyle = () => (
+    <section 
+      className="relative w-full py-10 md:py-16 px-4 overflow-hidden"
+      style={{ 
+        background: config.backgroundImage 
+          ? `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${config.backgroundImage}) center/cover`
+          : `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`
+      }}
+    >
+      {/* Decorative elements */}
+      <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10 blur-3xl" style={{ backgroundColor: 'white' }} />
+      <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-10 blur-3xl" style={{ backgroundColor: 'white' }} />
+      
+      <div className="max-w-5xl mx-auto text-center relative z-10">
+        {/* Discount badge */}
+        {config.discountText && (
+          <div className="inline-block mb-4">
+            <span className="bg-yellow-400 text-yellow-900 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider animate-pulse">
+              {config.discountText}
+            </span>
+          </div>
+        )}
+        
+        {config.subHeading && (
+          <p className="text-white/80 text-sm md:text-base uppercase tracking-wider mb-2">{config.subHeading}</p>
+        )}
+        
+        <h2 className={cn(
+          "font-bold text-white mb-4",
+          device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl'
+        )}>
+          {config.heading || 'Flash Sale'}
+        </h2>
+        
+        {config.description && (
+          <p className="text-white/90 mb-6 max-w-2xl mx-auto">{config.description}</p>
+        )}
+        
+        {/* Countdown Timer */}
+        <div className="flex justify-center mb-6">
+          <TimerDisplay variant="light" />
+        </div>
+        
+        {config.buttonText && (
+          <a 
+            href={config.buttonLink || '#'} 
+            className="inline-flex items-center gap-2 px-8 py-3 bg-white rounded-lg font-semibold transition-transform hover:scale-105"
+            style={{ color: brandColor }}
+          >
+            {config.buttonText}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          </a>
+        )}
+      </div>
+    </section>
+  );
+
+  // Style 2: Floating - Card style với shadow nổi bật
+  const renderFloatingStyle = () => (
+    <section className="py-8 md:py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div 
+          className="relative rounded-2xl overflow-hidden shadow-2xl"
+          style={{ 
+            background: config.backgroundImage 
+              ? `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${config.backgroundImage}) center/cover`
+              : `linear-gradient(135deg, ${brandColor}ee 0%, ${brandColor} 100%)`
+          }}
+        >
+          {/* Discount badge - corner ribbon */}
+          {config.discountText && (
+            <div className="absolute -right-12 top-6 rotate-45 bg-yellow-400 text-yellow-900 px-12 py-1 text-sm font-bold shadow-lg">
+              {config.discountText}
+            </div>
+          )}
+          
+          <div className={cn(
+            "p-6 md:p-10 text-center",
+            device === 'mobile' ? 'p-5' : ''
+          )}>
+            {config.subHeading && (
+              <div className="inline-block mb-3 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+                <span className="text-xs md:text-sm text-white font-medium uppercase tracking-wider">{config.subHeading}</span>
+              </div>
+            )}
+            
+            <h2 className={cn(
+              "font-bold text-white mb-3",
+              device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
+            )}>
+              {config.heading || 'Khuyến mãi đặc biệt'}
+            </h2>
+            
+            {config.description && (
+              <p className="text-white/80 mb-6 text-sm md:text-base">{config.description}</p>
+            )}
+            
+            {/* Countdown Timer */}
+            <div className="flex justify-center mb-6">
+              <TimerDisplay variant="light" />
+            </div>
+            
+            {config.buttonText && (
+              <a 
+                href={config.buttonLink || '#'} 
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-white rounded-full font-semibold text-sm transition-all hover:shadow-lg hover:scale-105"
+                style={{ color: brandColor }}
+              >
+                {config.buttonText}
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 3: Minimal - Clean, typography focused
+  const renderMinimalStyle = () => (
+    <section className="py-10 md:py-14 px-4 bg-slate-50 dark:bg-slate-900">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 md:p-10">
+          <div className={cn(
+            "flex items-center justify-between gap-6",
+            device === 'mobile' ? 'flex-col text-center' : ''
+          )}>
+            {/* Left content */}
+            <div className={cn("flex-1", device === 'mobile' ? '' : 'max-w-md')}>
+              {config.discountText && (
+                <span 
+                  className="inline-block px-3 py-1 rounded-full text-xs font-bold mb-3"
+                  style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                >
+                  {config.discountText}
+                </span>
+              )}
+              
+              {config.subHeading && (
+                <p className="text-sm text-slate-500 mb-1">{config.subHeading}</p>
+              )}
+              
+              <h2 className={cn(
+                "font-bold text-slate-900 dark:text-white",
+                device === 'mobile' ? 'text-xl mb-2' : 'text-2xl mb-2'
+              )}>
+                {config.heading || 'Ưu đãi có hạn'}
+              </h2>
+              
+              {config.description && (
+                <p className="text-slate-500 text-sm mb-4">{config.description}</p>
+              )}
+              
+              {config.buttonText && device !== 'mobile' && (
+                <a 
+                  href={config.buttonLink || '#'} 
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-lg font-medium text-sm text-white transition-colors hover:opacity-90"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {config.buttonText}
+                </a>
+              )}
+            </div>
+            
+            {/* Right - Timer */}
+            <div className="flex flex-col items-center">
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">Kết thúc sau</p>
+              <TimerDisplay variant="outlined" />
+              
+              {config.buttonText && device === 'mobile' && (
+                <a 
+                  href={config.buttonLink || '#'} 
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-lg font-medium text-sm text-white mt-4 transition-colors hover:opacity-90"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {config.buttonText}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 4: Split - Two columns with image
+  const renderSplitStyle = () => (
+    <section className="py-8 md:py-12 px-4">
+      <div className="max-w-5xl mx-auto">
+        <div 
+          className={cn(
+            "rounded-2xl overflow-hidden shadow-lg",
+            device === 'mobile' ? 'flex flex-col' : 'grid grid-cols-2'
+          )}
+        >
+          {/* Left - Image/Visual */}
+          <div 
+            className={cn(
+              "relative flex items-center justify-center",
+              device === 'mobile' ? 'h-48' : 'min-h-[300px]'
+            )}
+            style={{ 
+              background: config.backgroundImage 
+                ? `url(${config.backgroundImage}) center/cover`
+                : `linear-gradient(135deg, ${brandColor}dd 0%, ${brandColor} 100%)`
+            }}
+          >
+            {!config.backgroundImage && (
+              <div className="text-center text-white p-6">
+                {config.discountText && (
+                  <div className="text-5xl md:text-7xl font-black mb-2">{config.discountText}</div>
+                )}
+                <div className="text-lg md:text-xl font-medium opacity-90">GIẢM GIÁ</div>
+              </div>
+            )}
+            {config.backgroundImage && config.discountText && (
+              <div className="absolute top-4 left-4 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-lg font-bold text-xl">
+                {config.discountText}
+              </div>
+            )}
+          </div>
+          
+          {/* Right - Content */}
+          <div className="bg-white dark:bg-slate-800 p-6 md:p-8 flex flex-col justify-center">
+            {config.subHeading && (
+              <p className="text-sm uppercase tracking-wider mb-2" style={{ color: brandColor }}>{config.subHeading}</p>
+            )}
+            
+            <h2 className={cn(
+              "font-bold text-slate-900 dark:text-white mb-3",
+              device === 'mobile' ? 'text-xl' : 'text-2xl'
+            )}>
+              {config.heading || 'Khuyến mãi đặc biệt'}
+            </h2>
+            
+            {config.description && (
+              <p className="text-slate-500 text-sm mb-5">{config.description}</p>
+            )}
+            
+            {/* Countdown */}
+            <div className="mb-5">
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Còn lại</p>
+              <TimerDisplay variant="default" />
+            </div>
+            
+            {config.buttonText && (
+              <a 
+                href={config.buttonLink || '#'} 
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90 w-full md:w-auto"
+                style={{ backgroundColor: brandColor }}
+              >
+                {config.buttonText}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  return (
+    <PreviewWrapper 
+      title="Preview Countdown / Promotion" 
+      device={device} 
+      setDevice={setDevice} 
+      previewStyle={previewStyle} 
+      setPreviewStyle={setPreviewStyle} 
+      styles={styles}
+    >
+      <BrowserFrame>
+        {previewStyle === 'banner' && renderBannerStyle()}
+        {previewStyle === 'floating' && renderFloatingStyle()}
+        {previewStyle === 'minimal' && renderMinimalStyle()}
+        {previewStyle === 'split' && renderSplitStyle()}
+      </BrowserFrame>
+    </PreviewWrapper>
+  );
+};
