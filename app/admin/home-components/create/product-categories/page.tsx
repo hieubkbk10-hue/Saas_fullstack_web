@@ -4,14 +4,16 @@ import React, { useState } from 'react';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../../../components/ui';
+import { Card, CardContent, CardHeader, CardTitle, Label, Button } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { ProductCategoriesPreview, type ProductCategoriesStyle } from '../../previews';
+import { CategoryImageSelector } from '../../../components/CategoryImageSelector';
 
 interface CategoryItem {
   id: number;
   categoryId: string;
   customImage?: string;
+  imageMode?: 'default' | 'icon' | 'upload' | 'url';
 }
 
 export default function ProductCategoriesCreatePage() {
@@ -36,15 +38,22 @@ export default function ProductCategoriesCreatePage() {
     setSelectedCategories(selectedCategories.filter(c => c.id !== id));
   };
 
-  const updateCategory = (id: number, field: keyof CategoryItem, value: string) => {
-    setSelectedCategories(selectedCategories.map(c => c.id === id ? { ...c, [field]: value } : c));
+  const updateCategory = (id: number, updates: Partial<CategoryItem>) => {
+    setSelectedCategories(selectedCategories.map(c => c.id === id ? { ...c, ...updates } : c));
+  };
+
+  // Get category image for preview
+  const getCategoryImage = (categoryId: string) => {
+    const cat = availableCategories.find(c => c._id === categoryId);
+    return cat?.image;
   };
 
   const onSubmit = (e: React.FormEvent) => {
     handleSubmit(e, {
       categories: selectedCategories.map(c => ({ 
         categoryId: c.categoryId, 
-        customImage: c.customImage 
+        customImage: c.customImage,
+        imageMode: c.imageMode || 'default',
       })),
       style,
       showProductCount,
@@ -152,12 +161,12 @@ export default function ProductCategoriesCreatePage() {
                   </Button>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-3">
                   <div className="space-y-2">
                     <Label className="text-xs text-slate-500">Danh mục</Label>
                     <select
                       value={item.categoryId}
-                      onChange={(e) => updateCategory(item.id, 'categoryId', e.target.value)}
+                      onChange={(e) => updateCategory(item.id, { categoryId: e.target.value })}
                       className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
                     >
                       <option value="">-- Chọn danh mục --</option>
@@ -166,21 +175,25 @@ export default function ProductCategoriesCreatePage() {
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-slate-500">Ảnh tùy chỉnh (URL)</Label>
-                    <Input 
-                      value={item.customImage || ''} 
-                      onChange={(e) => updateCategory(item.id, 'customImage', e.target.value)}
-                      placeholder="Để trống sử dụng ảnh danh mục"
-                    />
-                  </div>
+                  
+                  {item.categoryId && (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-slate-500">Hình ảnh hiển thị</Label>
+                      <CategoryImageSelector
+                        value={item.customImage || ''}
+                        onChange={(value, mode) => updateCategory(item.id, { customImage: value, imageMode: mode })}
+                        categoryImage={getCategoryImage(item.categoryId)}
+                        brandColor={brandColor}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             ))
           )}
           
           <p className="text-xs text-slate-500">
-            Tối đa 12 danh mục. Để trống ảnh tùy chỉnh sẽ sử dụng ảnh từ danh mục gốc.
+            Tối đa 12 danh mục. Mỗi danh mục có thể: sử dụng ảnh gốc, chọn icon, upload ảnh, hoặc nhập URL.
           </p>
         </CardContent>
       </Card>

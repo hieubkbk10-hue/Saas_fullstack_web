@@ -4342,9 +4342,12 @@ export const SpeedDialPreview = ({
 };
 
 // ============ PRODUCT CATEGORIES PREVIEW ============
-type CategoryConfigItem = { id: number; categoryId: string; customImage?: string };
+type CategoryConfigItem = { id: number; categoryId: string; customImage?: string; imageMode?: 'default' | 'icon' | 'upload' | 'url' };
 type CategoryData = { _id: string; name: string; slug: string; image?: string; description?: string };
 export type ProductCategoriesStyle = 'grid' | 'carousel' | 'cards';
+
+// Import icon render helper
+import { getCategoryIcon } from '@/app/admin/components/CategoryImageSelector';
 
 export const ProductCategoriesPreview = ({ 
   config, 
@@ -4387,12 +4390,25 @@ export const ProductCategoriesPreview = ({
     .map(item => {
       const cat = categoryMap[item.categoryId];
       if (!cat) return null;
+      const imageMode = item.imageMode || 'default';
+      let displayImage = cat.image;
+      let displayIcon: string | undefined;
+      
+      if (imageMode === 'icon' && item.customImage?.startsWith('icon:')) {
+        displayIcon = item.customImage.replace('icon:', '');
+        displayImage = undefined;
+      } else if (imageMode === 'upload' || imageMode === 'url') {
+        displayImage = item.customImage || cat.image;
+      }
+      
       return {
         ...cat,
-        displayImage: item.customImage || cat.image,
+        displayImage,
+        displayIcon,
+        imageMode,
       };
     })
-    .filter(Boolean) as (CategoryData & { displayImage?: string })[];
+    .filter(Boolean) as (CategoryData & { displayImage?: string; displayIcon?: string; imageMode: string })[];
 
   const getGridCols = () => {
     if (device === 'mobile') {
@@ -4425,34 +4441,44 @@ export const ProductCategoriesPreview = ({
           </div>
         ) : (
           <div className={cn("grid gap-4", getGridCols())}>
-            {resolvedCategories.map((cat) => (
-              <div 
-                key={cat._id} 
-                className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer"
-              >
-                {cat.displayImage ? (
-                  <img 
-                    src={cat.displayImage} 
-                    alt={cat.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package size={32} className="text-slate-300" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 text-white">
-                  <h3 className={cn(
-                    "font-semibold truncate",
-                    device === 'mobile' ? 'text-sm' : 'text-base'
-                  )}>{cat.name}</h3>
-                  {config.showProductCount && (
-                    <p className="text-xs opacity-80 mt-0.5">12 sản phẩm</p>
+            {resolvedCategories.map((cat) => {
+              const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
+              return (
+                <div 
+                  key={cat._id} 
+                  className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer"
+                >
+                  {cat.displayIcon && iconData ? (
+                    <div 
+                      className="w-full h-full flex items-center justify-center"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      {React.createElement(iconData.icon, { size: device === 'mobile' ? 32 : 48, className: 'text-white' })}
+                    </div>
+                  ) : cat.displayImage ? (
+                    <img 
+                      src={cat.displayImage} 
+                      alt={cat.name} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package size={32} className="text-slate-300" />
+                    </div>
                   )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 text-white">
+                    <h3 className={cn(
+                      "font-semibold truncate",
+                      device === 'mobile' ? 'text-sm' : 'text-base'
+                    )}>{cat.name}</h3>
+                    {config.showProductCount && (
+                      <p className="text-xs opacity-80 mt-0.5">12 sản phẩm</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -4484,36 +4510,46 @@ export const ProductCategoriesPreview = ({
         ) : (
           <div className="overflow-x-auto pb-4 px-4 scrollbar-hide">
             <div className="flex gap-4">
-              {resolvedCategories.map((cat) => (
-                <div 
-                  key={cat._id} 
-                  className={cn(
-                    "flex-shrink-0 group cursor-pointer",
-                    device === 'mobile' ? 'w-32' : 'w-44'
-                  )}
-                >
-                  <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2">
-                    {cat.displayImage ? (
-                      <img 
-                        src={cat.displayImage} 
-                        alt={cat.name} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package size={32} className="text-slate-300" />
-                      </div>
+              {resolvedCategories.map((cat) => {
+                const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
+                return (
+                  <div 
+                    key={cat._id} 
+                    className={cn(
+                      "flex-shrink-0 group cursor-pointer",
+                      device === 'mobile' ? 'w-32' : 'w-44'
+                    )}
+                  >
+                    <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2">
+                      {cat.displayIcon && iconData ? (
+                        <div 
+                          className="w-full h-full flex items-center justify-center"
+                          style={{ backgroundColor: brandColor }}
+                        >
+                          {React.createElement(iconData.icon, { size: device === 'mobile' ? 32 : 40, className: 'text-white' })}
+                        </div>
+                      ) : cat.displayImage ? (
+                        <img 
+                          src={cat.displayImage} 
+                          alt={cat.name} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package size={32} className="text-slate-300" />
+                        </div>
+                      )}
+                    </div>
+                    <h3 className={cn(
+                      "font-medium text-center truncate",
+                      device === 'mobile' ? 'text-sm' : 'text-base'
+                    )}>{cat.name}</h3>
+                    {config.showProductCount && (
+                      <p className="text-xs text-slate-500 text-center">12 sản phẩm</p>
                     )}
                   </div>
-                  <h3 className={cn(
-                    "font-medium text-center truncate",
-                    device === 'mobile' ? 'text-sm' : 'text-base'
-                  )}>{cat.name}</h3>
-                  {config.showProductCount && (
-                    <p className="text-xs text-slate-500 text-center">12 sản phẩm</p>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -4537,44 +4573,54 @@ export const ProductCategoriesPreview = ({
           </div>
         ) : (
           <div className={cn("grid gap-4 md:gap-6", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
-            {resolvedCategories.slice(0, device === 'mobile' ? 3 : 6).map((cat) => (
-              <div 
-                key={cat._id} 
-                className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow cursor-pointer flex"
-              >
-                <div className={cn(
-                  "flex-shrink-0 bg-slate-100 dark:bg-slate-700",
-                  device === 'mobile' ? 'w-24 h-24' : 'w-32 h-32'
-                )}>
-                  {cat.displayImage ? (
-                    <img 
-                      src={cat.displayImage} 
-                      alt={cat.name} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package size={32} className="text-slate-300" />
-                    </div>
-                  )}
+            {resolvedCategories.slice(0, device === 'mobile' ? 3 : 6).map((cat) => {
+              const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
+              return (
+                <div 
+                  key={cat._id} 
+                  className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow cursor-pointer flex"
+                >
+                  <div className={cn(
+                    "flex-shrink-0 bg-slate-100 dark:bg-slate-700",
+                    device === 'mobile' ? 'w-24 h-24' : 'w-32 h-32'
+                  )}>
+                    {cat.displayIcon && iconData ? (
+                      <div 
+                        className="w-full h-full flex items-center justify-center"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        {React.createElement(iconData.icon, { size: device === 'mobile' ? 28 : 36, className: 'text-white' })}
+                      </div>
+                    ) : cat.displayImage ? (
+                      <img 
+                        src={cat.displayImage} 
+                        alt={cat.name} 
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package size={32} className="text-slate-300" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 p-4 flex flex-col justify-center">
+                    <h3 className={cn(
+                      "font-semibold mb-1",
+                      device === 'mobile' ? 'text-sm' : 'text-base'
+                    )}>{cat.name}</h3>
+                    {cat.description && (
+                      <p className="text-xs text-slate-500 line-clamp-2 mb-2">{cat.description}</p>
+                    )}
+                    <span 
+                      className="text-xs font-medium flex items-center gap-1"
+                      style={{ color: brandColor }}
+                    >
+                      Xem sản phẩm <ChevronRight size={14} />
+                    </span>
+                  </div>
                 </div>
-                <div className="flex-1 p-4 flex flex-col justify-center">
-                  <h3 className={cn(
-                    "font-semibold mb-1",
-                    device === 'mobile' ? 'text-sm' : 'text-base'
-                  )}>{cat.name}</h3>
-                  {cat.description && (
-                    <p className="text-xs text-slate-500 line-clamp-2 mb-2">{cat.description}</p>
-                  )}
-                  <span 
-                    className="text-xs font-medium flex items-center gap-1"
-                    style={{ color: brandColor }}
-                  >
-                    Xem sản phẩm <ChevronRight size={14} />
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

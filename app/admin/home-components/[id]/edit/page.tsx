@@ -39,6 +39,7 @@ import {
   ProductCategoriesPreview, ProductCategoriesStyle
 } from '../../previews';
 import { useBrandColor } from '../../create/shared';
+import { CategoryImageSelector } from '../../../components/CategoryImageSelector';
 
 const COMPONENT_TYPES = [
   { value: 'Hero', label: 'Hero Banner', icon: LayoutTemplate },
@@ -146,7 +147,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [speedDialPosition, setSpeedDialPosition] = useState<'bottom-right' | 'bottom-left'>('bottom-right');
   const [speedDialAlwaysOpen, setSpeedDialAlwaysOpen] = useState(true);
   // ProductCategories states
-  const [productCategoriesItems, setProductCategoriesItems] = useState<{id: number, categoryId: string, customImage: string}[]>([]);
+  const [productCategoriesItems, setProductCategoriesItems] = useState<{id: number, categoryId: string, customImage: string, imageMode?: 'default' | 'icon' | 'upload' | 'url'}[]>([]);
   const [productCategoriesStyle, setProductCategoriesStyle] = useState<ProductCategoriesStyle>('grid');
   const [productCategoriesShowCount, setProductCategoriesShowCount] = useState(true);
   const [productCategoriesColsDesktop, setProductCategoriesColsDesktop] = useState(4);
@@ -348,7 +349,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setSpeedDialAlwaysOpen(config.alwaysOpen ?? true);
           break;
         case 'ProductCategories':
-          setProductCategoriesItems(config.categories?.map((c: {categoryId: string, customImage?: string}, i: number) => ({ id: i, categoryId: c.categoryId, customImage: c.customImage || '' })) || []);
+          setProductCategoriesItems(config.categories?.map((c: {categoryId: string, customImage?: string, imageMode?: string}, i: number) => ({ id: i, categoryId: c.categoryId, customImage: c.customImage || '', imageMode: (c.imageMode as 'default' | 'icon' | 'upload' | 'url') || 'default' })) || []);
           setProductCategoriesStyle((config.style as ProductCategoriesStyle) || 'grid');
           setProductCategoriesShowCount(config.showProductCount ?? true);
           setProductCategoriesColsDesktop(config.columnsDesktop || 4);
@@ -448,7 +449,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         };
       case 'ProductCategories':
         return {
-          categories: productCategoriesItems.map(c => ({ categoryId: c.categoryId, customImage: c.customImage || undefined })),
+          categories: productCategoriesItems.map(c => ({ categoryId: c.categoryId, customImage: c.customImage || undefined, imageMode: c.imageMode || 'default' })),
           style: productCategoriesStyle,
           showProductCount: productCategoriesShowCount,
           columnsDesktop: productCategoriesColsDesktop,
@@ -2317,7 +2318,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                         </Button>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-3">
                         <div className="space-y-2">
                           <Label className="text-xs text-slate-500">Danh mục</Label>
                           <select
@@ -2331,21 +2332,25 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                             ))}
                           </select>
                         </div>
-                        <div className="space-y-2">
-                          <Label className="text-xs text-slate-500">Ảnh tùy chỉnh (URL)</Label>
-                          <Input 
-                            value={item.customImage || ''} 
-                            onChange={(e) => setProductCategoriesItems(productCategoriesItems.map(c => c.id === item.id ? {...c, customImage: e.target.value} : c))}
-                            placeholder="Để trống sử dụng ảnh danh mục"
-                          />
-                        </div>
+                        
+                        {item.categoryId && (
+                          <div className="space-y-2">
+                            <Label className="text-xs text-slate-500">Hình ảnh hiển thị</Label>
+                            <CategoryImageSelector
+                              value={item.customImage || ''}
+                              onChange={(value, mode) => setProductCategoriesItems(productCategoriesItems.map(c => c.id === item.id ? {...c, customImage: value, imageMode: mode} : c))}
+                              categoryImage={productCategoriesData?.find(cat => cat._id === item.categoryId)?.image}
+                              brandColor={brandColor}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))
                 )}
                 
                 <p className="text-xs text-slate-500">
-                  Tối đa 12 danh mục. Để trống ảnh tùy chỉnh sẽ sử dụng ảnh từ danh mục gốc.
+                  Tối đa 12 danh mục. Mỗi danh mục có thể: sử dụng ảnh gốc, chọn icon, upload ảnh, hoặc nhập URL.
                 </p>
               </CardContent>
             </Card>
