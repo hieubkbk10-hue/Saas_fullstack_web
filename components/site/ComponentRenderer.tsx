@@ -2735,9 +2735,11 @@ function SpeedDialSection({ config, brandColor }: { config: Record<string, unkno
 }
 
 // ============ PRODUCT CATEGORIES SECTION ============
+import { getCategoryIcon } from '@/app/admin/components/CategoryImageSelector';
+
 type ProductCategoriesStyle = 'grid' | 'carousel' | 'cards';
 function ProductCategoriesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const categoriesConfig = (config.categories as Array<{ categoryId: string; customImage?: string }>) || [];
+  const categoriesConfig = (config.categories as Array<{ categoryId: string; customImage?: string; imageMode?: string }>) || [];
   const style = (config.style as ProductCategoriesStyle) || 'grid';
   const showProductCount = (config.showProductCount as boolean) ?? true;
   const columnsDesktop = (config.columnsDesktop as number) || 4;
@@ -2770,14 +2772,27 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
     .map(item => {
       const cat = categoryMap[item.categoryId];
       if (!cat) return null;
+      
+      const imageMode = item.imageMode || 'default';
+      let displayImage = cat.image;
+      let displayIcon: string | undefined;
+      
+      if (imageMode === 'icon' && item.customImage?.startsWith('icon:')) {
+        displayIcon = item.customImage.replace('icon:', '');
+        displayImage = undefined;
+      } else if (imageMode === 'upload' || imageMode === 'url') {
+        displayImage = item.customImage || cat.image;
+      }
+      
       return {
         ...cat,
         id: item.categoryId,
-        displayImage: item.customImage || cat.image,
+        displayImage,
+        displayIcon,
         productCount: productCountMap[item.categoryId] || 0,
       };
     })
-    .filter(Boolean) as Array<{ id: string; name: string; slug: string; image?: string; description?: string; displayImage?: string; productCount: number }>;
+    .filter(Boolean) as Array<{ id: string; name: string; slug: string; image?: string; description?: string; displayImage?: string; displayIcon?: string; productCount: number }>;
 
   if (resolvedCategories.length === 0) return null;
 
@@ -2801,32 +2816,42 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">{title}</h2>
           <div className={`grid gap-4 md:gap-6 ${getMobileGridCols()} ${getGridCols()}`}>
-            {resolvedCategories.map((cat) => (
-              <a 
-                key={cat.id}
-                href={`/danh-muc/${cat.slug}`}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100"
-              >
-                {cat.displayImage ? (
-                  <img 
-                    src={cat.displayImage} 
-                    alt={cat.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package size={48} className="text-slate-300" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 text-white">
-                  <h3 className="font-semibold text-base md:text-lg truncate">{cat.name}</h3>
-                  {showProductCount && (
-                    <p className="text-sm opacity-80 mt-1">{cat.productCount} sản phẩm</p>
+            {resolvedCategories.map((cat) => {
+              const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
+              return (
+                <a 
+                  key={cat.id}
+                  href={`/danh-muc/${cat.slug}`}
+                  className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100"
+                >
+                  {cat.displayIcon && iconData ? (
+                    <div 
+                      className="w-full h-full flex items-center justify-center"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      {React.createElement(iconData.icon, { size: 56, className: 'text-white' })}
+                    </div>
+                  ) : cat.displayImage ? (
+                    <img 
+                      src={cat.displayImage} 
+                      alt={cat.name} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package size={48} className="text-slate-300" />
+                    </div>
                   )}
-                </div>
-              </a>
-            ))}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 text-white">
+                    <h3 className="font-semibold text-base md:text-lg truncate">{cat.name}</h3>
+                    {showProductCount && (
+                      <p className="text-sm opacity-80 mt-1">{cat.productCount} sản phẩm</p>
+                    )}
+                  </div>
+                </a>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -2853,31 +2878,41 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
           </div>
           <div className="overflow-x-auto pb-4 px-4 scrollbar-hide">
             <div className="flex gap-4 md:gap-6">
-              {resolvedCategories.map((cat) => (
-                <a 
-                  key={cat.id}
-                  href={`/danh-muc/${cat.slug}`}
-                  className="flex-shrink-0 w-36 md:w-48 group cursor-pointer"
-                >
-                  <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 mb-3">
-                    {cat.displayImage ? (
-                      <img 
-                        src={cat.displayImage} 
-                        alt={cat.name} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package size={40} className="text-slate-300" />
-                      </div>
+              {resolvedCategories.map((cat) => {
+                const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
+                return (
+                  <a 
+                    key={cat.id}
+                    href={`/danh-muc/${cat.slug}`}
+                    className="flex-shrink-0 w-36 md:w-48 group cursor-pointer"
+                  >
+                    <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 mb-3">
+                      {cat.displayIcon && iconData ? (
+                        <div 
+                          className="w-full h-full flex items-center justify-center"
+                          style={{ backgroundColor: brandColor }}
+                        >
+                          {React.createElement(iconData.icon, { size: 48, className: 'text-white' })}
+                        </div>
+                      ) : cat.displayImage ? (
+                        <img 
+                          src={cat.displayImage} 
+                          alt={cat.name} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package size={40} className="text-slate-300" />
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="font-medium text-center truncate">{cat.name}</h3>
+                    {showProductCount && (
+                      <p className="text-sm text-slate-500 text-center">{cat.productCount} sản phẩm</p>
                     )}
-                  </div>
-                  <h3 className="font-medium text-center truncate">{cat.name}</h3>
-                  {showProductCount && (
-                    <p className="text-sm text-slate-500 text-center">{cat.productCount} sản phẩm</p>
-                  )}
-                </a>
-              ))}
+                  </a>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -2891,42 +2926,52 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
       <div className="max-w-7xl mx-auto px-4">
         <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">{title}</h2>
         <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {resolvedCategories.map((cat) => (
-            <a 
-              key={cat.id}
-              href={`/danh-muc/${cat.slug}`}
-              className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow flex"
-            >
-              <div className="w-28 h-28 md:w-36 md:h-36 flex-shrink-0 bg-slate-100">
-                {cat.displayImage ? (
-                  <img 
-                    src={cat.displayImage} 
-                    alt={cat.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package size={40} className="text-slate-300" />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 p-4 md:p-5 flex flex-col justify-center">
-                <h3 className="font-semibold text-base md:text-lg mb-1">{cat.name}</h3>
-                {cat.description && (
-                  <p className="text-sm text-slate-500 line-clamp-2 mb-2">{cat.description}</p>
-                )}
-                <span 
-                  className="text-sm font-medium flex items-center gap-1"
-                  style={{ color: brandColor }}
-                >
-                  {showProductCount && `${cat.productCount} sản phẩm`}
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </span>
-              </div>
-            </a>
-          ))}
+          {resolvedCategories.map((cat) => {
+            const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
+            return (
+              <a 
+                key={cat.id}
+                href={`/danh-muc/${cat.slug}`}
+                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow flex"
+              >
+                <div className="w-28 h-28 md:w-36 md:h-36 flex-shrink-0 bg-slate-100">
+                  {cat.displayIcon && iconData ? (
+                    <div 
+                      className="w-full h-full flex items-center justify-center"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      {React.createElement(iconData.icon, { size: 40, className: 'text-white' })}
+                    </div>
+                  ) : cat.displayImage ? (
+                    <img 
+                      src={cat.displayImage} 
+                      alt={cat.name} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package size={40} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 p-4 md:p-5 flex flex-col justify-center">
+                  <h3 className="font-semibold text-base md:text-lg mb-1">{cat.name}</h3>
+                  {cat.description && (
+                    <p className="text-sm text-slate-500 line-clamp-2 mb-2">{cat.description}</p>
+                  )}
+                  <span 
+                    className="text-sm font-medium flex items-center gap-1"
+                    style={{ color: brandColor }}
+                  >
+                    {showProductCount && `${cat.productCount} sản phẩm`}
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                </div>
+              </a>
+            );
+          })}
         </div>
       </div>
     </section>
