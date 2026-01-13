@@ -7,6 +7,8 @@ import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared
 import { ClientsPreview, type ClientsStyle } from '../../previews';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { toast } from 'sonner';
 
 interface ClientItem {
   id: string;
@@ -20,6 +22,7 @@ export default function ClientsCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Khách hàng của chúng tôi', 'Clients');
   const brandColor = useBrandColor();
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
+  const saveImage = useMutation(api.storage.saveImage);
   
   const [clientItems, setClientItems] = useState<ClientItem[]>([
     { id: 'item-1', url: '', link: '', name: '', inputMode: 'upload' },
@@ -35,14 +38,27 @@ export default function ClientsCreatePage() {
       const uploadUrl = await generateUploadUrl();
       const result = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': file.type }, body: file });
       const { storageId } = await result.json();
-      const imageUrl = `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/storage/${storageId}`;
-      setClientItems(items => items.map(item => item.id === itemId ? { ...item, url: imageUrl } : item));
+      
+      // Save to DB and get URL
+      const saved = await saveImage({
+        storageId: storageId as Id<"_storage">,
+        filename: file.name,
+        mimeType: file.type,
+        size: file.size,
+        folder: 'clients',
+      });
+      
+      if (saved.url) {
+        setClientItems(items => items.map(item => item.id === itemId ? { ...item, url: saved.url! } : item));
+        toast.success('Upload thành công');
+      }
     } catch (error) {
       console.error('Upload failed:', error);
+      toast.error('Upload thất bại');
     } finally {
       setUploadingId(null);
     }
-  }, [generateUploadUrl]);
+  }, [generateUploadUrl, saveImage]);
 
   const toggleInputMode = (id: string) => {
     setClientItems(items => items.map(item => 
