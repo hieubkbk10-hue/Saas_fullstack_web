@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Plus, Trash2, Upload, Loader2, Image as ImageIcon, Link as LinkIcon, GripVertical } from 'lucide-react';
+import { Plus, Upload, Loader2, Link as LinkIcon, ImageIcon } from 'lucide-react';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { ClientsPreview, type ClientsStyle } from '../../previews';
@@ -13,6 +13,7 @@ interface ClientItem {
   url: string;
   link: string;
   name: string;
+  inputMode: 'upload' | 'url';
 }
 
 export default function ClientsCreatePage() {
@@ -21,9 +22,9 @@ export default function ClientsCreatePage() {
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   
   const [clientItems, setClientItems] = useState<ClientItem[]>([
-    { id: 'item-1', url: '', link: '', name: '' },
-    { id: 'item-2', url: '', link: '', name: '' },
-    { id: 'item-3', url: '', link: '', name: '' },
+    { id: 'item-1', url: '', link: '', name: '', inputMode: 'upload' },
+    { id: 'item-2', url: '', link: '', name: '', inputMode: 'upload' },
+    { id: 'item-3', url: '', link: '', name: '', inputMode: 'upload' },
   ]);
   const [style, setStyle] = useState<ClientsStyle>('marquee');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
@@ -43,9 +44,15 @@ export default function ClientsCreatePage() {
     }
   }, [generateUploadUrl]);
 
+  const toggleInputMode = (id: string) => {
+    setClientItems(items => items.map(item => 
+      item.id === id ? { ...item, inputMode: item.inputMode === 'upload' ? 'url' : 'upload', url: '' } : item
+    ));
+  };
+
   const addItem = () => {
     if (clientItems.length >= 20) return;
-    setClientItems([...clientItems, { id: `item-${Date.now()}`, url: '', link: '', name: '' }]);
+    setClientItems([...clientItems, { id: `item-${Date.now()}`, url: '', link: '', name: '', inputMode: 'upload' }]);
   };
 
   const removeItem = (id: string) => {
@@ -136,33 +143,82 @@ export default function ClientsCreatePage() {
                   </button>
                 </div>
 
-                {/* Image Upload - Square thumbnail */}
-                <label className="block cursor-pointer mb-2">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleImageUpload(item.id, file);
-                    }}
-                  />
-                  <div className={cn(
-                    "aspect-[3/2] rounded-md overflow-hidden border-2 border-dashed flex items-center justify-center transition-colors",
-                    item.url ? "border-transparent" : "border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500"
-                  )}>
-                    {uploadingId === item.id ? (
-                      <Loader2 size={20} className="animate-spin text-slate-400" />
-                    ) : item.url ? (
-                      <img src={item.url} alt="" className="w-full h-full object-contain bg-white dark:bg-slate-900" />
-                    ) : (
-                      <div className="text-center p-1">
-                        <Upload size={16} className="mx-auto text-slate-400 mb-0.5" />
-                        <span className="text-[10px] text-slate-400">Upload</span>
-                      </div>
-                    )}
+                {/* Image - Upload or URL */}
+                <div className="mb-2">
+                  {/* Toggle Upload/URL */}
+                  <div className="flex mb-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleInputMode(item.id)}
+                      className={cn(
+                        "flex-1 text-[9px] py-0.5 rounded-l border transition-colors",
+                        item.inputMode === 'upload' 
+                          ? "bg-slate-600 text-white border-slate-600" 
+                          : "bg-white dark:bg-slate-800 text-slate-500 border-slate-300 dark:border-slate-600"
+                      )}
+                    >
+                      Upload
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleInputMode(item.id)}
+                      className={cn(
+                        "flex-1 text-[9px] py-0.5 rounded-r border-t border-b border-r transition-colors",
+                        item.inputMode === 'url' 
+                          ? "bg-slate-600 text-white border-slate-600" 
+                          : "bg-white dark:bg-slate-800 text-slate-500 border-slate-300 dark:border-slate-600"
+                      )}
+                    >
+                      URL
+                    </button>
                   </div>
-                </label>
+
+                  {item.inputMode === 'upload' ? (
+                    <label className="block cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload(item.id, file);
+                        }}
+                      />
+                      <div className={cn(
+                        "aspect-[3/2] rounded-md overflow-hidden border-2 border-dashed flex items-center justify-center transition-colors",
+                        item.url ? "border-transparent" : "border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500"
+                      )}>
+                        {uploadingId === item.id ? (
+                          <Loader2 size={20} className="animate-spin text-slate-400" />
+                        ) : item.url ? (
+                          <img src={item.url} alt="" className="w-full h-full object-contain bg-white dark:bg-slate-900" />
+                        ) : (
+                          <div className="text-center p-1">
+                            <Upload size={16} className="mx-auto text-slate-400 mb-0.5" />
+                            <span className="text-[10px] text-slate-400">Click để upload</span>
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  ) : (
+                    <div className="space-y-1">
+                      <div className="relative">
+                        <ImageIcon size={10} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Input
+                          placeholder="https://example.com/logo.png"
+                          value={item.url}
+                          onChange={(e) => updateItem(item.id, 'url', e.target.value)}
+                          className="h-6 text-xs pl-6 pr-2"
+                        />
+                      </div>
+                      {item.url && (
+                        <div className="aspect-[3/2] rounded-md overflow-hidden border bg-white dark:bg-slate-900 flex items-center justify-center">
+                          <img src={item.url} alt="" className="w-full h-full object-contain" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Compact inputs */}
                 <div className="space-y-1">
