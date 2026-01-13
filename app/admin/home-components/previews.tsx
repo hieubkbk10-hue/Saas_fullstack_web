@@ -672,14 +672,21 @@ export const HeroBannerPreview = ({
 };
 
 // ============ STATS PREVIEW ============
-// Professional Stats UI/UX - 3 Variants from professional-stats-components
+// Professional Stats UI/UX - 6 Variants
 type StatsItem = { value: string; label: string };
-export type StatsStyle = 'horizontal' | 'cards' | 'icons';
+export type StatsStyle = 'horizontal' | 'cards' | 'icons' | 'gradient' | 'minimal' | 'counter';
 export const StatsPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: StatsItem[]; brandColor: string; selectedStyle?: StatsStyle; onStyleChange?: (style: StatsStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'horizontal';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as StatsStyle);
-  const styles = [{ id: 'horizontal', label: 'Thanh ngang' }, { id: 'cards', label: 'Cards' }, { id: 'icons', label: 'Icon Grid' }];
+  const styles = [
+    { id: 'horizontal', label: 'Thanh ngang' }, 
+    { id: 'cards', label: 'Cards' }, 
+    { id: 'icons', label: 'Circle' },
+    { id: 'gradient', label: 'Gradient' },
+    { id: 'minimal', label: 'Minimal' },
+    { id: 'counter', label: 'Counter' },
+  ];
 
   // Style 1: Thanh ngang - Full width bar với dividers
   const renderHorizontalStyle = () => (
@@ -781,12 +788,154 @@ export const StatsPreview = ({ items, brandColor, selectedStyle, onStyleChange }
     </section>
   );
 
+  // Style 4: Gradient - Glass morphism với gradient background
+  const renderGradientStyle = () => (
+    <section className={cn("w-full", device === 'mobile' ? 'p-3' : 'p-6')}>
+      <div 
+        className="rounded-2xl overflow-hidden"
+        style={{ 
+          background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 50%, ${brandColor}bb 100%)`,
+        }}
+      >
+        <div className={cn(
+          "grid backdrop-blur-sm",
+          device === 'mobile' ? 'grid-cols-2' : 'grid-cols-4'
+        )}>
+          {items.slice(0, 4).map((item, idx) => (
+            <div 
+              key={idx}
+              className={cn(
+                "relative flex flex-col items-center justify-center text-center text-white p-6",
+                device === 'mobile' ? 'p-4' : 'p-8',
+                idx !== items.slice(0, 4).length - 1 && (device === 'mobile' ? '' : 'border-r border-white/10')
+              )}
+            >
+              {/* Decorative circle */}
+              <div 
+                className="absolute top-2 right-2 w-16 h-16 rounded-full bg-white/5 blur-xl"
+              />
+              <span className={cn(
+                "font-extrabold tracking-tight tabular-nums leading-none mb-2 relative z-10",
+                device === 'mobile' ? 'text-3xl' : 'text-4xl md:text-5xl'
+              )}>
+                {item.value || '0'}
+              </span>
+              <h3 className={cn(
+                "font-medium opacity-90 relative z-10",
+                device === 'mobile' ? 'text-xs' : 'text-sm'
+              )}>
+                {item.label || 'Label'}
+              </h3>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 5: Minimal - Clean, simple với typography focus
+  const renderMinimalStyle = () => (
+    <section className={cn("w-full bg-slate-50 dark:bg-slate-900", device === 'mobile' ? 'py-8 px-4' : 'py-12 px-6')}>
+      <div className={cn(
+        "max-w-5xl mx-auto grid",
+        device === 'mobile' ? 'grid-cols-2 gap-6' : 'grid-cols-4 gap-8'
+      )}>
+        {items.slice(0, 4).map((item, idx) => (
+          <div 
+            key={idx}
+            className="flex flex-col items-start"
+          >
+            {/* Accent line */}
+            <div 
+              className="w-12 h-1 rounded-full mb-4"
+              style={{ backgroundColor: brandColor }}
+            />
+            <span 
+              className={cn(
+                "font-bold tracking-tight tabular-nums leading-none text-slate-900 dark:text-white",
+                device === 'mobile' ? 'text-3xl' : 'text-4xl md:text-5xl'
+              )}
+            >
+              {item.value || '0'}
+            </span>
+            <h3 className={cn(
+              "font-medium text-slate-500 dark:text-slate-400 mt-2",
+              device === 'mobile' ? 'text-sm' : 'text-base'
+            )}>
+              {item.label || 'Label'}
+            </h3>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+
+  // Style 6: Counter - Big numbers với animated feel & progress indicator
+  const renderCounterStyle = () => (
+    <section className={cn("w-full", device === 'mobile' ? 'py-6 px-3' : 'py-10 px-6')}>
+      <div className={cn(
+        "max-w-5xl mx-auto grid",
+        device === 'mobile' ? 'grid-cols-2 gap-4' : 'grid-cols-4 gap-6'
+      )}>
+        {items.slice(0, 4).map((item, idx) => (
+          <div 
+            key={idx}
+            className="relative bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden group"
+          >
+            {/* Top progress bar */}
+            <div className="h-1 w-full bg-slate-100 dark:bg-slate-700">
+              <div 
+                className="h-full transition-all duration-500"
+                style={{ 
+                  backgroundColor: brandColor,
+                  width: `${Math.min(100, (idx + 1) * 25)}%`
+                }}
+              />
+            </div>
+            
+            <div className={cn(
+              "flex flex-col items-center justify-center text-center",
+              device === 'mobile' ? 'p-4' : 'p-6'
+            )}>
+              <span 
+                className={cn(
+                  "font-black tracking-tighter tabular-nums leading-none group-hover:scale-110 transition-transform duration-300",
+                  device === 'mobile' ? 'text-4xl' : 'text-5xl md:text-6xl'
+                )}
+                style={{ color: brandColor }}
+              >
+                {item.value || '0'}
+              </span>
+              <h3 className={cn(
+                "font-semibold text-slate-600 dark:text-slate-300 mt-2",
+                device === 'mobile' ? 'text-xs' : 'text-sm'
+              )}>
+                {item.label || 'Label'}
+              </h3>
+            </div>
+            
+            {/* Decorative watermark */}
+            <div 
+              className="absolute -bottom-4 -right-4 text-[5rem] font-black opacity-[0.03] select-none pointer-events-none leading-none"
+              style={{ color: brandColor }}
+            >
+              {idx + 1}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+
   return (
     <PreviewWrapper title="Preview Stats" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`${items.filter(i => i.value || i.label).length} số liệu`}>
       <BrowserFrame>
         {previewStyle === 'horizontal' && renderHorizontalStyle()}
         {previewStyle === 'cards' && renderCardsStyle()}
         {previewStyle === 'icons' && renderIconsStyle()}
+        {previewStyle === 'gradient' && renderGradientStyle()}
+        {previewStyle === 'minimal' && renderMinimalStyle()}
+        {previewStyle === 'counter' && renderCounterStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );

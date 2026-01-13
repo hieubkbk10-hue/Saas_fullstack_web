@@ -448,8 +448,8 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
 }
 
 // ============ STATS SECTION ============
-// Professional Stats UI/UX - 3 Variants from professional-stats-components
-type StatsStyle = 'horizontal' | 'cards' | 'icons';
+// Professional Stats UI/UX - 6 Variants
+type StatsStyle = 'horizontal' | 'cards' | 'icons' | 'gradient' | 'minimal' | 'counter';
 function StatsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ value: string; label: string }>) || [];
   const style = (config.style as StatsStyle) || 'horizontal';
@@ -518,27 +518,139 @@ function StatsSection({ config, brandColor, title }: { config: Record<string, un
   }
 
   // Style 3: Icon Grid - Circle containers với shadow và hover scale
-  return (
-    <section className="py-12 px-4">
-      <div className="max-w-5xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-          {items.map((item, idx) => (
-            <div key={idx} className="flex flex-col items-center group">
-              {/* Circle Container with shadow and border */}
-              <div 
-                className="relative w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center mb-3 group-hover:scale-105 transition-all duration-300 ease-out border-[3px] border-white ring-1 ring-slate-100"
-                style={{ 
-                  backgroundColor: brandColor,
-                  boxShadow: `0 10px 15px -3px ${brandColor}30, 0 4px 6px -4px ${brandColor}20`
-                }}
-              >
-                <span className="text-2xl md:text-3xl font-bold text-white tracking-tight z-10 tabular-nums">
+  if (style === 'icons') {
+    return (
+      <section className="py-12 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            {items.map((item, idx) => (
+              <div key={idx} className="flex flex-col items-center group">
+                {/* Circle Container with shadow and border */}
+                <div 
+                  className="relative w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center mb-3 group-hover:scale-105 transition-all duration-300 ease-out border-[3px] border-white ring-1 ring-slate-100"
+                  style={{ 
+                    backgroundColor: brandColor,
+                    boxShadow: `0 10px 15px -3px ${brandColor}30, 0 4px 6px -4px ${brandColor}20`
+                  }}
+                >
+                  <span className="text-2xl md:text-3xl font-bold text-white tracking-tight z-10 tabular-nums">
+                    {item.value}
+                  </span>
+                </div>
+                <h3 className="text-base font-semibold text-slate-800 group-hover:text-opacity-80 transition-colors">
+                  {item.label}
+                </h3>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 4: Gradient - Glass morphism với gradient background
+  if (style === 'gradient') {
+    return (
+      <section className="py-12 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div 
+            className="rounded-2xl overflow-hidden"
+            style={{ 
+              background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 50%, ${brandColor}bb 100%)`,
+            }}
+          >
+            <div className="grid grid-cols-2 md:grid-cols-4 backdrop-blur-sm">
+              {items.map((item, idx) => (
+                <div 
+                  key={idx}
+                  className={`relative flex flex-col items-center justify-center text-center text-white p-6 md:p-8 ${
+                    idx !== items.length - 1 ? 'md:border-r md:border-white/10' : ''
+                  }`}
+                >
+                  {/* Decorative circle */}
+                  <div className="absolute top-2 right-2 w-16 h-16 rounded-full bg-white/5 blur-xl" />
+                  <span className="text-4xl md:text-5xl font-extrabold tracking-tight tabular-nums leading-none mb-2 relative z-10">
+                    {item.value}
+                  </span>
+                  <h3 className="text-sm font-medium opacity-90 relative z-10">
+                    {item.label}
+                  </h3>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Minimal - Clean, simple với typography focus
+  if (style === 'minimal') {
+    return (
+      <section className="py-12 md:py-16 px-4 bg-slate-50">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            {items.map((item, idx) => (
+              <div key={idx} className="flex flex-col items-start">
+                {/* Accent line */}
+                <div 
+                  className="w-12 h-1 rounded-full mb-4"
+                  style={{ backgroundColor: brandColor }}
+                />
+                <span className="text-4xl md:text-5xl font-bold tracking-tight tabular-nums leading-none text-slate-900">
                   {item.value}
                 </span>
+                <h3 className="text-base font-medium text-slate-500 mt-2">
+                  {item.label}
+                </h3>
               </div>
-              <h3 className="text-base font-semibold text-slate-800 group-hover:text-opacity-80 transition-colors">
-                {item.label}
-              </h3>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Counter - Big numbers với animated feel & progress indicator
+  return (
+    <section className="py-12 md:py-16 px-4">
+      <div className="max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {items.map((item, idx) => (
+            <div 
+              key={idx}
+              className="relative bg-white rounded-2xl border border-slate-100 overflow-hidden group"
+            >
+              {/* Top progress bar */}
+              <div className="h-1 w-full bg-slate-100">
+                <div 
+                  className="h-full transition-all duration-500"
+                  style={{ 
+                    backgroundColor: brandColor,
+                    width: `${Math.min(100, (idx + 1) * 25)}%`
+                  }}
+                />
+              </div>
+              
+              <div className="flex flex-col items-center justify-center text-center p-6">
+                <span 
+                  className="text-5xl md:text-6xl font-black tracking-tighter tabular-nums leading-none group-hover:scale-110 transition-transform duration-300"
+                  style={{ color: brandColor }}
+                >
+                  {item.value}
+                </span>
+                <h3 className="text-sm font-semibold text-slate-600 mt-2">
+                  {item.label}
+                </h3>
+              </div>
+              
+              {/* Decorative watermark */}
+              <div 
+                className="absolute -bottom-4 -right-4 text-[5rem] font-black opacity-[0.03] select-none pointer-events-none leading-none"
+                style={{ color: brandColor }}
+              >
+                {idx + 1}
+              </div>
             </div>
           ))}
         </div>
