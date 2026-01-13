@@ -1084,6 +1084,64 @@ const SkeletonCard = () => (
 )}>
 ```
 
+## Image Size Guidelines
+
+Mỗi style có yêu cầu kích thước ảnh khác nhau. Hiển thị gợi ý ngắn gọn dưới preview:
+
+### Pattern Implementation
+
+```tsx
+// Thêm vào cuối CardContent của Preview component
+<div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+  <div className="flex items-start gap-2">
+    <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+    <div className="text-xs text-slate-600 dark:text-slate-400">
+      {selectedStyle === 'style1' && (
+        <p><strong>1920×600px</strong> (16:5) • Mô tả ngắn về style</p>
+      )}
+      {selectedStyle === 'style2' && (
+        <p><strong>800×600px</strong> (4:3) • Mô tả khác</p>
+      )}
+    </div>
+  </div>
+</div>
+```
+
+### Quy tắc viết gợi ý
+
+1. **Format**: `<strong>WxH</strong> (ratio) • Ghi chú ngắn`
+2. **Chỉ 1 dòng** cho mỗi style (trừ bento/grid có nhiều slots)
+3. **Không dùng từ filler/fill** - thay bằng mô tả cụ thể
+4. **Ghi chú về vị trí subject** nếu có overlay
+
+### Ví dụ thực tế (Hero Component)
+
+| Style | Gợi ý |
+|-------|-------|
+| Slider | **1920×600px** (16:5) • Nhiều ảnh, auto slide |
+| Fade | **1920×600px** (16:5) • Nhiều ảnh, thumbnail navigation |
+| Bento | **Slot 1:** 800×500 • **Slot 2:** 800×250 • **Slot 3-4:** 400×250 |
+| Fullscreen | **1920×1080px** (16:9) • Subject đặt bên phải (trái có overlay) |
+| Split | **960×600px** (8:5) • Ảnh bên phải 50%, subject đặt giữa/trái |
+| Parallax | **1920×1080px** (16:9) • Để trống góc dưới trái cho card nổi |
+
+### Các tỉ lệ phổ biến
+
+| Ratio | Kích thước | Dùng cho |
+|-------|------------|----------|
+| 16:5 | 1920×600 | Banner, slider (landscape rộng) |
+| 16:9 | 1920×1080 | Fullscreen, hero, video thumbnail |
+| 4:3 | 800×600 | Cards, thumbnails |
+| 1:1 | 400×400 | Avatar, logo, icon |
+| 8:5 | 960×600 | Split layout, featured |
+
+### Tips
+
+- **object-cover**: Ảnh sẽ bị crop → ghi chú vị trí subject
+- **object-contain**: Ảnh giữ nguyên → ghi chú về padding/blur background
+- **Nhiều slots**: Liệt kê từng slot trên 1 dòng, dùng bullet `•`
+- **Overlay text**: Ghi rõ vùng nào bị che để user đặt subject đúng chỗ
+
 ## Testing Checklist - Edge Cases
 
 - [ ] Empty state hiển thị đẹp
