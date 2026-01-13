@@ -7,9 +7,10 @@ import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { Package, Loader2, ArrowRight } from 'lucide-react';
 
-// 3 Styles mới theo mẫu BrandStory.tsx
+// 6 Styles theo mẫu previews.tsx
 // 'minimal' = Luxury Minimal, 'commerce' = Commerce Card, 'bento' = Bento Grid
-type ProductListStyle = 'minimal' | 'commerce' | 'bento';
+// 'carousel' = Horizontal Scroll, 'compact' = Dense Grid, 'showcase' = Featured + Grid
+type ProductListStyle = 'minimal' | 'commerce' | 'bento' | 'carousel' | 'compact' | 'showcase';
 
 interface ProductListSectionProps {
   config: Record<string, unknown>;
@@ -254,7 +255,168 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
     );
   }
 
-  // Style 3: Bento Grid - Asymmetric layout với hero card lớn
+  // Style 4: Carousel - Horizontal scrollable products
+  if (style === 'carousel') {
+    return (
+      <section className="py-10 md:py-16 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeader />
+          
+          {/* Carousel */}
+          <div className="relative overflow-x-auto -mx-4 px-4 pb-4 scrollbar-hide">
+            <div className="flex gap-4 md:gap-5">
+              {products.slice(0, 8).map((product) => {
+                const discount = getDiscount(product.price, product.salePrice);
+                return (
+                  <Link 
+                    key={product._id}
+                    href={`/products/${product.slug}`}
+                    className="flex-shrink-0 w-[160px] md:w-[220px] lg:w-[260px] group cursor-pointer"
+                  >
+                    <div className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 mb-3 border border-transparent hover:border-slate-200 transition-all">
+                      {product.image ? (
+                        <img src={product.image} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center"><Package size={40} className="text-slate-300" /></div>
+                      )}
+                      {discount && (
+                        <span className="absolute top-2 left-2 px-2 py-1 text-[10px] font-bold text-white rounded" style={{ backgroundColor: brandColor }}>{discount}</span>
+                      )}
+                    </div>
+                    <h3 className="font-medium text-slate-900 text-sm truncate group-hover:opacity-80 transition-colors">{product.name}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-bold text-sm" style={{ color: brandColor }}>{formatPrice(product.salePrice || product.price)}</span>
+                      {product.salePrice && product.price && product.salePrice < product.price && (
+                        <span className="text-xs text-slate-400 line-through">{formatPrice(product.price)}</span>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Compact - Dense grid với smaller cards, nhiều sản phẩm hơn
+  if (style === 'compact') {
+    return (
+      <section className="py-10 md:py-16 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeader />
+          
+          {/* Compact Grid - More items, smaller cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {products.slice(0, 6).map((product) => {
+              const discount = getDiscount(product.price, product.salePrice);
+              return (
+                <Link key={product._id} href={`/products/${product.slug}`} className="group cursor-pointer bg-white rounded-lg border border-slate-100 p-2 hover:shadow-md hover:border-slate-200 transition-all">
+                  <div className="relative aspect-square overflow-hidden rounded-md bg-slate-50 mb-2">
+                    {product.image ? (
+                      <img src={product.image} alt={product.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center"><Package size={24} className="text-slate-300" /></div>
+                    )}
+                    {discount && (
+                      <span className="absolute top-1 left-1 px-1.5 py-0.5 text-[9px] font-bold text-white rounded" style={{ backgroundColor: brandColor }}>{discount}</span>
+                    )}
+                  </div>
+                  <h3 className="font-medium text-xs text-slate-900 truncate group-hover:opacity-80 transition-colors">{product.name}</h3>
+                  <span className="font-bold text-xs mt-0.5 block" style={{ color: brandColor }}>{formatPrice(product.salePrice || product.price)}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Showcase - Featured large item với grid nhỏ bên cạnh
+  if (style === 'showcase') {
+    const showcaseFeatured = products[0];
+    const showcaseOthers = products.slice(1, 5);
+    const showcaseDiscount = getDiscount(showcaseFeatured?.price, showcaseFeatured?.salePrice);
+
+    return (
+      <section className="py-10 md:py-16 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto">
+          <SectionHeader />
+          
+          {/* Showcase Layout - Mobile */}
+          <div className="grid md:hidden grid-cols-2 gap-3">
+            {products.slice(0, 4).map((product) => {
+              const discount = getDiscount(product.price, product.salePrice);
+              return (
+                <Link key={product._id} href={`/products/${product.slug}`} className="group bg-white border border-slate-200 rounded-xl p-2 flex flex-col cursor-pointer hover:shadow-md transition-all">
+                  <div className="relative aspect-square w-full rounded-lg bg-slate-100 overflow-hidden mb-2">
+                    {product.image ? <img src={product.image} className="h-full w-full object-cover" alt={product.name} /> : <div className="h-full w-full flex items-center justify-center"><Package size={24} className="text-slate-300" /></div>}
+                    {discount && <span className="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: brandColor }}>{discount}</span>}
+                  </div>
+                  <h4 className="font-medium text-sm text-slate-900 truncate">{product.name}</h4>
+                  <span className="text-sm font-bold mt-1" style={{ color: brandColor }}>{formatPrice(product.salePrice || product.price)}</span>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Showcase Layout - Desktop */}
+          <div className="hidden md:grid grid-cols-3 gap-4">
+            {/* Featured Large Item */}
+            <Link 
+              href={`/products/${showcaseFeatured?.slug}`}
+              className="relative group rounded-2xl overflow-hidden cursor-pointer h-[400px] border border-slate-200 hover:border-slate-300 transition-colors"
+              style={{ backgroundColor: `${brandColor}05` }}
+            >
+              {showcaseFeatured?.image ? (
+                <img src={showcaseFeatured.image} alt={showcaseFeatured.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              ) : (
+                <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-slate-100"><Package size={64} className="text-slate-300" /></div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              {showcaseDiscount && (
+                <div className="absolute top-4 left-4 font-bold px-3 py-1 rounded-full text-sm shadow-lg text-white" style={{ backgroundColor: brandColor }}>{showcaseDiscount}</div>
+              )}
+              <div className="absolute bottom-0 left-0 p-6 w-full">
+                <span className="inline-block px-2 py-1 rounded text-xs font-medium text-white/90 mb-2" style={{ backgroundColor: `${brandColor}80` }}>Nổi bật</span>
+                <h3 className="text-xl md:text-2xl font-bold text-white mb-2">{showcaseFeatured?.name}</h3>
+                <div className="flex items-center justify-between">
+                  <span className="text-xl font-bold text-white">{formatPrice(showcaseFeatured?.salePrice || showcaseFeatured?.price)}</span>
+                  <span className="px-4 py-2 rounded-lg text-white text-sm font-medium" style={{ backgroundColor: brandColor }}>Xem chi tiết</span>
+                </div>
+              </div>
+            </Link>
+
+            {/* Right Grid - 2x2 */}
+            <div className="col-span-2 grid grid-cols-2 gap-3">
+              {showcaseOthers.map((product) => {
+                const discount = getDiscount(product.price, product.salePrice);
+                return (
+                  <Link key={product._id} href={`/products/${product.slug}`} className="group bg-white border border-slate-200 rounded-xl p-3 flex flex-col cursor-pointer hover:shadow-md hover:border-slate-300 transition-all">
+                    <div className="relative aspect-square w-full rounded-lg bg-slate-50 overflow-hidden mb-3">
+                      {product.image ? <img src={product.image} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" alt={product.name} /> : <div className="h-full w-full flex items-center justify-center"><Package size={32} className="text-slate-300" /></div>}
+                      {discount && <span className="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: brandColor }}>{discount}</span>}
+                    </div>
+                    <h4 className="font-medium text-sm text-slate-900 truncate group-hover:opacity-80 transition-colors">{product.name}</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm font-bold" style={{ color: brandColor }}>{formatPrice(product.salePrice || product.price)}</span>
+                      {product.salePrice && product.price && product.salePrice < product.price && (
+                        <span className="text-[10px] text-slate-400 line-through">{formatPrice(product.price)}</span>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Bento Grid - Asymmetric layout với hero card lớn (default)
   const featured = products[products.length - 1] || products[0];
   const others = products.slice(0, 4);
   const featuredDiscount = getDiscount(featured?.price, featured?.salePrice);
