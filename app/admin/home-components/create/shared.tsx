@@ -38,6 +38,8 @@ export const COMPONENT_TYPES = [
   { value: 'CategoryProducts', label: 'Sản phẩm theo danh mục', icon: ShoppingBag, description: 'SP trong từng danh mục', route: 'category-products' },
   { value: 'Team', label: 'Đội ngũ', icon: UserCircle, description: 'Giới thiệu đội ngũ với ảnh, chức vụ, social links', route: 'team' },
   { value: 'Features', label: 'Tính năng', icon: Zap, description: 'Tính năng nổi bật với icon grid', route: 'features' },
+  { value: 'Process', label: 'Quy trình', icon: LayoutTemplate, description: 'Các bước quy trình/timeline cho dịch vụ', route: 'process' },
+  { value: 'Clients', label: 'Khách hàng (Marquee)', icon: Users, description: 'Logo khách hàng chạy auto-scroll', route: 'clients' },
 ];
 
 export const DEFAULT_BRAND_COLOR = '#3b82f6';

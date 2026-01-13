@@ -77,6 +77,8 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
       return <TeamSection config={config} brandColor={brandColor} title={title} />;
     case 'Features':
       return <FeaturesSection config={config} brandColor={brandColor} title={title} />;
+    case 'Process':
+      return <ProcessSection config={config} brandColor={brandColor} title={title} />;
     default:
       return <PlaceholderSection type={type} title={title} />;
   }
@@ -4363,6 +4365,258 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
                   </h3>
                   <p className="text-xs text-slate-500 line-clamp-2">
                     {item.description}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============ PROCESS SECTION ============
+// 4 Professional Styles: Timeline, Steps, Cards, Zigzag
+type ProcessStyle = 'timeline' | 'steps' | 'cards' | 'zigzag';
+
+function ProcessSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
+  const steps = (config.steps as Array<{ icon: string; title: string; description: string }>) || [];
+  const style = (config.style as ProcessStyle) || 'timeline';
+
+  // Style 1: Timeline - Vertical timeline với connecting line
+  if (style === 'timeline') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-10 md:mb-14">
+            <div 
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
+              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+            >
+              Quy trình
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+          </div>
+          
+          {/* Timeline */}
+          <div className="max-w-3xl mx-auto relative">
+            {/* Vertical Line */}
+            <div 
+              className="absolute top-0 bottom-0 left-4 md:left-1/2 md:-translate-x-1/2 w-0.5"
+              style={{ backgroundColor: `${brandColor}20` }}
+            />
+            
+            {/* Steps */}
+            <div className="relative space-y-8 md:space-y-12">
+              {steps.map((step, idx) => {
+                const isEven = idx % 2 === 0;
+                return (
+                  <div 
+                    key={idx} 
+                    className={`relative flex items-start gap-4 md:gap-8 pl-12 md:pl-0 ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} md:justify-center`}
+                  >
+                    {/* Circle Marker */}
+                    <div 
+                      className="absolute left-0 md:left-1/2 md:-translate-x-1/2 flex items-center justify-center w-8 h-8 rounded-full text-white font-bold text-sm border-4 border-white shadow-lg z-10"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      {step.icon || idx + 1}
+                    </div>
+                    
+                    {/* Content Card */}
+                    <div 
+                      className={`flex-1 md:w-[calc(50%-3rem)] bg-white rounded-xl p-5 md:p-6 shadow-sm border border-slate-200 ${isEven ? 'md:text-right' : 'md:text-left'}`}
+                    >
+                      <h3 className="font-bold text-base md:text-lg text-slate-900 mb-1">
+                        {step.title || `Bước ${idx + 1}`}
+                      </h3>
+                      <p className="text-sm text-slate-500 leading-relaxed">
+                        {step.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Steps - Horizontal steps với connector arrows
+  if (style === 'steps') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-10 md:mb-14">
+            <div 
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
+              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+            >
+              Quy trình
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+          </div>
+          
+          {/* Steps Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {steps.map((step, idx) => (
+              <div key={idx} className="relative">
+                {/* Connector Arrow */}
+                {idx < steps.length - 1 && (
+                  <div 
+                    className="hidden lg:block absolute top-10 -right-2 w-4 h-4 z-10"
+                    style={{ color: brandColor }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+                      <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+                    </svg>
+                  </div>
+                )}
+                
+                {/* Step Card */}
+                <div className="bg-white rounded-xl p-5 md:p-6 border border-slate-200 text-center h-full">
+                  {/* Step Number */}
+                  <div 
+                    className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-lg md:text-xl"
+                    style={{ 
+                      backgroundColor: brandColor,
+                      boxShadow: `0 4px 14px ${brandColor}40`
+                    }}
+                  >
+                    {step.icon || idx + 1}
+                  </div>
+                  
+                  <h3 className="font-bold text-base md:text-lg text-slate-900 mb-2">
+                    {step.title || `Bước ${idx + 1}`}
+                  </h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Cards - Grid cards với gradient header
+  if (style === 'cards') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-8" style={{ borderColor: `${brandColor}20` }}>
+            <div className="space-y-2">
+              <div 
+                className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider"
+                style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+              >
+                Quy trình
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
+            </div>
+          </div>
+          
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {steps.map((step, idx) => (
+              <div 
+                key={idx} 
+                className="group bg-white rounded-xl overflow-hidden border border-slate-200 hover:shadow-lg transition-shadow"
+              >
+                {/* Gradient Header */}
+                <div 
+                  className="h-2"
+                  style={{ background: `linear-gradient(to right, ${brandColor}, ${brandColor}99)` }}
+                />
+                
+                <div className="p-5 md:p-6">
+                  {/* Step Badge */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div 
+                      className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      {step.icon || idx + 1}
+                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      Bước {idx + 1}
+                    </span>
+                  </div>
+                  
+                  <h3 className="font-bold text-base md:text-lg text-slate-900 mb-2">
+                    {step.title || `Bước ${idx + 1}`}
+                  </h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 4: Zigzag - Alternating layout với số lớn (default)
+  return (
+    <section className="py-12 md:py-16 px-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-10 md:mb-14">
+          <div 
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
+            style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+          >
+            Quy trình
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+        </div>
+        
+        {/* Zigzag Steps */}
+        <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+          {steps.map((step, idx) => {
+            const isEven = idx % 2 === 0;
+            return (
+              <div 
+                key={idx} 
+                className={`flex items-center gap-6 md:gap-8 ${!isEven ? 'md:flex-row-reverse' : ''}`}
+              >
+                {/* Big Number */}
+                <div className="relative flex-shrink-0" style={{ minWidth: '80px' }}>
+                  <span 
+                    className="text-6xl md:text-7xl font-black leading-none"
+                    style={{ color: brandColor, opacity: 0.15 }}
+                  >
+                    {String(idx + 1).padStart(2, '0')}
+                  </span>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div 
+                      className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-white font-bold"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      {step.icon || idx + 1}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Content */}
+                <div 
+                  className={`flex-1 bg-slate-50 rounded-xl p-5 md:p-6 border border-slate-100 ${!isEven ? 'md:text-right' : ''}`}
+                >
+                  <h3 className="font-bold text-base md:text-lg text-slate-900 mb-1">
+                    {step.title || `Bước ${idx + 1}`}
+                  </h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    {step.description}
                   </p>
                 </div>
               </div>

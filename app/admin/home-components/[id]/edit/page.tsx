@@ -39,7 +39,9 @@ import {
   ProductCategoriesPreview, ProductCategoriesStyle,
   CategoryProductsPreview, CategoryProductsStyle,
   TeamPreview, TeamStyle,
-  FeaturesPreview, FeaturesStyle
+  FeaturesPreview, FeaturesStyle,
+  ProcessPreview, ProcessStyle,
+  ClientsPreview, ClientsStyle
 } from '../../previews';
 import { useBrandColor } from '../../create/shared';
 import { CategoryImageSelector } from '../../../components/CategoryImageSelector';
@@ -72,6 +74,8 @@ const COMPONENT_TYPES = [
   { value: 'CategoryProducts', label: 'Sản phẩm theo danh mục', icon: Package },
   { value: 'Team', label: 'Đội ngũ', icon: Users },
   { value: 'Features', label: 'Tính năng', icon: Zap },
+  { value: 'Process', label: 'Quy trình', icon: LayoutTemplate },
+  { value: 'Clients', label: 'Khách hàng (Marquee)', icon: Users },
 ];
 
 interface HeroSlide extends ImageItem {
@@ -171,6 +175,12 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   // Features states
   const [featuresItems, setFeaturesItems] = useState<{id: number, icon: string, title: string, description: string}[]>([]);
   const [featuresStyle, setFeaturesStyle] = useState<FeaturesStyle>('iconGrid');
+  // Process states
+  const [processSteps, setProcessSteps] = useState<{id: number, icon: string, title: string, description: string}[]>([]);
+  const [processStyle, setProcessStyle] = useState<ProcessStyle>('timeline');
+  // Clients states
+  const [clientItems, setClientItems] = useState<GalleryItem[]>([]);
+  const [clientsStyle, setClientsStyle] = useState<ClientsStyle>('marquee');
   const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true, mapEmbed: '' });
   const [contactStyle, setContactStyle] = useState<ContactStyle>('modern');
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
@@ -399,6 +409,14 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setFeaturesItems(config.items?.map((item: {icon: string, title: string, description: string}, i: number) => ({ id: i, icon: item.icon || 'Zap', title: item.title, description: item.description })) || []);
           setFeaturesStyle((config.style as FeaturesStyle) || 'iconGrid');
           break;
+        case 'Process':
+          setProcessSteps(config.steps?.map((step: {icon: string, title: string, description: string}, i: number) => ({ id: i, icon: step.icon || String(i + 1), title: step.title, description: step.description })) || []);
+          setProcessStyle((config.style as ProcessStyle) || 'timeline');
+          break;
+        case 'Clients':
+          setClientItems(config.items?.map((item: {url: string, link: string, name?: string}, i: number) => ({ id: `item-${i}`, url: item.url, link: item.link || '', name: item.name || '' })) || []);
+          setClientsStyle((config.style as ClientsStyle) || 'marquee');
+          break;
       }
       
       setIsInitialized(true);
@@ -525,6 +543,16 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         return { 
           items: featuresItems.map(f => ({ icon: f.icon, title: f.title, description: f.description })), 
           style: featuresStyle 
+        };
+      case 'Process':
+        return { 
+          steps: processSteps.map(s => ({ icon: s.icon, title: s.title, description: s.description })), 
+          style: processStyle 
+        };
+      case 'Clients':
+        return { 
+          items: clientItems.map(c => ({ url: c.url, link: c.link, name: c.name })), 
+          style: clientsStyle 
         };
       default:
         return {};
@@ -2781,6 +2809,110 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               brandColor={brandColor}
               selectedStyle={featuresStyle}
               onStyleChange={setFeaturesStyle}
+            />
+          </>
+        )}
+
+        {/* Process */}
+        {component.type === 'Process' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Các bước quy trình</CardTitle>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setProcessSteps([...processSteps, { id: Date.now(), icon: String(processSteps.length + 1), title: '', description: '' }])} 
+                  className="gap-2"
+                >
+                  <Plus size={14} /> Thêm bước
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {processSteps.map((step, idx) => (
+                  <div key={step.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold">{idx + 1}</span>
+                        Bước {idx + 1}
+                      </Label>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-red-500 h-8 w-8" 
+                        onClick={() => processSteps.length > 1 && setProcessSteps(processSteps.filter(s => s.id !== step.id))}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <Input 
+                        placeholder="Icon/Số (VD: 1, 01, ✓)" 
+                        value={step.icon} 
+                        onChange={(e) => setProcessSteps(processSteps.map(s => s.id === step.id ? {...s, icon: e.target.value} : s))}
+                        className="md:col-span-1"
+                      />
+                      <Input 
+                        placeholder="Tiêu đề bước" 
+                        value={step.title} 
+                        onChange={(e) => setProcessSteps(processSteps.map(s => s.id === step.id ? {...s, title: e.target.value} : s))} 
+                        className="md:col-span-3"
+                      />
+                    </div>
+                    <Input 
+                      placeholder="Mô tả chi tiết bước này..." 
+                      value={step.description} 
+                      onChange={(e) => setProcessSteps(processSteps.map(s => s.id === step.id ? {...s, description: e.target.value} : s))} 
+                    />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <ProcessPreview 
+              steps={processSteps} 
+              brandColor={brandColor}
+              selectedStyle={processStyle}
+              onStyleChange={setProcessStyle}
+            />
+          </>
+        )}
+
+        {/* Clients */}
+        {component.type === 'Clients' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base">Logo khách hàng</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MultiImageUploader<GalleryItem>
+                  items={clientItems}
+                  onChange={setClientItems}
+                  folder="clients"
+                  imageKey="url"
+                  extraFields={[
+                    { key: 'name', placeholder: 'Tên khách hàng (tùy chọn)', type: 'text' },
+                    { key: 'link', placeholder: 'Link website (tùy chọn)', type: 'url' }
+                  ]}
+                  minItems={3}
+                  maxItems={20}
+                  aspectRatio="video"
+                  columns={4}
+                  showReorder={true}
+                  addButtonText="Thêm logo"
+                  emptyText="Chưa có logo nào (tối thiểu 3)"
+                  layout="horizontal"
+                />
+              </CardContent>
+            </Card>
+            <ClientsPreview 
+              items={clientItems.map((item, idx) => ({ id: idx + 1, url: item.url, link: item.link, name: item.name }))} 
+              brandColor={brandColor}
+              selectedStyle={clientsStyle}
+              onStyleChange={setClientsStyle}
             />
           </>
         )}

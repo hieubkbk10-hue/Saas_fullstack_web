@@ -6118,3 +6118,805 @@ export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChang
     </PreviewWrapper>
   );
 };
+
+// ============ PROCESS/HOW IT WORKS PREVIEW ============
+// 4 Professional Styles: Timeline, Steps, Cards, Zigzag
+type ProcessStep = { id: number; icon: string; title: string; description: string };
+export type ProcessStyle = 'timeline' | 'steps' | 'cards' | 'zigzag';
+
+export const ProcessPreview = ({ 
+  steps, 
+  brandColor, 
+  selectedStyle, 
+  onStyleChange 
+}: { 
+  steps: ProcessStep[]; 
+  brandColor: string; 
+  selectedStyle?: ProcessStyle; 
+  onStyleChange?: (style: ProcessStyle) => void;
+}) => {
+  const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const previewStyle = selectedStyle || 'timeline';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as ProcessStyle);
+  const styles = [
+    { id: 'timeline', label: 'Timeline' },
+    { id: 'steps', label: 'Steps' },
+    { id: 'cards', label: 'Cards' },
+    { id: 'zigzag', label: 'Zigzag' },
+  ];
+
+  // Style 1: Timeline - Vertical timeline với connecting line
+  const renderTimelineStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+      {/* Header */}
+      <div className="text-center mb-8 md:mb-12">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+          Quy trình
+        </div>
+        <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+          Quy trình làm việc
+        </h2>
+      </div>
+      
+      {/* Timeline */}
+      <div className="max-w-3xl mx-auto relative">
+        {/* Vertical Line */}
+        <div 
+          className={cn(
+            "absolute top-0 bottom-0 w-0.5",
+            device === 'mobile' ? 'left-4' : 'left-1/2 -translate-x-1/2'
+          )}
+          style={{ backgroundColor: `${brandColor}20` }}
+        />
+        
+        {/* Steps */}
+        <div className="relative space-y-8 md:space-y-12">
+          {steps.map((step, idx) => {
+            const isEven = idx % 2 === 0;
+            return (
+              <div 
+                key={step.id} 
+                className={cn(
+                  "relative flex items-start gap-4 md:gap-8",
+                  device === 'mobile' ? 'pl-12' : (isEven ? 'md:flex-row' : 'md:flex-row-reverse'),
+                  device !== 'mobile' && 'justify-center'
+                )}
+              >
+                {/* Circle Marker */}
+                <div 
+                  className={cn(
+                    "absolute flex items-center justify-center w-8 h-8 rounded-full text-white font-bold text-sm border-4 border-white dark:border-slate-900 shadow-lg z-10",
+                    device === 'mobile' ? 'left-0' : 'left-1/2 -translate-x-1/2'
+                  )}
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {step.icon || idx + 1}
+                </div>
+                
+                {/* Content Card */}
+                <div 
+                  className={cn(
+                    "bg-white dark:bg-slate-800 rounded-xl p-4 md:p-6 shadow-sm border border-slate-200 dark:border-slate-700",
+                    device === 'mobile' ? 'flex-1' : 'w-[calc(50%-3rem)]',
+                    device !== 'mobile' && (isEven ? 'text-right' : 'text-left')
+                  )}
+                >
+                  <h3 className="font-bold text-base md:text-lg text-slate-900 dark:text-slate-100 mb-1">
+                    {step.title || `Bước ${idx + 1}`}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {step.description || 'Mô tả bước này...'}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Style 2: Steps - Horizontal steps với connector arrows
+  const renderStepsStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+      {/* Header */}
+      <div className="text-center mb-8 md:mb-12">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+          Quy trình
+        </div>
+        <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+          Các bước thực hiện
+        </h2>
+      </div>
+      
+      {/* Steps Grid */}
+      <div className={cn(
+        "grid gap-4",
+        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-4'
+      )}>
+        {steps.slice(0, 4).map((step, idx) => (
+          <div key={step.id} className="relative">
+            {/* Connector Arrow (không hiện trên mobile và item cuối) */}
+            {idx < steps.slice(0, 4).length - 1 && device === 'desktop' && (
+              <div 
+                className="absolute top-10 -right-2 w-4 h-4 z-10"
+                style={{ color: brandColor }}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+                  <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
+                </svg>
+              </div>
+            )}
+            
+            {/* Step Card */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-5 md:p-6 border border-slate-200 dark:border-slate-700 text-center h-full">
+              {/* Step Number */}
+              <div 
+                className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-lg md:text-xl"
+                style={{ 
+                  backgroundColor: brandColor,
+                  boxShadow: `0 4px 14px ${brandColor}40`
+                }}
+              >
+                {step.icon || idx + 1}
+              </div>
+              
+              <h3 className="font-bold text-base md:text-lg text-slate-900 dark:text-slate-100 mb-2">
+                {step.title || `Bước ${idx + 1}`}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                {step.description || 'Mô tả bước...'}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Style 3: Cards - Grid cards với gradient header
+  const renderCardsStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-8" style={{ borderColor: `${brandColor}20` }}>
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+            Quy trình
+          </div>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+            Cách chúng tôi làm việc
+          </h2>
+        </div>
+      </div>
+      
+      {/* Cards Grid */}
+      <div className={cn(
+        "grid gap-4 md:gap-6",
+        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'
+      )}>
+        {steps.slice(0, 4).map((step, idx) => (
+          <div 
+            key={step.id} 
+            className="group bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-shadow"
+          >
+            {/* Gradient Header */}
+            <div 
+              className="h-2"
+              style={{ background: `linear-gradient(to right, ${brandColor}, ${brandColor}99)` }}
+            />
+            
+            <div className="p-5 md:p-6">
+              {/* Step Badge */}
+              <div className="flex items-center gap-3 mb-4">
+                <div 
+                  className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {step.icon || idx + 1}
+                </div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Bước {idx + 1}
+                </span>
+              </div>
+              
+              <h3 className="font-bold text-base md:text-lg text-slate-900 dark:text-slate-100 mb-2">
+                {step.title || `Bước ${idx + 1}`}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                {step.description || 'Mô tả bước này...'}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Style 4: Zigzag - Alternating layout với số lớn
+  const renderZigzagStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+      {/* Header */}
+      <div className="text-center mb-8 md:mb-12">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+          Quy trình
+        </div>
+        <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+          Quy trình làm việc
+        </h2>
+      </div>
+      
+      {/* Zigzag Steps */}
+      <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+        {steps.slice(0, 4).map((step, idx) => {
+          const isEven = idx % 2 === 0;
+          return (
+            <div 
+              key={step.id} 
+              className={cn(
+                "flex items-center gap-6 md:gap-8",
+                device !== 'mobile' && !isEven && 'flex-row-reverse'
+              )}
+            >
+              {/* Big Number */}
+              <div 
+                className="relative flex-shrink-0"
+                style={{ minWidth: device === 'mobile' ? '60px' : '80px' }}
+              >
+                <span 
+                  className={cn(
+                    "font-black leading-none",
+                    device === 'mobile' ? 'text-5xl' : 'text-6xl md:text-7xl'
+                  )}
+                  style={{ 
+                    color: brandColor,
+                    opacity: 0.15
+                  }}
+                >
+                  {String(idx + 1).padStart(2, '0')}
+                </span>
+                <div 
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <div 
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-white font-bold"
+                    style={{ backgroundColor: brandColor }}
+                  >
+                    {step.icon || idx + 1}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Content */}
+              <div 
+                className={cn(
+                  "flex-1 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 md:p-6 border border-slate-100 dark:border-slate-700",
+                  device !== 'mobile' && !isEven && 'text-right'
+                )}
+              >
+                <h3 className="font-bold text-base md:text-lg text-slate-900 dark:text-slate-100 mb-1">
+                  {step.title || `Bước ${idx + 1}`}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {step.description || 'Mô tả bước này...'}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <PreviewWrapper 
+      title="Preview Process" 
+      device={device} 
+      setDevice={setDevice} 
+      previewStyle={previewStyle} 
+      setPreviewStyle={setPreviewStyle} 
+      styles={styles} 
+      info={`${steps.length} bước`}
+    >
+      <BrowserFrame>
+        {previewStyle === 'timeline' && renderTimelineStyle()}
+        {previewStyle === 'steps' && renderStepsStyle()}
+        {previewStyle === 'cards' && renderCardsStyle()}
+        {previewStyle === 'zigzag' && renderZigzagStyle()}
+      </BrowserFrame>
+    </PreviewWrapper>
+  );
+};
+
+// ============ CLIENTS MARQUEE PREVIEW ============
+// Auto-scroll Logo Marquee - 4 Styles: marquee, marqueeReverse, wave, logoWall
+// Khác với Partners (static grid), Clients có hiệu ứng chạy tự động
+type ClientItem = { id: number; url: string; link: string; name?: string };
+export type ClientsStyle = 'marquee' | 'marqueeReverse' | 'wave' | 'logoWall';
+
+// Infinite Marquee Component với CSS animation
+const MarqueeTrack = ({ 
+  children, 
+  className, 
+  reverse = false,
+  speed = 30,
+  pauseOnHover = true 
+}: { 
+  children: React.ReactNode; 
+  className?: string; 
+  reverse?: boolean;
+  speed?: number;
+  pauseOnHover?: boolean;
+}) => {
+  return (
+    <div 
+      className={cn(
+        "flex overflow-hidden",
+        pauseOnHover && "[&:hover_.marquee-track]:paused",
+        className
+      )}
+      style={{ 
+        maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
+        WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)'
+      }}
+    >
+      <div 
+        className={cn(
+          "marquee-track flex shrink-0 items-center gap-12 md:gap-16",
+          reverse ? 'animate-marquee-reverse' : 'animate-marquee'
+        )}
+        style={{ 
+          animationDuration: `${speed}s`,
+          animationTimingFunction: 'linear',
+          animationIterationCount: 'infinite'
+        }}
+      >
+        {children}
+      </div>
+      <div 
+        className={cn(
+          "marquee-track flex shrink-0 items-center gap-12 md:gap-16",
+          reverse ? 'animate-marquee-reverse' : 'animate-marquee'
+        )}
+        style={{ 
+          animationDuration: `${speed}s`,
+          animationTimingFunction: 'linear',
+          animationIterationCount: 'infinite'
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
+export const ClientsPreview = ({ 
+  items, 
+  brandColor, 
+  selectedStyle, 
+  onStyleChange 
+}: { 
+  items: ClientItem[]; 
+  brandColor: string; 
+  selectedStyle?: ClientsStyle; 
+  onStyleChange?: (style: ClientsStyle) => void;
+}) => {
+  const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const previewStyle = selectedStyle || 'marquee';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as ClientsStyle);
+  const styles = [
+    { id: 'marquee', label: 'Marquee' },
+    { id: 'marqueeReverse', label: 'Dual Row' },
+    { id: 'wave', label: 'Wave' },
+    { id: 'logoWall', label: 'Logo Wall' },
+  ];
+
+  // Empty state
+  if (items.length === 0) {
+    return (
+      <PreviewWrapper 
+        title="Preview Clients" 
+        device={device} 
+        setDevice={setDevice} 
+        previewStyle={previewStyle} 
+        setPreviewStyle={setPreviewStyle} 
+        styles={styles}
+      >
+        <BrowserFrame>
+          <section className="py-12 px-4">
+            <div className="flex flex-col items-center justify-center h-48 text-slate-400">
+              <ImageIcon size={48} className="opacity-20 mb-4" />
+              <p className="text-sm">Chưa có logo khách hàng nào.</p>
+              <p className="text-xs text-slate-300">Thêm ít nhất 3 logo để xem hiệu ứng marquee.</p>
+            </div>
+          </section>
+        </BrowserFrame>
+      </PreviewWrapper>
+    );
+  }
+
+  // CSS keyframes inline (để hoạt động trong preview)
+  const marqueeKeyframes = `
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+    @keyframes marquee-reverse {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(0); }
+    }
+    .animate-marquee { animation: marquee var(--marquee-duration, 30s) linear infinite; }
+    .animate-marquee-reverse { animation: marquee-reverse var(--marquee-duration, 30s) linear infinite; }
+    .paused { animation-play-state: paused !important; }
+  `;
+
+  // Logo item renderer
+  const renderLogoItem = (item: ClientItem, idx: number, grayscale = false) => (
+    <div key={`logo-${item.id}-${idx}`} className="shrink-0 group">
+      {item.url ? (
+        <img 
+          src={item.url} 
+          alt={item.name || `Client ${item.id}`}
+          className={cn(
+            "h-10 md:h-12 w-auto object-contain select-none pointer-events-none transition-all duration-500",
+            grayscale && "grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100"
+          )}
+        />
+      ) : (
+        <div 
+          className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center"
+          style={{ backgroundColor: `${brandColor}15` }}
+        >
+          <ImageIcon size={20} style={{ color: brandColor }} className="opacity-40" />
+        </div>
+      )}
+    </div>
+  );
+
+  // Style 1: Simple Marquee - Single row auto-scroll left
+  const renderMarqueeStyle = () => (
+    <section className="w-full py-10 md:py-12 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+      <style>{marqueeKeyframes}</style>
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <h2 className={cn(
+            "font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-4",
+            device === 'mobile' ? 'text-xl' : 'text-2xl'
+          )}>
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }} />
+            Khách hàng tin tưởng
+          </h2>
+        </div>
+        
+        {/* Marquee Track */}
+        <div 
+          className="relative py-6"
+          style={{ 
+            maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)',
+            WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)'
+          }}
+        >
+          <div className="flex overflow-hidden">
+            <div 
+              className="flex shrink-0 items-center gap-12 md:gap-16 animate-marquee"
+              style={{ animationDuration: `${Math.max(20, items.length * 4)}s` }}
+            >
+              {items.map((item, idx) => renderLogoItem(item, idx))}
+              {items.map((item, idx) => renderLogoItem(item, idx + items.length))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 2: Dual Row Marquee - 2 rows chạy ngược chiều
+  const renderMarqueeReverseStyle = () => (
+    <section className="w-full py-10 md:py-12 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+      <style>{marqueeKeyframes}</style>
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <h2 className={cn(
+            "font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-4",
+            device === 'mobile' ? 'text-xl' : 'text-2xl'
+          )}>
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }} />
+            Khách hàng tin tưởng
+          </h2>
+        </div>
+        
+        {/* Dual Row Marquee */}
+        <div className="space-y-4">
+          {/* Row 1 - Left to Right */}
+          <div 
+            className="relative py-4"
+            style={{ 
+              maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)'
+            }}
+          >
+            <div className="flex overflow-hidden">
+              <div 
+                className="flex shrink-0 items-center gap-12 md:gap-16 animate-marquee"
+                style={{ animationDuration: `${Math.max(25, items.length * 5)}s` }}
+              >
+                {items.map((item, idx) => renderLogoItem(item, idx, true))}
+                {items.map((item, idx) => renderLogoItem(item, idx + items.length, true))}
+              </div>
+            </div>
+          </div>
+          
+          {/* Row 2 - Right to Left (Reverse) */}
+          <div 
+            className="relative py-4"
+            style={{ 
+              maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)'
+            }}
+          >
+            <div className="flex overflow-hidden">
+              <div 
+                className="flex shrink-0 items-center gap-12 md:gap-16 animate-marquee-reverse"
+                style={{ animationDuration: `${Math.max(30, items.length * 6)}s` }}
+              >
+                {[...items].reverse().map((item, idx) => renderLogoItem(item, idx, true))}
+                {[...items].reverse().map((item, idx) => renderLogoItem(item, idx + items.length, true))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 3: Wave - Logos with floating animation
+  const renderWaveStyle = () => (
+    <section className="w-full py-10 md:py-16 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 border-b border-slate-200/40 dark:border-slate-700/40 overflow-hidden">
+      <style>{`
+        ${marqueeKeyframes}
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+      `}</style>
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+        {/* Header - Centered */}
+        <div className="text-center space-y-2">
+          <div 
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
+            style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+          >
+            Đối tác & Khách hàng
+          </div>
+          <h2 className={cn(
+            "font-bold tracking-tight text-slate-900 dark:text-slate-100",
+            device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
+          )}>
+            Được tin tưởng bởi các thương hiệu hàng đầu
+          </h2>
+        </div>
+        
+        {/* Wave Logos */}
+        <div 
+          className="relative py-8"
+          style={{ 
+            maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+            WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
+          }}
+        >
+          <div className="flex overflow-hidden">
+            <div 
+              className="flex shrink-0 items-center gap-14 md:gap-20 animate-marquee"
+              style={{ animationDuration: `${Math.max(35, items.length * 6)}s` }}
+            >
+              {items.map((item, idx) => (
+                <div 
+                  key={`wave-${item.id}-${idx}`} 
+                  className="shrink-0 animate-float"
+                  style={{ animationDelay: `${idx * 0.3}s` }}
+                >
+                  {item.url ? (
+                    <div className="p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+                      <img 
+                        src={item.url} 
+                        alt={item.name || `Client ${item.id}`}
+                        className="h-8 md:h-10 w-auto object-contain select-none pointer-events-none"
+                      />
+                    </div>
+                  ) : (
+                    <div 
+                      className="h-16 w-28 rounded-xl flex items-center justify-center bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700"
+                    >
+                      <ImageIcon size={20} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              {items.map((item, idx) => (
+                <div 
+                  key={`wave2-${item.id}-${idx}`} 
+                  className="shrink-0 animate-float"
+                  style={{ animationDelay: `${(idx + items.length) * 0.3}s` }}
+                >
+                  {item.url ? (
+                    <div className="p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+                      <img 
+                        src={item.url} 
+                        alt={item.name || `Client ${item.id}`}
+                        className="h-8 md:h-10 w-auto object-contain select-none pointer-events-none"
+                      />
+                    </div>
+                  ) : (
+                    <div 
+                      className="h-16 w-28 rounded-xl flex items-center justify-center bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700"
+                    >
+                      <ImageIcon size={20} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        
+        {/* Stats */}
+        <div className={cn(
+          "flex items-center justify-center gap-8 md:gap-16 pt-4",
+          device === 'mobile' && 'flex-wrap gap-4'
+        )}>
+          <div className="text-center">
+            <div className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{items.length * 10}+</div>
+            <div className="text-xs text-slate-500">Khách hàng</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>98%</div>
+            <div className="text-xs text-slate-500">Hài lòng</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>5+</div>
+            <div className="text-xs text-slate-500">Năm kinh nghiệm</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 4: Logo Wall - Static grid với hover highlight (fallback khi ít logos)
+  const renderLogoWallStyle = () => (
+    <section className="w-full py-10 md:py-12 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+      <style>{marqueeKeyframes}</style>
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <h2 className={cn(
+            "font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-4",
+            device === 'mobile' ? 'text-xl' : 'text-2xl'
+          )}>
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }} />
+            Khách hàng tiêu biểu
+          </h2>
+        </div>
+        
+        {/* Logo Wall Grid với auto-scroll nếu nhiều logos */}
+        {items.length > 8 ? (
+          <div 
+            className="relative py-6"
+            style={{ 
+              maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
+            }}
+          >
+            <div className="flex overflow-hidden">
+              <div 
+                className="flex shrink-0 items-center gap-10 md:gap-14 animate-marquee"
+                style={{ animationDuration: `${Math.max(40, items.length * 4)}s` }}
+              >
+                {items.map((item, idx) => (
+                  <div 
+                    key={`wall-${item.id}-${idx}`} 
+                    className="shrink-0 group p-3 rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                  >
+                    {item.url ? (
+                      <img 
+                        src={item.url} 
+                        alt={item.name || `Client ${item.id}`}
+                        className="h-10 md:h-12 w-auto object-contain select-none pointer-events-none grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                      />
+                    ) : (
+                      <div 
+                        className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: `${brandColor}10` }}
+                      >
+                        <ImageIcon size={18} className="text-slate-300" />
+                      </div>
+                    )}
+                    {item.name && (
+                      <div className="text-[10px] text-slate-400 text-center mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {item.name}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {items.map((item, idx) => (
+                  <div 
+                    key={`wall2-${item.id}-${idx}`} 
+                    className="shrink-0 group p-3 rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                  >
+                    {item.url ? (
+                      <img 
+                        src={item.url} 
+                        alt={item.name || `Client ${item.id}`}
+                        className="h-10 md:h-12 w-auto object-contain select-none pointer-events-none grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                      />
+                    ) : (
+                      <div 
+                        className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: `${brandColor}10` }}
+                      >
+                        <ImageIcon size={18} className="text-slate-300" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Static Grid cho ít logos */
+          <div className={cn(
+            "grid gap-6 items-center justify-items-center py-6",
+            device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-4' : 'grid-cols-4 lg:grid-cols-6'
+          )}>
+            {items.map((item) => (
+              <div 
+                key={`static-${item.id}`}
+                className="group p-4 rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer w-full flex flex-col items-center"
+              >
+                {item.url ? (
+                  <img 
+                    src={item.url} 
+                    alt={item.name || `Client ${item.id}`}
+                    className="h-10 md:h-12 w-auto object-contain select-none pointer-events-none grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                  />
+                ) : (
+                  <div 
+                    className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: `${brandColor}10` }}
+                  >
+                    <ImageIcon size={18} className="text-slate-300" />
+                  </div>
+                )}
+                {item.name && (
+                  <div className="text-[10px] text-slate-400 text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity truncate max-w-full">
+                    {item.name}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+
+  return (
+    <PreviewWrapper 
+      title="Preview Clients" 
+      device={device} 
+      setDevice={setDevice} 
+      previewStyle={previewStyle} 
+      setPreviewStyle={setPreviewStyle} 
+      styles={styles} 
+      info={`${items.length} logo`}
+    >
+      <BrowserFrame>
+        {previewStyle === 'marquee' && renderMarqueeStyle()}
+        {previewStyle === 'marqueeReverse' && renderMarqueeReverseStyle()}
+        {previewStyle === 'wave' && renderWaveStyle()}
+        {previewStyle === 'logoWall' && renderLogoWallStyle()}
+      </BrowserFrame>
+    </PreviewWrapper>
+  );
+};
