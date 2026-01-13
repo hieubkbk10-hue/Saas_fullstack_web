@@ -3052,16 +3052,16 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
         )}
       </div>
       <h4 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h4>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col">
         {product.salePrice && product.salePrice < (product.price || 0) ? (
           <>
-            <span className="font-bold text-base" style={{ color: brandColor }}>
+            <span className="font-bold text-sm" style={{ color: brandColor }}>
               {formatPrice(product.salePrice)}
             </span>
             <span className="text-xs text-slate-400 line-through">{formatPrice(product.price)}</span>
           </>
         ) : (
-          <span className="font-bold text-base" style={{ color: brandColor }}>
+          <span className="font-bold text-sm" style={{ color: brandColor }}>
             {formatPrice(product.price)}
           </span>
         )}
@@ -3322,14 +3322,14 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                               Nổi bật
                             </span>
                             <h3 className="font-bold text-lg line-clamp-2 mb-1">{featured.name}</h3>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
                               {featured.salePrice && featured.salePrice < (featured.price || 0) ? (
                                 <>
-                                  <span className="font-bold text-xl">{formatPrice(featured.salePrice)}</span>
-                                  <span className="text-sm text-white/60 line-through">{formatPrice(featured.price)}</span>
+                                  <span className="font-bold text-lg">{formatPrice(featured.salePrice)}</span>
+                                  <span className="text-xs text-white/60 line-through">{formatPrice(featured.price)}</span>
                                 </>
                               ) : (
-                                <span className="font-bold text-xl">{formatPrice(featured.price)}</span>
+                                <span className="font-bold text-lg">{formatPrice(featured.price)}</span>
                               )}
                             </div>
                           </div>
@@ -3569,18 +3569,18 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                     </div>
                     
                     {/* Product info */}
-                    <div className="space-y-1.5">
-                      <h4 className="font-medium text-sm md:text-base line-clamp-2 group-hover:opacity-80 transition-opacity">{product.name}</h4>
-                      <div className="flex items-center gap-2">
+                    <div className="space-y-1">
+                      <h4 className="font-medium text-sm line-clamp-2 group-hover:opacity-80 transition-opacity">{product.name}</h4>
+                      <div className="flex flex-col">
                         {product.salePrice && product.salePrice < (product.price || 0) ? (
                           <>
-                            <span className="font-bold text-base md:text-lg" style={{ color: brandColor }}>
+                            <span className="font-bold text-sm" style={{ color: brandColor }}>
                               {formatPrice(product.salePrice)}
                             </span>
-                            <span className="text-sm text-slate-400 line-through">{formatPrice(product.price)}</span>
+                            <span className="text-xs text-slate-400 line-through">{formatPrice(product.price)}</span>
                           </>
                         ) : (
-                          <span className="font-bold text-base md:text-lg" style={{ color: brandColor }}>
+                          <span className="font-bold text-sm" style={{ color: brandColor }}>
                             {formatPrice(product.price)}
                           </span>
                         )}

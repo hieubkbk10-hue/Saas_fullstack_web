@@ -4763,16 +4763,16 @@ export const CategoryProductsPreview = ({
         "font-medium line-clamp-2 mb-1",
         device === 'mobile' ? 'text-xs' : 'text-sm'
       )}>{product.name}</h4>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col">
         {product.salePrice && product.salePrice < (product.price || 0) ? (
           <>
-            <span className={cn("font-bold", device === 'mobile' ? 'text-sm' : 'text-base')} style={{ color: brandColor }}>
+            <span className={cn("font-bold", device === 'mobile' ? 'text-xs' : 'text-sm')} style={{ color: brandColor }}>
               {formatPrice(product.salePrice)}
             </span>
-            <span className="text-xs text-slate-400 line-through">{formatPrice(product.price)}</span>
+            <span className="text-[10px] text-slate-400 line-through">{formatPrice(product.price)}</span>
           </>
         ) : (
-          <span className={cn("font-bold", device === 'mobile' ? 'text-sm' : 'text-base')} style={{ color: brandColor }}>
+          <span className={cn("font-bold", device === 'mobile' ? 'text-xs' : 'text-sm')} style={{ color: brandColor }}>
             {formatPrice(product.price)}
           </span>
         )}
@@ -5047,15 +5047,15 @@ export const CategoryProductsPreview = ({
                           >
                             Nổi bật
                           </span>
-                          <h3 className="font-bold text-lg line-clamp-2 mb-1">{featured.name}</h3>
-                          <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-base line-clamp-2 mb-1">{featured.name}</h3>
+                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
                             {featured.salePrice && featured.salePrice < (featured.price || 0) ? (
                               <>
-                                <span className="font-bold text-xl">{formatPrice(featured.salePrice)}</span>
-                                <span className="text-sm text-white/60 line-through">{formatPrice(featured.price)}</span>
+                                <span className="font-bold text-base">{formatPrice(featured.salePrice)}</span>
+                                <span className="text-xs text-white/60 line-through">{formatPrice(featured.price)}</span>
                               </>
                             ) : (
-                              <span className="font-bold text-xl">{formatPrice(featured.price)}</span>
+                              <span className="font-bold text-base">{formatPrice(featured.price)}</span>
                             )}
                           </div>
                         </div>
@@ -5078,8 +5078,8 @@ export const CategoryProductsPreview = ({
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="absolute bottom-0 left-0 right-0 p-3 text-white transform translate-y-full group-hover:translate-y-0 transition-transform">
-                          <h4 className="font-medium text-sm line-clamp-1">{product.name}</h4>
-                          <span className="font-bold text-sm">{formatPrice(product.salePrice || product.price)}</span>
+                          <h4 className="font-medium text-xs line-clamp-1">{product.name}</h4>
+                          <span className="font-bold text-xs">{formatPrice(product.salePrice || product.price)}</span>
                         </div>
                       </div>
                     ))}
@@ -5320,25 +5320,25 @@ export const CategoryProductsPreview = ({
                       </div>
                       
                       {/* Product info */}
-                      <div className="space-y-1.5">
+                      <div className="space-y-1">
                         <h4 className={cn(
                           "font-medium line-clamp-2 group-hover:text-opacity-80 transition-colors",
-                          device === 'mobile' ? 'text-sm' : 'text-base'
+                          device === 'mobile' ? 'text-xs' : 'text-sm'
                         )}>{product.name}</h4>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col">
                           {product.salePrice && product.salePrice < (product.price || 0) ? (
                             <>
                               <span 
-                                className={cn("font-bold", device === 'mobile' ? 'text-base' : 'text-lg')} 
+                                className={cn("font-bold", device === 'mobile' ? 'text-xs' : 'text-sm')} 
                                 style={{ color: brandColor }}
                               >
                                 {formatPrice(product.salePrice)}
                               </span>
-                              <span className="text-sm text-slate-400 line-through">{formatPrice(product.price)}</span>
+                              <span className="text-[10px] text-slate-400 line-through">{formatPrice(product.price)}</span>
                             </>
                           ) : (
                             <span 
-                              className={cn("font-bold", device === 'mobile' ? 'text-base' : 'text-lg')} 
+                              className={cn("font-bold", device === 'mobile' ? 'text-xs' : 'text-sm')} 
                               style={{ color: brandColor }}
                             >
                               {formatPrice(product.price)}
