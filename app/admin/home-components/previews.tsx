@@ -641,59 +641,29 @@ export const HeroBannerPreview = ({
         </div>
 
         {/* Hướng dẫn kích thước ảnh tối ưu */}
-        <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-2 mb-2">
-            <ImageIcon size={14} className="text-slate-500" />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Kích thước ảnh tối ưu cho style "{styles.find(s => s.id === selectedStyle)?.label}"</span>
-          </div>
-          <div className="text-xs text-slate-600 dark:text-slate-400 space-y-1.5">
-            {selectedStyle === 'slider' && (
-              <>
-                <p><strong>Banner:</strong> 1920 × 600px (tỉ lệ 16:5)</p>
-                <p className="text-slate-500">• Ảnh sẽ hiển thị full width với object-contain, blur fill cho letterbox</p>
-                <p className="text-slate-500">• Hỗ trợ nhiều ảnh, tự động slide</p>
-              </>
-            )}
-            {selectedStyle === 'fade' && (
-              <>
-                <p><strong>Banner:</strong> 1920 × 600px (tỉ lệ 16:5)</p>
-                <p className="text-slate-500">• Thumbnail: 160 × 100px (tự crop từ ảnh gốc)</p>
-                <p className="text-slate-500">• Hỗ trợ nhiều ảnh, fade transition với thumbnail navigation</p>
-              </>
-            )}
-            {selectedStyle === 'bento' && (
-              <>
-                <p><strong>Ảnh chính (slot 1):</strong> 800 × 500px (tỉ lệ 8:5) - Chiếm 2x2 grid</p>
-                <p><strong>Ảnh phụ (slot 2):</strong> 800 × 250px (tỉ lệ 16:5) - Chiếm 2x1 grid</p>
-                <p><strong>Ảnh nhỏ (slot 3-4):</strong> 400 × 250px (tỉ lệ 8:5) - Mỗi ảnh 1x1 grid</p>
-                <p className="text-slate-500">• Tối đa 4 ảnh, layout cố định dạng bento grid</p>
-                <p className="text-slate-500">• Mobile: Tự động chuyển sang 2x2 grid đều</p>
-              </>
-            )}
-            {selectedStyle === 'fullscreen' && (
-              <>
-                <p><strong>Banner:</strong> 1920 × 1080px (tỉ lệ 16:9, Full HD)</p>
-                <p className="text-slate-500">• Ảnh sẽ hiển thị toàn màn hình với object-cover</p>
-                <p className="text-slate-500">• Gradient overlay từ trái sang phải để hiện text</p>
-                <p className="text-slate-500">• Nên đặt subject chính bên phải ảnh (trái sẽ bị overlay)</p>
-              </>
-            )}
-            {selectedStyle === 'split' && (
-              <>
-                <p><strong>Banner:</strong> 960 × 600px (tỉ lệ 8:5) hoặc 1280 × 800px</p>
-                <p className="text-slate-500">• Ảnh chiếm 50% màn hình bên phải, object-cover</p>
-                <p className="text-slate-500">• Nên dùng ảnh có subject ở giữa hoặc bên trái</p>
-                <p className="text-slate-500">• Mobile: Ảnh hiển thị phía trên, 280px height</p>
-              </>
-            )}
-            {selectedStyle === 'parallax' && (
-              <>
-                <p><strong>Banner:</strong> 1920 × 1080px (tỉ lệ 16:9, Full HD)</p>
-                <p className="text-slate-500">• Ảnh scale 110% tạo hiệu ứng parallax depth</p>
-                <p className="text-slate-500">• Gradient overlay từ dưới lên, card nổi phía dưới trái</p>
-                <p className="text-slate-500">• Nên dùng ảnh có không gian trống phía dưới trái</p>
-              </>
-            )}
+        <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+          <div className="flex items-start gap-2">
+            <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+            <div className="text-xs text-slate-600 dark:text-slate-400">
+              {selectedStyle === 'slider' && (
+                <p><strong>1920×600px</strong> (16:5) • Nhiều ảnh, auto slide</p>
+              )}
+              {selectedStyle === 'fade' && (
+                <p><strong>1920×600px</strong> (16:5) • Nhiều ảnh, thumbnail navigation</p>
+              )}
+              {selectedStyle === 'bento' && (
+                <p><strong>Slot 1:</strong> 800×500 • <strong>Slot 2:</strong> 800×250 • <strong>Slot 3-4:</strong> 400×250 • Tối đa 4 ảnh</p>
+              )}
+              {selectedStyle === 'fullscreen' && (
+                <p><strong>1920×1080px</strong> (16:9) • Subject đặt bên phải (trái có overlay text)</p>
+              )}
+              {selectedStyle === 'split' && (
+                <p><strong>960×600px</strong> (8:5) • Ảnh bên phải 50%, subject đặt giữa/trái</p>
+              )}
+              {selectedStyle === 'parallax' && (
+                <p><strong>1920×1080px</strong> (16:9) • Để trống góc dưới trái cho card nổi</p>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
