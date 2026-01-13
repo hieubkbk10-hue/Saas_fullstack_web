@@ -35,7 +35,8 @@ import {
   PricingPreview, PricingStyle,
   CaseStudyPreview, CaseStudyStyle,
   CareerPreview, CareerStyle,
-  SpeedDialPreview, SpeedDialStyle
+  SpeedDialPreview, SpeedDialStyle,
+  ProductCategoriesPreview, ProductCategoriesStyle
 } from '../../previews';
 import { useBrandColor } from '../../create/shared';
 
@@ -63,6 +64,7 @@ const COMPONENT_TYPES = [
   { value: 'News', label: 'Tin tức', icon: FileText },
   { value: 'Banner', label: 'Banner', icon: LayoutTemplate },
   { value: 'SpeedDial', label: 'Speed Dial', icon: Zap },
+  { value: 'ProductCategories', label: 'Danh mục sản phẩm', icon: Package },
 ];
 
 interface HeroSlide extends ImageItem {
@@ -91,6 +93,8 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const servicesData = useQuery(api.services.listAll, { limit: 100 });
   // Query products for ProductList manual selection
   const productsData = useQuery(api.products.listAll, { limit: 100 });
+  // Query product categories for ProductCategories component
+  const productCategoriesData = useQuery(api.productCategories.listActive);
   // Query settings for Footer
   const siteLogo = useQuery(api.settings.getByKey, { key: 'site_logo' });
   const socialFacebook = useQuery(api.settings.getByKey, { key: 'social_facebook' });
@@ -141,6 +145,12 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [speedDialStyle, setSpeedDialStyle] = useState<SpeedDialStyle>('fab');
   const [speedDialPosition, setSpeedDialPosition] = useState<'bottom-right' | 'bottom-left'>('bottom-right');
   const [speedDialAlwaysOpen, setSpeedDialAlwaysOpen] = useState(true);
+  // ProductCategories states
+  const [productCategoriesItems, setProductCategoriesItems] = useState<{id: number, categoryId: string, customImage: string}[]>([]);
+  const [productCategoriesStyle, setProductCategoriesStyle] = useState<ProductCategoriesStyle>('grid');
+  const [productCategoriesShowCount, setProductCategoriesShowCount] = useState(true);
+  const [productCategoriesColsDesktop, setProductCategoriesColsDesktop] = useState(4);
+  const [productCategoriesColsMobile, setProductCategoriesColsMobile] = useState(2);
   const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true, mapEmbed: '' });
   const [contactStyle, setContactStyle] = useState<ContactStyle>('modern');
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
@@ -337,6 +347,13 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setSpeedDialPosition(config.position || 'bottom-right');
           setSpeedDialAlwaysOpen(config.alwaysOpen ?? true);
           break;
+        case 'ProductCategories':
+          setProductCategoriesItems(config.categories?.map((c: {categoryId: string, customImage?: string}, i: number) => ({ id: i, categoryId: c.categoryId, customImage: c.customImage || '' })) || []);
+          setProductCategoriesStyle((config.style as ProductCategoriesStyle) || 'grid');
+          setProductCategoriesShowCount(config.showProductCount ?? true);
+          setProductCategoriesColsDesktop(config.columnsDesktop || 4);
+          setProductCategoriesColsMobile(config.columnsMobile || 2);
+          break;
       }
       
       setIsInitialized(true);
@@ -428,6 +445,14 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           position: speedDialPosition,
           alwaysOpen: speedDialAlwaysOpen,
           mainButtonColor: brandColor,
+        };
+      case 'ProductCategories':
+        return {
+          categories: productCategoriesItems.map(c => ({ categoryId: c.categoryId, customImage: c.customImage || undefined })),
+          style: productCategoriesStyle,
+          showProductCount: productCategoriesShowCount,
+          columnsDesktop: productCategoriesColsDesktop,
+          columnsMobile: productCategoriesColsMobile,
         };
       default:
         return {};
@@ -2195,6 +2220,148 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               brandColor={brandColor}
               selectedStyle={speedDialStyle}
               onStyleChange={setSpeedDialStyle}
+            />
+          </>
+        )}
+
+        {/* ProductCategories */}
+        {component.type === 'ProductCategories' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base">Cấu hình hiển thị</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Số cột (Desktop)</Label>
+                    <select
+                      value={productCategoriesColsDesktop}
+                      onChange={(e) => setProductCategoriesColsDesktop(parseInt(e.target.value))}
+                      className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+                    >
+                      <option value={3}>3 cột</option>
+                      <option value={4}>4 cột</option>
+                      <option value={5}>5 cột</option>
+                      <option value={6}>6 cột</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Số cột (Mobile)</Label>
+                    <select
+                      value={productCategoriesColsMobile}
+                      onChange={(e) => setProductCategoriesColsMobile(parseInt(e.target.value))}
+                      className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+                    >
+                      <option value={2}>2 cột</option>
+                      <option value={3}>3 cột</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="showProductCount"
+                    checked={productCategoriesShowCount}
+                    onChange={(e) => setProductCategoriesShowCount(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300"
+                  />
+                  <Label htmlFor="showProductCount" className="cursor-pointer">Hiển thị số lượng sản phẩm</Label>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Chọn danh mục ({productCategoriesItems.length})</CardTitle>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    const newId = Math.max(0, ...productCategoriesItems.map(c => c.id)) + 1;
+                    setProductCategoriesItems([...productCategoriesItems, { id: newId, categoryId: '', customImage: '' }]);
+                  }}
+                  disabled={productCategoriesItems.length >= 12 || !productCategoriesData?.length}
+                  className="gap-2"
+                >
+                  <Plus size={14} /> Thêm
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!productCategoriesData?.length ? (
+                  <p className="text-sm text-slate-500 text-center py-4">
+                    Chưa có danh mục sản phẩm. Vui lòng tạo danh mục trước.
+                  </p>
+                ) : productCategoriesItems.length === 0 ? (
+                  <p className="text-sm text-slate-500 text-center py-4">
+                    Chưa chọn danh mục nào. Nhấn &quot;Thêm&quot; để bắt đầu.
+                  </p>
+                ) : (
+                  productCategoriesItems.map((item, idx) => (
+                    <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <GripVertical size={16} className="text-slate-400 cursor-move" />
+                          <Label>Danh mục {idx + 1}</Label>
+                        </div>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-red-500 h-8 w-8" 
+                          onClick={() => setProductCategoriesItems(productCategoriesItems.filter(c => c.id !== item.id))}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label className="text-xs text-slate-500">Danh mục</Label>
+                          <select
+                            value={item.categoryId}
+                            onChange={(e) => setProductCategoriesItems(productCategoriesItems.map(c => c.id === item.id ? {...c, categoryId: e.target.value} : c))}
+                            className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+                          >
+                            <option value="">-- Chọn danh mục --</option>
+                            {productCategoriesData?.map(cat => (
+                              <option key={cat._id} value={cat._id}>{cat.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs text-slate-500">Ảnh tùy chỉnh (URL)</Label>
+                          <Input 
+                            value={item.customImage || ''} 
+                            onChange={(e) => setProductCategoriesItems(productCategoriesItems.map(c => c.id === item.id ? {...c, customImage: e.target.value} : c))}
+                            placeholder="Để trống sử dụng ảnh danh mục"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                
+                <p className="text-xs text-slate-500">
+                  Tối đa 12 danh mục. Để trống ảnh tùy chỉnh sẽ sử dụng ảnh từ danh mục gốc.
+                </p>
+              </CardContent>
+            </Card>
+
+            <ProductCategoriesPreview 
+              config={{
+                categories: productCategoriesItems,
+                style: productCategoriesStyle,
+                showProductCount: productCategoriesShowCount,
+                columnsDesktop: productCategoriesColsDesktop,
+                columnsMobile: productCategoriesColsMobile,
+              }}
+              brandColor={brandColor}
+              selectedStyle={productCategoriesStyle}
+              onStyleChange={setProductCategoriesStyle}
+              categoriesData={productCategoriesData || []}
             />
           </>
         )}
