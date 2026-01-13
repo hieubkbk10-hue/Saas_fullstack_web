@@ -1853,7 +1853,7 @@ const stripHtml = (html?: string) => {
   return html.replace(/<[^>]*>/g, '').trim();
 };
 
-export const ProductListPreview = ({ brandColor, itemCount, componentType, selectedStyle, onStyleChange, items, subTitle = 'Bộ sưu tập', buttonText = 'Xem tất cả', sectionTitle }: { 
+export const ProductListPreview = ({ brandColor, itemCount, componentType, selectedStyle, onStyleChange, items, subTitle = 'Bộ sưu tập', sectionTitle }: { 
   brandColor: string; 
   itemCount: number; 
   componentType: 'ProductList' | 'ServiceList'; 
@@ -1861,11 +1861,11 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
   onStyleChange?: (style: ProductListStyle) => void;
   items?: ProductListPreviewItem[];
   subTitle?: string;
-  buttonText?: string;
   sectionTitle?: string;
 }) => {
   // Use sectionTitle if provided, otherwise use default based on componentType
   const displayTitle = sectionTitle || (componentType === 'ProductList' ? 'Sản phẩm nổi bật' : 'Dịch vụ nổi bật');
+  const buttonText = 'Xem tất cả';
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'commerce';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ProductListStyle);

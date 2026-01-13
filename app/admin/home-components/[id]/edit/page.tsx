@@ -222,7 +222,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [productSearchTerm, setProductSearchTerm] = useState('');
   // ProductList text config
   const [productSubTitle, setProductSubTitle] = useState('Bộ sưu tập');
-  const [productButtonText, setProductButtonText] = useState('Xem tất cả');
+  const [productSectionTitle, setProductSectionTitle] = useState('Sản phẩm nổi bật');
 
   // Filter posts for search and get selected posts data
   const filteredPosts = useMemo(() => {
@@ -386,7 +386,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setProductSelectionMode(config.selectionMode || 'auto');
           setSelectedProductIds(config.selectedProductIds || []);
           setProductSubTitle(config.subTitle || 'Bộ sưu tập');
-          setProductButtonText(config.buttonText || 'Xem tất cả');
+          setProductSectionTitle(config.sectionTitle || 'Sản phẩm nổi bật');
           break;
         case 'ServiceList':
           setProductListConfig({ itemCount: config.itemCount || 8, sortBy: config.sortBy || 'newest' });
@@ -550,7 +550,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           selectionMode: productSelectionMode,
           selectedProductIds: productSelectionMode === 'manual' ? selectedProductIds : [],
           subTitle: productSubTitle,
-          buttonText: productButtonText,
+          sectionTitle: productSectionTitle,
         };
       case 'ServiceList':
         return { 
@@ -1609,11 +1609,11 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Text nút xem thêm</Label>
+                    <Label>Tiêu đề chính</Label>
                     <Input 
-                      value={productButtonText} 
-                      onChange={(e) => setProductButtonText(e.target.value)} 
-                      placeholder="VD: Xem tất cả, Khám phá..."
+                      value={productSectionTitle} 
+                      onChange={(e) => setProductSectionTitle(e.target.value)} 
+                      placeholder="VD: Sản phẩm nổi bật, Bán chạy nhất..."
                     />
                   </div>
                 </div>
@@ -1799,7 +1799,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                 : filteredProducts.slice(0, productListConfig.itemCount).map(p => ({ id: p._id, name: p.name, image: p.image, price: p.price?.toLocaleString('vi-VN') + 'đ', description: p.description }))
               }
               subTitle={productSubTitle}
-              buttonText={productButtonText}
+              sectionTitle={productSectionTitle}
             />
           </>
         )}

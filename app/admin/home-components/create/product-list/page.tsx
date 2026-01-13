@@ -31,7 +31,7 @@ function ProductListCreateContent() {
   
   // Config text fields
   const [subTitle, setSubTitle] = useState('Bộ sưu tập');
-  const [buttonText, setButtonText] = useState('Xem tất cả');
+  const [sectionTitle, setSectionTitle] = useState('Sản phẩm nổi bật');
   
   // Selection mode states
   const [selectionMode, setSelectionMode] = useState<'auto' | 'manual'>('auto');
@@ -115,10 +115,10 @@ function ProductListCreateContent() {
     const style = type === 'Blog' ? blogStyle : type === 'ServiceList' ? serviceStyle : productStyle;
     const config: Record<string, unknown> = { itemCount, sortBy, style, selectionMode };
     
-    // Chỉ thêm subTitle/buttonText cho ProductList
+    // Chỉ thêm subTitle/sectionTitle cho ProductList
     if (type === 'ProductList') {
       config.subTitle = subTitle;
-      config.buttonText = buttonText;
+      config.sectionTitle = sectionTitle;
     }
     
     if (selectionMode === 'manual') {
@@ -163,11 +163,11 @@ function ProductListCreateContent() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Text nút xem thêm</Label>
+                <Label>Tiêu đề chính</Label>
                 <Input 
-                  value={buttonText} 
-                  onChange={(e) => setButtonText(e.target.value)} 
-                  placeholder="VD: Xem tất cả, Khám phá..."
+                  value={sectionTitle} 
+                  onChange={(e) => setSectionTitle(e.target.value)} 
+                  placeholder="VD: Sản phẩm nổi bật, Bán chạy nhất..."
                 />
               </div>
             </div>
@@ -437,7 +437,7 @@ function ProductListCreateContent() {
       ) : type === 'ServiceList' ? (
         <ServiceListPreview brandColor={brandColor} itemCount={selectionMode === 'manual' ? selectedServiceIds.length : itemCount} selectedStyle={serviceStyle} onStyleChange={setServiceStyle} />
       ) : (
-        <ProductListPreview brandColor={brandColor} itemCount={selectionMode === 'manual' ? selectedProductIds.length : itemCount} componentType="ProductList" selectedStyle={productStyle} onStyleChange={setProductStyle} subTitle={subTitle} buttonText={buttonText} />
+        <ProductListPreview brandColor={brandColor} itemCount={selectionMode === 'manual' ? selectedProductIds.length : itemCount} componentType="ProductList" selectedStyle={productStyle} onStyleChange={setProductStyle} subTitle={subTitle} sectionTitle={sectionTitle} />
       )}
     </ComponentFormWrapper>
   );

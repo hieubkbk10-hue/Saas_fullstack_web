@@ -24,7 +24,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
   const selectionMode = (config.selectionMode as 'auto' | 'manual') || 'auto';
   const selectedProductIds = (config.selectedProductIds as string[]) || [];
   const subTitle = (config.subTitle as string) || 'Bộ sưu tập';
-  const buttonText = (config.buttonText as string) || 'Xem tất cả';
+  const sectionTitle = (config.sectionTitle as string) || title;
   
   // Query products based on selection mode
   const productsData = useQuery(
@@ -102,20 +102,20 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
             {subTitle}
           </div>
           <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-slate-900">
-            {title}
+            {sectionTitle}
           </h2>
         </div>
         {/* Mobile View All */}
         {showViewAll && (
           <Link href="/products" className="md:hidden p-0 h-auto font-semibold mb-1 gap-1 flex items-center" style={{ color: brandColor }}>
-            {buttonText} <ArrowRight size={16} />
+            Xem tất cả <ArrowRight size={16} />
           </Link>
         )}
       </div>
       {/* Desktop View All */}
       {showViewAll && (
         <Link href="/products" className="hidden md:flex gap-2 text-slate-500 hover:text-slate-900 pl-6 border-l border-slate-200 transition-colors items-center">
-          {buttonText} <ArrowRight size={16} />
+          Xem tất cả <ArrowRight size={16} />
         </Link>
       )}
     </div>
