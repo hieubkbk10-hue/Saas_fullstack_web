@@ -8,7 +8,7 @@ import { Id } from '@/convex/_generated/dataModel';
 import { Package, Briefcase, FileText, Search, GripVertical, X, Check } from 'lucide-react';
 import { cn, Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { ProductListPreview, ServiceListPreview, BlogPreview, type BlogStyle, type ProductListStyle, type ServiceListStyle } from '../../previews';
+import { ProductListPreview, ServiceListPreview, BlogPreview, type BlogStyle, type ProductListStyle, type ServiceListStyle, type ServiceListPreviewItem } from '../../previews';
 
 function ProductListCreateContent() {
   const searchParams = useSearchParams();
@@ -92,6 +92,18 @@ function ProductListCreateContent() {
       .map(id => serviceMap.get(id as Id<"services">))
       .filter((s): s is NonNullable<typeof s> => s !== undefined);
   }, [servicesData, selectedServiceIds]);
+
+  // Convert selectedServices to preview format
+  const servicePreviewItems: ServiceListPreviewItem[] = useMemo(() => {
+    return selectedServices.map((s, idx) => ({
+      id: s._id,
+      name: s.title,
+      image: s.thumbnail,
+      price: s.price?.toString(),
+      description: s.excerpt,
+      tag: idx === 0 ? 'hot' as const : idx === 1 ? 'new' as const : undefined
+    }));
+  }, [selectedServices]);
 
   const filteredPosts = useMemo(() => {
     if (!postsData) return [];
@@ -435,7 +447,7 @@ function ProductListCreateContent() {
       {type === 'Blog' ? (
         <BlogPreview brandColor={brandColor} postCount={selectionMode === 'manual' ? selectedPostIds.length : itemCount} selectedStyle={blogStyle} onStyleChange={setBlogStyle} />
       ) : type === 'ServiceList' ? (
-        <ServiceListPreview brandColor={brandColor} itemCount={selectionMode === 'manual' ? selectedServiceIds.length : itemCount} selectedStyle={serviceStyle} onStyleChange={setServiceStyle} />
+        <ServiceListPreview brandColor={brandColor} itemCount={selectionMode === 'manual' ? selectedServiceIds.length : itemCount} selectedStyle={serviceStyle} onStyleChange={setServiceStyle} items={selectionMode === 'manual' ? servicePreviewItems : undefined} />
       ) : (
         <ProductListPreview brandColor={brandColor} itemCount={selectionMode === 'manual' ? selectedProductIds.length : itemCount} componentType="ProductList" selectedStyle={productStyle} onStyleChange={setProductStyle} subTitle={subTitle} sectionTitle={sectionTitle} />
       )}
