@@ -136,7 +136,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [careerJobs, setCareerJobs] = useState<{id: number, title: string, department: string, location: string, type: string, salary: string, description: string}[]>([]);
   const [careerStyle, setCareerStyle] = useState<CareerStyle>('cards');
   const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true, mapEmbed: '' });
-  const [contactStyle, setContactStyle] = useState<ContactStyle>('split');
+  const [contactStyle, setContactStyle] = useState<ContactStyle>('modern');
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
   const [productListStyle, setProductListStyle] = useState<ProductListStyle>('commerce');
   const [serviceListStyle, setServiceListStyle] = useState<ServiceListStyle>('grid');
@@ -305,7 +305,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           break;
         case 'Contact':
           setContactConfig({ address: config.address || '', phone: config.phone || '', email: config.email || '', workingHours: config.workingHours || '', showMap: config.showMap ?? true, mapEmbed: config.mapEmbed || '' });
-          setContactStyle((config.style as ContactStyle) || 'split');
+          setContactStyle((config.style as ContactStyle) || 'modern');
           break;
         case 'ProductList':
           setProductListConfig({ itemCount: config.itemCount || 8, sortBy: config.sortBy || 'newest' });

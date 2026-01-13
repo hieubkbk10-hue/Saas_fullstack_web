@@ -22,7 +22,7 @@ export default function ContactCreatePage() {
       { id: 2, platform: 'zalo', url: '' }
     ]
   });
-  const [style, setStyle] = useState<ContactStyle>('split');
+  const [style, setStyle] = useState<ContactStyle>('modern');
 
   const onSubmit = (e: React.FormEvent) => {
     handleSubmit(e, { ...contactConfig, style });
