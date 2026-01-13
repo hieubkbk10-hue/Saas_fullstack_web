@@ -9,7 +9,7 @@ import { api } from '@/convex/_generated/api';
 import { 
   Grid, LayoutTemplate, AlertCircle, Package, Briefcase, FileText, 
   Users, MousePointerClick, HelpCircle, User as UserIcon, Check, 
-  Star, Award, Tag, Image as ImageIcon, Phone
+  Star, Award, Tag, Image as ImageIcon, Phone, Zap
 } from 'lucide-react';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../components/ui';
 
@@ -33,6 +33,7 @@ export const COMPONENT_TYPES = [
   { value: 'CaseStudy', label: 'Dự án thực tế', icon: FileText, description: 'Case study tiêu biểu', route: 'case-study' },
   { value: 'Career', label: 'Tuyển dụng', icon: Users, description: 'Vị trí đang tuyển', route: 'career' },
   { value: 'Contact', label: 'Liên hệ', icon: Phone, description: 'Form liên hệ, bản đồ', route: 'contact' },
+  { value: 'SpeedDial', label: 'Speed Dial', icon: Zap, description: 'Nút liên hệ nhanh (FAB)', route: 'speed-dial' },
 ];
 
 export const DEFAULT_BRAND_COLOR = '#3b82f6';

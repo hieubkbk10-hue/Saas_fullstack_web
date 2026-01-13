@@ -10,7 +10,7 @@ import {
   Grid, LayoutTemplate, AlertCircle, Package, Briefcase, FileText, 
   Users, MousePointerClick, HelpCircle, User as UserIcon, Check, 
   Star, Award, Tag, Image as ImageIcon, Phone, Plus, Trash2, Loader2, Download,
-  Search, GripVertical, X
+  Search, GripVertical, X, Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
@@ -34,7 +34,8 @@ import {
   TestimonialsPreview, TestimonialsStyle,
   PricingPreview, PricingStyle,
   CaseStudyPreview, CaseStudyStyle,
-  CareerPreview, CareerStyle
+  CareerPreview, CareerStyle,
+  SpeedDialPreview, SpeedDialStyle
 } from '../../previews';
 import { useBrandColor } from '../../create/shared';
 
@@ -61,6 +62,7 @@ const COMPONENT_TYPES = [
   { value: 'ProductGrid', label: 'Sản phẩm', icon: Package },
   { value: 'News', label: 'Tin tức', icon: FileText },
   { value: 'Banner', label: 'Banner', icon: LayoutTemplate },
+  { value: 'SpeedDial', label: 'Speed Dial', icon: Zap },
 ];
 
 interface HeroSlide extends ImageItem {
@@ -135,6 +137,10 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [caseStudyStyle, setCaseStudyStyle] = useState<CaseStudyStyle>('grid');
   const [careerJobs, setCareerJobs] = useState<{id: number, title: string, department: string, location: string, type: string, salary: string, description: string}[]>([]);
   const [careerStyle, setCareerStyle] = useState<CareerStyle>('cards');
+  const [speedDialActions, setSpeedDialActions] = useState<{id: number, icon: string, label: string, url: string, bgColor: string}[]>([]);
+  const [speedDialStyle, setSpeedDialStyle] = useState<SpeedDialStyle>('fab');
+  const [speedDialPosition, setSpeedDialPosition] = useState<'bottom-right' | 'bottom-left'>('bottom-right');
+  const [speedDialMainColor, setSpeedDialMainColor] = useState('#3b82f6');
   const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true, mapEmbed: '' });
   const [contactStyle, setContactStyle] = useState<ContactStyle>('modern');
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
@@ -325,11 +331,17 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setBlogSelectionMode(config.selectionMode || 'auto');
           setSelectedPostIds(config.selectedPostIds || []);
           break;
+        case 'SpeedDial':
+          setSpeedDialActions(config.actions?.map((a: {icon: string, label: string, url: string, bgColor: string}, i: number) => ({ id: i, ...a })) || [{ id: 1, icon: 'phone', label: 'Gọi ngay', url: '', bgColor: '#22c55e' }]);
+          setSpeedDialStyle((config.style as SpeedDialStyle) || 'fab');
+          setSpeedDialPosition(config.position || 'bottom-right');
+          setSpeedDialMainColor(config.mainButtonColor || brandColor);
+          break;
       }
       
       setIsInitialized(true);
     }
-  }, [component, isInitialized]);
+  }, [component, isInitialized, brandColor]);
 
   if (component === undefined) {
     return (
@@ -408,6 +420,13 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           style: blogStyle, 
           selectionMode: blogSelectionMode,
           selectedPostIds: blogSelectionMode === 'manual' ? selectedPostIds : [],
+        };
+      case 'SpeedDial':
+        return {
+          actions: speedDialActions.map(a => ({ icon: a.icon, label: a.label, url: a.url, bgColor: a.bgColor })),
+          style: speedDialStyle,
+          position: speedDialPosition,
+          mainButtonColor: speedDialMainColor,
         };
       default:
         return {};
@@ -2038,6 +2057,161 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               brandColor={brandColor}
               selectedStyle={careerStyle}
               onStyleChange={setCareerStyle}
+            />
+          </>
+        )}
+
+        {/* SpeedDial */}
+        {component.type === 'SpeedDial' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base">Cấu hình chung</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Vị trí</Label>
+                    <select
+                      value={speedDialPosition}
+                      onChange={(e) => setSpeedDialPosition(e.target.value as 'bottom-right' | 'bottom-left')}
+                      className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+                    >
+                      <option value="bottom-right">Góc phải dưới</option>
+                      <option value="bottom-left">Góc trái dưới</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Màu nút chính</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        type="color" 
+                        value={speedDialMainColor} 
+                        onChange={(e) => setSpeedDialMainColor(e.target.value)}
+                        className="w-12 h-9 p-1 cursor-pointer"
+                      />
+                      <Input 
+                        value={speedDialMainColor} 
+                        onChange={(e) => setSpeedDialMainColor(e.target.value)}
+                        placeholder="#3b82f6"
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Danh sách hành động ({speedDialActions.length})</CardTitle>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    const newId = Math.max(0, ...speedDialActions.map(a => a.id)) + 1;
+                    setSpeedDialActions([...speedDialActions, { id: newId, icon: 'phone', label: '', url: '', bgColor: brandColor }]);
+                  }}
+                  disabled={speedDialActions.length >= 6}
+                  className="gap-2"
+                >
+                  <Plus size={14} /> Thêm
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {speedDialActions.map((action, idx) => (
+                  <div key={action.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Hành động {idx + 1}</Label>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-red-500 h-8 w-8" 
+                        onClick={() => speedDialActions.length > 1 && setSpeedDialActions(speedDialActions.filter(a => a.id !== action.id))}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label className="text-xs text-slate-500">Icon</Label>
+                        <select
+                          value={action.icon}
+                          onChange={(e) => setSpeedDialActions(speedDialActions.map(a => a.id === action.id ? {...a, icon: e.target.value} : a))}
+                          className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+                        >
+                          <option value="phone">Điện thoại</option>
+                          <option value="mail">Email</option>
+                          <option value="message-circle">Chat</option>
+                          <option value="map-pin">Địa chỉ</option>
+                          <option value="facebook">Facebook</option>
+                          <option value="instagram">Instagram</option>
+                          <option value="youtube">Youtube</option>
+                          <option value="zalo">Zalo</option>
+                          <option value="calendar">Đặt lịch</option>
+                          <option value="shopping-cart">Giỏ hàng</option>
+                          <option value="headphones">Hỗ trợ</option>
+                          <option value="help-circle">FAQ</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs text-slate-500">Màu nền</Label>
+                        <div className="flex gap-2">
+                          <Input 
+                            type="color" 
+                            value={action.bgColor} 
+                            onChange={(e) => setSpeedDialActions(speedDialActions.map(a => a.id === action.id ? {...a, bgColor: e.target.value} : a))}
+                            className="w-12 h-9 p-1 cursor-pointer"
+                          />
+                          <Input 
+                            value={action.bgColor} 
+                            onChange={(e) => setSpeedDialActions(speedDialActions.map(a => a.id === action.id ? {...a, bgColor: e.target.value} : a))}
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label className="text-xs text-slate-500">Nhãn</Label>
+                        <Input 
+                          value={action.label} 
+                          onChange={(e) => setSpeedDialActions(speedDialActions.map(a => a.id === action.id ? {...a, label: e.target.value} : a))}
+                          placeholder="VD: Gọi ngay"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs text-slate-500">URL / Liên kết</Label>
+                        <Input 
+                          value={action.url} 
+                          onChange={(e) => setSpeedDialActions(speedDialActions.map(a => a.id === action.id ? {...a, url: e.target.value} : a))}
+                          placeholder="tel:0123456789"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                <p className="text-xs text-slate-500">
+                  Gợi ý URL: tel:0123456789 (gọi điện), mailto:email@example.com (email), https://zalo.me/... (Zalo)
+                </p>
+              </CardContent>
+            </Card>
+
+            <SpeedDialPreview 
+              config={{
+                actions: speedDialActions,
+                style: speedDialStyle,
+                position: speedDialPosition,
+                mainButtonColor: speedDialMainColor,
+              }}
+              brandColor={brandColor}
+              selectedStyle={speedDialStyle}
+              onStyleChange={setSpeedDialStyle}
             />
           </>
         )}
