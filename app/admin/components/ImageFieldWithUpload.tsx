@@ -341,12 +341,7 @@ export function ImageFieldWithUpload({
               <span className="text-sm text-slate-600">Đang nén và tải lên...</span>
             </div>
           )}
-          {/* Image info badge */}
-          {currentStorageId && (
-            <div className="absolute bottom-2 left-2 px-2 py-1 bg-green-500/90 text-white text-xs rounded-md flex items-center gap-1">
-              <ImageIcon size={12} /> WebP đã tối ưu
-            </div>
-          )}
+          
         </div>
       ) : mode === 'upload' ? (
         <div
