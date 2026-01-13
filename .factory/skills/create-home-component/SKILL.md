@@ -495,6 +495,352 @@ import { MultiImageUploader, ImageItem } from '../../../components/MultiImageUpl
 4. `[id]/edit/page.tsx` - **CẬP NHẬT imports, states, cases**
 5. `components/site/ComponentRenderer.tsx` - **THÊM case và Section**
 
+## Form UI/UX Optimization
+
+### 1. Compact Form Layout
+
+Thay vì form dọc chiếm nhiều không gian, sử dụng layout ngang gọn gàng:
+
+```tsx
+// ❌ BAD - Form dọc chiếm nhiều không gian
+<div className="space-y-4">
+  <Input placeholder="Tên" value={name} />
+  <Input placeholder="Chức vụ" value={role} />
+  <Input placeholder="Bio" value={bio} />
+</div>
+
+// ✅ GOOD - Compact row layout (như Team component)
+<div className="flex items-center gap-3 p-3">
+  <AvatarUpload value={avatar} onChange={setAvatar} />
+  <div className="flex-1 min-w-0 space-y-1.5">
+    <div className="flex gap-2">
+      <Input placeholder="Họ và tên" className="h-8 text-sm" />
+      <Input placeholder="Chức vụ" className="h-8 text-sm w-32" />
+    </div>
+    <div className="flex items-center gap-1">
+      {/* Icon buttons cho optional fields */}
+    </div>
+  </div>
+  <Button variant="ghost" size="icon"><Trash2 /></Button>
+</div>
+```
+
+### 2. Collapsible Optional Fields
+
+Ẩn các fields không bắt buộc, chỉ hiện khi cần:
+
+```tsx
+// Expandable section cho optional content
+const [expandedId, setExpandedId] = useState<number | null>(null);
+
+<button
+  onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+  className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1"
+>
+  Mở rộng {expandedId === item.id ? <ChevronUp /> : <ChevronDown />}
+</button>
+
+{expandedId === item.id && (
+  <div className="px-3 pb-3 bg-slate-50 border-t">
+    <textarea placeholder="Nội dung tùy chọn..." />
+  </div>
+)}
+```
+
+### 3. Icon Buttons cho Social/Optional Links
+
+Tiết kiệm không gian với icon buttons có popover input:
+
+```tsx
+const SocialIconBtn = ({ type, value, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "w-7 h-7 rounded-md flex items-center justify-center",
+          value ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-400"
+        )}
+      >
+        <SocialIcon type={type} />
+      </button>
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-1 z-10 bg-white border rounded-lg shadow-lg p-2 w-56">
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={`${type} URL...`}
+            className="text-xs h-8"
+            autoFocus
+            onBlur={() => setTimeout(() => setIsOpen(false), 150)}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+### 4. Inline Image Upload
+
+Compact avatar/thumbnail upload trong row:
+
+```tsx
+// Compact avatar upload (64x64)
+<div className={cn(
+  "w-16 h-16 rounded-xl overflow-hidden cursor-pointer border-2 border-dashed",
+  isDragOver ? "border-blue-400 bg-blue-50" : "border-slate-200"
+)}>
+  {isUploading ? (
+    <Loader2 className="animate-spin" />
+  ) : value ? (
+    <img src={value} className="w-full h-full object-cover" />
+  ) : (
+    <Upload size={16} className="text-slate-400" />
+  )}
+</div>
+{value && (
+  <button className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full">×</button>
+)}
+```
+
+### 5. Header với Counter
+
+Hiển thị số lượng items trong header:
+
+```tsx
+<CardHeader className="flex flex-row items-center justify-between py-3">
+  <CardTitle className="text-sm font-medium">
+    Thành viên ({items.length})
+  </CardTitle>
+  <Button variant="outline" size="sm" className="h-7 text-xs gap-1">
+    <Plus size={12} /> Thêm
+  </Button>
+</CardHeader>
+```
+
+### 6. Min/Max Items Constraint
+
+Validate số lượng items:
+
+```tsx
+// Trong add button
+<Button 
+  disabled={items.length >= MAX_ITEMS}
+  onClick={() => setItems([...items, newItem])}
+>
+  Thêm {items.length >= MAX_ITEMS && `(tối đa ${MAX_ITEMS})`}
+</Button>
+
+// Trong delete button
+<Button 
+  disabled={items.length <= MIN_ITEMS}
+  onClick={() => setItems(items.filter(i => i.id !== item.id))}
+>
+  <Trash2 />
+</Button>
+```
+
+## Preview UI/UX & Edge Cases
+
+### 1. Empty State - Không có items
+
+```tsx
+// Luôn có empty state khi không có data
+if (items.length === 0) {
+  return (
+    <section className="py-12 px-4">
+      <div className="flex flex-col items-center justify-center h-48 text-slate-400">
+        <ImageIcon size={48} className="opacity-20 mb-4" />
+        <p className="text-sm">Chưa có dữ liệu nào.</p>
+        <p className="text-xs text-slate-300">Thêm ít nhất 1 mục để xem preview.</p>
+      </div>
+    </section>
+  );
+}
+```
+
+### 2. Missing Image Placeholder
+
+```tsx
+// Placeholder khi chưa có ảnh
+{item.image ? (
+  <img src={item.image} alt="" className="w-full h-full object-cover" />
+) : (
+  <div className="w-full h-full bg-slate-100 flex flex-col items-center justify-center">
+    <ImageIcon size={24} className="text-slate-300 mb-1" />
+    <span className="text-xs text-slate-400">Chưa có ảnh</span>
+  </div>
+)}
+
+// Với gradient background cho Hero/Banner
+{!slide.image && (
+  <div 
+    className="w-full h-full flex flex-col items-center justify-center"
+    style={{ backgroundColor: `${brandColor}15` }}
+  >
+    <ImageIcon size={32} style={{ color: brandColor }} />
+    <span className="text-sm text-slate-400 mt-2">Banner #{idx + 1}</span>
+    <span className="text-xs text-slate-300">Khuyến nghị: 1920x600px</span>
+  </div>
+)}
+```
+
+### 3. Missing Text Fields - Fallback Values
+
+```tsx
+// Luôn có fallback cho empty text
+<h3 className="font-medium">{item.title || `Tiêu đề ${idx + 1}`}</h3>
+<p className="text-sm text-slate-500">{item.description || 'Mô tả...'}</p>
+
+// Initials cho avatar
+<div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" 
+     style={{ backgroundColor: brandColor }}>
+  {(item.name || 'U').charAt(0).toUpperCase()}
+</div>
+```
+
+### 4. Too Few Items - Grid Adaptation
+
+```tsx
+// Tự động điều chỉnh grid khi ít items
+const getGridCols = (count: number, device: PreviewDevice) => {
+  if (device === 'mobile') return 'grid-cols-1';
+  if (device === 'tablet') return count < 2 ? 'grid-cols-1' : 'grid-cols-2';
+  // Desktop: tối đa số cột dựa vào số items
+  if (count === 1) return 'grid-cols-1 max-w-md mx-auto';
+  if (count === 2) return 'grid-cols-2 max-w-2xl mx-auto';
+  if (count === 3) return 'grid-cols-3';
+  return 'grid-cols-4';
+};
+
+<div className={cn("grid gap-6", getGridCols(items.length, device))}>
+```
+
+### 5. Too Many Items - Truncation & Pagination
+
+```tsx
+// Giới hạn hiển thị trong preview
+const displayItems = items.slice(0, device === 'mobile' ? 3 : device === 'tablet' ? 4 : 6);
+const hasMore = items.length > displayItems.length;
+
+<div className="grid gap-4">
+  {displayItems.map((item) => (/* render item */))}
+</div>
+
+{hasMore && (
+  <div className="text-center mt-4 text-sm text-slate-500">
+    + {items.length - displayItems.length} mục khác
+  </div>
+)}
+```
+
+### 6. Long Text Truncation
+
+```tsx
+// Truncate cho text dài
+<p className="text-sm text-slate-500 line-clamp-2">
+  {item.description}
+</p>
+
+<h3 className="font-medium truncate" title={item.title}>
+  {item.title}
+</h3>
+
+// Hoặc với custom truncate
+const truncate = (text: string, max: number) => 
+  text.length > max ? `${text.slice(0, max)}...` : text;
+```
+
+### 7. Rating/Stars với Default
+
+```tsx
+// Stars với default rating
+const renderStars = (rating: number = 5) => (
+  <div className="flex gap-0.5">
+    {[1,2,3,4,5].map(star => (
+      <Star 
+        key={star} 
+        size={12} 
+        className={star <= rating ? "text-yellow-400 fill-yellow-400" : "text-slate-300"} 
+      />
+    ))}
+  </div>
+);
+```
+
+### 8. Skeleton Loading States
+
+```tsx
+// Skeleton cho preview đang load
+const SkeletonCard = () => (
+  <div className="bg-white rounded-xl p-4 border animate-pulse">
+    <div className="w-12 h-12 rounded-full bg-slate-200 mb-3" />
+    <div className="h-4 bg-slate-200 rounded w-3/4 mb-2" />
+    <div className="h-3 bg-slate-100 rounded w-1/2" />
+  </div>
+);
+
+// Sử dụng khi data đang load
+{isLoading ? (
+  <div className="grid grid-cols-3 gap-4">
+    {[1,2,3].map(i => <SkeletonCard key={i} />)}
+  </div>
+) : (
+  /* actual content */
+)}
+```
+
+### 9. Preview Info Bar
+
+```tsx
+// Thông tin preview ở footer
+<div className="mt-3 text-xs text-slate-500">
+  Style: <strong>{styles.find(s => s.id === previewStyle)?.label}</strong>
+  {' • '}
+  {device === 'desktop' && 'Desktop (1280px)'}
+  {device === 'tablet' && 'Tablet (768px)'}
+  {device === 'mobile' && 'Mobile (375px)'}
+  {' • '}
+  {items.filter(i => i.title || i.name).length}/{items.length} mục có dữ liệu
+</div>
+```
+
+### 10. Visual Indicators cho Incomplete Items
+
+```tsx
+// Badge cảnh báo cho items thiếu data
+<div className="relative">
+  {(!item.image || !item.title) && (
+    <div className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+      <AlertCircle size={10} className="text-white" />
+    </div>
+  )}
+  {/* card content */}
+</div>
+
+// Hoặc border highlight
+<div className={cn(
+  "border rounded-lg p-4",
+  (!item.title && !item.image) ? "border-amber-300 bg-amber-50/50" : "border-slate-200"
+)}>
+```
+
+## Testing Checklist - Edge Cases
+
+- [ ] Empty state hiển thị đẹp
+- [ ] Missing image có placeholder phù hợp
+- [ ] Missing text có fallback value
+- [ ] 1 item - layout vẫn đẹp
+- [ ] 2 items - layout balanced
+- [ ] Max items - truncation hoạt động
+- [ ] Long text - truncate/line-clamp
+- [ ] Mobile view - không bị overflow
+- [ ] Form compact - không chiếm quá nhiều space
+- [ ] Optional fields - collapsible hoạt động
+
 ## Lưu ý quan trọng
 
 1. **Không tạo file mới cho Preview** - Tất cả previews nằm trong `previews.tsx`
@@ -502,3 +848,5 @@ import { MultiImageUploader, ImageItem } from '../../../components/MultiImageUpl
 3. **Device responsive** - Luôn test cả 3 kích thước
 4. **Brand color** - Sử dụng `useBrandColor()` hook, không hardcode
 5. **Commit thường xuyên** - Sau mỗi bước hoàn thành
+6. **Edge cases** - Luôn xử lý empty, missing, overflow states
+7. **Compact forms** - Ưu tiên layout ngang, collapsible sections
