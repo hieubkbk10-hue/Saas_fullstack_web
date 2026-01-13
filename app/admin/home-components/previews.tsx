@@ -2537,17 +2537,20 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
   ];
   const title = 'Dịch vụ';
   
+  // Mock data for preview - always show at least 6 items
+  const mockServices: ServiceListPreviewItem[] = [
+    { id: 1, name: 'Thiết kế Nội thất Penthouse', description: 'Phong cách hiện đại, tối giản với vật liệu cao cấp nhập khẩu từ Ý.', price: '0', tag: 'hot' as const },
+    { id: 2, name: 'Kiến trúc Xanh Vertical', description: 'Giải pháp bền vững cho đô thị.', price: '15000000', tag: 'new' as const },
+    { id: 3, name: 'Cảnh quan Sân vườn Zen', description: 'Không gian thiền định tại gia.', price: '8500000' },
+    { id: 4, name: 'Smart Home Hub', description: 'Tự động hóa toàn diện.', price: '25000000' },
+    { id: 5, name: 'Biệt thự Cổ', description: 'Phục dựng di sản.', price: '0' },
+    { id: 6, name: 'Lighting Art', description: 'Nghệ thuật ánh sáng.', price: '12000000', tag: 'new' as const }
+  ];
+  
   // Use real items if provided, otherwise fallback to mock (luxury services)
   const displayItems: ServiceListPreviewItem[] = items && items.length > 0 
     ? items 
-    : [
-        { id: 1, name: 'Thiết kế Nội thất Penthouse', description: 'Phong cách hiện đại, tối giản với vật liệu cao cấp nhập khẩu từ Ý.', price: '0', tag: 'hot' as const },
-        { id: 2, name: 'Kiến trúc Xanh Vertical', description: 'Giải pháp bền vững cho đô thị.', price: '15000000', tag: 'new' as const },
-        { id: 3, name: 'Cảnh quan Sân vườn Zen', description: 'Không gian thiền định tại gia.', price: '8500000' },
-        { id: 4, name: 'Smart Home Hub', description: 'Tự động hóa toàn diện.', price: '25000000' },
-        { id: 5, name: 'Biệt thự Cổ', description: 'Phục dựng di sản.', price: '0' },
-        { id: 6, name: 'Lighting Art', description: 'Nghệ thuật ánh sáng.', price: '12000000', tag: 'new' as const }
-      ].slice(0, Math.max(itemCount, 6));
+    : mockServices;
 
   // Style 1: Grid - Clean cards với hover lift và arrow icon
   const renderGridStyle = () => (
