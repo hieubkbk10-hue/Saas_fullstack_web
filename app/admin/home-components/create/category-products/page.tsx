@@ -1,0 +1,204 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { Card, CardContent, CardHeader, CardTitle, Label, Button, Input } from '../../../components/ui';
+import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
+import { CategoryProductsPreview, type CategoryProductsStyle } from '../../previews';
+
+interface CategoryProductItem {
+  id: number;
+  categoryId: string;
+  itemCount: number;
+}
+
+export default function CategoryProductsCreatePage() {
+  const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Sản phẩm theo danh mục', 'CategoryProducts');
+  const brandColor = useBrandColor();
+  
+  const categoriesData = useQuery(api.productCategories.listActive);
+  const productsData = useQuery(api.products.listAll, { limit: 100 });
+  
+  const [sections, setSections] = useState<CategoryProductItem[]>([]);
+  const [style, setStyle] = useState<CategoryProductsStyle>('grid');
+  const [showViewAll, setShowViewAll] = useState(true);
+  const [columnsDesktop, setColumnsDesktop] = useState(4);
+  const [columnsMobile, setColumnsMobile] = useState(2);
+
+  const addSection = () => {
+    if (!categoriesData || categoriesData.length === 0) return;
+    const newId = Math.max(0, ...sections.map(s => s.id)) + 1;
+    setSections([...sections, { id: newId, categoryId: '', itemCount: 4 }]);
+  };
+
+  const removeSection = (id: number) => {
+    setSections(sections.filter(s => s.id !== id));
+  };
+
+  const updateSection = (id: number, updates: Partial<CategoryProductItem>) => {
+    setSections(sections.map(s => s.id === id ? { ...s, ...updates } : s));
+  };
+
+  const onSubmit = (e: React.FormEvent) => {
+    handleSubmit(e, {
+      sections: sections.map(s => ({ 
+        categoryId: s.categoryId, 
+        itemCount: s.itemCount,
+      })),
+      style,
+      showViewAll,
+      columnsDesktop,
+      columnsMobile,
+    });
+  };
+
+  const availableCategories = categoriesData || [];
+
+  return (
+    <ComponentFormWrapper
+      type="CategoryProducts"
+      title={title}
+      setTitle={setTitle}
+      active={active}
+      setActive={setActive}
+      onSubmit={onSubmit}
+      isSubmitting={isSubmitting}
+    >
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-base">Cấu hình hiển thị</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Số cột (Desktop)</Label>
+              <select
+                value={columnsDesktop}
+                onChange={(e) => setColumnsDesktop(parseInt(e.target.value))}
+                className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+              >
+                <option value={3}>3 cột</option>
+                <option value={4}>4 cột</option>
+                <option value={5}>5 cột</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Số cột (Mobile)</Label>
+              <select
+                value={columnsMobile}
+                onChange={(e) => setColumnsMobile(parseInt(e.target.value))}
+                className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+              >
+                <option value={1}>1 cột</option>
+                <option value={2}>2 cột</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="showViewAll"
+              checked={showViewAll}
+              onChange={(e) => setShowViewAll(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-300"
+            />
+            <Label htmlFor="showViewAll" className="cursor-pointer">Hiển thị nút "Xem danh mục"</Label>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base">Các section danh mục ({sections.length})</CardTitle>
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            onClick={addSection}
+            disabled={sections.length >= 6 || availableCategories.length === 0}
+            className="gap-2"
+          >
+            <Plus size={14} /> Thêm
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {availableCategories.length === 0 ? (
+            <p className="text-sm text-slate-500 text-center py-4">
+              Chưa có danh mục sản phẩm. Vui lòng tạo danh mục trước.
+            </p>
+          ) : sections.length === 0 ? (
+            <p className="text-sm text-slate-500 text-center py-4">
+              Chưa có section nào. Nhấn &quot;Thêm&quot; để bắt đầu.
+            </p>
+          ) : (
+            sections.map((item, idx) => (
+              <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="font-semibold">Section {idx + 1}</Label>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-red-500 h-8 w-8" 
+                    onClick={() => removeSection(item.id)}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs text-slate-500">Danh mục</Label>
+                    <select
+                      value={item.categoryId}
+                      onChange={(e) => updateSection(item.id, { categoryId: e.target.value })}
+                      className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+                    >
+                      <option value="">-- Chọn danh mục --</option>
+                      {availableCategories.map(cat => (
+                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-xs text-slate-500">Số sản phẩm hiển thị</Label>
+                    <Input
+                      type="number"
+                      min={2}
+                      max={12}
+                      value={item.itemCount}
+                      onChange={(e) => updateSection(item.id, { itemCount: parseInt(e.target.value) || 4 })}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+          
+          <p className="text-xs text-slate-500">
+            Tối đa 6 section. Mỗi section là 1 danh mục với các sản phẩm thuộc danh mục đó.
+          </p>
+        </CardContent>
+      </Card>
+
+      <CategoryProductsPreview 
+        config={{
+          sections,
+          style,
+          showViewAll,
+          columnsDesktop,
+          columnsMobile,
+        }}
+        brandColor={brandColor}
+        selectedStyle={style}
+        onStyleChange={setStyle}
+        categoriesData={availableCategories}
+        productsData={productsData || []}
+      />
+    </ComponentFormWrapper>
+  );
+}

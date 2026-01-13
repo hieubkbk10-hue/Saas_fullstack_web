@@ -71,6 +71,8 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
       return <SpeedDialSection config={config} brandColor={brandColor} />;
     case 'ProductCategories':
       return <ProductCategoriesSection config={config} brandColor={brandColor} title={title} />;
+    case 'CategoryProducts':
+      return <CategoryProductsSection config={config} brandColor={brandColor} title={title} />;
     default:
       return <PlaceholderSection type={type} title={title} />;
   }
@@ -2975,6 +2977,271 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
         </div>
       </div>
     </section>
+  );
+}
+
+// ============ CATEGORY PRODUCTS SECTION ============
+// Sản phẩm theo danh mục - Mỗi section là 1 danh mục với các sản phẩm thuộc danh mục đó
+type CategoryProductsStyle = 'grid' | 'carousel' | 'cards';
+
+function CategoryProductsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
+  const sections = (config.sections as Array<{ categoryId: string; itemCount: number }>) || [];
+  const style = (config.style as CategoryProductsStyle) || 'grid';
+  const showViewAll = (config.showViewAll as boolean) ?? true;
+  const columnsDesktop = (config.columnsDesktop as number) || 4;
+  const columnsMobile = (config.columnsMobile as number) || 2;
+
+  // Query categories and products
+  const categoriesData = useQuery(api.productCategories.listActive);
+  const productsData = useQuery(api.products.listAll, { limit: 100 });
+
+  // Resolve sections with category and products data
+  const resolvedSections = sections
+    .map(section => {
+      const category = categoriesData?.find(c => c._id === section.categoryId);
+      if (!category) return null;
+      
+      const products = (productsData || [])
+        .filter(p => p.categoryId === section.categoryId)
+        .slice(0, section.itemCount);
+      
+      return {
+        ...section,
+        category,
+        products,
+      };
+    })
+    .filter(Boolean) as Array<{ 
+      categoryId: string; 
+      itemCount: number;
+      category: { _id: string; name: string; slug?: string; image?: string }; 
+      products: Array<{ _id: string; name: string; image?: string; price?: number; salePrice?: number; slug?: string }> 
+    }>;
+
+  const getGridCols = () => {
+    switch (columnsDesktop) {
+      case 3: return 'md:grid-cols-3';
+      case 5: return 'md:grid-cols-5';
+      default: return 'md:grid-cols-4';
+    }
+  };
+
+  const getMobileGridCols = () => {
+    return columnsMobile === 1 ? 'grid-cols-1' : 'grid-cols-2';
+  };
+
+  const formatPrice = (price?: number) => {
+    if (!price) return '0đ';
+    return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
+  };
+
+  // Product Card Component
+  const ProductCard = ({ product }: { product: { _id: string; name: string; image?: string; price?: number; salePrice?: number; slug?: string } }) => (
+    <a href={`/san-pham/${product.slug || product._id}`} className="group cursor-pointer block">
+      <div className="aspect-square rounded-lg overflow-hidden bg-slate-100 mb-2">
+        {product.image ? (
+          <img 
+            src={product.image} 
+            alt={product.name} 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Package size={24} className="text-slate-300" />
+          </div>
+        )}
+      </div>
+      <h4 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h4>
+      <div className="flex items-center gap-2">
+        {product.salePrice && product.salePrice < (product.price || 0) ? (
+          <>
+            <span className="font-bold text-base" style={{ color: brandColor }}>
+              {formatPrice(product.salePrice)}
+            </span>
+            <span className="text-xs text-slate-400 line-through">{formatPrice(product.price)}</span>
+          </>
+        ) : (
+          <span className="font-bold text-base" style={{ color: brandColor }}>
+            {formatPrice(product.price)}
+          </span>
+        )}
+      </div>
+    </a>
+  );
+
+  if (resolvedSections.length === 0) {
+    return null;
+  }
+
+  // Style 1: Grid
+  if (style === 'grid') {
+    return (
+      <div className="py-8 md:py-12 space-y-10 md:space-y-16">
+        {resolvedSections.map((section, idx) => (
+          <section key={idx} className="px-4">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl md:text-2xl font-bold">{section.category.name}</h2>
+                {showViewAll && (
+                  <a 
+                    href={`/danh-muc/${section.category.slug || section.category._id}`}
+                    className="text-sm font-medium flex items-center gap-1 hover:underline px-3 py-1.5 rounded-lg border transition-colors"
+                    style={{ color: brandColor, borderColor: `${brandColor}30` }}
+                  >
+                    Xem danh mục
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </a>
+                )}
+              </div>
+              
+              {section.products.length > 0 ? (
+                <div className={`grid gap-4 ${getMobileGridCols()} ${getGridCols()}`}>
+                  {section.products.map((product) => (
+                    <ProductCard key={product._id} product={product} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-lg">
+                  <Package size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Chưa có sản phẩm trong danh mục này</p>
+                </div>
+              )}
+            </div>
+          </section>
+        ))}
+      </div>
+    );
+  }
+
+  // Style 2: Carousel
+  if (style === 'carousel') {
+    return (
+      <div className="py-8 md:py-12 space-y-10 md:space-y-16">
+        {resolvedSections.map((section, idx) => (
+          <section key={idx}>
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center justify-between px-4 mb-6">
+                <h2 className="text-xl md:text-2xl font-bold">{section.category.name}</h2>
+                {showViewAll && (
+                  <a 
+                    href={`/danh-muc/${section.category.slug || section.category._id}`}
+                    className="text-sm font-medium flex items-center gap-1 hover:underline"
+                    style={{ color: brandColor }}
+                  >
+                    Xem danh mục
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </a>
+                )}
+              </div>
+              
+              {section.products.length > 0 ? (
+                <div className="overflow-x-auto pb-4 px-4">
+                  <div className="flex gap-4">
+                    {section.products.map((product) => (
+                      <a 
+                        key={product._id}
+                        href={`/san-pham/${product.slug || product._id}`}
+                        className="flex-shrink-0 w-40 md:w-48 group cursor-pointer"
+                      >
+                        <div className="aspect-square rounded-lg overflow-hidden bg-slate-100 mb-2">
+                          {product.image ? (
+                            <img 
+                              src={product.image} 
+                              alt={product.name} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package size={24} className="text-slate-300" />
+                            </div>
+                          )}
+                        </div>
+                        <h4 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h4>
+                        <span className="font-bold text-base" style={{ color: brandColor }}>
+                          {formatPrice(product.salePrice || product.price)}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-lg mx-4">
+                  <Package size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Chưa có sản phẩm</p>
+                </div>
+              )}
+            </div>
+          </section>
+        ))}
+      </div>
+    );
+  }
+
+  // Style 3: Cards - Modern cards with category header
+  return (
+    <div className="py-8 md:py-12 space-y-10 md:space-y-16">
+      {resolvedSections.map((section, idx) => (
+        <section key={idx} className="px-4">
+          <div className="max-w-7xl mx-auto">
+            <div 
+              className="rounded-xl overflow-hidden"
+              style={{ border: `1px solid ${brandColor}20` }}
+            >
+              {/* Category Header */}
+              <div 
+                className="px-4 py-3 flex items-center justify-between"
+                style={{ backgroundColor: `${brandColor}08` }}
+              >
+                <div className="flex items-center gap-3">
+                  {section.category.image && (
+                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-white">
+                      <img 
+                        src={section.category.image} 
+                        alt={section.category.name} 
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                  )}
+                  <h2 className="text-lg font-bold">{section.category.name}</h2>
+                </div>
+                {showViewAll && (
+                  <a 
+                    href={`/danh-muc/${section.category.slug || section.category._id}`}
+                    className="text-sm font-medium flex items-center gap-1 hover:underline px-3 py-1.5 rounded-lg transition-colors"
+                    style={{ color: brandColor, backgroundColor: `${brandColor}15` }}
+                  >
+                    Xem danh mục
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </a>
+                )}
+              </div>
+              
+              {/* Products Grid */}
+              <div className="p-4 bg-white">
+                {section.products.length > 0 ? (
+                  <div className={`grid gap-4 ${getMobileGridCols()} ${getGridCols()}`}>
+                    {section.products.map((product) => (
+                      <ProductCard key={product._id} product={product} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-400">
+                    <Package size={32} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">Chưa có sản phẩm</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      ))}
+    </div>
   );
 }
 

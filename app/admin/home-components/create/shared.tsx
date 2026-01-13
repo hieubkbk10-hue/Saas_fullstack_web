@@ -9,7 +9,7 @@ import { api } from '@/convex/_generated/api';
 import { 
   Grid, LayoutTemplate, AlertCircle, Package, Briefcase, FileText, 
   Users, MousePointerClick, HelpCircle, User as UserIcon, Check, 
-  Star, Award, Tag, Image as ImageIcon, Phone, Zap, FolderTree
+  Star, Award, Tag, Image as ImageIcon, Phone, Zap, FolderTree, ShoppingBag
 } from 'lucide-react';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../components/ui';
 
@@ -35,6 +35,7 @@ export const COMPONENT_TYPES = [
   { value: 'Contact', label: 'Liên hệ', icon: Phone, description: 'Form liên hệ, bản đồ', route: 'contact' },
   { value: 'SpeedDial', label: 'Speed Dial', icon: Zap, description: 'Nút liên hệ nhanh (FAB)', route: 'speed-dial' },
   { value: 'ProductCategories', label: 'Danh mục sản phẩm', icon: FolderTree, description: 'Hiển thị danh mục SP', route: 'product-categories' },
+  { value: 'CategoryProducts', label: 'Sản phẩm theo danh mục', icon: ShoppingBag, description: 'SP trong từng danh mục', route: 'category-products' },
 ];
 
 export const DEFAULT_BRAND_COLOR = '#3b82f6';

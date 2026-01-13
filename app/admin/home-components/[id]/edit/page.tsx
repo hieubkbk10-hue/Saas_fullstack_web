@@ -36,7 +36,8 @@ import {
   CaseStudyPreview, CaseStudyStyle,
   CareerPreview, CareerStyle,
   SpeedDialPreview, SpeedDialStyle,
-  ProductCategoriesPreview, ProductCategoriesStyle
+  ProductCategoriesPreview, ProductCategoriesStyle,
+  CategoryProductsPreview, CategoryProductsStyle
 } from '../../previews';
 import { useBrandColor } from '../../create/shared';
 import { CategoryImageSelector } from '../../../components/CategoryImageSelector';
@@ -66,6 +67,7 @@ const COMPONENT_TYPES = [
   { value: 'Banner', label: 'Banner', icon: LayoutTemplate },
   { value: 'SpeedDial', label: 'Speed Dial', icon: Zap },
   { value: 'ProductCategories', label: 'Danh mục sản phẩm', icon: Package },
+  { value: 'CategoryProducts', label: 'Sản phẩm theo danh mục', icon: Package },
 ];
 
 interface HeroSlide extends ImageItem {
@@ -152,6 +154,12 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [productCategoriesShowCount, setProductCategoriesShowCount] = useState(true);
   const [productCategoriesColsDesktop, setProductCategoriesColsDesktop] = useState(4);
   const [productCategoriesColsMobile, setProductCategoriesColsMobile] = useState(2);
+  // CategoryProducts states
+  const [categoryProductsSections, setCategoryProductsSections] = useState<{id: number, categoryId: string, itemCount: number}[]>([]);
+  const [categoryProductsStyle, setCategoryProductsStyle] = useState<CategoryProductsStyle>('grid');
+  const [categoryProductsShowViewAll, setCategoryProductsShowViewAll] = useState(true);
+  const [categoryProductsColsDesktop, setCategoryProductsColsDesktop] = useState(4);
+  const [categoryProductsColsMobile, setCategoryProductsColsMobile] = useState(2);
   const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true, mapEmbed: '' });
   const [contactStyle, setContactStyle] = useState<ContactStyle>('modern');
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
@@ -355,6 +363,13 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setProductCategoriesColsDesktop(config.columnsDesktop || 4);
           setProductCategoriesColsMobile(config.columnsMobile || 2);
           break;
+        case 'CategoryProducts':
+          setCategoryProductsSections(config.sections?.map((s: {categoryId: string, itemCount: number}, i: number) => ({ id: i, categoryId: s.categoryId, itemCount: s.itemCount || 4 })) || []);
+          setCategoryProductsStyle((config.style as CategoryProductsStyle) || 'grid');
+          setCategoryProductsShowViewAll(config.showViewAll ?? true);
+          setCategoryProductsColsDesktop(config.columnsDesktop || 4);
+          setCategoryProductsColsMobile(config.columnsMobile || 2);
+          break;
       }
       
       setIsInitialized(true);
@@ -454,6 +469,14 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           showProductCount: productCategoriesShowCount,
           columnsDesktop: productCategoriesColsDesktop,
           columnsMobile: productCategoriesColsMobile,
+        };
+      case 'CategoryProducts':
+        return {
+          sections: categoryProductsSections.map(s => ({ categoryId: s.categoryId, itemCount: s.itemCount })),
+          style: categoryProductsStyle,
+          showViewAll: categoryProductsShowViewAll,
+          columnsDesktop: categoryProductsColsDesktop,
+          columnsMobile: categoryProductsColsMobile,
         };
       default:
         return {};
@@ -2367,6 +2390,148 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               selectedStyle={productCategoriesStyle}
               onStyleChange={setProductCategoriesStyle}
               categoriesData={productCategoriesData || []}
+            />
+          </>
+        )}
+
+        {/* CategoryProducts - Sản phẩm theo danh mục */}
+        {component.type === 'CategoryProducts' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base">Cấu hình hiển thị</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Số cột (Desktop)</Label>
+                    <select
+                      value={categoryProductsColsDesktop}
+                      onChange={(e) => setCategoryProductsColsDesktop(parseInt(e.target.value))}
+                      className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+                    >
+                      <option value={3}>3 cột</option>
+                      <option value={4}>4 cột</option>
+                      <option value={5}>5 cột</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Số cột (Mobile)</Label>
+                    <select
+                      value={categoryProductsColsMobile}
+                      onChange={(e) => setCategoryProductsColsMobile(parseInt(e.target.value))}
+                      className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+                    >
+                      <option value={1}>1 cột</option>
+                      <option value={2}>2 cột</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="categoryProductsShowViewAll"
+                    checked={categoryProductsShowViewAll}
+                    onChange={(e) => setCategoryProductsShowViewAll(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300"
+                  />
+                  <Label htmlFor="categoryProductsShowViewAll" className="cursor-pointer">Hiển thị nút "Xem danh mục"</Label>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Các section danh mục ({categoryProductsSections.length})</CardTitle>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    const newId = Math.max(0, ...categoryProductsSections.map(s => s.id)) + 1;
+                    setCategoryProductsSections([...categoryProductsSections, { id: newId, categoryId: '', itemCount: 4 }]);
+                  }}
+                  disabled={categoryProductsSections.length >= 6 || !productCategoriesData?.length}
+                  className="gap-2"
+                >
+                  <Plus size={14} /> Thêm
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!productCategoriesData?.length ? (
+                  <p className="text-sm text-slate-500 text-center py-4">
+                    Chưa có danh mục sản phẩm. Vui lòng tạo danh mục trước.
+                  </p>
+                ) : categoryProductsSections.length === 0 ? (
+                  <p className="text-sm text-slate-500 text-center py-4">
+                    Chưa có section nào. Nhấn &quot;Thêm&quot; để bắt đầu.
+                  </p>
+                ) : (
+                  categoryProductsSections.map((item, idx) => (
+                    <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="font-semibold">Section {idx + 1}</Label>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-red-500 h-8 w-8" 
+                          onClick={() => setCategoryProductsSections(categoryProductsSections.filter(s => s.id !== item.id))}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label className="text-xs text-slate-500">Danh mục</Label>
+                          <select
+                            value={item.categoryId}
+                            onChange={(e) => setCategoryProductsSections(categoryProductsSections.map(s => s.id === item.id ? {...s, categoryId: e.target.value} : s))}
+                            className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+                          >
+                            <option value="">-- Chọn danh mục --</option>
+                            {productCategoriesData?.map(cat => (
+                              <option key={cat._id} value={cat._id}>{cat.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label className="text-xs text-slate-500">Số sản phẩm hiển thị</Label>
+                          <Input
+                            type="number"
+                            min={2}
+                            max={12}
+                            value={item.itemCount}
+                            onChange={(e) => setCategoryProductsSections(categoryProductsSections.map(s => s.id === item.id ? {...s, itemCount: parseInt(e.target.value) || 4} : s))}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                
+                <p className="text-xs text-slate-500">
+                  Tối đa 6 section. Mỗi section là 1 danh mục với các sản phẩm thuộc danh mục đó.
+                </p>
+              </CardContent>
+            </Card>
+
+            <CategoryProductsPreview 
+              config={{
+                sections: categoryProductsSections,
+                style: categoryProductsStyle,
+                showViewAll: categoryProductsShowViewAll,
+                columnsDesktop: categoryProductsColsDesktop,
+                columnsMobile: categoryProductsColsMobile,
+              }}
+              brandColor={brandColor}
+              selectedStyle={categoryProductsStyle}
+              onStyleChange={setCategoryProductsStyle}
+              categoriesData={productCategoriesData || []}
+              productsData={productsData || []}
             />
           </>
         )}

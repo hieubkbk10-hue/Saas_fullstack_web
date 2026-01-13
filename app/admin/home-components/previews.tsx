@@ -4645,3 +4645,343 @@ export const ProductCategoriesPreview = ({
     </PreviewWrapper>
   );
 };
+
+// ============ CATEGORY PRODUCTS PREVIEW ============
+// Sản phẩm theo danh mục - Mỗi section là 1 danh mục với các sản phẩm thuộc danh mục đó
+export type CategoryProductsStyle = 'grid' | 'carousel' | 'cards';
+
+interface CategoryProductsSection {
+  id: number;
+  categoryId: string;
+  itemCount: number;
+}
+
+interface CategoryProductsConfig {
+  sections: CategoryProductsSection[];
+  style: CategoryProductsStyle;
+  showViewAll: boolean;
+  columnsDesktop: number;
+  columnsMobile: number;
+}
+
+interface ProductData {
+  _id: string;
+  name: string;
+  image?: string;
+  price?: number;
+  salePrice?: number;
+  categoryId?: string;
+}
+
+interface CategoryProductsPreviewProps {
+  config: CategoryProductsConfig;
+  brandColor: string;
+  selectedStyle: CategoryProductsStyle;
+  onStyleChange: (style: CategoryProductsStyle) => void;
+  categoriesData: Array<{ _id: string; name: string; slug?: string; image?: string }>;
+  productsData: ProductData[];
+}
+
+export const CategoryProductsPreview = ({ 
+  config, 
+  brandColor, 
+  selectedStyle, 
+  onStyleChange, 
+  categoriesData,
+  productsData 
+}: CategoryProductsPreviewProps) => {
+  const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const previewStyle = selectedStyle || 'grid';
+  const setPreviewStyle = (s: string) => onStyleChange(s as CategoryProductsStyle);
+  
+  const styles = [
+    { id: 'grid', label: 'Grid' },
+    { id: 'carousel', label: 'Carousel' },
+    { id: 'cards', label: 'Cards' },
+  ];
+
+  // Resolve sections with category and products data
+  const resolvedSections = config.sections
+    .map(section => {
+      const category = categoriesData.find(c => c._id === section.categoryId);
+      if (!category) return null;
+      
+      const products = productsData
+        .filter(p => p.categoryId === section.categoryId)
+        .slice(0, section.itemCount);
+      
+      return {
+        ...section,
+        category,
+        products,
+      };
+    })
+    .filter(Boolean) as Array<CategoryProductsSection & { 
+      category: { _id: string; name: string; slug?: string; image?: string }; 
+      products: ProductData[] 
+    }>;
+
+  const getGridCols = () => {
+    if (device === 'mobile') {
+      return config.columnsMobile === 1 ? 'grid-cols-1' : 'grid-cols-2';
+    }
+    if (device === 'tablet') {
+      return 'grid-cols-3';
+    }
+    switch (config.columnsDesktop) {
+      case 3: return 'grid-cols-3';
+      case 5: return 'grid-cols-5';
+      default: return 'grid-cols-4';
+    }
+  };
+
+  const formatPrice = (price?: number) => {
+    if (!price) return '0đ';
+    return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
+  };
+
+  // Product Card Component
+  const ProductCard = ({ product }: { product: ProductData }) => (
+    <div className="group cursor-pointer">
+      <div className="aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2">
+        {product.image ? (
+          <img 
+            src={product.image} 
+            alt={product.name} 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Package size={24} className="text-slate-300" />
+          </div>
+        )}
+      </div>
+      <h4 className={cn(
+        "font-medium line-clamp-2 mb-1",
+        device === 'mobile' ? 'text-xs' : 'text-sm'
+      )}>{product.name}</h4>
+      <div className="flex items-center gap-2">
+        {product.salePrice && product.salePrice < (product.price || 0) ? (
+          <>
+            <span className={cn("font-bold", device === 'mobile' ? 'text-sm' : 'text-base')} style={{ color: brandColor }}>
+              {formatPrice(product.salePrice)}
+            </span>
+            <span className="text-xs text-slate-400 line-through">{formatPrice(product.price)}</span>
+          </>
+        ) : (
+          <span className={cn("font-bold", device === 'mobile' ? 'text-sm' : 'text-base')} style={{ color: brandColor }}>
+            {formatPrice(product.price)}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+
+  // Style 1: Grid - Classic grid layout per section
+  const renderGridStyle = () => (
+    <div className="w-full py-4 space-y-8 md:space-y-12">
+      {resolvedSections.length === 0 ? (
+        <div className="text-center py-12 text-slate-400 px-4">
+          <Package size={48} className="mx-auto mb-4 opacity-30" />
+          <p className="text-sm">Chưa chọn danh mục nào</p>
+        </div>
+      ) : (
+        resolvedSections.map((section) => (
+          <section key={section.id} className="px-4">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center justify-between mb-4 md:mb-6">
+                <h2 className={cn(
+                  "font-bold",
+                  device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl'
+                )}>{section.category.name}</h2>
+                {config.showViewAll && (
+                  <button 
+                    className="text-sm font-medium flex items-center gap-1 hover:underline px-3 py-1.5 rounded-lg border transition-colors"
+                    style={{ color: brandColor, borderColor: `${brandColor}30` }}
+                  >
+                    Xem danh mục <ArrowRight size={16} />
+                  </button>
+                )}
+              </div>
+              
+              {section.products.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-lg">
+                  <Package size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Chưa có sản phẩm trong danh mục này</p>
+                </div>
+              ) : (
+                <div className={cn("grid gap-4", getGridCols())}>
+                  {section.products.map((product) => (
+                    <ProductCard key={product._id} product={product} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        ))
+      )}
+    </div>
+  );
+
+  // Style 2: Carousel - Horizontal scroll
+  const renderCarouselStyle = () => (
+    <div className="w-full py-4 space-y-8 md:space-y-12">
+      {resolvedSections.length === 0 ? (
+        <div className="text-center py-12 text-slate-400 px-4">
+          <Package size={48} className="mx-auto mb-4 opacity-30" />
+          <p className="text-sm">Chưa chọn danh mục nào</p>
+        </div>
+      ) : (
+        resolvedSections.map((section) => (
+          <section key={section.id}>
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center justify-between px-4 mb-4">
+                <h2 className={cn(
+                  "font-bold",
+                  device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl'
+                )}>{section.category.name}</h2>
+                {config.showViewAll && (
+                  <button 
+                    className="text-sm font-medium flex items-center gap-1 hover:underline"
+                    style={{ color: brandColor }}
+                  >
+                    Xem danh mục <ArrowRight size={16} />
+                  </button>
+                )}
+              </div>
+              
+              {section.products.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-lg mx-4">
+                  <Package size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Chưa có sản phẩm</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto pb-4 px-4 scrollbar-hide">
+                  <div className="flex gap-4">
+                    {section.products.map((product) => (
+                      <div 
+                        key={product._id}
+                        className={cn(
+                          "flex-shrink-0 group cursor-pointer",
+                          device === 'mobile' ? 'w-36' : 'w-48'
+                        )}
+                      >
+                        <div className="aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2">
+                          {product.image ? (
+                            <img 
+                              src={product.image} 
+                              alt={product.name} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package size={24} className="text-slate-300" />
+                            </div>
+                          )}
+                        </div>
+                        <h4 className={cn(
+                          "font-medium line-clamp-2 mb-1",
+                          device === 'mobile' ? 'text-xs' : 'text-sm'
+                        )}>{product.name}</h4>
+                        <span className={cn("font-bold", device === 'mobile' ? 'text-sm' : 'text-base')} style={{ color: brandColor }}>
+                          {formatPrice(product.salePrice || product.price)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        ))
+      )}
+    </div>
+  );
+
+  // Style 3: Cards - Modern cards with category header
+  const renderCardsStyle = () => (
+    <div className="w-full py-4 space-y-8 md:space-y-12">
+      {resolvedSections.length === 0 ? (
+        <div className="text-center py-12 text-slate-400 px-4">
+          <Package size={48} className="mx-auto mb-4 opacity-30" />
+          <p className="text-sm">Chưa chọn danh mục nào</p>
+        </div>
+      ) : (
+        resolvedSections.map((section) => (
+          <section key={section.id} className="px-4">
+            <div className="max-w-7xl mx-auto">
+              <div 
+                className="rounded-xl overflow-hidden"
+                style={{ border: `1px solid ${brandColor}20` }}
+              >
+                {/* Category Header */}
+                <div 
+                  className="px-4 py-3 flex items-center justify-between"
+                  style={{ backgroundColor: `${brandColor}08` }}
+                >
+                  <div className="flex items-center gap-3">
+                    {section.category.image && (
+                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-white">
+                        <img 
+                          src={section.category.image} 
+                          alt={section.category.name} 
+                          className="w-full h-full object-cover" 
+                        />
+                      </div>
+                    )}
+                    <h2 className={cn(
+                      "font-bold",
+                      device === 'mobile' ? 'text-base' : 'text-lg'
+                    )}>{section.category.name}</h2>
+                  </div>
+                  {config.showViewAll && (
+                    <button 
+                      className="text-sm font-medium flex items-center gap-1 hover:underline px-3 py-1.5 rounded-lg transition-colors"
+                      style={{ color: brandColor, backgroundColor: `${brandColor}15` }}
+                    >
+                      Xem danh mục <ArrowRight size={14} />
+                    </button>
+                  )}
+                </div>
+                
+                {/* Products Grid */}
+                <div className="p-4 bg-white dark:bg-slate-900">
+                  {section.products.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400">
+                      <Package size={32} className="mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">Chưa có sản phẩm</p>
+                    </div>
+                  ) : (
+                    <div className={cn("grid gap-4", getGridCols())}>
+                      {section.products.map((product) => (
+                        <ProductCard key={product._id} product={product} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <PreviewWrapper 
+      title="Preview Sản phẩm theo danh mục" 
+      device={device} 
+      setDevice={setDevice} 
+      previewStyle={previewStyle} 
+      setPreviewStyle={setPreviewStyle} 
+      styles={styles} 
+      info={`${resolvedSections.length} section`}
+    >
+      <BrowserFrame>
+        {previewStyle === 'grid' && renderGridStyle()}
+        {previewStyle === 'carousel' && renderCarouselStyle()}
+        {previewStyle === 'cards' && renderCardsStyle()}
+      </BrowserFrame>
+    </PreviewWrapper>
+  );
+};
