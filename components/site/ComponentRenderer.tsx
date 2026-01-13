@@ -95,9 +95,19 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
 // Supports 6 styles: slider, fade, bento, fullscreen, split, parallax
 type HeroStyle = 'slider' | 'fade' | 'bento' | 'fullscreen' | 'split' | 'parallax';
 
+interface HeroContent {
+  badge?: string;
+  heading?: string;
+  description?: string;
+  primaryButtonText?: string;
+  secondaryButtonText?: string;
+  countdownText?: string;
+}
+
 function HeroSection({ config, brandColor }: { config: Record<string, unknown>; brandColor: string }) {
   const slides = (config.slides as Array<{ image: string; link: string }>) || [];
   const style = (config.style as HeroStyle) || 'slider';
+  const content = (config.content as HeroContent) || {};
   const [currentSlide, setCurrentSlide] = React.useState(0);
 
   React.useEffect(() => {
@@ -266,23 +276,31 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
           {/* CTA Overlay Content */}
           <div className="absolute inset-0 z-10 flex flex-col justify-center px-4 md:px-8 lg:px-16">
             <div className="max-w-xl space-y-4 md:space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: `${brandColor}30`, color: brandColor }}>
-                <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
-                Nổi bật
-              </div>
+              {content.badge && (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: `${brandColor}30`, color: brandColor }}>
+                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                  {content.badge}
+                </div>
+              )}
               <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-                Khám phá bộ sưu tập mới nhất
+                {content.heading || 'Tiêu đề chính'}
               </h1>
-              <p className="text-white/80 text-sm md:text-lg">
-                Sản phẩm chất lượng cao với giá thành hợp lý
-              </p>
+              {content.description && (
+                <p className="text-white/80 text-sm md:text-lg">
+                  {content.description}
+                </p>
+              )}
               <div className="flex flex-col sm:flex-row gap-3">
-                <a href={slides[currentSlide]?.link || '#'} className="px-6 py-3 font-medium rounded-lg text-white text-center" style={{ backgroundColor: brandColor }}>
-                  Khám phá ngay
-                </a>
-                <a href="#" className="px-6 py-3 font-medium rounded-lg border border-white/30 text-white hover:bg-white/10 transition-colors text-center">
-                  Tìm hiểu thêm
-                </a>
+                {content.primaryButtonText && (
+                  <a href={slides[currentSlide]?.link || '#'} className="px-6 py-3 font-medium rounded-lg text-white text-center" style={{ backgroundColor: brandColor }}>
+                    {content.primaryButtonText}
+                  </a>
+                )}
+                {content.secondaryButtonText && (
+                  <a href="#" className="px-6 py-3 font-medium rounded-lg border border-white/30 text-white hover:bg-white/10 transition-colors text-center">
+                    {content.secondaryButtonText}
+                  </a>
+                )}
               </div>
             </div>
           </div>
@@ -308,19 +326,23 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
           <div className="w-full md:w-1/2 flex flex-col justify-center bg-slate-50 p-6 md:p-10 lg:p-16 order-2 md:order-1">
             <div className="max-w-md space-y-4">
               <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                Banner {currentSlide + 1}/{slides.length}
+                {content.badge || `Banner ${currentSlide + 1}/${slides.length}`}
               </span>
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
-                Tiêu đề nổi bật
+                {content.heading || 'Tiêu đề nổi bật'}
               </h2>
-              <p className="text-slate-600 text-base md:text-lg">
-                Mô tả ngắn gọn về nội dung banner hoặc chương trình khuyến mãi.
-              </p>
-              <div className="pt-2">
-                <a href={slides[currentSlide]?.link || '#'} className="inline-block px-6 py-3 font-medium rounded-lg text-white" style={{ backgroundColor: brandColor }}>
-                  Xem chi tiết →
-                </a>
-              </div>
+              {content.description && (
+                <p className="text-slate-600 text-base md:text-lg">
+                  {content.description}
+                </p>
+              )}
+              {content.primaryButtonText && (
+                <div className="pt-2">
+                  <a href={slides[currentSlide]?.link || '#'} className="inline-block px-6 py-3 font-medium rounded-lg text-white" style={{ backgroundColor: brandColor }}>
+                    {content.primaryButtonText}
+                  </a>
+                </div>
+              )}
             </div>
             {/* Slide indicators */}
             {slides.length > 1 && (
@@ -379,21 +401,29 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
           {/* Floating content card */}
           <div className="absolute z-10 inset-x-4 md:inset-x-8 bottom-4 md:bottom-8 flex items-end">
             <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl p-4 md:p-6 max-w-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
-                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: brandColor }}>Đang diễn ra</span>
-              </div>
+              {content.badge && (
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                  <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: brandColor }}>{content.badge}</span>
+                </div>
+              )}
               <h3 className="text-lg md:text-xl font-bold text-slate-900">
-                Ưu đãi đặc biệt tháng này
+                {content.heading || 'Tiêu đề nổi bật'}
               </h3>
-              <p className="text-slate-600 text-sm mt-1">
-                Giảm giá lên đến 50% cho tất cả sản phẩm
-              </p>
+              {content.description && (
+                <p className="text-slate-600 text-sm mt-1">
+                  {content.description}
+                </p>
+              )}
               <div className="flex items-center gap-3 mt-4">
-                <a href={slides[currentSlide]?.link || '#'} className="px-5 py-2 font-medium rounded-lg text-white text-sm" style={{ backgroundColor: brandColor }}>
-                  Mua ngay
-                </a>
-                <span className="text-slate-500 text-sm">Còn 3 ngày</span>
+                {content.primaryButtonText && (
+                  <a href={slides[currentSlide]?.link || '#'} className="px-5 py-2 font-medium rounded-lg text-white text-sm" style={{ backgroundColor: brandColor }}>
+                    {content.primaryButtonText}
+                  </a>
+                )}
+                {content.countdownText && (
+                  <span className="text-slate-500 text-sm">{content.countdownText}</span>
+                )}
               </div>
             </div>
           </div>

@@ -109,16 +109,27 @@ const PreviewWrapper = ({
 // 6 Styles: slider, fade, bento, fullscreen, split, parallax
 export type HeroStyle = 'slider' | 'fade' | 'bento' | 'fullscreen' | 'split' | 'parallax';
 
+export interface HeroContent {
+  badge?: string;
+  heading?: string;
+  description?: string;
+  primaryButtonText?: string;
+  secondaryButtonText?: string;
+  countdownText?: string;
+}
+
 export const HeroBannerPreview = ({ 
   slides, 
   brandColor,
   selectedStyle = 'slider',
-  onStyleChange
+  onStyleChange,
+  content
 }: { 
   slides: Array<{ id: number; image: string; link: string }>; 
   brandColor: string;
   selectedStyle?: HeroStyle;
   onStyleChange?: (style: HeroStyle) => void;
+  content?: HeroContent;
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -323,6 +334,7 @@ export const HeroBannerPreview = ({
   // Style 4: Fullscreen - Hero toàn màn hình với CTA overlay
   const renderFullscreenStyle = () => {
     const mainSlide = slides[currentSlide] || slides[0];
+    const c = content || {};
     return (
       <section className="relative w-full bg-slate-900 overflow-hidden">
         <div className={cn(
@@ -347,23 +359,31 @@ export const HeroBannerPreview = ({
                 device === 'mobile' ? 'px-4' : 'px-8 md:px-16'
               )}>
                 <div className={cn("max-w-xl", device === 'mobile' ? 'space-y-3' : 'space-y-4')}>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: `${brandColor}30`, color: brandColor }}>
-                    <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
-                    Nổi bật
-                  </div>
+                  {c.badge && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: `${brandColor}30`, color: brandColor }}>
+                      <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                      {c.badge}
+                    </div>
+                  )}
                   <h1 className={cn("font-bold text-white leading-tight", device === 'mobile' ? 'text-xl' : device === 'tablet' ? 'text-2xl' : 'text-3xl md:text-4xl')}>
-                    Khám phá bộ sưu tập mới nhất
+                    {c.heading || 'Tiêu đề chính'}
                   </h1>
-                  <p className={cn("text-white/80", device === 'mobile' ? 'text-sm line-clamp-2' : 'text-base')}>
-                    Sản phẩm chất lượng cao với giá thành hợp lý
-                  </p>
+                  {c.description && (
+                    <p className={cn("text-white/80", device === 'mobile' ? 'text-sm line-clamp-2' : 'text-base')}>
+                      {c.description}
+                    </p>
+                  )}
                   <div className={cn("flex gap-3", device === 'mobile' ? 'flex-col' : 'flex-row')}>
-                    <button className={cn("font-medium rounded-lg text-white", device === 'mobile' ? 'px-4 py-2 text-sm' : 'px-6 py-2.5')} style={{ backgroundColor: brandColor }}>
-                      Khám phá ngay
-                    </button>
-                    <button className={cn("font-medium rounded-lg border border-white/30 text-white hover:bg-white/10", device === 'mobile' ? 'px-4 py-2 text-sm' : 'px-6 py-2.5')}>
-                      Tìm hiểu thêm
-                    </button>
+                    {c.primaryButtonText && (
+                      <button className={cn("font-medium rounded-lg text-white", device === 'mobile' ? 'px-4 py-2 text-sm' : 'px-6 py-2.5')} style={{ backgroundColor: brandColor }}>
+                        {c.primaryButtonText}
+                      </button>
+                    )}
+                    {c.secondaryButtonText && (
+                      <button className={cn("font-medium rounded-lg border border-white/30 text-white hover:bg-white/10", device === 'mobile' ? 'px-4 py-2 text-sm' : 'px-6 py-2.5')}>
+                        {c.secondaryButtonText}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -391,6 +411,7 @@ export const HeroBannerPreview = ({
   // Style 5: Split - Layout chia đôi (Content + Image)
   const renderSplitStyle = () => {
     const mainSlide = slides[currentSlide] || slides[0];
+    const c = content || {};
     return (
       <section className="relative w-full bg-white dark:bg-slate-900 overflow-hidden">
         <div className={cn(
@@ -406,19 +427,23 @@ export const HeroBannerPreview = ({
               )}>
                 <div className={cn("space-y-3", device === 'mobile' ? '' : 'max-w-md')}>
                   <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                    Banner {currentSlide + 1}/{slides.length}
+                    {c.badge || `Banner ${currentSlide + 1}/${slides.length}`}
                   </span>
                   <h2 className={cn("font-bold text-slate-900 dark:text-white leading-tight", device === 'mobile' ? 'text-lg' : 'text-2xl lg:text-3xl')}>
-                    Tiêu đề nổi bật
+                    {c.heading || 'Tiêu đề nổi bật'}
                   </h2>
-                  <p className={cn("text-slate-600 dark:text-slate-300", device === 'mobile' ? 'text-sm' : 'text-base')}>
-                    Mô tả ngắn gọn về nội dung banner hoặc chương trình khuyến mãi.
-                  </p>
-                  <div className="pt-2">
-                    <button className={cn("font-medium rounded-lg text-white", device === 'mobile' ? 'px-4 py-2 text-sm' : 'px-6 py-2.5')} style={{ backgroundColor: brandColor }}>
-                      Xem chi tiết →
-                    </button>
-                  </div>
+                  {c.description && (
+                    <p className={cn("text-slate-600 dark:text-slate-300", device === 'mobile' ? 'text-sm' : 'text-base')}>
+                      {c.description}
+                    </p>
+                  )}
+                  {c.primaryButtonText && (
+                    <div className="pt-2">
+                      <button className={cn("font-medium rounded-lg text-white", device === 'mobile' ? 'px-4 py-2 text-sm' : 'px-6 py-2.5')} style={{ backgroundColor: brandColor }}>
+                        {c.primaryButtonText}
+                      </button>
+                    </div>
+                  )}
                 </div>
                 {/* Slide indicators */}
                 {slides.length > 1 && device !== 'mobile' && (
@@ -473,6 +498,7 @@ export const HeroBannerPreview = ({
   // Style 6: Parallax - Hiệu ứng layer với depth
   const renderParallaxStyle = () => {
     const mainSlide = slides[currentSlide] || slides[0];
+    const c = content || {};
     return (
       <section className="relative w-full bg-slate-900 overflow-hidden">
         <div className={cn(
@@ -502,21 +528,29 @@ export const HeroBannerPreview = ({
                   "bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-xl shadow-2xl",
                   device === 'mobile' ? 'p-3 w-full' : 'p-5 max-w-lg'
                 )}>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
-                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: brandColor }}>Đang diễn ra</span>
-                  </div>
+                  {c.badge && (
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                      <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: brandColor }}>{c.badge}</span>
+                    </div>
+                  )}
                   <h3 className={cn("font-bold text-slate-900 dark:text-white", device === 'mobile' ? 'text-base' : 'text-xl')}>
-                    Ưu đãi đặc biệt tháng này
+                    {c.heading || 'Tiêu đề nổi bật'}
                   </h3>
-                  <p className={cn("text-slate-600 dark:text-slate-300 mt-1", device === 'mobile' ? 'text-xs' : 'text-sm')}>
-                    Giảm giá lên đến 50% cho tất cả sản phẩm
-                  </p>
+                  {c.description && (
+                    <p className={cn("text-slate-600 dark:text-slate-300 mt-1", device === 'mobile' ? 'text-xs' : 'text-sm')}>
+                      {c.description}
+                    </p>
+                  )}
                   <div className="flex items-center gap-3 mt-3">
-                    <button className={cn("font-medium rounded-lg text-white", device === 'mobile' ? 'px-3 py-1.5 text-xs' : 'px-5 py-2 text-sm')} style={{ backgroundColor: brandColor }}>
-                      Mua ngay
-                    </button>
-                    <span className={cn("text-slate-500", device === 'mobile' ? 'text-xs' : 'text-sm')}>Còn 3 ngày</span>
+                    {c.primaryButtonText && (
+                      <button className={cn("font-medium rounded-lg text-white", device === 'mobile' ? 'px-3 py-1.5 text-xs' : 'px-5 py-2 text-sm')} style={{ backgroundColor: brandColor }}>
+                        {c.primaryButtonText}
+                      </button>
+                    )}
+                    {c.countdownText && (
+                      <span className={cn("text-slate-500", device === 'mobile' ? 'text-xs' : 'text-sm')}>{c.countdownText}</span>
+                    )}
                   </div>
                 </div>
               </div>
