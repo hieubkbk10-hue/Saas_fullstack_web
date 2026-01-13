@@ -23,6 +23,8 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
   const itemCount = (config.itemCount as number) || 8;
   const selectionMode = (config.selectionMode as 'auto' | 'manual') || 'auto';
   const selectedProductIds = (config.selectedProductIds as string[]) || [];
+  const subTitle = (config.subTitle as string) || 'Bộ sưu tập';
+  const buttonText = (config.buttonText as string) || 'Xem tất cả';
   
   // Query products based on selection mode
   const productsData = useQuery(
@@ -90,14 +92,14 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
     return `-${Math.round(((price - salePrice) / price) * 100)}%`;
   };
 
-  // Common Header Component - Giữ nhất quán cho cả 3 styles
+  // Common Header Component - Giữ nhất quán cho tất cả styles
   const SectionHeader = () => (
     <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between md:mb-10">
       <div className="flex items-end justify-between w-full md:w-auto">
         <div className="space-y-1 md:space-y-2">
           <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
             <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
-            Bộ sưu tập
+            {subTitle}
           </div>
           <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-slate-900">
             {title}
@@ -106,14 +108,14 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
         {/* Mobile View All */}
         {showViewAll && (
           <Link href="/products" className="md:hidden p-0 h-auto font-semibold mb-1 gap-1 flex items-center" style={{ color: brandColor }}>
-            Xem tất cả <ArrowRight size={16} />
+            {buttonText} <ArrowRight size={16} />
           </Link>
         )}
       </div>
       {/* Desktop View All */}
       {showViewAll && (
         <Link href="/products" className="hidden md:flex gap-2 text-slate-500 hover:text-slate-900 pl-6 border-l border-slate-200 transition-colors items-center">
-          Xem tất cả <ArrowRight size={16} />
+          {buttonText} <ArrowRight size={16} />
         </Link>
       )}
     </div>

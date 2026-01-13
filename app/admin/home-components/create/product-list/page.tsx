@@ -29,6 +29,10 @@ function ProductListCreateContent() {
   const [productStyle, setProductStyle] = useState<ProductListStyle>('commerce');
   const [serviceStyle, setServiceStyle] = useState<ServiceListStyle>('grid');
   
+  // Config text fields
+  const [subTitle, setSubTitle] = useState('Bộ sưu tập');
+  const [buttonText, setButtonText] = useState('Xem tất cả');
+  
   // Selection mode states
   const [selectionMode, setSelectionMode] = useState<'auto' | 'manual'>('auto');
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
@@ -111,6 +115,12 @@ function ProductListCreateContent() {
     const style = type === 'Blog' ? blogStyle : type === 'ServiceList' ? serviceStyle : productStyle;
     const config: Record<string, unknown> = { itemCount, sortBy, style, selectionMode };
     
+    // Chỉ thêm subTitle/buttonText cho ProductList
+    if (type === 'ProductList') {
+      config.subTitle = subTitle;
+      config.buttonText = buttonText;
+    }
+    
     if (selectionMode === 'manual') {
       if (type === 'ProductList') config.selectedProductIds = selectedProductIds;
       else if (type === 'ServiceList') config.selectedServiceIds = selectedServiceIds;
@@ -136,6 +146,35 @@ function ProductListCreateContent() {
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}
     >
+      {/* Config hiển thị - chỉ hiện cho ProductList */}
+      {type === 'ProductList' && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-base">Cấu hình hiển thị</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Tiêu đề phụ (badge)</Label>
+                <Input 
+                  value={subTitle} 
+                  onChange={(e) => setSubTitle(e.target.value)} 
+                  placeholder="VD: Bộ sưu tập, Sản phẩm hot..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Text nút xem thêm</Label>
+                <Input 
+                  value={buttonText} 
+                  onChange={(e) => setButtonText(e.target.value)} 
+                  placeholder="VD: Xem tất cả, Khám phá..."
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base">Nguồn dữ liệu</CardTitle>
@@ -398,7 +437,7 @@ function ProductListCreateContent() {
       ) : type === 'ServiceList' ? (
         <ServiceListPreview brandColor={brandColor} itemCount={selectionMode === 'manual' ? selectedServiceIds.length : itemCount} selectedStyle={serviceStyle} onStyleChange={setServiceStyle} />
       ) : (
-        <ProductListPreview brandColor={brandColor} itemCount={selectionMode === 'manual' ? selectedProductIds.length : itemCount} componentType="ProductList" selectedStyle={productStyle} onStyleChange={setProductStyle} />
+        <ProductListPreview brandColor={brandColor} itemCount={selectionMode === 'manual' ? selectedProductIds.length : itemCount} componentType="ProductList" selectedStyle={productStyle} onStyleChange={setProductStyle} subTitle={subTitle} buttonText={buttonText} />
       )}
     </ComponentFormWrapper>
   );

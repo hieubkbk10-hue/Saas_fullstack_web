@@ -1853,14 +1853,19 @@ const stripHtml = (html?: string) => {
   return html.replace(/<[^>]*>/g, '').trim();
 };
 
-export const ProductListPreview = ({ brandColor, itemCount, componentType, selectedStyle, onStyleChange, items }: { 
+export const ProductListPreview = ({ brandColor, itemCount, componentType, selectedStyle, onStyleChange, items, subTitle = 'Bộ sưu tập', buttonText = 'Xem tất cả', sectionTitle }: { 
   brandColor: string; 
   itemCount: number; 
   componentType: 'ProductList' | 'ServiceList'; 
   selectedStyle?: ProductListStyle; 
   onStyleChange?: (style: ProductListStyle) => void;
   items?: ProductListPreviewItem[];
+  subTitle?: string;
+  buttonText?: string;
+  sectionTitle?: string;
 }) => {
+  // Use sectionTitle if provided, otherwise use default based on componentType
+  const displayTitle = sectionTitle || (componentType === 'ProductList' ? 'Sản phẩm nổi bật' : 'Dịch vụ nổi bật');
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'commerce';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ProductListStyle);
@@ -1906,20 +1911,20 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
           <div className="space-y-1 md:space-y-2">
             <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
               <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
-              Bộ sưu tập
+              {subTitle}
             </div>
             <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-2xl md:text-4xl')}>
-              Sản phẩm nổi bật
+              {displayTitle}
             </h2>
           </div>
           {/* Mobile View All */}
           <button className="md:hidden p-0 h-auto font-semibold mb-1 gap-1 flex items-center" style={{ color: brandColor }}>
-            Xem tất cả <ArrowRight size={16} />
+            {buttonText} <ArrowRight size={16} />
           </button>
         </div>
         {/* Desktop View All */}
         <button className="hidden md:flex gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 pl-6 border-l border-slate-200 dark:border-slate-700 transition-colors items-center">
-          Xem tất cả <ArrowRight size={16} />
+          {buttonText} <ArrowRight size={16} />
         </button>
       </div>
 
@@ -1998,18 +2003,18 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
           <div className="space-y-1 md:space-y-2">
             <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
               <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
-              Bộ sưu tập
+              {subTitle}
             </div>
             <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-2xl md:text-4xl')}>
-              Sản phẩm nổi bật
+              {displayTitle}
             </h2>
           </div>
           <button className="md:hidden p-0 h-auto font-semibold mb-1 gap-1 flex items-center" style={{ color: brandColor }}>
-            Xem tất cả <ArrowRight size={16} />
+            {buttonText} <ArrowRight size={16} />
           </button>
         </div>
         <button className="hidden md:flex gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 pl-6 border-l border-slate-200 dark:border-slate-700 transition-colors items-center">
-          Xem tất cả <ArrowRight size={16} />
+          {buttonText} <ArrowRight size={16} />
         </button>
       </div>
 
@@ -2092,18 +2097,18 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
             <div className="space-y-1 md:space-y-2">
               <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
                 <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
-                Bộ sưu tập
+                {subTitle}
               </div>
               <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-2xl md:text-4xl')}>
-                Sản phẩm nổi bật
+                {displayTitle}
               </h2>
             </div>
             <button className="md:hidden p-0 h-auto font-semibold mb-1 gap-1 flex items-center" style={{ color: brandColor }}>
-              Xem tất cả <ArrowRight size={16} />
+              {buttonText} <ArrowRight size={16} />
             </button>
           </div>
           <button className="hidden md:flex gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 pl-6 border-l border-slate-200 dark:border-slate-700 transition-colors items-center">
-            Xem tất cả <ArrowRight size={16} />
+            {buttonText} <ArrowRight size={16} />
           </button>
         </div>
 
@@ -2247,10 +2252,10 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
             <div className="space-y-1 md:space-y-2">
               <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
                 <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
-                Bộ sưu tập
+                {subTitle}
               </div>
               <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-2xl md:text-4xl')}>
-                Sản phẩm nổi bật
+                {displayTitle}
               </h2>
             </div>
             <div className="flex gap-2 md:hidden">
@@ -2324,18 +2329,18 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
           <div className="space-y-1 md:space-y-2">
             <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
               <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
-              Bộ sưu tập
+              {subTitle}
             </div>
             <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-2xl md:text-4xl')}>
-              Sản phẩm nổi bật
+              {displayTitle}
             </h2>
           </div>
           <button className="md:hidden p-0 h-auto font-semibold mb-1 gap-1 flex items-center" style={{ color: brandColor }}>
-            Xem tất cả <ArrowRight size={16} />
+            {buttonText} <ArrowRight size={16} />
           </button>
         </div>
         <button className="hidden md:flex gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 pl-6 border-l border-slate-200 dark:border-slate-700 transition-colors items-center">
-          Xem tất cả <ArrowRight size={16} />
+          {buttonText} <ArrowRight size={16} />
         </button>
       </div>
 
@@ -2381,18 +2386,18 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
             <div className="space-y-1 md:space-y-2">
               <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
                 <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
-                Bộ sưu tập
+                {subTitle}
               </div>
               <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-2xl md:text-4xl')}>
-                Sản phẩm nổi bật
+                {displayTitle}
               </h2>
             </div>
             <button className="md:hidden p-0 h-auto font-semibold mb-1 gap-1 flex items-center" style={{ color: brandColor }}>
-              Xem tất cả <ArrowRight size={16} />
+              {buttonText} <ArrowRight size={16} />
             </button>
           </div>
           <button className="hidden md:flex gap-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 pl-6 border-l border-slate-200 dark:border-slate-700 transition-colors items-center">
-            Xem tất cả <ArrowRight size={16} />
+            {buttonText} <ArrowRight size={16} />
           </button>
         </div>
 
