@@ -37,7 +37,8 @@ import {
   CareerPreview, CareerStyle,
   SpeedDialPreview, SpeedDialStyle,
   ProductCategoriesPreview, ProductCategoriesStyle,
-  CategoryProductsPreview, CategoryProductsStyle
+  CategoryProductsPreview, CategoryProductsStyle,
+  TeamPreview, TeamStyle
 } from '../../previews';
 import { useBrandColor } from '../../create/shared';
 import { CategoryImageSelector } from '../../../components/CategoryImageSelector';
@@ -68,6 +69,7 @@ const COMPONENT_TYPES = [
   { value: 'SpeedDial', label: 'Speed Dial', icon: Zap },
   { value: 'ProductCategories', label: 'Danh mục sản phẩm', icon: Package },
   { value: 'CategoryProducts', label: 'Sản phẩm theo danh mục', icon: Package },
+  { value: 'Team', label: 'Đội ngũ', icon: Users },
 ];
 
 interface HeroSlide extends ImageItem {
@@ -160,6 +162,9 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [categoryProductsShowViewAll, setCategoryProductsShowViewAll] = useState(true);
   const [categoryProductsColsDesktop, setCategoryProductsColsDesktop] = useState(4);
   const [categoryProductsColsMobile, setCategoryProductsColsMobile] = useState(2);
+  // Team states
+  const [teamMembers, setTeamMembers] = useState<{id: number, name: string, role: string, avatar: string, bio: string, facebook: string, linkedin: string, twitter: string, email: string}[]>([]);
+  const [teamStyle, setTeamStyle] = useState<TeamStyle>('grid');
   const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true, mapEmbed: '' });
   const [contactStyle, setContactStyle] = useState<ContactStyle>('modern');
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
@@ -370,6 +375,20 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setCategoryProductsColsDesktop(config.columnsDesktop || 4);
           setCategoryProductsColsMobile(config.columnsMobile || 2);
           break;
+        case 'Team':
+          setTeamMembers(config.members?.map((m: {name: string, role: string, avatar: string, bio: string, facebook?: string, linkedin?: string, twitter?: string, email?: string}, i: number) => ({ 
+            id: i, 
+            name: m.name || '', 
+            role: m.role || '', 
+            avatar: m.avatar || '', 
+            bio: m.bio || '', 
+            facebook: m.facebook || '', 
+            linkedin: m.linkedin || '', 
+            twitter: m.twitter || '', 
+            email: m.email || '' 
+          })) || []);
+          setTeamStyle((config.style as TeamStyle) || 'grid');
+          break;
       }
       
       setIsInitialized(true);
@@ -477,6 +496,20 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           showViewAll: categoryProductsShowViewAll,
           columnsDesktop: categoryProductsColsDesktop,
           columnsMobile: categoryProductsColsMobile,
+        };
+      case 'Team':
+        return {
+          members: teamMembers.map(m => ({ 
+            name: m.name, 
+            role: m.role, 
+            avatar: m.avatar, 
+            bio: m.bio, 
+            facebook: m.facebook, 
+            linkedin: m.linkedin, 
+            twitter: m.twitter, 
+            email: m.email 
+          })),
+          style: teamStyle,
         };
       default:
         return {};
@@ -2532,6 +2565,116 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               onStyleChange={setCategoryProductsStyle}
               categoriesData={productCategoriesData || []}
               productsData={productsData || []}
+            />
+          </>
+        )}
+
+        {/* Team - Đội ngũ */}
+        {component.type === 'Team' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Thành viên đội ngũ</CardTitle>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    const newId = Math.max(0, ...teamMembers.map(m => m.id)) + 1;
+                    setTeamMembers([...teamMembers, { id: newId, name: '', role: '', avatar: '', bio: '', facebook: '', linkedin: '', twitter: '', email: '' }]);
+                  }}
+                  className="gap-2"
+                >
+                  <Plus size={14} /> Thêm
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {teamMembers.length === 0 ? (
+                  <p className="text-sm text-slate-500 text-center py-4">
+                    Chưa có thành viên nào. Nhấn &quot;Thêm&quot; để bắt đầu.
+                  </p>
+                ) : (
+                  teamMembers.map((member, idx) => (
+                    <div key={member.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="font-medium">Thành viên {idx + 1}</Label>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-red-500 h-8 w-8" 
+                          onClick={() => setTeamMembers(teamMembers.filter(m => m.id !== member.id))}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input 
+                          placeholder="Họ và tên" 
+                          value={member.name} 
+                          onChange={(e) => setTeamMembers(teamMembers.map(m => m.id === member.id ? {...m, name: e.target.value} : m))} 
+                        />
+                        <Input 
+                          placeholder="Chức vụ" 
+                          value={member.role} 
+                          onChange={(e) => setTeamMembers(teamMembers.map(m => m.id === member.id ? {...m, role: e.target.value} : m))} 
+                        />
+                      </div>
+
+                      <Input 
+                        placeholder="URL ảnh đại diện" 
+                        value={member.avatar} 
+                        onChange={(e) => setTeamMembers(teamMembers.map(m => m.id === member.id ? {...m, avatar: e.target.value} : m))} 
+                      />
+
+                      <textarea 
+                        placeholder="Giới thiệu ngắn..." 
+                        value={member.bio} 
+                        onChange={(e) => setTeamMembers(teamMembers.map(m => m.id === member.id ? {...m, bio: e.target.value} : m))}
+                        className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" 
+                      />
+
+                      <div className="space-y-2">
+                        <Label className="text-xs text-slate-500">Social Links</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input 
+                            placeholder="Facebook URL" 
+                            value={member.facebook} 
+                            onChange={(e) => setTeamMembers(teamMembers.map(m => m.id === member.id ? {...m, facebook: e.target.value} : m))} 
+                            className="text-xs"
+                          />
+                          <Input 
+                            placeholder="LinkedIn URL" 
+                            value={member.linkedin} 
+                            onChange={(e) => setTeamMembers(teamMembers.map(m => m.id === member.id ? {...m, linkedin: e.target.value} : m))} 
+                            className="text-xs"
+                          />
+                          <Input 
+                            placeholder="Twitter URL" 
+                            value={member.twitter} 
+                            onChange={(e) => setTeamMembers(teamMembers.map(m => m.id === member.id ? {...m, twitter: e.target.value} : m))} 
+                            className="text-xs"
+                          />
+                          <Input 
+                            placeholder="Email" 
+                            value={member.email} 
+                            onChange={(e) => setTeamMembers(teamMembers.map(m => m.id === member.id ? {...m, email: e.target.value} : m))} 
+                            className="text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            <TeamPreview 
+              members={teamMembers} 
+              brandColor={brandColor}
+              selectedStyle={teamStyle}
+              onStyleChange={setTeamStyle}
             />
           </>
         )}
