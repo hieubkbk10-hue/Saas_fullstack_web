@@ -92,8 +92,8 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
 
 // ============ HERO SECTION ============
 // Best Practice: Blurred Background Fill - fills letterbox gaps with blurred version of same image
-// Supports 3 styles: slider, fade (with thumbnails), bento (grid)
-type HeroStyle = 'slider' | 'fade' | 'bento';
+// Supports 6 styles: slider, fade, bento, fullscreen, split, parallax
+type HeroStyle = 'slider' | 'fade' | 'bento' | 'fullscreen' | 'split' | 'parallax';
 
 function HeroSection({ config, brandColor }: { config: Record<string, unknown>; brandColor: string }) {
   const slides = (config.slides as Array<{ image: string; link: string }>) || [];
@@ -243,6 +243,172 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
               ) : <div className="w-full h-full bg-slate-800" />}
             </a>
           </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 4: Fullscreen - Hero toàn màn hình với CTA overlay
+  if (style === 'fullscreen') {
+    return (
+      <section className="relative w-full bg-slate-900 overflow-hidden">
+        <div className="relative w-full h-[400px] md:h-[550px] lg:h-[650px]">
+          {slides.map((slide, idx) => (
+            <div key={idx} className={`absolute inset-0 transition-opacity duration-1000 ${idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              {slide.image ? (
+                <div className="w-full h-full relative">
+                  <img src={slide.image} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+                </div>
+              ) : <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900" />}
+            </div>
+          ))}
+          {/* CTA Overlay Content */}
+          <div className="absolute inset-0 z-10 flex flex-col justify-center px-4 md:px-8 lg:px-16">
+            <div className="max-w-xl space-y-4 md:space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: `${brandColor}30`, color: brandColor }}>
+                <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                Nổi bật
+              </div>
+              <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
+                Khám phá bộ sưu tập mới nhất
+              </h1>
+              <p className="text-white/80 text-sm md:text-lg">
+                Sản phẩm chất lượng cao với giá thành hợp lý
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a href={slides[currentSlide]?.link || '#'} className="px-6 py-3 font-medium rounded-lg text-white text-center" style={{ backgroundColor: brandColor }}>
+                  Khám phá ngay
+                </a>
+                <a href="#" className="px-6 py-3 font-medium rounded-lg border border-white/30 text-white hover:bg-white/10 transition-colors text-center">
+                  Tìm hiểu thêm
+                </a>
+              </div>
+            </div>
+          </div>
+          {/* Navigation dots */}
+          {slides.length > 1 && (
+            <div className="absolute bottom-6 right-6 flex gap-2 z-20">
+              {slides.map((_, idx) => (
+                <button key={idx} onClick={() => setCurrentSlide(idx)} className={`w-3 h-3 rounded-full transition-all ${idx === currentSlide ? 'w-8' : 'bg-white/50'}`} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Split - Layout chia đôi (Content + Image)
+  if (style === 'split') {
+    return (
+      <section className="relative w-full bg-white overflow-hidden">
+        <div className="flex flex-col md:flex-row md:h-[450px] lg:h-[550px]">
+          {/* Content Side */}
+          <div className="w-full md:w-1/2 flex flex-col justify-center bg-slate-50 p-6 md:p-10 lg:p-16 order-2 md:order-1">
+            <div className="max-w-md space-y-4">
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                Banner {currentSlide + 1}/{slides.length}
+              </span>
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
+                Tiêu đề nổi bật
+              </h2>
+              <p className="text-slate-600 text-base md:text-lg">
+                Mô tả ngắn gọn về nội dung banner hoặc chương trình khuyến mãi.
+              </p>
+              <div className="pt-2">
+                <a href={slides[currentSlide]?.link || '#'} className="inline-block px-6 py-3 font-medium rounded-lg text-white" style={{ backgroundColor: brandColor }}>
+                  Xem chi tiết →
+                </a>
+              </div>
+            </div>
+            {/* Slide indicators */}
+            {slides.length > 1 && (
+              <div className="flex gap-2 mt-8">
+                {slides.map((_, idx) => (
+                  <button key={idx} onClick={() => setCurrentSlide(idx)} className={`h-1.5 rounded-full transition-all ${idx === currentSlide ? 'w-10' : 'w-6 bg-slate-300'}`} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Image Side */}
+          <div className="w-full md:w-1/2 h-[280px] md:h-full relative overflow-hidden order-1 md:order-2">
+            {slides.map((slide, idx) => (
+              <div key={idx} className={`absolute inset-0 transition-all duration-700 ${idx === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-105 pointer-events-none'}`}>
+                {slide.image ? (
+                  <img src={slide.image} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-slate-200">
+                    <LayoutTemplate size={48} className="text-slate-400" />
+                  </div>
+                )}
+              </div>
+            ))}
+            {/* Navigation arrows */}
+            {slides.length > 1 && (
+              <>
+                <button onClick={() => setCurrentSlide(prev => prev === 0 ? slides.length - 1 : prev - 1)} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center z-10">
+                  <svg className="w-5 h-5" style={{ color: brandColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <button onClick={() => setCurrentSlide(prev => (prev + 1) % slides.length)} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center z-10">
+                  <svg className="w-5 h-5" style={{ color: brandColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Parallax - Hiệu ứng layer với floating card
+  if (style === 'parallax') {
+    return (
+      <section className="relative w-full bg-slate-900 overflow-hidden">
+        <div className="relative w-full h-[350px] md:h-[450px] lg:h-[550px]">
+          {slides.map((slide, idx) => (
+            <div key={idx} className={`absolute inset-0 transition-opacity duration-700 ${idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              {slide.image ? (
+                <div className="w-full h-full relative">
+                  <div className="absolute inset-0 scale-110 transform-gpu" style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+                </div>
+              ) : <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900" />}
+            </div>
+          ))}
+          {/* Floating content card */}
+          <div className="absolute z-10 inset-x-4 md:inset-x-8 bottom-4 md:bottom-8 flex items-end">
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl p-4 md:p-6 max-w-lg">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: brandColor }}>Đang diễn ra</span>
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-slate-900">
+                Ưu đãi đặc biệt tháng này
+              </h3>
+              <p className="text-slate-600 text-sm mt-1">
+                Giảm giá lên đến 50% cho tất cả sản phẩm
+              </p>
+              <div className="flex items-center gap-3 mt-4">
+                <a href={slides[currentSlide]?.link || '#'} className="px-5 py-2 font-medium rounded-lg text-white text-sm" style={{ backgroundColor: brandColor }}>
+                  Mua ngay
+                </a>
+                <span className="text-slate-500 text-sm">Còn 3 ngày</span>
+              </div>
+            </div>
+          </div>
+          {/* Top navigation bar */}
+          {slides.length > 1 && (
+            <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
+              <button onClick={() => setCurrentSlide(prev => prev === 0 ? slides.length - 1 : prev - 1)} className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <span className="text-white/80 text-xs font-medium px-2">{currentSlide + 1} / {slides.length}</span>
+              <button onClick={() => setCurrentSlide(prev => (prev + 1) % slides.length)} className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+          )}
         </div>
       </section>
     );

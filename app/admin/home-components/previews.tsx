@@ -106,7 +106,8 @@ const PreviewWrapper = ({
 // ============ HERO BANNER PREVIEW ============
 // Admin chọn style -> lưu vào config -> trang chủ render theo style đã chọn
 // Tất cả styles đều tuân thủ best practice: blurred background + object-contain + max-height
-export type HeroStyle = 'slider' | 'fade' | 'bento';
+// 6 Styles: slider, fade, bento, fullscreen, split, parallax
+export type HeroStyle = 'slider' | 'fade' | 'bento' | 'fullscreen' | 'split' | 'parallax';
 
 export const HeroBannerPreview = ({ 
   slides, 
@@ -124,8 +125,11 @@ export const HeroBannerPreview = ({
 
   const styles = [
     { id: 'slider' as const, label: 'Slider' },
-    { id: 'fade' as const, label: 'Fade + Thumbs' },
-    { id: 'bento' as const, label: 'Bento Grid' }
+    { id: 'fade' as const, label: 'Fade' },
+    { id: 'bento' as const, label: 'Bento' },
+    { id: 'fullscreen' as const, label: 'Fullscreen' },
+    { id: 'split' as const, label: 'Split' },
+    { id: 'parallax' as const, label: 'Parallax' }
   ];
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -316,6 +320,229 @@ export const HeroBannerPreview = ({
     );
   };
 
+  // Style 4: Fullscreen - Hero toàn màn hình với CTA overlay
+  const renderFullscreenStyle = () => {
+    const mainSlide = slides[currentSlide] || slides[0];
+    return (
+      <section className="relative w-full bg-slate-900 overflow-hidden">
+        <div className={cn(
+          "relative w-full",
+          device === 'mobile' ? 'h-[280px]' : device === 'tablet' ? 'h-[350px]' : 'h-[400px]'
+        )}>
+          {slides.length > 0 && mainSlide ? (
+            <>
+              {slides.map((slide, idx) => (
+                <div key={slide.id} className={cn("absolute inset-0 transition-opacity duration-1000", idx === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none")}>
+                  {slide.image ? (
+                    <div className="w-full h-full relative">
+                      <img src={slide.image} alt="" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+                    </div>
+                  ) : renderPlaceholder(idx)}
+                </div>
+              ))}
+              {/* CTA Overlay Content */}
+              <div className={cn(
+                "absolute inset-0 z-10 flex flex-col justify-center",
+                device === 'mobile' ? 'px-4' : 'px-8 md:px-16'
+              )}>
+                <div className={cn("max-w-xl", device === 'mobile' ? 'space-y-3' : 'space-y-4')}>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: `${brandColor}30`, color: brandColor }}>
+                    <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                    Nổi bật
+                  </div>
+                  <h1 className={cn("font-bold text-white leading-tight", device === 'mobile' ? 'text-xl' : device === 'tablet' ? 'text-2xl' : 'text-3xl md:text-4xl')}>
+                    Khám phá bộ sưu tập mới nhất
+                  </h1>
+                  <p className={cn("text-white/80", device === 'mobile' ? 'text-sm line-clamp-2' : 'text-base')}>
+                    Sản phẩm chất lượng cao với giá thành hợp lý
+                  </p>
+                  <div className={cn("flex gap-3", device === 'mobile' ? 'flex-col' : 'flex-row')}>
+                    <button className={cn("font-medium rounded-lg text-white", device === 'mobile' ? 'px-4 py-2 text-sm' : 'px-6 py-2.5')} style={{ backgroundColor: brandColor }}>
+                      Khám phá ngay
+                    </button>
+                    <button className={cn("font-medium rounded-lg border border-white/30 text-white hover:bg-white/10", device === 'mobile' ? 'px-4 py-2 text-sm' : 'px-6 py-2.5')}>
+                      Tìm hiểu thêm
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {/* Navigation dots */}
+              {slides.length > 1 && (
+                <div className="absolute bottom-4 right-4 flex gap-2 z-20">
+                  {slides.map((_, idx) => (
+                    <button key={idx} type="button" onClick={() => setCurrentSlide(idx)} 
+                      className={cn("w-2 h-2 rounded-full transition-all", idx === currentSlide ? "w-6" : "bg-white/50")} 
+                      style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-slate-800">
+              <span className="text-slate-400 text-sm">Chưa có banner</span>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  // Style 5: Split - Layout chia đôi (Content + Image)
+  const renderSplitStyle = () => {
+    const mainSlide = slides[currentSlide] || slides[0];
+    return (
+      <section className="relative w-full bg-white dark:bg-slate-900 overflow-hidden">
+        <div className={cn(
+          "relative w-full flex",
+          device === 'mobile' ? 'flex-col h-auto' : 'flex-row h-[320px]'
+        )}>
+          {slides.length > 0 && mainSlide ? (
+            <>
+              {/* Content Side */}
+              <div className={cn(
+                "flex flex-col justify-center bg-slate-50 dark:bg-slate-800/50",
+                device === 'mobile' ? 'p-4 order-2' : 'w-1/2 p-8 lg:p-12'
+              )}>
+                <div className={cn("space-y-3", device === 'mobile' ? '' : 'max-w-md')}>
+                  <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                    Banner {currentSlide + 1}/{slides.length}
+                  </span>
+                  <h2 className={cn("font-bold text-slate-900 dark:text-white leading-tight", device === 'mobile' ? 'text-lg' : 'text-2xl lg:text-3xl')}>
+                    Tiêu đề nổi bật
+                  </h2>
+                  <p className={cn("text-slate-600 dark:text-slate-300", device === 'mobile' ? 'text-sm' : 'text-base')}>
+                    Mô tả ngắn gọn về nội dung banner hoặc chương trình khuyến mãi.
+                  </p>
+                  <div className="pt-2">
+                    <button className={cn("font-medium rounded-lg text-white", device === 'mobile' ? 'px-4 py-2 text-sm' : 'px-6 py-2.5')} style={{ backgroundColor: brandColor }}>
+                      Xem chi tiết →
+                    </button>
+                  </div>
+                </div>
+                {/* Slide indicators */}
+                {slides.length > 1 && device !== 'mobile' && (
+                  <div className="flex gap-2 mt-6">
+                    {slides.map((_, idx) => (
+                      <button key={idx} type="button" onClick={() => setCurrentSlide(idx)}
+                        className={cn("h-1 rounded-full transition-all", idx === currentSlide ? "w-8" : "w-4 bg-slate-300 dark:bg-slate-600")}
+                        style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Image Side */}
+              <div className={cn(
+                "relative overflow-hidden",
+                device === 'mobile' ? 'w-full h-[200px] order-1' : 'w-1/2'
+              )}>
+                {slides.map((slide, idx) => (
+                  <div key={slide.id} className={cn("absolute inset-0 transition-all duration-700", idx === currentSlide ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none")}>
+                    {slide.image ? (
+                      <img src={slide.image} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-slate-200 dark:bg-slate-700">
+                        <ImageIcon size={40} className="text-slate-400" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {/* Navigation arrows */}
+                {slides.length > 1 && (
+                  <>
+                    <button type="button" onClick={prevSlide} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 shadow-lg flex items-center justify-center z-10">
+                      <ChevronLeft size={16} style={{ color: brandColor }} />
+                    </button>
+                    <button type="button" onClick={nextSlide} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 shadow-lg flex items-center justify-center z-10">
+                      <ChevronRight size={16} style={{ color: brandColor }} />
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="w-full h-[300px] flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+              <span className="text-slate-400 text-sm">Chưa có banner</span>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  // Style 6: Parallax - Hiệu ứng layer với depth
+  const renderParallaxStyle = () => {
+    const mainSlide = slides[currentSlide] || slides[0];
+    return (
+      <section className="relative w-full bg-slate-900 overflow-hidden">
+        <div className={cn(
+          "relative w-full",
+          device === 'mobile' ? 'h-[260px]' : device === 'tablet' ? 'h-[320px]' : 'h-[380px]'
+        )}>
+          {slides.length > 0 && mainSlide ? (
+            <>
+              {slides.map((slide, idx) => (
+                <div key={slide.id} className={cn("absolute inset-0 transition-opacity duration-700", idx === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none")}>
+                  {slide.image ? (
+                    <div className="w-full h-full relative">
+                      {/* Background layer - slight scale for parallax effect */}
+                      <div className="absolute inset-0 scale-110 transform-gpu" style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                      {/* Gradient overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+                    </div>
+                  ) : renderPlaceholder(idx)}
+                </div>
+              ))}
+              {/* Floating content card */}
+              <div className={cn(
+                "absolute z-10 flex items-end",
+                device === 'mobile' ? 'inset-x-3 bottom-3' : 'inset-x-6 bottom-6'
+              )}>
+                <div className={cn(
+                  "bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-xl shadow-2xl",
+                  device === 'mobile' ? 'p-3 w-full' : 'p-5 max-w-lg'
+                )}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: brandColor }}>Đang diễn ra</span>
+                  </div>
+                  <h3 className={cn("font-bold text-slate-900 dark:text-white", device === 'mobile' ? 'text-base' : 'text-xl')}>
+                    Ưu đãi đặc biệt tháng này
+                  </h3>
+                  <p className={cn("text-slate-600 dark:text-slate-300 mt-1", device === 'mobile' ? 'text-xs' : 'text-sm')}>
+                    Giảm giá lên đến 50% cho tất cả sản phẩm
+                  </p>
+                  <div className="flex items-center gap-3 mt-3">
+                    <button className={cn("font-medium rounded-lg text-white", device === 'mobile' ? 'px-3 py-1.5 text-xs' : 'px-5 py-2 text-sm')} style={{ backgroundColor: brandColor }}>
+                      Mua ngay
+                    </button>
+                    <span className={cn("text-slate-500", device === 'mobile' ? 'text-xs' : 'text-sm')}>Còn 3 ngày</span>
+                  </div>
+                </div>
+              </div>
+              {/* Top navigation bar */}
+              {slides.length > 1 && (
+                <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
+                  <button type="button" onClick={prevSlide} className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
+                    <ChevronLeft size={16} className="text-white" />
+                  </button>
+                  <span className="text-white/80 text-xs font-medium px-2">{currentSlide + 1} / {slides.length}</span>
+                  <button type="button" onClick={nextSlide} className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
+                    <ChevronRight size={16} className="text-white" />
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-slate-800">
+              <span className="text-slate-400 text-sm">Chưa có banner</span>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  };
+
   return (
     <Card className="mt-6">
       <CardHeader className="pb-3">
@@ -325,10 +552,10 @@ export const HeroBannerPreview = ({
           </CardTitle>
           <div className="flex items-center gap-4">
             {/* Style selector - admin chọn style để lưu */}
-            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1 flex-wrap">
               {styles.map((s) => (
                 <button key={s.id} type="button" onClick={() => onStyleChange?.(s.id)}
-                  className={cn("px-3 py-1 text-xs font-medium rounded-md transition-all",
+                  className={cn("px-2 py-1 text-xs font-medium rounded-md transition-all",
                     selectedStyle === s.id ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
                   {s.label}
                 </button>
@@ -364,6 +591,9 @@ export const HeroBannerPreview = ({
             {selectedStyle === 'slider' && renderSliderStyle()}
             {selectedStyle === 'fade' && renderFadeStyle()}
             {selectedStyle === 'bento' && renderBentoStyle()}
+            {selectedStyle === 'fullscreen' && renderFullscreenStyle()}
+            {selectedStyle === 'split' && renderSplitStyle()}
+            {selectedStyle === 'parallax' && renderParallaxStyle()}
             {/* Fake content bên dưới */}
             <div className="p-4 space-y-3">
               <div className="flex gap-3">{[1,2,3,4].slice(0, device === 'mobile' ? 2 : 4).map(i => (<div key={i} className="flex-1 h-16 bg-slate-100 dark:bg-slate-800 rounded-lg"></div>))}</div>
