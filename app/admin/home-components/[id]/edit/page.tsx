@@ -38,7 +38,8 @@ import {
   SpeedDialPreview, SpeedDialStyle,
   ProductCategoriesPreview, ProductCategoriesStyle,
   CategoryProductsPreview, CategoryProductsStyle,
-  TeamPreview, TeamStyle
+  TeamPreview, TeamStyle,
+  FeaturesPreview, FeaturesStyle
 } from '../../previews';
 import { useBrandColor } from '../../create/shared';
 import { CategoryImageSelector } from '../../../components/CategoryImageSelector';
@@ -70,6 +71,7 @@ const COMPONENT_TYPES = [
   { value: 'ProductCategories', label: 'Danh mục sản phẩm', icon: Package },
   { value: 'CategoryProducts', label: 'Sản phẩm theo danh mục', icon: Package },
   { value: 'Team', label: 'Đội ngũ', icon: Users },
+  { value: 'Features', label: 'Tính năng', icon: Zap },
 ];
 
 interface HeroSlide extends ImageItem {
@@ -166,6 +168,9 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [teamMembers, setTeamMembers] = useState<{id: number, name: string, role: string, avatar: string, bio: string, facebook: string, linkedin: string, twitter: string, email: string}[]>([]);
   const [teamStyle, setTeamStyle] = useState<TeamStyle>('grid');
   const [expandedTeamId, setExpandedTeamId] = useState<number | null>(null);
+  // Features states
+  const [featuresItems, setFeaturesItems] = useState<{id: number, icon: string, title: string, description: string}[]>([]);
+  const [featuresStyle, setFeaturesStyle] = useState<FeaturesStyle>('iconGrid');
   const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true, mapEmbed: '' });
   const [contactStyle, setContactStyle] = useState<ContactStyle>('modern');
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
@@ -390,6 +395,10 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           })) || []);
           setTeamStyle((config.style as TeamStyle) || 'grid');
           break;
+        case 'Features':
+          setFeaturesItems(config.items?.map((item: {icon: string, title: string, description: string}, i: number) => ({ id: i, icon: item.icon || 'Zap', title: item.title, description: item.description })) || []);
+          setFeaturesStyle((config.style as FeaturesStyle) || 'iconGrid');
+          break;
       }
       
       setIsInitialized(true);
@@ -511,6 +520,11 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
             email: m.email 
           })),
           style: teamStyle,
+        };
+      case 'Features':
+        return { 
+          items: featuresItems.map(f => ({ icon: f.icon, title: f.title, description: f.description })), 
+          style: featuresStyle 
         };
       default:
         return {};
@@ -2693,6 +2707,80 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               brandColor={brandColor}
               selectedStyle={teamStyle}
               onStyleChange={setTeamStyle}
+            />
+          </>
+        )}
+
+        {/* Features - Tính năng */}
+        {component.type === 'Features' && (
+          <>
+            <Card className="mb-6">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Danh sách tính năng</CardTitle>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setFeaturesItems([...featuresItems, { id: Date.now(), icon: 'Zap', title: '', description: '' }])} 
+                  className="gap-2"
+                >
+                  <Plus size={14} /> Thêm
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {featuresItems.map((item, idx) => (
+                  <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Tính năng {idx + 1}</Label>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-red-500 h-8 w-8" 
+                        onClick={() => featuresItems.length > 1 && setFeaturesItems(featuresItems.filter(f => f.id !== item.id))}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <select 
+                        value={item.icon} 
+                        onChange={(e) => setFeaturesItems(featuresItems.map(f => f.id === item.id ? {...f, icon: e.target.value} : f))}
+                        className="h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+                      >
+                        <option value="Zap">Zap - Nhanh</option>
+                        <option value="Shield">Shield - Bảo mật</option>
+                        <option value="Target">Target - Mục tiêu</option>
+                        <option value="Layers">Layers - Tầng lớp</option>
+                        <option value="Cpu">Cpu - Công nghệ</option>
+                        <option value="Globe">Globe - Toàn cầu</option>
+                        <option value="Rocket">Rocket - Khởi động</option>
+                        <option value="Settings">Settings - Cài đặt</option>
+                        <option value="Check">Check - Đúng</option>
+                        <option value="Star">Star - Nổi bật</option>
+                      </select>
+                      <Input 
+                        placeholder="Tiêu đề" 
+                        value={item.title} 
+                        onChange={(e) => setFeaturesItems(featuresItems.map(f => f.id === item.id ? {...f, title: e.target.value} : f))} 
+                        className="md:col-span-2"
+                      />
+                    </div>
+                    <Input 
+                      placeholder="Mô tả ngắn" 
+                      value={item.description} 
+                      onChange={(e) => setFeaturesItems(featuresItems.map(f => f.id === item.id ? {...f, description: e.target.value} : f))} 
+                    />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <FeaturesPreview 
+              items={featuresItems} 
+              brandColor={brandColor}
+              selectedStyle={featuresStyle}
+              onStyleChange={setFeaturesStyle}
             />
           </>
         )}

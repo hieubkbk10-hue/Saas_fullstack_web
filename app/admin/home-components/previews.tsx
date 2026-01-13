@@ -5,7 +5,7 @@ import {
   Monitor, Tablet, Smartphone, Eye, ChevronLeft, ChevronRight, 
   Image as ImageIcon, Star, Check, ExternalLink, Globe, Mail, 
   Phone, Package, FileText, Users, MapPin, Tag, ArrowUpRight, Briefcase, Plus, ArrowRight,
-  X, ZoomIn, Maximize2, Building2, Clock
+  X, ZoomIn, Maximize2, Building2, Clock, Zap, Shield, Target, Layers, Cpu, Rocket, Settings
 } from 'lucide-react';
 import { cn, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
 
@@ -5908,7 +5908,6 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
 // ============ FEATURES PREVIEW (Product Features) ============
 // 3 Professional Styles: Icon Grid, Alternating, Compact
 // Khác với Benefits (focuses on "why choose us"), Features focuses on product/service features
-import { Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings } from 'lucide-react';
 
 type FeatureItem = { id: number; icon: string; title: string; description: string };
 export type FeaturesStyle = 'iconGrid' | 'alternating' | 'compact';
