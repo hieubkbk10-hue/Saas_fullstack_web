@@ -65,6 +65,8 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
       return <CareerSection config={config} brandColor={brandColor} title={title} />;
     case 'CaseStudy':
       return <CaseStudySection config={config} brandColor={brandColor} title={title} />;
+    case 'SpeedDial':
+      return <SpeedDialSection config={config} brandColor={brandColor} />;
     default:
       return <PlaceholderSection type={type} title={title} />;
   }
@@ -2607,6 +2609,124 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
         </div>
       </div>
     </section>
+  );
+}
+
+// ============ SPEED DIAL SECTION ============
+// Floating action buttons for quick contact - always visible
+type SpeedDialStyle = 'fab' | 'sidebar' | 'pills';
+
+const SpeedDialIcon = ({ name, size = 18 }: { name: string; size?: number }) => {
+  const icons: Record<string, React.ReactNode> = {
+    'phone': <Phone size={size} />,
+    'mail': <Mail size={size} />,
+    'message-circle': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>,
+    'map-pin': <MapPin size={size} />,
+    'facebook': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>,
+    'instagram': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>,
+    'youtube': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>,
+    'zalo': <span className="text-[10px] font-bold">Zalo</span>,
+    'calendar': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
+    'shopping-cart': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>,
+    'headphones': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>,
+    'help-circle': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>,
+  };
+  return <span className="inline-flex items-center justify-center">{icons[name] || <Phone size={size} />}</span>;
+};
+
+function SpeedDialSection({ config, brandColor }: { config: Record<string, unknown>; brandColor: string }) {
+  const actions = (config.actions as Array<{ icon: string; label: string; url: string; bgColor: string }>) || [];
+  const style = (config.style as SpeedDialStyle) || 'fab';
+  const position = (config.position as 'bottom-right' | 'bottom-left') || 'bottom-right';
+  const isRight = position !== 'bottom-left';
+
+  if (actions.length === 0) return null;
+
+  // Style 1: FAB - Floating Action Buttons (vertical stack)
+  if (style === 'fab') {
+    return (
+      <div className={`fixed bottom-6 z-50 flex flex-col gap-3 ${isRight ? 'right-6 items-end' : 'left-6 items-start'}`}>
+        {actions.map((action, idx) => (
+          <a
+            key={idx}
+            href={action.url || '#'}
+            target={action.url?.startsWith('http') ? '_blank' : undefined}
+            rel={action.url?.startsWith('http') ? 'noopener noreferrer' : undefined}
+            className="group flex items-center gap-3"
+          >
+            {isRight && action.label && (
+              <span className="px-3 py-1.5 bg-slate-900/90 text-white text-sm font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-200 whitespace-nowrap">
+                {action.label}
+              </span>
+            )}
+            <div
+              className="w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white hover:scale-110 hover:shadow-xl transition-all duration-200 cursor-pointer"
+              style={{ backgroundColor: action.bgColor || brandColor }}
+            >
+              <SpeedDialIcon name={action.icon} size={20} />
+            </div>
+            {!isRight && action.label && (
+              <span className="px-3 py-1.5 bg-slate-900/90 text-white text-sm font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-200 whitespace-nowrap">
+                {action.label}
+              </span>
+            )}
+          </a>
+        ))}
+      </div>
+    );
+  }
+
+  // Style 2: Sidebar - Vertical bar attached to edge
+  if (style === 'sidebar') {
+    return (
+      <div className={`fixed top-1/2 -translate-y-1/2 z-50 flex flex-col overflow-hidden shadow-xl ${isRight ? 'right-0 rounded-l-xl' : 'left-0 rounded-r-xl'}`}>
+        {actions.map((action, idx) => (
+          <a
+            key={idx}
+            href={action.url || '#'}
+            target={action.url?.startsWith('http') ? '_blank' : undefined}
+            rel={action.url?.startsWith('http') ? 'noopener noreferrer' : undefined}
+            className="group relative flex items-center justify-center w-14 h-14 text-white hover:w-36 transition-all duration-200 overflow-hidden"
+            style={{ backgroundColor: action.bgColor || brandColor }}
+          >
+            <div className={`absolute flex items-center gap-3 transition-all duration-200 ${isRight ? 'right-4' : 'left-4'}`}>
+              <SpeedDialIcon name={action.icon} size={20} />
+            </div>
+            {action.label && (
+              <span className={`absolute text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${isRight ? 'right-12' : 'left-12'}`}>
+                {action.label}
+              </span>
+            )}
+            {idx < actions.length - 1 && (
+              <div className="absolute bottom-0 left-3 right-3 h-px bg-white/20" />
+            )}
+          </a>
+        ))}
+      </div>
+    );
+  }
+
+  // Style 3: Pills - Horizontal pills with labels
+  return (
+    <div className={`fixed bottom-6 z-50 flex flex-col gap-3 ${isRight ? 'right-6 items-end' : 'left-6 items-start'}`}>
+      {actions.map((action, idx) => (
+        <a
+          key={idx}
+          href={action.url || '#'}
+          target={action.url?.startsWith('http') ? '_blank' : undefined}
+          rel={action.url?.startsWith('http') ? 'noopener noreferrer' : undefined}
+          className={`flex items-center gap-2.5 pl-4 pr-5 py-2.5 rounded-full shadow-lg text-white hover:shadow-xl hover:scale-[1.02] transition-all duration-200 cursor-pointer ${isRight ? 'flex-row' : 'flex-row-reverse'}`}
+          style={{ backgroundColor: action.bgColor || brandColor }}
+        >
+          <SpeedDialIcon name={action.icon} size={18} />
+          {action.label && (
+            <span className="text-sm font-medium whitespace-nowrap">
+              {action.label}
+            </span>
+          )}
+        </a>
+      ))}
+    </div>
   );
 }
 
