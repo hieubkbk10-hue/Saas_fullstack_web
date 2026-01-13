@@ -4162,7 +4162,7 @@ export const TrustBadgesPreview = ({
 
 // ============ SPEED DIAL PREVIEW ============
 type SpeedDialAction = { id: number; icon: string; label: string; url: string; bgColor: string };
-export type SpeedDialStyle = 'fab' | 'vertical' | 'arc';
+export type SpeedDialStyle = 'fab' | 'sidebar' | 'pills';
 
 const SpeedDialIcon = ({ name, size = 20 }: { name: string; size?: number }) => {
   const icons: Record<string, React.ReactNode> = {
@@ -4173,7 +4173,7 @@ const SpeedDialIcon = ({ name, size = 20 }: { name: string; size?: number }) => 
     'facebook': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>,
     'instagram': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg></span>,
     'youtube': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg></span>,
-    'zalo': <span className="inline-flex items-center justify-center text-xs font-bold">Zalo</span>,
+    'zalo': <span className="inline-flex items-center justify-center text-[10px] font-bold">Zalo</span>,
     'calendar': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg></span>,
     'shopping-cart': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></span>,
     'headphones': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg></span>,
@@ -4193,192 +4193,119 @@ export const SpeedDialPreview = ({
     style: SpeedDialStyle;
     position: 'bottom-right' | 'bottom-left';
     mainButtonColor: string;
+    alwaysOpen?: boolean;
   };
   brandColor: string;
   selectedStyle?: SpeedDialStyle;
   onStyleChange?: (style: SpeedDialStyle) => void;
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const [isOpen, setIsOpen] = useState(true);
   const previewStyle = selectedStyle || config.style || 'fab';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as SpeedDialStyle);
+  const alwaysOpen = config.alwaysOpen ?? true;
   
   const styles = [
-    { id: 'fab', label: 'FAB Classic' },
-    { id: 'vertical', label: 'Vertical' },
-    { id: 'arc', label: 'Arc' },
+    { id: 'fab', label: 'FAB' },
+    { id: 'sidebar', label: 'Sidebar' },
+    { id: 'pills', label: 'Pills' },
   ];
 
-  const positionClass = config.position === 'bottom-left' ? 'left-4' : 'right-4';
+  const isRight = config.position !== 'bottom-left';
 
-  // Style 1: FAB Classic - Material Design Floating Action Button
+  // Style 1: FAB - Floating Action Buttons (vertical stack)
   const renderFabStyle = () => (
-    <div className={cn("absolute bottom-4", positionClass, "z-50")}>
-      {/* Actions */}
-      <div className={cn(
-        "flex flex-col-reverse gap-3 mb-3 transition-all duration-300",
-        isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
-      )}>
-        {config.actions.map((action, idx) => (
-          <div 
-            key={action.id} 
-            className="flex items-center gap-3 group"
-            style={{ 
-              transitionDelay: isOpen ? `${idx * 50}ms` : '0ms',
-              transform: isOpen ? 'scale(1)' : 'scale(0.8)',
-            }}
-          >
-            {config.position === 'bottom-right' && action.label && (
-              <span className="bg-slate-800 text-white text-xs px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                {action.label}
-              </span>
-            )}
-            <button
-              type="button"
-              className="w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white hover:scale-110 transition-transform"
-              style={{ backgroundColor: action.bgColor || brandColor }}
-            >
-              <SpeedDialIcon name={action.icon} size={20} />
-            </button>
-            {config.position === 'bottom-left' && action.label && (
-              <span className="bg-slate-800 text-white text-xs px-3 py-1.5 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                {action.label}
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
-      
-      {/* Main Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-white hover:scale-105 transition-all duration-300"
-        style={{ backgroundColor: config.mainButtonColor || brandColor }}
-      >
-        <Plus 
-          size={24} 
-          className={cn("transition-transform duration-300", isOpen && "rotate-45")} 
-        />
-      </button>
-    </div>
-  );
-
-  // Style 2: Vertical - Simple vertical list with labels
-  const renderVerticalStyle = () => (
-    <div className={cn("absolute bottom-4", positionClass, "z-50")}>
-      {/* Actions with Labels */}
-      <div className={cn(
-        "flex flex-col gap-2 mb-3 transition-all duration-300",
-        isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
-      )}>
-        {config.actions.map((action, idx) => (
-          <div 
-            key={action.id} 
-            className={cn(
-              "flex items-center gap-2 bg-white dark:bg-slate-800 rounded-full shadow-lg pr-4 hover:shadow-xl transition-all",
-              config.position === 'bottom-left' ? 'flex-row' : 'flex-row-reverse'
-            )}
-            style={{ 
-              transitionDelay: isOpen ? `${idx * 50}ms` : '0ms',
-            }}
-          >
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0"
-              style={{ backgroundColor: action.bgColor || brandColor }}
-            >
-              <SpeedDialIcon name={action.icon} size={18} />
-            </div>
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 whitespace-nowrap">
-              {action.label || 'Action'}
-            </span>
-          </div>
-        ))}
-      </div>
-      
-      {/* Main Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-white hover:scale-105 transition-all duration-300"
-        style={{ backgroundColor: config.mainButtonColor || brandColor }}
-      >
-        <Plus 
-          size={24} 
-          className={cn("transition-transform duration-300", isOpen && "rotate-45")} 
-        />
-      </button>
-    </div>
-  );
-
-  // Style 3: Arc - Actions spread in an arc pattern
-  const renderArcStyle = () => {
-    const actionCount = config.actions.length;
-    const startAngle = config.position === 'bottom-right' ? 180 : 270;
-    const endAngle = config.position === 'bottom-right' ? 270 : 360;
-    const angleStep = (endAngle - startAngle) / (actionCount > 1 ? actionCount - 1 : 1);
-    const radius = device === 'mobile' ? 70 : 90;
-
-    return (
-      <div className={cn("absolute bottom-4", positionClass, "z-50")}>
-        {/* Arc Actions */}
-        <div className="relative">
-          {config.actions.map((action, idx) => {
-            const angle = startAngle + (idx * angleStep);
-            const radian = (angle * Math.PI) / 180;
-            const x = Math.cos(radian) * radius;
-            const y = Math.sin(radian) * radius;
-
-            return (
-              <div
-                key={action.id}
-                className={cn(
-                  "absolute transition-all duration-300 group",
-                  isOpen ? "opacity-100 scale-100" : "opacity-0 scale-0"
-                )}
-                style={{
-                  left: '50%',
-                  top: '50%',
-                  transform: isOpen 
-                    ? `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`
-                    : 'translate(-50%, -50%)',
-                  transitionDelay: isOpen ? `${idx * 50}ms` : '0ms',
-                }}
-              >
-                <button
-                  type="button"
-                  className="w-11 h-11 rounded-full shadow-lg flex items-center justify-center text-white hover:scale-110 transition-transform"
-                  style={{ backgroundColor: action.bgColor || brandColor }}
-                >
-                  <SpeedDialIcon name={action.icon} size={18} />
-                </button>
-                {/* Tooltip */}
-                <span className={cn(
-                  "absolute top-1/2 -translate-y-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none",
-                  config.position === 'bottom-right' ? 'right-full mr-2' : 'left-full ml-2'
-                )}>
-                  {action.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-        
-        {/* Main Button */}
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className="relative w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-white hover:scale-105 transition-all duration-300 z-10"
-          style={{ backgroundColor: config.mainButtonColor || brandColor }}
+    <div className={cn(
+      "absolute bottom-4 flex flex-col gap-2",
+      isRight ? "right-4 items-end" : "left-4 items-start"
+    )}>
+      {config.actions.map((action) => (
+        <a
+          key={action.id}
+          href={action.url || '#'}
+          className="group flex items-center gap-2"
         >
-          <Plus 
-            size={24} 
-            className={cn("transition-transform duration-300", isOpen && "rotate-45")} 
-          />
-        </button>
-      </div>
-    );
-  };
+          {isRight && action.label && (
+            <span className="px-2.5 py-1 bg-slate-900/90 text-white text-xs font-medium rounded-md shadow-lg opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200 whitespace-nowrap">
+              {action.label}
+            </span>
+          )}
+          <div
+            className="w-11 h-11 rounded-full shadow-lg flex items-center justify-center text-white hover:scale-110 hover:shadow-xl transition-all duration-200 cursor-pointer"
+            style={{ backgroundColor: action.bgColor || brandColor }}
+          >
+            <SpeedDialIcon name={action.icon} size={18} />
+          </div>
+          {!isRight && action.label && (
+            <span className="px-2.5 py-1 bg-slate-900/90 text-white text-xs font-medium rounded-md shadow-lg opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all duration-200 whitespace-nowrap">
+              {action.label}
+            </span>
+          )}
+        </a>
+      ))}
+    </div>
+  );
+
+  // Style 2: Sidebar - Vertical bar attached to edge
+  const renderSidebarStyle = () => (
+    <div className={cn(
+      "absolute top-1/2 -translate-y-1/2 flex flex-col overflow-hidden shadow-xl",
+      isRight ? "right-0 rounded-l-xl" : "left-0 rounded-r-xl"
+    )}>
+      {config.actions.map((action, idx) => (
+        <a
+          key={action.id}
+          href={action.url || '#'}
+          className="group relative flex items-center justify-center w-12 h-12 text-white hover:w-32 transition-all duration-200 overflow-hidden"
+          style={{ backgroundColor: action.bgColor || brandColor }}
+        >
+          <div className={cn(
+            "absolute flex items-center gap-2 transition-all duration-200",
+            isRight ? "right-3" : "left-3"
+          )}>
+            <SpeedDialIcon name={action.icon} size={18} />
+          </div>
+          {action.label && (
+            <span className={cn(
+              "absolute text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+              isRight ? "right-10" : "left-10"
+            )}>
+              {action.label}
+            </span>
+          )}
+          {idx < config.actions.length - 1 && (
+            <div className="absolute bottom-0 left-2 right-2 h-px bg-white/20" />
+          )}
+        </a>
+      ))}
+    </div>
+  );
+
+  // Style 3: Pills - Horizontal pills with labels
+  const renderPillsStyle = () => (
+    <div className={cn(
+      "absolute bottom-4 flex flex-col gap-2",
+      isRight ? "right-4 items-end" : "left-4 items-start"
+    )}>
+      {config.actions.map((action) => (
+        <a
+          key={action.id}
+          href={action.url || '#'}
+          className={cn(
+            "flex items-center gap-2 pl-3 pr-4 py-2 rounded-full shadow-lg text-white hover:shadow-xl hover:scale-[1.02] transition-all duration-200 cursor-pointer",
+            isRight ? "flex-row" : "flex-row-reverse"
+          )}
+          style={{ backgroundColor: action.bgColor || brandColor }}
+        >
+          <SpeedDialIcon name={action.icon} size={16} />
+          {action.label && (
+            <span className="text-xs font-medium whitespace-nowrap">
+              {action.label}
+            </span>
+          )}
+        </a>
+      ))}
+    </div>
+  );
 
   return (
     <PreviewWrapper 
@@ -4388,25 +4315,26 @@ export const SpeedDialPreview = ({
       previewStyle={previewStyle} 
       setPreviewStyle={setPreviewStyle} 
       styles={styles} 
-      info={`${config.actions.length} hành động • Click FAB để toggle`}
+      info={`${config.actions.length} hành động${alwaysOpen ? ' • Luôn hiển thị' : ''}`}
     >
       <BrowserFrame>
-        <div className="relative h-80 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 overflow-hidden">
+        <div className="relative h-72 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 overflow-hidden">
           {/* Sample page content */}
-          <div className="p-4 space-y-3">
-            <div className="h-6 w-48 bg-slate-300 dark:bg-slate-700 rounded" />
-            <div className="h-4 w-full bg-slate-200 dark:bg-slate-700/50 rounded" />
-            <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-700/50 rounded" />
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              <div className="h-24 bg-slate-200 dark:bg-slate-700/50 rounded-lg" />
-              <div className="h-24 bg-slate-200 dark:bg-slate-700/50 rounded-lg" />
+          <div className="p-4 space-y-2">
+            <div className="h-5 w-40 bg-slate-200 dark:bg-slate-700 rounded" />
+            <div className="h-3 w-full bg-slate-100 dark:bg-slate-700/50 rounded" />
+            <div className="h-3 w-4/5 bg-slate-100 dark:bg-slate-700/50 rounded" />
+            <div className="grid grid-cols-3 gap-2 mt-3">
+              <div className="h-16 bg-slate-100 dark:bg-slate-700/50 rounded-lg" />
+              <div className="h-16 bg-slate-100 dark:bg-slate-700/50 rounded-lg" />
+              <div className="h-16 bg-slate-100 dark:bg-slate-700/50 rounded-lg" />
             </div>
           </div>
           
           {/* Speed Dial */}
           {previewStyle === 'fab' && renderFabStyle()}
-          {previewStyle === 'vertical' && renderVerticalStyle()}
-          {previewStyle === 'arc' && renderArcStyle()}
+          {previewStyle === 'sidebar' && renderSidebarStyle()}
+          {previewStyle === 'pills' && renderPillsStyle()}
         </div>
       </BrowserFrame>
     </PreviewWrapper>

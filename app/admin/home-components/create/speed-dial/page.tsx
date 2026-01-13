@@ -41,6 +41,7 @@ export default function SpeedDialCreatePage() {
   const [style, setStyle] = useState<SpeedDialStyle>('fab');
   const [position, setPosition] = useState<'bottom-right' | 'bottom-left'>('bottom-right');
   const [mainButtonColor, setMainButtonColor] = useState(brandColor);
+  const [alwaysOpen, setAlwaysOpen] = useState(true);
 
   const addAction = () => {
     const newId = Math.max(0, ...actions.map(a => a.id)) + 1;
@@ -63,6 +64,7 @@ export default function SpeedDialCreatePage() {
       style,
       position,
       mainButtonColor,
+      alwaysOpen,
     });
   };
 
@@ -81,35 +83,16 @@ export default function SpeedDialCreatePage() {
           <CardTitle className="text-base">Cấu hình chung</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Vị trí</Label>
-              <select
-                value={position}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPosition(e.target.value as 'bottom-right' | 'bottom-left')}
-                className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
-              >
-                <option value="bottom-right">Góc phải dưới</option>
-                <option value="bottom-left">Góc trái dưới</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label>Màu nút chính</Label>
-              <div className="flex gap-2">
-                <Input 
-                  type="color" 
-                  value={mainButtonColor} 
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMainButtonColor(e.target.value)}
-                  className="w-12 h-9 p-1 cursor-pointer"
-                />
-                <Input 
-                  value={mainButtonColor} 
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMainButtonColor(e.target.value)}
-                  placeholder="#3b82f6"
-                  className="flex-1"
-                />
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label>Vị trí hiển thị</Label>
+            <select
+              value={position}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPosition(e.target.value as 'bottom-right' | 'bottom-left')}
+              className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
+            >
+              <option value="bottom-right">Góc phải</option>
+              <option value="bottom-left">Góc trái</option>
+            </select>
           </div>
         </CardContent>
       </Card>
@@ -209,6 +192,7 @@ export default function SpeedDialCreatePage() {
           style,
           position,
           mainButtonColor,
+          alwaysOpen,
         }}
         brandColor={brandColor}
         selectedStyle={style}
