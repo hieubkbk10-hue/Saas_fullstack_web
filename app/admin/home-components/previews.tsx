@@ -5380,9 +5380,9 @@ export const CategoryProductsPreview = ({
 };
 
 // ============ TEAM PREVIEW ============
-// Professional Team Section UI/UX - 3 Variants: Grid, Cards, Carousel
+// Professional Team Section UI/UX - 6 Variants: Grid, Cards, Carousel, Hexagon, Timeline, Spotlight
 type TeamMember = { id: number; name: string; role: string; avatar: string; bio: string; facebook: string; linkedin: string; twitter: string; email: string };
-export type TeamStyle = 'grid' | 'cards' | 'carousel';
+export type TeamStyle = 'grid' | 'cards' | 'carousel' | 'hexagon' | 'timeline' | 'spotlight';
 
 export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange }: { 
   members: TeamMember[]; 
@@ -5397,7 +5397,10 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
   const styles = [
     { id: 'grid', label: 'Grid' }, 
     { id: 'cards', label: 'Cards' }, 
-    { id: 'carousel', label: 'Carousel' }
+    { id: 'carousel', label: 'Carousel' },
+    { id: 'hexagon', label: 'Hexagon' },
+    { id: 'timeline', label: 'Timeline' },
+    { id: 'spotlight', label: 'Spotlight' }
   ];
 
   const SocialIcon = ({ type, url }: { type: 'facebook' | 'linkedin' | 'twitter' | 'email'; url: string }) => {
@@ -5598,6 +5601,288 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
     );
   };
 
+  // Style 4: Hexagon - Hình lục giác sáng tạo
+  const renderHexagonStyle = () => (
+    <div className={cn("py-8 px-4 overflow-hidden", device === 'mobile' ? 'py-6' : '')}>
+      <div className="text-center mb-8">
+        <span 
+          className="inline-block px-4 py-1.5 rounded-full text-xs font-medium mb-3"
+          style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+        >
+          Đội ngũ của chúng tôi
+        </span>
+        <h3 className={cn("font-bold text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg' : 'text-2xl')}>
+          Đội ngũ của chúng tôi
+        </h3>
+      </div>
+      
+      <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+        {members.slice(0, device === 'mobile' ? 4 : 6).map((member) => (
+          <div key={member.id} className="group relative">
+            {/* Hexagon container */}
+            <div 
+              className={cn(
+                "relative",
+                device === 'mobile' ? 'w-28 h-32' : 'w-36 h-40'
+              )}
+              style={{
+                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+              }}
+            >
+              {/* Main hexagon */}
+              <div 
+                className="absolute inset-1 transition-transform duration-500 group-hover:scale-[0.98]"
+                style={{
+                  clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+                  backgroundColor: '#f1f5f9'
+                }}
+              >
+                {member.avatar ? (
+                  <img 
+                    src={member.avatar} 
+                    alt={member.name} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div 
+                    className="w-full h-full flex items-center justify-center text-3xl font-bold text-white"
+                    style={{ backgroundColor: brandColor }}
+                  >
+                    {(member.name || 'U').charAt(0)}
+                  </div>
+                )}
+                
+                {/* Overlay on hover */}
+                <div 
+                  className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+                  style={{ backgroundColor: `${brandColor}ee` }}
+                >
+                  <div className="flex gap-1.5">
+                    {member.facebook && <SocialIcon type="facebook" url={member.facebook} />}
+                    {member.linkedin && <SocialIcon type="linkedin" url={member.linkedin} />}
+                    {member.email && <SocialIcon type="email" url={member.email} />}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Border effect */}
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                  clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+                  background: `linear-gradient(135deg, ${brandColor}, ${brandColor}60)`,
+                }}
+              />
+            </div>
+            
+            {/* Info below hexagon */}
+            <div className="text-center mt-3">
+              <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{member.name || 'Họ và tên'}</h4>
+              <p className="text-xs mt-0.5" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Style 5: Timeline - Dạng timeline sang trọng
+  const renderTimelineStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
+      <div className="text-center mb-8">
+        <h3 className={cn("font-bold text-slate-900 dark:text-slate-100 mb-2", device === 'mobile' ? 'text-lg' : 'text-2xl')}>
+          Đội ngũ của chúng tôi
+        </h3>
+        <div 
+          className="w-16 h-1 mx-auto rounded-full"
+          style={{ background: `linear-gradient(90deg, transparent, ${brandColor}, transparent)` }}
+        />
+      </div>
+      
+      <div className="relative max-w-3xl mx-auto">
+        {/* Timeline line */}
+        <div 
+          className={cn(
+            "absolute top-0 bottom-0 w-0.5",
+            device === 'mobile' ? 'left-4' : 'left-1/2 -translate-x-1/2'
+          )}
+          style={{ background: `linear-gradient(to bottom, transparent, ${brandColor}30, ${brandColor}30, transparent)` }}
+        />
+        
+        <div className="space-y-6">
+          {members.slice(0, device === 'mobile' ? 3 : 4).map((member, idx) => {
+            const isEven = idx % 2 === 0;
+            return (
+              <div 
+                key={member.id} 
+                className={cn(
+                  "relative flex items-center gap-4",
+                  device === 'mobile' ? '' : isEven ? 'flex-row' : 'flex-row-reverse'
+                )}
+              >
+                {/* Timeline dot */}
+                <div 
+                  className={cn(
+                    "absolute w-3 h-3 rounded-full border-2 border-white shadow-md z-10",
+                    device === 'mobile' ? 'left-4 -translate-x-1/2' : 'left-1/2 -translate-x-1/2'
+                  )}
+                  style={{ backgroundColor: brandColor }}
+                />
+                
+                {/* Content card */}
+                <div className={cn(
+                  "flex-1",
+                  device === 'mobile' ? 'ml-8' : isEven ? 'pr-8 text-right' : 'pl-8'
+                )}>
+                  <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-md border border-slate-100 dark:border-slate-700">
+                    <div className={cn(
+                      "flex items-center gap-3",
+                      device !== 'mobile' && isEven ? 'flex-row-reverse' : ''
+                    )}>
+                      {/* Avatar */}
+                      <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden ring-2 ring-white shadow-sm">
+                        {member.avatar ? (
+                          <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div 
+                            className="w-full h-full flex items-center justify-center text-lg font-bold text-white"
+                            style={{ backgroundColor: brandColor }}
+                          >
+                            {(member.name || 'U').charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Info */}
+                      <div className={cn("flex-1 min-w-0", device !== 'mobile' && isEven ? 'text-right' : '')}>
+                        <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{member.name || 'Họ và tên'}</h4>
+                        <p className="text-xs" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+                      </div>
+                    </div>
+                    {member.bio && (
+                      <p className={cn(
+                        "text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2",
+                        device !== 'mobile' && isEven ? 'text-right' : ''
+                      )}>{member.bio}</p>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Spacer for opposite side on desktop */}
+                {device !== 'mobile' && <div className="flex-1" />}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Style 6: Spotlight - Glassmorphism với hiệu ứng ánh sáng
+  const renderSpotlightStyle = () => (
+    <div 
+      className={cn("py-8 px-4 relative overflow-hidden", device === 'mobile' ? 'py-6' : '')}
+      style={{ background: `linear-gradient(135deg, ${brandColor}08 0%, #f8fafc 50%, ${brandColor}05 100%)` }}
+    >
+      {/* Decorative background elements */}
+      <div 
+        className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-20 blur-3xl"
+        style={{ background: `radial-gradient(circle, ${brandColor}40, transparent)` }}
+      />
+      <div 
+        className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-15 blur-3xl"
+        style={{ background: `radial-gradient(circle, ${brandColor}30, transparent)` }}
+      />
+      
+      <div className="relative">
+        <div className="text-center mb-8">
+          <h3 className={cn("font-bold text-slate-900 dark:text-slate-100 mb-2", device === 'mobile' ? 'text-lg' : 'text-2xl')}>
+            Đội ngũ của chúng tôi
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Những con người tài năng đứng sau thành công</p>
+        </div>
+        
+        <div className={cn(
+          "grid gap-5",
+          device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+        )}>
+          {members.slice(0, device === 'mobile' ? 3 : 6).map((member) => (
+            <div key={member.id} className="group relative">
+              {/* Glow effect behind card */}
+              <div 
+                className="absolute -inset-1 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-lg"
+                style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}20)` }}
+              />
+              
+              {/* Main card with glassmorphism */}
+              <div className="relative bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-5 border border-white/50 dark:border-slate-700/50 shadow-md hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+                {/* Spotlight effect */}
+                <div 
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full opacity-0 group-hover:opacity-30 transition-opacity duration-500"
+                  style={{ 
+                    background: `radial-gradient(circle, ${brandColor}, transparent)`,
+                    filter: 'blur(15px)'
+                  }}
+                />
+                
+                {/* Avatar with ring effect */}
+                <div className="relative mx-auto w-20 h-20 mb-4">
+                  <div 
+                    className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    style={{ 
+                      background: `conic-gradient(from 0deg, ${brandColor}, ${brandColor}40, ${brandColor})`,
+                      padding: '2px'
+                    }}
+                  />
+                  <div className="absolute inset-0.5 rounded-full bg-white dark:bg-slate-800" />
+                  <div className="absolute inset-1.5 rounded-full overflow-hidden">
+                    {member.avatar ? (
+                      <img 
+                        src={member.avatar} 
+                        alt={member.name} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div 
+                        className="w-full h-full flex items-center justify-center text-2xl font-bold text-white"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        {(member.name || 'U').charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Info */}
+                <div className="text-center relative">
+                  <h4 className="font-bold text-slate-900 dark:text-slate-100 mb-0.5">{member.name || 'Họ và tên'}</h4>
+                  <p 
+                    className="text-xs font-medium mb-2"
+                    style={{ color: brandColor }}
+                  >
+                    {member.role || 'Chức vụ'}
+                  </p>
+                  
+                  {member.bio && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">{member.bio}</p>
+                  )}
+                  
+                  {/* Social icons with glass effect */}
+                  <div className="flex justify-center gap-2">
+                    {member.facebook && <SocialIcon type="facebook" url={member.facebook} />}
+                    {member.linkedin && <SocialIcon type="linkedin" url={member.linkedin} />}
+                    {member.twitter && <SocialIcon type="twitter" url={member.twitter} />}
+                    {member.email && <SocialIcon type="email" url={member.email} />}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <PreviewWrapper 
       title="Preview Team" 
@@ -5612,6 +5897,224 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
         {previewStyle === 'grid' && renderGridStyle()}
         {previewStyle === 'cards' && renderCardsStyle()}
         {previewStyle === 'carousel' && renderCarouselStyle()}
+        {previewStyle === 'hexagon' && renderHexagonStyle()}
+        {previewStyle === 'timeline' && renderTimelineStyle()}
+        {previewStyle === 'spotlight' && renderSpotlightStyle()}
+      </BrowserFrame>
+    </PreviewWrapper>
+  );
+};
+
+// ============ FEATURES PREVIEW (Product Features) ============
+// 3 Professional Styles: Icon Grid, Alternating, Compact
+// Khác với Benefits (focuses on "why choose us"), Features focuses on product/service features
+import { Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings } from 'lucide-react';
+
+type FeatureItem = { id: number; icon: string; title: string; description: string };
+export type FeaturesStyle = 'iconGrid' | 'alternating' | 'compact';
+
+// Icon mapping for features
+const featureIcons: Record<string, React.ElementType> = {
+  Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, Check, Star
+};
+
+export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: FeatureItem[]; brandColor: string; selectedStyle?: FeaturesStyle; onStyleChange?: (style: FeaturesStyle) => void }) => {
+  const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const previewStyle = selectedStyle || 'iconGrid';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as FeaturesStyle);
+  const styles = [
+    { id: 'iconGrid', label: 'Icon Grid' }, 
+    { id: 'alternating', label: 'Alternating' }, 
+    { id: 'compact', label: 'Compact' }
+  ];
+
+  const getIcon = (iconName: string) => {
+    return featureIcons[iconName] || Zap;
+  };
+
+  // Style 1: Icon Grid - Grid với icon nổi bật, hover effects
+  const renderIconGridStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+      {/* Header */}
+      <div className="text-center mb-8 md:mb-12">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+          <Zap size={12} />
+          Tính năng
+        </div>
+        <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-3", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>
+          Tính năng nổi bật
+        </h2>
+        <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
+          Khám phá những tính năng ưu việt giúp bạn đạt hiệu quả tối đa
+        </p>
+      </div>
+      
+      {/* Grid */}
+      <div className={cn(
+        "grid gap-4 md:gap-6",
+        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+      )}>
+        {items.slice(0, device === 'mobile' ? 4 : 6).map((item, idx) => {
+          const IconComponent = getIcon(item.icon);
+          return (
+            <div 
+              key={item.id} 
+              className="group bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 hover:border-transparent hover:shadow-xl transition-all duration-300"
+              style={{ '--hover-shadow': `0 20px 25px -5px ${brandColor}15` } as React.CSSProperties}
+            >
+              {/* Icon với background gradient */}
+              <div 
+                className="w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 duration-300"
+                style={{ 
+                  background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`,
+                  boxShadow: `0 8px 16px -4px ${brandColor}40`
+                }}
+              >
+                <IconComponent size={24} className="text-white" strokeWidth={2} />
+              </div>
+              
+              <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 mb-2">
+                {item.title || 'Tên tính năng'}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                {item.description || 'Mô tả tính năng...'}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // Style 2: Alternating - Layout xen kẽ trái/phải với number
+  const renderAlternatingStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+      {/* Header */}
+      <div className="text-center mb-8 md:mb-12">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+          <Zap size={12} />
+          Tính năng
+        </div>
+        <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>
+          Tính năng nổi bật
+        </h2>
+      </div>
+      
+      {/* Features List */}
+      <div className="max-w-4xl mx-auto space-y-6">
+        {items.slice(0, 4).map((item, idx) => {
+          const IconComponent = getIcon(item.icon);
+          const isEven = idx % 2 === 0;
+          return (
+            <div 
+              key={item.id} 
+              className={cn(
+                "flex items-center gap-6 p-4 md:p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700",
+                device !== 'mobile' && !isEven && 'flex-row-reverse'
+              )}
+            >
+              {/* Icon + Number */}
+              <div className="relative flex-shrink-0">
+                <div 
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${brandColor}15 0%, ${brandColor}05 100%)`,
+                    border: `2px solid ${brandColor}20`
+                  }}
+                >
+                  <IconComponent size={device === 'mobile' ? 28 : 32} style={{ color: brandColor }} strokeWidth={1.5} />
+                </div>
+                {/* Number badge */}
+                <span 
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full text-xs font-bold text-white flex items-center justify-center"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {idx + 1}
+                </span>
+              </div>
+              
+              {/* Content */}
+              <div className={cn("flex-1", device !== 'mobile' && !isEven && 'text-right')}>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 mb-1">
+                  {item.title || 'Tên tính năng'}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {item.description || 'Mô tả tính năng...'}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // Style 3: Compact - Danh sách nhỏ gọn với icon inline
+  const renderCompactStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-6" style={{ borderColor: `${brandColor}20` }}>
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+            <Zap size={12} />
+            Tính năng
+          </div>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+            Tính năng nổi bật
+          </h2>
+        </div>
+      </div>
+      
+      {/* Compact Grid */}
+      <div className={cn(
+        "grid gap-3",
+        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'
+      )}>
+        {items.slice(0, device === 'mobile' ? 4 : 8).map((item) => {
+          const IconComponent = getIcon(item.icon);
+          return (
+            <div 
+              key={item.id} 
+              className="flex items-start gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+            >
+              {/* Small Icon */}
+              <div 
+                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: `${brandColor}15` }}
+              >
+                <IconComponent size={18} style={{ color: brandColor }} strokeWidth={2} />
+              </div>
+              
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 mb-0.5 truncate">
+                  {item.title || 'Tính năng'}
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                  {item.description || 'Mô tả...'}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <PreviewWrapper 
+      title="Preview Features" 
+      device={device} 
+      setDevice={setDevice} 
+      previewStyle={previewStyle} 
+      setPreviewStyle={setPreviewStyle} 
+      styles={styles} 
+      info={`${items.length} tính năng`}
+    >
+      <BrowserFrame>
+        {previewStyle === 'iconGrid' && renderIconGridStyle()}
+        {previewStyle === 'alternating' && renderAlternatingStyle()}
+        {previewStyle === 'compact' && renderCompactStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );

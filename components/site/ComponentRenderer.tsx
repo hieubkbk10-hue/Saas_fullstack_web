@@ -10,7 +10,7 @@ import { ServiceListSection } from './ServiceListSection';
 import { 
   LayoutTemplate, Package, FileText, HelpCircle, MousePointerClick, 
   Users, Star, Phone, Briefcase, Image as ImageIcon, Check, ZoomIn, Maximize2, X,
-  Building2, Clock, MapPin, Mail
+  Building2, Clock, MapPin, Mail, Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings
 } from 'lucide-react';
 
 interface HomeComponent {
@@ -75,6 +75,8 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
       return <CategoryProductsSection config={config} brandColor={brandColor} title={title} />;
     case 'Team':
       return <TeamSection config={config} brandColor={brandColor} title={title} />;
+    case 'Features':
+      return <FeaturesSection config={config} brandColor={brandColor} title={title} />;
     default:
       return <PlaceholderSection type={type} title={title} />;
   }
@@ -3600,8 +3602,8 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
 }
 
 // ============ TEAM SECTION ============
-// 3 Professional Styles: Grid, Cards, Carousel
-type TeamStyle = 'grid' | 'cards' | 'carousel';
+// 6 Professional Styles: Grid, Cards, Carousel, Hexagon, Timeline, Spotlight
+type TeamStyle = 'grid' | 'cards' | 'carousel' | 'hexagon' | 'timeline' | 'spotlight';
 
 interface TeamMember {
   name: string;
@@ -3747,82 +3749,626 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
   }
 
   // Style 3: Carousel - Single member spotlight với navigation
-  const current = members[currentSlide] || members[0];
-  return (
-    <section className="py-16 md:py-20 px-4 bg-slate-50">
-      <div className="max-w-5xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-        
-        <div 
-          className="bg-white rounded-2xl shadow-xl overflow-hidden"
-          style={{ borderTop: `4px solid ${brandColor}` }}
-        >
-          <div className="flex flex-col md:flex-row">
-            {/* Avatar side */}
-            <div className="flex-shrink-0 w-full md:w-1/3 aspect-square md:aspect-[3/4] max-h-[300px] md:max-h-none bg-slate-100">
-              {current.avatar ? (
-                <img src={current.avatar} alt={current.name} className="w-full h-full object-cover" />
-              ) : (
-                <div 
-                  className="w-full h-full flex items-center justify-center text-6xl font-bold text-white"
-                  style={{ backgroundColor: brandColor }}
-                >
-                  {(current.name || 'U').charAt(0)}
-                </div>
-              )}
-            </div>
+  if (style === 'carousel') {
+    const current = members[currentSlide] || members[0];
+    return (
+      <section className="py-16 md:py-20 px-4 bg-slate-50">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          
+          <div 
+            className="bg-white rounded-2xl shadow-xl overflow-hidden"
+            style={{ borderTop: `4px solid ${brandColor}` }}
+          >
+            <div className="flex flex-col md:flex-row">
+              {/* Avatar side */}
+              <div className="flex-shrink-0 w-full md:w-1/3 aspect-square md:aspect-[3/4] max-h-[300px] md:max-h-none bg-slate-100">
+                {current.avatar ? (
+                  <img src={current.avatar} alt={current.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div 
+                    className="w-full h-full flex items-center justify-center text-6xl font-bold text-white"
+                    style={{ backgroundColor: brandColor }}
+                  >
+                    {(current.name || 'U').charAt(0)}
+                  </div>
+                )}
+              </div>
 
-            {/* Info side */}
-            <div className="flex-1 p-6 md:p-10 flex flex-col justify-center">
-              <span 
-                className="text-sm font-semibold uppercase tracking-wider mb-2"
-                style={{ color: brandColor }}
-              >
-                {current.role || 'Chức vụ'}
-              </span>
-              <h4 className="text-2xl md:text-4xl font-bold text-slate-900 mb-4">
-                {current.name || 'Họ và tên'}
-              </h4>
-              <p className="text-slate-500 leading-relaxed mb-6">
-                {current.bio || 'Giới thiệu về thành viên này...'}
-              </p>
-              <div className="flex gap-3">
-                <SocialIcon type="facebook" url={current.facebook} brandColor={brandColor} />
-                <SocialIcon type="linkedin" url={current.linkedin} brandColor={brandColor} />
-                <SocialIcon type="twitter" url={current.twitter} brandColor={brandColor} />
-                <SocialIcon type="email" url={current.email} brandColor={brandColor} />
+              {/* Info side */}
+              <div className="flex-1 p-6 md:p-10 flex flex-col justify-center">
+                <span 
+                  className="text-sm font-semibold uppercase tracking-wider mb-2"
+                  style={{ color: brandColor }}
+                >
+                  {current.role || 'Chức vụ'}
+                </span>
+                <h4 className="text-2xl md:text-4xl font-bold text-slate-900 mb-4">
+                  {current.name || 'Họ và tên'}
+                </h4>
+                <p className="text-slate-500 leading-relaxed mb-6">
+                  {current.bio || 'Giới thiệu về thành viên này...'}
+                </p>
+                <div className="flex gap-3">
+                  <SocialIcon type="facebook" url={current.facebook} brandColor={brandColor} />
+                  <SocialIcon type="linkedin" url={current.linkedin} brandColor={brandColor} />
+                  <SocialIcon type="twitter" url={current.twitter} brandColor={brandColor} />
+                  <SocialIcon type="email" url={current.email} brandColor={brandColor} />
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Navigation */}
-        {members.length > 1 && (
-          <div className="flex items-center justify-center gap-4 mt-8">
-            <button 
-              onClick={() => setCurrentSlide(prev => prev === 0 ? members.length - 1 : prev - 1)} 
-              className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <div className="flex gap-2">
-              {members.map((_, idx) => (
-                <button 
-                  key={idx} 
-                  onClick={() => setCurrentSlide(idx)} 
-                  className={`h-2.5 rounded-full transition-all ${idx === currentSlide ? 'w-8' : 'w-2.5 bg-slate-300 hover:bg-slate-400'}`}
-                  style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
-                />
-              ))}
+          {/* Navigation */}
+          {members.length > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-8">
+              <button 
+                onClick={() => setCurrentSlide(prev => prev === 0 ? members.length - 1 : prev - 1)} 
+                className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <div className="flex gap-2">
+                {members.map((_, idx) => (
+                  <button 
+                    key={idx} 
+                    onClick={() => setCurrentSlide(idx)} 
+                    className={`h-2.5 rounded-full transition-all ${idx === currentSlide ? 'w-8' : 'w-2.5 bg-slate-300 hover:bg-slate-400'}`}
+                    style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
+                  />
+                ))}
+              </div>
+              <button 
+                onClick={() => setCurrentSlide(prev => (prev + 1) % members.length)} 
+                className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </button>
             </div>
-            <button 
-              onClick={() => setCurrentSlide(prev => (prev + 1) % members.length)} 
-              className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Style 4: Hexagon - Hình lục giác sáng tạo với hiệu ứng hover
+  if (style === 'hexagon') {
+    return (
+      <section className="py-16 md:py-20 px-4 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <span 
+              className="inline-block px-4 py-1.5 rounded-full text-sm font-medium mb-4"
+              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-            </button>
+              Đội ngũ của chúng tôi
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">{title}</h2>
           </div>
-        )}
+          
+          <div className="flex flex-wrap justify-center gap-6 md:gap-8">
+            {members.map((member, idx) => (
+              <div key={idx} className="group relative">
+                {/* Hexagon container */}
+                <div 
+                  className="relative w-36 h-40 md:w-44 md:h-48"
+                  style={{
+                    clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+                  }}
+                >
+                  {/* Background glow effect */}
+                  <div 
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}20)`,
+                      filter: 'blur(20px)',
+                      transform: 'scale(1.2)'
+                    }}
+                  />
+                  
+                  {/* Main hexagon */}
+                  <div 
+                    className="absolute inset-1 transition-transform duration-500 group-hover:scale-[0.98]"
+                    style={{
+                      clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+                      backgroundColor: '#f1f5f9'
+                    }}
+                  >
+                    {member.avatar ? (
+                      <img 
+                        src={member.avatar} 
+                        alt={member.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div 
+                        className="w-full h-full flex items-center justify-center text-4xl font-bold text-white"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        {(member.name || 'U').charAt(0)}
+                      </div>
+                    )}
+                    
+                    {/* Overlay on hover */}
+                    <div 
+                      className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+                      style={{ backgroundColor: `${brandColor}ee` }}
+                    >
+                      <div className="flex gap-2">
+                        {member.facebook && (
+                          <a href={member.facebook} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+                            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                          </a>
+                        )}
+                        {member.linkedin && (
+                          <a href={member.linkedin} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+                            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                          </a>
+                        )}
+                        {member.email && (
+                          <a href={`mailto:${member.email}`} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+                            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Border effect */}
+                  <div 
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{
+                      clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+                      background: `linear-gradient(135deg, ${brandColor}, ${brandColor}60)`,
+                    }}
+                  />
+                </div>
+                
+                {/* Info below hexagon */}
+                <div className="text-center mt-4">
+                  <h4 className="font-semibold text-slate-900">{member.name || 'Họ và tên'}</h4>
+                  <p className="text-sm mt-0.5" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Timeline - Dạng timeline sang trọng
+  if (style === 'timeline') {
+    return (
+      <section className="py-16 md:py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">{title}</h2>
+            <div 
+              className="w-20 h-1 mx-auto rounded-full"
+              style={{ background: `linear-gradient(90deg, transparent, ${brandColor}, transparent)` }}
+            />
+          </div>
+          
+          <div className="relative">
+            {/* Timeline line - center on desktop, left on mobile */}
+            <div 
+              className="absolute top-0 bottom-0 w-0.5 left-6 md:left-1/2 md:-translate-x-1/2"
+              style={{ background: `linear-gradient(to bottom, transparent, ${brandColor}30, ${brandColor}30, transparent)` }}
+            />
+            
+            <div className="space-y-8 md:space-y-12">
+              {members.map((member, idx) => {
+                const isEven = idx % 2 === 0;
+                return (
+                  <div 
+                    key={idx} 
+                    className={`relative flex items-center gap-6 md:gap-0 ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'}`}
+                  >
+                    {/* Timeline dot */}
+                    <div 
+                      className="absolute left-6 md:left-1/2 w-4 h-4 rounded-full border-4 border-white shadow-lg -translate-x-1/2 z-10"
+                      style={{ backgroundColor: brandColor }}
+                    />
+                    
+                    {/* Content card */}
+                    <div className={`flex-1 ml-12 md:ml-0 ${isEven ? 'md:pr-12 md:text-right' : 'md:pl-12'}`}>
+                      <div 
+                        className="group bg-white rounded-2xl p-5 md:p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100"
+                        style={{ '--hover-border': `${brandColor}30` } as React.CSSProperties}
+                      >
+                        <div className={`flex items-center gap-4 ${isEven ? 'md:flex-row-reverse' : ''}`}>
+                          {/* Avatar */}
+                          <div 
+                            className="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden ring-4 ring-white shadow-md"
+                          >
+                            {member.avatar ? (
+                              <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div 
+                                className="w-full h-full flex items-center justify-center text-2xl font-bold text-white"
+                                style={{ backgroundColor: brandColor }}
+                              >
+                                {(member.name || 'U').charAt(0)}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Info */}
+                          <div className={`flex-1 min-w-0 ${isEven ? 'md:text-right' : ''}`}>
+                            <h4 className="font-bold text-lg text-slate-900">{member.name || 'Họ và tên'}</h4>
+                            <p 
+                              className="text-sm font-medium"
+                              style={{ color: brandColor }}
+                            >
+                              {member.role || 'Chức vụ'}
+                            </p>
+                            {member.bio && (
+                              <p className="text-sm text-slate-500 mt-2 line-clamp-2">{member.bio}</p>
+                            )}
+                            
+                            {/* Social icons */}
+                            <div className={`flex gap-2 mt-3 ${isEven ? 'md:justify-end' : ''}`}>
+                              <SocialIcon type="facebook" url={member.facebook} brandColor={brandColor} />
+                              <SocialIcon type="linkedin" url={member.linkedin} brandColor={brandColor} />
+                              <SocialIcon type="twitter" url={member.twitter} brandColor={brandColor} />
+                              <SocialIcon type="email" url={member.email} brandColor={brandColor} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Spacer for opposite side on desktop */}
+                    <div className="hidden md:block flex-1" />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Spotlight - Glassmorphism với hiệu ứng ánh sáng
+  return (
+    <section 
+      className="py-16 md:py-20 px-4 relative overflow-hidden"
+      style={{ background: `linear-gradient(135deg, ${brandColor}08 0%, #f8fafc 50%, ${brandColor}05 100%)` }}
+    >
+      {/* Decorative background elements */}
+      <div 
+        className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl"
+        style={{ background: `radial-gradient(circle, ${brandColor}40, transparent)` }}
+      />
+      <div 
+        className="absolute bottom-0 left-0 w-80 h-80 rounded-full opacity-15 blur-3xl"
+        style={{ background: `radial-gradient(circle, ${brandColor}30, transparent)` }}
+      />
+      
+      <div className="max-w-6xl mx-auto relative">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">{title}</h2>
+          <p className="text-slate-500 max-w-2xl mx-auto">Những con người tài năng đứng sau thành công của chúng tôi</p>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {members.map((member, idx) => (
+            <div 
+              key={idx} 
+              className="group relative"
+            >
+              {/* Glow effect behind card */}
+              <div 
+                className="absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"
+                style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}20)` }}
+              />
+              
+              {/* Main card with glassmorphism */}
+              <div 
+                className="relative bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
+              >
+                {/* Spotlight effect */}
+                <div 
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full opacity-0 group-hover:opacity-30 transition-opacity duration-500"
+                  style={{ 
+                    background: `radial-gradient(circle, ${brandColor}, transparent)`,
+                    filter: 'blur(20px)'
+                  }}
+                />
+                
+                {/* Avatar with ring effect */}
+                <div className="relative mx-auto w-28 h-28 md:w-32 md:h-32 mb-5">
+                  <div 
+                    className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    style={{ 
+                      background: `conic-gradient(from 0deg, ${brandColor}, ${brandColor}40, ${brandColor})`,
+                      animation: 'spin 4s linear infinite',
+                      padding: '3px'
+                    }}
+                  />
+                  <div className="absolute inset-1 rounded-full bg-white" />
+                  <div className="absolute inset-2 rounded-full overflow-hidden">
+                    {member.avatar ? (
+                      <img 
+                        src={member.avatar} 
+                        alt={member.name} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div 
+                        className="w-full h-full flex items-center justify-center text-4xl font-bold text-white"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        {(member.name || 'U').charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Info */}
+                <div className="text-center relative">
+                  <h4 className="font-bold text-xl text-slate-900 mb-1">{member.name || 'Họ và tên'}</h4>
+                  <p 
+                    className="text-sm font-medium mb-3"
+                    style={{ color: brandColor }}
+                  >
+                    {member.role || 'Chức vụ'}
+                  </p>
+                  
+                  {member.bio && (
+                    <p className="text-sm text-slate-500 mb-4 line-clamp-2">{member.bio}</p>
+                  )}
+                  
+                  {/* Social icons with glass effect */}
+                  <div className="flex justify-center gap-2">
+                    {member.facebook && (
+                      <a 
+                        href={member.facebook} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110 backdrop-blur-sm"
+                        style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                      >
+                        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                      </a>
+                    )}
+                    {member.linkedin && (
+                      <a 
+                        href={member.linkedin} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110 backdrop-blur-sm"
+                        style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                      >
+                        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                      </a>
+                    )}
+                    {member.twitter && (
+                      <a 
+                        href={member.twitter} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110 backdrop-blur-sm"
+                        style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                      >
+                        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                      </a>
+                    )}
+                    {member.email && (
+                      <a 
+                        href={`mailto:${member.email}`}
+                        className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110 backdrop-blur-sm"
+                        style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                      >
+                        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Add keyframes for spinning animation */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </section>
+  );
+}
+
+// ============ FEATURES SECTION ============
+// 3 Professional Styles: Icon Grid, Alternating, Compact
+type FeaturesStyle = 'iconGrid' | 'alternating' | 'compact';
+
+// Icon mapping for features
+const featureIcons: Record<string, React.ElementType> = {
+  Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, Check, Star
+};
+
+function FeaturesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
+  const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
+  const style = (config.style as FeaturesStyle) || 'iconGrid';
+
+  const getIcon = (iconName?: string) => {
+    return featureIcons[iconName || 'Zap'] || Zap;
+  };
+
+  // Style 1: Icon Grid - Grid với icon nổi bật
+  if (style === 'iconGrid') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-10 md:mb-14">
+            <div 
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
+              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+            >
+              <Zap size={12} />
+              Tính năng
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-3">{title}</h2>
+            <p className="text-slate-500 max-w-2xl mx-auto">
+              Khám phá những tính năng ưu việt giúp bạn đạt hiệu quả tối đa
+            </p>
+          </div>
+          
+          {/* Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {items.map((item, idx) => {
+              const IconComponent = getIcon(item.icon);
+              return (
+                <div 
+                  key={idx} 
+                  className="group bg-white rounded-2xl p-6 border border-slate-200 hover:border-transparent hover:shadow-xl transition-all duration-300"
+                >
+                  {/* Icon với background gradient */}
+                  <div 
+                    className="w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 duration-300"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`,
+                      boxShadow: `0 8px 16px -4px ${brandColor}40`
+                    }}
+                  >
+                    <IconComponent size={24} className="text-white" strokeWidth={2} />
+                  </div>
+                  
+                  <h3 className="font-bold text-lg text-slate-900 mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Alternating - Layout xen kẽ trái/phải
+  if (style === 'alternating') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-10 md:mb-14">
+            <div 
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
+              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+            >
+              <Zap size={12} />
+              Tính năng
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+          </div>
+          
+          {/* Features List */}
+          <div className="max-w-4xl mx-auto space-y-6">
+            {items.map((item, idx) => {
+              const IconComponent = getIcon(item.icon);
+              const isEven = idx % 2 === 0;
+              return (
+                <div 
+                  key={idx} 
+                  className={`flex items-center gap-6 p-6 rounded-2xl bg-slate-50 border border-slate-100 ${!isEven ? 'md:flex-row-reverse' : ''}`}
+                >
+                  {/* Icon + Number */}
+                  <div className="relative flex-shrink-0">
+                    <div 
+                      className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center"
+                      style={{ 
+                        background: `linear-gradient(135deg, ${brandColor}15 0%, ${brandColor}05 100%)`,
+                        border: `2px solid ${brandColor}20`
+                      }}
+                    >
+                      <IconComponent size={32} style={{ color: brandColor }} strokeWidth={1.5} />
+                    </div>
+                    {/* Number badge */}
+                    <span 
+                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full text-xs font-bold text-white flex items-center justify-center"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      {idx + 1}
+                    </span>
+                  </div>
+                  
+                  {/* Content */}
+                  <div className={`flex-1 ${!isEven ? 'md:text-right' : ''}`}>
+                    <h3 className="font-bold text-lg text-slate-900 mb-1">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm text-slate-500 leading-relaxed">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Compact - Danh sách nhỏ gọn với icon inline
+  return (
+    <section className="py-12 md:py-16 px-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-8" style={{ borderColor: `${brandColor}20` }}>
+          <div className="space-y-2">
+            <div 
+              className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider"
+              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+            >
+              <Zap size={12} />
+              Tính năng
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
+          </div>
+        </div>
+        
+        {/* Compact Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {items.map((item, idx) => {
+            const IconComponent = getIcon(item.icon);
+            return (
+              <div 
+                key={idx} 
+                className="flex items-start gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition-colors"
+              >
+                {/* Small Icon */}
+                <div 
+                  className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `${brandColor}15` }}
+                >
+                  <IconComponent size={18} style={{ color: brandColor }} strokeWidth={2} />
+                </div>
+                
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm text-slate-900 mb-0.5 truncate">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 line-clamp-2">
+                    {item.description}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
