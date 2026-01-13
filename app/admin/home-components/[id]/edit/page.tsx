@@ -220,6 +220,9 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [productSelectionMode, setProductSelectionMode] = useState<'auto' | 'manual'>('auto');
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [productSearchTerm, setProductSearchTerm] = useState('');
+  // ProductList text config
+  const [productSubTitle, setProductSubTitle] = useState('Bộ sưu tập');
+  const [productButtonText, setProductButtonText] = useState('Xem tất cả');
 
   // Filter posts for search and get selected posts data
   const filteredPosts = useMemo(() => {
@@ -382,6 +385,8 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setProductListStyle((config.style as ProductListStyle) || 'commerce');
           setProductSelectionMode(config.selectionMode || 'auto');
           setSelectedProductIds(config.selectedProductIds || []);
+          setProductSubTitle(config.subTitle || 'Bộ sưu tập');
+          setProductButtonText(config.buttonText || 'Xem tất cả');
           break;
         case 'ServiceList':
           setProductListConfig({ itemCount: config.itemCount || 8, sortBy: config.sortBy || 'newest' });
@@ -544,6 +549,8 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           style: productListStyle, 
           selectionMode: productSelectionMode,
           selectedProductIds: productSelectionMode === 'manual' ? selectedProductIds : [],
+          subTitle: productSubTitle,
+          buttonText: productButtonText,
         };
       case 'ServiceList':
         return { 
@@ -1588,6 +1595,31 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         {/* ProductList */}
         {component.type === 'ProductList' && (
           <>
+            {/* Cấu hình hiển thị */}
+            <Card className="mb-6">
+              <CardHeader><CardTitle className="text-base">Cấu hình hiển thị</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Tiêu đề phụ (badge)</Label>
+                    <Input 
+                      value={productSubTitle} 
+                      onChange={(e) => setProductSubTitle(e.target.value)} 
+                      placeholder="VD: Bộ sưu tập, Sản phẩm hot..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Text nút xem thêm</Label>
+                    <Input 
+                      value={productButtonText} 
+                      onChange={(e) => setProductButtonText(e.target.value)} 
+                      placeholder="VD: Xem tất cả, Khám phá..."
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="mb-6">
               <CardHeader><CardTitle className="text-base">Nguồn dữ liệu</CardTitle></CardHeader>
               <CardContent className="space-y-4">
@@ -1766,6 +1798,8 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                 ? selectedProducts.map(p => ({ id: p._id, name: p.name, image: p.image, price: p.price?.toLocaleString('vi-VN') + 'đ', description: p.description }))
                 : filteredProducts.slice(0, productListConfig.itemCount).map(p => ({ id: p._id, name: p.name, image: p.image, price: p.price?.toLocaleString('vi-VN') + 'đ', description: p.description }))
               }
+              subTitle={productSubTitle}
+              buttonText={productButtonText}
             />
           </>
         )}
