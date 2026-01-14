@@ -5634,17 +5634,17 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
 
   // Style 6: Marquee - Auto-scrolling horizontal animation (default fallback)
   return (
-    <section className="py-10 md:py-16 overflow-hidden max-w-[100vw]">
-      <div className="w-full max-w-full overflow-hidden">
-        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-center px-4">{title}</h2>
-        <div className="relative w-full max-w-full overflow-hidden">
+    <section className="py-10 md:py-16">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
+        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-center">{title}</h2>
+        <div className="relative overflow-hidden rounded-xl">
           {/* Gradient masks */}
           <div className="absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-white to-transparent pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-white to-transparent pointer-events-none" />
           
           {/* Marquee track */}
           <div 
-            className="inline-flex hover:[animation-play-state:paused]"
+            className="flex w-max hover:[animation-play-state:paused]"
             style={{
               animation: 'marquee-scroll 25s linear infinite',
             }}
