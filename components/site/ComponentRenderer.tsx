@@ -6607,18 +6607,20 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
           </p>
         </div>
 
-        {/* Marquee Row - Infinite scroll */}
-        <div className="relative mb-12">
-          <div className="absolute left-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
-          
-          <div 
-            className="flex gap-5"
-            style={{ 
-              width: 'max-content',
-              animation: members.length > 2 ? 'team-marquee 25s linear infinite' : 'none'
-            }}
-          >
+        {/* Marquee Row - Contained infinite scroll */}
+        <div className="max-w-7xl mx-auto px-4 mb-12">
+          <div className="relative overflow-hidden rounded-xl">
+            {/* Gradient fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+            
+            <div 
+              className="flex gap-5 py-4"
+              style={{ 
+                width: 'max-content',
+                animation: members.length > 2 ? 'team-marquee 25s linear infinite' : 'none'
+              }}
+            >
             {marqueeMembers.map((member, idx) => (
               <div 
                 key={idx}
@@ -6654,6 +6656,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
                 <p className="text-sm truncate px-1" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
               </div>
             ))}
+            </div>
           </div>
         </div>
 

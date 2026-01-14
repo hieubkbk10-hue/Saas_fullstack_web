@@ -10925,21 +10925,21 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
           </p>
         </div>
 
-        {/* Marquee Row - Infinite scroll effect */}
-        <div className="relative mb-8">
-          {/* Gradient fade left */}
-          <div className="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
-          {/* Gradient fade right */}
-          <div className="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
-          
-          {/* Scrolling container */}
-          <div 
-            className="flex gap-4 animate-marquee"
-            style={{ 
-              width: 'max-content',
-              animation: members.length > 2 ? 'marquee 20s linear infinite' : 'none'
-            }}
-          >
+        {/* Marquee Row - Contained infinite scroll */}
+        <div className="mb-8 px-4">
+          <div className="relative overflow-hidden rounded-xl">
+            {/* Gradient fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-12 md:w-20 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-12 md:w-20 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
+            
+            {/* Scrolling container */}
+            <div 
+              className="flex gap-4 py-3"
+              style={{ 
+                width: 'max-content',
+                animation: members.length > 2 ? 'marquee 20s linear infinite' : 'none'
+              }}
+            >
             {marqueeMembers.map((member, idx) => (
               <div 
                 key={`${member.id}-${idx}`}
@@ -10986,6 +10986,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                 </p>
               </div>
             ))}
+            </div>
           </div>
         </div>
 
