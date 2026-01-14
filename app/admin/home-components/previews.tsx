@@ -2113,19 +2113,49 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
 };
 
 // ============ SERVICES/BENEFITS PREVIEW ============
-// Professional Services UI/UX - 3 Variants: Elegant Grid, Modern List, Big Number
+// Professional Services UI/UX - 6 Variants: Elegant Grid, Modern List, Big Number, Cards, Carousel, Timeline
 type ServiceItem = { id: number; icon: string; title: string; description: string };
-export type ServicesStyle = 'elegantGrid' | 'modernList' | 'bigNumber';
+export type ServicesStyle = 'elegantGrid' | 'modernList' | 'bigNumber' | 'cards' | 'carousel' | 'timeline';
+
+// Dynamic Icon component for Services
+const ServiceIcon = ({ name, size = 24, className, style }: { name: string; size?: number; className?: string; style?: React.CSSProperties }) => {
+  const icons: Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>> = {
+    Briefcase, Shield, Truck: Package, Star, Users, Phone, Target, Zap, Globe, Rocket, Settings, Layers, Cpu, Clock, MapPin, Mail, Building2, Check, HelpCircle, MousePointerClick, FileText, ImageIcon: ImageIcon
+  };
+  const IconComponent = icons[name] || Star;
+  return <IconComponent size={size} className={className} style={style} />;
+};
+
 export const ServicesPreview = ({ items, brandColor, componentType, selectedStyle, onStyleChange }: { items: ServiceItem[]; brandColor: string; componentType: 'Services' | 'Benefits'; selectedStyle?: ServicesStyle; onStyleChange?: (style: ServicesStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const previewStyle = selectedStyle || 'elegantGrid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ServicesStyle);
   const styles = [
     { id: 'elegantGrid', label: 'Elegant Grid' }, 
     { id: 'modernList', label: 'Modern List' }, 
-    { id: 'bigNumber', label: 'Big Number' }
+    { id: 'bigNumber', label: 'Big Number' },
+    { id: 'cards', label: 'Icon Cards' },
+    { id: 'carousel', label: 'Carousel' },
+    { id: 'timeline', label: 'Timeline' }
   ];
   const titles = { Services: 'Dịch vụ của chúng tôi', Benefits: 'Tại sao chọn chúng tôi' };
+
+  // Empty State
+  const renderEmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+        <Briefcase size={32} style={{ color: brandColor }} />
+      </div>
+      <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có {componentType === 'Services' ? 'dịch vụ' : 'lợi ích'} nào</h3>
+      <p className="text-sm text-slate-500">Thêm mục đầu tiên để bắt đầu</p>
+    </div>
+  );
+
+  // Get visible items with "+N" pattern
+  const MAX_VISIBLE = device === 'mobile' ? 3 : device === 'tablet' ? 4 : 6;
+  const visibleItems = items.slice(0, MAX_VISIBLE);
+  const remainingCount = Math.max(0, items.length - MAX_VISIBLE);
 
   // Style 1: Elegant Grid - Clean cards with top accent line, hover lift
   const renderElegantGridStyle = () => (
@@ -2290,12 +2320,157 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
     </div>
   );
 
+  // Style 4: Icon Cards - Cards with prominent icon
+  const renderCardsStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    if (items.length <= 2) {
+      return (
+        <div className="w-full max-w-4xl mx-auto space-y-6 py-8 px-4">
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100 text-center", device === 'mobile' ? 'text-2xl' : 'text-3xl')}>{titles[componentType]}</h2>
+          <div className={cn("mx-auto flex justify-center gap-6", items.length === 1 ? 'max-w-sm' : 'max-w-2xl')}>
+            {items.map((item) => (
+              <div key={item.id} className="flex-1 bg-white dark:bg-slate-800 rounded-2xl p-6 border shadow-sm" style={{ borderColor: `${brandColor}15` }}>
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+                  <ServiceIcon name={item.icon} size={28} style={{ color: brandColor }} />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">{item.title || 'Tiêu đề'}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{item.description || 'Mô tả...'}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="w-full max-w-6xl mx-auto space-y-8 py-8 px-4">
+        <div className="text-center space-y-2">
+          <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{componentType === 'Services' ? 'Dịch vụ' : 'Lợi ích'}</span>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>{titles[componentType]}</h2>
+        </div>
+        <div className={cn("grid gap-5", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+          {visibleItems.map((item) => (
+            <div key={item.id} className="group bg-white dark:bg-slate-800 rounded-2xl p-6 border transition-all hover:shadow-lg" style={{ borderColor: `${brandColor}15` }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 8px 30px ${brandColor}15`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; }}>
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110" style={{ backgroundColor: `${brandColor}10` }}>
+                <ServiceIcon name={item.icon} size={28} style={{ color: brandColor }} />
+              </div>
+              <h3 className={cn("font-bold text-slate-900 dark:text-slate-100 mb-2", device === 'mobile' ? 'text-base' : 'text-lg')}>{item.title || 'Tiêu đề'}</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 min-h-[2.5rem]">{item.description || 'Mô tả dịch vụ...'}</p>
+            </div>
+          ))}
+          {remainingCount > 0 && (
+            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6" style={{ borderColor: `${brandColor}30` }}>
+              <Plus size={28} style={{ color: brandColor }} className="mb-2" />
+              <span className="text-lg font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+              <span className="text-xs text-slate-500">mục khác</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Style 5: Carousel - Horizontal scroll with navigation
+  const renderCarouselStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    const itemsPerPage = device === 'mobile' ? 1 : device === 'tablet' ? 2 : 3;
+    const totalPages = Math.ceil(items.length / itemsPerPage);
+    const startIdx = carouselIndex * itemsPerPage;
+    const pageItems = items.slice(startIdx, startIdx + itemsPerPage);
+
+    return (
+      <div className="w-full max-w-6xl mx-auto space-y-6 py-8 px-4">
+        <div className="flex items-end justify-between gap-4 border-b border-slate-200 dark:border-slate-700 pb-4">
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>{titles[componentType]}</h2>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <button onClick={() => setCarouselIndex(prev => Math.max(0, prev - 1))} disabled={carouselIndex === 0} className="w-9 h-9 rounded-full border flex items-center justify-center disabled:opacity-30" style={{ borderColor: `${brandColor}30`, color: brandColor }}><ChevronLeft size={18} /></button>
+              <button onClick={() => setCarouselIndex(prev => Math.min(totalPages - 1, prev + 1))} disabled={carouselIndex === totalPages - 1} className="w-9 h-9 rounded-full border flex items-center justify-center disabled:opacity-30" style={{ borderColor: `${brandColor}30`, color: brandColor }}><ChevronRight size={18} /></button>
+            </div>
+          )}
+        </div>
+        <div className={cn("grid gap-5", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+          {pageItems.map((item) => (
+            <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border shadow-sm" style={{ borderColor: `${brandColor}15` }}>
+              <div className="h-2 w-full" style={{ background: `linear-gradient(to right, ${brandColor}66, ${brandColor})` }} />
+              <div className="p-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${brandColor}10` }}>
+                    <ServiceIcon name={item.icon} size={24} style={{ color: brandColor }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1 truncate">{item.title || 'Tiêu đề'}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{item.description || 'Mô tả...'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-1.5">
+            {Array.from({ length: totalPages }).map((_, idx) => (
+              <button key={idx} onClick={() => setCarouselIndex(idx)} className={cn("h-1.5 rounded-full transition-all", idx === carouselIndex ? "w-6" : "w-1.5 bg-slate-200 dark:bg-slate-700")} style={idx === carouselIndex ? { backgroundColor: brandColor } : {}} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Style 6: Timeline - Vertical timeline layout
+  const renderTimelineStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    return (
+      <div className="w-full max-w-4xl mx-auto space-y-8 py-8 px-4">
+        <div className="text-center space-y-2">
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>{titles[componentType]}</h2>
+        </div>
+        <div className="relative">
+          <div className="absolute left-4 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-0.5" style={{ backgroundColor: `${brandColor}20` }} />
+          <div className="space-y-6">
+            {visibleItems.map((item, idx) => (
+              <div key={item.id} className={cn("relative flex", device !== 'mobile' && idx % 2 === 0 ? 'md:flex-row-reverse' : '')}>
+                <div className="absolute left-4 md:left-1/2 md:-translate-x-1/2 w-10 h-10 rounded-full border-4 bg-white dark:bg-slate-800 flex items-center justify-center z-10" style={{ borderColor: brandColor }}>
+                  <ServiceIcon name={item.icon} size={18} style={{ color: brandColor }} />
+                </div>
+                <div className={cn("ml-20 md:ml-0 md:w-5/12 bg-white dark:bg-slate-800 rounded-xl p-4 border shadow-sm", device !== 'mobile' && idx % 2 === 0 ? 'md:mr-auto md:ml-8' : 'md:ml-auto md:mr-8')} style={{ borderColor: `${brandColor}15` }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-bold tabular-nums" style={{ color: brandColor }}>{String(idx + 1).padStart(2, '0')}</span>
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100">{item.title || 'Tiêu đề'}</h3>
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{item.description || 'Mô tả...'}</p>
+                </div>
+              </div>
+            ))}
+            {remainingCount > 0 && (
+              <div className="relative flex">
+                <div className="absolute left-4 md:left-1/2 md:-translate-x-1/2 w-10 h-10 rounded-full border-2 border-dashed bg-white dark:bg-slate-800 flex items-center justify-center z-10" style={{ borderColor: `${brandColor}40` }}>
+                  <Plus size={18} style={{ color: brandColor }} />
+                </div>
+                <div className="ml-20 md:ml-auto md:mr-8 md:w-5/12 text-sm font-medium" style={{ color: brandColor }}>+{remainingCount} mục khác</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <PreviewWrapper title={`Preview ${componentType}`} device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`${items.length} mục`}>
       <BrowserFrame>
-        {previewStyle === 'elegantGrid' && renderElegantGridStyle()}
-        {previewStyle === 'modernList' && renderModernListStyle()}
-        {previewStyle === 'bigNumber' && renderBigNumberStyle()}
+        {items.length === 0 ? renderEmptyState() : (
+          <>
+            {previewStyle === 'elegantGrid' && renderElegantGridStyle()}
+            {previewStyle === 'modernList' && renderModernListStyle()}
+            {previewStyle === 'bigNumber' && renderBigNumberStyle()}
+            {previewStyle === 'cards' && renderCardsStyle()}
+            {previewStyle === 'carousel' && renderCarouselStyle()}
+            {previewStyle === 'timeline' && renderTimelineStyle()}
+          </>
+        )}
       </BrowserFrame>
     </PreviewWrapper>
   );
@@ -5520,10 +5695,11 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
 };
 
 // ============ BENEFITS PREVIEW (Why Choose Us) ============
-// 4 Professional Styles: Solid Cards, Accent List, Bold Bento, Icon Row
+// 6 Professional Styles: Solid Cards, Accent List, Bold Bento, Icon Row, Carousel, Timeline
 type BenefitItem = { id: number; icon: string; title: string; description: string };
-export type BenefitsStyle = 'cards' | 'list' | 'bento' | 'row';
-export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: BenefitItem[]; brandColor: string; selectedStyle?: BenefitsStyle; onStyleChange?: (style: BenefitsStyle) => void }) => {
+export type BenefitsStyle = 'cards' | 'list' | 'bento' | 'row' | 'carousel' | 'timeline';
+export type BenefitsConfig = { subHeading?: string; heading?: string; buttonText?: string; buttonLink?: string };
+export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChange, config }: { items: BenefitItem[]; brandColor: string; selectedStyle?: BenefitsStyle; onStyleChange?: (style: BenefitsStyle) => void; config?: BenefitsConfig }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'cards';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as BenefitsStyle);
@@ -5531,221 +5707,293 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
     { id: 'cards', label: 'Solid Cards' }, 
     { id: 'list', label: 'Accent List' }, 
     { id: 'bento', label: 'Bold Bento' },
-    { id: 'row', label: 'Icon Row' }
+    { id: 'row', label: 'Icon Row' },
+    { id: 'carousel', label: 'Carousel' },
+    { id: 'timeline', label: 'Timeline' }
   ];
+  const subHeading = config?.subHeading || 'Vì sao chọn chúng tôi?';
+  const heading = config?.heading || 'Giá trị cốt lõi';
+
+  // Header Component - reusable
+  const BenefitsHeader = () => (
+    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-6" style={{ borderColor: `${brandColor}20` }}>
+      <div className="space-y-2">
+        <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+          {subHeading}
+        </div>
+        <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+          {heading}
+        </h2>
+      </div>
+    </div>
+  );
+
+  // Empty State
+  const EmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+        <Check size={32} style={{ color: brandColor }} />
+      </div>
+      <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có lợi ích nào</h3>
+      <p className="text-sm text-slate-500">Thêm lợi ích đầu tiên để bắt đầu</p>
+    </div>
+  );
+
+  // Max visible items
+  const MAX_VISIBLE = device === 'mobile' ? 4 : 6;
+  const visibleItems = items.slice(0, MAX_VISIBLE);
+  const remainingCount = items.length - MAX_VISIBLE;
 
   // Style 1: Corporate Cards - Solid background với icon đậm màu chủ đạo
   const renderCardsStyle = () => (
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-6" style={{ borderColor: `${brandColor}20` }}>
-        <div className="space-y-2">
-          <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-            Vì sao chọn chúng tôi?
-          </div>
-          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
-            Giá trị cốt lõi
-          </h2>
-        </div>
-      </div>
-      
-      {/* Grid */}
-      <div className={cn(
-        "grid gap-4 md:gap-6",
-        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'
-      )}>
-        {items.slice(0, 4).map((item) => (
-          <div 
-            key={item.id} 
-            className="rounded-xl p-5 md:p-6 shadow-sm flex flex-col items-start border"
-            style={{ backgroundColor: `${brandColor}08`, borderColor: `${brandColor}20` }}
-          >
-            {/* Icon luôn hiển thị trạng thái active */}
+      <BenefitsHeader />
+      {items.length === 0 ? <EmptyState /> : (
+        <div className={cn(
+          "grid gap-4 md:gap-6",
+          items.length === 1 ? 'max-w-md mx-auto' : items.length === 2 ? 'max-w-2xl mx-auto grid-cols-2' : '',
+          items.length >= 3 && (device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4')
+        )}>
+          {visibleItems.map((item) => (
             <div 
-              className="w-11 h-11 md:w-12 md:h-12 rounded-lg flex items-center justify-center mb-4 text-white"
-              style={{ backgroundColor: brandColor, boxShadow: `0 4px 6px -1px ${brandColor}30` }}
+              key={item.id} 
+              className="rounded-xl p-5 md:p-6 shadow-sm flex flex-col items-start border"
+              style={{ backgroundColor: `${brandColor}08`, borderColor: `${brandColor}20` }}
             >
-              <Check size={18} strokeWidth={3} />
+              <div 
+                className="w-11 h-11 md:w-12 md:h-12 rounded-lg flex items-center justify-center mb-4 text-white"
+                style={{ backgroundColor: brandColor, boxShadow: `0 4px 6px -1px ${brandColor}30` }}
+              >
+                <Check size={18} strokeWidth={3} />
+              </div>
+              <h3 className="font-bold text-base md:text-lg mb-2 line-clamp-2" style={{ color: brandColor }}>
+                {item.title || 'Tiêu đề'}
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-3 min-h-[3.75rem]">
+                {item.description || 'Mô tả lợi ích...'}
+              </p>
             </div>
-            
-            <h3 className="font-bold text-base md:text-lg mb-2" style={{ color: brandColor }}>
-              {item.title || 'Tiêu đề'}
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              {item.description || 'Mô tả lợi ích...'}
-            </p>
-          </div>
-        ))}
-      </div>
+          ))}
+          {remainingCount > 0 && (
+            <div className="rounded-xl flex items-center justify-center border-2 border-dashed p-5" style={{ borderColor: `${brandColor}30` }}>
+              <div className="text-center">
+                <Plus size={28} className="mx-auto mb-2" style={{ color: brandColor }} />
+                <span className="text-lg font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+                <p className="text-xs text-slate-400">mục khác</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
   // Style 2: Modern List - Thanh màu bên trái nhấn mạnh
   const renderListStyle = () => (
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-6" style={{ borderColor: `${brandColor}20` }}>
-        <div className="space-y-2">
-          <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-            Vì sao chọn chúng tôi?
-          </div>
-          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
-            Giá trị cốt lõi
-          </h2>
-        </div>
-      </div>
-      
-      {/* List */}
-      <div className="flex flex-col gap-3 max-w-4xl mx-auto">
-        {items.slice(0, 4).map((item, index) => (
-          <div 
-            key={item.id} 
-            className="relative bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 rounded-lg p-4 md:p-5 pl-5 md:pl-6 overflow-hidden shadow-sm"
-          >
-            {/* Thanh màu chủ đạo nhấn mạnh bên trái */}
-            <div className="absolute top-0 bottom-0 left-0 w-1.5" style={{ backgroundColor: brandColor }} />
-            
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-3">
-              <div className="flex items-start gap-3 md:gap-4">
-                <div className="flex-shrink-0 mt-0.5">
-                  <div 
-                    className="w-6 h-6 rounded-full flex items-center justify-center border"
-                    style={{ backgroundColor: `${brandColor}15`, borderColor: `${brandColor}30` }}
-                  >
-                    <span className="text-[11px] font-bold" style={{ color: brandColor }}>{index + 1}</span>
+      <BenefitsHeader />
+      {items.length === 0 ? <EmptyState /> : (
+        <div className="flex flex-col gap-3 max-w-4xl mx-auto">
+          {visibleItems.map((item, index) => (
+            <div 
+              key={item.id} 
+              className="relative bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 rounded-lg p-4 md:p-5 pl-5 md:pl-6 overflow-hidden shadow-sm"
+            >
+              <div className="absolute top-0 bottom-0 left-0 w-1.5" style={{ backgroundColor: brandColor }} />
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-3">
+                <div className="flex items-start gap-3 md:gap-4">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center border" style={{ backgroundColor: `${brandColor}15`, borderColor: `${brandColor}30` }}>
+                      <span className="text-[11px] font-bold" style={{ color: brandColor }}>{index + 1}</span>
+                    </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm md:text-base line-clamp-1">{item.title || 'Tiêu đề'}</h3>
+                    <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 md:mt-1.5 leading-normal line-clamp-2">{item.description || 'Mô tả lợi ích...'}</p>
                   </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm md:text-base">
-                    {item.title || 'Tiêu đề'}
-                  </h3>
-                  <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 md:mt-1.5 leading-normal">
-                    {item.description || 'Mô tả lợi ích...'}
-                  </p>
+                <div className="hidden md:block flex-shrink-0">
+                  <svg className="w-[18px] h-[18px] opacity-60" style={{ color: brandColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </div>
               </div>
-              
-              <div className="hidden md:block">
-                <svg className="w-[18px] h-[18px] opacity-60" style={{ color: brandColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+          {remainingCount > 0 && (
+            <div className="text-center py-3">
+              <span className="text-sm font-medium" style={{ color: brandColor }}>+{remainingCount} mục khác</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
   // Style 3: Trust Bento - Typography focused với layout 2-1 / 1-2
   const renderBentoStyle = () => (
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-6" style={{ borderColor: `${brandColor}20` }}>
-        <div className="space-y-2">
-          <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-            Vì sao chọn chúng tôi?
-          </div>
-          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
-            Giá trị cốt lõi
-          </h2>
+      <BenefitsHeader />
+      {items.length === 0 ? <EmptyState /> : (
+        <div className={cn("grid gap-3 md:gap-4", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3')}>
+          {items.slice(0, 4).map((item, index) => {
+            const isWide = index === 0 || index === 3;
+            const isPrimary = index === 0;
+            return (
+              <div 
+                key={item.id} 
+                className={cn(
+                  "flex flex-col justify-between p-5 md:p-6 lg:p-8 rounded-2xl transition-colors min-h-[160px] md:min-h-[180px]",
+                  device !== 'mobile' && isWide ? "md:col-span-2" : device !== 'mobile' ? "md:col-span-1" : "",
+                  isPrimary ? "text-white border border-transparent" : "bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700"
+                )}
+                style={isPrimary ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}30` } : {}}
+              >
+                <div className="flex justify-between items-start mb-3 md:mb-4">
+                  <span className={cn("text-xs font-bold uppercase tracking-widest px-2 py-1 rounded", isPrimary ? "bg-white/20 text-white" : "")} style={!isPrimary ? { backgroundColor: `${brandColor}15`, color: brandColor } : {}}>
+                    0{index + 1}
+                  </span>
+                </div>
+                <div>
+                  <h3 className={cn("font-bold mb-2 md:mb-3 tracking-tight line-clamp-2", device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl', isPrimary ? "text-white" : "text-slate-900 dark:text-slate-100")}>
+                    {item.title || 'Tiêu đề'}
+                  </h3>
+                  <p className={cn("text-sm md:text-base leading-relaxed font-medium line-clamp-3", isPrimary ? "text-white/90" : "text-slate-500 dark:text-slate-400")}>
+                    {item.description || 'Mô tả lợi ích...'}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </div>
-      </div>
-      
-      {/* Bento Grid */}
-      <div className={cn(
-        "grid gap-3 md:gap-4",
-        device === 'mobile' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'
-      )}>
-        {items.slice(0, 4).map((item, index) => {
-          // Layout: Item 0 span 2, Item 3 span 2, Items 1 & 2 span 1
-          const isWide = index === 0 || index === 3;
-          const isPrimary = index === 0;
-          
-          return (
-            <div 
-              key={item.id} 
-              className={cn(
-                "flex flex-col justify-between p-5 md:p-6 lg:p-8 rounded-2xl transition-colors min-h-[160px] md:min-h-[180px]",
-                device !== 'mobile' && isWide ? "md:col-span-2" : device !== 'mobile' ? "md:col-span-1" : "",
-                isPrimary 
-                  ? "text-white border border-transparent" 
-                  : "bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700"
-              )}
-              style={isPrimary ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}30` } : {}}
-            >
-              {/* Header: Number Index */}
-              <div className="flex justify-between items-start mb-3 md:mb-4">
-                <span className={cn(
-                  "text-xs font-bold uppercase tracking-widest px-2 py-1 rounded",
-                  isPrimary ? "bg-white/20 text-white" : ""
-                )} style={!isPrimary ? { backgroundColor: `${brandColor}15`, color: brandColor } : {}}>
-                  0{index + 1}
-                </span>
-              </div>
-
-              {/* Content: Pure Typography */}
-              <div>
-                <h3 className={cn(
-                  "font-bold mb-2 md:mb-3 tracking-tight",
-                  device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl',
-                  isPrimary ? "text-white" : "text-slate-900 dark:text-slate-100"
-                )}>
-                  {item.title || 'Tiêu đề'}
-                </h3>
-                <p className={cn(
-                  "text-sm md:text-base leading-relaxed font-medium",
-                  isPrimary ? "text-white/90" : "text-slate-500 dark:text-slate-400"
-                )}>
-                  {item.description || 'Mô tả lợi ích...'}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      )}
     </div>
   );
 
   // Style 4: Minimal Row - Icon to với dividers
   const renderRowStyle = () => (
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-6" style={{ borderColor: `${brandColor}20` }}>
-        <div className="space-y-2">
-          <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-            Vì sao chọn chúng tôi?
-          </div>
-          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
-            Giá trị cốt lõi
-          </h2>
-        </div>
-      </div>
-      
-      {/* Row */}
-      <div className="bg-white dark:bg-slate-800 border-y-2 rounded-lg overflow-hidden" style={{ borderColor: `${brandColor}15` }}>
-        <div className={cn(
-          "flex items-center justify-between",
-          device === 'mobile' ? 'flex-col divide-y' : 'flex-row divide-x',
-        )} style={{ '--tw-divide-opacity': '1', borderColor: `${brandColor}15` } as React.CSSProperties}>
-          {items.slice(0, 4).map((item) => (
-            <div key={item.id} className="flex-1 w-full p-5 md:p-6 lg:p-8 flex flex-col items-center text-center">
-              <div 
-                className="mb-3 md:mb-4 p-3 rounded-full"
-                style={{ 
-                  backgroundColor: `${brandColor}15`, 
-                  color: brandColor,
-                  boxShadow: `0 0 0 4px ${brandColor}08`
-                }}
-              >
-                <Check size={22} md-size={24} strokeWidth={3} />
+      <BenefitsHeader />
+      {items.length === 0 ? <EmptyState /> : (
+        <div className="bg-white dark:bg-slate-800 border-y-2 rounded-lg overflow-hidden" style={{ borderColor: `${brandColor}15` }}>
+          <div className={cn("flex items-stretch", device === 'mobile' ? 'flex-col divide-y' : 'flex-row divide-x')} style={{ borderColor: `${brandColor}15` }}>
+            {items.slice(0, 4).map((item) => (
+              <div key={item.id} className="flex-1 w-full p-5 md:p-6 lg:p-8 flex flex-col items-center text-center">
+                <div className="mb-3 md:mb-4 p-3 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor, boxShadow: `0 0 0 4px ${brandColor}08` }}>
+                  <Check size={22} strokeWidth={3} />
+                </div>
+                <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1.5 md:mb-2 text-sm md:text-base line-clamp-2 min-h-[2.5rem]">{item.title || 'Tiêu đề'}</h3>
+                <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">{item.description || 'Mô tả lợi ích...'}</p>
               </div>
-              <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1.5 md:mb-2 text-sm md:text-base">{item.title || 'Tiêu đề'}</h3>
-              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{item.description || 'Mô tả lợi ích...'}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+      )}
+    </div>
+  );
+
+  // Style 5: Carousel - Horizontal scroll với navigation
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const renderCarouselStyle = () => {
+    const itemsPerView = device === 'mobile' ? 1 : device === 'tablet' ? 2 : 3;
+    const maxIndex = Math.max(0, items.length - itemsPerView);
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+        <BenefitsHeader />
+        {items.length === 0 ? <EmptyState /> : (
+          <div className="relative">
+            {/* Navigation Arrows */}
+            {items.length > itemsPerView && (
+              <>
+                <button
+                  onClick={() => setCarouselIndex(Math.max(0, carouselIndex - 1))}
+                  disabled={carouselIndex === 0}
+                  className={cn("absolute -left-2 md:-left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-lg border flex items-center justify-center transition-all", carouselIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110')}
+                  style={{ borderColor: `${brandColor}20` }}
+                >
+                  <ChevronLeft size={20} style={{ color: brandColor }} />
+                </button>
+                <button
+                  onClick={() => setCarouselIndex(Math.min(maxIndex, carouselIndex + 1))}
+                  disabled={carouselIndex >= maxIndex}
+                  className={cn("absolute -right-2 md:-right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-lg border flex items-center justify-center transition-all", carouselIndex >= maxIndex ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110')}
+                  style={{ borderColor: `${brandColor}20` }}
+                >
+                  <ChevronRight size={20} style={{ color: brandColor }} />
+                </button>
+              </>
+            )}
+            {/* Carousel Container */}
+            <div className="overflow-hidden mx-4 md:mx-8">
+              <div className="flex transition-transform duration-300 ease-out gap-4" style={{ transform: `translateX(-${carouselIndex * (100 / itemsPerView)}%)` }}>
+                {items.map((item, idx) => (
+                  <div 
+                    key={item.id} 
+                    className="flex-shrink-0 rounded-xl p-5 md:p-6 border shadow-sm"
+                    style={{ width: `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 16 / itemsPerView}px)`, backgroundColor: idx === 0 ? brandColor : `${brandColor}08`, borderColor: `${brandColor}20` }}
+                  >
+                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-4", idx === 0 ? 'bg-white/20' : '')} style={idx !== 0 ? { backgroundColor: brandColor } : {}}>
+                      <Check size={18} strokeWidth={3} className={idx === 0 ? 'text-white' : ''} style={idx !== 0 ? { color: 'white' } : {}} />
+                    </div>
+                    <h3 className={cn("font-bold text-base mb-2 line-clamp-2", idx === 0 ? 'text-white' : '')} style={idx !== 0 ? { color: brandColor } : {}}>{item.title || 'Tiêu đề'}</h3>
+                    <p className={cn("text-sm leading-relaxed line-clamp-3", idx === 0 ? 'text-white/80' : 'text-slate-500 dark:text-slate-400')}>{item.description || 'Mô tả...'}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Dots Indicator */}
+            {items.length > itemsPerView && (
+              <div className="flex justify-center gap-2 mt-4">
+                {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
+                  <button key={idx} onClick={() => setCarouselIndex(idx)} className={cn("w-2 h-2 rounded-full transition-all", carouselIndex === idx ? 'w-6' : '')} style={{ backgroundColor: carouselIndex === idx ? brandColor : `${brandColor}30` }} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+    );
+  };
+
+  // Style 6: Timeline - Vertical timeline với milestones
+  const renderTimelineStyle = () => (
+    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+      <BenefitsHeader />
+      {items.length === 0 ? <EmptyState /> : (
+        <div className="relative max-w-3xl mx-auto">
+          {/* Vertical Line */}
+          <div className={cn("absolute top-0 bottom-0 w-0.5", device === 'mobile' ? 'left-4' : 'left-1/2 -translate-x-px')} style={{ backgroundColor: `${brandColor}20` }} />
+          <div className="space-y-6 md:space-y-8">
+            {visibleItems.map((item, idx) => (
+              <div key={item.id} className={cn("relative flex items-start", device === 'mobile' ? 'pl-12' : idx % 2 === 0 ? 'flex-row' : 'flex-row-reverse')}>
+                {/* Dot */}
+                <div className={cn("absolute w-8 h-8 rounded-full border-4 bg-white dark:bg-slate-900 flex items-center justify-center text-xs font-bold z-10", device === 'mobile' ? 'left-0' : 'left-1/2 -translate-x-1/2')} style={{ borderColor: brandColor, color: brandColor }}>
+                  {idx + 1}
+                </div>
+                {/* Content Card */}
+                <div className={cn("bg-white dark:bg-slate-800 rounded-xl p-4 md:p-5 border shadow-sm", device === 'mobile' ? 'w-full' : 'w-5/12')} style={{ borderColor: `${brandColor}15` }}>
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-2 line-clamp-2" style={{ color: brandColor }}>{item.title || 'Tiêu đề'}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">{item.description || 'Mô tả...'}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {remainingCount > 0 && (
+            <div className="text-center mt-6">
+              <span className="text-sm font-medium" style={{ color: brandColor }}>+{remainingCount} mục khác</span>
+            </div>
+          )}
+          {/* CTA Button */}
+          {config?.buttonText && (
+            <div className="text-center mt-8">
+              <a href={config.buttonLink || '#'} className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium text-white" style={{ backgroundColor: brandColor }}>
+                {config.buttonText}
+                <ArrowRight size={16} />
+              </a>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
@@ -5756,6 +6004,8 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
         {previewStyle === 'list' && renderListStyle()}
         {previewStyle === 'bento' && renderBentoStyle()}
         {previewStyle === 'row' && renderRowStyle()}
+        {previewStyle === 'carousel' && renderCarouselStyle()}
+        {previewStyle === 'timeline' && renderTimelineStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );

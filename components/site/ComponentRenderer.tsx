@@ -10,7 +10,7 @@ import { ServiceListSection } from './ServiceListSection';
 import { 
   LayoutTemplate, Package, FileText, HelpCircle, MousePointerClick, 
   Users, Star, Phone, Briefcase, Image as ImageIcon, Check, ZoomIn, Maximize2, X,
-  Building2, Clock, MapPin, Mail, Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings
+  Building2, Clock, MapPin, Mail, Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, ArrowRight
 } from 'lucide-react';
 
 interface HomeComponent {
@@ -1164,12 +1164,40 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
 }
 
 // ============ SERVICES SECTION ============
-// Professional Services UI/UX - 3 Variants: Elegant Grid, Modern List, Big Number
-// No hover effects - mobile friendly
-type ServicesStyle = 'elegantGrid' | 'modernList' | 'bigNumber';
+// Professional Services UI/UX - 6 Variants: Elegant Grid, Modern List, Big Number, Cards, Carousel, Timeline
+type ServicesStyle = 'elegantGrid' | 'modernList' | 'bigNumber' | 'cards' | 'carousel' | 'timeline';
+
+// Dynamic Icon for Services
+const ServiceIconRenderer = ({ name, size = 24, style }: { name?: string; size?: number; style?: React.CSSProperties }) => {
+  const icons: Record<string, React.ComponentType<{ size?: number; style?: React.CSSProperties }>> = {
+    Briefcase, Shield, Package, Star, Users, Phone, Target, Zap, Globe, Rocket, Settings, Layers, Cpu, Clock, MapPin, Mail, Building2, Check
+  };
+  const IconComponent = icons[name || 'Star'] || Star;
+  return <IconComponent size={size} style={style} />;
+};
+
 function ServicesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
   const style = (config.style as ServicesStyle) || 'elegantGrid';
+
+  // Empty state
+  if (items.length === 0) {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+            <Briefcase size={32} style={{ color: brandColor }} />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">{title || 'Dịch vụ'}</h2>
+          <p className="text-slate-500">Chưa có dịch vụ nào</p>
+        </div>
+      </section>
+    );
+  }
+
+  const MAX_VISIBLE = 6;
+  const visibleItems = items.slice(0, MAX_VISIBLE);
+  const remainingCount = Math.max(0, items.length - MAX_VISIBLE);
 
   // Style 1: Elegant Grid - Clean cards with top accent line
   if (style === 'elegantGrid') {
@@ -1254,56 +1282,177 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 3: Big Number Tiles - Bento/Typographic style with giant numbers
+  // Style 3: Big Number Tiles
+  if (style === 'bigNumber') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto space-y-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {visibleItems.map((item, idx) => {
+              const isHighlighted = idx === 1;
+              return (
+                <div key={idx} className={`relative overflow-hidden rounded-xl p-6 min-h-[180px] flex flex-col justify-end border ${isHighlighted ? 'text-white border-transparent' : 'bg-slate-100/50 text-slate-900 border-slate-200/50'}`}
+                  style={isHighlighted ? { backgroundColor: brandColor } : {}}>
+                  <span className={`absolute -top-6 -right-3 text-[8rem] font-black leading-none select-none pointer-events-none ${isHighlighted ? 'text-white opacity-[0.15]' : 'text-slate-900 opacity-[0.07]'}`}>{idx + 1}</span>
+                  <div className="relative z-10 space-y-2">
+                    <div className="w-6 h-1 mb-3 opacity-50 rounded-full" style={{ backgroundColor: isHighlighted ? 'white' : brandColor }} />
+                    <h3 className="text-lg md:text-xl font-bold tracking-tight">{item.title || 'Tiêu đề'}</h3>
+                    <p className={`text-sm leading-relaxed ${isHighlighted ? 'text-white/90' : 'text-slate-500'}`}>{item.description || 'Mô tả...'}</p>
+                  </div>
+                </div>
+              );
+            })}
+            {remainingCount > 0 && (
+              <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 min-h-[180px]" style={{ borderColor: `${brandColor}30` }}>
+                <span className="text-2xl font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+                <span className="text-sm text-slate-500">dịch vụ khác</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 4: Icon Cards - Cards with prominent icon
+  if (style === 'cards') {
+    if (items.length <= 2) {
+      return (
+        <section className="py-12 md:py-16 px-4">
+          <div className="max-w-4xl mx-auto space-y-8">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 text-center">{title}</h2>
+            <div className={`mx-auto flex justify-center gap-6 ${items.length === 1 ? 'max-w-sm' : 'max-w-2xl'}`}>
+              {items.map((item, idx) => (
+                <div key={idx} className="flex-1 bg-white rounded-2xl p-6 border shadow-sm" style={{ borderColor: `${brandColor}15` }}>
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+                    <ServiceIconRenderer name={item.icon} size={28} style={{ color: brandColor }} />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">{item.title || 'Tiêu đề'}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">{item.description || 'Mô tả...'}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    }
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto space-y-10">
+          <div className="text-center space-y-2">
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Dịch vụ</span>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visibleItems.map((item, idx) => (
+              <div key={idx} className="bg-white rounded-2xl p-6 border shadow-sm transition-shadow hover:shadow-md" style={{ borderColor: `${brandColor}15` }}>
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+                  <ServiceIconRenderer name={item.icon} size={28} style={{ color: brandColor }} />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">{item.title || 'Tiêu đề'}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">{item.description || 'Mô tả...'}</p>
+              </div>
+            ))}
+            {remainingCount > 0 && (
+              <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6" style={{ borderColor: `${brandColor}30` }}>
+                <span className="text-2xl font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+                <span className="text-sm text-slate-500">dịch vụ khác</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Carousel - Horizontal cards layout
+  if (style === 'carousel') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto space-y-8">
+          <div className="border-b border-slate-200 pb-4">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {visibleItems.map((item, idx) => (
+              <div key={idx} className="bg-white rounded-xl overflow-hidden border shadow-sm" style={{ borderColor: `${brandColor}15` }}>
+                <div className="h-2 w-full" style={{ background: `linear-gradient(to right, ${brandColor}66, ${brandColor})` }} />
+                <div className="p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${brandColor}10` }}>
+                      <ServiceIconRenderer name={item.icon} size={24} style={{ color: brandColor }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-slate-900 mb-1">{item.title || 'Tiêu đề'}</h3>
+                      <p className="text-sm text-slate-500 line-clamp-2">{item.description || 'Mô tả...'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Timeline - Vertical timeline layout
+  if (style === 'timeline') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-4xl mx-auto space-y-10">
+          <div className="text-center">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+          </div>
+          <div className="relative">
+            <div className="absolute left-4 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-0.5" style={{ backgroundColor: `${brandColor}20` }} />
+            <div className="space-y-8">
+              {visibleItems.map((item, idx) => (
+                <div key={idx} className={`relative flex ${idx % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
+                  <div className="absolute left-4 md:left-1/2 md:-translate-x-1/2 w-10 h-10 rounded-full border-4 bg-white flex items-center justify-center z-10" style={{ borderColor: brandColor }}>
+                    <ServiceIconRenderer name={item.icon} size={18} style={{ color: brandColor }} />
+                  </div>
+                  <div className={`ml-20 md:ml-0 md:w-5/12 bg-white rounded-xl p-5 border shadow-sm ${idx % 2 === 0 ? 'md:mr-auto md:ml-8' : 'md:ml-auto md:mr-8'}`} style={{ borderColor: `${brandColor}15` }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm font-bold tabular-nums" style={{ color: brandColor }}>{String(idx + 1).padStart(2, '0')}</span>
+                      <h3 className="font-bold text-slate-900">{item.title || 'Tiêu đề'}</h3>
+                    </div>
+                    <p className="text-sm text-slate-500">{item.description || 'Mô tả...'}</p>
+                  </div>
+                </div>
+              ))}
+              {remainingCount > 0 && (
+                <div className="relative flex">
+                  <div className="absolute left-4 md:left-1/2 md:-translate-x-1/2 w-10 h-10 rounded-full border-2 border-dashed bg-white flex items-center justify-center z-10" style={{ borderColor: `${brandColor}40` }}>
+                    <span className="text-xs font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Default fallback - elegantGrid
   return (
     <section className="py-12 md:py-16 px-4">
       <div className="max-w-6xl mx-auto space-y-10">
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-4">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">
-            {title}
-          </h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
         </div>
-
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {items.map((item, idx) => {
-            const isHighlighted = idx === 1;
-            return (
-              <div 
-                key={idx} 
-                className={`relative overflow-hidden rounded-xl p-6 min-h-[180px] flex flex-col justify-end border ${
-                  isHighlighted 
-                    ? 'text-white border-transparent' 
-                    : 'bg-slate-100/50 text-slate-900 border-slate-200/50'
-                }`}
-                style={isHighlighted ? { backgroundColor: brandColor } : {}}
-              >
-                {/* Giant Number Watermark */}
-                <span className={`absolute -top-6 -right-3 text-[8rem] font-black leading-none select-none pointer-events-none ${
-                  isHighlighted ? 'text-white opacity-[0.15]' : 'text-slate-900 opacity-[0.07]'
-                }`}>
-                  {idx + 1}
-                </span>
-
-                <div className="relative z-10 space-y-2">
-                  {/* Accent bar */}
-                  <div 
-                    className="w-6 h-1 mb-3 opacity-50 rounded-full"
-                    style={{ backgroundColor: isHighlighted ? 'white' : brandColor }}
-                  />
-                  <h3 className="text-lg md:text-xl font-bold tracking-tight">
-                    {item.title}
-                  </h3>
-                  <p className={`text-sm leading-relaxed ${
-                    isHighlighted ? 'text-white/90' : 'text-slate-500'
-                  }`}>
-                    {item.description}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {items.map((item, idx) => (
+            <div key={idx} className="bg-white p-6 pt-8 rounded-xl shadow-sm border border-slate-200/60 relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1.5 w-full" style={{ background: `linear-gradient(to right, ${brandColor}66, ${brandColor})` }} />
+              <h3 className="text-lg md:text-xl font-bold text-slate-900 mb-2 tracking-tight">{item.title || 'Tiêu đề'}</h3>
+              <p className="text-slate-500 leading-relaxed text-sm">{item.description || 'Mô tả...'}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -1311,49 +1460,57 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
 }
 
 // ============ BENEFITS SECTION ============
-// 4 Professional Styles: Solid Cards, Accent List, Bold Bento, Icon Row
-type BenefitsStyle = 'cards' | 'list' | 'bento' | 'row';
+// 6 Professional Styles: Solid Cards, Accent List, Bold Bento, Icon Row, Carousel, Timeline
+type BenefitsStyle = 'cards' | 'list' | 'bento' | 'row' | 'carousel' | 'timeline';
 function BenefitsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
   const style = (config.style as BenefitsStyle) || 'cards';
+  const subHeading = (config.subHeading as string) || 'Vì sao chọn chúng tôi?';
+  const heading = (config.heading as string) || title;
+  const buttonText = (config.buttonText as string) || '';
+  const buttonLink = (config.buttonLink as string) || '';
+
+  // Empty state
+  if (items.length === 0) {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+            <Check size={32} style={{ color: brandColor }} />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">{title || 'Lợi ích'}</h2>
+          <p className="text-slate-500">Chưa có lợi ích nào</p>
+        </div>
+      </section>
+    );
+  }
+
+  // Reusable Header
+  const BenefitsHeader = () => (
+    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2" style={{ borderColor: `${brandColor}20` }}>
+      <div className="space-y-2">
+        <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+          {subHeading}
+        </div>
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{heading}</h2>
+      </div>
+    </div>
+  );
 
   // Style 1: Solid Cards - Corporate style với icon đậm màu chủ đạo
   if (style === 'cards') {
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto space-y-8">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2" style={{ borderColor: `${brandColor}20` }}>
-            <div className="space-y-2">
-              <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                Vì sao chọn chúng tôi?
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-                {title}
-              </h2>
-            </div>
-          </div>
-          
-          {/* Grid */}
+          <BenefitsHeader />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {items.map((item, idx) => (
-              <div 
-                key={idx} 
-                className="rounded-xl p-5 md:p-6 shadow-sm flex flex-col items-start border"
-                style={{ backgroundColor: `${brandColor}08`, borderColor: `${brandColor}20` }}
-              >
-                <div 
-                  className="w-11 h-11 md:w-12 md:h-12 rounded-lg flex items-center justify-center mb-4 text-white"
-                  style={{ backgroundColor: brandColor, boxShadow: `0 4px 6px -1px ${brandColor}30` }}
-                >
+              <div key={idx} className="rounded-xl p-5 md:p-6 shadow-sm flex flex-col items-start border" style={{ backgroundColor: `${brandColor}08`, borderColor: `${brandColor}20` }}>
+                <div className="w-11 h-11 md:w-12 md:h-12 rounded-lg flex items-center justify-center mb-4 text-white" style={{ backgroundColor: brandColor, boxShadow: `0 4px 6px -1px ${brandColor}30` }}>
                   <Check size={18} strokeWidth={3} />
                 </div>
-                <h3 className="font-bold text-base md:text-lg mb-2" style={{ color: brandColor }}>
-                  {item.title}
-                </h3>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  {item.description}
-                </p>
+                <h3 className="font-bold text-base md:text-lg mb-2 line-clamp-2" style={{ color: brandColor }}>{item.title}</h3>
+                <p className="text-sm text-slate-600 leading-relaxed line-clamp-3 min-h-[3.75rem]">{item.description}</p>
               </div>
             ))}
           </div>
@@ -1367,49 +1524,24 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-5xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2" style={{ borderColor: `${brandColor}20` }}>
-            <div className="space-y-2">
-              <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                Vì sao chọn chúng tôi?
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-                {title}
-              </h2>
-            </div>
-          </div>
-          
-          {/* List */}
+          <BenefitsHeader />
           <div className="flex flex-col gap-3">
             {items.map((item, idx) => (
-              <div 
-                key={idx} 
-                className="relative bg-white border border-slate-200/60 rounded-lg p-4 md:p-5 pl-5 md:pl-6 overflow-hidden shadow-sm"
-              >
-                {/* Thanh màu bên trái */}
+              <div key={idx} className="relative bg-white border border-slate-200/60 rounded-lg p-4 md:p-5 pl-5 md:pl-6 overflow-hidden shadow-sm">
                 <div className="absolute top-0 bottom-0 left-0 w-1.5" style={{ backgroundColor: brandColor }} />
-                
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-3">
                   <div className="flex items-start gap-3 md:gap-4">
                     <div className="flex-shrink-0 mt-0.5">
-                      <div 
-                        className="w-6 h-6 rounded-full flex items-center justify-center border"
-                        style={{ backgroundColor: `${brandColor}15`, borderColor: `${brandColor}30` }}
-                      >
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center border" style={{ backgroundColor: `${brandColor}15`, borderColor: `${brandColor}30` }}>
                         <span className="text-[11px] font-bold" style={{ color: brandColor }}>{idx + 1}</span>
                       </div>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 text-sm md:text-base">
-                        {item.title}
-                      </h3>
-                      <p className="text-xs md:text-sm text-slate-500 mt-1 md:mt-1.5 leading-normal">
-                        {item.description}
-                      </p>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-slate-900 text-sm md:text-base line-clamp-1">{item.title}</h3>
+                      <p className="text-xs md:text-sm text-slate-500 mt-1 md:mt-1.5 leading-normal line-clamp-2">{item.description}</p>
                     </div>
                   </div>
-                  
-                  <div className="hidden md:block">
+                  <div className="hidden md:block flex-shrink-0">
                     <svg className="w-[18px] h-[18px] opacity-60" style={{ color: brandColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -1428,60 +1560,21 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto space-y-8">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2" style={{ borderColor: `${brandColor}20` }}>
-            <div className="space-y-2">
-              <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                Vì sao chọn chúng tôi?
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-                {title}
-              </h2>
-            </div>
-          </div>
-          
-          {/* Bento Grid */}
+          <BenefitsHeader />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
             {items.slice(0, 4).map((item, idx) => {
               const isWide = idx === 0 || idx === 3;
               const isPrimary = idx === 0;
-              
               return (
-                <div 
-                  key={idx} 
-                  className={`flex flex-col justify-between p-5 md:p-6 lg:p-8 rounded-2xl transition-colors min-h-[160px] md:min-h-[180px] ${
-                    isWide ? 'md:col-span-2' : 'md:col-span-1'
-                  } ${
-                    isPrimary 
-                      ? 'text-white border border-transparent' 
-                      : 'bg-white border border-slate-200/60'
-                  }`}
-                  style={isPrimary ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}30` } : {}}
-                >
-                  {/* Header: Number Index */}
+                <div key={idx} className={`flex flex-col justify-between p-5 md:p-6 lg:p-8 rounded-2xl transition-colors min-h-[160px] md:min-h-[180px] ${isWide ? 'md:col-span-2' : 'md:col-span-1'} ${isPrimary ? 'text-white border border-transparent' : 'bg-white border border-slate-200/60'}`} style={isPrimary ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}30` } : {}}>
                   <div className="flex justify-between items-start mb-3 md:mb-4">
-                    <span 
-                      className={`text-xs font-bold uppercase tracking-widest px-2 py-1 rounded ${
-                        isPrimary ? 'bg-white/20 text-white' : ''
-                      }`}
-                      style={!isPrimary ? { backgroundColor: `${brandColor}15`, color: brandColor } : {}}
-                    >
+                    <span className={`text-xs font-bold uppercase tracking-widest px-2 py-1 rounded ${isPrimary ? 'bg-white/20 text-white' : ''}`} style={!isPrimary ? { backgroundColor: `${brandColor}15`, color: brandColor } : {}}>
                       0{idx + 1}
                     </span>
                   </div>
-
-                  {/* Content: Pure Typography */}
                   <div>
-                    <h3 className={`font-bold text-lg md:text-xl lg:text-2xl mb-2 md:mb-3 tracking-tight ${
-                      isPrimary ? 'text-white' : 'text-slate-900'
-                    }`}>
-                      {item.title}
-                    </h3>
-                    <p className={`text-sm md:text-base leading-relaxed font-medium ${
-                      isPrimary ? 'text-white/90' : 'text-slate-500'
-                    }`}>
-                      {item.description}
-                    </p>
+                    <h3 className={`font-bold text-lg md:text-xl lg:text-2xl mb-2 md:mb-3 tracking-tight line-clamp-2 ${isPrimary ? 'text-white' : 'text-slate-900'}`}>{item.title}</h3>
+                    <p className={`text-sm md:text-base leading-relaxed font-medium line-clamp-3 ${isPrimary ? 'text-white/90' : 'text-slate-500'}`}>{item.description}</p>
                   </div>
                 </div>
               );
@@ -1493,42 +1586,83 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
   }
 
   // Style 4: Icon Row - Horizontal layout với dividers
-  return (
-    <section className="py-12 md:py-16 px-4">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2" style={{ borderColor: `${brandColor}20` }}>
-          <div className="space-y-2">
-            <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-              Vì sao chọn chúng tôi?
+  if (style === 'row') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto space-y-8">
+          <BenefitsHeader />
+          <div className="bg-white border-y-2 rounded-lg overflow-hidden" style={{ borderColor: `${brandColor}15` }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: `${brandColor}15` }}>
+              {items.slice(0, 4).map((item, idx) => (
+                <div key={idx} className="p-5 md:p-6 lg:p-8 flex flex-col items-center text-center">
+                  <div className="mb-3 md:mb-4 p-3 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor, boxShadow: `0 0 0 4px ${brandColor}08` }}>
+                    <Check size={22} strokeWidth={3} />
+                  </div>
+                  <h3 className="font-bold text-slate-900 mb-1.5 md:mb-2 text-sm md:text-base line-clamp-2 min-h-[2.5rem]">{item.title}</h3>
+                  <p className="text-xs md:text-sm text-slate-500 leading-relaxed line-clamp-3">{item.description}</p>
+                </div>
+              ))}
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
-              {title}
-            </h2>
           </div>
         </div>
-        
-        {/* Row */}
-        <div className="bg-white border-y-2 rounded-lg overflow-hidden" style={{ borderColor: `${brandColor}15` }}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: `${brandColor}15` }}>
-            {items.map((item, idx) => (
-              <div key={idx} className="p-5 md:p-6 lg:p-8 flex flex-col items-center text-center">
-                <div 
-                  className="mb-3 md:mb-4 p-3 rounded-full"
-                  style={{ 
-                    backgroundColor: `${brandColor}15`, 
-                    color: brandColor,
-                    boxShadow: `0 0 0 4px ${brandColor}08`
-                  }}
-                >
-                  <Check size={22} strokeWidth={3} />
+      </section>
+    );
+  }
+
+  // Style 5: Carousel - Horizontal scroll với swipe
+  if (style === 'carousel') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto space-y-8">
+          <BenefitsHeader />
+          <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+            <div className="flex gap-4" style={{ width: 'max-content' }}>
+              {items.map((item, idx) => (
+                <div key={idx} className="w-[280px] md:w-[320px] flex-shrink-0 rounded-xl p-5 md:p-6 border shadow-sm" style={{ backgroundColor: idx === 0 ? brandColor : `${brandColor}08`, borderColor: `${brandColor}20` }}>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${idx === 0 ? 'bg-white/20' : ''}`} style={idx !== 0 ? { backgroundColor: brandColor } : {}}>
+                    <Check size={18} strokeWidth={3} className="text-white" />
+                  </div>
+                  <h3 className={`font-bold text-base mb-2 line-clamp-2 ${idx === 0 ? 'text-white' : ''}`} style={idx !== 0 ? { color: brandColor } : {}}>{item.title}</h3>
+                  <p className={`text-sm leading-relaxed line-clamp-3 ${idx === 0 ? 'text-white/80' : 'text-slate-500'}`}>{item.description}</p>
                 </div>
-                <h3 className="font-bold text-slate-900 mb-1.5 md:mb-2 text-sm md:text-base">{item.title}</h3>
-                <p className="text-xs md:text-sm text-slate-500 leading-relaxed">{item.description}</p>
+              ))}
+            </div>
+          </div>
+          <p className="text-xs text-center text-slate-400">Vuốt sang trái/phải để xem thêm</p>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Timeline - Vertical timeline với milestones (default)
+  return (
+    <section className="py-12 md:py-16 px-4">
+      <div className="max-w-3xl mx-auto space-y-8">
+        <BenefitsHeader />
+        <div className="relative">
+          <div className="absolute left-4 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-0.5" style={{ backgroundColor: `${brandColor}20` }} />
+          <div className="space-y-6 md:space-y-8">
+            {items.map((item, idx) => (
+              <div key={idx} className={`relative flex items-start pl-12 md:pl-0 ${idx % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
+                <div className="absolute left-0 md:left-1/2 md:-translate-x-1/2 w-8 h-8 rounded-full border-4 bg-white flex items-center justify-center text-xs font-bold z-10" style={{ borderColor: brandColor, color: brandColor }}>
+                  {idx + 1}
+                </div>
+                <div className="bg-white rounded-xl p-4 md:p-5 border shadow-sm w-full md:w-5/12" style={{ borderColor: `${brandColor}15` }}>
+                  <h3 className="font-bold text-slate-900 mb-2 line-clamp-2" style={{ color: brandColor }}>{item.title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed line-clamp-3">{item.description}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
+        {buttonText && (
+          <div className="text-center">
+            <a href={buttonLink || '#'} className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium text-white" style={{ backgroundColor: brandColor }}>
+              {buttonText}
+              <ArrowRight size={16} />
+            </a>
+          </div>
+        )}
       </div>
     </section>
   );

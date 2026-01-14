@@ -22,7 +22,7 @@ import {
   FaqPreview, FaqStyle,
   CTAPreview, CTAStyle,
   ServicesPreview, ServicesStyle,
-  BenefitsPreview, BenefitsStyle,
+  BenefitsPreview, BenefitsStyle, BenefitsConfig,
   GalleryPreview, GalleryStyle,
   TrustBadgesPreview, TrustBadgesStyle,
   ContactPreview, ContactStyle,
@@ -158,7 +158,11 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [footerStyle, setFooterStyle] = useState<FooterStyle>('classic');
   const [servicesItems, setServicesItems] = useState<{id: number, icon: string, title: string, description: string}[]>([]);
   const [servicesStyle, setServicesStyle] = useState<ServicesStyle>('elegantGrid');
+  const [draggedServiceId, setDraggedServiceId] = useState<number | null>(null);
+  const [dragOverServiceId, setDragOverServiceId] = useState<number | null>(null);
+  const [benefitsItems, setBenefitsItems] = useState<{id: number, icon: string, title: string, description: string}[]>([]);
   const [benefitsStyle, setBenefitsStyle] = useState<BenefitsStyle>('cards');
+  const [benefitsConfig, setBenefitsConfig] = useState<{subHeading?: string, heading?: string, buttonText?: string, buttonLink?: string}>({});
   const [testimonialsItems, setTestimonialsItems] = useState<{id: number, name: string, role: string, content: string, avatar: string, rating: number}[]>([]);
   const [testimonialsStyle, setTestimonialsStyle] = useState<TestimonialsStyle>('cards');
   const [pricingPlans, setPricingPlans] = useState<{id: number, name: string, price: string, period: string, features: string[], isPopular: boolean, buttonText: string, buttonLink: string}[]>([]);
@@ -366,8 +370,14 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setServicesStyle((config.style as ServicesStyle) || 'elegantGrid');
           break;
         case 'Benefits':
-          setServicesItems(config.items?.map((item: {icon: string, title: string, description: string}, i: number) => ({ id: i, icon: item.icon, title: item.title, description: item.description })) || []);
+          setBenefitsItems(config.items?.map((item: {icon: string, title: string, description: string}, i: number) => ({ id: i, icon: item.icon, title: item.title, description: item.description })) || []);
           setBenefitsStyle((config.style as BenefitsStyle) || 'cards');
+          setBenefitsConfig({
+            subHeading: config.subHeading || 'Vì sao chọn chúng tôi?',
+            heading: config.heading || 'Giá trị cốt lõi',
+            buttonText: config.buttonText || '',
+            buttonLink: config.buttonLink || ''
+          });
           break;
         case 'Testimonials':
           setTestimonialsItems(config.items?.map((item: {name: string, role: string, content: string, avatar: string, rating: number}, i: number) => ({ id: i, ...item })) || []);
@@ -541,7 +551,14 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'Services':
         return { items: servicesItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })), style: servicesStyle };
       case 'Benefits':
-        return { items: servicesItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })), style: benefitsStyle };
+        return { 
+          items: benefitsItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })), 
+          style: benefitsStyle,
+          subHeading: benefitsConfig.subHeading,
+          heading: benefitsConfig.heading,
+          buttonText: benefitsConfig.buttonText,
+          buttonLink: benefitsConfig.buttonLink
+        };
       case 'Testimonials':
         return { items: testimonialsItems.map(t => ({ name: t.name, role: t.role, content: t.content, avatar: t.avatar, rating: t.rating })), style: testimonialsStyle };
       case 'Pricing':
@@ -1252,20 +1269,71 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           <>
             <Card className="mb-6">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">Dịch vụ</CardTitle>
+                <CardTitle className="text-base">Dịch vụ ({servicesItems.length})</CardTitle>
                 <Button type="button" variant="outline" size="sm" onClick={() => setServicesItems([...servicesItems, { id: Date.now(), icon: 'Star', title: '', description: '' }])} className="gap-2"><Plus size={14} /> Thêm</Button>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {servicesItems.map((item, idx) => (
-                  <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label>Mục {idx + 1}</Label>
-                      <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => servicesItems.length > 1 && setServicesItems(servicesItems.filter(s => s.id !== item.id))}><Trash2 size={14} /></Button>
+              <CardContent className="space-y-3">
+                {servicesItems.map((item, idx) => {
+                  const icons: Record<string, React.ComponentType<{ size?: number; style?: React.CSSProperties }>> = { Briefcase, Star, Users, Package, Zap, Check };
+                  const IconComponent = icons[item.icon] || Star;
+                  return (
+                    <div 
+                      key={item.id} 
+                      draggable
+                      onDragStart={() => setDraggedServiceId(item.id)}
+                      onDragEnd={() => { setDraggedServiceId(null); setDragOverServiceId(null); }}
+                      onDragOver={(e) => { e.preventDefault(); if (draggedServiceId !== item.id) setDragOverServiceId(item.id); }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (!draggedServiceId || draggedServiceId === item.id) return;
+                        const newItems = [...servicesItems];
+                        const draggedIdx = newItems.findIndex(i => i.id === draggedServiceId);
+                        const targetIdx = newItems.findIndex(i => i.id === item.id);
+                        const [moved] = newItems.splice(draggedIdx, 1);
+                        newItems.splice(targetIdx, 0, moved);
+                        setServicesItems(newItems);
+                        setDraggedServiceId(null);
+                        setDragOverServiceId(null);
+                      }}
+                      className={cn(
+                        "p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3 border-2 transition-all cursor-grab active:cursor-grabbing",
+                        draggedServiceId === item.id && "opacity-50",
+                        dragOverServiceId === item.id && "border-blue-500",
+                        !draggedServiceId && "border-transparent"
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <GripVertical size={16} className="text-slate-400 flex-shrink-0" />
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${brandColor}15` }}>
+                            <IconComponent size={16} style={{ color: brandColor }} />
+                          </div>
+                          <Label className="font-medium">Dịch vụ {idx + 1}</Label>
+                        </div>
+                        <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8 flex-shrink-0" onClick={() => servicesItems.length > 1 && setServicesItems(servicesItems.filter(s => s.id !== item.id))}><Trash2 size={14} /></Button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <select 
+                          value={item.icon} 
+                          onChange={(e) => setServicesItems(servicesItems.map(s => s.id === item.id ? {...s, icon: e.target.value} : s))}
+                          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        >
+                          {['Briefcase', 'Star', 'Users', 'Package', 'Zap', 'Check', 'Shield', 'Target', 'Globe', 'Rocket', 'Settings', 'Layers', 'Cpu', 'Clock', 'MapPin', 'Mail', 'Building2', 'Phone'].map(icon => (
+                            <option key={icon} value={icon}>{icon}</option>
+                          ))}
+                        </select>
+                        <Input placeholder="Tiêu đề" value={item.title} onChange={(e) => setServicesItems(servicesItems.map(s => s.id === item.id ? {...s, title: e.target.value} : s))} className="md:col-span-1" />
+                        <Input placeholder="Mô tả ngắn" value={item.description} onChange={(e) => setServicesItems(servicesItems.map(s => s.id === item.id ? {...s, description: e.target.value} : s))} className="md:col-span-2" />
+                      </div>
                     </div>
-                    <Input placeholder="Tiêu đề" value={item.title} onChange={(e) => setServicesItems(servicesItems.map(s => s.id === item.id ? {...s, title: e.target.value} : s))} />
-                    <Input placeholder="Mô tả ngắn" value={item.description} onChange={(e) => setServicesItems(servicesItems.map(s => s.id === item.id ? {...s, description: e.target.value} : s))} />
+                  );
+                })}
+                {servicesItems.length === 0 && (
+                  <div className="text-center py-8 text-slate-500">
+                    <Briefcase size={32} className="mx-auto mb-2 opacity-50" />
+                    <p>Chưa có dịch vụ nào. Nhấn "Thêm" để bắt đầu.</p>
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
             <ServicesPreview 
@@ -1281,29 +1349,60 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         {/* Benefits */}
         {component.type === 'Benefits' && (
           <>
+            {/* Config Card */}
+            <Card className="mb-6">
+              <CardHeader><CardTitle className="text-base">Cấu hình hiển thị</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Badge text</Label>
+                    <Input placeholder="Vì sao chọn chúng tôi?" value={benefitsConfig.subHeading || ''} onChange={(e) => setBenefitsConfig({ ...benefitsConfig, subHeading: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Tiêu đề chính</Label>
+                    <Input placeholder="Giá trị cốt lõi" value={benefitsConfig.heading || ''} onChange={(e) => setBenefitsConfig({ ...benefitsConfig, heading: e.target.value })} />
+                  </div>
+                </div>
+                {benefitsStyle === 'timeline' && (
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                    <div>
+                      <Label>Nút CTA (tùy chọn)</Label>
+                      <Input placeholder="Tìm hiểu thêm" value={benefitsConfig.buttonText || ''} onChange={(e) => setBenefitsConfig({ ...benefitsConfig, buttonText: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Link nút CTA</Label>
+                      <Input placeholder="/lien-he" value={benefitsConfig.buttonLink || ''} onChange={(e) => setBenefitsConfig({ ...benefitsConfig, buttonLink: e.target.value })} />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            {/* Benefits Items Card */}
             <Card className="mb-6">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">Lợi ích</CardTitle>
-                <Button type="button" variant="outline" size="sm" onClick={() => setServicesItems([...servicesItems, { id: Date.now(), icon: 'Star', title: '', description: '' }])} className="gap-2"><Plus size={14} /> Thêm</Button>
+                <CardTitle className="text-base">Lợi ích ({benefitsItems.length}/8)</CardTitle>
+                <Button type="button" variant="outline" size="sm" onClick={() => benefitsItems.length < 8 && setBenefitsItems([...benefitsItems, { id: Date.now(), icon: 'Star', title: '', description: '' }])} disabled={benefitsItems.length >= 8} className="gap-2"><Plus size={14} /> Thêm</Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                {servicesItems.map((item, idx) => (
+                {benefitsItems.map((item, idx) => (
                   <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label>Mục {idx + 1}</Label>
-                      <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => servicesItems.length > 1 && setServicesItems(servicesItems.filter(s => s.id !== item.id))}><Trash2 size={14} /></Button>
+                      <Label>Lợi ích {idx + 1}</Label>
+                      <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => benefitsItems.length > 1 && setBenefitsItems(benefitsItems.filter(s => s.id !== item.id))} disabled={benefitsItems.length <= 1}><Trash2 size={14} /></Button>
                     </div>
-                    <Input placeholder="Tiêu đề" value={item.title} onChange={(e) => setServicesItems(servicesItems.map(s => s.id === item.id ? {...s, title: e.target.value} : s))} />
-                    <Input placeholder="Mô tả ngắn" value={item.description} onChange={(e) => setServicesItems(servicesItems.map(s => s.id === item.id ? {...s, description: e.target.value} : s))} />
+                    <Input placeholder="Tiêu đề" value={item.title} onChange={(e) => setBenefitsItems(benefitsItems.map(s => s.id === item.id ? {...s, title: e.target.value} : s))} />
+                    <Input placeholder="Mô tả ngắn (max 150 ký tự)" maxLength={150} value={item.description} onChange={(e) => setBenefitsItems(benefitsItems.map(s => s.id === item.id ? {...s, description: e.target.value} : s))} />
+                    <p className="text-xs text-slate-400 text-right">{item.description.length}/150</p>
                   </div>
                 ))}
               </CardContent>
             </Card>
             <BenefitsPreview 
-              items={servicesItems} 
+              items={benefitsItems} 
               brandColor={brandColor}
               selectedStyle={benefitsStyle}
               onStyleChange={setBenefitsStyle}
+              config={benefitsConfig}
             />
           </>
         )}
