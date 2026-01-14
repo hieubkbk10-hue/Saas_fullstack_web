@@ -7114,7 +7114,7 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 5: Carousel (static version for frontend)
+  // Style 5: Carousel - Horizontal scroll with snap
   if (style === 'carousel') {
     return (
       <section className="py-12 md:py-16 px-4">
@@ -7125,11 +7125,14 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {items.slice(0, 6).map((item, idx) => {
+          <div 
+            className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {items.map((item, idx) => {
               const IconComponent = getIcon(item.icon);
               return (
-                <div key={idx} className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-xl transition-all">
+                <div key={idx} className="flex-shrink-0 w-[280px] md:w-[320px] snap-start bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-xl transition-all">
                   <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`, boxShadow: `0 8px 16px -4px ${brandColor}40` }}>
                     <IconComponent size={24} className="text-white" strokeWidth={2} />
                   </div>
