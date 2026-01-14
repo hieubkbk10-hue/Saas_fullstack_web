@@ -214,7 +214,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
     backgroundImage: '', discountText: '', showDays: true, showHours: true, showMinutes: true, showSeconds: true
   });
   const [countdownStyle, setCountdownStyle] = useState<CountdownStyle>('banner');
-  const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true, mapEmbed: '' });
+  const [contactConfig, setContactConfig] = useState({ address: '', phone: '', email: '', workingHours: '', showMap: true, mapEmbed: '', formFields: ['name', 'email', 'phone', 'message'], socialLinks: [] as Array<{ id: number; platform: string; url: string }>, formTitle: '', formDescription: '', submitButtonText: '', responseTimeText: '' });
   const [contactStyle, setContactStyle] = useState<ContactStyle>('modern');
   const [productListConfig, setProductListConfig] = useState({ itemCount: 8, sortBy: 'newest' });
   const [productListStyle, setProductListStyle] = useState<ProductListStyle>('commerce');
@@ -408,7 +408,14 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setCareerStyle((config.style as CareerStyle) || 'cards');
           break;
         case 'Contact':
-          setContactConfig({ address: config.address || '', phone: config.phone || '', email: config.email || '', workingHours: config.workingHours || '', showMap: config.showMap ?? true, mapEmbed: config.mapEmbed || '' });
+          setContactConfig({ 
+            address: config.address || '', phone: config.phone || '', email: config.email || '', workingHours: config.workingHours || '', 
+            showMap: config.showMap ?? true, mapEmbed: config.mapEmbed || '', 
+            formFields: (config.formFields as string[]) || ['name', 'email', 'phone', 'message'],
+            socialLinks: (config.socialLinks as Array<{ id: number; platform: string; url: string }>) || [],
+            formTitle: (config.formTitle as string) || '', formDescription: (config.formDescription as string) || '',
+            submitButtonText: (config.submitButtonText as string) || '', responseTimeText: (config.responseTimeText as string) || ''
+          });
           setContactStyle((config.style as ContactStyle) || 'modern');
           break;
         case 'ProductList':

@@ -11,7 +11,7 @@ import {
   LayoutTemplate, Package, FileText, HelpCircle, MousePointerClick, 
   Users, Star, Phone, Briefcase, Image as ImageIcon, Check, ZoomIn, Maximize2, X,
   Building2, Clock, MapPin, Mail, Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, ArrowRight, ArrowUpRight,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Send
 } from 'lucide-react';
 
 interface HomeComponent {
@@ -2552,10 +2552,10 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
 }
 
 // ============ CONTACT SECTION ============
-// 4 Professional Styles from contact-section-showcase: Modern Split, Floating Card, Grid Cards, Elegant Clean
-type ContactStyle = 'modern' | 'floating' | 'grid' | 'elegant';
+// 6 Professional Styles: Modern Split, Floating Card, Grid Cards, Elegant Clean, Minimal Form, Centered
+type ContactStyle = 'modern' | 'floating' | 'grid' | 'elegant' | 'minimal' | 'centered';
 function ContactSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const { address, phone, email, workingHours, showMap, mapEmbed, style: contactStyle } = config as {
+  const { address, phone, email, workingHours, showMap, mapEmbed, style: contactStyle, socialLinks, formTitle, formDescription, submitButtonText, responseTimeText } = config as {
     address?: string;
     phone?: string;
     email?: string;
@@ -2563,8 +2563,14 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
     showMap?: boolean;
     mapEmbed?: string;
     style?: ContactStyle;
+    socialLinks?: Array<{ id: number; platform: string; url: string }>;
+    formTitle?: string;
+    formDescription?: string;
+    submitButtonText?: string;
+    responseTimeText?: string;
   };
   const style = contactStyle || 'modern';
+  const activeSocials = socialLinks?.filter(s => s.url) || [];
 
   const renderMapOrPlaceholder = (className: string = "w-full h-full") => {
     if (mapEmbed) {
@@ -2825,6 +2831,88 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
       </div>
     </section>
   );
+
+  // Style 5: Minimal Form - Form liên hệ bên trái, thông tin bên phải
+  if (style === 'minimal') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-white border border-slate-200/40 rounded-xl overflow-hidden shadow-sm">
+            <div className="flex flex-col md:flex-row">
+              <div className="md:w-3/5 md:border-r border-slate-200 p-8 lg:p-10">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2 text-slate-900">{formTitle || 'Gửi tin nhắn cho chúng tôi'}</h2>
+                <p className="text-slate-500 mb-8">{formDescription || 'Điền thông tin bên dưới, chúng tôi sẽ phản hồi sớm nhất.'}</p>
+                <form className="space-y-5">
+                  <div><label className="block text-sm font-medium text-slate-700 mb-2">Họ và tên <span className="text-red-500">*</span></label><input type="text" className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm" placeholder="Nguyễn Văn A" /></div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><label className="block text-sm font-medium text-slate-700 mb-2">Email <span className="text-red-500">*</span></label><input type="email" className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm" placeholder="email@example.com" /></div>
+                    <div><label className="block text-sm font-medium text-slate-700 mb-2">Số điện thoại</label><input type="tel" className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm" placeholder="0901 234 567" /></div>
+                  </div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-2">Nội dung <span className="text-red-500">*</span></label><textarea rows={4} className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm resize-none" placeholder="Nhập nội dung..." /></div>
+                  <div className="flex items-center justify-between gap-4">
+                    <button type="submit" className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium" style={{ backgroundColor: brandColor }}><Send size={18} />{submitButtonText || 'Gửi tin nhắn'}</button>
+                    {responseTimeText && <span className="text-sm text-slate-500">{responseTimeText}</span>}
+                  </div>
+                </form>
+              </div>
+              <div className="md:w-2/5 p-8 lg:p-10 bg-slate-50">
+                <h3 className="font-semibold text-slate-900 mb-6">Thông tin liên hệ</h3>
+                <div className="space-y-5">
+                  <div className="flex items-start gap-3"><div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><MapPin size={16} /></div><div><p className="text-xs text-slate-500 mb-1">Địa chỉ</p><p className="text-sm font-medium text-slate-900">{address || '123 Nguyễn Huệ, Q1, TP.HCM'}</p></div></div>
+                  <div className="flex items-start gap-3"><div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Phone size={16} /></div><div><p className="text-xs text-slate-500 mb-1">Điện thoại</p><p className="text-sm font-medium text-slate-900">{phone || '1900 1234'}</p></div></div>
+                  <div className="flex items-start gap-3"><div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Mail size={16} /></div><div><p className="text-xs text-slate-500 mb-1">Email</p><p className="text-sm font-medium text-slate-900">{email || 'contact@example.com'}</p></div></div>
+                  <div className="flex items-start gap-3"><div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Clock size={16} /></div><div><p className="text-xs text-slate-500 mb-1">Giờ làm việc</p><p className="text-sm font-medium text-slate-900">{workingHours || 'T2-T6: 8:00-17:00'}</p></div></div>
+                </div>
+                {showMap !== false && (<div className="mt-6 rounded-lg overflow-hidden h-40">{renderMapOrPlaceholder()}</div>)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Centered - Form centered với thông tin bên cạnh
+  if (style === 'centered') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-white border border-slate-200/40 rounded-xl overflow-hidden shadow-sm">
+            <div className="text-center p-8 lg:p-10 border-b border-slate-200">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Send size={28} /></div>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{formTitle || 'Liên hệ với chúng tôi'}</h2>
+              <p className="text-slate-500 mt-2 max-w-lg mx-auto">{formDescription || 'Có câu hỏi hoặc cần hỗ trợ? Hãy để lại tin nhắn, chúng tôi sẽ phản hồi trong vòng 24h.'}</p>
+            </div>
+            <div className="p-8 lg:p-10 flex flex-col md:flex-row gap-10">
+              <div className="flex-1">
+                <form className="space-y-5">
+                  <div><label className="block text-sm font-medium text-slate-700 mb-2">Họ và tên <span className="text-red-500">*</span></label><input type="text" className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm" placeholder="Nguyễn Văn A" /></div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><label className="block text-sm font-medium text-slate-700 mb-2">Email <span className="text-red-500">*</span></label><input type="email" className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm" placeholder="email@example.com" /></div>
+                    <div><label className="block text-sm font-medium text-slate-700 mb-2">Số điện thoại</label><input type="tel" className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm" placeholder="0901 234 567" /></div>
+                  </div>
+                  <div><label className="block text-sm font-medium text-slate-700 mb-2">Nội dung <span className="text-red-500">*</span></label><textarea rows={4} className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm resize-none" placeholder="Nhập nội dung..." /></div>
+                  <div className="flex items-center justify-between gap-4">
+                    <button type="submit" className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium" style={{ backgroundColor: brandColor }}><Send size={18} />{submitButtonText || 'Gửi tin nhắn'}</button>
+                    {responseTimeText && <span className="text-sm text-slate-500">{responseTimeText}</span>}
+                  </div>
+                </form>
+              </div>
+              <div className="md:w-80 shrink-0 md:border-l md:pl-10 border-slate-200">
+                <h3 className="font-semibold text-slate-900 mb-5 text-sm">Hoặc liên hệ trực tiếp</h3>
+                <div className="space-y-4">
+                  <a href={`tel:${phone}`} className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"><Phone size={18} style={{ color: brandColor }} /><span className="text-sm font-medium text-slate-900">{phone || '1900 1234'}</span></a>
+                  <a href={`mailto:${email}`} className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"><Mail size={18} style={{ color: brandColor }} /><span className="text-sm font-medium text-slate-900 truncate">{email || 'contact@example.com'}</span></a>
+                  <div className="flex items-center gap-3 p-4 rounded-lg border border-slate-200"><Clock size={18} style={{ color: brandColor }} /><span className="text-sm text-slate-600">{workingHours || 'T2-T6: 8:00-17:00'}</span></div>
+                </div>
+                {showMap !== false && (<div className="mt-5 rounded-lg overflow-hidden h-36">{renderMapOrPlaceholder()}</div>)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 }
 
 // ============ GALLERY/PARTNERS SECTION ============
@@ -5070,34 +5158,23 @@ function SpeedDialSection({ config, brandColor }: { config: Record<string, unkno
 
   if (actions.length === 0) return null;
 
+  const linkProps = (url: string) => ({
+    href: url || '#',
+    target: url?.startsWith('http') ? '_blank' as const : undefined,
+    rel: url?.startsWith('http') ? 'noopener noreferrer' : undefined,
+  });
+
   // Style 1: FAB - Floating Action Buttons (vertical stack)
   if (style === 'fab') {
     return (
-      <div className={`fixed bottom-6 z-50 flex flex-col gap-3 ${isRight ? 'right-6 items-end' : 'left-6 items-start'}`}>
+      <div className={`fixed bottom-6 z-50 flex flex-col gap-3 ${isRight ? 'right-6 items-end' : 'left-6 items-start'}`} role="group" aria-label="Liên hệ nhanh">
         {actions.map((action, idx) => (
-          <a
-            key={idx}
-            href={action.url || '#'}
-            target={action.url?.startsWith('http') ? '_blank' : undefined}
-            rel={action.url?.startsWith('http') ? 'noopener noreferrer' : undefined}
-            className="group flex items-center gap-3"
-          >
-            {isRight && action.label && (
-              <span className="px-3 py-1.5 bg-slate-900/90 text-white text-sm font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-200 whitespace-nowrap">
-                {action.label}
-              </span>
-            )}
-            <div
-              className="w-12 h-12 rounded-full shadow-lg flex items-center justify-center text-white hover:scale-110 hover:shadow-xl transition-all duration-200 cursor-pointer"
-              style={{ backgroundColor: action.bgColor || brandColor }}
-            >
+          <a key={idx} {...linkProps(action.url)} className="group flex items-center gap-3" aria-label={action.label || action.icon}>
+            {isRight && action.label && <span className="px-3 py-1.5 bg-slate-900/90 text-white text-sm font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-200 whitespace-nowrap">{action.label}</span>}
+            <div className="w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg flex items-center justify-center text-white hover:scale-110 hover:shadow-xl transition-all duration-200 cursor-pointer min-w-[48px] min-h-[48px]" style={{ backgroundColor: action.bgColor || brandColor }}>
               <SpeedDialIcon name={action.icon} size={20} />
             </div>
-            {!isRight && action.label && (
-              <span className="px-3 py-1.5 bg-slate-900/90 text-white text-sm font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-200 whitespace-nowrap">
-                {action.label}
-              </span>
-            )}
+            {!isRight && action.label && <span className="px-3 py-1.5 bg-slate-900/90 text-white text-sm font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-200 whitespace-nowrap">{action.label}</span>}
           </a>
         ))}
       </div>
@@ -5107,52 +5184,76 @@ function SpeedDialSection({ config, brandColor }: { config: Record<string, unkno
   // Style 2: Sidebar - Vertical bar attached to edge
   if (style === 'sidebar') {
     return (
-      <div className={`fixed top-1/2 -translate-y-1/2 z-50 flex flex-col overflow-hidden shadow-xl ${isRight ? 'right-0 rounded-l-xl' : 'left-0 rounded-r-xl'}`}>
+      <div className={`fixed top-1/2 -translate-y-1/2 z-50 flex flex-col overflow-hidden shadow-xl ${isRight ? 'right-0 rounded-l-xl' : 'left-0 rounded-r-xl'}`} role="group" aria-label="Liên hệ nhanh">
         {actions.map((action, idx) => (
-          <a
-            key={idx}
-            href={action.url || '#'}
-            target={action.url?.startsWith('http') ? '_blank' : undefined}
-            rel={action.url?.startsWith('http') ? 'noopener noreferrer' : undefined}
-            className="group relative flex items-center justify-center w-14 h-14 text-white hover:w-36 transition-all duration-200 overflow-hidden"
-            style={{ backgroundColor: action.bgColor || brandColor }}
-          >
-            <div className={`absolute flex items-center gap-3 transition-all duration-200 ${isRight ? 'right-4' : 'left-4'}`}>
+          <a key={idx} {...linkProps(action.url)} className={`group relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 text-white hover:w-36 transition-all duration-200 overflow-hidden`} style={{ backgroundColor: action.bgColor || brandColor }} aria-label={action.label || action.icon}>
+            <div className={`absolute flex items-center gap-3 transition-all duration-200 ${isRight ? 'right-3 md:right-4' : 'left-3 md:left-4'}`}>
               <SpeedDialIcon name={action.icon} size={20} />
             </div>
-            {action.label && (
-              <span className={`absolute text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${isRight ? 'right-12' : 'left-12'}`}>
-                {action.label}
-              </span>
-            )}
-            {idx < actions.length - 1 && (
-              <div className="absolute bottom-0 left-3 right-3 h-px bg-white/20" />
-            )}
+            {action.label && <span className={`absolute text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${isRight ? 'right-12' : 'left-12'}`}>{action.label}</span>}
+            {idx < actions.length - 1 && <div className="absolute bottom-0 left-3 right-3 h-px bg-white/20" />}
           </a>
         ))}
       </div>
     );
   }
 
-  // Style 3: Pills - Horizontal pills with labels
+  // Style 3: Pills - Horizontal pills with labels always visible
+  if (style === 'pills') {
+    return (
+      <div className={`fixed bottom-6 z-50 flex flex-col gap-3 ${isRight ? 'right-6 items-end' : 'left-6 items-start'}`} role="group" aria-label="Liên hệ nhanh">
+        {actions.map((action, idx) => (
+          <a key={idx} {...linkProps(action.url)} className={`flex items-center gap-2.5 pl-4 pr-5 py-2.5 rounded-full shadow-lg text-white hover:shadow-xl hover:scale-[1.02] transition-all duration-200 cursor-pointer min-h-[48px] ${isRight ? 'flex-row' : 'flex-row-reverse'}`} style={{ backgroundColor: action.bgColor || brandColor }} aria-label={action.label || action.icon}>
+            <SpeedDialIcon name={action.icon} size={18} />
+            {action.label && <span className="text-sm font-medium whitespace-nowrap">{action.label}</span>}
+          </a>
+        ))}
+      </div>
+    );
+  }
+
+  // Style 4: Stack - Overlapping buttons
+  if (style === 'stack') {
+    return (
+      <div className={`fixed bottom-6 z-50 flex flex-col items-center ${isRight ? 'right-6' : 'left-6'}`} role="group" aria-label="Liên hệ nhanh">
+        <div className="relative" style={{ height: `${Math.min(actions.length * 36 + 24, 200)}px` }}>
+          {actions.map((action, idx) => (
+            <a key={idx} {...linkProps(action.url)} className="group absolute left-1/2 -translate-x-1/2 flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full shadow-lg text-white hover:scale-110 hover:z-50 transition-all duration-200 cursor-pointer" style={{ backgroundColor: action.bgColor || brandColor, bottom: `${idx * 36}px`, zIndex: actions.length - idx, boxShadow: `0 4px 12px ${action.bgColor || brandColor}40` }} aria-label={action.label || action.icon}>
+              <SpeedDialIcon name={action.icon} size={18} />
+              {action.label && <span className={`absolute px-2 py-1 bg-slate-900/90 text-white text-xs font-medium rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap ${isRight ? 'right-full mr-2' : 'left-full ml-2'}`}>{action.label}</span>}
+            </a>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Style 5: Dock - MacOS dock style
+  if (style === 'dock') {
+    return (
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-end justify-center rounded-2xl p-2 gap-1.5 md:gap-2" style={{ backgroundColor: `${brandColor}10`, backdropFilter: 'blur(8px)' }} role="group" aria-label="Liên hệ nhanh">
+        {actions.map((action, idx) => (
+          <a key={idx} {...linkProps(action.url)} className="group relative flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-xl text-white transition-all duration-200 cursor-pointer hover:scale-125 hover:-translate-y-2" style={{ backgroundColor: action.bgColor || brandColor, boxShadow: `0 4px 12px ${action.bgColor || brandColor}30` }} aria-label={action.label || action.icon}>
+            <SpeedDialIcon name={action.icon} size={18} />
+            {action.label && <span className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900/90 text-white text-xs font-medium rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap">{action.label}</span>}
+          </a>
+        ))}
+      </div>
+    );
+  }
+
+  // Style 6: Minimal - Icons only, compact bar
   return (
-    <div className={`fixed bottom-6 z-50 flex flex-col gap-3 ${isRight ? 'right-6 items-end' : 'left-6 items-start'}`}>
+    <div className={`fixed bottom-6 z-50 flex items-center bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-full shadow-lg px-2 py-1.5 gap-1.5 ${isRight ? 'right-6' : 'left-6'}`} style={{ boxShadow: `0 4px 20px ${brandColor}15` }} role="group" aria-label="Liên hệ nhanh">
       {actions.map((action, idx) => (
-        <a
-          key={idx}
-          href={action.url || '#'}
-          target={action.url?.startsWith('http') ? '_blank' : undefined}
-          rel={action.url?.startsWith('http') ? 'noopener noreferrer' : undefined}
-          className={`flex items-center gap-2.5 pl-4 pr-5 py-2.5 rounded-full shadow-lg text-white hover:shadow-xl hover:scale-[1.02] transition-all duration-200 cursor-pointer ${isRight ? 'flex-row' : 'flex-row-reverse'}`}
-          style={{ backgroundColor: action.bgColor || brandColor }}
-        >
-          <SpeedDialIcon name={action.icon} size={18} />
-          {action.label && (
-            <span className="text-sm font-medium whitespace-nowrap">
-              {action.label}
-            </span>
-          )}
-        </a>
+        <React.Fragment key={idx}>
+          <a {...linkProps(action.url)} className="group relative flex items-center justify-center w-10 h-10 md:w-11 md:h-11 rounded-full transition-all duration-200 cursor-pointer hover:scale-110" style={{ color: action.bgColor || brandColor }} aria-label={action.label || action.icon}>
+            <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ backgroundColor: `${action.bgColor || brandColor}15` }} />
+            <SpeedDialIcon name={action.icon} size={18} />
+            {action.label && <span className="absolute -top-9 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900/90 text-white text-xs font-medium rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-10">{action.label}</span>}
+          </a>
+          {idx < actions.length - 1 && <div className="w-px h-6 bg-slate-200 dark:bg-slate-600" />}
+        </React.Fragment>
       ))}
     </div>
   );

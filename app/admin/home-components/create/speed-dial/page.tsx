@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../../../components/ui';
+import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { cn, Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { SpeedDialPreview, type SpeedDialStyle } from '../../previews';
 
@@ -40,8 +40,10 @@ export default function SpeedDialCreatePage() {
   ]);
   const [style, setStyle] = useState<SpeedDialStyle>('fab');
   const [position, setPosition] = useState<'bottom-right' | 'bottom-left'>('bottom-right');
-  const [mainButtonColor, setMainButtonColor] = useState(brandColor);
-  const [alwaysOpen, setAlwaysOpen] = useState(true);
+
+  // Drag & Drop state
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
 
   const addAction = () => {
     const newId = Math.max(0, ...actions.map(a => a.id)) + 1;
@@ -58,13 +60,31 @@ export default function SpeedDialCreatePage() {
     setActions(actions.map(a => a.id === id ? { ...a, [field]: value } : a));
   };
 
+  // Drag & Drop handlers
+  const handleDragStart = (id: number) => setDraggedId(id);
+  const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
+  const handleDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    if (draggedId !== id) setDragOverId(id);
+  };
+  const handleDrop = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === id) return;
+    const newActions = [...actions];
+    const draggedIndex = newActions.findIndex(a => a.id === draggedId);
+    const dropIndex = newActions.findIndex(a => a.id === id);
+    const [moved] = newActions.splice(draggedIndex, 1);
+    newActions.splice(dropIndex, 0, moved);
+    setActions(newActions);
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
   const onSubmit = (e: React.FormEvent) => {
     handleSubmit(e, {
       actions: actions.map(a => ({ icon: a.icon, label: a.label, url: a.url, bgColor: a.bgColor })),
       style,
       position,
-      mainButtonColor,
-      alwaysOpen,
     });
   };
 
@@ -113,9 +133,24 @@ export default function SpeedDialCreatePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {actions.map((action, idx) => (
-            <div key={action.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+            <div 
+              key={action.id} 
+              className={cn(
+                "p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3 transition-all",
+                draggedId === action.id && "opacity-50 scale-[0.98]",
+                dragOverId === action.id && "ring-2 ring-blue-500 ring-offset-2"
+              )}
+              draggable
+              onDragStart={() => handleDragStart(action.id)}
+              onDragEnd={handleDragEnd}
+              onDragOver={(e) => handleDragOver(e, action.id)}
+              onDrop={(e) => handleDrop(e, action.id)}
+            >
               <div className="flex items-center justify-between">
-                <Label>Hành động {idx + 1}</Label>
+                <div className="flex items-center gap-2">
+                  <GripVertical size={16} className="text-slate-400 cursor-grab active:cursor-grabbing" />
+                  <Label>Hành động {idx + 1}</Label>
+                </div>
                 <Button 
                   type="button" 
                   variant="ghost" 
@@ -191,8 +226,7 @@ export default function SpeedDialCreatePage() {
           actions,
           style,
           position,
-          mainButtonColor,
-          alwaysOpen,
+          mainButtonColor: brandColor,
         }}
         brandColor={brandColor}
         selectedStyle={style}
