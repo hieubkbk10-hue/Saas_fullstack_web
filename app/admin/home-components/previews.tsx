@@ -3549,207 +3549,444 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
 };
 
 // ============ BLOG PREVIEW ============
-// Modern News Feed UI/UX - 3 Variants from modern-news-feed
-export type BlogStyle = 'grid' | 'list' | 'featured';
-export const BlogPreview = ({ brandColor, postCount, selectedStyle, onStyleChange }: { brandColor: string; postCount: number; selectedStyle?: BlogStyle; onStyleChange?: (style: BlogStyle) => void }) => {
+// Modern News Feed UI/UX - 6 Variants (Best Practice compliant)
+// Styles: Grid, List, Featured, Magazine, Carousel, Minimal
+export type BlogStyle = 'grid' | 'list' | 'featured' | 'magazine' | 'carousel' | 'minimal';
+
+export interface BlogPreviewItem {
+  id: string | number;
+  title: string;
+  excerpt?: string;
+  thumbnail?: string;
+  date?: string;
+  category?: string;
+  readTime?: string;
+  views?: number;
+}
+
+export const BlogPreview = ({ 
+  brandColor, 
+  postCount, 
+  selectedStyle, 
+  onStyleChange,
+  posts,
+  title = 'Bài viết'
+}: { 
+  brandColor: string; 
+  postCount: number; 
+  selectedStyle?: BlogStyle; 
+  onStyleChange?: (style: BlogStyle) => void;
+  posts?: BlogPreviewItem[];
+  title?: string;
+}) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'grid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as BlogStyle);
-  const styles = [{ id: 'grid', label: 'Lưới' }, { id: 'list', label: 'Danh sách' }, { id: 'featured', label: 'Nổi bật' }];
+  const styles = [
+    { id: 'grid', label: 'Grid' }, 
+    { id: 'list', label: 'List' }, 
+    { id: 'featured', label: 'Featured' },
+    { id: 'magazine', label: 'Magazine' },
+    { id: 'carousel', label: 'Carousel' },
+    { id: 'minimal', label: 'Minimal' }
+  ];
   
-  const mockPosts = Array.from({ length: Math.max(postCount, 5) }, (_, i) => ({ 
-    id: i + 1, 
-    title: i === 0 ? 'Xu hướng thiết kế UI/UX nổi bật năm 2024' : 
-           i === 1 ? 'Tối ưu hóa hiệu năng React Application' :
-           i === 2 ? 'AI và tương lai của thị trường lao động' :
-           `Bài viết chất lượng cao số ${i + 1}`,
-    excerpt: 'Khám phá những phong cách thiết kế đang thống trị thế giới công nghệ hiện đại.',
-    date: `${12 - i}/05/2024`,
-    category: i % 3 === 0 ? 'Thiết kế' : i % 3 === 1 ? 'Lập trình' : 'Công nghệ',
-    readTime: `${5 + i} phút đọc`
-  }));
-  const showViewAll = postCount > 3;
+  // Mock data
+  const mockPosts: BlogPreviewItem[] = [
+    { id: 1, title: 'Xu hướng thiết kế UI/UX nổi bật năm 2024', excerpt: 'Khám phá những phong cách thiết kế đang thống trị thế giới công nghệ hiện đại và cách áp dụng vào dự án của bạn.', date: '12/05/2024', category: 'Thiết kế', readTime: '5 phút đọc', views: 1250 },
+    { id: 2, title: 'Tối ưu hóa hiệu năng React Application', excerpt: 'Những kỹ thuật và best practices để tối ưu performance cho ứng dụng React của bạn.', date: '11/05/2024', category: 'Lập trình', readTime: '8 phút đọc', views: 980 },
+    { id: 3, title: 'AI và tương lai của thị trường lao động', excerpt: 'Phân tích sâu về tác động của AI đến việc làm và cách thích nghi với xu hướng mới.', date: '10/05/2024', category: 'Công nghệ', readTime: '6 phút đọc', views: 2100 },
+    { id: 4, title: 'Hướng dẫn SEO cho Developers', excerpt: 'Tất cả những gì developer cần biết về SEO để xây dựng website thân thiện với công cụ tìm kiếm.', date: '09/05/2024', category: 'Marketing', readTime: '7 phút đọc', views: 750 },
+    { id: 5, title: 'Bảo mật Web Application 101', excerpt: 'Những lỗ hổng bảo mật phổ biến và cách phòng tránh trong ứng dụng web.', date: '08/05/2024', category: 'Bảo mật', readTime: '10 phút đọc', views: 1500 },
+    { id: 6, title: 'Microservices vs Monolith: Khi nào nên chọn gì?', excerpt: 'So sánh chi tiết giữa hai kiến trúc phổ biến và cách đưa ra quyết định phù hợp.', date: '07/05/2024', category: 'Architecture', readTime: '9 phút đọc', views: 890 }
+  ];
 
-  // Style 1: Grid - Professional card grid với hover lift
-  const renderGridStyle = () => (
-    <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
-      <h2 className={cn("font-bold tracking-tighter text-left mb-6 md:mb-8", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>
-        Bài viết
-      </h2>
-      <div className={cn("grid gap-4 md:gap-6", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
-        {mockPosts.slice(0, device === 'mobile' ? 2 : 3).map((post) => (
-          <article 
-            key={post.id} 
-            className="group flex flex-col overflow-hidden rounded-xl border border-slate-200/60 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
-          >
-            {/* Image */}
-            <div className="relative aspect-[16/10] overflow-hidden">
-              <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-600 dark:to-slate-700 flex items-center justify-center">
-                <FileText size={32} className="text-slate-400" />
-              </div>
-              <div className="absolute left-3 top-3">
-                <span className="px-2 py-1 text-xs font-medium rounded bg-white/90 dark:bg-slate-800/90 shadow-sm backdrop-blur-sm">
-                  {post.category}
-                </span>
-              </div>
-            </div>
+  // Use real posts if provided, otherwise mock
+  const displayPosts: BlogPreviewItem[] = posts && posts.length > 0 
+    ? posts 
+    : mockPosts.slice(0, Math.max(postCount, 6));
+  
+  const showViewAll = displayPosts.length > 3;
 
-            {/* Content */}
-            <div className="flex flex-1 flex-col p-4">
-              <h3 className="mb-2 text-base md:text-lg font-bold leading-tight tracking-tight text-slate-900 dark:text-slate-100 group-hover:text-opacity-80 transition-colors line-clamp-2">
-                {post.title}
-              </h3>
-              <div className="mt-auto pt-2">
-                <time className="text-xs text-slate-500 dark:text-slate-400">{post.date}</time>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
-      
-      {/* View All */}
-      {showViewAll && (
-        <div className="flex justify-center pt-6 md:pt-8">
-          <button className="group flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
-            Xem tất cả
-            <span className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5">↗</span>
-          </button>
-        </div>
-      )}
-    </section>
+  // Image placeholder with brandColor
+  const ImagePlaceholder = ({ size = 32 }: { size?: number }) => (
+    <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
+      <FileText size={size} style={{ color: `${brandColor}40` }} />
+    </div>
   );
 
-  // Style 2: List - Horizontal cards với image trái
-  const renderListStyle = () => (
-    <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
-      <h2 className={cn("font-bold tracking-tighter text-left mb-6 md:mb-8", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>
-        Bài viết
-      </h2>
-      <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-1 max-w-4xl mx-auto')}>
-        {mockPosts.slice(0, 4).map((post) => (
-          <article 
-            key={post.id} 
-            className={cn(
-              "group flex w-full overflow-hidden rounded-lg border border-slate-200/60 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/80 transition-all",
-              device === 'mobile' ? 'flex-col' : 'flex-row'
-            )}
-          >
-            {/* Image */}
-            <div className={cn(
-              "overflow-hidden flex-shrink-0",
-              device === 'mobile' ? 'aspect-[16/9] w-full' : 'aspect-[4/3] w-[220px]'
-            )}>
-              <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-600 dark:to-slate-700 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-                <FileText size={24} className="text-slate-400" />
-              </div>
-            </div>
-            
-            {/* Content */}
-            <div className="flex flex-1 flex-col justify-center p-4 md:px-6">
-              <div className="mb-2">
-                <span className="text-xs font-semibold" style={{ color: brandColor }}>{post.category}</span>
-              </div>
-              <h3 className="mb-2 text-base md:text-lg font-bold leading-snug text-slate-900 dark:text-slate-100 group-hover:text-opacity-80 transition-colors line-clamp-2">
-                {post.title}
-              </h3>
-              <time className="text-xs text-slate-500 dark:text-slate-400">{post.date}</time>
-            </div>
-          </article>
-        ))}
+  // Empty State
+  const EmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+        <FileText size={32} style={{ color: brandColor }} />
       </div>
-      
-      {/* View All */}
-      {showViewAll && (
-        <div className="flex justify-center pt-6 md:pt-8">
-          <button className="group flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
-            Xem tất cả
-            <span className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5">↗</span>
-          </button>
-        </div>
-      )}
-    </section>
+      <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có bài viết nào</h3>
+      <p className="text-sm text-slate-500">Thêm bài viết để hiển thị ở đây</p>
+    </div>
   );
 
-  // Style 3: Featured - Hero card + sidebar compact list
-  const renderFeaturedStyle = () => (
-    <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
-      <div className="flex items-center justify-between mb-6 md:mb-8">
-        <h2 className={cn("font-bold tracking-tighter", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>
-          Bài viết
-        </h2>
-        {showViewAll && (
-          <button className="group flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
-            Xem tất cả
-            <span className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5">↗</span>
-          </button>
-        )}
+  // "+N bài viết khác" component
+  const MoreItemsCard = ({ count }: { count: number }) => (
+    <div 
+      className="flex flex-col items-center justify-center rounded-xl aspect-[16/10] border-2 border-dashed cursor-pointer"
+      style={{ borderColor: `${brandColor}30`, backgroundColor: `${brandColor}05` }}
+    >
+      <div className="w-12 h-12 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: `${brandColor}15` }}>
+        <Plus size={24} style={{ color: brandColor }} />
       </div>
-      
-      <div className={cn("grid gap-6 md:gap-8", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-12')}>
-        {/* Main Hero Card - 8 columns */}
-        <div className={cn(device === 'mobile' ? '' : 'col-span-8')}>
-          <article className="group relative flex h-full min-h-[300px] md:min-h-[400px] flex-col justify-end overflow-hidden rounded-xl bg-slate-900 text-white shadow-md hover:shadow-xl transition-all">
-            {/* Background */}
-            <div className="absolute inset-0 z-0">
-              <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-900 opacity-60 group-hover:opacity-50 group-hover:scale-105 transition-all duration-700" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent" />
-            </div>
+      <span className="text-lg font-bold" style={{ color: brandColor }}>+{count}</span>
+      <p className="text-xs text-slate-500">bài viết khác</p>
+    </div>
+  );
 
-            {/* Content */}
-            <div className="relative z-10 p-5 md:p-8">
-              <div className="mb-3 flex items-center space-x-3">
-                <span 
-                  className="px-2.5 py-1 text-xs font-medium rounded backdrop-blur-md"
-                  style={{ backgroundColor: `${brandColor}40`, color: 'white' }}
-                >
-                  {mockPosts[0].category}
-                </span>
-              </div>
-              
-              <h3 className={cn(
-                "mb-2 font-bold leading-tight tracking-tight text-white",
-                device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
-              )}>
-                {mockPosts[0].title}
-              </h3>
-              
-              <time className="text-sm font-medium text-slate-300">{mockPosts[0].date}</time>
-            </div>
-          </article>
-        </div>
+  // Style 1: Grid - Professional card grid với brandColor hover
+  const renderGridStyle = () => {
+    if (displayPosts.length === 0) return <EmptyState />;
+    const visibleCount = device === 'mobile' ? 2 : 3;
+    const visibleItems = displayPosts.slice(0, visibleCount);
+    const remaining = displayPosts.length - visibleCount;
 
-        {/* Sidebar List - 4 columns */}
-        <div className={cn("flex flex-col gap-4", device === 'mobile' ? '' : 'col-span-4')}>
-          <h3 className="font-semibold text-base md:text-lg mb-1 px-1 text-slate-700 dark:text-slate-300">Đáng chú ý khác</h3>
-          {mockPosts.slice(1, 5).map((post) => (
-            <article key={post.id} className="group flex items-center space-x-4 rounded-lg p-2 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors">
-              <div className="relative h-14 w-14 md:h-16 md:w-16 shrink-0 overflow-hidden rounded-md border border-slate-200 dark:border-slate-700">
-                <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-600 dark:to-slate-700 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <FileText size={16} className="text-slate-400" />
+    // Centered layout for 1-2 items
+    if (displayPosts.length <= 2) {
+      return (
+        <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
+          <h2 className={cn("font-bold tracking-tighter text-left mb-6 md:mb-8", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>{title}</h2>
+          <div className={cn("mx-auto", displayPosts.length === 1 ? 'max-w-md' : 'max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-4')}>
+            {displayPosts.map((post) => (
+              <article 
+                key={post.id} 
+                className="group flex flex-col overflow-hidden rounded-xl border bg-white dark:bg-slate-800 transition-all duration-300 cursor-pointer"
+                style={{ borderColor: `${brandColor}15` }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 8px 24px ${brandColor}15`; e.currentTarget.style.transform = 'translateY(-4px)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              >
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  {post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={32} />}
+                  <div className="absolute left-3 top-3">
+                    <span className="px-2 py-1 text-xs font-medium rounded shadow-sm backdrop-blur-sm" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category || 'Tin tức'}</span>
+                  </div>
+                </div>
+                <div className="flex flex-1 flex-col p-4">
+                  <h3 className="mb-2 text-base md:text-lg font-bold leading-tight text-slate-900 dark:text-slate-100 group-hover:opacity-80 transition-colors line-clamp-2">{post.title || 'Tiêu đề bài viết'}</h3>
+                  {post.excerpt && <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-2">{post.excerpt}</p>}
+                  <div className="mt-auto pt-2 flex items-center justify-between">
+                    <time className="text-xs text-slate-500">{post.date || 'Hôm nay'}</time>
+                    {post.readTime && <span className="text-xs text-slate-400">{post.readTime}</span>}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
+        <h2 className={cn("font-bold tracking-tighter text-left mb-6 md:mb-8", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>{title}</h2>
+        <div className={cn("grid gap-4 md:gap-6", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+          {visibleItems.map((post) => (
+            <article 
+              key={post.id} 
+              className="group flex flex-col overflow-hidden rounded-xl border bg-white dark:bg-slate-800 transition-all duration-300 cursor-pointer"
+              style={{ borderColor: `${brandColor}15` }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 8px 24px ${brandColor}15`; e.currentTarget.style.transform = 'translateY(-4px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              <div className="relative aspect-[16/10] overflow-hidden">
+                {post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={32} />}
+                <div className="absolute left-3 top-3">
+                  <span className="px-2 py-1 text-xs font-medium rounded shadow-sm backdrop-blur-sm" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category || 'Tin tức'}</span>
                 </div>
               </div>
-              <div className="flex flex-col flex-1 min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: brandColor }}>{post.category}</span>
-                <h4 className="text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100 line-clamp-2 group-hover:text-opacity-80 transition-colors">
-                  {post.title}
-                </h4>
-                <time className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">{post.date}</time>
+              <div className="flex flex-1 flex-col p-4">
+                <h3 className="mb-2 text-base md:text-lg font-bold leading-tight text-slate-900 dark:text-slate-100 group-hover:opacity-80 transition-colors line-clamp-2">{post.title || 'Tiêu đề bài viết'}</h3>
+                {post.excerpt && <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-2">{post.excerpt}</p>}
+                <div className="mt-auto pt-2 flex items-center justify-between">
+                  <time className="text-xs text-slate-500">{post.date || 'Hôm nay'}</time>
+                  {post.readTime && <span className="text-xs text-slate-400">{post.readTime}</span>}
+                </div>
+              </div>
+            </article>
+          ))}
+          {remaining > 0 && device !== 'mobile' && <MoreItemsCard count={remaining} />}
+        </div>
+        {showViewAll && (
+          <div className="flex justify-center pt-6 md:pt-8">
+            <button className="group flex items-center gap-2 text-sm font-medium transition-colors" style={{ color: brandColor }}>
+              Xem tất cả <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+            </button>
+          </div>
+        )}
+      </section>
+    );
+  };
+
+  // Style 2: List - Horizontal cards với brandColor hover
+  const renderListStyle = () => {
+    if (displayPosts.length === 0) return <EmptyState />;
+    return (
+      <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
+        <h2 className={cn("font-bold tracking-tighter text-left mb-6 md:mb-8", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>{title}</h2>
+        <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-1 max-w-4xl mx-auto')}>
+          {displayPosts.slice(0, 4).map((post) => (
+            <article 
+              key={post.id} 
+              className={cn("group flex w-full overflow-hidden rounded-lg border bg-white dark:bg-slate-800 transition-all cursor-pointer", device === 'mobile' ? 'flex-col' : 'flex-row')}
+              style={{ borderColor: `${brandColor}15` }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; }}
+            >
+              <div className={cn("overflow-hidden flex-shrink-0", device === 'mobile' ? 'aspect-[16/9] w-full' : 'aspect-[4/3] w-[220px]')}>
+                {post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={24} />}
+              </div>
+              <div className="flex flex-1 flex-col justify-center p-4 md:px-6">
+                <div className="mb-2"><span className="text-xs font-semibold" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span></div>
+                <h3 className="mb-2 text-base md:text-lg font-bold leading-snug text-slate-900 dark:text-slate-100 group-hover:opacity-80 transition-colors line-clamp-2">{post.title || 'Tiêu đề bài viết'}</h3>
+                {post.excerpt && <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-2">{post.excerpt}</p>}
+                <div className="flex items-center gap-3">
+                  <time className="text-xs text-slate-500">{post.date || 'Hôm nay'}</time>
+                  {post.readTime && <span className="text-xs text-slate-400">• {post.readTime}</span>}
+                </div>
               </div>
             </article>
           ))}
         </div>
+        {showViewAll && (
+          <div className="flex justify-center pt-6 md:pt-8">
+            <button className="group flex items-center gap-2 text-sm font-medium transition-colors" style={{ color: brandColor }}>Xem tất cả <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" /></button>
+          </div>
+        )}
+      </section>
+    );
+  };
+
+  // Style 3: Featured - Hero card + sidebar with brandColor
+  const renderFeaturedStyle = () => {
+    if (displayPosts.length === 0) return <EmptyState />;
+    const featuredPost = displayPosts[0];
+    const sidebarPosts = displayPosts.slice(1, 5);
+    return (
+      <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
+        <div className="flex items-center justify-between mb-6 md:mb-8">
+          <h2 className={cn("font-bold tracking-tighter", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>{title}</h2>
+          {showViewAll && <button className="group flex items-center gap-1 text-sm font-medium transition-colors" style={{ color: brandColor }}>Xem tất cả <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" /></button>}
+        </div>
+        <div className={cn("grid gap-6 md:gap-8", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-12')}>
+          <div className={cn(device === 'mobile' ? '' : 'col-span-8')}>
+            <article className="group relative flex h-full min-h-[300px] md:min-h-[400px] flex-col justify-end overflow-hidden rounded-xl text-white cursor-pointer transition-all" style={{ boxShadow: `0 8px 30px ${brandColor}20` }}>
+              <div className="absolute inset-0 z-0">
+                {featuredPost.thumbnail ? <img src={featuredPost.thumbnail} alt={featuredPost.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}80)` }} />}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent" />
+              </div>
+              <div className="relative z-10 p-5 md:p-8">
+                <div className="mb-3 flex items-center space-x-3">
+                  <span className="px-2.5 py-1 text-xs font-medium rounded backdrop-blur-md" style={{ backgroundColor: `${brandColor}60`, color: 'white' }}>{featuredPost.category || 'Tin tức'}</span>
+                  {featuredPost.readTime && <span className="text-xs text-slate-300">{featuredPost.readTime}</span>}
+                </div>
+                <h3 className={cn("mb-2 font-bold leading-tight tracking-tight text-white", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>{featuredPost.title || 'Tiêu đề bài viết'}</h3>
+                {featuredPost.excerpt && <p className="text-sm text-slate-200 line-clamp-2 mb-3">{featuredPost.excerpt}</p>}
+                <time className="text-sm font-medium text-slate-300">{featuredPost.date || 'Hôm nay'}</time>
+              </div>
+            </article>
+          </div>
+          <div className={cn("flex flex-col gap-3", device === 'mobile' ? '' : 'col-span-4')}>
+            <h3 className="font-semibold text-base mb-1 px-1 text-slate-700 dark:text-slate-300">Đáng chú ý</h3>
+            {sidebarPosts.map((post) => (
+              <article 
+                key={post.id} 
+                className="group flex items-center space-x-4 rounded-lg p-2 border transition-all cursor-pointer"
+                style={{ borderColor: `${brandColor}10` }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}30`; e.currentTarget.style.backgroundColor = `${brandColor}05`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}10`; e.currentTarget.style.backgroundColor = 'transparent'; }}
+              >
+                <div className="relative h-14 w-14 md:h-16 md:w-16 shrink-0 overflow-hidden rounded-md border" style={{ borderColor: `${brandColor}15` }}>
+                  {post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <ImagePlaceholder size={16} />}
+                </div>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span>
+                  <h4 className="text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100 line-clamp-2 group-hover:opacity-80 transition-colors">{post.title || 'Tiêu đề bài viết'}</h4>
+                  <time className="mt-1 text-[10px] text-slate-500">{post.date || 'Hôm nay'}</time>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  // Style 4: Magazine - Bento grid layout
+  const renderMagazineStyle = () => {
+    if (displayPosts.length === 0) return <EmptyState />;
+    const featured = displayPosts[0];
+    const secondary = displayPosts.slice(1, 3);
+    const others = displayPosts.slice(3, 6);
+    return (
+      <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
+        <div className="flex items-center justify-between mb-6 md:mb-8">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-widest" style={{ color: brandColor }}><span className="w-6 h-[2px]" style={{ backgroundColor: brandColor }}></span>Magazine</div>
+            <h2 className={cn("font-bold tracking-tighter", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>{title}</h2>
+          </div>
+          {showViewAll && <button className="group flex items-center gap-2 text-sm font-medium transition-colors" style={{ color: brandColor }}>Xem tất cả <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" /></button>}
+        </div>
+        {device === 'mobile' ? (
+          <div className="space-y-4">
+            <article className="group relative rounded-xl overflow-hidden aspect-[4/3] cursor-pointer" style={{ boxShadow: `0 4px 20px ${brandColor}15` }}>
+              {featured.thumbnail ? <img src={featured.thumbnail} alt={featured.title} className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}30, ${brandColor}60)` }} />}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <span className="px-2 py-1 text-[10px] font-bold rounded mb-2 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{featured.category || 'Tin tức'}</span>
+                <h3 className="text-lg font-bold text-white line-clamp-2">{featured.title || 'Tiêu đề'}</h3>
+              </div>
+            </article>
+            <div className="grid grid-cols-2 gap-3">
+              {secondary.concat(others).slice(0, 4).map((post) => (
+                <article key={post.id} className="group rounded-xl border p-2 cursor-pointer transition-all" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; }}>
+                  <div className="aspect-[4/3] rounded-lg overflow-hidden mb-2">{post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" /> : <ImagePlaceholder size={20} />}</div>
+                  <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 line-clamp-2">{post.title || 'Tiêu đề'}</h4>
+                  <time className="text-[10px] text-slate-500 mt-1 block">{post.date || 'Hôm nay'}</time>
+                </article>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className={cn("grid gap-4", device === 'tablet' ? 'grid-cols-2 grid-rows-3' : 'grid-cols-4 grid-rows-2')}>
+            <article className={cn("group relative rounded-2xl overflow-hidden cursor-pointer", device === 'desktop' ? 'col-span-2 row-span-2' : 'col-span-1 row-span-2')} style={{ boxShadow: `0 8px 30px ${brandColor}20` }}>
+              <div className="h-full min-h-[350px]">{featured.thumbnail ? <img src={featured.thumbnail} alt={featured.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}80)` }} />}</div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <span className="px-2.5 py-1 text-xs font-bold rounded mb-3 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{featured.category || 'Nổi bật'}</span>
+                <h3 className="text-xl md:text-2xl font-bold text-white leading-tight line-clamp-2 mb-2">{featured.title || 'Tiêu đề'}</h3>
+                {featured.excerpt && <p className="text-sm text-slate-200 line-clamp-2 mb-3">{featured.excerpt}</p>}
+                <div className="flex items-center gap-3 text-sm text-slate-300"><time>{featured.date || 'Hôm nay'}</time>{featured.readTime && <span>• {featured.readTime}</span>}</div>
+              </div>
+            </article>
+            {secondary.map((post) => (
+              <article key={post.id} className="group rounded-xl border overflow-hidden cursor-pointer transition-all" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; }}>
+                <div className="aspect-[16/9] overflow-hidden">{post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={24} />}</div>
+                <div className="p-3"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span><h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 mt-1">{post.title || 'Tiêu đề'}</h4></div>
+              </article>
+            ))}
+            {others.slice(0, device === 'desktop' ? 2 : 1).map((post) => (
+              <article key={post.id} className="group flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.backgroundColor = `${brandColor}05`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.backgroundColor = 'transparent'; }}>
+                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">{post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" /> : <ImagePlaceholder size={16} />}</div>
+                <div className="flex-1 min-w-0"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span><h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 line-clamp-2">{post.title || 'Tiêu đề'}</h4></div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    );
+  };
+
+  // Style 5: Carousel - Horizontal scrollable
+  const renderCarouselStyle = () => {
+    if (displayPosts.length === 0) return <EmptyState />;
+    return (
+      <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
+        <div className="flex items-center justify-between mb-6 md:mb-8">
+          <h2 className={cn("font-bold tracking-tighter", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>{title}</h2>
+          <div className="flex items-center gap-3">
+            <button className="w-9 h-9 rounded-full border flex items-center justify-center transition-colors" style={{ borderColor: `${brandColor}30` }}><ChevronLeft size={18} style={{ color: brandColor }} /></button>
+            <button className="w-9 h-9 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: brandColor }}><ChevronRight size={18} /></button>
+          </div>
+        </div>
+        <div className="relative overflow-hidden -mx-3 md:-mx-4 px-3 md:px-4">
+          <div className={cn("flex gap-4", device === 'mobile' ? 'gap-3' : 'gap-5')}>
+            {displayPosts.slice(0, 6).map((post) => (
+              <article 
+                key={post.id}
+                className={cn("flex-shrink-0 group cursor-pointer rounded-xl border overflow-hidden transition-all", device === 'mobile' ? 'w-[260px]' : device === 'tablet' ? 'w-[300px]' : 'w-[340px]')}
+                style={{ borderColor: `${brandColor}15` }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 8px 24px ${brandColor}15`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; }}
+              >
+                <div className="aspect-[16/10] overflow-hidden">{post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={32} />}</div>
+                <div className="p-4">
+                  <div className="flex items-center gap-2 mb-2"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span>{post.readTime && <span className="text-[10px] text-slate-400">• {post.readTime}</span>}</div>
+                  <h3 className="font-bold text-slate-900 dark:text-slate-100 line-clamp-2 mb-2 group-hover:opacity-80 transition-colors">{post.title || 'Tiêu đề bài viết'}</h3>
+                  {post.excerpt && <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">{post.excerpt}</p>}
+                  <div className="flex items-center justify-between"><time className="text-xs text-slate-500">{post.date || 'Hôm nay'}</time><ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} /></div>
+                </div>
+              </article>
+            ))}
+            <div className="flex-shrink-0 w-3 md:w-6" aria-hidden="true" />
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  // Style 6: Minimal - Typography-first, clean design
+  const renderMinimalStyle = () => {
+    if (displayPosts.length === 0) return <EmptyState />;
+    return (
+      <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
+        <div className="flex items-center justify-between border-b pb-4 mb-8" style={{ borderColor: `${brandColor}20` }}>
+          <h2 className={cn("font-light tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>{title}</h2>
+          {showViewAll && <button className="group flex items-center gap-2 text-sm transition-colors" style={{ color: brandColor }}>Xem tất cả <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" /></button>}
+        </div>
+        <div className="space-y-0">
+          {displayPosts.slice(0, device === 'mobile' ? 4 : 5).map((post, index) => (
+            <article 
+              key={post.id}
+              className="group flex items-start gap-4 py-5 border-b cursor-pointer transition-colors"
+              style={{ borderColor: `${brandColor}10` }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${brandColor}03`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+            >
+              <span className={cn("font-bold tabular-nums flex-shrink-0", device === 'mobile' ? 'text-xl w-8' : 'text-2xl w-10')} style={{ color: `${brandColor}60` }}>{String(index + 1).padStart(2, '0')}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span>
+                  <span className="text-[10px] text-slate-400">•</span>
+                  <time className="text-[10px] text-slate-500">{post.date || 'Hôm nay'}</time>
+                </div>
+                <h3 className={cn("font-semibold text-slate-900 dark:text-slate-100 group-hover:opacity-80 transition-colors line-clamp-2", device === 'mobile' ? 'text-base' : 'text-lg')}>{post.title || 'Tiêu đề bài viết'}</h3>
+                {post.excerpt && <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1 mt-1">{post.excerpt}</p>}
+              </div>
+              <ArrowRight size={18} className="flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" style={{ color: brandColor }} />
+            </article>
+          ))}
+        </div>
+      </section>
+    );
+  };
+
+  // Image guidelines component
+  const ImageGuidelines = () => (
+    <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+      <div className="flex items-start gap-2">
+        <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+        <div className="text-xs text-slate-600 dark:text-slate-400">
+          {previewStyle === 'grid' && <p><strong>800×500px</strong> (16:10) • Card thumbnail, nhiều bài hiển thị grid</p>}
+          {previewStyle === 'list' && <p><strong>600×450px</strong> (4:3) • Thumbnail ngang, hiển thị bên trái</p>}
+          {previewStyle === 'featured' && <p><strong>Hero:</strong> 1200×800px (3:2) • <strong>Sidebar:</strong> 200×200px (1:1)</p>}
+          {previewStyle === 'magazine' && <p><strong>Featured:</strong> 1200×800px • <strong>Secondary:</strong> 600×340px • <strong>Small:</strong> 200×200px</p>}
+          {previewStyle === 'carousel' && <p><strong>800×500px</strong> (16:10) • Card ngang, scroll horizontal</p>}
+          {previewStyle === 'minimal' && <p><strong>Không cần ảnh</strong> • Style typography-first, focus vào nội dung text</p>}
+        </div>
       </div>
-    </section>
+    </div>
   );
 
   return (
-    <PreviewWrapper title="Preview Blog" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles}>
-      <BrowserFrame url="yoursite.com/blog">
-        {previewStyle === 'grid' && renderGridStyle()}
-        {previewStyle === 'list' && renderListStyle()}
-        {previewStyle === 'featured' && renderFeaturedStyle()}
-      </BrowserFrame>
-    </PreviewWrapper>
+    <>
+      <PreviewWrapper title="Preview Blog" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`${displayPosts.length} bài viết`}>
+        <BrowserFrame url="yoursite.com/blog">
+          {previewStyle === 'grid' && renderGridStyle()}
+          {previewStyle === 'list' && renderListStyle()}
+          {previewStyle === 'featured' && renderFeaturedStyle()}
+          {previewStyle === 'magazine' && renderMagazineStyle()}
+          {previewStyle === 'carousel' && renderCarouselStyle()}
+          {previewStyle === 'minimal' && renderMinimalStyle()}
+        </BrowserFrame>
+      </PreviewWrapper>
+      <ImageGuidelines />
+    </>
   );
 };
 
