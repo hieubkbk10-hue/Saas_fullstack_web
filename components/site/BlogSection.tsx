@@ -307,10 +307,10 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
     );
   }
 
-  // Style 5: Carousel - Horizontal scrollable
+  // Style 5: Carousel - Horizontal scrollable (hidden scrollbar)
   if (style === 'carousel') {
     return (
-      <section className="py-12 md:py-16 px-4">
+      <section className="py-12 md:py-16 px-4 overflow-hidden">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-8 md:mb-10">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tighter text-slate-900">{title}</h2>
@@ -319,8 +319,16 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
               <button className="w-9 h-9 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: brandColor }}><ChevronRight size={18} /></button>
             </div>
           </div>
-          <div className="relative overflow-x-auto -mx-4 px-4 pb-4 scrollbar-hide">
-            <div className="flex gap-4 md:gap-5">
+          <div 
+            className="relative -mx-4 px-4 pb-4 overflow-x-auto"
+            style={{ 
+              scrollbarWidth: 'none', 
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            <style>{`.carousel-scroll::-webkit-scrollbar { display: none; }`}</style>
+            <div className="carousel-scroll flex gap-4 md:gap-5" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {posts.slice(0, 6).map((post) => (
                 <Link key={post._id} href={`/posts/${post.slug}`} className="flex-shrink-0 w-[280px] md:w-[320px] lg:w-[360px] group">
                   <article className="rounded-xl border overflow-hidden transition-all" style={{ borderColor: `${brandColor}15` }}>
