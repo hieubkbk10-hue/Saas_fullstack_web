@@ -1,23 +1,50 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, Star } from 'lucide-react';
+import { Plus, Trash2, Star, GripVertical, User } from 'lucide-react';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { TestimonialsPreview, type TestimonialsStyle } from '../../previews';
+
+type TestimonialItem = { id: number; name: string; role: string; content: string; avatar: string; rating: number };
 
 export default function TestimonialsCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Đánh giá / Review', 'Testimonials');
   const brandColor = useBrandColor();
   
-  const [testimonials, setTestimonials] = useState([
-    { id: 1, name: 'Nguyễn Văn A', role: 'CEO, ABC Corp', content: 'Dịch vụ tuyệt vời!', avatar: '', rating: 5 },
-    { id: 2, name: 'Trần Thị B', role: 'Manager, XYZ Ltd', content: 'Chất lượng vượt mong đợi.', avatar: '', rating: 5 }
+  const [testimonials, setTestimonials] = useState<TestimonialItem[]>([
+    { id: 1, name: 'Nguyễn Văn A', role: 'CEO, ABC Corp', content: 'Dịch vụ tuyệt vời! Chúng tôi rất hài lòng với chất lượng sản phẩm và dịch vụ hỗ trợ.', avatar: '', rating: 5 },
+    { id: 2, name: 'Trần Thị B', role: 'Manager, XYZ Ltd', content: 'Chất lượng vượt mong đợi. Đội ngũ chuyên nghiệp và tận tâm.', avatar: '', rating: 5 }
   ]);
 
   const [style, setStyle] = useState<TestimonialsStyle>('cards');
+  
+  // Drag & Drop state
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+
   const handleAddTestimonial = () => setTestimonials([...testimonials, { id: Date.now(), name: '', role: '', content: '', avatar: '', rating: 5 }]);
   const handleRemoveTestimonial = (id: number) => testimonials.length > 1 && setTestimonials(testimonials.filter(t => t.id !== id));
+
+  // Drag & Drop handlers
+  const handleDragStart = (id: number) => setDraggedId(id);
+  const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
+  const handleDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    if (draggedId !== id) setDragOverId(id);
+  };
+  const handleDrop = (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) return;
+    const newItems = [...testimonials];
+    const draggedIndex = newItems.findIndex(i => i.id === draggedId);
+    const targetIndex = newItems.findIndex(i => i.id === targetId);
+    const [moved] = newItems.splice(draggedIndex, 1);
+    newItems.splice(targetIndex, 0, moved);
+    setTestimonials(newItems);
+    setDraggedId(null);
+    setDragOverId(null);
+  };
 
   const onSubmit = (e: React.FormEvent) => {
     handleSubmit(e, { items: testimonials.map(t => ({ name: t.name, role: t.role, content: t.content, avatar: t.avatar, rating: t.rating })), style });
@@ -35,51 +62,94 @@ export default function TestimonialsCreatePage() {
     >
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Đánh giá khách hàng</CardTitle>
+          <div>
+            <CardTitle className="text-base">Đánh giá khách hàng</CardTitle>
+            <p className="text-xs text-slate-500 mt-1">Kéo thả để sắp xếp thứ tự hiển thị</p>
+          </div>
           <Button type="button" variant="outline" size="sm" onClick={handleAddTestimonial} className="gap-2">
             <Plus size={14} /> Thêm
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           {testimonials.map((item, idx) => (
-            <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+            <div 
+              key={item.id} 
+              draggable
+              onDragStart={() => handleDragStart(item.id)}
+              onDragEnd={handleDragEnd}
+              onDragOver={(e) => handleDragOver(e, item.id)}
+              onDrop={(e) => handleDrop(e, item.id)}
+              className={cn(
+                "p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3 transition-all",
+                draggedId === item.id && "opacity-50 scale-[0.98]",
+                dragOverId === item.id && "ring-2 ring-blue-500 ring-offset-2"
+              )}
+            >
               <div className="flex items-center justify-between">
-                <Label>Đánh giá {idx + 1}</Label>
+                <div className="flex items-center gap-2">
+                  <GripVertical size={16} className="text-slate-400 cursor-grab active:cursor-grabbing" />
+                  <Label>Đánh giá {idx + 1}</Label>
+                </div>
                 <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => handleRemoveTestimonial(item.id)}>
                   <Trash2 size={14} />
                 </Button>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <Input 
-                  placeholder="Tên khách hàng" 
-                  value={item.name} 
-                  onChange={(e) => setTestimonials(testimonials.map(t => t.id === item.id ? {...t, name: e.target.value} : t))} 
-                />
-                <Input 
-                  placeholder="Chức vụ / Công ty" 
-                  value={item.role} 
-                  onChange={(e) => setTestimonials(testimonials.map(t => t.id === item.id ? {...t, role: e.target.value} : t))} 
-                />
-              </div>
-              <textarea 
-                placeholder="Nội dung đánh giá..." 
-                value={item.content} 
-                onChange={(e) => setTestimonials(testimonials.map(t => t.id === item.id ? {...t, content: e.target.value} : t))}
-                className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" 
-              />
-              <div className="flex items-center gap-2">
-                <Label className="text-sm">Đánh giá:</Label>
-                {[1,2,3,4,5].map(star => (
-                  <Star 
-                    key={star} 
-                    size={20} 
-                    className={cn("cursor-pointer", star <= item.rating ? "text-yellow-400 fill-yellow-400" : "text-slate-300")}
-                    onClick={() => setTestimonials(testimonials.map(t => t.id === item.id ? {...t, rating: star} : t))} 
+                <div>
+                  <Input 
+                    placeholder="Tên khách hàng" 
+                    value={item.name} 
+                    onChange={(e) => setTestimonials(testimonials.map(t => t.id === item.id ? {...t, name: e.target.value} : t))} 
                   />
-                ))}
+                  <p className="text-[10px] text-slate-400 mt-1">VD: Nguyễn Văn A</p>
+                </div>
+                <div>
+                  <Input 
+                    placeholder="Chức vụ / Công ty" 
+                    value={item.role} 
+                    onChange={(e) => setTestimonials(testimonials.map(t => t.id === item.id ? {...t, role: e.target.value} : t))} 
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">VD: CEO, ABC Corp</p>
+                </div>
+              </div>
+              <div>
+                <textarea 
+                  placeholder="Nội dung đánh giá chi tiết từ khách hàng..." 
+                  value={item.content} 
+                  onChange={(e) => setTestimonials(testimonials.map(t => t.id === item.id ? {...t, content: e.target.value} : t))}
+                  className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm resize-y" 
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Nội dung chi tiết giúp tăng độ tin cậy (2-4 dòng)</p>
+              </div>
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm">Đánh giá:</Label>
+                  {[1,2,3,4,5].map(star => (
+                    <Star 
+                      key={star} 
+                      size={22} 
+                      className={cn("cursor-pointer transition-colors", star <= item.rating ? "text-yellow-400 fill-yellow-400" : "text-slate-300 hover:text-yellow-200")}
+                      onClick={() => setTestimonials(testimonials.map(t => t.id === item.id ? {...t, rating: star} : t))} 
+                    />
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <User size={12} />
+                  <span>Avatar: hiển thị chữ cái đầu tên</span>
+                </div>
               </div>
             </div>
           ))}
+          
+          {testimonials.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+              <Star size={32} className="text-slate-300 mb-2" />
+              <p className="text-sm text-slate-500 mb-3">Chưa có đánh giá nào</p>
+              <Button type="button" variant="outline" size="sm" onClick={handleAddTestimonial} className="gap-2">
+                <Plus size={14} /> Thêm đánh giá đầu tiên
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

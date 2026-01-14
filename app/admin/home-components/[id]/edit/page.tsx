@@ -32,7 +32,7 @@ import {
   FooterPreview, FooterStyle,
   AboutPreview, AboutStyle,
   TestimonialsPreview, TestimonialsStyle,
-  PricingPreview, PricingStyle,
+  PricingPreview, PricingStyle, PricingConfig,
   CaseStudyPreview, CaseStudyStyle,
   CareerPreview, CareerStyle,
   SpeedDialPreview, SpeedDialStyle,
@@ -165,8 +165,13 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [benefitsConfig, setBenefitsConfig] = useState<{subHeading?: string, heading?: string, buttonText?: string, buttonLink?: string}>({});
   const [testimonialsItems, setTestimonialsItems] = useState<{id: number, name: string, role: string, content: string, avatar: string, rating: number}[]>([]);
   const [testimonialsStyle, setTestimonialsStyle] = useState<TestimonialsStyle>('cards');
-  const [pricingPlans, setPricingPlans] = useState<{id: number, name: string, price: string, period: string, features: string[], isPopular: boolean, buttonText: string, buttonLink: string}[]>([]);
+  const [draggedTestimonialId, setDraggedTestimonialId] = useState<number | null>(null);
+  const [dragOverTestimonialId, setDragOverTestimonialId] = useState<number | null>(null);
+  const [pricingPlans, setPricingPlans] = useState<{id: number, name: string, price: string, yearlyPrice: string, period: string, features: string[], isPopular: boolean, buttonText: string, buttonLink: string}[]>([]);
   const [pricingStyle, setPricingStyle] = useState<PricingStyle>('cards');
+  const [pricingConfig, setPricingConfig] = useState<PricingConfig>({ subtitle: '', showBillingToggle: true, monthlyLabel: 'Hàng tháng', yearlyLabel: 'Hàng năm', yearlySavingText: 'Tiết kiệm 17%' });
+  const [draggedPricingId, setDraggedPricingId] = useState<number | null>(null);
+  const [dragOverPricingId, setDragOverPricingId] = useState<number | null>(null);
   const [caseStudyProjects, setCaseStudyProjects] = useState<{id: number, title: string, category: string, image: string, description: string, link: string}[]>([]);
   const [caseStudyStyle, setCaseStudyStyle] = useState<CaseStudyStyle>('grid');
   const [careerJobs, setCareerJobs] = useState<{id: number, title: string, department: string, location: string, type: string, salary: string, description: string}[]>([]);
@@ -384,8 +389,15 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setTestimonialsStyle((config.style as TestimonialsStyle) || 'cards');
           break;
         case 'Pricing':
-          setPricingPlans(config.plans?.map((p: {name: string, price: string, period: string, features: string[], isPopular: boolean, buttonText: string, buttonLink: string}, i: number) => ({ id: i, ...p })) || []);
+          setPricingPlans(config.plans?.map((p: {name: string, price: string, yearlyPrice?: string, period: string, features: string[], isPopular: boolean, buttonText: string, buttonLink: string}, i: number) => ({ id: i, yearlyPrice: '', ...p })) || []);
           setPricingStyle((config.style as PricingStyle) || 'cards');
+          setPricingConfig({
+            subtitle: (config.subtitle as string) || 'Chọn gói phù hợp với nhu cầu của bạn',
+            showBillingToggle: config.showBillingToggle !== false,
+            monthlyLabel: (config.monthlyLabel as string) || 'Hàng tháng',
+            yearlyLabel: (config.yearlyLabel as string) || 'Hàng năm',
+            yearlySavingText: (config.yearlySavingText as string) || 'Tiết kiệm 17%'
+          });
           break;
         case 'CaseStudy':
           setCaseStudyProjects(config.projects?.map((p: {title: string, category: string, image: string, description: string, link: string}, i: number) => ({ id: i, ...p })) || []);
@@ -562,7 +574,11 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'Testimonials':
         return { items: testimonialsItems.map(t => ({ name: t.name, role: t.role, content: t.content, avatar: t.avatar, rating: t.rating })), style: testimonialsStyle };
       case 'Pricing':
-        return { plans: pricingPlans.map(p => ({ name: p.name, price: p.price, period: p.period, features: p.features, isPopular: p.isPopular, buttonText: p.buttonText, buttonLink: p.buttonLink })), style: pricingStyle };
+        return { 
+          plans: pricingPlans.map(p => ({ name: p.name, price: p.price, yearlyPrice: p.yearlyPrice, period: p.period, features: p.features, isPopular: p.isPopular, buttonText: p.buttonText, buttonLink: p.buttonLink })), 
+          style: pricingStyle,
+          ...pricingConfig
+        };
       case 'CaseStudy':
         return { projects: caseStudyProjects.map(p => ({ title: p.title, category: p.category, image: p.image, description: p.description, link: p.link })), style: caseStudyStyle };
       case 'Career':
@@ -1412,39 +1428,93 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           <>
             <Card className="mb-6">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">Đánh giá khách hàng</CardTitle>
+                <div>
+                  <CardTitle className="text-base">Đánh giá khách hàng</CardTitle>
+                  <p className="text-xs text-slate-500 mt-1">Kéo thả để sắp xếp thứ tự hiển thị</p>
+                </div>
                 <Button type="button" variant="outline" size="sm" onClick={() => setTestimonialsItems([...testimonialsItems, { id: Date.now(), name: '', role: '', content: '', avatar: '', rating: 5 }])} className="gap-2"><Plus size={14} /> Thêm</Button>
               </CardHeader>
               <CardContent className="space-y-4">
                 {testimonialsItems.map((item, idx) => (
-                  <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                  <div 
+                    key={item.id} 
+                    draggable
+                    onDragStart={() => setDraggedTestimonialId(item.id)}
+                    onDragEnd={() => { setDraggedTestimonialId(null); setDragOverTestimonialId(null); }}
+                    onDragOver={(e) => { e.preventDefault(); if (draggedTestimonialId !== item.id) setDragOverTestimonialId(item.id); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (!draggedTestimonialId || draggedTestimonialId === item.id) return;
+                      const newItems = [...testimonialsItems];
+                      const draggedIndex = newItems.findIndex(i => i.id === draggedTestimonialId);
+                      const targetIndex = newItems.findIndex(i => i.id === item.id);
+                      const [moved] = newItems.splice(draggedIndex, 1);
+                      newItems.splice(targetIndex, 0, moved);
+                      setTestimonialsItems(newItems);
+                      setDraggedTestimonialId(null);
+                      setDragOverTestimonialId(null);
+                    }}
+                    className={cn(
+                      "p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3 transition-all",
+                      draggedTestimonialId === item.id && "opacity-50 scale-[0.98]",
+                      dragOverTestimonialId === item.id && "ring-2 ring-blue-500 ring-offset-2"
+                    )}
+                  >
                     <div className="flex items-center justify-between">
-                      <Label>Đánh giá {idx + 1}</Label>
+                      <div className="flex items-center gap-2">
+                        <GripVertical size={16} className="text-slate-400 cursor-grab active:cursor-grabbing" />
+                        <Label>Đánh giá {idx + 1}</Label>
+                      </div>
                       <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => testimonialsItems.length > 1 && setTestimonialsItems(testimonialsItems.filter(t => t.id !== item.id))}><Trash2 size={14} /></Button>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                      <Input placeholder="Tên khách hàng" value={item.name} onChange={(e) => setTestimonialsItems(testimonialsItems.map(t => t.id === item.id ? {...t, name: e.target.value} : t))} />
-                      <Input placeholder="Chức vụ / Công ty" value={item.role} onChange={(e) => setTestimonialsItems(testimonialsItems.map(t => t.id === item.id ? {...t, role: e.target.value} : t))} />
+                      <div>
+                        <Input placeholder="Tên khách hàng" value={item.name} onChange={(e) => setTestimonialsItems(testimonialsItems.map(t => t.id === item.id ? {...t, name: e.target.value} : t))} />
+                        <p className="text-[10px] text-slate-400 mt-1">VD: Nguyễn Văn A</p>
+                      </div>
+                      <div>
+                        <Input placeholder="Chức vụ / Công ty" value={item.role} onChange={(e) => setTestimonialsItems(testimonialsItems.map(t => t.id === item.id ? {...t, role: e.target.value} : t))} />
+                        <p className="text-[10px] text-slate-400 mt-1">VD: CEO, ABC Corp</p>
+                      </div>
                     </div>
-                    <textarea 
-                      placeholder="Nội dung đánh giá..." 
-                      value={item.content} 
-                      onChange={(e) => setTestimonialsItems(testimonialsItems.map(t => t.id === item.id ? {...t, content: e.target.value} : t))}
-                      className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" 
-                    />
-                    <div className="flex items-center gap-2">
-                      <Label className="text-sm">Đánh giá:</Label>
-                      {[1,2,3,4,5].map(star => (
-                        <Star 
-                          key={star} 
-                          size={20} 
-                          className={cn("cursor-pointer", star <= item.rating ? "text-yellow-400 fill-yellow-400" : "text-slate-300")}
-                          onClick={() => setTestimonialsItems(testimonialsItems.map(t => t.id === item.id ? {...t, rating: star} : t))} 
-                        />
-                      ))}
+                    <div>
+                      <textarea 
+                        placeholder="Nội dung đánh giá chi tiết từ khách hàng..." 
+                        value={item.content} 
+                        onChange={(e) => setTestimonialsItems(testimonialsItems.map(t => t.id === item.id ? {...t, content: e.target.value} : t))}
+                        className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm resize-y" 
+                      />
+                      <p className="text-[10px] text-slate-400 mt-1">Nội dung chi tiết giúp tăng độ tin cậy (2-4 dòng)</p>
+                    </div>
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm">Đánh giá:</Label>
+                        {[1,2,3,4,5].map(star => (
+                          <Star 
+                            key={star} 
+                            size={22} 
+                            className={cn("cursor-pointer transition-colors", star <= item.rating ? "text-yellow-400 fill-yellow-400" : "text-slate-300 hover:text-yellow-200")}
+                            onClick={() => setTestimonialsItems(testimonialsItems.map(t => t.id === item.id ? {...t, rating: star} : t))} 
+                          />
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <UserIcon size={12} />
+                        <span>Avatar: hiển thị chữ cái đầu tên</span>
+                      </div>
                     </div>
                   </div>
                 ))}
+                
+                {testimonialsItems.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+                    <Star size={32} className="text-slate-300 mb-2" />
+                    <p className="text-sm text-slate-500 mb-3">Chưa có đánh giá nào</p>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setTestimonialsItems([...testimonialsItems, { id: Date.now(), name: '', role: '', content: '', avatar: '', rating: 5 }])} className="gap-2">
+                      <Plus size={14} /> Thêm đánh giá đầu tiên
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
             <TestimonialsPreview 

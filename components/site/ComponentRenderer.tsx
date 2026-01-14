@@ -3745,10 +3745,30 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
 }
 
 // ============ PRICING SECTION ============
-type PricingStyle = 'cards' | 'horizontal' | 'minimal';
+// 6 Styles: cards, horizontal, minimal, comparison, featured, compact
+type PricingPlan = { 
+  name: string; 
+  price: string; 
+  yearlyPrice?: string;
+  period: string; 
+  features: string[]; 
+  isPopular: boolean; 
+  buttonText: string; 
+  buttonLink: string;
+};
+type PricingStyle = 'cards' | 'horizontal' | 'minimal' | 'comparison' | 'featured' | 'compact';
+
 function PricingSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const plans = (config.plans as Array<{ name: string; price: string; period: string; features: string[]; isPopular: boolean; buttonText: string; buttonLink: string }>) || [];
+  const plans = (config.plans as PricingPlan[]) || [];
   const style = (config.style as PricingStyle) || 'cards';
+  const subtitle = (config.subtitle as string) || 'Chọn gói phù hợp với nhu cầu của bạn';
+
+  // Centered layout helper for few items
+  const getGridClass = (count: number) => {
+    if (count === 1) return 'grid-cols-1 max-w-md mx-auto';
+    if (count === 2) return 'md:grid-cols-2 max-w-2xl mx-auto';
+    return 'md:grid-cols-3';
+  };
 
   // Style: Cards (default)
   if (style === 'cards') {
@@ -3756,35 +3776,35 @@ function PricingSection({ config, brandColor, title }: { config: Record<string, 
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-4 text-slate-900">{title}</h2>
-          <p className="text-center text-slate-500 mb-12">Chọn gói phù hợp với nhu cầu của bạn</p>
-          <div className="grid md:grid-cols-3 gap-8">
+          <p className="text-center text-slate-500 mb-12">{subtitle}</p>
+          <div className={`grid gap-8 ${getGridClass(plans.length)}`}>
             {plans.map((plan, idx) => (
               <div
                 key={idx}
-                className={`bg-white p-6 rounded-xl border-2 relative ${plan.isPopular ? 'shadow-lg scale-105' : ''}`}
+                className={`bg-white p-6 rounded-xl border-2 relative flex flex-col h-full ${plan.isPopular ? 'shadow-lg scale-105' : ''}`}
                 style={{ borderColor: plan.isPopular ? brandColor : '#e2e8f0' }}
               >
                 {plan.isPopular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-xs font-medium text-white rounded-full" style={{ backgroundColor: brandColor }}>
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-xs font-medium text-white rounded-full whitespace-nowrap" style={{ backgroundColor: brandColor }}>
                     Phổ biến
                   </div>
                 )}
-                <h3 className="text-lg font-semibold text-center mb-4">{plan.name}</h3>
+                <h3 className="text-lg font-semibold text-center mb-4 line-clamp-1">{plan.name}</h3>
                 <div className="text-center mb-6">
-                  <span className="text-3xl font-bold" style={{ color: brandColor }}>{plan.price}đ</span>
-                  <span className="text-slate-500">{plan.period}</span>
+                  <span className="text-3xl font-bold tabular-nums" style={{ color: brandColor }}>{plan.price}đ</span>
+                  <span className="text-slate-500">{plan.period || '/tháng'}</span>
                 </div>
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((f, fIdx) => (
-                    <li key={fIdx} className="flex items-center gap-2 text-sm">
-                      <span style={{ color: brandColor }}>✓</span>
-                      {f}
+                <ul className="space-y-3 mb-6 flex-1 min-h-[100px]">
+                  {plan.features.slice(0, 6).map((f, fIdx) => (
+                    <li key={fIdx} className="flex items-start gap-2 text-sm">
+                      <span className="flex-shrink-0 mt-0.5" style={{ color: brandColor }}>✓</span>
+                      <span className="line-clamp-1">{f}</span>
                     </li>
                   ))}
                 </ul>
                 <a
                   href={plan.buttonLink || '#'}
-                  className={`block w-full py-3 text-center rounded-lg font-medium ${plan.isPopular ? 'text-white' : ''}`}
+                  className={`block w-full py-3 text-center rounded-lg font-medium transition-opacity hover:opacity-90 ${plan.isPopular ? 'text-white' : ''}`}
                   style={plan.isPopular ? { backgroundColor: brandColor } : { border: `2px solid ${brandColor}`, color: brandColor }}
                 >
                   {plan.buttonText}
@@ -3802,30 +3822,31 @@ function PricingSection({ config, brandColor, title }: { config: Record<string, 
     return (
       <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <h2 className="text-3xl font-bold text-center mb-4 text-slate-900">{title}</h2>
+          <p className="text-center text-slate-500 mb-12">{subtitle}</p>
           <div className="space-y-4">
             {plans.map((plan, idx) => (
               <div
                 key={idx}
-                className="bg-white p-5 rounded-xl border flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+                className="bg-white p-5 rounded-xl border-2 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
                 style={{ borderColor: plan.isPopular ? brandColor : '#e2e8f0' }}
               >
-                <div className="flex items-center gap-4">
-                  <h3 className="font-semibold text-lg">{plan.name}</h3>
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <h3 className="font-semibold text-lg truncate">{plan.name}</h3>
                   {plan.isPopular && (
-                    <span className="px-2 py-0.5 text-xs font-medium text-white rounded-full" style={{ backgroundColor: brandColor }}>Hot</span>
+                    <span className="px-2 py-0.5 text-xs font-medium text-white rounded-full flex-shrink-0" style={{ backgroundColor: brandColor }}>Hot</span>
                   )}
                 </div>
-                <div className="text-sm text-slate-500">
+                <div className="text-sm text-slate-500 truncate flex-1 md:text-center">
                   {plan.features.slice(0, 2).join(' • ')}
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-xl font-bold" style={{ color: brandColor }}>
-                    {plan.price}đ<span className="text-sm font-normal text-slate-500">{plan.period}</span>
+                <div className="flex items-center gap-4 flex-shrink-0">
+                  <span className="text-xl font-bold tabular-nums whitespace-nowrap" style={{ color: brandColor }}>
+                    {plan.price}đ<span className="text-sm font-normal text-slate-500">{plan.period || '/tháng'}</span>
                   </span>
                   <a
                     href={plan.buttonLink || '#'}
-                    className="px-5 py-2 rounded-lg text-sm text-white font-medium"
+                    className="px-5 py-2 rounded-lg text-sm text-white font-medium whitespace-nowrap"
                     style={{ backgroundColor: brandColor }}
                   >
                     {plan.buttonText}
@@ -3840,38 +3861,253 @@ function PricingSection({ config, brandColor, title }: { config: Record<string, 
   }
 
   // Style: Minimal
+  if (style === 'minimal') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-4 text-slate-900">{title}</h2>
+          <p className="text-center text-slate-500 mb-12">{subtitle}</p>
+          <div className="border rounded-2xl overflow-hidden">
+            {plans.map((plan, idx) => (
+              <div
+                key={idx}
+                className={`flex flex-col md:flex-row md:items-center gap-4 p-6 bg-white transition-all relative ${idx !== plans.length - 1 ? 'border-b' : ''}`}
+                style={plan.isPopular ? { backgroundColor: `${brandColor}08` } : {}}
+              >
+                {plan.isPopular && (
+                  <span className="absolute top-3 right-4 px-2 py-0.5 text-xs font-medium text-white rounded-full" style={{ backgroundColor: brandColor }}>Phổ biến</span>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-lg truncate">{plan.name}</h3>
+                  <p className="text-sm text-slate-500 mt-1 truncate">{plan.features.slice(0, 2).join(' • ')}</p>
+                </div>
+                <div className="flex items-center gap-6 flex-shrink-0">
+                  <span className="text-2xl font-bold tabular-nums whitespace-nowrap" style={{ color: brandColor }}>
+                    {plan.price}đ<span className="text-sm text-slate-500">{plan.period || '/tháng'}</span>
+                  </span>
+                  <a
+                    href={plan.buttonLink || '#'}
+                    className={`px-6 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap ${plan.isPopular ? 'text-white shadow-md' : ''}`}
+                    style={plan.isPopular ? { backgroundColor: brandColor } : { border: `2px solid ${brandColor}`, color: brandColor }}
+                  >
+                    {plan.buttonText}
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style: Comparison - Feature comparison table
+  if (style === 'comparison') {
+    const displayPlans = plans.slice(0, 4);
+    const allFeatures = [...new Set(displayPlans.flatMap(p => p.features))].slice(0, 10);
+    
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-4 text-slate-900">{title}</h2>
+          <p className="text-center text-slate-500 mb-12">{subtitle}</p>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse bg-white rounded-2xl overflow-hidden shadow-sm">
+              <thead>
+                <tr className="bg-slate-50">
+                  <th className="p-4 text-left text-sm font-medium text-slate-500 border-b">Tính năng</th>
+                  {displayPlans.map((plan, idx) => (
+                    <th 
+                      key={idx} 
+                      className="p-4 text-center border-b min-w-[140px]"
+                      style={plan.isPopular ? { backgroundColor: `${brandColor}08` } : {}}
+                    >
+                      <div className="font-semibold text-slate-900">{plan.name}</div>
+                      <div className="font-bold text-xl mt-2 tabular-nums" style={{ color: brandColor }}>
+                        {plan.price}đ
+                      </div>
+                      {plan.isPopular && (
+                        <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-medium text-white" style={{ backgroundColor: brandColor }}>
+                          Khuyên dùng
+                        </span>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {allFeatures.map((feature, fIdx) => (
+                  <tr key={fIdx} className={fIdx % 2 === 0 ? 'bg-slate-50/50' : ''}>
+                    <td className="p-4 text-sm border-b text-slate-700">{feature}</td>
+                    {displayPlans.map((plan, pIdx) => (
+                      <td 
+                        key={pIdx} 
+                        className="p-4 text-center border-b"
+                        style={plan.isPopular ? { backgroundColor: `${brandColor}05` } : {}}
+                      >
+                        {plan.features.includes(feature) ? (
+                          <span className="text-lg" style={{ color: brandColor }}>✓</span>
+                        ) : (
+                          <span className="text-slate-300">✗</span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td className="p-4"></td>
+                  {displayPlans.map((plan, idx) => (
+                    <td key={idx} className="p-4 text-center" style={plan.isPopular ? { backgroundColor: `${brandColor}08` } : {}}>
+                      <a 
+                        href={plan.buttonLink || '#'}
+                        className={`inline-block px-5 py-2.5 rounded-lg text-sm font-medium ${plan.isPopular ? 'text-white' : ''}`}
+                        style={plan.isPopular ? { backgroundColor: brandColor } : { border: `2px solid ${brandColor}`, color: brandColor }}
+                      >
+                        {plan.buttonText}
+                      </a>
+                    </td>
+                  ))}
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style: Featured - One plan highlighted large
+  if (style === 'featured') {
+    const popularPlan = plans.find(p => p.isPopular) || plans[0];
+    const otherPlans = plans.filter(p => p !== popularPlan).slice(0, 2);
+    
+    if (!popularPlan) return null;
+    
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-4 text-slate-900">{title}</h2>
+          <p className="text-center text-slate-500 mb-12">{subtitle}</p>
+          
+          <div className="flex flex-col lg:flex-row gap-8 items-stretch">
+            {/* Featured Plan */}
+            <div 
+              className="bg-white rounded-2xl border-2 p-8 relative flex flex-col flex-1"
+              style={{ 
+                borderColor: brandColor,
+                boxShadow: `0 8px 30px ${brandColor}20`
+              }}
+            >
+              <div 
+                className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold text-white"
+                style={{ backgroundColor: brandColor }}
+              >
+                ★ Phổ biến nhất
+              </div>
+              <h3 className="text-2xl font-bold text-center mt-4">{popularPlan.name}</h3>
+              <div className="text-center my-8">
+                <span className="text-4xl font-bold tabular-nums" style={{ color: brandColor }}>
+                  {popularPlan.price}đ
+                </span>
+                <span className="text-slate-500">{popularPlan.period || '/tháng'}</span>
+              </div>
+              <ul className="space-y-4 mb-8 flex-1">
+                {popularPlan.features.slice(0, 6).map((f, idx) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <span className="text-lg flex-shrink-0" style={{ color: brandColor }}>✓</span>
+                    <span className="line-clamp-1">{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <a 
+                href={popularPlan.buttonLink || '#'}
+                className="block w-full py-4 text-center rounded-xl font-semibold text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
+              >
+                {popularPlan.buttonText}
+              </a>
+            </div>
+
+            {/* Other Plans */}
+            {otherPlans.length > 0 && (
+              <div className="flex flex-col gap-6 lg:w-72 justify-center">
+                {otherPlans.map((plan, idx) => (
+                  <div 
+                    key={idx}
+                    className="bg-white rounded-xl border p-5 flex flex-col"
+                    style={{ borderColor: `${brandColor}20` }}
+                  >
+                    <h4 className="font-semibold">{plan.name}</h4>
+                    <div className="my-3">
+                      <span className="text-xl font-bold tabular-nums" style={{ color: brandColor }}>
+                        {plan.price}đ
+                      </span>
+                      <span className="text-sm text-slate-500">{plan.period || '/tháng'}</span>
+                    </div>
+                    <p className="text-sm text-slate-500 line-clamp-2 flex-1 mb-4">
+                      {plan.features.slice(0, 2).join(', ')}
+                    </p>
+                    <a 
+                      href={plan.buttonLink || '#'}
+                      className="block w-full py-2.5 text-center rounded-lg text-sm font-medium border-2"
+                      style={{ borderColor: brandColor, color: brandColor }}
+                    >
+                      {plan.buttonText}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style: Compact - Small dense cards
   return (
     <section className="py-16 px-4">
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-        <div className="border rounded-2xl overflow-hidden">
-          {plans.map((plan, idx) => (
-            <div
+        <h2 className="text-3xl font-bold text-center mb-4 text-slate-900">{title}</h2>
+        <p className="text-center text-slate-500 mb-12">{subtitle}</p>
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {plans.slice(0, 6).map((plan, idx) => (
+            <div 
               key={idx}
-              className={`flex flex-col md:flex-row md:items-center gap-4 p-6 bg-white transition-all ${idx !== plans.length - 1 ? 'border-b' : ''}`}
-              style={plan.isPopular ? { backgroundColor: `${brandColor}08` } : {}}
+              className={`bg-white rounded-lg border-2 p-4 relative flex flex-col text-center ${plan.isPopular ? 'ring-2 ring-offset-2' : ''}`}
+              style={{ 
+                borderColor: plan.isPopular ? brandColor : '#e2e8f0',
+                ...(plan.isPopular && { ringColor: brandColor })
+              }}
             >
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-lg">{plan.name}</h3>
-                  {plan.isPopular && (
-                    <span className="px-2 py-0.5 text-xs font-medium text-white rounded-full" style={{ backgroundColor: brandColor }}>Phổ biến</span>
-                  )}
-                </div>
-                <p className="text-sm text-slate-500 mt-1">{plan.features.slice(0, 2).join(' • ')}</p>
-              </div>
-              <div className="flex items-center gap-6">
-                <span className="text-2xl font-bold" style={{ color: brandColor }}>
-                  {plan.price}đ<span className="text-sm text-slate-500">{plan.period}</span>
-                </span>
-                <a
-                  href={plan.buttonLink || '#'}
-                  className={`px-6 py-2.5 rounded-lg text-sm font-medium ${plan.isPopular ? 'text-white shadow-md' : ''}`}
-                  style={plan.isPopular ? { backgroundColor: brandColor } : { border: `2px solid ${brandColor}`, color: brandColor }}
+              {plan.isPopular && (
+                <div 
+                  className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[10px] font-bold text-white"
+                  style={{ backgroundColor: brandColor }}
                 >
-                  {plan.buttonText}
-                </a>
+                  HOT
+                </div>
+              )}
+              <h4 className="font-semibold text-sm truncate mt-1">{plan.name}</h4>
+              <div className="my-3">
+                <span className="text-xl font-bold tabular-nums" style={{ color: brandColor }}>
+                  {plan.price}đ
+                </span>
+                <span className="text-[10px] text-slate-500 block">{plan.period || '/tháng'}</span>
               </div>
+              <p className="text-[11px] text-slate-500 line-clamp-2 min-h-[2rem] mb-3">
+                {plan.features.slice(0, 2).join(', ')}
+              </p>
+              <a 
+                href={plan.buttonLink || '#'}
+                className={`block w-full py-2 rounded text-xs font-medium mt-auto ${plan.isPopular ? 'text-white' : ''}`}
+                style={plan.isPopular ? { backgroundColor: brandColor } : { border: `1px solid ${brandColor}`, color: brandColor }}
+              >
+                {plan.buttonText}
+              </a>
             </div>
           ))}
         </div>
