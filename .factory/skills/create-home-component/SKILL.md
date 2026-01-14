@@ -37,6 +37,126 @@ components/site/
 
 ---
 
+## WebSearch Best Practices (BẮT BUỘC TRƯỚC KHI CODE)
+
+**CRITICAL**: Mỗi loại home-component có đặc thù riêng. PHẢI WebSearch để tìm Best Practices cụ thể trước khi thiết kế.
+
+### Cách Search
+
+```
+// Search query pattern
+"[component-name] UI UX best practices 2024"
+"[component-name] section design patterns"
+"[component-name] component accessibility guidelines"
+"[component-name] responsive design examples"
+```
+
+### Checklist Search theo Component Type
+
+Dùng WebSearch tool với các query sau để lấy best practices cụ thể:
+
+#### Hero Banner / Slider
+- `"hero banner best practices ecommerce"`
+- `"image slider UX accessibility"`
+- `"hero section CTA placement"`
+- **Key points cần tìm**: CTA visibility, image focal point, text contrast, animation speed, mobile touch gestures
+
+#### FAQ / Accordion
+- `"FAQ section UX best practices"`
+- `"accordion accessibility ARIA"`
+- `"FAQ schema SEO structured data"`
+- **Key points cần tìm**: Expand/collapse behavior, keyboard navigation, search/filter, schema markup, anchor links
+
+#### Testimonials / Reviews
+- `"testimonials section best practices"`
+- `"social proof UX design"`
+- `"customer reviews display patterns"`
+- **Key points cần tìm**: Credibility indicators (photo, company, role), star ratings, verification badges, video testimonials
+
+#### Pricing Table
+- `"pricing table UX best practices"`
+- `"SaaS pricing page conversion"`
+- `"pricing comparison accessibility"`
+- **Key points cần tìm**: Feature comparison, highlight recommended plan, annual/monthly toggle, CTA hierarchy, mobile stacking
+
+#### Gallery / Portfolio
+- `"image gallery UX patterns"`
+- `"portfolio grid best practices"`
+- `"lightbox accessibility guidelines"`
+- **Key points cần tìm**: Lazy loading, lightbox navigation, thumbnail sizing, masonry vs grid, keyboard navigation
+
+#### Partners / Logos
+- `"logo carousel best practices"`
+- `"partner logos display UX"`
+- `"trust badges placement"`
+- **Key points cần tìm**: Logo sizing consistency, grayscale vs color, animation speed, hover effects, link behavior
+
+#### Stats / Counters
+- `"statistics section design"`
+- `"number counter animation UX"`
+- `"data visualization best practices"`
+- **Key points cần tìm**: Number formatting, animation timing, context/comparison, icon usage, mobile layout
+
+#### Services / Features
+- `"features section best practices"`
+- `"service cards UX design"`
+- `"benefits section layout"`
+- **Key points cần tìm**: Icon consistency, description length, CTA placement, grid vs list, feature prioritization
+
+#### Newsletter / Subscribe
+- `"newsletter signup best practices"`
+- `"email subscription UX"`
+- `"form conversion optimization"`
+- **Key points cần tìm**: Single field vs multi-field, privacy notice, success feedback, inline validation, incentive copy
+
+#### Contact / Map
+- `"contact section UX design"`
+- `"Google Maps embed best practices"`
+- `"contact form accessibility"`
+- **Key points cần tìm**: Map interactivity, address formatting, multiple contact methods, form fields, response time expectation
+
+#### CTA / Banner
+- `"call to action best practices"`
+- `"CTA button design conversion"`
+- `"promotional banner UX"`
+- **Key points cần tìm**: Button color/contrast, urgency indicators, value proposition, dismissible banners, A/B testing
+
+#### Timeline / Process
+- `"timeline component UX"`
+- `"process steps design"`
+- `"stepper component accessibility"`
+- **Key points cần tìm**: Vertical vs horizontal, mobile adaptation, progress indication, content length, connector lines
+
+### Output Format sau WebSearch
+
+Sau khi search, tổng hợp thành checklist cụ thể:
+
+```markdown
+## [ComponentName] Best Practices Checklist
+
+### UX Requirements
+- [ ] Point 1 từ search results
+- [ ] Point 2 từ search results
+- [ ] ...
+
+### Accessibility (a11y)
+- [ ] ARIA labels cụ thể
+- [ ] Keyboard navigation
+- [ ] Screen reader support
+
+### Performance
+- [ ] Lazy loading strategy
+- [ ] Animation performance
+- [ ] Mobile optimization
+
+### SEO (nếu relevant)
+- [ ] Schema markup
+- [ ] Semantic HTML
+- [ ] Alt texts
+```
+
+---
+
 ## 6 Styles Requirement (BẮT BUỘC)
 
 **Mỗi component PHẢI có đúng 6 styles khác nhau**. Các styles phải:
