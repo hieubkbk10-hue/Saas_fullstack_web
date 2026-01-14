@@ -7013,30 +7013,29 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 2: Alternating
+  // Style 2: Alternating - Compact 2-column grid
   if (style === 'alternating') {
     return (
-      <section className="py-12 md:py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10 md:mb-14">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+      <section className="py-10 md:py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
           </div>
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {items.map((item, idx) => {
               const IconComponent = getIcon(item.icon);
-              const isEven = idx % 2 === 0;
               return (
-                <div key={idx} className={`flex items-center gap-6 p-6 rounded-2xl bg-slate-50 border border-slate-100 ${!isEven ? 'md:flex-row-reverse' : ''}`}>
+                <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
                   <div className="relative flex-shrink-0">
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}15 0%, ${brandColor}05 100%)`, border: `2px solid ${brandColor}20` }}>
-                      <IconComponent size={32} style={{ color: brandColor }} strokeWidth={1.5} />
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
+                      <IconComponent size={18} style={{ color: brandColor }} strokeWidth={2} />
                     </div>
-                    <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full text-xs font-bold text-white flex items-center justify-center" style={{ backgroundColor: brandColor }}>{idx + 1}</span>
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[10px] font-bold text-white flex items-center justify-center" style={{ backgroundColor: brandColor }}>{idx + 1}</span>
                   </div>
-                  <div className={`flex-1 ${!isEven ? 'md:text-right' : ''}`}>
-                    <h3 className="font-bold text-lg text-slate-900 mb-1 line-clamp-1">{item.title}</h3>
-                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">{item.description}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm text-slate-900 line-clamp-1">{item.title}</h3>
+                    <p className="text-xs text-slate-500 line-clamp-1">{item.description}</p>
                   </div>
                 </div>
               );
@@ -7142,29 +7141,31 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 6: Timeline (default fallback)
+  // Style 6: Timeline (default fallback) - Compact vertical timeline
   return (
-    <section className="py-12 md:py-16 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-10 md:mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+    <section className="py-10 md:py-12 px-4">
+      <div className="max-w-3xl mx-auto">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
         </div>
-        <div className="max-w-3xl mx-auto relative">
-          <div className="absolute top-0 bottom-0 left-4 md:left-1/2 md:-translate-x-1/2 w-0.5" style={{ backgroundColor: `${brandColor}20` }} />
-          <div className="relative space-y-8">
+        <div className="relative">
+          <div className="absolute top-0 bottom-0 left-3 md:left-1/2 w-px" style={{ backgroundColor: `${brandColor}30` }} />
+          <div className="relative space-y-4">
             {items.map((item, idx) => {
               const IconComponent = getIcon(item.icon);
               const isEven = idx % 2 === 0;
               return (
-                <div key={idx} className={`relative flex items-start gap-4 md:gap-8 pl-12 md:pl-0 ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} md:justify-center`}>
-                  <div className="absolute left-0 md:left-1/2 md:-translate-x-1/2 flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shadow-lg z-10" style={{ backgroundColor: brandColor }}>
-                    <IconComponent size={14} className="text-white" strokeWidth={2.5} />
+                <div key={idx} className={`relative flex items-center pl-8 md:pl-0 ${isEven ? 'md:pr-[52%]' : 'md:pl-[52%] md:flex-row-reverse'}`}>
+                  <div className="absolute left-0 md:left-1/2 md:-translate-x-1/2 flex items-center justify-center w-6 h-6 rounded-full border-2 border-white shadow z-10" style={{ backgroundColor: brandColor }}>
+                    <IconComponent size={12} className="text-white" strokeWidth={2.5} />
                   </div>
-                  <div className={`bg-white rounded-xl p-4 md:p-5 shadow-sm border border-slate-200 flex-1 md:w-[calc(50%-3rem)]`}>
-                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: brandColor }}>Tính năng {idx + 1}</span>
-                    <h3 className="font-bold text-base md:text-lg text-slate-900 mt-1 mb-2 line-clamp-1">{item.title}</h3>
-                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">{item.description}</p>
+                  <div className="flex-1 bg-white rounded-lg p-3 shadow-sm border border-slate-200">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{idx + 1}</span>
+                      <h3 className="font-semibold text-sm text-slate-900 line-clamp-1">{item.title}</h3>
+                    </div>
+                    <p className="text-xs text-slate-500 line-clamp-1 pl-6">{item.description}</p>
                   </div>
                 </div>
               );
