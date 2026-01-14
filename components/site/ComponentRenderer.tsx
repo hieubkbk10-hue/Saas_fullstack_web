@@ -5384,7 +5384,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
             {resolvedCategories.map((cat) => (
               <a 
                 key={cat.id}
-                href={`/danh-muc/${cat.slug}`}
+                href={`/products?category=${cat.slug}`}
                 className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer transition-all duration-300"
                 style={{ boxShadow: `0 2px 8px ${brandColor}10` }}
                 onMouseEnter={(e) => {
@@ -5420,7 +5420,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
           <div className="flex items-center justify-between px-4 md:px-6 mb-6 md:mb-8">
             <h2 className="text-xl md:text-2xl lg:text-3xl font-bold">{title}</h2>
             <a 
-              href="/danh-muc"
+              href="/products"
               className="text-sm font-medium flex items-center gap-1 hover:underline whitespace-nowrap"
               style={{ color: brandColor }}
             >
@@ -5433,7 +5433,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
               {resolvedCategories.map((cat) => (
                 <a 
                   key={cat.id}
-                  href={`/danh-muc/${cat.slug}`}
+                  href={`/products?category=${cat.slug}`}
                   className="flex-shrink-0 w-32 md:w-40 group cursor-pointer"
                 >
                   <div 
@@ -5467,7 +5467,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
             {resolvedCategories.map((cat) => (
               <a 
                 key={cat.id}
-                href={`/danh-muc/${cat.slug}`}
+                href={`/products?category=${cat.slug}`}
                 className="group bg-white rounded-xl overflow-hidden flex cursor-pointer transition-all"
                 style={{ border: `1px solid ${brandColor}15` }}
                 onMouseEnter={(e) => {
@@ -5507,7 +5507,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
         <div className="max-w-5xl mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg md:text-xl font-bold">{title}</h2>
-            <a href="/danh-muc" className="text-sm font-medium hover:underline" style={{ color: brandColor }}>
+            <a href="/products" className="text-sm font-medium hover:underline" style={{ color: brandColor }}>
               Tất cả →
             </a>
           </div>
@@ -5517,7 +5517,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
               return (
                 <a 
                   key={cat.id}
-                  href={`/danh-muc/${cat.slug}`}
+                  href={`/products?category=${cat.slug}`}
                   className="flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-full cursor-pointer transition-all"
                   style={{ backgroundColor: `${brandColor}08`, border: `1px solid ${brandColor}20` }}
                   onMouseEnter={(e) => {
@@ -5561,7 +5561,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
           <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
             {/* Featured category */}
             <a 
-              href={`/danh-muc/${featured.slug}`}
+              href={`/products?category=${featured.slug}`}
               className="relative rounded-2xl overflow-hidden cursor-pointer group md:row-span-2"
               style={{ boxShadow: `0 8px 30px ${brandColor}20` }}
             >
@@ -5591,7 +5591,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
               {others.slice(0, 5).map((cat) => (
                 <a 
                   key={cat.id}
-                  href={`/danh-muc/${cat.slug}`}
+                  href={`/products?category=${cat.slug}`}
                   className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group transition-all"
                   style={{ border: `2px solid ${brandColor}15` }}
                   onMouseEnter={(e) => {
@@ -5617,7 +5617,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
               {/* +N more */}
               {others.length > 5 && (
                 <a 
-                  href="/danh-muc"
+                  href="/products"
                   className="flex flex-col items-center justify-center aspect-[4/3] rounded-xl cursor-pointer"
                   style={{ backgroundColor: `${brandColor}08`, border: `2px dashed ${brandColor}30` }}
                 >
@@ -5647,7 +5647,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
             {[...resolvedCategories, ...resolvedCategories].map((cat, idx) => (
               <a 
                 key={`${cat.id}-${idx}`}
-                href={`/danh-muc/${cat.slug}`}
+                href={`/products?category=${cat.slug}`}
                 className="flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-full cursor-pointer mx-2 bg-white"
                 style={{ border: `2px solid ${brandColor}20`, boxShadow: `0 2px 8px ${brandColor}10` }}
               >
@@ -5803,7 +5803,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                 <h2 className="text-xl md:text-2xl font-bold">{section.category.name}</h2>
                 {showViewAll && (
                   <a 
-                    href={`/danh-muc/${section.category.slug || section.category._id}`}
+                    href={`/products?category=${section.category.slug || section.category._id}`}
                     className="text-sm font-medium flex items-center gap-1 hover:underline px-3 py-1.5 rounded-lg border transition-colors"
                     style={{ color: brandColor, borderColor: `${brandColor}30` }}
                   >
@@ -5842,7 +5842,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                 <h2 className="text-xl md:text-2xl font-bold">{section.category.name}</h2>
                 {showViewAll && (
                   <a 
-                    href={`/danh-muc/${section.category.slug || section.category._id}`}
+                    href={`/products?category=${section.category.slug || section.category._id}`}
                     className="text-sm font-medium flex items-center gap-1 hover:underline"
                     style={{ color: brandColor }}
                   >
@@ -5926,7 +5926,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                   </div>
                   {showViewAll && (
                     <a 
-                      href={`/danh-muc/${section.category.slug || section.category._id}`}
+                      href={`/products?category=${section.category.slug || section.category._id}`}
                       className="text-sm font-medium flex items-center gap-1 hover:underline px-3 py-1.5 rounded-lg transition-colors"
                       style={{ color: brandColor, backgroundColor: `${brandColor}15` }}
                     >
@@ -5980,7 +5980,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                   </div>
                   {showViewAll && (
                     <a 
-                      href={`/danh-muc/${section.category.slug || section.category._id}`}
+                      href={`/products?category=${section.category.slug || section.category._id}`}
                       className="text-sm font-medium flex items-center gap-1.5 px-4 py-2 rounded-full transition-all hover:shadow-md"
                       style={{ backgroundColor: `${brandColor}10`, color: brandColor }}
                     >
@@ -6117,7 +6117,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                       </div>
                       {showViewAll && (
                         <a 
-                          href={`/danh-muc/${section.category.slug || section.category._id}`}
+                          href={`/products?category=${section.category.slug || section.category._id}`}
                           className="self-start flex items-center gap-2 text-sm font-medium bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full transition-colors backdrop-blur-sm"
                         >
                           Khám phá
@@ -6199,7 +6199,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
               </div>
               {showViewAll && (
                 <a 
-                  href={`/danh-muc/${section.category.slug || section.category._id}`}
+                  href={`/products?category=${section.category.slug || section.category._id}`}
                   className="group flex items-center gap-2 text-sm font-medium transition-colors"
                   style={{ color: brandColor }}
                 >
