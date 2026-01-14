@@ -7,8 +7,8 @@ import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { Briefcase, Loader2, ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
 
-// Luxury Services Gallery UI/UX - 4 Variants from luxury-services-gallery
-type ServiceListStyle = 'grid' | 'bento' | 'list' | 'carousel';
+// Luxury Services Gallery UI/UX - 6 Variants (added minimal & showcase)
+type ServiceListStyle = 'grid' | 'bento' | 'list' | 'carousel' | 'minimal' | 'showcase';
 
 interface ServiceListSectionProps {
   config: Record<string, unknown>;
@@ -28,12 +28,15 @@ const formatServicePrice = (price?: number) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(price);
 };
 
-// Badge component for service status (monochromatic style)
-const ServiceBadge = ({ isNew, isHot }: { isNew?: boolean; isHot?: boolean }) => {
+// Badge component for service status (uses brandColor for hot)
+const ServiceBadge = ({ isNew, isHot, brandColor }: { isNew?: boolean; isHot?: boolean; brandColor?: string }) => {
   if (!isNew && !isHot) return null;
   if (isHot) {
     return (
-      <span className="inline-flex items-center rounded-sm px-2 py-1 text-[10px] font-medium uppercase tracking-widest bg-slate-900 text-white">
+      <span 
+        className="inline-flex items-center rounded-sm px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-white"
+        style={{ backgroundColor: brandColor || '#1e293b' }}
+      >
         Hot
       </span>
     );
@@ -134,7 +137,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   {/* Badge */}
                   {idx < 2 && (
                     <div className="absolute z-20 top-3 left-3">
-                      <ServiceBadge isHot={idx === 0} isNew={idx === 1} />
+                      <ServiceBadge isHot={idx === 0} isNew={idx === 1} brandColor={brandColor} />
                     </div>
                   )}
 
@@ -217,7 +220,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                     {/* Badge */}
                     {i < 2 && (
                       <div className="absolute z-20 top-5 left-5 md:top-6 md:left-6">
-                        <ServiceBadge isHot={i === 0} isNew={i === 1} />
+                        <ServiceBadge isHot={i === 0} isNew={i === 1} brandColor={brandColor} />
                       </div>
                     )}
                     
@@ -324,7 +327,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   <div className="py-1 flex-1">
                     {idx < 2 && (
                       <div className="mb-1">
-                        <ServiceBadge isHot={idx === 0} isNew={idx === 1} />
+                        <ServiceBadge isHot={idx === 0} isNew={idx === 1} brandColor={brandColor} />
                       </div>
                     )}
                     <h3 className="font-medium text-base md:text-lg text-slate-900 leading-tight group-hover:opacity-70 transition-colors line-clamp-2">
@@ -346,80 +349,163 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
     );
   }
 
-  // Style 4: Carousel - Horizontal scroll với snap (best practice: wider cards, snap-start, smooth scroll)
+  // Style 4: Carousel - Horizontal scroll với snap
+  if (style === 'carousel') {
+    return (
+      <section className="py-12 md:py-16">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 pb-3 mb-6 px-3 md:px-6">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-light tracking-tight text-slate-900">{title}</h2>
+            {showViewAll && (
+              <Link href="/services" className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors">
+                Xem tất cả <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            )}
+          </div>
+          {/* Carousel Container */}
+          <div className="flex gap-4 overflow-x-auto pb-4 px-3 md:px-6 snap-x snap-mandatory scroll-smooth" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+            {services.slice(0, 8).map((service, idx) => (
+              <Link key={service._id} href={`/services/${service.slug}`} className="snap-start flex-shrink-0 w-[75vw] sm:w-[280px]">
+                <article className="group cursor-pointer relative bg-white flex flex-col hover:-translate-y-1 transition-all duration-300 h-full">
+                  {idx < 2 && <div className="absolute z-20 top-3 left-3"><ServiceBadge isHot={idx === 0} isNew={idx === 1} brandColor={brandColor} /></div>}
+                  <div className="relative overflow-hidden bg-slate-100 mb-3 rounded-lg aspect-[4/3] w-full">
+                    {service.thumbnail ? (
+                      <img src={service.thumbnail} alt={service.title} draggable={false} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><Briefcase size={32} className="text-slate-300" /></div>
+                    )}
+                  </div>
+                  <div className="flex flex-col justify-between flex-shrink-0 pt-1">
+                    <h3 className="font-medium text-base text-slate-900 leading-tight group-hover:opacity-70 transition-colors line-clamp-2">{service.title}</h3>
+                    <div className="flex items-end justify-between mt-3">
+                      <span className="text-sm font-semibold tracking-wide text-slate-700">{formatServicePrice(service.price)}</span>
+                      <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                    </div>
+                  </div>
+                </article>
+              </Link>
+            ))}
+            <div className="snap-start flex-shrink-0 w-3 md:w-6" aria-hidden="true" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Minimal - Clean typography-first design
+  if (style === 'minimal') {
+    return (
+      <section className="py-12 md:py-16 px-3 md:px-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 pb-3 mb-8">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-light tracking-tight text-slate-900">{title}</h2>
+            {showViewAll && (
+              <Link href="/services" className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors">
+                Xem tất cả <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            )}
+          </div>
+          {/* Minimal Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {services.slice(0, 6).map((service, idx) => (
+              <Link key={service._id} href={`/services/${service.slug}`} className="group">
+                <article className="cursor-pointer">
+                  {/* Image - More minimal, rounded corners */}
+                  <div className="relative overflow-hidden bg-slate-100 rounded-2xl aspect-[3/2] mb-5">
+                    {service.thumbnail ? (
+                      <img src={service.thumbnail} alt={service.title} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><Briefcase size={40} className="text-slate-300" /></div>
+                    )}
+                    {idx < 2 && <div className="absolute top-3 left-3"><ServiceBadge isHot={idx === 0} isNew={idx === 1} brandColor={brandColor} /></div>}
+                  </div>
+                  {/* Content - Typography focused */}
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-lg text-slate-900 leading-snug group-hover:text-slate-600 transition-colors line-clamp-2">{service.title}</h3>
+                    {service.excerpt && <p className="text-sm text-slate-500 line-clamp-2">{stripHtml(service.excerpt)}</p>}
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-base font-semibold text-slate-800">{formatServicePrice(service.price)}</span>
+                      <span className="text-sm text-slate-400 group-hover:text-slate-600 transition-colors flex items-center gap-1">
+                        Chi tiết <ArrowUpRight className="w-4 h-4" />
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Showcase - Featured large item + grid of smaller items (default fallback)
+  const featuredService = services[0];
+  const otherServices = services.slice(1, 5);
+  
   return (
-    <section className="py-12 md:py-16">
+    <section className="py-12 md:py-16 px-3 md:px-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 pb-3 mb-6 px-3 md:px-6">
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-light tracking-tight text-slate-900">
-            {title}
-          </h2>
+        <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 pb-3 mb-8">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-light tracking-tight text-slate-900">{title}</h2>
           {showViewAll && (
-            <Link 
-              href="/services" 
-              className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors"
-            >
-              Xem tất cả 
-              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            <Link href="/services" className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors">
+              Xem tất cả <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Link>
           )}
         </div>
         
-        {/* Carousel Container */}
-        <div 
-          className="flex gap-4 overflow-x-auto pb-4 px-3 md:px-6 snap-x snap-mandatory scroll-smooth"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
-        >
-          {services.slice(0, 8).map((service, idx) => (
-            <Link 
-              key={service._id} 
-              href={`/services/${service.slug}`}
-              className="snap-start flex-shrink-0 w-[75vw] sm:w-[280px]"
-            >
-              <article className="group cursor-pointer relative bg-white flex flex-col hover:-translate-y-1 transition-all duration-300 h-full">
-                {/* Badge */}
-                {idx < 2 && (
-                  <div className="absolute z-20 top-3 left-3">
-                    <ServiceBadge isHot={idx === 0} isNew={idx === 1} />
-                  </div>
+        {/* Showcase Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Featured Large Item */}
+          {featuredService && (
+            <Link href={`/services/${featuredService.slug}`} className="lg:row-span-2 group">
+              <article className="cursor-pointer relative rounded-2xl overflow-hidden h-full min-h-[300px] lg:min-h-[500px]">
+                {featuredService.thumbnail ? (
+                  <img src={featuredService.thumbnail} alt={featuredService.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
+                ) : (
+                  <div className="absolute inset-0 w-full h-full bg-slate-100 flex items-center justify-center"><Briefcase size={64} className="text-slate-300" /></div>
                 )}
-
-                {/* Image Container */}
-                <div className="relative overflow-hidden bg-slate-100 mb-3 rounded-lg aspect-[4/3] w-full">
-                  {service.thumbnail ? (
-                    <img 
-                      src={service.thumbnail} 
-                      alt={service.title}
-                      draggable={false}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Briefcase size={32} className="text-slate-300" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="flex flex-col justify-between flex-shrink-0 pt-1">
-                  <h3 className="font-medium text-base text-slate-900 leading-tight group-hover:opacity-70 transition-colors line-clamp-2">
-                    {service.title}
-                  </h3>
-
-                  <div className="flex items-end justify-between mt-3">
-                    <span className="text-sm font-semibold tracking-wide text-slate-700">
-                      {formatServicePrice(service.price)}
-                    </span>
-                    <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute top-4 left-4"><ServiceBadge isHot={true} brandColor={brandColor} /></div>
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <span className="text-xs text-white/70 uppercase tracking-wider font-medium">Dịch vụ nổi bật</span>
+                  <h3 className="text-xl md:text-2xl font-semibold text-white mt-2 leading-tight line-clamp-2">{featuredService.title}</h3>
+                  {featuredService.excerpt && <p className="text-sm text-white/80 mt-2 line-clamp-2">{stripHtml(featuredService.excerpt)}</p>}
+                  <div className="flex items-center justify-between mt-4">
+                    <span className="text-lg font-semibold text-white">{formatServicePrice(featuredService.price)}</span>
+                    <span className="px-4 py-2 text-white text-sm font-medium rounded-lg" style={{ backgroundColor: brandColor }}>Xem chi tiết</span>
                   </div>
                 </div>
               </article>
             </Link>
-          ))}
-          {/* Spacer at end for last item visibility */}
-          <div className="snap-start flex-shrink-0 w-3 md:w-6" aria-hidden="true" />
+          )}
+          
+          {/* Right Grid - 2x2 */}
+          <div className="lg:col-span-2 grid grid-cols-2 gap-3">
+            {otherServices.map((service, idx) => (
+              <Link key={service._id} href={`/services/${service.slug}`} className="group">
+                <article className="cursor-pointer bg-white border border-slate-200/50 rounded-xl p-3 hover:shadow-md hover:border-slate-300 transition-all h-full">
+                  <div className="relative overflow-hidden bg-slate-100 rounded-lg aspect-[4/3] mb-3">
+                    {service.thumbnail ? (
+                      <img src={service.thumbnail} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><Briefcase size={28} className="text-slate-300" /></div>
+                    )}
+                    {idx === 0 && <div className="absolute top-2 left-2"><ServiceBadge isNew={true} brandColor={brandColor} /></div>}
+                  </div>
+                  <h4 className="font-medium text-sm text-slate-900 line-clamp-1 group-hover:text-slate-600 transition-colors">{service.title}</h4>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-sm font-semibold text-slate-700">{formatServicePrice(service.price)}</span>
+                    <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </article>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -2481,8 +2481,8 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
 };
 
 // ============ SERVICE LIST PREVIEW ============
-// Luxury Services Gallery UI/UX - 4 Variants from luxury-services-gallery
-export type ServiceListStyle = 'grid' | 'bento' | 'list' | 'carousel';
+// Luxury Services Gallery UI/UX - 6 Variants (added minimal & showcase)
+export type ServiceListStyle = 'grid' | 'bento' | 'list' | 'carousel' | 'minimal' | 'showcase';
 export interface ServiceListPreviewItem {
   id: string | number;
   name: string;
@@ -2492,9 +2492,19 @@ export interface ServiceListPreviewItem {
   tag?: 'new' | 'hot';
 }
 
-// Badge component for service tags (monochromatic style)
-const ServiceBadge = ({ tag }: { tag?: 'new' | 'hot' }) => {
+// Badge component for service tags (uses brandColor for hot)
+const ServiceBadge = ({ tag, brandColor }: { tag?: 'new' | 'hot'; brandColor?: string }) => {
   if (!tag) return null;
+  if (tag === 'hot' && brandColor) {
+    return (
+      <span 
+        className="inline-flex items-center rounded-sm px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-white"
+        style={{ backgroundColor: brandColor }}
+      >
+        Hot
+      </span>
+    );
+  }
   return (
     <span className={cn(
       "inline-flex items-center rounded-sm px-2 py-1 text-[10px] font-medium uppercase tracking-widest transition-colors",
@@ -2533,7 +2543,9 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
     { id: 'grid', label: 'Grid' }, 
     { id: 'bento', label: 'Bento' }, 
     { id: 'list', label: 'List' }, 
-    { id: 'carousel', label: 'Carousel' }
+    { id: 'carousel', label: 'Carousel' },
+    { id: 'minimal', label: 'Minimal' },
+    { id: 'showcase', label: 'Showcase' }
   ];
   const title = 'Dịch vụ';
   
@@ -2579,7 +2591,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
             {/* Badge */}
             {item.tag && (
               <div className="absolute z-20 top-3 left-3">
-                <ServiceBadge tag={item.tag} />
+                <ServiceBadge tag={item.tag} brandColor={brandColor} />
               </div>
             )}
 
@@ -2643,7 +2655,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                 <div className="h-full border border-slate-200/40 dark:border-slate-700 rounded-xl p-3 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all flex flex-col">
                   {item.tag && (
                     <div className="absolute z-20 top-4 left-4">
-                      <ServiceBadge tag={item.tag} />
+                      <ServiceBadge tag={item.tag} brandColor={brandColor} />
                     </div>
                   )}
                   <div className="flex-1 rounded-md overflow-hidden bg-slate-100 dark:bg-slate-700 min-h-[80px] mb-2">
@@ -2681,7 +2693,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                   <div className="h-full border border-slate-200/40 dark:border-slate-700 rounded-xl p-4 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all flex flex-col cursor-pointer">
                     {item.tag && (
                       <div className="absolute z-20 top-6 left-6">
-                        <ServiceBadge tag={item.tag} />
+                        <ServiceBadge tag={item.tag} brandColor={brandColor} />
                       </div>
                     )}
                     
@@ -2785,7 +2797,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
             <div className="py-1 flex-1">
               {item.tag && (
                 <div className="mb-1">
-                  <ServiceBadge tag={item.tag} />
+                  <ServiceBadge tag={item.tag} brandColor={brandColor} />
                 </div>
               )}
               <h3 className="font-medium text-base md:text-lg text-slate-900 dark:text-slate-100 leading-tight group-hover:opacity-70 transition-colors">
@@ -2835,7 +2847,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
               {/* Badge */}
               {item.tag && (
                 <div className="absolute z-20 top-3 left-3">
-                  <ServiceBadge tag={item.tag} />
+                  <ServiceBadge tag={item.tag} brandColor={brandColor} />
                 </div>
               )}
 
@@ -2877,6 +2889,151 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
     </section>
   );
 
+  // Style 5: Minimal - Clean typography-first design with subtle cards
+  const renderMinimalStyle = () => (
+    <section className="py-6 md:py-8 px-3 md:px-6">
+      {/* Header */}
+      <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 dark:border-slate-700/40 pb-3 mb-6">
+        <h2 className="text-xl md:text-2xl font-light tracking-tight text-slate-900 dark:text-slate-100">
+          {title}
+        </h2>
+        <button className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+          Xem tất cả 
+          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+        </button>
+      </div>
+      {/* Minimal Grid */}
+      <div className={cn(
+        "grid gap-6",
+        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+      )}>
+        {displayItems.slice(0, device === 'mobile' ? 3 : 6).map((item) => (
+          <div key={item.id} className="group cursor-pointer">
+            {/* Image - More minimal, rounded corners */}
+            <div className="relative overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-2xl aspect-[3/2] mb-4">
+              {item.image ? (
+                <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Briefcase size={40} className="text-slate-300 dark:text-slate-600" />
+                </div>
+              )}
+              {item.tag && (
+                <div className="absolute top-3 left-3">
+                  <ServiceBadge tag={item.tag} brandColor={brandColor} />
+                </div>
+              )}
+            </div>
+            {/* Content - Typography focused */}
+            <div className="space-y-2">
+              <h3 className="font-medium text-lg text-slate-900 dark:text-slate-100 leading-snug group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
+                {item.name}
+              </h3>
+              {item.description && (
+                <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{item.description}</p>
+              )}
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-base font-semibold text-slate-800 dark:text-slate-200">{formatServicePrice(item.price)}</span>
+                <span className="text-sm text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors flex items-center gap-1">
+                  Chi tiết <ArrowUpRight className="w-4 h-4" />
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+
+  // Style 6: Showcase - Featured large item + grid of smaller items
+  const renderShowcaseStyle = () => {
+    const featuredItem = displayItems[0];
+    const otherItems = displayItems.slice(1, 5);
+    return (
+      <section className="py-6 md:py-8 px-3 md:px-6">
+        {/* Header */}
+        <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 dark:border-slate-700/40 pb-3 mb-6">
+          <h2 className="text-xl md:text-2xl font-light tracking-tight text-slate-900 dark:text-slate-100">{title}</h2>
+          <button className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
+            Xem tất cả <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </button>
+        </div>
+        {/* Showcase Layout */}
+        {device === 'mobile' ? (
+          <div className="space-y-4">
+            {featuredItem && (
+              <div className="group cursor-pointer relative rounded-2xl overflow-hidden aspect-[4/3]">
+                {featuredItem.image ? (
+                  <img src={featuredItem.image} alt={featuredItem.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center"><Briefcase size={48} className="text-slate-300" /></div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                {featuredItem.tag && <div className="absolute top-3 left-3"><ServiceBadge tag={featuredItem.tag} brandColor={brandColor} /></div>}
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <span className="text-xs text-white/70 uppercase tracking-wider">Nổi bật</span>
+                  <h3 className="text-lg font-semibold text-white mt-1">{featuredItem.name}</h3>
+                  <span className="text-sm font-medium text-white/90 mt-1 block">{formatServicePrice(featuredItem.price)}</span>
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              {otherItems.map((item) => (
+                <div key={item.id} className="group cursor-pointer">
+                  <div className="relative overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-xl aspect-square mb-2">
+                    {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Briefcase size={24} className="text-slate-300" /></div>}
+                  </div>
+                  <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 line-clamp-1">{item.name}</h4>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">{formatServicePrice(item.price)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className={cn("grid gap-4", device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+            {featuredItem && (
+              <div className={cn("group cursor-pointer relative rounded-2xl overflow-hidden", device === 'desktop' ? 'row-span-2' : 'col-span-1')}>
+                <div className="h-full min-h-[400px]">
+                  {featuredItem.image ? (
+                    <img src={featuredItem.image} alt={featuredItem.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  ) : (
+                    <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center"><Briefcase size={64} className="text-slate-300" /></div>
+                  )}
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                {featuredItem.tag && <div className="absolute top-4 left-4"><ServiceBadge tag={featuredItem.tag} brandColor={brandColor} /></div>}
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <span className="text-xs text-white/70 uppercase tracking-wider font-medium">Dịch vụ nổi bật</span>
+                  <h3 className="text-xl md:text-2xl font-semibold text-white mt-2 leading-tight">{featuredItem.name}</h3>
+                  {featuredItem.description && <p className="text-sm text-white/80 mt-2 line-clamp-2">{featuredItem.description}</p>}
+                  <div className="flex items-center justify-between mt-4">
+                    <span className="text-lg font-semibold text-white">{formatServicePrice(featuredItem.price)}</span>
+                    <button className="px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors" style={{ backgroundColor: brandColor }}>Xem chi tiết</button>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className={cn("grid gap-3", device === 'desktop' ? 'col-span-2 grid-cols-2' : 'grid-cols-2')}>
+              {otherItems.map((item) => (
+                <div key={item.id} className="group cursor-pointer bg-white dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700 rounded-xl p-3 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all">
+                  <div className="relative overflow-hidden bg-slate-100 dark:bg-slate-700 rounded-lg aspect-[4/3] mb-3">
+                    {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center"><Briefcase size={28} className="text-slate-300" /></div>}
+                    {item.tag && <div className="absolute top-2 left-2"><ServiceBadge tag={item.tag} brandColor={brandColor} /></div>}
+                  </div>
+                  <h4 className="font-medium text-sm text-slate-900 dark:text-slate-100 line-clamp-1 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">{item.name}</h4>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{formatServicePrice(item.price)}</span>
+                    <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  };
+
   return (
     <PreviewWrapper title="Preview Dịch vụ" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`${displayItems.length} dịch vụ`}>
       <BrowserFrame url="yoursite.com/services">
@@ -2884,6 +3041,8 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
         {previewStyle === 'bento' && renderBentoStyle()}
         {previewStyle === 'list' && renderListStyle()}
         {previewStyle === 'carousel' && renderCarouselStyle()}
+        {previewStyle === 'minimal' && renderMinimalStyle()}
+        {previewStyle === 'showcase' && renderShowcaseStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );
