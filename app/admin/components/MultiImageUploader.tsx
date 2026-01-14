@@ -196,8 +196,10 @@ export function MultiImageUploader<T extends ImageItem>({
     // If there's exactly 1 item with no image, upload first file to it
     const firstEmptyItem = items.find(item => !item[imageKey]);
     if (firstEmptyItem && filesToUpload.length > 0) {
-      await handleFileUpload(firstEmptyItem.id, filesToUpload[0]);
-      // Upload remaining files as new items
+      // Start uploading first file to empty item (don't await)
+      const firstUploadPromise = handleFileUpload(firstEmptyItem.id, filesToUpload[0]);
+      
+      // Upload remaining files as new items in parallel
       const remainingFiles = filesToUpload.slice(1);
       if (remainingFiles.length > 0) {
         const remainingSlots = maxItems - items.length;
@@ -205,18 +207,20 @@ export function MultiImageUploader<T extends ImageItem>({
         
         if (filesToAdd.length > 0) {
           const newItems: T[] = filesToAdd.map((_, index) => ({
-            id: `new-${Date.now()}-${index}`,
+            id: `new-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 4)}`,
             [imageKey]: '',
           } as unknown as T));
 
           const updatedItems = [...items, ...newItems];
           onChange(updatedItems);
 
-          for (let i = 0; i < filesToAdd.length; i++) {
-            await handleFileUpload(newItems[i].id, filesToAdd[i]);
-          }
+          // Upload all in parallel using Promise.all
+          const uploadPromises = filesToAdd.map((file, i) => handleFileUpload(newItems[i].id, file));
+          await Promise.all([firstUploadPromise, ...uploadPromises]);
+          return;
         }
       }
+      await firstUploadPromise;
       return;
     }
 
@@ -234,16 +238,15 @@ export function MultiImageUploader<T extends ImageItem>({
     }
 
     const newItems: T[] = filesToAdd.map((_, index) => ({
-      id: `new-${Date.now()}-${index}`,
+      id: `new-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 4)}`,
       [imageKey]: '',
     } as unknown as T));
 
     const updatedItems = [...items, ...newItems];
     onChange(updatedItems);
 
-    for (let i = 0; i < filesToAdd.length; i++) {
-      await handleFileUpload(newItems[i].id, filesToAdd[i]);
-    }
+    // Upload all files in parallel using Promise.all
+    await Promise.all(filesToAdd.map((file, i) => handleFileUpload(newItems[i].id, file)));
   }, [items, maxItems, imageKey, onChange, handleFileUpload]);
 
   const handleDragEnter = useCallback((e: DragEvent) => {
