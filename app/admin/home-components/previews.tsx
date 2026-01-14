@@ -7867,13 +7867,13 @@ export const CareerPreview = ({ jobs, brandColor, selectedStyle, onStyleChange }
       );
     }
 
-    // Group jobs by department
-    const groupedJobs = jobs.reduce((acc, job) => {
+    // Group jobs by department with global index tracking
+    const groupedJobs = jobs.reduce((acc, job, globalIdx) => {
       const dept = job.department || 'Đang cập nhật';
       if (!acc[dept]) acc[dept] = [];
-      acc[dept].push(job);
+      acc[dept].push({ ...job, globalIdx: globalIdx + 1 }); // Track global 1-based index
       return acc;
-    }, {} as Record<string, JobPosition[]>);
+    }, {} as Record<string, (JobPosition & { globalIdx: number })[]>);
 
     return (
       <div className={cn("px-4", device === 'mobile' ? 'py-6' : 'py-10 md:py-16')}>
@@ -7885,12 +7885,12 @@ export const CareerPreview = ({ jobs, brandColor, selectedStyle, onStyleChange }
           <div className="space-y-8">
             {Object.entries(groupedJobs).map(([department, deptJobs], deptIdx) => (
               <div key={deptIdx} className={cn("relative", device === 'mobile' ? 'pl-12' : 'pl-16')}>
-                {/* Department Dot */}
+                {/* Department Badge - shows department name initial */}
                 <div 
-                  className={cn("absolute rounded-full border-4 bg-white dark:bg-slate-900 flex items-center justify-center font-bold text-white z-10", device === 'mobile' ? 'w-8 h-8 left-0 text-xs' : 'w-12 h-12 left-0 text-sm')} 
-                  style={{ borderColor: brandColor, backgroundColor: brandColor }}
+                  className={cn("absolute rounded-full border-4 bg-white dark:bg-slate-900 flex items-center justify-center font-bold z-10", device === 'mobile' ? 'w-8 h-8 left-0 text-xs' : 'w-12 h-12 left-0 text-sm')} 
+                  style={{ borderColor: brandColor, color: brandColor }}
                 >
-                  {deptJobs.length}
+                  {department.charAt(0).toUpperCase()}
                 </div>
                 
                 {/* Department Content */}
@@ -7905,9 +7905,20 @@ export const CareerPreview = ({ jobs, brandColor, selectedStyle, onStyleChange }
                           className="bg-white dark:bg-slate-800 rounded-xl border p-4 transition-all hover:shadow-md"
                           style={{ borderColor: `${brandColor}15` }}
                         >
-                          <div className="flex items-start justify-between mb-2">
-                            <h5 className="font-semibold text-slate-900 dark:text-slate-100 flex-1 line-clamp-2 pr-2">{job.title || 'Vị trí'}</h5>
-                            <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{job.type || 'Full-time'}</span>
+                          <div className="flex items-start gap-3 mb-2">
+                            {/* Job number badge */}
+                            <div 
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5" 
+                              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                            >
+                              {job.globalIdx}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <h5 className="font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 flex-1">{job.title || 'Vị trí'}</h5>
+                                <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{job.type || 'Full-time'}</span>
+                              </div>
+                            </div>
                           </div>
                           <div className="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400 mb-3">
                             <div className="flex items-center gap-1">
@@ -8837,15 +8848,32 @@ export const SpeedDialPreview = ({
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || config.style || 'fab';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as SpeedDialStyle);
-  const alwaysOpen = config.alwaysOpen ?? true;
   
+  // BẮT BUỘC 6 styles theo Best Practice
   const styles = [
     { id: 'fab', label: 'FAB' },
     { id: 'sidebar', label: 'Sidebar' },
     { id: 'pills', label: 'Pills' },
+    { id: 'stack', label: 'Stack' },
+    { id: 'dock', label: 'Dock' },
+    { id: 'minimal', label: 'Minimal' },
   ];
 
   const isRight = config.position !== 'bottom-left';
+  const isMobile = device === 'mobile';
+  const isTablet = device === 'tablet';
+  const iconSize = isMobile ? 16 : 18;
+  const gap = isMobile ? 'gap-2' : 'gap-2.5';
+
+  // Empty State
+  const renderEmptyState = () => (
+    <div className={cn("absolute flex flex-col items-center justify-center", isRight ? "right-4 bottom-4" : "left-4 bottom-4")}>
+      <div className="w-14 h-14 rounded-full flex items-center justify-center mb-2 opacity-40" style={{ backgroundColor: `${brandColor}20` }}>
+        <Plus size={24} style={{ color: brandColor }} />
+      </div>
+      <p className="text-xs text-slate-400 text-center max-w-[100px]">Thêm hành động</p>
+    </div>
+  );
 
   // Style 1: FAB - Floating Action Buttons (vertical stack)
   const renderFabStyle = () => (

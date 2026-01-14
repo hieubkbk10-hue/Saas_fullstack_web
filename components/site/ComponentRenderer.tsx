@@ -4587,12 +4587,12 @@ function CareerSection({ config, brandColor, title }: { config: Record<string, u
   }
 
   // Style 6: Timeline - Grouped by department
-  const groupedJobs = jobs.reduce((acc, job) => {
+  const groupedJobs = jobs.reduce((acc, job, globalIdx) => {
     const dept = job.department || 'Đang cập nhật';
     if (!acc[dept]) acc[dept] = [];
-    acc[dept].push(job);
+    acc[dept].push({ ...job, globalIdx: globalIdx + 1 });
     return acc;
-  }, {} as Record<string, typeof jobs>);
+  }, {} as Record<string, (typeof jobs[0] & { globalIdx: number })[]>);
 
   return (
     <section className="py-16 px-4">
@@ -4608,12 +4608,12 @@ function CareerSection({ config, brandColor, title }: { config: Record<string, u
           <div className="space-y-8">
             {Object.entries(groupedJobs).map(([department, deptJobs], deptIdx) => (
               <div key={deptIdx} className="relative pl-16">
-                {/* Department badge */}
+                {/* Department badge - shows first letter */}
                 <div 
-                  className="absolute left-0 w-12 h-12 rounded-full border-4 bg-white flex items-center justify-center font-bold text-white text-sm z-10" 
-                  style={{ borderColor: brandColor, backgroundColor: brandColor }}
+                  className="absolute left-0 w-12 h-12 rounded-full border-4 bg-white flex items-center justify-center font-bold text-sm z-10" 
+                  style={{ borderColor: brandColor, color: brandColor }}
                 >
-                  {deptJobs.length}
+                  {department.charAt(0).toUpperCase()}
                 </div>
                 
                 <div>
@@ -4626,9 +4626,20 @@ function CareerSection({ config, brandColor, title }: { config: Record<string, u
                         <article 
                           className="bg-white rounded-xl border border-slate-200 p-4 transition-all hover:shadow-md"
                         >
-                          <div className="flex items-start justify-between mb-2">
-                            <h5 className="font-semibold text-slate-900 flex-1 line-clamp-2 pr-2">{job.title || 'Vị trí'}</h5>
-                            <span className="text-xs text-slate-500 whitespace-nowrap">{job.type || 'Full-time'}</span>
+                          <div className="flex items-start gap-3 mb-2">
+                            {/* Job number badge */}
+                            <div 
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5" 
+                              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                            >
+                              {job.globalIdx}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <h5 className="font-semibold text-slate-900 line-clamp-2 flex-1">{job.title || 'Vị trí'}</h5>
+                                <span className="text-xs text-slate-500 whitespace-nowrap">{job.type || 'Full-time'}</span>
+                              </div>
+                            </div>
                           </div>
                           <div className="flex flex-wrap gap-3 text-xs text-slate-500 mb-3">
                             <div className="flex items-center gap-1">
