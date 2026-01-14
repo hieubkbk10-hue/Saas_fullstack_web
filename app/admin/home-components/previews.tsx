@@ -944,7 +944,8 @@ export const StatsPreview = ({ items, brandColor, selectedStyle, onStyleChange }
 // ============ FAQ PREVIEW ============
 type FaqItem = { id: number; question: string; answer: string };
 export type FaqStyle = 'accordion' | 'cards' | 'two-column' | 'minimal' | 'timeline' | 'tabbed';
-export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: FaqItem[]; brandColor: string; selectedStyle?: FaqStyle; onStyleChange?: (style: FaqStyle) => void }) => {
+export type FaqConfig = { description?: string; buttonText?: string; buttonLink?: string };
+export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange, config }: { items: FaqItem[]; brandColor: string; selectedStyle?: FaqStyle; onStyleChange?: (style: FaqStyle) => void; config?: FaqConfig }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'accordion';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as FaqStyle);
@@ -1102,7 +1103,7 @@ export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange }: 
     </div>
   );
 
-  // Style 3: Two Column
+  // Style 3: Two Column - with configurable CTA button
   const renderTwoColumnStyle = () => (
     <div className={cn("py-10 px-4", device === 'mobile' && 'py-6 px-3')}>
       <div className={cn("max-w-5xl mx-auto", device === 'mobile' ? 'space-y-6' : 'grid grid-cols-5 gap-10')}>
@@ -1111,14 +1112,17 @@ export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange }: 
             Câu hỏi thường gặp
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-5 leading-relaxed">
-            Tìm câu trả lời cho các thắc mắc phổ biến của bạn
+            {config?.description || 'Tìm câu trả lời cho các thắc mắc phổ biến của bạn'}
           </p>
-          <button 
-            className={cn("rounded-lg text-white font-medium transition-all", device === 'mobile' ? 'px-4 py-2.5 text-sm min-h-[44px]' : 'px-5 py-2.5')}
-            style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}30` }}
-          >
-            Liên hệ hỗ trợ
-          </button>
+          {config?.buttonText && (
+            <a 
+              href={config?.buttonLink || '#'}
+              className={cn("inline-block rounded-lg text-white font-medium transition-all", device === 'mobile' ? 'px-4 py-2.5 text-sm min-h-[44px]' : 'px-5 py-2.5')}
+              style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}30` }}
+            >
+              {config.buttonText}
+            </a>
+          )}
         </div>
         <div className={cn("space-y-4", device === 'mobile' ? '' : 'col-span-3')}>
           {visibleItems.slice(0, device === 'mobile' ? 3 : 5).map((item, idx) => (

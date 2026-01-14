@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2, GripVertical, HelpCircle } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { FaqPreview, type FaqStyle } from '../../previews';
+import { FaqPreview, type FaqStyle, type FaqConfig } from '../../previews';
 
 export default function FaqCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Câu hỏi thường gặp', 'FAQ');
@@ -15,6 +15,13 @@ export default function FaqCreatePage() {
     { id: 2, question: 'Chính sách đổi trả ra sao?', answer: 'Chúng tôi hỗ trợ đổi trả trong vòng 30 ngày.' }
   ]);
   const [style, setStyle] = useState<FaqStyle>('accordion');
+  
+  // Config for two-column style
+  const [faqConfig, setFaqConfig] = useState<FaqConfig>({
+    description: 'Tìm câu trả lời cho các thắc mắc phổ biến của bạn',
+    buttonText: 'Liên hệ hỗ trợ',
+    buttonLink: '/lien-he'
+  });
 
   // Drag & Drop state
   const [draggedId, setDraggedId] = useState<number | null>(null);
@@ -44,7 +51,11 @@ export default function FaqCreatePage() {
   });
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { items: faqItems.map(f => ({ question: f.question, answer: f.answer })), style });
+    handleSubmit(e, { 
+      items: faqItems.map(f => ({ question: f.question, answer: f.answer })), 
+      style,
+      ...faqConfig
+    });
   };
 
   return (
@@ -120,7 +131,45 @@ export default function FaqCreatePage() {
         </CardContent>
       </Card>
 
-      <FaqPreview items={faqItems} brandColor={brandColor} selectedStyle={style} onStyleChange={setStyle} />
+      {/* Config cho style 2 Cột */}
+      {style === 'two-column' && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-base">Cấu hình style 2 Cột</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="text-sm mb-1.5 block">Mô tả ngắn</Label>
+              <Input 
+                placeholder="Tìm câu trả lời cho các thắc mắc phổ biến của bạn" 
+                value={faqConfig.description || ''} 
+                onChange={(e) => setFaqConfig({...faqConfig, description: e.target.value})} 
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm mb-1.5 block">Nút CTA - Text</Label>
+                <Input 
+                  placeholder="Liên hệ hỗ trợ" 
+                  value={faqConfig.buttonText || ''} 
+                  onChange={(e) => setFaqConfig({...faqConfig, buttonText: e.target.value})} 
+                />
+              </div>
+              <div>
+                <Label className="text-sm mb-1.5 block">Nút CTA - Link</Label>
+                <Input 
+                  placeholder="/lien-he" 
+                  value={faqConfig.buttonLink || ''} 
+                  onChange={(e) => setFaqConfig({...faqConfig, buttonLink: e.target.value})} 
+                />
+              </div>
+            </div>
+            <p className="text-xs text-slate-500">Để trống nút CTA nếu không muốn hiển thị</p>
+          </CardContent>
+        </Card>
+      )}
+
+      <FaqPreview items={faqItems} brandColor={brandColor} selectedStyle={style} onStyleChange={setStyle} config={faqConfig} />
     </ComponentFormWrapper>
   );
 }

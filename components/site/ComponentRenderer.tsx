@@ -1338,6 +1338,9 @@ type FaqStyle = 'accordion' | 'cards' | 'two-column' | 'minimal' | 'timeline' | 
 function FAQSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ question: string; answer: string }>) || [];
   const style = (config.style as FaqStyle) || 'accordion';
+  const description = (config.description as string) || '';
+  const buttonText = (config.buttonText as string) || '';
+  const buttonLink = (config.buttonLink as string) || '';
   const [openIndex, setOpenIndex] = React.useState<number | null>(0);
   const [activeTab, setActiveTab] = React.useState(0);
 
@@ -1469,7 +1472,7 @@ function FAQSection({ config, brandColor, title }: { config: Record<string, unkn
     );
   }
 
-  // Style 3: Two Column
+  // Style 3: Two Column - with configurable CTA
   if (style === 'two-column') {
     return (
       <section className="py-12 md:py-16 px-4">
@@ -1478,13 +1481,16 @@ function FAQSection({ config, brandColor, title }: { config: Record<string, unkn
           <div className="grid md:grid-cols-5 gap-8 md:gap-12">
             <div className="md:col-span-2">
               <h2 className="text-2xl md:text-3xl font-bold mb-4 text-slate-900" style={{ color: brandColor }}>{title}</h2>
-              <p className="text-slate-500 mb-6 leading-relaxed">Tìm câu trả lời cho các thắc mắc phổ biến của bạn</p>
-              <button 
-                className="px-6 py-3 min-h-[44px] rounded-lg text-white font-medium transition-all" 
-                style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}30` }}
-              >
-                Liên hệ hỗ trợ
-              </button>
+              <p className="text-slate-500 mb-6 leading-relaxed">{description || 'Tìm câu trả lời cho các thắc mắc phổ biến của bạn'}</p>
+              {buttonText && (
+                <a 
+                  href={buttonLink || '#'}
+                  className="inline-block px-6 py-3 min-h-[44px] rounded-lg text-white font-medium transition-all" 
+                  style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}30` }}
+                >
+                  {buttonText}
+                </a>
+              )}
             </div>
             <div className="md:col-span-3 space-y-5">
               {items.map((item, idx) => (

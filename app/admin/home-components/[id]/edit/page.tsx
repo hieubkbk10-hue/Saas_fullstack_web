@@ -143,6 +143,9 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [ctaStyle, setCtaStyle] = useState<CTAStyle>('banner');
   const [faqItems, setFaqItems] = useState<{id: number, question: string, answer: string}[]>([]);
   const [faqStyle, setFaqStyle] = useState<FaqStyle>('accordion');
+  const [faqConfig, setFaqConfig] = useState<{description?: string, buttonText?: string, buttonLink?: string}>({
+    description: '', buttonText: '', buttonLink: ''
+  });
   const [aboutConfig, setAboutConfig] = useState({ style: 'bento' as AboutStyle, subHeading: '', heading: '', description: '', image: '', buttonText: '', buttonLink: '', stats: [] as {id: number, value: string, label: string}[] });
   const [footerConfig, setFooterConfig] = useState({
     logo: '',
@@ -319,6 +322,11 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         case 'FAQ':
           setFaqItems(config.items?.map((item: {question: string, answer: string}, i: number) => ({ id: i, question: item.question, answer: item.answer })) || [{ id: 1, question: '', answer: '' }]);
           setFaqStyle((config.style as FaqStyle) || 'accordion');
+          setFaqConfig({
+            description: config.description || '',
+            buttonText: config.buttonText || '',
+            buttonLink: config.buttonLink || ''
+          });
           break;
         case 'About':
           setAboutConfig({ 
@@ -516,7 +524,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
       case 'CTA':
         return { ...ctaConfig, style: ctaStyle };
       case 'FAQ':
-        return { items: faqItems.map(f => ({ question: f.question, answer: f.answer })), style: faqStyle };
+        return { items: faqItems.map(f => ({ question: f.question, answer: f.answer })), style: faqStyle, ...faqConfig };
       case 'About':
         return aboutConfig;
       case 'Footer':
@@ -927,6 +935,8 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
             faqStyle={faqStyle}
             setFaqStyle={setFaqStyle}
             brandColor={brandColor}
+            faqConfig={faqConfig}
+            setFaqConfig={setFaqConfig}
           />
         )}
 
@@ -3320,14 +3330,17 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
 
 // FAQ Edit Section with Drag & Drop
 type FaqItem = { id: number; question: string; answer: string };
+type FaqConfigType = { description?: string; buttonText?: string; buttonLink?: string };
 function FaqEditSection({ 
-  faqItems, setFaqItems, faqStyle, setFaqStyle, brandColor 
+  faqItems, setFaqItems, faqStyle, setFaqStyle, brandColor, faqConfig, setFaqConfig
 }: { 
   faqItems: FaqItem[]; 
   setFaqItems: (items: FaqItem[]) => void; 
   faqStyle: FaqStyle; 
   setFaqStyle: (style: FaqStyle) => void; 
   brandColor: string;
+  faqConfig: FaqConfigType;
+  setFaqConfig: (config: FaqConfigType) => void;
 }) {
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
@@ -3417,11 +3430,51 @@ function FaqEditSection({
           )}
         </CardContent>
       </Card>
+
+      {/* Config cho style 2 Cột */}
+      {faqStyle === 'two-column' && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-base">Cấu hình style 2 Cột</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="text-sm mb-1.5 block">Mô tả ngắn</Label>
+              <Input 
+                placeholder="Tìm câu trả lời cho các thắc mắc phổ biến của bạn" 
+                value={faqConfig.description || ''} 
+                onChange={(e) => setFaqConfig({...faqConfig, description: e.target.value})} 
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm mb-1.5 block">Nút CTA - Text</Label>
+                <Input 
+                  placeholder="Liên hệ hỗ trợ" 
+                  value={faqConfig.buttonText || ''} 
+                  onChange={(e) => setFaqConfig({...faqConfig, buttonText: e.target.value})} 
+                />
+              </div>
+              <div>
+                <Label className="text-sm mb-1.5 block">Nút CTA - Link</Label>
+                <Input 
+                  placeholder="/lien-he" 
+                  value={faqConfig.buttonLink || ''} 
+                  onChange={(e) => setFaqConfig({...faqConfig, buttonLink: e.target.value})} 
+                />
+              </div>
+            </div>
+            <p className="text-xs text-slate-500">Để trống nút CTA nếu không muốn hiển thị</p>
+          </CardContent>
+        </Card>
+      )}
+
       <FaqPreview 
         items={faqItems} 
         brandColor={brandColor}
         selectedStyle={faqStyle}
         onStyleChange={setFaqStyle}
+        config={faqConfig}
       />
     </>
   );
