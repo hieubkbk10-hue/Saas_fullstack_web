@@ -16,10 +16,17 @@ export default function VideoCreatePage() {
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [heading, setHeading] = useState('Khám phá sản phẩm của chúng tôi');
   const [description, setDescription] = useState('Xem video để hiểu rõ hơn về những gì chúng tôi mang lại');
+  const [badge, setBadge] = useState('');
+  const [buttonText, setButtonText] = useState('');
+  const [buttonLink, setButtonLink] = useState('');
   const [style, setStyle] = useState<VideoStyle>('centered');
   const [autoplay, setAutoplay] = useState(false);
   const [loop, setLoop] = useState(false);
   const [muted, setMuted] = useState(true);
+
+  // Styles that support CTA/Badge
+  const stylesWithCTA = ['split', 'fullwidth', 'cinema', 'minimal', 'parallax'];
+  const showCTAConfig = stylesWithCTA.includes(style);
 
   const onSubmit = (e: React.FormEvent) => {
     handleSubmit(e, { 
@@ -27,6 +34,9 @@ export default function VideoCreatePage() {
       thumbnailUrl,
       heading,
       description,
+      badge,
+      buttonText,
+      buttonLink,
       style,
       autoplay,
       loop,
@@ -120,6 +130,45 @@ export default function VideoCreatePage() {
         </CardContent>
       </Card>
 
+      {/* CTA Config - chỉ hiển thị cho styles hỗ trợ */}
+      {showCTAConfig && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-base">CTA & Badge</CardTitle>
+            <p className="text-xs text-slate-500 mt-1">Cấu hình cho style {style}</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Badge / Label</Label>
+              <Input 
+                value={badge} 
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBadge(e.target.value)} 
+                placeholder="VD: Video mới, Giới thiệu, Featured..."
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Nút CTA - Text</Label>
+                <Input 
+                  value={buttonText} 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setButtonText(e.target.value)} 
+                  placeholder="VD: Tìm hiểu thêm, Xem ngay..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nút CTA - Link</Label>
+                <Input 
+                  value={buttonLink} 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setButtonLink(e.target.value)} 
+                  placeholder="/lien-he hoặc https://..."
+                />
+              </div>
+            </div>
+            <p className="text-xs text-slate-500">Để trống nếu không muốn hiển thị nút CTA</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Video Options */}
       <Card className="mb-6">
         <CardHeader>
@@ -168,6 +217,9 @@ export default function VideoCreatePage() {
           thumbnailUrl,
           heading,
           description,
+          badge,
+          buttonText,
+          buttonLink,
           autoplay,
           loop,
           muted,

@@ -7442,11 +7442,108 @@ function ProcessSection({ config, brandColor, title }: { config: Record<string, 
     );
   }
 
-  // Style 4: Zigzag - Alternating layout với số lớn (default)
+  // Style 4: Zigzag - Alternating layout với số lớn
+  if (style === 'zigzag') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10 md:mb-14">
+            <div 
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
+              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+            >
+              Quy trình
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+          </div>
+          
+          <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+            {steps.map((step, idx) => {
+              const isEven = idx % 2 === 0;
+              return (
+                <div 
+                  key={idx} 
+                  className={`flex items-center gap-6 md:gap-8 ${!isEven ? 'md:flex-row-reverse' : ''}`}
+                >
+                  <div className="relative flex-shrink-0" style={{ minWidth: '80px' }}>
+                    <span 
+                      className="text-6xl md:text-7xl font-black leading-none"
+                      style={{ color: brandColor, opacity: 0.15 }}
+                    >
+                      {String(idx + 1).padStart(2, '0')}
+                    </span>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div 
+                        className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-white font-bold"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        {step.icon || idx + 1}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className={`flex-1 bg-slate-50 rounded-xl p-5 md:p-6 border border-slate-100 ${!isEven ? 'md:text-right' : ''}`}>
+                    <h3 className="font-bold text-base md:text-lg text-slate-900 mb-1 line-clamp-1">
+                      {step.title || `Bước ${idx + 1}`}
+                    </h3>
+                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Minimal - Compact list with subtle styling
+  if (style === 'minimal') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8 md:mb-10">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+            <p className="text-sm text-slate-500 mt-2">Đơn giản • Hiệu quả • Chuyên nghiệp</p>
+          </div>
+          
+          <div className="max-w-2xl mx-auto">
+            <div className="space-y-3">
+              {steps.map((step, idx) => (
+                <div 
+                  key={idx} 
+                  className="flex items-center gap-4 p-4 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+                >
+                  <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                    style={{ backgroundColor: brandColor }}
+                  >
+                    {step.icon || idx + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm text-slate-900 truncate">
+                      {step.title || `Bước ${idx + 1}`}
+                    </h3>
+                    <p className="text-xs text-slate-500 truncate">
+                      {step.description}
+                    </p>
+                  </div>
+                  <ArrowRight size={16} className="text-slate-300 flex-shrink-0" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Numbered - Big numbers with grid layout (default fallback)
   return (
     <section className="py-12 md:py-16 px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-10 md:mb-14">
           <div 
             className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
@@ -7457,47 +7554,33 @@ function ProcessSection({ config, brandColor, title }: { config: Record<string, 
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
         </div>
         
-        {/* Zigzag Steps */}
-        <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
-          {steps.map((step, idx) => {
-            const isEven = idx % 2 === 0;
-            return (
-              <div 
-                key={idx} 
-                className={`flex items-center gap-6 md:gap-8 ${!isEven ? 'md:flex-row-reverse' : ''}`}
-              >
-                {/* Big Number */}
-                <div className="relative flex-shrink-0" style={{ minWidth: '80px' }}>
-                  <span 
-                    className="text-6xl md:text-7xl font-black leading-none"
-                    style={{ color: brandColor, opacity: 0.15 }}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {steps.map((step, idx) => (
+            <div key={idx} className="text-center">
+              <div className="relative mb-4">
+                <span 
+                  className="text-7xl md:text-8xl font-black"
+                  style={{ color: brandColor, opacity: 0.1 }}
+                >
+                  {String(idx + 1).padStart(2, '0')}
+                </span>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div 
+                    className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center text-white font-bold text-lg"
+                    style={{ backgroundColor: brandColor, boxShadow: `0 4px 14px ${brandColor}40` }}
                   >
-                    {String(idx + 1).padStart(2, '0')}
-                  </span>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div 
-                      className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-white font-bold"
-                      style={{ backgroundColor: brandColor }}
-                    >
-                      {step.icon || idx + 1}
-                    </div>
+                    {step.icon || idx + 1}
                   </div>
                 </div>
-                
-                {/* Content */}
-                <div 
-                  className={`flex-1 bg-slate-50 rounded-xl p-5 md:p-6 border border-slate-100 ${!isEven ? 'md:text-right' : ''}`}
-                >
-                  <h3 className="font-bold text-base md:text-lg text-slate-900 mb-1">
-                    {step.title || `Bước ${idx + 1}`}
-                  </h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">
-                    {step.description}
-                  </p>
-                </div>
               </div>
-            );
-          })}
+              <h3 className="font-bold text-base md:text-lg text-slate-900 mb-2 line-clamp-1">
+                {step.title || `Bước ${idx + 1}`}
+              </h3>
+              <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">
+                {step.description}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -7846,10 +7929,10 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
 }
 
 // ============ VIDEO SECTION ============
-// 3 Styles: centered, split, fullwidth
+// 6 Styles: centered, split, fullwidth, cinema, minimal, parallax
 import { Play, Video as VideoIcon } from 'lucide-react';
 
-type VideoStyle = 'centered' | 'split' | 'fullwidth';
+type VideoStyle = 'centered' | 'split' | 'fullwidth' | 'cinema' | 'minimal' | 'parallax';
 
 // Helper: Extract video ID and type
 const getVideoInfo = (url: string): { type: 'youtube' | 'vimeo' | 'direct'; id?: string } => {
@@ -7868,6 +7951,9 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
   const thumbnailUrl = (config.thumbnailUrl as string) || '';
   const heading = (config.heading as string) || title;
   const description = (config.description as string) || '';
+  const badge = (config.badge as string) || '';
+  const buttonText = (config.buttonText as string) || '';
+  const buttonLink = (config.buttonLink as string) || '#';
   const style = (config.style as VideoStyle) || 'centered';
   const autoplay = config.autoplay as boolean || false;
   const loop = config.loop as boolean || false;
@@ -7877,58 +7963,22 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
   const videoInfo = getVideoInfo(videoUrl);
   const displayThumbnail = thumbnailUrl || (videoInfo.type === 'youtube' && videoInfo.id ? getYouTubeThumbnail(videoInfo.id) : '');
 
-  // Video embed component
   const VideoEmbed = () => {
     if (!isPlaying) return null;
-    
-    const autoplayParams = autoplay ? '&autoplay=1' : '';
     const loopParams = loop ? '&loop=1' : '';
     const muteParams = muted ? '&mute=1' : '';
-    
     if (videoInfo.type === 'youtube' && videoInfo.id) {
-      return (
-        <iframe 
-          src={`https://www.youtube.com/embed/${videoInfo.id}?autoplay=1&rel=0${loopParams}${muteParams}`}
-          className="absolute inset-0 w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      );
+      return <iframe src={`https://www.youtube.com/embed/${videoInfo.id}?autoplay=1&rel=0${loopParams}${muteParams}`} className="absolute inset-0 w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />;
     }
-    
     if (videoInfo.type === 'vimeo' && videoInfo.id) {
-      return (
-        <iframe 
-          src={`https://player.vimeo.com/video/${videoInfo.id}?autoplay=1${loopParams}${muteParams}`}
-          className="absolute inset-0 w-full h-full"
-          allow="autoplay; fullscreen; picture-in-picture"
-          allowFullScreen
-        />
-      );
+      return <iframe src={`https://player.vimeo.com/video/${videoInfo.id}?autoplay=1${loopParams}${muteParams}`} className="absolute inset-0 w-full h-full" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />;
     }
-    
-    return (
-      <video 
-        src={videoUrl}
-        className="absolute inset-0 w-full h-full object-cover"
-        controls
-        autoPlay={autoplay}
-        loop={loop}
-        muted={muted}
-      />
-    );
+    return <video src={videoUrl} className="absolute inset-0 w-full h-full object-cover" controls autoPlay={autoplay} loop={loop} muted={muted} />;
   };
 
-  // Play button
   const PlayButton = ({ size = 'lg' }: { size?: 'sm' | 'lg' }) => (
-    <button 
-      onClick={() => setIsPlaying(true)}
-      className="absolute inset-0 flex items-center justify-center group transition-all bg-black/30 hover:bg-black/40"
-    >
-      <div 
-        className={`rounded-full flex items-center justify-center transition-transform group-hover:scale-110 shadow-xl ${size === 'lg' ? 'w-16 h-16 md:w-20 md:h-20' : 'w-12 h-12'}`}
-        style={{ backgroundColor: brandColor }}
-      >
+    <button onClick={() => setIsPlaying(true)} className="absolute inset-0 flex items-center justify-center group transition-all bg-black/30 hover:bg-black/40">
+      <div className={`rounded-full flex items-center justify-center transition-transform group-hover:scale-110 shadow-xl ${size === 'lg' ? 'w-16 h-16 md:w-20 md:h-20' : 'w-12 h-12'}`} style={{ backgroundColor: brandColor }}>
         <Play className={`text-white ml-1 ${size === 'lg' ? 'w-7 h-7 md:w-8 md:h-8' : 'w-5 h-5'}`} fill="white" />
       </div>
     </button>
@@ -7959,7 +8009,7 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
             </div>
           )}
           <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl bg-slate-900">
-            {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="Video thumbnail" className="absolute inset-0 w-full h-full object-cover" />}
+            {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
             {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}20` }}><VideoIcon size={64} className="text-slate-400" /></div>}
             {!isPlaying && <PlayButton />}
             <VideoEmbed />
@@ -7977,16 +8027,17 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
             <div className="order-1">
               <div className="relative aspect-video rounded-xl overflow-hidden shadow-xl bg-slate-900">
-                {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="Video thumbnail" className="absolute inset-0 w-full h-full object-cover" />}
+                {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                 {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}20` }}><VideoIcon size={48} className="text-slate-400" /></div>}
                 {!isPlaying && <PlayButton size="sm" />}
                 <VideoEmbed />
               </div>
             </div>
             <div className="order-2">
+              {badge && <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{badge}</span>}
               {heading && <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">{heading}</h2>}
               {description && <p className="text-slate-500 mb-6">{description}</p>}
-              <a href="#" className="inline-block px-6 py-2.5 rounded-lg text-white font-medium text-sm transition-opacity hover:opacity-90" style={{ backgroundColor: brandColor }}>Tìm hiểu thêm</a>
+              {buttonText && <a href={buttonLink} className="inline-block px-6 py-2.5 rounded-lg text-white font-medium text-sm transition-opacity hover:opacity-90" style={{ backgroundColor: brandColor }}>{buttonText}</a>}
             </div>
           </div>
         </div>
@@ -7995,21 +8046,119 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
   }
 
   // Style 3: Fullwidth
+  if (style === 'fullwidth') {
+    return (
+      <section className="relative">
+        <div className="relative overflow-hidden aspect-video md:aspect-[21/9] md:min-h-[400px]">
+          {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+          {!isPlaying && !displayThumbnail && <div className="absolute inset-0" style={{ backgroundColor: `${brandColor}30` }} />}
+          {!isPlaying && <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />}
+          {!isPlaying && (
+            <div className="absolute inset-0 flex items-center px-4 md:px-8 lg:px-16">
+              <div className="max-w-xl">
+                {heading && <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-4">{heading}</h2>}
+                {description && <p className="text-sm md:text-lg text-white/80 mb-6">{description}</p>}
+                <button onClick={() => setIsPlaying(true)} className="flex items-center gap-3 px-6 py-3 rounded-lg text-white font-medium transition-transform hover:scale-105" style={{ backgroundColor: brandColor }}>
+                  <Play className="w-5 h-5" fill="white" />{buttonText || 'Xem video'}
+                </button>
+              </div>
+            </div>
+          )}
+          <VideoEmbed />
+        </div>
+      </section>
+    );
+  }
+
+  // Style 4: Cinema - Letterbox với gradient frame
+  if (style === 'cinema') {
+    return (
+      <section className="py-12 md:py-16 px-4 bg-slate-900">
+        <div className="max-w-5xl mx-auto">
+          {(heading || description) && (
+            <div className="text-center mb-8">
+              {badge && <span className="inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-4" style={{ backgroundColor: `${brandColor}30`, color: brandColor }}>{badge}</span>}
+              {heading && <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">{heading}</h2>}
+              {description && <p className="text-slate-400 max-w-2xl mx-auto">{description}</p>}
+            </div>
+          )}
+          <div className="relative">
+            <div className="absolute -top-3 -left-3 -right-3 h-3 rounded-t-xl" style={{ backgroundColor: `${brandColor}40` }} />
+            <div className="absolute -bottom-3 -left-3 -right-3 h-3 rounded-b-xl" style={{ backgroundColor: `${brandColor}40` }} />
+            <div className="relative aspect-[21/9] rounded-lg overflow-hidden bg-black">
+              {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><VideoIcon size={64} className="text-slate-600" /></div>}
+              {!isPlaying && <PlayButton />}
+              <VideoEmbed />
+            </div>
+          </div>
+          {buttonText && !isPlaying && <div className="text-center mt-8"><a href={buttonLink} className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90" style={{ backgroundColor: brandColor, boxShadow: `0 4px 14px ${brandColor}40` }}>{buttonText}</a></div>}
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Minimal - Clean card layout
+  if (style === 'minimal') {
+    return (
+      <section className="py-12 md:py-16 px-4 bg-slate-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="relative aspect-video">
+              {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><VideoIcon size={48} className="text-slate-300" /></div>}
+              {!isPlaying && <PlayButton />}
+              <VideoEmbed />
+            </div>
+            {(heading || description) && (
+              <div className="p-6 md:p-8 border-t border-slate-100">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="flex-1">
+                    {badge && <span className="inline-block px-2.5 py-0.5 rounded-md text-xs font-medium mb-2" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{badge}</span>}
+                    {heading && <h3 className="text-xl font-bold text-slate-900">{heading}</h3>}
+                    {description && <p className="text-sm text-slate-500 mt-1 line-clamp-2">{description}</p>}
+                  </div>
+                  {buttonText && <a href={buttonLink} className="inline-flex items-center px-5 py-2.5 rounded-lg text-white font-medium text-sm whitespace-nowrap hover:opacity-90" style={{ backgroundColor: brandColor }}>{buttonText}</a>}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Parallax - Floating card với background blur (default fallback)
   return (
     <section className="relative">
-      <div className="relative overflow-hidden aspect-video md:aspect-[21/9] md:min-h-[400px]">
-        {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="Video thumbnail" className="absolute inset-0 w-full h-full object-cover" />}
-        {!isPlaying && !displayThumbnail && <div className="absolute inset-0" style={{ backgroundColor: `${brandColor}30` }} />}
-        {!isPlaying && <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />}
+      <div className="relative overflow-hidden min-h-[400px] md:min-h-[500px]">
+        {!isPlaying && displayThumbnail && (
+          <>
+            <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${displayThumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(8px)' }} />
+            <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+          </>
+        )}
+        {!isPlaying && !displayThumbnail && <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${brandColor}dd 0%, ${brandColor} 100%)` }} />}
+        {!isPlaying && <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />}
         {!isPlaying && (
-          <div className="absolute inset-0 flex items-center px-4 md:px-8 lg:px-16">
-            <div className="max-w-xl">
-              {heading && <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-4">{heading}</h2>}
-              {description && <p className="text-sm md:text-lg text-white/80 mb-6">{description}</p>}
-              <button onClick={() => setIsPlaying(true)} className="flex items-center gap-3 px-6 py-3 rounded-lg text-white font-medium transition-transform hover:scale-105" style={{ backgroundColor: brandColor }}>
-                <Play className="w-5 h-5" fill="white" />Xem video
-              </button>
+          <div className="absolute z-10 inset-x-4 md:inset-x-8 bottom-4 md:bottom-8 flex items-end">
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl p-4 md:p-6 max-w-lg">
+              {badge && <div className="flex items-center gap-2 mb-2"><div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} /><span className="text-xs font-semibold uppercase tracking-wide" style={{ color: brandColor }}>{badge}</span></div>}
+              {heading && <h3 className="text-lg md:text-xl font-bold text-slate-900">{heading}</h3>}
+              {description && <p className="text-slate-600 text-sm mt-1">{description}</p>}
+              <div className="flex items-center gap-3 mt-4">
+                <button onClick={() => setIsPlaying(true)} className="flex items-center gap-2 px-5 py-2.5 font-medium rounded-lg text-white text-sm" style={{ backgroundColor: brandColor }}>
+                  <Play className="w-4 h-4" fill="white" />{buttonText || 'Xem video'}
+                </button>
+              </div>
             </div>
+          </div>
+        )}
+        {!isPlaying && (
+          <div className="absolute top-6 right-6 z-20">
+            <button onClick={() => setIsPlaying(true)} className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
+              <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
+            </button>
           </div>
         )}
         <VideoEmbed />
@@ -8349,21 +8498,15 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
     );
   }
 
-  // Style 6: Popup - Modal overlay (default fallback)
+  // Style 6: Popup - Centered card (default fallback)
   return (
-    <section className="py-16 px-4 relative">
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" style={{ position: 'absolute' }}>
+    <section className="py-8 md:py-12 px-4">
+      <div className="max-w-md mx-auto">
         <div 
-          className="bg-white rounded-2xl shadow-2xl overflow-hidden relative w-full max-w-md"
-          role="dialog"
-          aria-modal="true"
+          className="bg-white rounded-2xl shadow-2xl overflow-hidden"
+          role="article"
           aria-labelledby="countdown-popup-title"
         >
-          <button className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 z-10">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
           <div 
             className="h-32 md:h-40 flex items-center justify-center"
             style={{ 
@@ -8381,9 +8524,9 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
           </div>
           <div className="p-5 md:p-6 text-center">
             <h3 id="countdown-popup-title" className="text-xl md:text-2xl font-bold text-slate-900 mb-2">{heading}</h3>
-            {description && <p className="text-slate-500 text-sm mb-5">{description}</p>}
-            <div className="mb-5">
-              <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">Còn lại</p>
+            {description && <p className="text-slate-500 text-sm mb-4 line-clamp-2">{description}</p>}
+            <div className="mb-4">
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Còn lại</p>
               {timeLeft.isExpired ? <ExpiredState /> : <TimerDisplay variant="default" />}
             </div>
             {buttonText && !timeLeft.isExpired && (
@@ -8391,7 +8534,6 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
                 {buttonText}
               </a>
             )}
-            <button className="text-slate-400 text-xs mt-3 hover:text-slate-600 transition-colors">Để sau</button>
           </div>
         </div>
       </div>

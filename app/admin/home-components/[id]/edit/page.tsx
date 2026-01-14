@@ -209,7 +209,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [clientItems, setClientItems] = useState<GalleryItem[]>([]);
   const [clientsStyle, setClientsStyle] = useState<ClientsStyle>('marquee');
   // Video states
-  const [videoConfig, setVideoConfig] = useState({ videoUrl: '', thumbnailUrl: '', heading: '', description: '', autoplay: false, loop: false, muted: true });
+  const [videoConfig, setVideoConfig] = useState({ videoUrl: '', thumbnailUrl: '', heading: '', description: '', badge: '', buttonText: '', buttonLink: '', autoplay: false, loop: false, muted: true });
   const [videoStyle, setVideoStyle] = useState<VideoStyle>('centered');
   // Countdown states
   const [countdownConfig, setCountdownConfig] = useState({
@@ -493,6 +493,9 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
             thumbnailUrl: config.thumbnailUrl as string || '',
             heading: config.heading as string || '',
             description: config.description as string || '',
+            badge: config.badge as string || '',
+            buttonText: config.buttonText as string || '',
+            buttonLink: config.buttonLink as string || '',
             autoplay: config.autoplay as boolean || false,
             loop: config.loop as boolean || false,
             muted: config.muted as boolean ?? true,

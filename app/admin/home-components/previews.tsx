@@ -13454,23 +13454,25 @@ export const CountdownPreview = ({
     </section>
   );
 
-  // Style 6: Popup - Modal/Dialog style
+  // Style 6: Popup - Modal/Dialog style (contained within preview)
   const renderPopupStyle = () => (
-    <section className="py-16 px-4">
+    <section className="relative min-h-[400px] bg-slate-100 dark:bg-slate-900">
       {/* Simulated page content behind popup */}
-      <div className="max-w-4xl mx-auto opacity-30 pointer-events-none">
-        <div className="h-8 bg-slate-200 rounded mb-4 w-3/4" />
-        <div className="h-4 bg-slate-200 rounded mb-2 w-full" />
-        <div className="h-4 bg-slate-200 rounded mb-2 w-5/6" />
-        <div className="h-4 bg-slate-200 rounded w-4/6" />
+      <div className="absolute inset-0 p-6 opacity-30 pointer-events-none">
+        <div className="max-w-4xl mx-auto">
+          <div className="h-8 bg-slate-300 dark:bg-slate-700 rounded mb-4 w-3/4" />
+          <div className="h-4 bg-slate-300 dark:bg-slate-700 rounded mb-2 w-full" />
+          <div className="h-4 bg-slate-300 dark:bg-slate-700 rounded mb-2 w-5/6" />
+          <div className="h-4 bg-slate-300 dark:bg-slate-700 rounded w-4/6" />
+        </div>
       </div>
       
-      {/* Popup overlay */}
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" style={{ position: 'absolute' }}>
+      {/* Popup overlay - contained within section */}
+      <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-4">
         <div 
           className={cn(
             "bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden relative",
-            device === 'mobile' ? 'w-full max-w-sm' : 'w-full max-w-md'
+            device === 'mobile' ? 'w-full max-w-[280px]' : 'w-full max-w-md'
           )}
           role="dialog"
           aria-modal="true"
@@ -13485,7 +13487,7 @@ export const CountdownPreview = ({
           
           {/* Image/Visual header */}
           <div 
-            className="h-32 md:h-40 flex items-center justify-center relative"
+            className={cn("flex items-center justify-center relative", device === 'mobile' ? 'h-24' : 'h-32 md:h-40')}
             style={{ 
               background: config.backgroundImage 
                 ? `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${config.backgroundImage}) center/cover`
@@ -13494,25 +13496,25 @@ export const CountdownPreview = ({
           >
             {config.discountText && (
               <div className="text-center text-white">
-                <div className="text-4xl md:text-5xl font-black">{config.discountText}</div>
+                <div className={cn("font-black", device === 'mobile' ? 'text-3xl' : 'text-4xl md:text-5xl')}>{config.discountText}</div>
                 <div className="text-sm font-medium opacity-80 mt-1">{config.subHeading || 'GIẢM GIÁ'}</div>
               </div>
             )}
           </div>
           
           {/* Content */}
-          <div className="p-5 md:p-6 text-center">
-            <h3 id="popup-title" className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-2">
+          <div className={cn("text-center", device === 'mobile' ? 'p-4' : 'p-5 md:p-6')}>
+            <h3 id="popup-title" className={cn("font-bold text-slate-900 dark:text-white mb-2", device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl')}>
               {config.heading || 'Ưu đãi đặc biệt!'}
             </h3>
             
             {config.description && (
-              <p className="text-slate-500 text-sm mb-5">{config.description}</p>
+              <p className="text-slate-500 text-sm mb-4 line-clamp-2">{config.description}</p>
             )}
             
             {/* Timer */}
-            <div className="mb-5">
-              <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">Còn lại</p>
+            <div className="mb-4">
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Còn lại</p>
               {timeLeft.isExpired ? <ExpiredState /> : <TimerDisplay variant="default" />}
             </div>
             
@@ -13520,7 +13522,7 @@ export const CountdownPreview = ({
             {config.buttonText && !timeLeft.isExpired && (
               <a 
                 href={config.buttonLink || '#'} 
-                className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90"
+                className={cn("inline-flex items-center justify-center gap-2 w-full rounded-lg font-semibold text-white transition-all hover:opacity-90", device === 'mobile' ? 'px-4 py-2.5 text-sm' : 'px-6 py-3')}
                 style={{ backgroundColor: brandColor }}
               >
                 {config.buttonText}
