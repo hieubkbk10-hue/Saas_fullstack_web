@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
+import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { AboutPreview, AboutStyle } from '../../previews';
 import { ImageFieldWithUpload } from '../../../components/ImageFieldWithUpload';
@@ -17,6 +17,7 @@ export default function AboutCreatePage() {
     heading: 'Mang đến giá trị thực',
     description: 'Chúng tôi là đội ngũ chuyên gia với hơn 10 năm kinh nghiệm trong lĩnh vực...',
     image: '',
+    imageCaption: '', // Caption for bento style image overlay
     stats: [
       { id: 1, value: '10+', label: 'Năm kinh nghiệm' },
       { id: 2, value: '5000+', label: 'Khách hàng tin dùng' }
@@ -24,6 +25,29 @@ export default function AboutCreatePage() {
     buttonText: 'Xem chi tiết',
     buttonLink: '/about'
   });
+
+  // Drag & Drop state for stats
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+
+  const handleStatDragStart = (id: number) => setDraggedId(id);
+  const handleStatDragEnd = () => { setDraggedId(null); setDragOverId(null); };
+  const handleStatDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    if (draggedId !== id) setDragOverId(id);
+  };
+  const handleStatDrop = (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) return;
+    const newStats = [...aboutConfig.stats];
+    const draggedIdx = newStats.findIndex(s => s.id === draggedId);
+    const targetIdx = newStats.findIndex(s => s.id === targetId);
+    const [moved] = newStats.splice(draggedIdx, 1);
+    newStats.splice(targetIdx, 0, moved);
+    setAboutConfig({...aboutConfig, stats: newStats});
+    setDraggedId(null);
+    setDragOverId(null);
+  };
 
   const onSubmit = (e: React.FormEvent) => {
     handleSubmit(e, aboutConfig);
@@ -80,6 +104,18 @@ export default function AboutCreatePage() {
             quality={0.85}
             placeholder="https://example.com/about-image.jpg"
           />
+          {/* Image Caption - hiển thị khi style = bento */}
+          {aboutConfig.style === 'bento' && (
+            <div className="space-y-2">
+              <Label>Caption ảnh (Bento style)</Label>
+              <Input 
+                value={aboutConfig.imageCaption} 
+                onChange={(e) => setAboutConfig({...aboutConfig, imageCaption: e.target.value})} 
+                placeholder="Kiến tạo không gian làm việc hiện đại & bền vững." 
+              />
+              <p className="text-xs text-slate-500">Text hiển thị overlay trên ảnh trong style Bento Grid</p>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Text nút bấm</Label>
@@ -100,7 +136,7 @@ export default function AboutCreatePage() {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label>Số liệu nổi bật</Label>
+              <Label>Số liệu nổi bật (kéo thả để sắp xếp)</Label>
               <Button 
                 type="button" 
                 variant="outline" 
@@ -112,7 +148,20 @@ export default function AboutCreatePage() {
               </Button>
             </div>
             {aboutConfig.stats.map((stat) => (
-              <div key={stat.id} className="flex gap-3 items-center">
+              <div 
+                key={stat.id} 
+                className={cn(
+                  "flex gap-3 items-center p-2 rounded-lg border bg-white dark:bg-slate-800 cursor-grab transition-all",
+                  draggedId === stat.id && "opacity-50",
+                  dragOverId === stat.id && "ring-2 ring-blue-500"
+                )}
+                draggable
+                onDragStart={() => handleStatDragStart(stat.id)}
+                onDragEnd={handleStatDragEnd}
+                onDragOver={(e) => handleStatDragOver(e, stat.id)}
+                onDrop={(e) => handleStatDrop(e, stat.id)}
+              >
+                <GripVertical size={16} className="text-slate-400 flex-shrink-0 cursor-grab" />
                 <Input 
                   placeholder="Số liệu" 
                   value={stat.value} 
@@ -129,7 +178,7 @@ export default function AboutCreatePage() {
                   type="button" 
                   variant="ghost" 
                   size="icon" 
-                  className="text-red-500 h-8 w-8" 
+                  className="text-red-500 h-8 w-8 flex-shrink-0" 
                   onClick={() => aboutConfig.stats.length > 1 && setAboutConfig({...aboutConfig, stats: aboutConfig.stats.filter(s => s.id !== stat.id)})}
                 >
                   <Trash2 size={14} />

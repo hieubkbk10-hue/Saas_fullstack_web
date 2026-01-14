@@ -85,6 +85,8 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
       return <VideoSection config={config} brandColor={brandColor} title={title} />;
     case 'Countdown':
       return <CountdownSection config={config} brandColor={brandColor} title={title} />;
+    case 'Footer':
+      return <FooterSection config={config} brandColor={brandColor} />;
     default:
       return <PlaceholderSection type={type} title={title} />;
   }
@@ -660,8 +662,8 @@ function StatsSection({ config, brandColor, title }: { config: Record<string, un
 }
 
 // ============ ABOUT SECTION ============
-// Brand Story UI/UX - 3 Variants: classic, bento, minimal
-type AboutStyle = 'classic' | 'bento' | 'minimal';
+// Brand Story UI/UX - 6 Variants: classic, bento, minimal, split, timeline, showcase
+type AboutStyle = 'classic' | 'bento' | 'minimal' | 'split' | 'timeline' | 'showcase';
 
 // Badge Component for About - Monochromatic with brandColor
 const AboutBadge = ({ text, variant = 'default', brandColor }: { text: string; variant?: 'default' | 'outline' | 'minimal'; brandColor: string }) => {
@@ -741,11 +743,12 @@ const AboutStatBox = ({ stat, variant = 'classic', brandColor }: {
 };
 
 function AboutSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const { subHeading, heading, description, image, buttonText, buttonLink, stats, style } = config as {
+  const { subHeading, heading, description, image, imageCaption, buttonText, buttonLink, stats, style } = config as {
     subHeading?: string;
     heading?: string;
     description?: string;
     image?: string;
+    imageCaption?: string;
     buttonText?: string;
     buttonLink?: string;
     stats?: Array<{ value: string; label: string }>;
@@ -880,11 +883,13 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
                     <ImageIcon size={48} className="text-slate-300" />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6 md:p-8">
-                  <p className="text-white font-medium text-base md:text-lg">
-                    Kiến tạo không gian làm việc hiện đại & bền vững.
-                  </p>
-                </div>
+                {(imageCaption || image) && (
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6 md:p-8">
+                    <p className="text-white font-medium text-base md:text-lg">
+                      {imageCaption || 'Kiến tạo không gian làm việc hiện đại & bền vững.'}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -952,6 +957,173 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 4: Split - Layout chia đôi (Content trái, Image phải)
+  if (aboutStyle === 'split') {
+    return (
+      <section className="relative w-full bg-white overflow-hidden">
+        <div className="flex flex-col md:flex-row md:min-h-[450px] lg:min-h-[500px]">
+          {/* Content Side */}
+          <div className="w-full md:w-1/2 flex flex-col justify-center bg-slate-50 p-6 md:p-10 lg:p-16 order-2 md:order-1">
+            <div className="max-w-md space-y-4">
+              {subHeading && (
+                <AboutBadge text={subHeading || ''} variant="outline" brandColor={brandColor} />
+              )}
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 leading-tight">
+                {heading || title}
+              </h2>
+              <p className="text-slate-600 leading-relaxed">
+                {description || ''}
+              </p>
+              {/* Stats inline */}
+              {(stats ?? []).length > 0 && (
+                <div className="flex gap-6 pt-4 border-t border-slate-200">
+                  {(stats ?? []).slice(0, 2).map((stat, idx) => (
+                    <div key={idx} className="flex flex-col">
+                      <span className="text-2xl font-bold" style={{ color: brandColor }}>{stat.value || '0'}</span>
+                      <span className="text-xs text-slate-500">{stat.label || ''}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {buttonText && (
+                <div className="pt-2">
+                  <a href={buttonLink || '#'} className="inline-block px-6 py-2.5 font-medium rounded-lg text-white" style={{ backgroundColor: brandColor }}>
+                    {buttonText}
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Image Side */}
+          <div className="w-full md:w-1/2 h-[250px] md:h-auto relative overflow-hidden order-1 md:order-2">
+            {image ? (
+              <img src={image} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-slate-200">
+                <ImageIcon size={48} className="text-slate-400" />
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Timeline - Vertical timeline với milestones
+  if (aboutStyle === 'timeline') {
+    return (
+      <section className="py-12 md:py-16 px-4 md:px-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-12">
+            {subHeading && (
+              <div className="flex justify-center mb-3">
+                <AboutBadge text={subHeading || ''} variant="default" brandColor={brandColor} />
+              </div>
+            )}
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
+              {heading || title}
+            </h2>
+            <p className="text-slate-600 mt-2 max-w-2xl mx-auto">
+              {description || ''}
+            </p>
+          </div>
+
+          {/* Timeline */}
+          <div className="relative">
+            {/* Vertical line */}
+            <div className="absolute left-4 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-0.5" style={{ backgroundColor: `${brandColor}20` }} />
+            
+            <div className="space-y-8">
+              {(stats ?? []).slice(0, 4).map((stat, idx) => (
+                <div key={idx} className={`relative flex ${idx % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
+                  {/* Dot */}
+                  <div className="absolute left-4 md:left-1/2 md:-translate-x-1/2 w-8 h-8 rounded-full border-4 bg-white flex items-center justify-center text-xs font-bold" style={{ borderColor: brandColor, color: brandColor }}>
+                    {idx + 1}
+                  </div>
+                  {/* Content card */}
+                  <div className="ml-16 md:ml-0 md:w-5/12 bg-white rounded-xl p-4 border shadow-sm" style={{ borderColor: `${brandColor}15` }}>
+                    <span className="text-2xl font-bold" style={{ color: brandColor }}>{stat.value || ''}</span>
+                    <p className="text-sm text-slate-600 mt-1">{stat.label || ''}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Image at bottom */}
+          {image && (
+            <div className="mt-12 rounded-2xl overflow-hidden aspect-[16/9] max-h-[350px]">
+              <img src={image} alt="" className="w-full h-full object-cover" />
+            </div>
+          )}
+
+          {buttonText && (
+            <div className="text-center mt-10">
+              <a href={buttonLink || '#'} className="inline-block px-6 py-2.5 rounded-lg font-medium text-white" style={{ backgroundColor: brandColor }}>
+                {buttonText}
+              </a>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Showcase - Featured image lớn với text overlay (default fallback)
+  return (
+    <section className="relative w-full overflow-hidden">
+      {/* Background Image */}
+      <div className="relative w-full h-[400px] md:h-[500px] lg:h-[600px]">
+        {image ? (
+          <>
+            <img src={image} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+          </>
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-slate-900 to-slate-700" />
+        )}
+        
+        {/* Content Overlay */}
+        <div className="absolute inset-0 flex flex-col justify-center px-4 md:px-8 lg:px-16">
+          <div className="max-w-xl space-y-4 md:space-y-6">
+            {subHeading && (
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm text-white">
+                {subHeading}
+              </div>
+            )}
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
+              {heading || title}
+            </h2>
+            <p className="text-white/80 leading-relaxed text-sm md:text-lg">
+              {description || ''}
+            </p>
+            
+            {/* Stats row */}
+            {(stats ?? []).length > 0 && (
+              <div className="flex gap-8 pt-4">
+                {(stats ?? []).slice(0, 3).map((stat, idx) => (
+                  <div key={idx} className="text-center">
+                    <span className="block text-xl md:text-3xl font-bold text-white">{stat.value || ''}</span>
+                    <span className="text-xs text-white/70 uppercase tracking-wide">{stat.label || ''}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {buttonText && (
+              <div className="pt-2">
+                <a href={buttonLink || '#'} className="inline-block px-6 py-3 font-medium rounded-lg text-white" style={{ backgroundColor: brandColor }}>
+                  {buttonText}
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -6236,6 +6408,293 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
         </div>
       </div>
     </section>
+  );
+}
+
+// ============ FOOTER SECTION ============
+// 6 Styles: classic, modern, corporate, minimal, centered, stacked
+type FooterStyle = 'classic' | 'modern' | 'corporate' | 'minimal' | 'centered' | 'stacked';
+type FooterColumn = { title: string; links: Array<{ label: string; url: string }> };
+type SocialLinkItem = { platform: string; url: string; icon: string };
+
+function FooterSection({ config, brandColor }: { config: Record<string, unknown>; brandColor: string }) {
+  const style = (config.style as FooterStyle) || 'classic';
+  const logo = (config.logo as string) || '';
+  const description = (config.description as string) || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.';
+  const columns = (config.columns as FooterColumn[]) || [];
+  const socialLinks = (config.socialLinks as SocialLinkItem[]) || [];
+  const copyright = (config.copyright as string) || '© 2024 VietAdmin. All rights reserved.';
+  const showSocialLinks = config.showSocialLinks !== false;
+
+  // Utility: Darken a hex color
+  const darkenColor = (hex: string, percent: number): string => {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.max((num >> 16) - amt, 0);
+    const G = Math.max((num >> 8 & 0x00FF) - amt, 0);
+    const B = Math.max((num & 0x0000FF) - amt, 0);
+    return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+  };
+
+  const bgDark = darkenColor(brandColor, 70);
+  const bgMedium = darkenColor(brandColor, 60);
+  const borderColor = darkenColor(brandColor, 45);
+
+  const socialColors: Record<string, string> = {
+    facebook: '#1877F2', instagram: '#E4405F', youtube: '#FF0000',
+    tiktok: '#000000', zalo: '#0084FF', twitter: '#1DA1F2', linkedin: '#0A66C2'
+  };
+
+  // Social icons
+  const renderSocialIcon = (platform: string, size: number = 18) => {
+    switch (platform) {
+      case 'facebook':
+        return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>;
+      case 'instagram':
+        return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>;
+      case 'youtube':
+        return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="white"/></svg>;
+      case 'tiktok':
+        return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>;
+      case 'zalo':
+        return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M12.49 10.2722v-.4496h1.3467v6.3218h-.7704a.576.576 0 01-.5763-.5729l-.0006.0005a3.273 3.273 0 01-1.9372.6321c-1.8138 0-3.2844-1.4697-3.2844-3.2823 0-1.8125 1.4706-3.2822 3.2844-3.2822a3.273 3.273 0 011.9372.6321l.0006.0005zM6.9188 7.7896v.205c0 .3823-.051.6944-.2995 1.0605l-.03.0343c-.0542.0615-.1815.206-.2421.2843L2.024 14.8h4.8948v.7682a.5764.5764 0 01-.5767.5761H0v-.3622c0-.4436.1102-.6414.2495-.8476L4.8582 9.23H.1922V7.7896h6.7266zm8.5513 8.3548a.4805.4805 0 01-.4803-.4798v-7.875h1.4416v8.3548H15.47zM20.6934 9.6C22.52 9.6 24 11.0807 24 12.9044c0 1.8252-1.4801 3.306-3.3066 3.306-1.8264 0-3.3066-1.4808-3.3066-3.306 0-1.8237 1.4802-3.3044 3.3066-3.3044zm-10.1412 5.253c1.0675 0 1.9324-.8645 1.9324-1.9312 0-1.065-.865-1.9295-1.9324-1.9295s-1.9324.8644-1.9324 1.9295c0 1.0667.865 1.9312 1.9324 1.9312zm10.1412-.0033c1.0737 0 1.945-.8707 1.945-1.9453 0-1.073-.8713-1.9436-1.945-1.9436-1.0753 0-1.945.8706-1.945 1.9436 0 1.0746.8697 1.9453 1.945 1.9453z"/></svg>;
+      default:
+        return <Globe size={size} />;
+    }
+  };
+
+  const getSocials = () => socialLinks.length > 0 ? socialLinks : [
+    { platform: 'facebook', url: '#', icon: 'facebook' },
+    { platform: 'instagram', url: '#', icon: 'instagram' },
+    { platform: 'youtube', url: '#', icon: 'youtube' }
+  ];
+
+  const getColumns = () => columns.length > 0 ? columns : [
+    { title: 'Về chúng tôi', links: [{ label: 'Giới thiệu', url: '/about' }, { label: 'Tuyển dụng', url: '/careers' }] },
+    { title: 'Hỗ trợ', links: [{ label: 'FAQ', url: '/faq' }, { label: 'Liên hệ', url: '/contact' }] }
+  ];
+
+  // Style 1: Classic Dark
+  if (style === 'classic') {
+    return (
+      <footer className="w-full text-white py-8 md:py-12" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
+        <div className="container max-w-7xl mx-auto px-4">
+          <div className="grid gap-8 md:grid-cols-12">
+            <div className="md:col-span-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg" style={{ backgroundColor: bgMedium, border: `1px solid ${borderColor}` }}>
+                  {logo ? <img src={logo} alt="Logo" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 rounded flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: brandColor }}>V</div>}
+                </div>
+                <span className="text-lg font-bold text-white">VietAdmin</span>
+              </div>
+              <p className="text-sm leading-relaxed text-white/80 max-w-sm">{description}</p>
+              {showSocialLinks && (
+                <div className="flex gap-3">
+                  {getSocials().map((s, i) => (
+                    <a key={i} href={s.url} className="h-8 w-8 flex items-center justify-center rounded-full bg-white transition-all hover:scale-110" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
+                      {renderSocialIcon(s.platform, 16)}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="md:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-8">
+              {getColumns().slice(0, 3).map((col, i) => (
+                <div key={i}>
+                  <h3 className="font-semibold text-white text-sm mb-3">{col.title}</h3>
+                  <ul className="space-y-2">
+                    {col.links.map((link, j) => (
+                      <li key={j}><a href={link.url} className="text-sm text-white/70 hover:text-white transition-colors">{link.label}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-8 pt-6 border-t" style={{ borderColor: `${borderColor}50` }}>
+            <p className="text-xs text-white/60">{copyright}</p>
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
+  // Style 2: Modern Center
+  if (style === 'modern') {
+    return (
+      <footer className="w-full text-white py-10 md:py-14" style={{ backgroundColor: bgDark }}>
+        <div className="container max-w-5xl mx-auto px-4 flex flex-col items-center text-center space-y-6">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-12 w-12 rounded-xl flex items-center justify-center shadow-lg" style={{ background: `linear-gradient(to top right, ${bgMedium}, ${borderColor})` }}>
+              {logo ? <img src={logo} alt="Logo" className="h-7 w-7 object-contain" /> : <div className="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>V</div>}
+            </div>
+            <h2 className="text-lg font-bold text-white">VietAdmin</h2>
+            <p className="text-sm text-white/80 max-w-md">{description}</p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+            {getColumns().flatMap(col => col.links).slice(0, 8).map((link, i) => (
+              <a key={i} href={link.url} className="text-sm font-medium text-white/70 hover:text-white transition-colors">{link.label}</a>
+            ))}
+          </div>
+          <div className="w-16 h-px" style={{ background: `linear-gradient(to right, transparent, ${borderColor}, transparent)` }}></div>
+          {showSocialLinks && (
+            <div className="flex gap-4">
+              {getSocials().map((s, i) => (
+                <a key={i} href={s.url} className="h-8 w-8 flex items-center justify-center rounded-full bg-white transition-all hover:scale-110" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
+                  {renderSocialIcon(s.platform, 16)}
+                </a>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-white/60">{copyright}</p>
+        </div>
+      </footer>
+    );
+  }
+
+  // Style 3: Corporate
+  if (style === 'corporate') {
+    return (
+      <footer className="w-full text-white py-8 md:py-12" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
+        <div className="container max-w-7xl mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b" style={{ borderColor }}>
+            <div className="flex items-center gap-3">
+              {logo ? <img src={logo} alt="Logo" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 rounded flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: brandColor }}>V</div>}
+              <span className="text-base font-bold text-white">VietAdmin</span>
+            </div>
+            {showSocialLinks && (
+              <div className="flex gap-3">
+                {getSocials().map((s, i) => (
+                  <a key={i} href={s.url} className="h-7 w-7 flex items-center justify-center rounded-full bg-white" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
+                    {renderSocialIcon(s.platform, 14)}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="py-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="md:col-span-2">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Về Công Ty</h4>
+              <p className="text-sm text-white/80">{description}</p>
+            </div>
+            {getColumns().slice(0, 2).map((col, i) => (
+              <div key={i}>
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">{col.title}</h4>
+                <ul className="space-y-2">
+                  {col.links.map((link, j) => (
+                    <li key={j}><a href={link.url} className="text-sm text-white/70 hover:text-white transition-colors">{link.label}</a></li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="pt-4">
+            <p className="text-xs text-white/60">{copyright}</p>
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
+  // Style 4: Minimal
+  if (style === 'minimal') {
+    return (
+      <footer className="w-full text-white py-4 md:py-6" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
+        <div className="container max-w-7xl mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {logo ? <img src={logo} alt="Logo" className="h-5 w-5 opacity-80" /> : <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>}
+              <span className="text-xs text-white/60">{copyright}</span>
+            </div>
+            {showSocialLinks && (
+              <div className="flex gap-3">
+                {getSocials().map((s, i) => (
+                  <a key={i} href={s.url} className="h-6 w-6 flex items-center justify-center rounded-full bg-white" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
+                    {renderSocialIcon(s.platform, 12)}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
+  // Style 5: Centered
+  if (style === 'centered') {
+    return (
+      <footer className="w-full text-white py-10 md:py-14" style={{ backgroundColor: bgDark }}>
+        <div className="container max-w-6xl mx-auto px-4 text-center">
+          <div className="flex flex-col items-center gap-4 mb-8">
+            <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg" style={{ backgroundColor: `${brandColor}20`, border: `2px solid ${brandColor}40` }}>
+              {logo ? <img src={logo} alt="Logo" className="h-8 w-8 object-contain" /> : <div className="h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: brandColor }}>V</div>}
+            </div>
+            <h2 className="text-xl font-bold text-white">VietAdmin</h2>
+            <p className="text-sm text-white/70 max-w-md">{description}</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+            {getColumns().slice(0, 4).map((col, i) => (
+              <div key={i} className="text-center">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2">{col.title}</h4>
+                <ul className="space-y-1">
+                  {col.links.slice(0, 4).map((link, j) => (
+                    <li key={j}><a href={link.url} className="text-sm text-white/60 hover:text-white transition-colors">{link.label}</a></li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="w-20 h-px mx-auto mb-6" style={{ background: `linear-gradient(to right, transparent, ${brandColor}, transparent)` }}></div>
+          {showSocialLinks && (
+            <div className="flex justify-center gap-4 mb-4">
+              {getSocials().map((s, i) => (
+                <a key={i} href={s.url} className="h-10 w-10 flex items-center justify-center rounded-full transition-all hover:scale-110" style={{ backgroundColor: `${brandColor}20`, color: '#fff', border: `1px solid ${brandColor}30` }}>
+                  {renderSocialIcon(s.platform, 18)}
+                </a>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-white/50">{copyright}</p>
+        </div>
+      </footer>
+    );
+  }
+
+  // Style 6: Stacked (default)
+  return (
+    <footer className="w-full text-white py-8" style={{ backgroundColor: bgDark, borderTop: `3px solid ${brandColor}` }}>
+      <div className="container max-w-4xl mx-auto px-4 md:px-6">
+        <div className="flex flex-col md:flex-row items-start gap-4 mb-6">
+          <div className="h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: brandColor }}>
+            {logo ? <img src={logo} alt="Logo" className="h-7 w-7 object-contain" /> : <span className="text-white font-bold">V</span>}
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white mb-1">VietAdmin</h3>
+            <p className="text-sm text-white/70">{description}</p>
+          </div>
+        </div>
+        <div className="mb-6 pb-4" style={{ borderBottom: `1px solid ${borderColor}` }}>
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            {getColumns().flatMap(col => col.links).slice(0, 10).map((link, i) => (
+              <a key={i} href={link.url} className="text-sm text-white/60 hover:text-white transition-colors">{link.label}</a>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          {showSocialLinks && (
+            <div className="flex gap-3">
+              {getSocials().map((s, i) => (
+                <a key={i} href={s.url} className="h-9 w-9 flex items-center justify-center rounded-lg transition-all" style={{ backgroundColor: `${brandColor}15`, color: '#fff' }}>
+                  {renderSocialIcon(s.platform, 16)}
+                </a>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-white/50">{copyright}</p>
+        </div>
+      </div>
+    </footer>
   );
 }
 

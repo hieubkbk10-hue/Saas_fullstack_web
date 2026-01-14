@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, Download } from 'lucide-react';
+import { Plus, Trash2, Download, GripVertical, LayoutGrid, Share2 } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../../../components/ui';
+import { cn, Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { FooterPreview, type FooterStyle } from '../../previews';
 import { SettingsImageUploader } from '../../../components/SettingsImageUploader';
@@ -47,6 +47,14 @@ export default function FooterCreatePage() {
   });
   const [style, setStyle] = useState<FooterStyle>('classic');
 
+  // Drag & Drop states for columns
+  const [draggedColumnId, setDraggedColumnId] = useState<number | null>(null);
+  const [dragOverColumnId, setDragOverColumnId] = useState<number | null>(null);
+
+  // Drag & Drop states for social links
+  const [draggedSocialId, setDraggedSocialId] = useState<number | null>(null);
+  const [dragOverSocialId, setDragOverSocialId] = useState<number | null>(null);
+
   // Load from Settings
   const loadFromSettings = () => {
     const newSocialLinks: SocialLink[] = [];
@@ -79,6 +87,46 @@ export default function FooterCreatePage() {
 
   const onSubmit = (e: React.FormEvent) => {
     handleSubmit(e, { ...footerConfig, style });
+  };
+
+  // Column drag handlers
+  const handleColumnDragStart = (columnId: number) => setDraggedColumnId(columnId);
+  const handleColumnDragEnd = () => { setDraggedColumnId(null); setDragOverColumnId(null); };
+  const handleColumnDragOver = (e: React.DragEvent, columnId: number) => {
+    e.preventDefault();
+    if (draggedColumnId !== columnId) setDragOverColumnId(columnId);
+  };
+  const handleColumnDrop = (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    if (!draggedColumnId || draggedColumnId === targetId) return;
+    const newColumns = [...footerConfig.columns];
+    const draggedIndex = newColumns.findIndex(c => c.id === draggedColumnId);
+    const targetIndex = newColumns.findIndex(c => c.id === targetId);
+    const [moved] = newColumns.splice(draggedIndex, 1);
+    newColumns.splice(targetIndex, 0, moved);
+    setFooterConfig({ ...footerConfig, columns: newColumns });
+    setDraggedColumnId(null);
+    setDragOverColumnId(null);
+  };
+
+  // Social drag handlers
+  const handleSocialDragStart = (socialId: number) => setDraggedSocialId(socialId);
+  const handleSocialDragEnd = () => { setDraggedSocialId(null); setDragOverSocialId(null); };
+  const handleSocialDragOver = (e: React.DragEvent, socialId: number) => {
+    e.preventDefault();
+    if (draggedSocialId !== socialId) setDragOverSocialId(socialId);
+  };
+  const handleSocialDrop = (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    if (!draggedSocialId || draggedSocialId === targetId) return;
+    const newSocials = [...footerConfig.socialLinks];
+    const draggedIndex = newSocials.findIndex(s => s.id === draggedSocialId);
+    const targetIndex = newSocials.findIndex(s => s.id === targetId);
+    const [moved] = newSocials.splice(draggedIndex, 1);
+    newSocials.splice(targetIndex, 0, moved);
+    setFooterConfig({ ...footerConfig, socialLinks: newSocials });
+    setDraggedSocialId(null);
+    setDragOverSocialId(null);
   };
 
   // Column management
@@ -232,25 +280,56 @@ export default function FooterCreatePage() {
         </CardContent>
       </Card>
 
-      {/* Menu Columns */}
+      {/* Menu Columns with Drag & Drop */}
       <Card className="mb-6">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Cột menu ({footerConfig.columns.length})</CardTitle>
-            <Button type="button" variant="outline" size="sm" onClick={addColumn} disabled={footerConfig.columns.length >= 4}>
+            <CardTitle className="text-base">Cột menu ({footerConfig.columns.length}/4)</CardTitle>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={addColumn} 
+              disabled={footerConfig.columns.length >= 4}
+              title={footerConfig.columns.length >= 4 ? 'Tối đa 4 cột menu' : ''}
+            >
               <Plus size={14} className="mr-1" /> Thêm cột
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {footerConfig.columns.length === 0 ? (
-            <div className="text-center py-6 text-slate-500 text-sm">
-              Chưa có cột menu nào. Nhấn "Thêm cột" để bắt đầu.
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div 
+                className="w-14 h-14 rounded-full flex items-center justify-center mb-3"
+                style={{ backgroundColor: `${brandColor}10` }}
+              >
+                <LayoutGrid size={24} style={{ color: brandColor }} />
+              </div>
+              <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có cột menu</h3>
+              <p className="text-sm text-slate-500 mb-3">Nhấn "Thêm cột" để tạo menu footer</p>
+              <Button type="button" variant="outline" size="sm" onClick={addColumn}>
+                <Plus size={14} className="mr-1" /> Thêm cột đầu tiên
+              </Button>
             </div>
           ) : (
             footerConfig.columns.map((column) => (
-              <div key={column.id} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 space-y-3">
+              <div 
+                key={column.id} 
+                draggable
+                onDragStart={() => handleColumnDragStart(column.id)}
+                onDragEnd={handleColumnDragEnd}
+                onDragOver={(e) => handleColumnDragOver(e, column.id)}
+                onDrop={(e) => handleColumnDrop(e, column.id)}
+                className={cn(
+                  "border rounded-lg p-4 space-y-3 transition-all",
+                  draggedColumnId === column.id && "opacity-50",
+                  dragOverColumnId === column.id && "ring-2 ring-blue-500 ring-offset-2",
+                  "border-slate-200 dark:border-slate-700"
+                )}
+              >
                 <div className="flex items-center gap-3">
+                  <GripVertical size={16} className="text-slate-400 cursor-grab flex-shrink-0" />
                   <Input
                     value={column.title}
                     onChange={(e) => updateColumn(column.id, 'title', e.target.value)}
@@ -269,7 +348,7 @@ export default function FooterCreatePage() {
                 </div>
                 
                 {/* Links */}
-                <div className="pl-4 space-y-2">
+                <div className="pl-6 space-y-2">
                   <Label className="text-xs text-slate-500">Links ({column.links.length})</Label>
                   {column.links.map((link, linkIdx) => (
                     <div key={linkIdx} className="flex items-center gap-2">
@@ -313,17 +392,18 @@ export default function FooterCreatePage() {
         </CardContent>
       </Card>
 
-      {/* Social Links */}
+      {/* Social Links with Drag & Drop */}
       <Card className="mb-6">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Mạng xã hội ({footerConfig.socialLinks.length})</CardTitle>
+            <CardTitle className="text-base">Mạng xã hội ({footerConfig.socialLinks.length}/{SOCIAL_PLATFORMS.length})</CardTitle>
             <Button 
               type="button" 
               variant="outline" 
               size="sm" 
               onClick={addSocialLink}
               disabled={footerConfig.socialLinks.length >= SOCIAL_PLATFORMS.length}
+              title={footerConfig.socialLinks.length >= SOCIAL_PLATFORMS.length ? 'Đã thêm đủ tất cả mạng xã hội' : ''}
             >
               <Plus size={14} className="mr-1" /> Thêm MXH
             </Button>
@@ -331,12 +411,40 @@ export default function FooterCreatePage() {
         </CardHeader>
         <CardContent className="space-y-3">
           {footerConfig.socialLinks.length === 0 ? (
-            <div className="text-center py-6 text-slate-500 text-sm">
-              Chưa có mạng xã hội nào. Nhấn "Thêm MXH" hoặc "Load từ Settings".
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div 
+                className="w-14 h-14 rounded-full flex items-center justify-center mb-3"
+                style={{ backgroundColor: `${brandColor}10` }}
+              >
+                <Share2 size={24} style={{ color: brandColor }} />
+              </div>
+              <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có mạng xã hội</h3>
+              <p className="text-sm text-slate-500 mb-3">Thêm MXH hoặc load từ Settings</p>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={loadFromSettings}>
+                  <Download size={14} className="mr-1" /> Load từ Settings
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addSocialLink}>
+                  <Plus size={14} className="mr-1" /> Thêm MXH
+                </Button>
+              </div>
             </div>
           ) : (
             footerConfig.socialLinks.map((social) => (
-              <div key={social.id} className="flex items-center gap-3">
+              <div 
+                key={social.id} 
+                draggable
+                onDragStart={() => handleSocialDragStart(social.id)}
+                onDragEnd={handleSocialDragEnd}
+                onDragOver={(e) => handleSocialDragOver(e, social.id)}
+                onDrop={(e) => handleSocialDrop(e, social.id)}
+                className={cn(
+                  "flex items-center gap-3 p-2 rounded-lg transition-all",
+                  draggedSocialId === social.id && "opacity-50",
+                  dragOverSocialId === social.id && "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                )}
+              >
+                <GripVertical size={16} className="text-slate-400 cursor-grab flex-shrink-0" />
                 <select
                   value={social.platform}
                   onChange={(e) => updateSocialLink(social.id, 'platform', e.target.value)}

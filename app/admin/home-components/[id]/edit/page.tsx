@@ -146,7 +146,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [faqConfig, setFaqConfig] = useState<{description?: string, buttonText?: string, buttonLink?: string}>({
     description: '', buttonText: '', buttonLink: ''
   });
-  const [aboutConfig, setAboutConfig] = useState({ style: 'bento' as AboutStyle, subHeading: '', heading: '', description: '', image: '', buttonText: '', buttonLink: '', stats: [] as {id: number, value: string, label: string}[] });
+  const [aboutConfig, setAboutConfig] = useState({ style: 'bento' as AboutStyle, subHeading: '', heading: '', description: '', image: '', imageCaption: '', buttonText: '', buttonLink: '', stats: [] as {id: number, value: string, label: string}[] });
   const [footerConfig, setFooterConfig] = useState({
     logo: '',
     description: '',
@@ -335,6 +335,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
             heading: config.heading || '',
             description: config.description || '',
             image: config.image || '',
+            imageCaption: config.imageCaption || '',
             buttonText: config.buttonText || '',
             buttonLink: config.buttonLink || '',
             stats: config.stats?.map((s: {value: string, label: string}, i: number) => ({ id: i, value: s.value, label: s.label })) || [] 

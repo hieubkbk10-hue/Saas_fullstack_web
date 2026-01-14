@@ -3993,7 +3993,8 @@ export const BlogPreview = ({
 };
 
 // ============ FOOTER PREVIEW ============
-// 4 Professional Styles from footer reference: Classic Dark, Modern Center, Corporate, Minimal
+// 6 Professional Styles: Classic Dark, Modern Center, Corporate, Minimal, Centered, Stacked
+// Best Practices: Clear navigation hierarchy, Social proof, Contact accessibility, Mobile-first, Brand consistency
 type SocialLinkItem = { id: number; platform: string; url: string; icon: string };
 type FooterConfig = { 
   logo: string; 
@@ -4003,7 +4004,7 @@ type FooterConfig = {
   copyright: string; 
   showSocialLinks: boolean 
 };
-export type FooterStyle = 'classic' | 'modern' | 'corporate' | 'minimal';
+export type FooterStyle = 'classic' | 'modern' | 'corporate' | 'minimal' | 'centered' | 'stacked';
 export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange }: { config: FooterConfig; brandColor: string; selectedStyle?: FooterStyle; onStyleChange?: (style: FooterStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'classic';
@@ -4012,7 +4013,9 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
     { id: 'classic', label: '1. Classic Dark' }, 
     { id: 'modern', label: '2. Modern Center' },
     { id: 'corporate', label: '3. Corporate' },
-    { id: 'minimal', label: '4. Minimal' }
+    { id: 'minimal', label: '4. Minimal' },
+    { id: 'centered', label: '5. Centered' },
+    { id: 'stacked', label: '6. Stacked' }
   ];
 
   // Utility: Darken a hex color
@@ -4323,6 +4326,174 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
     </footer>
   );
 
+  // Style 5: Centered - Logo + social giữa, columns dàn 2 rows
+  const renderCenteredStyle = () => (
+    <footer className="w-full text-white py-8 md:py-10" style={{ backgroundColor: bgDark }}>
+      <div className={cn("container max-w-6xl mx-auto text-center", device === 'mobile' ? 'px-3' : 'px-4')}>
+        
+        {/* Brand Center */}
+        <div className="flex flex-col items-center gap-3 mb-6">
+          <div 
+            className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg"
+            style={{ backgroundColor: `${brandColor}20`, border: `2px solid ${brandColor}40` }}
+          >
+            {config.logo ? (
+              <img src={config.logo} alt="Logo" className="h-7 w-7 object-contain" />
+            ) : (
+              <div className="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>V</div>
+            )}
+          </div>
+          <h2 className="text-lg font-bold text-white tracking-tight">VietAdmin</h2>
+          <p className={cn("text-xs leading-relaxed text-white/70 max-w-md", device === 'mobile' ? 'max-w-xs' : '')}>
+            {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}
+          </p>
+        </div>
+
+        {/* Columns in grid */}
+        <div className={cn(
+          "grid gap-4 mb-6",
+          device === 'mobile' ? 'grid-cols-2 gap-3' : 'grid-cols-4 gap-6'
+        )}>
+          {getColumns().slice(0, 4).map((col) => (
+            <div key={col.id} className="text-center">
+              <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-2">{col.title}</h4>
+              <ul className="space-y-1">
+                {col.links.slice(0, 4).map((link, lIdx) => (
+                  <li key={lIdx}>
+                    <a 
+                      href={link.url} 
+                      className="text-xs hover:text-white transition-colors inline-block text-white/60"
+                      onMouseEnter={(e) => e.currentTarget.style.color = brandColor}
+                      onMouseLeave={(e) => e.currentTarget.style.color = ''}
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Divider */}
+        <div className="w-16 h-px mx-auto mb-5" style={{ background: `linear-gradient(to right, transparent, ${brandColor}, transparent)` }}></div>
+
+        {/* Socials Center */}
+        {config.showSocialLinks && (
+          <div className="flex justify-center gap-3 mb-4">
+            {getSocials().map((s) => (
+              <a 
+                key={s.id} 
+                href={s.url} 
+                className="h-8 w-8 flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110"
+                style={{ backgroundColor: `${brandColor}20`, color: '#fff', border: `1px solid ${brandColor}30` }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = brandColor;
+                  e.currentTarget.style.borderColor = brandColor;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = `${brandColor}20`;
+                  e.currentTarget.style.borderColor = `${brandColor}30`;
+                }}
+              >
+                {renderSocialIcon(s.platform, 16)}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {/* Copyright */}
+        <p className="text-[10px] text-white/50">{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</p>
+      </div>
+    </footer>
+  );
+
+  // Style 6: Stacked - Tất cả elements xếp chồng vertical, mobile-first compact
+  const renderStackedStyle = () => (
+    <footer className="w-full text-white py-6" style={{ backgroundColor: bgDark, borderTop: `3px solid ${brandColor}` }}>
+      <div className={cn("container max-w-4xl mx-auto", device === 'mobile' ? 'px-4' : 'px-6')}>
+        
+        {/* Logo + Description */}
+        <div className={cn("flex items-start gap-3 mb-5", device === 'mobile' ? 'flex-col items-center text-center' : '')}>
+          <div 
+            className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: brandColor }}
+          >
+            {config.logo ? (
+              <img src={config.logo} alt="Logo" className="h-6 w-6 object-contain brightness-110" />
+            ) : (
+              <span className="text-white font-bold text-sm">V</span>
+            )}
+          </div>
+          <div className={cn(device === 'mobile' ? '' : 'flex-1')}>
+            <h3 className="text-sm font-bold text-white mb-1">VietAdmin</h3>
+            <p className="text-xs text-white/70 leading-relaxed line-clamp-2">
+              {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}
+            </p>
+          </div>
+        </div>
+
+        {/* Links in single row (flat) */}
+        <div className="mb-5 pb-4" style={{ borderBottom: `1px solid ${borderColor}` }}>
+          <div className={cn(
+            "flex flex-wrap gap-x-4 gap-y-2",
+            device === 'mobile' ? 'justify-center gap-x-3' : ''
+          )}>
+            {getColumns().flatMap(col => col.links).slice(0, device === 'mobile' ? 6 : 10).map((link, i) => (
+              <a 
+                key={i} 
+                href={link.url} 
+                className="text-xs font-medium text-white/60 hover:text-white transition-colors"
+                onMouseEnter={(e) => e.currentTarget.style.color = brandColor}
+                onMouseLeave={(e) => e.currentTarget.style.color = ''}
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom: Socials + Copyright */}
+        <div className={cn(
+          "flex items-center justify-between",
+          device === 'mobile' ? 'flex-col gap-3' : ''
+        )}>
+          {config.showSocialLinks && (
+            <div className="flex gap-2">
+              {getSocials().map((s) => (
+                <a 
+                  key={s.id} 
+                  href={s.url} 
+                  className="h-7 w-7 flex items-center justify-center rounded-lg transition-all duration-300"
+                  style={{ backgroundColor: `${brandColor}15`, color: '#fff' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = brandColor;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = `${brandColor}15`;
+                  }}
+                >
+                  {renderSocialIcon(s.platform, 14)}
+                </a>
+              ))}
+            </div>
+          )}
+          <p className="text-[10px] text-white/50">{config.copyright || '© 2024 VietAdmin. All rights reserved.'}</p>
+        </div>
+      </div>
+    </footer>
+  );
+
+  // Logo size guidelines
+  const logoGuidelines = {
+    classic: '40×40px - Logo nhỏ trong header box',
+    modern: '48×48px - Logo trong gradient box',
+    corporate: '40×40px - Logo inline với brand name',
+    minimal: '32×32px - Logo compact',
+    centered: '48×48px - Logo nổi bật ở giữa',
+    stacked: '40×40px - Logo với brandColor background'
+  };
+
   return (
     <PreviewWrapper title="Preview Footer" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles}>
       <BrowserFrame>
@@ -4330,7 +4501,18 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         {previewStyle === 'modern' && renderModernStyle()}
         {previewStyle === 'corporate' && renderCorporateStyle()}
         {previewStyle === 'minimal' && renderMinimalStyle()}
+        {previewStyle === 'centered' && renderCenteredStyle()}
+        {previewStyle === 'stacked' && renderStackedStyle()}
       </BrowserFrame>
+      {/* Logo size guidelines */}
+      <div className="mt-3 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+        <div className="flex items-start gap-2">
+          <ImageIcon size={12} className="text-slate-400 mt-0.5 flex-shrink-0" />
+          <p className="text-[10px] text-slate-600 dark:text-slate-400">
+            <strong>Logo:</strong> {logoGuidelines[previewStyle as keyof typeof logoGuidelines]} • PNG/SVG trong suốt, tỉ lệ 1:1
+          </p>
+        </div>
+      </div>
     </PreviewWrapper>
   );
 };
@@ -4743,7 +4925,7 @@ export const CTAPreview = ({ config, brandColor, selectedStyle, onStyleChange }:
 };
 
 // ============ ABOUT PREVIEW ============
-// Brand Story UI/UX - 3 Variants from brand-story-component: classic, bento, minimal
+// Brand Story UI/UX - 6 Variants: classic, bento, minimal, split, timeline, showcase
 type AboutConfig = {
   layout?: string;
   subHeading: string;
@@ -4754,8 +4936,9 @@ type AboutConfig = {
   buttonText: string;
   buttonLink: string;
   style?: AboutStyle;
+  imageCaption?: string; // Configurable caption for bento style image overlay
 };
-export type AboutStyle = 'classic' | 'bento' | 'minimal';
+export type AboutStyle = 'classic' | 'bento' | 'minimal' | 'split' | 'timeline' | 'showcase';
 
 // Badge Component for About - Monochromatic with brandColor
 const AboutBadge = ({ text, variant = 'default', brandColor }: { text: string; variant?: 'default' | 'outline' | 'minimal'; brandColor: string }) => {
@@ -4845,8 +5028,29 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
   const styles = [
     { id: 'classic', label: 'Classic' }, 
     { id: 'bento', label: 'Bento Grid' }, 
-    { id: 'minimal', label: 'Minimal' }
+    { id: 'minimal', label: 'Minimal' },
+    { id: 'split', label: 'Split' },
+    { id: 'timeline', label: 'Timeline' },
+    { id: 'showcase', label: 'Showcase' }
   ];
+
+  // Empty state
+  const hasContent = config.heading || config.description || config.image || config.stats.length > 0;
+  if (!hasContent) {
+    return (
+      <PreviewWrapper title="Preview About" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles}>
+        <BrowserFrame url="yoursite.com/about">
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+              <Users size={32} style={{ color: brandColor }} />
+            </div>
+            <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có nội dung</h3>
+            <p className="text-sm text-slate-500">Nhập tiêu đề và mô tả để bắt đầu</p>
+          </div>
+        </BrowserFrame>
+      </PreviewWrapper>
+    );
+  }
 
   // Style 1: Classic - Open Layout, Image Left, Typography Focused
   const renderClassicStyle = () => (
@@ -4990,11 +5194,13 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
               <ImageIcon size={48} className="text-slate-300" />
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6 md:p-8">
-            <p className="text-white font-medium text-base md:text-lg">
-              Kiến tạo không gian làm việc hiện đại & bền vững.
-            </p>
-          </div>
+          {(config.imageCaption || config.image) && (
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6 md:p-8">
+              <p className="text-white font-medium text-base md:text-lg">
+                {config.imageCaption || 'Kiến tạo không gian làm việc hiện đại & bền vững.'}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -5075,14 +5281,221 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
     </section>
   );
 
+  // Style 4: Split - Layout chia đôi (Content trái, Image phải)
+  const renderSplitStyle = () => (
+    <section className="relative w-full bg-white dark:bg-slate-900 overflow-hidden">
+      <div className={cn(
+        "flex",
+        device === 'mobile' ? 'flex-col h-auto' : 'flex-row min-h-[400px] md:min-h-[500px]'
+      )}>
+        {/* Content Side */}
+        <div className={cn(
+          "flex flex-col justify-center bg-slate-50 dark:bg-slate-800/50",
+          device === 'mobile' ? 'p-6 order-2' : 'w-1/2 p-8 lg:p-12'
+        )}>
+          <div className={cn("space-y-4", device === 'mobile' ? '' : 'max-w-md')}>
+            {config.subHeading && (
+              <AboutBadge text={config.subHeading} variant="outline" brandColor={brandColor} />
+            )}
+            <h2 className={cn("font-bold text-slate-900 dark:text-white leading-tight", device === 'mobile' ? 'text-xl' : 'text-2xl lg:text-3xl')}>
+              {config.heading || 'Câu chuyện của chúng tôi'}
+            </h2>
+            <p className={cn("text-slate-600 dark:text-slate-300 leading-relaxed", device === 'mobile' ? 'text-sm' : 'text-base')}>
+              {config.description || 'Mô tả về công ty...'}
+            </p>
+            {/* Stats inline */}
+            {config.stats.length > 0 && (
+              <div className="flex gap-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+                {config.stats.slice(0, 2).map((stat) => (
+                  <div key={stat.id} className="flex flex-col">
+                    <span className="text-2xl font-bold" style={{ color: brandColor }}>{stat.value || '0'}</span>
+                    <span className="text-xs text-slate-500">{stat.label || 'Label'}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {config.buttonText && (
+              <div className="pt-2">
+                <button className={cn("font-medium rounded-lg text-white", device === 'mobile' ? 'px-4 py-2 text-sm' : 'px-6 py-2.5')} style={{ backgroundColor: brandColor }}>
+                  {config.buttonText}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Image Side */}
+        <div className={cn(
+          "relative overflow-hidden",
+          device === 'mobile' ? 'w-full h-[200px] order-1' : 'w-1/2'
+        )}>
+          {config.image ? (
+            <img src={config.image} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-slate-200 dark:bg-slate-700">
+              <ImageIcon size={40} className="text-slate-400" />
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 5: Timeline - Vertical timeline với milestones
+  const renderTimelineStyle = () => (
+    <section className={cn("py-10", device === 'mobile' ? 'px-4' : 'px-6 md:px-8')}>
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-10">
+          {config.subHeading && (
+            <div className="flex justify-center mb-3">
+              <AboutBadge text={config.subHeading} variant="default" brandColor={brandColor} />
+            </div>
+          )}
+          <h2 className={cn("font-bold text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+            {config.heading || 'Hành trình phát triển'}
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-2 max-w-2xl mx-auto text-sm">
+            {config.description || 'Mô tả về công ty...'}
+          </p>
+        </div>
+
+        {/* Timeline */}
+        <div className="relative">
+          {/* Vertical line */}
+          <div className="absolute left-4 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-0.5" style={{ backgroundColor: `${brandColor}20` }} />
+          
+          <div className="space-y-8">
+            {config.stats.slice(0, 4).map((stat, idx) => (
+              <div key={stat.id} className={cn("relative flex", device === 'mobile' ? 'pl-12' : idx % 2 === 0 ? 'md:flex-row-reverse' : '')}>
+                {/* Dot */}
+                <div className={cn(
+                  "absolute w-8 h-8 rounded-full border-4 bg-white dark:bg-slate-900 flex items-center justify-center text-xs font-bold",
+                  device === 'mobile' ? 'left-0' : 'left-1/2 -translate-x-1/2'
+                )} style={{ borderColor: brandColor, color: brandColor }}>
+                  {idx + 1}
+                </div>
+                {/* Content card */}
+                <div className={cn(
+                  "bg-white dark:bg-slate-800 rounded-xl p-4 border shadow-sm",
+                  device === 'mobile' ? 'w-full' : 'w-5/12'
+                )} style={{ borderColor: `${brandColor}15` }}>
+                  <span className="text-2xl font-bold" style={{ color: brandColor }}>{stat.value || '0'}</span>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{stat.label || 'Milestone'}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Image at bottom */}
+        {config.image && (
+          <div className="mt-10 rounded-2xl overflow-hidden aspect-[16/9] max-h-[300px]">
+            <img src={config.image} alt="" className="w-full h-full object-cover" />
+          </div>
+        )}
+
+        {config.buttonText && (
+          <div className="text-center mt-8">
+            <button className="px-6 py-2.5 rounded-lg font-medium text-white" style={{ backgroundColor: brandColor }}>
+              {config.buttonText}
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+
+  // Style 6: Showcase - Featured image lớn với text overlay
+  const renderShowcaseStyle = () => (
+    <section className="relative w-full overflow-hidden">
+      {/* Background Image */}
+      <div className={cn(
+        "relative w-full",
+        device === 'mobile' ? 'h-[400px]' : 'h-[500px] md:h-[600px]'
+      )}>
+        {config.image ? (
+          <>
+            <img src={config.image} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+          </>
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-slate-900 to-slate-700" />
+        )}
+        
+        {/* Content Overlay */}
+        <div className={cn(
+          "absolute inset-0 flex flex-col justify-center",
+          device === 'mobile' ? 'px-4' : 'px-8 md:px-16'
+        )}>
+          <div className={cn("max-w-xl space-y-4", device === 'mobile' ? 'space-y-3' : 'md:space-y-6')}>
+            {config.subHeading && (
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm text-white">
+                {config.subHeading}
+              </div>
+            )}
+            <h2 className={cn("font-bold text-white leading-tight", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-5xl')}>
+              {config.heading || 'Câu chuyện thương hiệu'}
+            </h2>
+            <p className={cn("text-white/80 leading-relaxed", device === 'mobile' ? 'text-sm line-clamp-3' : 'text-base md:text-lg')}>
+              {config.description || 'Mô tả về công ty...'}
+            </p>
+            
+            {/* Stats row */}
+            {config.stats.length > 0 && (
+              <div className="flex gap-8 pt-4">
+                {config.stats.slice(0, 3).map((stat) => (
+                  <div key={stat.id} className="text-center">
+                    <span className={cn("block font-bold text-white", device === 'mobile' ? 'text-xl' : 'text-3xl')}>{stat.value || '0'}</span>
+                    <span className="text-xs text-white/70 uppercase tracking-wide">{stat.label || 'Label'}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {config.buttonText && (
+              <div className="pt-2">
+                <button className={cn("font-medium rounded-lg text-white", device === 'mobile' ? 'px-4 py-2.5 text-sm' : 'px-6 py-3')} style={{ backgroundColor: brandColor }}>
+                  {config.buttonText}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  // Image size guidelines component
+  const ImageGuidelines = () => (
+    <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+      <div className="flex items-start gap-2">
+        <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+        <div className="text-xs text-slate-600 dark:text-slate-400">
+          {previewStyle === 'classic' && <p><strong>1200×800px</strong> (3:2) • Ảnh bên trái, subject đặt giữa</p>}
+          {previewStyle === 'bento' && <p><strong>1920×600px</strong> (16:5) • Banner ngang, góc dưới có caption overlay</p>}
+          {previewStyle === 'minimal' && <p><strong>800×600px</strong> (4:3) • Ảnh bên phải chiếm 45%, object-cover</p>}
+          {previewStyle === 'split' && <p><strong>960×600px</strong> (8:5) • Ảnh bên phải 50%, subject đặt giữa/trái</p>}
+          {previewStyle === 'timeline' && <p><strong>1200×400px</strong> (3:1) • Banner ngang cuối section, optional</p>}
+          {previewStyle === 'showcase' && <p><strong>1920×1080px</strong> (16:9) • Fullscreen background, subject đặt bên phải</p>}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <PreviewWrapper title="Preview About" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles}>
-      <BrowserFrame url="yoursite.com/about">
-        {previewStyle === 'classic' && renderClassicStyle()}
-        {previewStyle === 'bento' && renderBentoStyle()}
-        {previewStyle === 'minimal' && renderMinimalStyle()}
-      </BrowserFrame>
-    </PreviewWrapper>
+    <>
+      <PreviewWrapper title="Preview About" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles}>
+        <BrowserFrame url="yoursite.com/about">
+          {previewStyle === 'classic' && renderClassicStyle()}
+          {previewStyle === 'bento' && renderBentoStyle()}
+          {previewStyle === 'minimal' && renderMinimalStyle()}
+          {previewStyle === 'split' && renderSplitStyle()}
+          {previewStyle === 'timeline' && renderTimelineStyle()}
+          {previewStyle === 'showcase' && renderShowcaseStyle()}
+        </BrowserFrame>
+      </PreviewWrapper>
+      <ImageGuidelines />
+    </>
   );
 };
 
