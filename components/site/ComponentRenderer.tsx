@@ -3106,7 +3106,8 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                   e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
                 }}
               >
-                <div className="aspect-[5/4] bg-slate-50/50 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
+                <div className="aspect-[5/4] bg-slate-50/50 flex items-center justify-center p-6 md:p-8 relative overflow-hidden">
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-colors duration-300" style={{ backgroundColor: `${brandColor}08` }} />
                   {item.url ? (
                     <img src={item.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" alt={item.name || ''} />
                   ) : (
@@ -3175,7 +3176,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6 justify-items-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-6 justify-items-center">
             {items.map((item, idx) => (
               <div 
                 key={idx} 
@@ -3214,8 +3215,12 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
     );
   }
 
-  // Style 5: Carousel - Horizontal scroll, full color
+  // Style 5: Carousel - Grid with navigation arrows (like preview)
   if (style === 'carousel') {
+    const itemsPerView = 4; // Desktop: 4 items per view
+    const [carouselIndex, setCarouselIndex] = React.useState(0);
+    const maxIndex = Math.max(0, items.length - itemsPerView);
+    
     return (
       <section className="w-full py-12 md:py-16 bg-white">
         <div className="container max-w-7xl mx-auto px-4">
@@ -3223,13 +3228,37 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
             <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
           </div>
           <div className="relative">
-            <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-              <div className="flex gap-4 md:gap-5">
+            {items.length > itemsPerView && (
+              <>
+                <button
+                  onClick={() => setCarouselIndex(Math.max(0, carouselIndex - 1))}
+                  disabled={carouselIndex === 0}
+                  className={`absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center transition-all ${carouselIndex === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110'}`}
+                  style={{ left: '-16px', border: `1px solid ${brandColor}20` }}
+                >
+                  <ChevronLeft size={20} style={{ color: brandColor }} />
+                </button>
+                <button
+                  onClick={() => setCarouselIndex(Math.min(maxIndex, carouselIndex + 1))}
+                  disabled={carouselIndex >= maxIndex}
+                  className={`absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center transition-all ${carouselIndex >= maxIndex ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110'}`}
+                  style={{ right: '-16px', border: `1px solid ${brandColor}20` }}
+                >
+                  <ChevronRight size={20} style={{ color: brandColor }} />
+                </button>
+              </>
+            )}
+            <div className="overflow-hidden mx-4">
+              <div 
+                className="flex transition-transform duration-300 ease-out gap-4"
+                style={{ transform: `translateX(-${carouselIndex * (100 / itemsPerView)}%)` }}
+              >
                 {items.map((item, idx) => (
                   <div 
                     key={idx}
                     onClick={() => setSelectedCert(item)}
-                    className="flex-shrink-0 w-[180px] md:w-[220px] group cursor-zoom-in"
+                    className="flex-shrink-0 group cursor-zoom-in"
+                    style={{ width: `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 16 / itemsPerView}px)` }}
                   >
                     <div 
                       className="aspect-square rounded-xl flex items-center justify-center p-4 md:p-5 transition-all duration-300"
@@ -3258,6 +3287,18 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                 ))}
               </div>
             </div>
+            {items.length > itemsPerView && (
+              <div className="flex justify-center gap-2 mt-6">
+                {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
+                  <button 
+                    key={idx} 
+                    onClick={() => setCarouselIndex(idx)} 
+                    className={`h-2 rounded-full transition-all ${carouselIndex === idx ? 'w-6' : 'w-2'}`}
+                    style={{ backgroundColor: carouselIndex === idx ? brandColor : `${brandColor}30` }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
         <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />

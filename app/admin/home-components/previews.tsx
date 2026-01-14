@@ -7713,7 +7713,7 @@ export const TrustBadgesPreview = ({
             <>
               <div className={cn(
                 "grid gap-4 md:gap-6 justify-items-center",
-                device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4 xl:grid-cols-6'
+                device === 'mobile' ? 'grid-cols-2' : 'grid-cols-3'
               )}>
                 {wallItems.map((item) => (
                   <div 
