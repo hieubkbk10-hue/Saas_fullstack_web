@@ -1984,6 +1984,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                 ? selectedServices.map(s => ({ id: s._id, name: s.title, image: s.thumbnail, price: s.price ? s.price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ', description: s.excerpt }))
                 : filteredServices.slice(0, productListConfig.itemCount).map(s => ({ id: s._id, name: s.title, image: s.thumbnail, price: s.price ? s.price.toLocaleString('vi-VN') + 'đ' : 'Liên hệ', description: s.excerpt }))
               }
+              title={title}
             />
           </>
         )}

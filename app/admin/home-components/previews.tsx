@@ -2529,16 +2529,18 @@ const formatServicePrice = (price?: string | number) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(price);
 };
 
-export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onStyleChange, items }: { 
+export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onStyleChange, items, title: propTitle }: { 
   brandColor: string; 
   itemCount: number; 
   selectedStyle?: ServiceListStyle; 
   onStyleChange?: (style: ServiceListStyle) => void;
   items?: ServiceListPreviewItem[];
+  title?: string;
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'grid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ServiceListStyle);
+  const title = propTitle || 'Dịch vụ';
   const styles = [
     { id: 'grid', label: 'Grid' }, 
     { id: 'bento', label: 'Bento' }, 
@@ -2547,7 +2549,6 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
     { id: 'minimal', label: 'Minimal' },
     { id: 'showcase', label: 'Showcase' }
   ];
-  const title = 'Dịch vụ';
   
   // Mock data for preview - always show at least 6 items
   const mockServices: ServiceListPreviewItem[] = [

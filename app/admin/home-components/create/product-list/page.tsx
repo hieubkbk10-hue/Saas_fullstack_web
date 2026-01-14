@@ -473,7 +473,8 @@ function ProductListCreateContent() {
             : autoServicePreviewItems.length > 0 
               ? autoServicePreviewItems 
               : undefined
-          } 
+          }
+          title={title}
         />
       ) : (
         <ProductListPreview brandColor={brandColor} itemCount={selectionMode === 'manual' ? selectedProductIds.length : itemCount} componentType="ProductList" selectedStyle={productStyle} onStyleChange={setProductStyle} subTitle={subTitle} sectionTitle={sectionTitle} />
