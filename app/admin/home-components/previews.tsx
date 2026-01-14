@@ -11512,9 +11512,9 @@ export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChang
 };
 
 // ============ PROCESS/HOW IT WORKS PREVIEW ============
-// 4 Professional Styles: Timeline, Steps, Cards, Zigzag
+// 6 Professional Styles: Timeline, Steps, Cards, Zigzag, Minimal, Numbered
 type ProcessStep = { id: number; icon: string; title: string; description: string };
-export type ProcessStyle = 'timeline' | 'steps' | 'cards' | 'zigzag';
+export type ProcessStyle = 'timeline' | 'steps' | 'cards' | 'zigzag' | 'minimal' | 'numbered';
 
 export const ProcessPreview = ({ 
   steps, 
@@ -11535,7 +11535,38 @@ export const ProcessPreview = ({
     { id: 'steps', label: 'Steps' },
     { id: 'cards', label: 'Cards' },
     { id: 'zigzag', label: 'Zigzag' },
+    { id: 'minimal', label: 'Minimal' },
+    { id: 'numbered', label: 'Numbered' },
   ];
+
+  const MAX_VISIBLE = device === 'mobile' ? 4 : 6;
+
+  // Dynamic info based on style
+  const getInfoText = () => {
+    const count = steps.length;
+    if (count === 0) return 'Chưa có bước nào';
+    const remaining = count > MAX_VISIBLE ? ` (+${count - MAX_VISIBLE} ẩn)` : '';
+    switch (previewStyle) {
+      case 'timeline': return `${count} bước • Vertical timeline${remaining}`;
+      case 'steps': return `${Math.min(count, 4)} bước hiển thị • Horizontal flow`;
+      case 'cards': return `${Math.min(count, 4)} bước • Grid cards`;
+      case 'zigzag': return `${Math.min(count, 4)} bước • Alternating layout`;
+      case 'minimal': return `${count} bước • Compact list${remaining}`;
+      case 'numbered': return `${count} bước • Big numbers${remaining}`;
+      default: return `${count} bước`;
+    }
+  };
+
+  // Empty State
+  const renderEmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+        <Layers size={32} style={{ color: brandColor }} />
+      </div>
+      <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có bước nào</h3>
+      <p className="text-sm text-slate-500">Thêm bước đầu tiên để bắt đầu</p>
+    </div>
+  );
 
   // Style 1: Timeline - Vertical timeline với connecting line
   const renderTimelineStyle = () => (
@@ -11788,7 +11819,7 @@ export const ProcessPreview = ({
                 <h3 className="font-bold text-base md:text-lg text-slate-900 dark:text-slate-100 mb-1">
                   {step.title || `Bước ${idx + 1}`}
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
                   {step.description || 'Mô tả bước này...'}
                 </p>
               </div>
@@ -11796,8 +11827,126 @@ export const ProcessPreview = ({
           );
         })}
       </div>
+      {steps.length > 4 && (
+        <div className="text-center mt-6">
+          <span className="text-sm font-medium" style={{ color: brandColor }}>+{steps.length - 4} bước khác</span>
+        </div>
+      )}
     </div>
   );
+
+  // Style 5: Minimal - Compact list with subtle styling
+  const renderMinimalStyle = () => {
+    if (steps.length === 0) return renderEmptyState();
+    const visibleSteps = steps.slice(0, MAX_VISIBLE);
+    const remainingCount = steps.length - MAX_VISIBLE;
+    
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+        <div className="text-center mb-6 md:mb-8">
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+            Quy trình làm việc
+          </h2>
+          <p className="text-sm text-slate-500 mt-2">Đơn giản • Hiệu quả • Chuyên nghiệp</p>
+        </div>
+        
+        <div className={cn("mx-auto", steps.length <= 2 ? 'max-w-md' : 'max-w-2xl')}>
+          <div className="space-y-3">
+            {visibleSteps.map((step, idx) => (
+              <div 
+                key={step.id} 
+                className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+              >
+                <div 
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {step.icon || idx + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">
+                    {step.title || `Bước ${idx + 1}`}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    {step.description || 'Mô tả bước...'}
+                  </p>
+                </div>
+                <ArrowRight size={16} className="text-slate-300 flex-shrink-0" />
+              </div>
+            ))}
+          </div>
+          {remainingCount > 0 && (
+            <div className="text-center mt-4">
+              <span className="text-sm" style={{ color: brandColor }}>+{remainingCount} bước khác</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Style 6: Numbered - Big numbers with grid layout
+  const renderNumberedStyle = () => {
+    if (steps.length === 0) return renderEmptyState();
+    const visibleSteps = steps.slice(0, MAX_VISIBLE);
+    const remainingCount = steps.length - MAX_VISIBLE;
+    
+    const gridClass = cn(
+      "grid gap-6",
+      steps.length === 1 ? 'max-w-xs mx-auto' :
+      steps.length === 2 ? 'max-w-xl mx-auto grid-cols-2' :
+      device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+    );
+    
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+        <div className="text-center mb-8 md:mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+            Quy trình
+          </div>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+            Quy trình làm việc
+          </h2>
+        </div>
+        
+        <div className={gridClass}>
+          {visibleSteps.map((step, idx) => (
+            <div key={step.id} className="text-center">
+              <div className="relative mb-4">
+                <span 
+                  className={cn("font-black", device === 'mobile' ? 'text-6xl' : 'text-7xl md:text-8xl')}
+                  style={{ color: brandColor, opacity: 0.1 }}
+                >
+                  {String(idx + 1).padStart(2, '0')}
+                </span>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div 
+                    className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center text-white font-bold text-lg"
+                    style={{ backgroundColor: brandColor, boxShadow: `0 4px 14px ${brandColor}40` }}
+                  >
+                    {step.icon || idx + 1}
+                  </div>
+                </div>
+              </div>
+              <h3 className="font-bold text-base md:text-lg text-slate-900 dark:text-slate-100 mb-2 line-clamp-1">
+                {step.title || `Bước ${idx + 1}`}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 min-h-[2.5rem]">
+                {step.description || 'Mô tả bước này...'}
+              </p>
+            </div>
+          ))}
+        </div>
+        {remainingCount > 0 && (
+          <div className="text-center mt-8">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>
+              <Plus size={14} /> {remainingCount} bước khác
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <PreviewWrapper 
@@ -11807,13 +11956,15 @@ export const ProcessPreview = ({
       previewStyle={previewStyle} 
       setPreviewStyle={setPreviewStyle} 
       styles={styles} 
-      info={`${steps.length} bước`}
+      info={getInfoText()}
     >
       <BrowserFrame>
         {previewStyle === 'timeline' && renderTimelineStyle()}
         {previewStyle === 'steps' && renderStepsStyle()}
         {previewStyle === 'cards' && renderCardsStyle()}
         {previewStyle === 'zigzag' && renderZigzagStyle()}
+        {previewStyle === 'minimal' && renderMinimalStyle()}
+        {previewStyle === 'numbered' && renderNumberedStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );
@@ -12296,16 +12447,19 @@ export const ClientsPreview = ({
 };
 
 // ============ VIDEO PREVIEW ============
-// 3 Professional Styles: Centered, Split, Fullwidth
+// 6 Professional Styles: Centered, Split, Fullwidth, Cinema, Minimal, Parallax
 import { Play, Video as VideoIcon } from 'lucide-react';
 
-export type VideoStyle = 'centered' | 'split' | 'fullwidth';
+export type VideoStyle = 'centered' | 'split' | 'fullwidth' | 'cinema' | 'minimal' | 'parallax';
 
-interface VideoConfig {
+export interface VideoConfig {
   videoUrl: string;
   thumbnailUrl?: string;
   heading?: string;
   description?: string;
+  badge?: string;
+  buttonText?: string;
+  buttonLink?: string;
   autoplay?: boolean;
   loop?: boolean;
   muted?: boolean;
@@ -12350,10 +12504,13 @@ export const VideoPreview = ({
   const styles = [
     { id: 'centered', label: 'Centered' },
     { id: 'split', label: 'Split' },
-    { id: 'fullwidth', label: 'Toàn màn hình' },
+    { id: 'fullwidth', label: 'Fullwidth' },
+    { id: 'cinema', label: 'Cinema' },
+    { id: 'minimal', label: 'Minimal' },
+    { id: 'parallax', label: 'Parallax' },
   ];
 
-  const { videoUrl, thumbnailUrl, heading, description } = config;
+  const { videoUrl, thumbnailUrl, heading, description, badge, buttonText, buttonLink } = config;
   const videoInfo = getVideoInfo(videoUrl);
   
   // Determine thumbnail
@@ -12524,9 +12681,17 @@ export const VideoPreview = ({
           
           {/* Content */}
           <div className={cn(device === 'mobile' ? 'order-2 text-center' : 'order-2')}>
+            {badge && (
+              <span 
+                className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide mb-3"
+                style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+              >
+                {badge}
+              </span>
+            )}
             {heading && (
               <h2 className={cn(
-                "font-bold text-slate-900 mb-4",
+                "font-bold text-slate-900 dark:text-white mb-4",
                 device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
               )}>
                 {heading}
@@ -12534,19 +12699,21 @@ export const VideoPreview = ({
             )}
             {description && (
               <p className={cn(
-                "text-slate-500 mb-6",
+                "text-slate-500 dark:text-slate-400 mb-6",
                 device === 'mobile' ? 'text-sm' : 'text-base'
               )}>
                 {description}
               </p>
             )}
-            <button 
-              type="button"
-              className="px-6 py-2.5 rounded-lg text-white font-medium text-sm transition-opacity hover:opacity-90"
-              style={{ backgroundColor: brandColor }}
-            >
-              Tìm hiểu thêm
-            </button>
+            {buttonText && (
+              <a 
+                href={buttonLink || '#'}
+                className="inline-block px-6 py-2.5 rounded-lg text-white font-medium text-sm transition-opacity hover:opacity-90"
+                style={{ backgroundColor: brandColor }}
+              >
+                {buttonText}
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -12615,7 +12782,7 @@ export const VideoPreview = ({
                   style={{ backgroundColor: brandColor }}
                 >
                   <Play className="w-5 h-5" fill="white" />
-                  Xem video
+                  {buttonText || 'Xem video'}
                 </button>
               </div>
             </div>
@@ -12639,27 +12806,150 @@ export const VideoPreview = ({
     </section>
   );
 
+  // Style 4: Cinema - Letterbox với gradient frame
+  const renderCinemaStyle = () => (
+    <section className={cn("py-12 px-4 bg-slate-900", device === 'mobile' ? 'py-8' : 'py-16')}>
+      <div className="max-w-5xl mx-auto">
+        {(heading || description) && (
+          <div className="text-center mb-8">
+            {badge && <span className="inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-4" style={{ backgroundColor: `${brandColor}30`, color: brandColor }}>{badge}</span>}
+            {heading && <h2 className={cn("font-bold text-white mb-3", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>{heading}</h2>}
+            {description && <p className={cn("text-slate-400 max-w-2xl mx-auto", device === 'mobile' ? 'text-sm' : 'text-base')}>{description}</p>}
+          </div>
+        )}
+        {!videoUrl ? <EmptyState /> : (
+          <div className="relative">
+            <div className="absolute -top-3 -left-3 -right-3 h-3 rounded-t-xl" style={{ backgroundColor: `${brandColor}40` }} />
+            <div className="absolute -bottom-3 -left-3 -right-3 h-3 rounded-b-xl" style={{ backgroundColor: `${brandColor}40` }} />
+            <div className="relative aspect-[21/9] rounded-lg overflow-hidden bg-black">
+              {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><VideoIcon size={64} className="text-slate-600" /></div>}
+              {!isPlaying && <PlayButton />}
+              <VideoEmbed />
+            </div>
+          </div>
+        )}
+        {buttonText && !isPlaying && <div className="text-center mt-8"><a href={buttonLink || '#'} className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90" style={{ backgroundColor: brandColor, boxShadow: `0 4px 14px ${brandColor}40` }}>{buttonText}</a></div>}
+      </div>
+    </section>
+  );
+
+  // Style 5: Minimal - Clean card với video và content
+  const renderMinimalStyle = () => (
+    <section className={cn("py-12 px-4 bg-slate-50 dark:bg-slate-900", device === 'mobile' ? 'py-8' : 'py-16')}>
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          {!videoUrl ? <div className="p-8"><EmptyState /></div> : (
+            <div className="relative aspect-video">
+              {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><VideoIcon size={48} className="text-slate-300" /></div>}
+              {!isPlaying && <PlayButton />}
+              <VideoEmbed />
+            </div>
+          )}
+          {(heading || description) && (
+            <div className={cn("p-6 border-t border-slate-100 dark:border-slate-700", device === 'mobile' ? 'p-4' : 'p-8')}>
+              <div className={cn("flex gap-4", device === 'mobile' ? 'flex-col' : 'flex-row items-center justify-between')}>
+                <div className="flex-1">
+                  {badge && <span className="inline-block px-2.5 py-0.5 rounded-md text-xs font-medium mb-2" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{badge}</span>}
+                  {heading && <h3 className={cn("font-bold text-slate-900 dark:text-white", device === 'mobile' ? 'text-lg' : 'text-xl')}>{heading}</h3>}
+                  {description && <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{description}</p>}
+                </div>
+                {buttonText && <a href={buttonLink || '#'} className="inline-flex items-center px-5 py-2.5 rounded-lg text-white font-medium text-sm whitespace-nowrap hover:opacity-90" style={{ backgroundColor: brandColor }}>{buttonText}</a>}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 6: Parallax - Floating card với background blur
+  const renderParallaxStyle = () => (
+    <section className="relative">
+      {!videoUrl ? <div className="py-16 px-4"><EmptyState /></div> : (
+        <div className={cn("relative overflow-hidden", device === 'mobile' ? 'min-h-[350px]' : 'min-h-[450px] md:min-h-[500px]')}>
+          {!isPlaying && displayThumbnail && (
+            <>
+              <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${displayThumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(8px)' }} />
+              <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+            </>
+          )}
+          {!isPlaying && !displayThumbnail && <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${brandColor}dd 0%, ${brandColor} 100%)` }} />}
+          {!isPlaying && <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />}
+          {!isPlaying && (
+            <div className={cn("absolute z-10 flex items-end", device === 'mobile' ? 'inset-x-4 bottom-4' : 'inset-x-8 bottom-8')}>
+              <div className={cn("bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-xl shadow-2xl", device === 'mobile' ? 'p-4 w-full' : 'p-6 max-w-lg')}>
+                {badge && <div className="flex items-center gap-2 mb-2"><div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} /><span className="text-xs font-semibold uppercase tracking-wide" style={{ color: brandColor }}>{badge}</span></div>}
+                {heading && <h3 className={cn("font-bold text-slate-900 dark:text-white", device === 'mobile' ? 'text-base' : 'text-xl')}>{heading}</h3>}
+                {description && <p className={cn("text-slate-600 dark:text-slate-300 mt-1", device === 'mobile' ? 'text-xs line-clamp-2' : 'text-sm')}>{description}</p>}
+                <div className="flex items-center gap-3 mt-4">
+                  <button type="button" onClick={() => setIsPlaying(true)} className={cn("flex items-center gap-2 font-medium rounded-lg text-white", device === 'mobile' ? 'px-4 py-2 text-xs' : 'px-5 py-2.5 text-sm')} style={{ backgroundColor: brandColor }}>
+                    <Play className="w-4 h-4" fill="white" />{buttonText || 'Xem video'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {!isPlaying && device !== 'mobile' && (
+            <div className="absolute top-6 right-6 z-20">
+              <button type="button" onClick={() => setIsPlaying(true)} className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
+                <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
+              </button>
+            </div>
+          )}
+          <VideoEmbed />
+        </div>
+      )}
+    </section>
+  );
+
+  const getThumbnailSizeInfo = () => {
+    if (!videoUrl) return 'Chưa có video';
+    const vType = videoInfo.type === 'direct' ? 'Direct' : videoInfo.type.charAt(0).toUpperCase() + videoInfo.type.slice(1);
+    switch (previewStyle) {
+      case 'centered': return `${vType} • 1280×720px (16:9)`;
+      case 'split': return `${vType} • 1280×720px (16:9)`;
+      case 'fullwidth': return `${vType} • 1920×820px (21:9)`;
+      case 'cinema': return `${vType} • 1920×820px (21:9)`;
+      case 'minimal': return `${vType} • 1280×720px (16:9)`;
+      case 'parallax': return `${vType} • 1920×1080px (16:9)`;
+      default: return vType;
+    }
+  };
+
   return (
-    <PreviewWrapper 
-      title="Preview Video" 
-      device={device} 
-      setDevice={setDevice} 
-      previewStyle={previewStyle} 
-      setPreviewStyle={setPreviewStyle} 
-      styles={styles}
-      info={videoUrl ? (videoInfo.type === 'direct' ? 'Video trực tiếp' : videoInfo.type.charAt(0).toUpperCase() + videoInfo.type.slice(1)) : 'Chưa có video'}
-    >
-      <BrowserFrame>
-        {previewStyle === 'centered' && renderCenteredStyle()}
-        {previewStyle === 'split' && renderSplitStyle()}
-        {previewStyle === 'fullwidth' && renderFullwidthStyle()}
-      </BrowserFrame>
-    </PreviewWrapper>
+    <>
+      <PreviewWrapper title="Preview Video" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={getThumbnailSizeInfo()}>
+        <BrowserFrame>
+          {previewStyle === 'centered' && renderCenteredStyle()}
+          {previewStyle === 'split' && renderSplitStyle()}
+          {previewStyle === 'fullwidth' && renderFullwidthStyle()}
+          {previewStyle === 'cinema' && renderCinemaStyle()}
+          {previewStyle === 'minimal' && renderMinimalStyle()}
+          {previewStyle === 'parallax' && renderParallaxStyle()}
+        </BrowserFrame>
+      </PreviewWrapper>
+      <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+        <div className="flex items-start gap-2">
+          <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+          <div className="text-xs text-slate-600 dark:text-slate-400">
+            {previewStyle === 'centered' && <p><strong>1280×720px</strong> (16:9) • Video centered với header text</p>}
+            {previewStyle === 'split' && <p><strong>1280×720px</strong> (16:9) • Video trái, content phải</p>}
+            {previewStyle === 'fullwidth' && <p><strong>1920×820px</strong> (21:9) • Fullwidth với overlay text</p>}
+            {previewStyle === 'cinema' && <p><strong>1920×820px</strong> (21:9) • Letterbox cinema frame</p>}
+            {previewStyle === 'minimal' && <p><strong>1280×720px</strong> (16:9) • Clean card layout</p>}
+            {previewStyle === 'parallax' && <p><strong>1920×1080px</strong> (16:9) • Background blur + floating card</p>}
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 
 // ============ COUNTDOWN / PROMOTION PREVIEW ============
-// 4 Professional Styles: Banner, Floating, Minimal, Split
+// 6 Professional Styles: Banner, Floating, Minimal, Split, Sticky, Popup
+// Best Practices: Urgency indicators, expired state handling, accessibility (aria-live)
 type CountdownConfig = {
   heading: string;
   subHeading: string;
@@ -12675,23 +12965,29 @@ type CountdownConfig = {
   showSeconds: boolean;
 };
 
-export type CountdownStyle = 'banner' | 'floating' | 'minimal' | 'split';
+export type CountdownStyle = 'banner' | 'floating' | 'minimal' | 'split' | 'sticky' | 'popup';
 
-// Countdown Timer Hook
+// Countdown Timer Hook with expired state
 const useCountdown = (endDate: string) => {
-  const [timeLeft, setTimeLeft] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [timeLeft, setTimeLeft] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: false });
 
   React.useEffect(() => {
     const calculateTime = () => {
       const end = new Date(endDate).getTime();
       const now = Date.now();
-      const diff = Math.max(0, end - now);
+      const diff = end - now;
+      
+      if (diff <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true });
+        return;
+      }
 
       setTimeLeft({
         days: Math.floor(diff / (1000 * 60 * 60 * 24)),
         hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
         minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
         seconds: Math.floor((diff % (1000 * 60)) / 1000),
+        isExpired: false,
       });
     };
 
@@ -12724,15 +13020,43 @@ export const CountdownPreview = ({
     { id: 'floating', label: 'Nổi bật' },
     { id: 'minimal', label: 'Tối giản' },
     { id: 'split', label: 'Chia đôi' },
+    { id: 'sticky', label: 'Dính header' },
+    { id: 'popup', label: 'Popup' },
   ];
 
-  // Time unit renderer
+  // Image size guidance per style
+  const getImageSizeInfo = () => {
+    if (!config.backgroundImage) return 'Chưa có ảnh nền';
+    switch (previewStyle) {
+      case 'banner': return 'Ảnh nền: 1920×600px (16:5) - Full width banner';
+      case 'floating': return 'Ảnh nền: 1200×600px (2:1) - Card nổi bật';
+      case 'split': return 'Ảnh nền: 800×600px (4:3) - Cột trái';
+      case 'sticky': return 'Không dùng ảnh - Thanh compact';
+      case 'popup': return 'Ảnh nền: 600×400px (3:2) - Modal center';
+      default: return 'Ảnh nền tùy chọn';
+    }
+  };
+
+  // Expired State Component
+  const ExpiredState = ({ variant = 'default' }: { variant?: 'default' | 'light' }) => (
+    <div className={cn(
+      "flex items-center gap-2 px-4 py-2 rounded-lg font-semibold",
+      variant === 'light' ? 'bg-white/20 text-white' : 'bg-red-100 text-red-600'
+    )}>
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>Khuyến mãi đã kết thúc</span>
+    </div>
+  );
+
+  // Time unit renderer with accessibility
   const TimeUnit = ({ value, label, variant = 'default' }: { value: number; label: string; variant?: 'default' | 'light' | 'outlined' }) => {
     if (variant === 'light') {
       return (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center" role="timer" aria-label={`${value} ${label}`}>
           <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 min-w-[50px] md:min-w-[60px]">
-            <span className="text-2xl md:text-3xl font-bold text-white tabular-nums">{String(value).padStart(2, '0')}</span>
+            <span className="text-2xl md:text-3xl font-bold text-white tabular-nums" aria-hidden="true">{String(value).padStart(2, '0')}</span>
           </div>
           <span className="text-xs text-white/80 mt-1 uppercase tracking-wider">{label}</span>
         </div>
@@ -12740,33 +13064,33 @@ export const CountdownPreview = ({
     }
     if (variant === 'outlined') {
       return (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center" role="timer" aria-label={`${value} ${label}`}>
           <div 
             className="border-2 rounded-lg px-3 py-2 min-w-[50px] md:min-w-[60px]"
             style={{ borderColor: brandColor }}
           >
-            <span className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: brandColor }}>{String(value).padStart(2, '0')}</span>
+            <span className="text-2xl md:text-3xl font-bold tabular-nums" style={{ color: brandColor }} aria-hidden="true">{String(value).padStart(2, '0')}</span>
           </div>
           <span className="text-xs text-slate-500 mt-1 uppercase tracking-wider">{label}</span>
         </div>
       );
     }
     return (
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center" role="timer" aria-label={`${value} ${label}`}>
         <div 
           className="rounded-lg px-3 py-2 min-w-[50px] md:min-w-[60px] text-white"
           style={{ backgroundColor: brandColor }}
         >
-          <span className="text-2xl md:text-3xl font-bold tabular-nums">{String(value).padStart(2, '0')}</span>
+          <span className="text-2xl md:text-3xl font-bold tabular-nums" aria-hidden="true">{String(value).padStart(2, '0')}</span>
         </div>
         <span className="text-xs text-slate-500 mt-1 uppercase tracking-wider">{label}</span>
       </div>
     );
   };
 
-  // Timer Display
+  // Timer Display with aria-live for screen readers
   const TimerDisplay = ({ variant = 'default' }: { variant?: 'default' | 'light' | 'outlined' }) => (
-    <div className={cn("flex items-center gap-2 md:gap-3", device === 'mobile' && 'gap-1.5')}>
+    <div className={cn("flex items-center gap-2 md:gap-3", device === 'mobile' && 'gap-1.5')} role="timer" aria-live="polite" aria-atomic="true">
       {config.showDays && (
         <>
           <TimeUnit value={timeLeft.days} label="Ngày" variant={variant} />
@@ -13035,10 +13359,10 @@ export const CountdownPreview = ({
             {/* Countdown */}
             <div className="mb-5">
               <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Còn lại</p>
-              <TimerDisplay variant="default" />
+              {timeLeft.isExpired ? <ExpiredState /> : <TimerDisplay variant="default" />}
             </div>
             
-            {config.buttonText && (
+            {config.buttonText && !timeLeft.isExpired && (
               <a 
                 href={config.buttonLink || '#'} 
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90 w-full md:w-auto"
@@ -13056,6 +13380,163 @@ export const CountdownPreview = ({
     </section>
   );
 
+  // Style 5: Sticky - Compact top bar style (dính header)
+  const renderStickyStyle = () => (
+    <section 
+      className="w-full py-3 px-4"
+      style={{ backgroundColor: brandColor }}
+      role="banner"
+      aria-label="Khuyến mãi có thời hạn"
+    >
+      <div className="max-w-7xl mx-auto">
+        <div className={cn(
+          "flex items-center justify-between gap-4",
+          device === 'mobile' ? 'flex-col gap-3' : ''
+        )}>
+          {/* Left - Content */}
+          <div className={cn(
+            "flex items-center gap-4",
+            device === 'mobile' ? 'flex-col text-center gap-2' : ''
+          )}>
+            {config.discountText && (
+              <span className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-bold uppercase">
+                {config.discountText}
+              </span>
+            )}
+            <span className="text-white font-semibold text-sm md:text-base">
+              {config.heading || 'Flash Sale'}
+            </span>
+          </div>
+          
+          {/* Center - Timer (compact) */}
+          <div className="flex items-center gap-2">
+            {timeLeft.isExpired ? (
+              <span className="text-white/80 text-sm">Đã kết thúc</span>
+            ) : (
+              <div className="flex items-center gap-1.5 text-white font-mono">
+                {config.showDays && (
+                  <>
+                    <span className="bg-white/20 px-2 py-1 rounded text-sm font-bold">{String(timeLeft.days).padStart(2, '0')}</span>
+                    <span className="text-white/60">:</span>
+                  </>
+                )}
+                {config.showHours && (
+                  <>
+                    <span className="bg-white/20 px-2 py-1 rounded text-sm font-bold">{String(timeLeft.hours).padStart(2, '0')}</span>
+                    <span className="text-white/60">:</span>
+                  </>
+                )}
+                {config.showMinutes && (
+                  <>
+                    <span className="bg-white/20 px-2 py-1 rounded text-sm font-bold">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                    {config.showSeconds && <span className="text-white/60">:</span>}
+                  </>
+                )}
+                {config.showSeconds && (
+                  <span className="bg-white/20 px-2 py-1 rounded text-sm font-bold">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Right - CTA */}
+          {config.buttonText && !timeLeft.isExpired && (
+            <a 
+              href={config.buttonLink || '#'} 
+              className="bg-white px-4 py-1.5 rounded-full text-sm font-semibold transition-transform hover:scale-105 whitespace-nowrap"
+              style={{ color: brandColor }}
+            >
+              {config.buttonText}
+            </a>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 6: Popup - Modal/Dialog style
+  const renderPopupStyle = () => (
+    <section className="py-16 px-4">
+      {/* Simulated page content behind popup */}
+      <div className="max-w-4xl mx-auto opacity-30 pointer-events-none">
+        <div className="h-8 bg-slate-200 rounded mb-4 w-3/4" />
+        <div className="h-4 bg-slate-200 rounded mb-2 w-full" />
+        <div className="h-4 bg-slate-200 rounded mb-2 w-5/6" />
+        <div className="h-4 bg-slate-200 rounded w-4/6" />
+      </div>
+      
+      {/* Popup overlay */}
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" style={{ position: 'absolute' }}>
+        <div 
+          className={cn(
+            "bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden relative",
+            device === 'mobile' ? 'w-full max-w-sm' : 'w-full max-w-md'
+          )}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="popup-title"
+        >
+          {/* Close button */}
+          <button className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 z-10">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          
+          {/* Image/Visual header */}
+          <div 
+            className="h-32 md:h-40 flex items-center justify-center relative"
+            style={{ 
+              background: config.backgroundImage 
+                ? `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${config.backgroundImage}) center/cover`
+                : `linear-gradient(135deg, ${brandColor}ee 0%, ${brandColor} 100%)`
+            }}
+          >
+            {config.discountText && (
+              <div className="text-center text-white">
+                <div className="text-4xl md:text-5xl font-black">{config.discountText}</div>
+                <div className="text-sm font-medium opacity-80 mt-1">{config.subHeading || 'GIẢM GIÁ'}</div>
+              </div>
+            )}
+          </div>
+          
+          {/* Content */}
+          <div className="p-5 md:p-6 text-center">
+            <h3 id="popup-title" className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-2">
+              {config.heading || 'Ưu đãi đặc biệt!'}
+            </h3>
+            
+            {config.description && (
+              <p className="text-slate-500 text-sm mb-5">{config.description}</p>
+            )}
+            
+            {/* Timer */}
+            <div className="mb-5">
+              <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">Còn lại</p>
+              {timeLeft.isExpired ? <ExpiredState /> : <TimerDisplay variant="default" />}
+            </div>
+            
+            {/* CTA */}
+            {config.buttonText && !timeLeft.isExpired && (
+              <a 
+                href={config.buttonLink || '#'} 
+                className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90"
+                style={{ backgroundColor: brandColor }}
+              >
+                {config.buttonText}
+              </a>
+            )}
+            
+            {/* Skip link */}
+            <button className="text-slate-400 text-xs mt-3 hover:text-slate-600 transition-colors">
+              Để sau
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
   return (
     <PreviewWrapper 
       title="Preview Countdown / Promotion" 
@@ -13064,12 +13545,15 @@ export const CountdownPreview = ({
       previewStyle={previewStyle} 
       setPreviewStyle={setPreviewStyle} 
       styles={styles}
+      info={getImageSizeInfo()}
     >
       <BrowserFrame>
         {previewStyle === 'banner' && renderBannerStyle()}
         {previewStyle === 'floating' && renderFloatingStyle()}
         {previewStyle === 'minimal' && renderMinimalStyle()}
         {previewStyle === 'split' && renderSplitStyle()}
+        {previewStyle === 'sticky' && renderStickyStyle()}
+        {previewStyle === 'popup' && renderPopupStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );
