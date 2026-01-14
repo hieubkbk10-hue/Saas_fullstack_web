@@ -1529,26 +1529,120 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
         {/* Pricing */}
         {component.type === 'Pricing' && (
           <>
+            {/* Cấu hình chung */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-base">Cấu hình bảng giá</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Mô tả ngắn (subtitle)</Label>
+                  <Input 
+                    placeholder="Chọn gói phù hợp với nhu cầu của bạn"
+                    value={pricingConfig.subtitle || ''} 
+                    onChange={(e) => setPricingConfig({ ...pricingConfig, subtitle: e.target.value })} 
+                  />
+                </div>
+                <div className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={pricingConfig.showBillingToggle} 
+                      onChange={(e) => setPricingConfig({ ...pricingConfig, showBillingToggle: e.target.checked })} 
+                      className="w-4 h-4 rounded" 
+                    />
+                    <span>Hiển thị toggle Tháng/Năm</span>
+                  </label>
+                </div>
+                {pricingConfig.showBillingToggle && (
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs">Label tháng</Label>
+                      <Input 
+                        placeholder="Hàng tháng"
+                        value={pricingConfig.monthlyLabel || ''} 
+                        onChange={(e) => setPricingConfig({ ...pricingConfig, monthlyLabel: e.target.value })} 
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Label năm</Label>
+                      <Input 
+                        placeholder="Hàng năm"
+                        value={pricingConfig.yearlyLabel || ''} 
+                        onChange={(e) => setPricingConfig({ ...pricingConfig, yearlyLabel: e.target.value })} 
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Badge tiết kiệm</Label>
+                      <Input 
+                        placeholder="Tiết kiệm 17%"
+                        value={pricingConfig.yearlySavingText || ''} 
+                        onChange={(e) => setPricingConfig({ ...pricingConfig, yearlySavingText: e.target.value })} 
+                      />
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Danh sách gói */}
             <Card className="mb-6">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">Các gói dịch vụ</CardTitle>
+                <CardTitle className="text-base">Các gói dịch vụ ({pricingPlans.length})</CardTitle>
                 <Button 
                   type="button" 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => setPricingPlans([...pricingPlans, { id: Date.now(), name: '', price: '', period: '/tháng', features: [], isPopular: false, buttonText: 'Chọn gói', buttonLink: '' }])} 
+                  onClick={() => setPricingPlans([...pricingPlans, { id: Date.now(), name: '', price: '', yearlyPrice: '', period: '/tháng', features: [], isPopular: false, buttonText: 'Chọn gói', buttonLink: '' }])} 
                   className="gap-2"
                 >
                   <Plus size={14} /> Thêm gói
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                {pricingPlans.map((plan, idx) => (
-                  <div key={plan.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                {pricingPlans.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-slate-100 dark:bg-slate-800">
+                      <Tag size={32} className="text-slate-400" />
+                    </div>
+                    <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có gói nào</h3>
+                    <p className="text-sm text-slate-500 mb-4">Thêm gói đầu tiên để bắt đầu</p>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setPricingPlans([{ id: Date.now(), name: '', price: '', yearlyPrice: '', period: '/tháng', features: [], isPopular: false, buttonText: 'Chọn gói', buttonLink: '' }])} className="gap-2">
+                      <Plus size={14} /> Thêm gói
+                    </Button>
+                  </div>
+                ) : pricingPlans.map((plan, idx) => (
+                  <div 
+                    key={plan.id} 
+                    draggable
+                    onDragStart={() => setDraggedPricingId(plan.id)}
+                    onDragEnd={() => { setDraggedPricingId(null); setDragOverPricingId(null); }}
+                    onDragOver={(e) => { e.preventDefault(); if (draggedPricingId !== plan.id) setDragOverPricingId(plan.id); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (!draggedPricingId || draggedPricingId === plan.id) return;
+                      const newPlans = [...pricingPlans];
+                      const draggedIdx = newPlans.findIndex(p => p.id === draggedPricingId);
+                      const dropIdx = newPlans.findIndex(p => p.id === plan.id);
+                      const [moved] = newPlans.splice(draggedIdx, 1);
+                      newPlans.splice(dropIdx, 0, moved);
+                      setPricingPlans(newPlans);
+                      setDraggedPricingId(null);
+                      setDragOverPricingId(null);
+                    }}
+                    className={cn(
+                      "p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3 transition-all",
+                      draggedPricingId === plan.id && "opacity-50 scale-95",
+                      dragOverPricingId === plan.id && "ring-2 ring-blue-500"
+                    )}
+                  >
                     <div className="flex items-center justify-between">
-                      <Label>Gói {idx + 1}</Label>
                       <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-2 text-sm">
+                        <GripVertical size={16} className="text-slate-400 cursor-grab" />
+                        <Label>Gói {idx + 1}</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-sm cursor-pointer">
                           <input 
                             type="checkbox" 
                             checked={plan.isPopular} 
@@ -1563,6 +1657,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                           size="icon" 
                           className="text-red-500 h-8 w-8" 
                           onClick={() => pricingPlans.length > 1 && setPricingPlans(pricingPlans.filter(p => p.id !== plan.id))}
+                          disabled={pricingPlans.length <= 1}
                         >
                           <Trash2 size={14} />
                         </Button>
@@ -1575,15 +1670,22 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                         onChange={(e) => setPricingPlans(pricingPlans.map(p => p.id === plan.id ? {...p, name: e.target.value} : p))} 
                       />
                       <Input 
-                        placeholder="Giá (VD: 299.000)" 
+                        placeholder="Giá tháng (VD: 299.000)" 
                         value={plan.price} 
                         onChange={(e) => setPricingPlans(pricingPlans.map(p => p.id === plan.id ? {...p, price: e.target.value} : p))} 
                       />
                     </div>
+                    {pricingConfig.showBillingToggle && (
+                      <Input 
+                        placeholder="Giá năm (VD: 2.990.000)" 
+                        value={plan.yearlyPrice} 
+                        onChange={(e) => setPricingPlans(pricingPlans.map(p => p.id === plan.id ? {...p, yearlyPrice: e.target.value} : p))} 
+                      />
+                    )}
                     <Input 
                       placeholder="Tính năng (phân cách bởi dấu phẩy)" 
                       value={plan.features.join(', ')} 
-                      onChange={(e) => setPricingPlans(pricingPlans.map(p => p.id === plan.id ? {...p, features: e.target.value.split(', ').filter(Boolean)} : p))} 
+                      onChange={(e) => setPricingPlans(pricingPlans.map(p => p.id === plan.id ? {...p, features: e.target.value.split(',').map(s => s.trim()).filter(Boolean)} : p))} 
                     />
                     <div className="grid grid-cols-2 gap-3">
                       <Input 
@@ -1606,6 +1708,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               brandColor={brandColor}
               selectedStyle={pricingStyle}
               onStyleChange={setPricingStyle}
+              config={pricingConfig}
             />
           </>
         )}

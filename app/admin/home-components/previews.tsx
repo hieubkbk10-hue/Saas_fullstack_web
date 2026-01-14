@@ -7389,9 +7389,11 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
 };
 
 // ============ TRUST BADGES / CERTIFICATIONS PREVIEW ============
-// 4 Professional Styles: Grid, Cards, Marquee, Wall
+// 6 Professional Styles: Grid, Cards, Marquee, Wall, Carousel, Featured
+// Best Practices: Grayscale-to-color hover, lightbox/zoom indicator, verification links, alt text accessibility
 type TrustBadgeItem = { id: number; url: string; link: string; name?: string };
-export type TrustBadgesStyle = 'grid' | 'cards' | 'marquee' | 'wall';
+export type TrustBadgesStyle = 'grid' | 'cards' | 'marquee' | 'wall' | 'carousel' | 'featured';
+export type TrustBadgesConfig = { heading?: string; subHeading?: string; buttonText?: string; buttonLink?: string };
 
 // Auto Scroll Slider cho Marquee style
 const TrustBadgesAutoScroll = ({ children, speed = 0.6, isPaused }: { children: React.ReactNode; speed?: number; isPaused?: boolean }) => {
@@ -7440,242 +7442,508 @@ export const TrustBadgesPreview = ({
   items, 
   brandColor, 
   selectedStyle, 
-  onStyleChange 
+  onStyleChange,
+  config
 }: { 
   items: TrustBadgeItem[]; 
   brandColor: string; 
   selectedStyle?: TrustBadgesStyle; 
   onStyleChange?: (style: TrustBadgesStyle) => void;
+  config?: TrustBadgesConfig;
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [isPaused, setIsPaused] = useState(false);
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const previewStyle = selectedStyle || 'cards';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as TrustBadgesStyle);
   
   const styles = [
-    { id: 'grid', label: 'Grid Vuông' }, 
-    { id: 'cards', label: 'Thẻ Lớn' }, 
-    { id: 'marquee', label: 'Dải Logo' },
-    { id: 'wall', label: 'Khung Tranh' }
+    { id: 'grid', label: 'Grid' }, 
+    { id: 'cards', label: 'Cards' }, 
+    { id: 'marquee', label: 'Marquee' },
+    { id: 'wall', label: 'Wall' },
+    { id: 'carousel', label: 'Carousel' },
+    { id: 'featured', label: 'Featured' }
   ];
+
+  // Config values with defaults
+  const heading = config?.heading || 'Chứng nhận & Giải thưởng';
+  const subHeading = config?.subHeading || 'Được công nhận bởi các tổ chức uy tín';
+
+  // Max visible items pattern
+  const MAX_VISIBLE = device === 'mobile' ? 4 : 8;
+  const visibleItems = items.slice(0, MAX_VISIBLE);
+  const remainingCount = items.length - MAX_VISIBLE;
+
+  // Empty State Component
+  const EmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-20 h-20 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+        <Shield size={36} style={{ color: brandColor }} />
+      </div>
+      <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Chưa có chứng nhận</h3>
+      <p className="text-sm text-slate-500 max-w-xs">Thêm chứng nhận, giải thưởng hoặc badge để tăng độ tin cậy</p>
+    </div>
+  );
+
+  // Section Header Component
+  const SectionHeader = ({ centered = true }: { centered?: boolean }) => (
+    <div className={cn("mb-8 md:mb-10", centered && "text-center")}>
+      {subHeading && (
+        <span className="inline-block px-3 py-1 mb-3 rounded-full text-xs font-semibold uppercase tracking-wider" 
+          style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+          {subHeading}
+        </span>
+      )}
+      <h2 className={cn(
+        "font-bold text-slate-900 dark:text-slate-100",
+        device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
+      )}>
+        {heading}
+      </h2>
+    </div>
+  );
+
+  // +N More Items Badge
+  const MoreItemsBadge = ({ count }: { count: number }) => count > 0 ? (
+    <div className="flex items-center justify-center py-4 mt-4">
+      <span className="text-sm font-medium px-4 py-2 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>
+        +{count} chứng nhận khác
+      </span>
+    </div>
+  ) : null;
 
   // Style 1: Square Grid - Grayscale hover to color, with zoom icon
   const renderGridStyle = () => (
-    <section className="w-full py-12 md:py-16 bg-white dark:bg-slate-900">
-      <div className="container max-w-7xl mx-auto px-4 md:px-6">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <h2 className={cn(
-            "font-bold",
-            device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
-          )} style={{ color: brandColor }}>Chứng nhận</h2>
-        </div>
-        
-        {/* Grid */}
-        <div className={cn(
-          "grid gap-4 md:gap-6",
-          device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4'
-        )}>
-          {items.slice(0, device === 'mobile' ? 4 : 8).map((item) => (
-            <div 
-              key={item.id} 
-              className="group relative aspect-square bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center p-6 md:p-8 cursor-pointer hover:border-blue-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
-            >
-              {item.url ? (
-                <img 
-                  src={item.url} 
-                  className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-70 group-hover:opacity-100 transition-all duration-300" 
-                  alt={item.name || ''} 
-                />
-              ) : (
-                <ImageIcon size={40} className="text-slate-300" />
-              )}
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Maximize2 className="w-5 h-5 text-blue-500" />
-              </div>
-              {item.name && (
-                <div className="absolute bottom-2 left-2 right-2 text-center">
-                  <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate block px-2">{item.name}</span>
+    <section className={cn("w-full bg-white dark:bg-slate-900", device === 'mobile' ? 'py-8 px-3' : 'py-12 px-6')}>
+      <div className="container max-w-7xl mx-auto">
+        <SectionHeader />
+        {items.length === 0 ? <EmptyState /> : (
+          <>
+            <div className={cn(
+              "grid gap-4 md:gap-5",
+              device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4'
+            )}>
+              {visibleItems.map((item) => (
+                <div 
+                  key={item.id} 
+                  className="group relative aspect-square bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300"
+                  style={{ 
+                    padding: device === 'mobile' ? '16px' : '24px',
+                    border: `1px solid ${brandColor}15`
+                  }}
+                  onMouseEnter={(e) => { 
+                    e.currentTarget.style.borderColor = `${brandColor}40`; 
+                    e.currentTarget.style.boxShadow = `0 8px 24px ${brandColor}15`; 
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                  }}
+                  onMouseLeave={(e) => { 
+                    e.currentTarget.style.borderColor = `${brandColor}15`; 
+                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  {item.url ? (
+                    <img 
+                      src={item.url} 
+                      className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100 transition-all duration-300" 
+                      alt={item.name || 'Chứng nhận'} 
+                    />
+                  ) : (
+                    <ImageIcon size={device === 'mobile' ? 32 : 40} className="text-slate-300" />
+                  )}
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
+                      <Maximize2 size={14} style={{ color: brandColor }} />
+                    </div>
+                  </div>
+                  {item.name && (
+                    <div className="absolute bottom-2 left-2 right-2 text-center">
+                      <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate block">{item.name}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {remainingCount > 0 && (
+                <div 
+                  className="aspect-square rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all"
+                  style={{ backgroundColor: `${brandColor}05`, border: `2px dashed ${brandColor}30` }}
+                >
+                  <Plus size={28} style={{ color: brandColor }} className="mb-1" />
+                  <span className="text-lg font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+                  <span className="text-[10px] text-slate-400">xem thêm</span>
                 </div>
               )}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
     </section>
   );
 
-  // Style 2: Feature Cards - Large cards with image and title, hover zoom effect (BEST)
-  const renderCardsStyle = () => (
-    <section className="w-full py-12 md:py-16 bg-white dark:bg-slate-900">
-      <div className="container max-w-7xl mx-auto px-4 md:px-6">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <h2 className={cn(
-            "font-bold",
-            device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
-          )} style={{ color: brandColor }}>Chứng nhận</h2>
-        </div>
-
-        {/* Cards Grid */}
-        <div className={cn(
-          "grid gap-6 md:gap-8",
-          device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
-        )}>
-          {items.slice(0, device === 'mobile' ? 2 : 3).map((item) => (
-            <div 
-              key={item.id} 
-              className="group relative flex flex-col border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm hover:shadow-2xl hover:border-blue-200 dark:hover:border-blue-800 transition-all duration-500 cursor-pointer h-full"
-            >
-              {/* Image Container */}
-              <div className="aspect-[5/4] bg-slate-50 dark:bg-slate-700/30 flex items-center justify-center p-8 md:p-12 relative overflow-hidden">
-                {/* Hover Background */}
-                <div className="absolute inset-0 bg-blue-50/0 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/20 transition-colors duration-300" />
-                
-                {item.url ? (
-                  <img 
-                    src={item.url} 
-                    className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" 
-                    alt={item.name || ''} 
-                  />
-                ) : (
-                  <ImageIcon size={48} className="text-slate-300" />
-                )}
-                
-                {/* Hover Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-                  <span className="bg-white/90 dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-full shadow-lg font-medium flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform text-sm">
-                    <ZoomIn size={16} /> Xem chi tiết
-                  </span>
-                </div>
+  // Style 2: Feature Cards - Large cards with image and title, hover zoom effect
+  const renderCardsStyle = () => {
+    const cardItems = items.slice(0, device === 'mobile' ? 2 : 3);
+    const cardRemaining = items.length - cardItems.length;
+    return (
+      <section className={cn("w-full bg-white dark:bg-slate-900", device === 'mobile' ? 'py-8 px-3' : 'py-12 px-6')}>
+        <div className="container max-w-7xl mx-auto">
+          <SectionHeader />
+          {items.length === 0 ? <EmptyState /> : (
+            <>
+              <div className={cn(
+                "grid gap-5 md:gap-6",
+                device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+              )}>
+                {cardItems.map((item) => (
+                  <div 
+                    key={item.id} 
+                    className="group relative flex flex-col rounded-2xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm cursor-pointer h-full transition-all duration-300"
+                    style={{ border: `1px solid ${brandColor}15` }}
+                    onMouseEnter={(e) => { 
+                      e.currentTarget.style.borderColor = `${brandColor}30`; 
+                      e.currentTarget.style.boxShadow = `0 12px 32px ${brandColor}15`; 
+                    }}
+                    onMouseLeave={(e) => { 
+                      e.currentTarget.style.borderColor = `${brandColor}15`; 
+                      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                    }}
+                  >
+                    <div className={cn("bg-slate-50 dark:bg-slate-700/30 flex items-center justify-center relative overflow-hidden", device === 'mobile' ? 'aspect-[4/3] p-6' : 'aspect-[5/4] p-10')}>
+                      <div className="absolute inset-0 bg-blue-50/0 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/20 transition-colors duration-300" />
+                      {item.url ? (
+                        <img src={item.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" alt={item.name || 'Chứng nhận'} />
+                      ) : (
+                        <ImageIcon size={48} className="text-slate-300" />
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                        <span className="bg-white/90 dark:bg-slate-800/90 px-4 py-2 rounded-full shadow-lg font-medium flex items-center gap-2 text-sm" style={{ color: brandColor }}>
+                          <ZoomIn size={16} /> Xem chi tiết
+                        </span>
+                      </div>
+                    </div>
+                    <div className={cn("bg-white dark:bg-slate-800 border-t flex items-center justify-between group-hover:bg-slate-50 dark:group-hover:bg-slate-700/50 transition-colors", device === 'mobile' ? 'py-3 px-4 min-h-[48px]' : 'py-4 px-5')} style={{ borderColor: `${brandColor}10` }}>
+                      <span className="font-semibold truncate text-sm" style={{ color: brandColor }}>
+                        {item.name || 'Chứng nhận'}
+                      </span>
+                      <ArrowUpRight size={16} className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} />
+                    </div>
+                  </div>
+                ))}
               </div>
-              
-              {/* Footer with Title */}
-              <div className="py-4 px-5 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between group-hover:bg-slate-50 dark:group-hover:bg-slate-700/50 transition-colors">
-                <span className="font-semibold text-slate-700 dark:text-slate-300 truncate transition-colors text-sm" style={{ color: brandColor }}>
-                  {item.name || 'Chứng nhận'}
-                </span>
-              </div>
-            </div>
-          ))}
+              <MoreItemsBadge count={cardRemaining} />
+            </>
+          )}
         </div>
-      </div>
-    </section>
-  );
+      </section>
+    );
+  };
 
   // Style 3: Marquee - Auto scroll slider with tooltip
   const renderMarqueeStyle = () => (
     <section 
-      className="w-full py-16 md:py-20 bg-slate-50 dark:bg-slate-800/50 border-y border-slate-200 dark:border-slate-700"
+      className={cn("w-full border-y", device === 'mobile' ? 'py-10' : 'py-14')}
+      style={{ backgroundColor: `${brandColor}05`, borderColor: `${brandColor}15` }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Header */}
-      <div className="container max-w-7xl mx-auto px-4 mb-10 text-center">
-        <h2 className={cn(
-          "font-bold",
-          device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
-        )} style={{ color: brandColor }}>Chứng nhận</h2>
+      <div className="container max-w-7xl mx-auto px-4 mb-8 text-center">
+        <SectionHeader />
       </div>
-      
-      {/* Auto Scroll */}
-      <TrustBadgesAutoScroll speed={0.6} isPaused={isPaused}>
-        {items.map((item) => (
-          <div 
-            key={item.id} 
-            className="h-28 md:h-36 w-auto flex items-center justify-center px-4 opacity-60 hover:opacity-100 hover:scale-110 transition-all duration-300 cursor-pointer relative group"
-          >
-            {item.url ? (
-              <img src={item.url} className="h-full w-auto object-contain max-w-[250px]" alt={item.name || ''} />
-            ) : (
-              <div className="h-20 w-32 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
-                <ImageIcon size={32} className="text-slate-400" />
-              </div>
-            )}
-            {/* Tooltip on hover */}
-            {item.name && (
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">
-                {item.name}
-              </div>
-            )}
-          </div>
-        ))}
-      </TrustBadgesAutoScroll>
+      {items.length === 0 ? <EmptyState /> : (
+        <TrustBadgesAutoScroll speed={0.6} isPaused={isPaused}>
+          {items.map((item) => (
+            <div 
+              key={item.id} 
+              className={cn("w-auto flex items-center justify-center px-4 opacity-50 hover:opacity-100 hover:scale-110 transition-all duration-300 cursor-pointer relative group", device === 'mobile' ? 'h-20' : 'h-28 md:h-32')}
+            >
+              {item.url ? (
+                <img src={item.url} className="h-full w-auto object-contain max-w-[200px] filter grayscale group-hover:grayscale-0 transition-all" alt={item.name || 'Chứng nhận'} />
+              ) : (
+                <div className="h-16 w-28 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
+                  <ImageIcon size={28} className="text-slate-400" />
+                </div>
+              )}
+              {item.name && (
+                <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded text-xs font-medium opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none" style={{ backgroundColor: brandColor, color: 'white' }}>
+                  {item.name}
+                </div>
+              )}
+            </div>
+          ))}
+        </TrustBadgesAutoScroll>
+      )}
     </section>
   );
 
   // Style 4: Framed Wall - Certificate frames hanging on wall
-  const renderWallStyle = () => (
-    <section className="w-full py-14 md:py-20 bg-slate-100 dark:bg-slate-800/30">
-      <div className="container max-w-7xl mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className={cn(
-            "font-bold",
-            device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl'
-          )} style={{ color: brandColor }}>Chứng nhận</h2>
+  const renderWallStyle = () => {
+    const wallItems = items.slice(0, device === 'mobile' ? 4 : 6);
+    const wallRemaining = items.length - wallItems.length;
+    return (
+      <section className={cn("w-full", device === 'mobile' ? 'py-10 px-3' : 'py-14 px-6')} style={{ backgroundColor: `${brandColor}05` }}>
+        <div className="container max-w-7xl mx-auto">
+          <SectionHeader />
+          {items.length === 0 ? <EmptyState /> : (
+            <>
+              <div className={cn("flex flex-wrap justify-center", device === 'mobile' ? 'gap-4' : 'gap-8')}>
+                {wallItems.map((item) => (
+                  <div 
+                    key={item.id} 
+                    className={cn(
+                      "group relative bg-white dark:bg-slate-800 shadow-md rounded-sm flex flex-col cursor-pointer transition-all duration-300",
+                      device === 'mobile' ? 'w-[140px] h-[180px] p-2' : 'w-[180px] h-[230px] p-3'
+                    )}
+                    style={{ border: `1px solid ${brandColor}15` }}
+                    onMouseEnter={(e) => { 
+                      e.currentTarget.style.boxShadow = `0 12px 24px ${brandColor}20`; 
+                      e.currentTarget.style.transform = 'translateY(-8px)';
+                    }}
+                    onMouseLeave={(e) => { 
+                      e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-1 h-10 bg-gradient-to-b from-slate-400 to-transparent opacity-40"></div>
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full shadow-inner" style={{ backgroundColor: `${brandColor}60` }}></div>
+                    <div className="flex-1 flex items-center justify-center p-3 relative overflow-hidden" style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}10` }}>
+                      {item.url ? (
+                        <img src={item.url} className="w-full h-full object-contain" alt={item.name || 'Chứng nhận'} />
+                      ) : (
+                        <ImageIcon size={28} className="text-slate-300" />
+                      )}
+                    </div>
+                    <div className={cn("flex items-center justify-center", device === 'mobile' ? 'h-7 mt-1' : 'h-9 mt-2')}>
+                      <span className={cn("font-semibold uppercase tracking-wider text-center truncate px-1", device === 'mobile' ? 'text-[8px]' : 'text-[9px]')} style={{ color: `${brandColor}cc` }}>
+                        {item.name ? (item.name.length > 18 ? item.name.substring(0, 16) + '...' : item.name) : 'Certificate'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <MoreItemsBadge count={wallRemaining} />
+            </>
+          )}
         </div>
-        
-        {/* Wall of Frames */}
-        <div className={cn(
-          "flex flex-wrap justify-center gap-6 md:gap-10",
-          device === 'mobile' && 'gap-4'
-        )}>
-          {items.slice(0, device === 'mobile' ? 4 : 6).map((item) => (
-            <div 
-              key={item.id} 
-              className={cn(
-                "group relative bg-white dark:bg-slate-800 p-3 md:p-4 shadow-md rounded-sm border border-slate-200 dark:border-slate-700 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer",
-                device === 'mobile' ? 'w-36 h-48' : 'w-52 h-64'
+      </section>
+    );
+  };
+
+  // Style 5: Carousel - Horizontal scroll với navigation arrows
+  const renderCarouselStyle = () => {
+    const itemsPerView = device === 'mobile' ? 2 : device === 'tablet' ? 3 : 4;
+    const maxIndex = Math.max(0, items.length - itemsPerView);
+    return (
+      <section className={cn("w-full bg-white dark:bg-slate-900", device === 'mobile' ? 'py-8 px-3' : 'py-12 px-6')}>
+        <div className="container max-w-7xl mx-auto">
+          <SectionHeader />
+          {items.length === 0 ? <EmptyState /> : (
+            <div className="relative">
+              {items.length > itemsPerView && (
+                <>
+                  <button
+                    onClick={() => setCarouselIndex(Math.max(0, carouselIndex - 1))}
+                    disabled={carouselIndex === 0}
+                    className={cn("absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-lg flex items-center justify-center transition-all", carouselIndex === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110')}
+                    style={{ left: device === 'mobile' ? '-4px' : '-16px', border: `1px solid ${brandColor}20` }}
+                  >
+                    <ChevronLeft size={20} style={{ color: brandColor }} />
+                  </button>
+                  <button
+                    onClick={() => setCarouselIndex(Math.min(maxIndex, carouselIndex + 1))}
+                    disabled={carouselIndex >= maxIndex}
+                    className={cn("absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-lg flex items-center justify-center transition-all", carouselIndex >= maxIndex ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110')}
+                    style={{ right: device === 'mobile' ? '-4px' : '-16px', border: `1px solid ${brandColor}20` }}
+                  >
+                    <ChevronRight size={20} style={{ color: brandColor }} />
+                  </button>
+                </>
               )}
-            >
-              {/* Hanging Wire */}
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-12 bg-gradient-to-b from-slate-300 dark:from-slate-600 to-transparent opacity-50 z-0"></div>
-              <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600 shadow-inner z-10"></div>
-              
-              {/* Image Frame */}
-              <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-700/30 border border-slate-100 dark:border-slate-600 p-4 relative z-10 overflow-hidden">
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 dark:group-hover:bg-white/5 transition-colors z-20 pointer-events-none"></div>
-                {item.url ? (
-                  <img src={item.url} className="w-full h-full object-contain" alt={item.name || ''} />
-                ) : (
-                  <ImageIcon size={32} className="text-slate-300" />
+              <div className={cn("overflow-hidden", device === 'mobile' ? 'mx-2' : 'mx-6')}>
+                <div className="flex transition-transform duration-300 ease-out gap-4" style={{ transform: `translateX(-${carouselIndex * (100 / itemsPerView)}%)` }}>
+                  {items.map((item) => (
+                    <div 
+                      key={item.id} 
+                      className="flex-shrink-0 group cursor-pointer"
+                      style={{ width: `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 16 / itemsPerView}px)` }}
+                    >
+                      <div 
+                        className="aspect-square rounded-xl flex items-center justify-center transition-all duration-300"
+                        style={{ padding: device === 'mobile' ? '12px' : '20px', backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
+                        onMouseEnter={(e) => { 
+                          e.currentTarget.style.borderColor = `${brandColor}40`; 
+                          e.currentTarget.style.boxShadow = `0 8px 20px ${brandColor}15`; 
+                        }}
+                        onMouseLeave={(e) => { 
+                          e.currentTarget.style.borderColor = `${brandColor}15`; 
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        {item.url ? (
+                          <img src={item.url} className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100 transition-all" alt={item.name || 'Chứng nhận'} />
+                        ) : (
+                          <ImageIcon size={32} className="text-slate-300" />
+                        )}
+                      </div>
+                      {item.name && (
+                        <p className="text-center text-xs font-medium text-slate-500 mt-2 truncate px-1">{item.name}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {items.length > itemsPerView && (
+                <div className="flex justify-center gap-2 mt-6">
+                  {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
+                    <button key={idx} onClick={() => setCarouselIndex(idx)} className={cn("h-2 rounded-full transition-all", carouselIndex === idx ? 'w-6' : 'w-2')} style={{ backgroundColor: carouselIndex === idx ? brandColor : `${brandColor}30` }} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  // Style 6: Featured - 1 item nổi bật + grid nhỏ bên dưới
+  const renderFeaturedStyle = () => {
+    const featuredItem = items[0];
+    const otherItems = items.slice(1, device === 'mobile' ? 5 : 7);
+    const featuredRemaining = items.length - 1 - otherItems.length;
+    return (
+      <section className={cn("w-full bg-white dark:bg-slate-900", device === 'mobile' ? 'py-8 px-3' : 'py-12 px-6')}>
+        <div className="container max-w-7xl mx-auto">
+          <SectionHeader />
+          {items.length === 0 ? <EmptyState /> : (
+            <div className={cn("grid gap-5", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2')}>
+              {featuredItem && (
+                <div 
+                  className="group cursor-pointer rounded-2xl overflow-hidden transition-all duration-300"
+                  style={{ backgroundColor: `${brandColor}08`, border: `2px solid ${brandColor}20` }}
+                  onMouseEnter={(e) => { 
+                    e.currentTarget.style.borderColor = `${brandColor}40`; 
+                    e.currentTarget.style.boxShadow = `0 12px 32px ${brandColor}15`; 
+                  }}
+                  onMouseLeave={(e) => { 
+                    e.currentTarget.style.borderColor = `${brandColor}20`; 
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div className={cn("flex items-center justify-center relative", device === 'mobile' ? 'aspect-[4/3] p-6' : 'aspect-[4/3] p-10')}>
+                    {featuredItem.url ? (
+                      <img src={featuredItem.url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt={featuredItem.name || 'Chứng nhận nổi bật'} />
+                    ) : (
+                      <ImageIcon size={64} className="text-slate-300" />
+                    )}
+                    <div className="absolute top-3 left-3">
+                      <span className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: brandColor }}>
+                        NỔI BẬT
+                      </span>
+                    </div>
+                    <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-lg" style={{ color: brandColor }}>
+                        <ZoomIn size={20} />
+                      </div>
+                    </div>
+                  </div>
+                  <div className={cn("border-t flex items-center justify-center", device === 'mobile' ? 'py-3 min-h-[48px]' : 'py-4')} style={{ borderColor: `${brandColor}15` }}>
+                    <span className="font-bold text-base" style={{ color: brandColor }}>
+                      {featuredItem.name || 'Chứng nhận nổi bật'}
+                    </span>
+                  </div>
+                </div>
+              )}
+              <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-2' : 'grid-cols-3')}>
+                {otherItems.map((item) => (
+                  <div 
+                    key={item.id} 
+                    className="group aspect-square rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300"
+                    style={{ padding: device === 'mobile' ? '12px' : '16px', backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
+                    onMouseEnter={(e) => { 
+                      e.currentTarget.style.borderColor = `${brandColor}40`; 
+                      e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`; 
+                    }}
+                    onMouseLeave={(e) => { 
+                      e.currentTarget.style.borderColor = `${brandColor}15`; 
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    {item.url ? (
+                      <img src={item.url} className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-50 group-hover:opacity-100 transition-all" alt={item.name || 'Chứng nhận'} />
+                    ) : (
+                      <ImageIcon size={24} className="text-slate-300" />
+                    )}
+                  </div>
+                ))}
+                {featuredRemaining > 0 && (
+                  <div 
+                    className="aspect-square rounded-xl flex flex-col items-center justify-center cursor-pointer"
+                    style={{ backgroundColor: `${brandColor}08`, border: `2px dashed ${brandColor}30` }}
+                  >
+                    <Plus size={24} style={{ color: brandColor }} />
+                    <span className="text-sm font-bold mt-1" style={{ color: brandColor }}>+{featuredRemaining}</span>
+                  </div>
                 )}
               </div>
-              
-              {/* Label */}
-              <div className={cn("flex items-center justify-center relative z-10", device === 'mobile' ? 'h-8' : 'h-10')}>
-                <span className={cn(
-                  "font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors text-center truncate px-1",
-                  device === 'mobile' ? 'text-[9px]' : 'text-[10px]'
-                )}>
-                  {item.name ? (item.name.length > 20 ? item.name.substring(0, 18) + '...' : item.name) : 'Certificate'}
-                </span>
-              </div>
             </div>
-          ))}
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  // Image Guidelines Component
+  const ImageGuidelines = () => (
+    <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+      <div className="flex items-start gap-2">
+        <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+        <div className="text-xs text-slate-600 dark:text-slate-400">
+          {previewStyle === 'grid' && (
+            <p><strong>300×300px</strong> (1:1) • Ảnh vuông, nền trong suốt PNG. Grayscale → color on hover.</p>
+          )}
+          {previewStyle === 'cards' && (
+            <p><strong>400×320px</strong> (5:4) • Ảnh chứng nhận rõ ràng, zoom on hover.</p>
+          )}
+          {previewStyle === 'marquee' && (
+            <p><strong>200×120px</strong> (5:3) • Logo/badge nhỏ gọn, auto scroll, hover pause.</p>
+          )}
+          {previewStyle === 'wall' && (
+            <p><strong>250×300px</strong> (5:6) • Khung ảnh dọc như bằng khen treo tường.</p>
+          )}
+          {previewStyle === 'carousel' && (
+            <p><strong>280×280px</strong> (1:1) • Grid vuông, navigation arrows, responsive.</p>
+          )}
+          {previewStyle === 'featured' && (
+            <p><strong>Featured: 600×450px</strong> (4:3) • <strong>Others: 200×200px</strong> (1:1) • 1 nổi bật + grid nhỏ.</p>
+          )}
         </div>
       </div>
-    </section>
+    </div>
   );
 
   return (
-    <PreviewWrapper 
-      title="Preview Chứng nhận" 
-      device={device} 
-      setDevice={setDevice} 
-      previewStyle={previewStyle} 
-      setPreviewStyle={setPreviewStyle} 
-      styles={styles} 
-      info={`${items.length} chứng nhận`}
-    >
-      <BrowserFrame>
-        {previewStyle === 'grid' && renderGridStyle()}
-        {previewStyle === 'cards' && renderCardsStyle()}
-        {previewStyle === 'marquee' && renderMarqueeStyle()}
-        {previewStyle === 'wall' && renderWallStyle()}
-      </BrowserFrame>
-    </PreviewWrapper>
+    <>
+      <PreviewWrapper 
+        title="Preview Chứng nhận" 
+        device={device} 
+        setDevice={setDevice} 
+        previewStyle={previewStyle} 
+        setPreviewStyle={setPreviewStyle} 
+        styles={styles} 
+        info={`${items.length} chứng nhận`}
+      >
+        <BrowserFrame>
+          {previewStyle === 'grid' && renderGridStyle()}
+          {previewStyle === 'cards' && renderCardsStyle()}
+          {previewStyle === 'marquee' && renderMarqueeStyle()}
+          {previewStyle === 'wall' && renderWallStyle()}
+          {previewStyle === 'carousel' && renderCarouselStyle()}
+          {previewStyle === 'featured' && renderFeaturedStyle()}
+        </BrowserFrame>
+      </PreviewWrapper>
+      <ImageGuidelines />
+    </>
   );
 };
 

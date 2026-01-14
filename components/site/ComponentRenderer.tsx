@@ -2919,9 +2919,9 @@ const GalleryLightbox = ({ photo, onClose }: { photo: { url: string } | null; on
 };
 
 // ============ TRUST BADGES / CERTIFICATIONS SECTION ============
-// 4 Styles: grid, cards, marquee, wall (matching the reference UI)
+// 6 Styles: grid, cards, marquee, wall, carousel, featured
 
-type TrustBadgesStyle = 'grid' | 'cards' | 'marquee' | 'wall';
+type TrustBadgesStyle = 'grid' | 'cards' | 'marquee' | 'wall' | 'carousel' | 'featured';
 type TrustBadgeItem = { url: string; link?: string; name?: string };
 
 // Auto Scroll component for TrustBadges Marquee
