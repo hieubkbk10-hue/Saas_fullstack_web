@@ -133,10 +133,15 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {services.slice(0, 6).map((service, idx) => (
               <Link key={service._id} href={`/services/${service.slug}`} className="group">
-                <article className="cursor-pointer relative bg-white flex flex-col hover:-translate-y-1 transition-all duration-300 h-full">
+                <article 
+                  className="cursor-pointer relative bg-white border rounded-lg p-3 flex flex-col hover:-translate-y-1 transition-all duration-300 h-full"
+                  style={{ borderColor: `${brandColor}10` }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}30`; (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 12px ${brandColor}10`; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}10`; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+                >
                   {/* Badge */}
                   {idx < 2 && (
-                    <div className="absolute z-20 top-3 left-3">
+                    <div className="absolute z-20 top-5 left-5">
                       <ServiceBadge isHot={idx === 0} isNew={idx === 1} brandColor={brandColor} />
                     </div>
                   )}
@@ -164,10 +169,10 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                     </h3>
 
                     <div className="flex items-end justify-between mt-3">
-                      <span className="text-sm font-semibold tracking-wide text-slate-700">
+                      <span className="text-sm font-semibold tracking-wide" style={{ color: brandColor }}>
                         {formatServicePrice(service.price)}
                       </span>
-                      <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                      <ArrowUpRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" style={{ color: brandColor }} />
                     </div>
                   </div>
                 </article>
@@ -216,7 +221,12 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                     i === 0 ? 'md:col-span-2 md:row-span-2' : ''
                   } ${i === 3 ? 'md:col-span-2' : ''}`}
                 >
-                  <article className="h-full border border-slate-200/40 rounded-xl p-3 md:p-4 hover:shadow-md hover:border-slate-300 transition-all flex flex-col cursor-pointer">
+                  <article 
+                    className="h-full border rounded-xl p-3 md:p-4 transition-all flex flex-col cursor-pointer"
+                    style={{ borderColor: `${brandColor}15`, boxShadow: i === 0 ? `0 4px 20px ${brandColor}08` : 'none' }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}40`; (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 24px ${brandColor}12`; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}15`; (e.currentTarget as HTMLElement).style.boxShadow = i === 0 ? `0 4px 20px ${brandColor}08` : 'none'; }}
+                  >
                     {/* Badge */}
                     {i < 2 && (
                       <div className="absolute z-20 top-5 left-5 md:top-6 md:left-6">
@@ -253,10 +263,10 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                         </p>
                       )}
                       <div className="flex items-end justify-between mt-2">
-                        <span className="text-sm font-semibold tracking-wide text-slate-700">
+                        <span className="text-sm font-semibold tracking-wide" style={{ color: brandColor }}>
                           {formatServicePrice(service.price)}
                         </span>
-                        <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover/bento:opacity-100 group-hover/bento:translate-x-0 transition-all duration-300" />
+                        <ArrowUpRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover/bento:opacity-100 group-hover/bento:translate-x-0 transition-all duration-300" style={{ color: brandColor }} />
                       </div>
                     </div>
                   </article>
@@ -306,7 +316,12 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
           <div className="flex flex-col gap-2">
             {services.slice(0, 6).map((service, idx) => (
               <Link key={service._id} href={`/services/${service.slug}`} className="group block">
-                <article className="cursor-pointer flex flex-row items-center gap-4 md:gap-6 py-4 border-b border-slate-200/40 hover:bg-slate-50 px-2 rounded-lg transition-all">
+                <article 
+                  className="cursor-pointer flex flex-row items-center gap-4 md:gap-6 py-4 border-b px-2 rounded-lg transition-all"
+                  style={{ borderColor: `${brandColor}10` }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = `${brandColor}05`; (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}20`; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}10`; }}
+                >
                   {/* Image */}
                   <div className="flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-md overflow-hidden bg-slate-100">
                     {service.thumbnail ? (
@@ -334,10 +349,10 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                       {service.title}
                     </h3>
                     <div className="flex items-end justify-between mt-2">
-                      <span className="text-sm font-semibold tracking-wide text-slate-700">
+                      <span className="text-sm font-semibold tracking-wide" style={{ color: brandColor }}>
                         {formatServicePrice(service.price)}
                       </span>
-                      <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                      <ArrowUpRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" style={{ color: brandColor }} />
                     </div>
                   </div>
                 </article>
@@ -367,8 +382,13 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
           <div className="flex gap-4 overflow-x-auto pb-4 px-3 md:px-6 snap-x snap-mandatory scroll-smooth" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
             {services.slice(0, 8).map((service, idx) => (
               <Link key={service._id} href={`/services/${service.slug}`} className="snap-start flex-shrink-0 w-[75vw] sm:w-[280px]">
-                <article className="group cursor-pointer relative bg-white flex flex-col hover:-translate-y-1 transition-all duration-300 h-full">
-                  {idx < 2 && <div className="absolute z-20 top-3 left-3"><ServiceBadge isHot={idx === 0} isNew={idx === 1} brandColor={brandColor} /></div>}
+                <article 
+                  className="group cursor-pointer relative bg-white border rounded-xl p-3 flex flex-col hover:-translate-y-1 transition-all duration-300 h-full"
+                  style={{ borderColor: `${brandColor}10` }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}30`; (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 20px ${brandColor}12`; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}10`; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+                >
+                  {idx < 2 && <div className="absolute z-20 top-5 left-5"><ServiceBadge isHot={idx === 0} isNew={idx === 1} brandColor={brandColor} /></div>}
                   <div className="relative overflow-hidden bg-slate-100 mb-3 rounded-lg aspect-[4/3] w-full">
                     {service.thumbnail ? (
                       <img src={service.thumbnail} alt={service.title} draggable={false} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
@@ -379,8 +399,8 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   <div className="flex flex-col justify-between flex-shrink-0 pt-1">
                     <h3 className="font-medium text-base text-slate-900 leading-tight group-hover:opacity-70 transition-colors line-clamp-2">{service.title}</h3>
                     <div className="flex items-end justify-between mt-3">
-                      <span className="text-sm font-semibold tracking-wide text-slate-700">{formatServicePrice(service.price)}</span>
-                      <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                      <span className="text-sm font-semibold tracking-wide" style={{ color: brandColor }}>{formatServicePrice(service.price)}</span>
+                      <ArrowUpRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" style={{ color: brandColor }} />
                     </div>
                   </div>
                 </article>
@@ -411,9 +431,13 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {services.slice(0, 6).map((service, idx) => (
               <Link key={service._id} href={`/services/${service.slug}`} className="group">
-                <article className="cursor-pointer">
+                <article 
+                  className="cursor-pointer"
+                  onMouseEnter={(e) => { const img = e.currentTarget.querySelector('.img-wrapper'); if (img) (img as HTMLElement).style.boxShadow = `0 8px 24px ${brandColor}15`; }}
+                  onMouseLeave={(e) => { const img = e.currentTarget.querySelector('.img-wrapper'); if (img) (img as HTMLElement).style.boxShadow = 'none'; }}
+                >
                   {/* Image - More minimal, rounded corners */}
-                  <div className="relative overflow-hidden bg-slate-100 rounded-2xl aspect-[3/2] mb-5">
+                  <div className="img-wrapper relative overflow-hidden bg-slate-100 rounded-2xl aspect-[3/2] mb-5 transition-shadow duration-300">
                     {service.thumbnail ? (
                       <img src={service.thumbnail} alt={service.title} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" loading="lazy" />
                     ) : (
@@ -426,9 +450,9 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                     <h3 className="font-medium text-lg text-slate-900 leading-snug group-hover:text-slate-600 transition-colors line-clamp-2">{service.title}</h3>
                     {service.excerpt && <p className="text-sm text-slate-500 line-clamp-2">{stripHtml(service.excerpt)}</p>}
                     <div className="flex items-center justify-between pt-2">
-                      <span className="text-base font-semibold text-slate-800">{formatServicePrice(service.price)}</span>
-                      <span className="text-sm text-slate-400 group-hover:text-slate-600 transition-colors flex items-center gap-1">
-                        Chi tiết <ArrowUpRight className="w-4 h-4" />
+                      <span className="text-base font-semibold" style={{ color: brandColor }}>{formatServicePrice(service.price)}</span>
+                      <span className="text-sm transition-colors flex items-center gap-1" style={{ color: `${brandColor}80` }}>
+                        Chi tiết <ArrowUpRight className="w-4 h-4" style={{ color: brandColor }} />
                       </span>
                     </div>
                   </div>
