@@ -2587,11 +2587,14 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
         {displayItems.slice(0, device === 'mobile' ? 3 : 6).map((item) => (
           <div 
             key={item.id} 
-            className="group cursor-pointer relative bg-white dark:bg-slate-800 flex flex-col hover:-translate-y-1 transition-all duration-300 h-full"
+            className="group cursor-pointer relative bg-white dark:bg-slate-800 border rounded-lg flex flex-col hover:-translate-y-1 transition-all duration-300 h-full p-3"
+            style={{ borderColor: `${brandColor}10` }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}30`; e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}10`; e.currentTarget.style.boxShadow = 'none'; }}
           >
             {/* Badge */}
             {item.tag && (
-              <div className="absolute z-20 top-3 left-3">
+              <div className="absolute z-20 top-5 left-5">
                 <ServiceBadge tag={item.tag} brandColor={brandColor} />
               </div>
             )}
@@ -2618,10 +2621,10 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
               </h3>
 
               <div className="flex items-end justify-between mt-3">
-                <span className="text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-300">
+                <span className="text-sm font-semibold tracking-wide" style={{ color: brandColor }}>
                   {formatServicePrice(item.price)}
                 </span>
-                <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                <ArrowUpRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" style={{ color: brandColor }} />
               </div>
             </div>
           </div>
@@ -2653,7 +2656,12 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
           <div className="grid grid-cols-2 gap-3">
             {bentoItems.map((item, i) => (
               <div key={item.id} className="group cursor-pointer h-[160px] relative">
-                <div className="h-full border border-slate-200/40 dark:border-slate-700 rounded-xl p-3 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all flex flex-col">
+                <div 
+                  className="h-full border rounded-xl p-3 transition-all flex flex-col"
+                  style={{ borderColor: `${brandColor}15` }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; }}
+                >
                   {item.tag && (
                     <div className="absolute z-20 top-4 left-4">
                       <ServiceBadge tag={item.tag} brandColor={brandColor} />
@@ -2669,7 +2677,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                     )}
                   </div>
                   <h3 className="text-sm font-medium leading-tight line-clamp-1">{item.name}</h3>
-                  <span className="text-xs text-slate-500 mt-1">{formatServicePrice(item.price)}</span>
+                  <span className="text-xs font-semibold mt-1" style={{ color: brandColor }}>{formatServicePrice(item.price)}</span>
                 </div>
               </div>
             ))}
@@ -2691,7 +2699,12 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                     i === 3 ? "col-span-2" : ""
                   )}
                 >
-                  <div className="h-full border border-slate-200/40 dark:border-slate-700 rounded-xl p-4 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all flex flex-col cursor-pointer">
+                  <div 
+                    className="h-full border rounded-xl p-4 transition-all flex flex-col cursor-pointer"
+                    style={{ borderColor: `${brandColor}15`, boxShadow: i === 0 ? `0 4px 20px ${brandColor}08` : 'none' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 8px 24px ${brandColor}12`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = i === 0 ? `0 4px 20px ${brandColor}08` : 'none'; }}
+                  >
                     {item.tag && (
                       <div className="absolute z-20 top-6 left-6">
                         <ServiceBadge tag={item.tag} brandColor={brandColor} />
@@ -2727,10 +2740,10 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                         </p>
                       )}
                       <div className="flex items-end justify-between mt-2">
-                        <span className="text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-300">
+                        <span className="text-sm font-semibold tracking-wide" style={{ color: brandColor }}>
                           {formatServicePrice(item.price)}
                         </span>
-                        <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover/bento:opacity-100 group-hover/bento:translate-x-0 transition-all duration-300" />
+                        <ArrowUpRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover/bento:opacity-100 group-hover/bento:translate-x-0 transition-all duration-300" style={{ color: brandColor }} />
                       </div>
                     </div>
                   </div>
@@ -2774,7 +2787,10 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
         {displayItems.slice(0, device === 'mobile' ? 4 : 6).map((item) => (
           <div 
             key={item.id}
-            className="group cursor-pointer flex flex-row items-center gap-4 md:gap-6 py-4 border-b border-slate-200/40 dark:border-slate-700/40 hover:bg-slate-50 dark:hover:bg-slate-800/50 px-2 rounded-lg transition-all"
+            className="group cursor-pointer flex flex-row items-center gap-4 md:gap-6 py-4 border-b px-2 rounded-lg transition-all"
+            style={{ borderColor: `${brandColor}10` }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${brandColor}05`; e.currentTarget.style.borderColor = `${brandColor}20`; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.borderColor = `${brandColor}10`; }}
           >
             {/* Image */}
             <div className={cn(
@@ -2805,10 +2821,10 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                 {item.name}
               </h3>
               <div className="flex items-end justify-between mt-2">
-                <span className="text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-300">
+                <span className="text-sm font-semibold tracking-wide" style={{ color: brandColor }}>
                   {formatServicePrice(item.price)}
                 </span>
-                <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                <ArrowUpRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" style={{ color: brandColor }} />
               </div>
             </div>
           </div>
@@ -2844,10 +2860,15 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
               device === 'mobile' ? 'w-[75vw]' : 'w-[280px]'
             )}
           >
-            <div className="group cursor-pointer relative bg-white dark:bg-slate-800 flex flex-col hover:-translate-y-1 transition-all duration-300 h-full">
+            <div 
+              className="group cursor-pointer relative bg-white dark:bg-slate-800 border rounded-xl p-3 flex flex-col hover:-translate-y-1 transition-all duration-300 h-full"
+              style={{ borderColor: `${brandColor}10` }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}30`; e.currentTarget.style.boxShadow = `0 8px 20px ${brandColor}12`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}10`; e.currentTarget.style.boxShadow = 'none'; }}
+            >
               {/* Badge */}
               {item.tag && (
-                <div className="absolute z-20 top-3 left-3">
+                <div className="absolute z-20 top-5 left-5">
                   <ServiceBadge tag={item.tag} brandColor={brandColor} />
                 </div>
               )}
@@ -2875,10 +2896,10 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                 </h3>
 
                 <div className="flex items-end justify-between mt-3">
-                  <span className="text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-300">
+                  <span className="text-sm font-semibold tracking-wide" style={{ color: brandColor }}>
                     {formatServicePrice(item.price)}
                   </span>
-                  <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                  <ArrowUpRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" style={{ color: brandColor }} />
                 </div>
               </div>
             </div>
@@ -2909,9 +2930,14 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
         device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
       )}>
         {displayItems.slice(0, device === 'mobile' ? 3 : 6).map((item) => (
-          <div key={item.id} className="group cursor-pointer">
+          <div 
+            key={item.id} 
+            className="group cursor-pointer"
+            onMouseEnter={(e) => { const img = e.currentTarget.querySelector('.img-wrapper'); if (img) (img as HTMLElement).style.boxShadow = `0 8px 24px ${brandColor}15`; }}
+            onMouseLeave={(e) => { const img = e.currentTarget.querySelector('.img-wrapper'); if (img) (img as HTMLElement).style.boxShadow = 'none'; }}
+          >
             {/* Image - More minimal, rounded corners */}
-            <div className="relative overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-2xl aspect-[3/2] mb-4">
+            <div className="img-wrapper relative overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-2xl aspect-[3/2] mb-4 transition-shadow duration-300">
               {item.image ? (
                 <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
               ) : (
@@ -2934,9 +2960,9 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                 <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{item.description}</p>
               )}
               <div className="flex items-center justify-between pt-2">
-                <span className="text-base font-semibold text-slate-800 dark:text-slate-200">{formatServicePrice(item.price)}</span>
-                <span className="text-sm text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors flex items-center gap-1">
-                  Chi tiết <ArrowUpRight className="w-4 h-4" />
+                <span className="text-base font-semibold" style={{ color: brandColor }}>{formatServicePrice(item.price)}</span>
+                <span className="text-sm transition-colors flex items-center gap-1" style={{ color: `${brandColor}80` }}>
+                  Chi tiết <ArrowUpRight className="w-4 h-4" style={{ color: brandColor }} />
                 </span>
               </div>
             </div>
