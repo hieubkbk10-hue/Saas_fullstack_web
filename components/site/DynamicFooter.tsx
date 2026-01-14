@@ -47,13 +47,13 @@ const SocialIcon = ({ platform, size = 18 }: { platform: string; size?: number }
   }
 };
 
-// Utility: Darken a hex color
-const darkenColor = (hex: string, percent: number): string => {
+// Utility: Create shade from brandColor (same as previews.tsx)
+// Multiplies RGB by (1 - percent/100) to keep brand hue while darkening
+const shadeColor = (hex: string, percent: number): string => {
   const num = parseInt(hex.replace('#', ''), 16);
-  const amt = Math.round(2.55 * percent);
-  const R = Math.max((num >> 16) - amt, 0);
-  const G = Math.max((num >> 8 & 0x00FF) - amt, 0);
-  const B = Math.max((num & 0x0000FF) - amt, 0);
+  const R = Math.round((num >> 16) * (1 - percent / 100));
+  const G = Math.round((num >> 8 & 0x00FF) * (1 - percent / 100));
+  const B = Math.round((num & 0x0000FF) * (1 - percent / 100));
   return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
 };
 
@@ -101,7 +101,7 @@ export function DynamicFooter() {
   };
 
   // Fallback footer nếu không có Footer component
-  const fallbackBgDark = darkenColor(brandColor, 70);
+  const fallbackBgDark = shadeColor(brandColor, 65);
   if (!footerComponent) {
     return (
       <footer className="text-white" style={{ backgroundColor: fallbackBgDark }}>
@@ -120,10 +120,10 @@ export function DynamicFooter() {
   const socials = getSocials(config);
   const columns = getColumns(config);
 
-  // Background colors from brandColor, text uses neutral colors
-  const bgDark = darkenColor(brandColor, 70);      // Dark background
-  const bgMedium = darkenColor(brandColor, 60);    // Medium dark for cards/sections
-  const borderColor = darkenColor(brandColor, 45); // Border color (subtle)
+  // Background colors from brandColor (same as previews.tsx)
+  const bgDark = shadeColor(brandColor, 65);       // Đậm nhất - nền footer
+  const bgMedium = shadeColor(brandColor, 50);     // Medium - cards/sections
+  const borderColor = shadeColor(brandColor, 30);  // Nhẹ - borders
 
   // Social media brand colors
   const socialColors: Record<string, string> = {
