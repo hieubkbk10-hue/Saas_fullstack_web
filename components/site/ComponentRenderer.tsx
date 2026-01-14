@@ -2273,31 +2273,44 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
 }
 
 // ============ TESTIMONIALS SECTION ============
-// 3 Professional Styles: Cards, Slider, Masonry
-type TestimonialsStyle = 'cards' | 'slider' | 'masonry';
+// 6 Professional Styles: Cards, Slider, Masonry, Quote, Carousel, Minimal
+// Best Practices: Authenticity, Credibility indicators, Diverse formats, Mobile responsive
+type TestimonialsStyle = 'cards' | 'slider' | 'masonry' | 'quote' | 'carousel' | 'minimal';
 function TestimonialsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ name: string; role: string; content: string; rating: number }>) || [];
   const style = (config.style as TestimonialsStyle) || 'cards';
   const [currentSlide, setCurrentSlide] = React.useState(0);
 
-  // Auto slide for slider style
+  // Auto slide for slider/quote styles
   React.useEffect(() => {
-    if (style !== 'slider' || items.length <= 1) return;
+    if ((style !== 'slider' && style !== 'quote') || items.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % items.length);
     }, 5000);
     return () => clearInterval(timer);
   }, [items.length, style]);
 
-  const renderStars = (rating: number) => (
+  const renderStars = (rating: number, size: number = 16) => (
     <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map(star => (
-        <Star key={star} size={16} className={star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-300'} />
+        <Star key={star} size={size} className={star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-300'} />
       ))}
     </div>
   );
 
-  // Style 1: Cards - Grid layout
+  // Empty state
+  if (items.length === 0) {
+    return (
+      <section className="py-16 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-4 text-slate-900">{title}</h2>
+          <p className="text-slate-500">Chưa có đánh giá nào</p>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 1: Cards - Grid layout with equal height
   if (style === 'cards') {
     return (
       <section className="py-16 px-4 bg-slate-50">
@@ -2305,16 +2318,16 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
           <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item, idx) => (
-              <div key={idx} className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+              <div key={idx} className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full">
                 {renderStars(item.rating)}
-                <p className="text-slate-600 my-4 line-clamp-4">"{item.content}"</p>
-                <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>
+                <p className="text-slate-600 my-4 line-clamp-4 flex-1 min-h-[5rem]">"{item.content}"</p>
+                <div className="flex items-center gap-3 pt-4 border-t border-slate-100 mt-auto">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ backgroundColor: brandColor }}>
                     {(item.name || 'U').charAt(0)}
                   </div>
-                  <div>
-                    <div className="font-medium text-slate-900">{item.name}</div>
-                    <div className="text-sm text-slate-500">{item.role}</div>
+                  <div className="min-w-0">
+                    <div className="font-medium text-slate-900 truncate">{item.name}</div>
+                    <div className="text-sm text-slate-500 truncate">{item.role}</div>
                   </div>
                 </div>
               </div>
@@ -2332,17 +2345,16 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
 
     return (
       <section className="py-16 md:py-20 px-4 bg-slate-50 relative overflow-hidden">
-        {/* Big quote decoration */}
         <div className="absolute top-8 left-1/2 -translate-x-1/2 text-[120px] md:text-[180px] leading-none font-serif opacity-5 pointer-events-none select-none" style={{ color: brandColor }}>"</div>
         
         <div className="max-w-4xl mx-auto relative">
           <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
           
           <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center relative" style={{ borderTop: `4px solid ${brandColor}` }}>
-            <div className="flex justify-center mb-6">{renderStars(current.rating)}</div>
+            <div className="flex justify-center mb-6">{renderStars(current.rating, 18)}</div>
             <p className="text-lg md:text-xl text-slate-700 leading-relaxed mb-8">"{current.content}"</p>
             <div className="flex items-center justify-center gap-4">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg" style={{ backgroundColor: brandColor }}>
+              <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg flex-shrink-0" style={{ backgroundColor: brandColor }}>
                 {(current.name || 'U').charAt(0)}
               </div>
               <div className="text-left">
@@ -2356,9 +2368,9 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
             <div className="flex items-center justify-center gap-4 mt-8">
               <button 
                 onClick={() => setCurrentSlide(prev => prev === 0 ? items.length - 1 : prev - 1)} 
-                className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+                className="w-10 h-10 min-h-[44px] rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 hover:scale-105 transition-all"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                <ChevronLeft size={20} />
               </button>
               <div className="flex gap-2">
                 {items.map((_, idx) => (
@@ -2372,9 +2384,9 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
               </div>
               <button 
                 onClick={() => setCurrentSlide(prev => (prev + 1) % items.length)} 
-                className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+                className="w-10 h-10 min-h-[44px] rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 hover:scale-105 transition-all"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                <ChevronRight size={20} />
               </button>
             </div>
           )}
@@ -2384,24 +2396,153 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
   }
 
   // Style 3: Masonry - Pinterest-like layout
+  if (style === 'masonry') {
+    return (
+      <section className="py-16 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
+            {items.map((item, idx) => (
+              <div key={idx} className={`break-inside-avoid mb-6 bg-white rounded-xl p-6 shadow-sm border border-slate-100 ${idx % 2 === 1 ? 'pt-8' : ''}`}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ backgroundColor: brandColor }}>
+                    {(item.name || 'U').charAt(0)}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium text-slate-900 truncate">{item.name}</div>
+                    <div className="text-sm text-slate-500 truncate">{item.role}</div>
+                  </div>
+                </div>
+                {renderStars(item.rating)}
+                <p className="mt-4 text-slate-600">"{item.content}"</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 4: Quote - Big quote focused, elegant typography
+  if (style === 'quote') {
+    const current = items[currentSlide] || items[0];
+    if (!current) return null;
+
+    return (
+      <section className="py-16 md:py-20 px-4" style={{ backgroundColor: `${brandColor}05` }}>
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-8 text-slate-900">{title}</h2>
+          
+          <div className="text-[80px] md:text-[120px] leading-none font-serif mb-[-30px] md:mb-[-50px] select-none" style={{ color: brandColor }}>"</div>
+          
+          <blockquote className="text-xl md:text-2xl lg:text-3xl text-slate-800 leading-relaxed font-medium italic">
+            {current.content}
+          </blockquote>
+          
+          <div className="mt-10 flex flex-col items-center gap-4">
+            <div className="flex justify-center">{renderStars(current.rating, 20)}</div>
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold" style={{ backgroundColor: brandColor }}>
+                {(current.name || 'U').charAt(0)}
+              </div>
+              <div className="text-left">
+                <div className="font-semibold text-lg text-slate-900">{current.name}</div>
+                <div className="text-slate-500">{current.role}</div>
+              </div>
+            </div>
+          </div>
+          
+          {items.length > 1 && (
+            <div className="flex justify-center gap-3 mt-10">
+              {items.map((_, idx) => (
+                <button 
+                  key={idx} 
+                  onClick={() => setCurrentSlide(idx)} 
+                  className={`w-3 h-3 rounded-full transition-all ${idx === currentSlide ? '' : 'bg-slate-300 hover:bg-slate-400'}`}
+                  style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Carousel - Horizontal scroll cards
+  if (style === 'carousel') {
+    return (
+      <section className="py-16 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
+          
+          <div className="relative">
+            <div 
+              className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory" 
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {items.map((item, idx) => (
+                <div 
+                  key={idx} 
+                  className="flex-shrink-0 snap-center w-[320px] md:w-[360px] bg-white rounded-xl p-6 shadow-md border flex flex-col"
+                  style={{ borderColor: `${brandColor}15` }}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ backgroundColor: brandColor }}>
+                      {(item.name || 'U').charAt(0)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-slate-900 truncate">{item.name}</div>
+                      <div className="text-sm text-slate-500 truncate">{item.role}</div>
+                    </div>
+                  </div>
+                  {renderStars(item.rating)}
+                  <p className="mt-4 text-slate-600 line-clamp-4 flex-1">"{item.content}"</p>
+                </div>
+              ))}
+            </div>
+            
+            {items.length > 3 && (
+              <div className="flex justify-center gap-2 mt-6">
+                {items.map((_, idx) => (
+                  <div 
+                    key={idx} 
+                    className="w-2 h-2 rounded-full bg-slate-300"
+                    style={idx === 0 ? { backgroundColor: brandColor } : {}}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Minimal - Clean list with accent line
   return (
     <section className="py-16 px-4 bg-slate-50">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-3xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-        <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
+        <div className="space-y-4">
           {items.map((item, idx) => (
-            <div key={idx} className={`break-inside-avoid mb-6 bg-white rounded-xl p-6 shadow-sm border border-slate-100 ${idx % 2 === 1 ? 'pt-8' : ''}`}>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>
-                  {(item.name || 'U').charAt(0)}
-                </div>
-                <div>
-                  <div className="font-medium text-slate-900">{item.name}</div>
-                  <div className="text-sm text-slate-500">{item.role}</div>
-                </div>
+            <div 
+              key={idx} 
+              className="flex gap-4 p-5 rounded-lg bg-white border-l-4 shadow-sm"
+              style={{ borderLeftColor: brandColor }}
+            >
+              <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ backgroundColor: brandColor }}>
+                {(item.name || 'U').charAt(0)}
               </div>
-              {renderStars(item.rating)}
-              <p className="mt-4 text-slate-600">"{item.content}"</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-2 flex-wrap">
+                  <span className="font-medium text-slate-900">{item.name}</span>
+                  <span className="text-slate-400">•</span>
+                  <span className="text-sm text-slate-500 truncate">{item.role}</span>
+                  <div className="ml-auto">{renderStars(item.rating, 12)}</div>
+                </div>
+                <p className="text-slate-600 line-clamp-2">"{item.content}"</p>
+              </div>
             </div>
           ))}
         </div>
@@ -2687,9 +2828,9 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
 }
 
 // ============ GALLERY/PARTNERS SECTION ============
-// Gallery: 3 Professional Styles from pure-visual-gallery (Spotlight, Explore, Stories)
-// Partners: 4 Professional Styles from partner-&-logo-manager (Grid, Marquee, Mono, Badge)
-type GalleryStyle = 'spotlight' | 'explore' | 'stories' | 'grid' | 'marquee' | 'mono' | 'badge' | 'carousel' | 'featured';
+// Gallery: 6 Professional Styles (Spotlight, Explore, Stories, Grid, Marquee, Masonry)
+// Partners: 6 Professional Styles (Grid, Marquee, Mono, Badge, Carousel, Featured)
+type GalleryStyle = 'spotlight' | 'explore' | 'stories' | 'grid' | 'marquee' | 'masonry' | 'mono' | 'badge' | 'carousel' | 'featured';
 
 // Auto Scroll Slider Component for Marquee/Mono styles
 const AutoScrollSlider = ({ children, speed = 0.5 }: { children: React.ReactNode; speed?: number }) => {
@@ -3198,6 +3339,148 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                       <ImageIcon size={32} className="text-slate-300" />
                     </div>
                   )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+      </section>
+    );
+  }
+
+  // ============ GALLERY STYLES 4-6 (Grid, Marquee, Masonry) - Only for type === 'Gallery' ============
+
+  // Style 4: Gallery Grid - Clean equal squares grid
+  if (style === 'grid' && type === 'Gallery') {
+    if (items.length === 0) {
+      return (
+        <section className="w-full py-12 bg-white">
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-[1600px]">
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+                <ImageIcon size={32} style={{ color: brandColor }} />
+              </div>
+              <h3 className="font-medium text-slate-900 mb-1">Chưa có hình ảnh nào</h3>
+              <p className="text-sm text-slate-500">Thêm ảnh đầu tiên để bắt đầu</p>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <section className="w-full bg-white">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-[1600px] py-8 md:py-12">
+          {title && <h2 className="text-2xl font-bold mb-6" style={{ color: brandColor }}>{title}</h2>}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {items.map((photo, idx) => (
+              <div 
+                key={idx} 
+                className="aspect-square rounded-lg overflow-hidden bg-slate-100 cursor-pointer group relative"
+                onClick={() => setSelectedPhoto(photo)}
+              >
+                {photo.url ? (
+                  <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center"><ImageIcon size={28} className="text-slate-300" /></div>
+                )}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+      </section>
+    );
+  }
+
+  // Style 5: Gallery Marquee - Auto scroll horizontal
+  if (style === 'marquee' && type === 'Gallery') {
+    if (items.length === 0) {
+      return (
+        <section className="w-full py-12 bg-white">
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-[1600px]">
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+                <ImageIcon size={32} style={{ color: brandColor }} />
+              </div>
+              <h3 className="font-medium text-slate-900 mb-1">Chưa có hình ảnh nào</h3>
+              <p className="text-sm text-slate-500">Thêm ảnh đầu tiên để bắt đầu</p>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <section className="w-full bg-white py-8 md:py-12">
+        {title && <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: brandColor }}>{title}</h2>}
+        <div className="w-full relative">
+          <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+          <AutoScrollSlider speed={0.6}>
+            {items.map((photo, idx) => (
+              <div 
+                key={idx} 
+                className="shrink-0 h-48 md:h-64 aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group"
+                onClick={() => setSelectedPhoto(photo)}
+              >
+                {photo.url ? (
+                  <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                    <ImageIcon size={32} className="text-slate-300" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </AutoScrollSlider>
+        </div>
+        <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+      </section>
+    );
+  }
+
+  // Style 6: Gallery Masonry - Pinterest-like varying heights
+  if (style === 'masonry' && type === 'Gallery') {
+    if (items.length === 0) {
+      return (
+        <section className="w-full py-12 bg-white">
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-[1600px]">
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+                <ImageIcon size={32} style={{ color: brandColor }} />
+              </div>
+              <h3 className="font-medium text-slate-900 mb-1">Chưa có hình ảnh nào</h3>
+              <p className="text-sm text-slate-500">Thêm ảnh đầu tiên để bắt đầu</p>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    const heights = ['h-48', 'h-64', 'h-56', 'h-72', 'h-52', 'h-60'];
+
+    return (
+      <section className="w-full bg-white">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-[1600px] py-8 md:py-12">
+          {title && <h2 className="text-2xl font-bold mb-6" style={{ color: brandColor }}>{title}</h2>}
+          <div className="columns-2 md:columns-3 lg:columns-4 gap-3">
+            {items.map((photo, idx) => {
+              const heightClass = heights[idx % heights.length];
+              return (
+                <div 
+                  key={idx} 
+                  className={`mb-3 break-inside-avoid rounded-xl overflow-hidden bg-slate-100 cursor-pointer group relative ${heightClass}`}
+                  onClick={() => setSelectedPhoto(photo)}
+                >
+                  {photo.url ? (
+                    <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><ImageIcon size={28} className="text-slate-300" /></div>
+                  )}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                 </div>
               );
             })}

@@ -104,34 +104,60 @@ function GalleryCreateContent() {
             onStyleChange={setStyle}
           />
           
-          {/* Image Guidelines - Partners only */}
-          {type === 'Partners' && (
-            <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-              <div className="flex items-start gap-2">
-                <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-slate-600 dark:text-slate-400">
-                  {style === 'grid' && (
-                    <p><strong>200×80px</strong> (5:2) • Logo ngang, nền trong suốt PNG. Grid 8 cột desktop, 2 cột mobile.</p>
-                  )}
-                  {style === 'marquee' && (
-                    <p><strong>160×60px</strong> (8:3) • Logo nhỏ gọn, auto scroll. Hover để dừng.</p>
-                  )}
-                  {style === 'mono' && (
-                    <p><strong>160×60px</strong> (8:3) • Logo grayscale, hover để hiện màu. Scroll chậm.</p>
-                  )}
-                  {style === 'badge' && (
-                    <p><strong>120×48px</strong> (5:2) • Logo nhỏ kèm tên đối tác. Compact badges.</p>
-                  )}
-                  {style === 'carousel' && (
-                    <p><strong>200×100px</strong> (2:1) • Logo cards với navigation. 6 items/trang desktop.</p>
-                  )}
-                  {style === 'featured' && (
-                    <p><strong>Featured: 400×200px</strong> • <strong>Others: 150×75px</strong> • Đối tác nổi bật + grid nhỏ.</p>
-                  )}
-                </div>
+          {/* Image Guidelines - for Gallery and Partners */}
+          <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+            <div className="flex items-start gap-2">
+              <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-slate-600 dark:text-slate-400">
+                {/* Gallery Image Guidelines */}
+                {type === 'Gallery' && (
+                  <>
+                    {style === 'spotlight' && (
+                      <p><strong>Featured: 1200×800px</strong> (3:2) • <strong>Sub: 600×600px</strong> (1:1) • Ảnh chính lớn + 3 ảnh vuông.</p>
+                    )}
+                    {style === 'explore' && (
+                      <p><strong>600×600px</strong> (1:1) • Grid vuông kiểu Instagram. 5 cột desktop, 3 cột mobile.</p>
+                    )}
+                    {style === 'stories' && (
+                      <p><strong>800×600px</strong> đến <strong>1200×600px</strong> • Ảnh cùng/khác kích thước tạo hiệu ứng masonry nhẹ.</p>
+                    )}
+                    {style === 'grid' && (
+                      <p><strong>800×800px</strong> (1:1) • Grid đều, ảnh vuông. 4 cột desktop, 2 cột mobile. Click để xem lớn.</p>
+                    )}
+                    {style === 'marquee' && (
+                      <p><strong>800×600px</strong> (4:3) • Ảnh cuộn ngang tự động. Hover để dừng. Rounded corners.</p>
+                    )}
+                    {style === 'masonry' && (
+                      <p><strong>600×400px</strong> đến <strong>600×900px</strong> • Ảnh cao/thấp khác nhau tạo Pinterest-like layout.</p>
+                    )}
+                  </>
+                )}
+                {/* Partners Image Guidelines */}
+                {type === 'Partners' && (
+                  <>
+                    {style === 'grid' && (
+                      <p><strong>200×80px</strong> (5:2) • Logo ngang, nền trong suốt PNG. Grid 8 cột desktop, 2 cột mobile.</p>
+                    )}
+                    {style === 'marquee' && (
+                      <p><strong>160×60px</strong> (8:3) • Logo nhỏ gọn, auto scroll. Hover để dừng.</p>
+                    )}
+                    {style === 'mono' && (
+                      <p><strong>160×60px</strong> (8:3) • Logo grayscale, hover để hiện màu. Scroll chậm.</p>
+                    )}
+                    {style === 'badge' && (
+                      <p><strong>120×48px</strong> (5:2) • Logo nhỏ kèm tên đối tác. Compact badges.</p>
+                    )}
+                    {style === 'carousel' && (
+                      <p><strong>200×100px</strong> (2:1) • Logo cards với navigation. 6 items/trang desktop.</p>
+                    )}
+                    {style === 'featured' && (
+                      <p><strong>Featured: 400×200px</strong> • <strong>Others: 150×75px</strong> • Đối tác nổi bật + grid nhỏ.</p>
+                    )}
+                  </>
+                )}
               </div>
             </div>
-          )}
+          </div>
         </>
       )}
     </ComponentFormWrapper>

@@ -1288,52 +1288,107 @@ export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange, co
 
 // ============ TESTIMONIALS PREVIEW ============
 type TestimonialItem = { id: number; name: string; role: string; content: string; avatar: string; rating: number };
-export type TestimonialsStyle = 'cards' | 'slider' | 'masonry';
+// ============ TESTIMONIALS PREVIEW ============
+// 6 Professional Styles following Best Practices:
+// - Authenticity: Real customer info (name, role, company)
+// - Credibility indicators: Star ratings, avatar, verification
+// - Diverse formats: Cards, Slider, Masonry, Quote, Carousel, Minimal
+// - Mobile responsive with proper touch targets
+export type TestimonialsStyle = 'cards' | 'slider' | 'masonry' | 'quote' | 'carousel' | 'minimal';
 export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: TestimonialItem[]; brandColor: string; selectedStyle?: TestimonialsStyle; onStyleChange?: (style: TestimonialsStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'cards';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as TestimonialsStyle);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const styles = [{ id: 'cards', label: 'Cards' }, { id: 'slider', label: 'Slider' }, { id: 'masonry', label: 'Masonry' }];
+  const styles = [
+    { id: 'cards', label: 'Cards' }, 
+    { id: 'slider', label: 'Slider' }, 
+    { id: 'masonry', label: 'Masonry' },
+    { id: 'quote', label: 'Quote' },
+    { id: 'carousel', label: 'Carousel' },
+    { id: 'minimal', label: 'Minimal' }
+  ];
 
-  const renderStars = (rating: number) => (
+  const renderStars = (rating: number, size: number = 12) => (
     <div className="flex gap-0.5">
-      {[1,2,3,4,5].map(star => (<Star key={star} size={12} className={star <= rating ? "text-yellow-400 fill-yellow-400" : "text-slate-300"} />))}
+      {[1,2,3,4,5].map(star => (<Star key={star} size={size} className={star <= rating ? "text-yellow-400 fill-yellow-400" : "text-slate-300"} />))}
     </div>
   );
 
-  const renderCardsStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Khách hàng nói gì về chúng tôi</h3>
-      <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
-        {items.slice(0, device === 'mobile' ? 2 : 3).map((item) => (
-          <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
-            {renderStars(item.rating)}
-            <p className={cn("my-3 text-slate-600 dark:text-slate-300 line-clamp-3 text-sm")}>"{item.content || 'Nội dung đánh giá...'}"</p>
-            <div className="flex items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: brandColor }}>{(item.name || 'U')[0]}</div>
-              <div>
-                <div className="font-medium text-sm">{item.name || 'Tên khách hàng'}</div>
-                <div className="text-xs text-slate-500">{item.role || 'Chức vụ'}</div>
+  // Helper: Get visible items with +N pattern
+  const getVisibleItems = (maxVisible: number) => {
+    const visible = items.slice(0, maxVisible);
+    const remaining = items.length - maxVisible;
+    return { visible, remaining };
+  };
+
+  // Empty State
+  const renderEmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+        <Star size={32} style={{ color: brandColor }} />
+      </div>
+      <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có đánh giá nào</h3>
+      <p className="text-sm text-slate-500">Thêm đánh giá đầu tiên để bắt đầu</p>
+    </div>
+  );
+
+  // Style 1: Cards - Grid layout with equal height
+  const renderCardsStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    const maxVisible = device === 'mobile' ? 2 : device === 'tablet' ? 4 : 6;
+    const { visible, remaining } = getVisibleItems(maxVisible);
+    
+    // Centered layout for 1-2 items
+    const gridClass = items.length === 1 
+      ? 'max-w-md mx-auto' 
+      : items.length === 2 
+        ? 'max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4'
+        : cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3');
+    
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
+        <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Khách hàng nói gì về chúng tôi</h3>
+        <div className={gridClass}>
+          {visible.map((item) => (
+            <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col h-full">
+              {renderStars(item.rating)}
+              <p className="my-3 text-slate-600 dark:text-slate-300 line-clamp-3 text-sm flex-1 min-h-[3.5rem]">"{item.content || 'Nội dung đánh giá...'}"</p>
+              <div className="flex items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-700 mt-auto">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ backgroundColor: brandColor }}>{(item.name || 'U')[0]}</div>
+                <div className="min-w-0">
+                  <div className="font-medium text-sm truncate">{item.name || 'Tên khách hàng'}</div>
+                  <div className="text-xs text-slate-500 truncate">{item.role || 'Chức vụ'}</div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+          {remaining > 0 && (
+            <div className="flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl aspect-square border-2 border-dashed border-slate-300 dark:border-slate-600">
+              <div className="text-center">
+                <div className="text-2xl font-bold" style={{ color: brandColor }}>+{remaining}</div>
+                <p className="text-xs text-slate-500 mt-1">đánh giá khác</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
+  // Style 2: Slider - Single testimonial with navigation
   const renderSliderStyle = () => {
+    if (items.length === 0) return renderEmptyState();
     const current = items[currentSlide] || items[0];
     return (
       <div className={cn("py-12 px-4 relative overflow-hidden", device === 'mobile' ? 'py-8' : '')}>
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 text-[120px] leading-none font-serif opacity-5 pointer-events-none" style={{ color: brandColor }}>"</div>
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 text-[120px] leading-none font-serif opacity-5 pointer-events-none select-none" style={{ color: brandColor }}>"</div>
         <div className="max-w-6xl mx-auto relative">
           <div className={cn("bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 text-center relative", device === 'mobile' ? 'p-5' : '')} style={{ borderTop: `4px solid ${brandColor}` }}>
-            <div className="flex justify-center mb-4">{renderStars(current?.rating || 5)}</div>
+            <div className="flex justify-center mb-4">{renderStars(current?.rating || 5, 16)}</div>
             <p className={cn("text-slate-700 dark:text-slate-200 leading-relaxed mb-6", device === 'mobile' ? 'text-base' : 'text-lg')}>"{current?.content || 'Nội dung đánh giá...'}"</p>
             <div className="flex items-center justify-center gap-4">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg" style={{ backgroundColor: brandColor }}>{(current?.name || 'U')[0]}</div>
+              <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg flex-shrink-0" style={{ backgroundColor: brandColor }}>{(current?.name || 'U')[0]}</div>
               <div className="text-left">
                 <div className="font-semibold text-slate-900 dark:text-white">{current?.name || 'Tên khách hàng'}</div>
                 <div className="text-sm text-slate-500">{current?.role || 'Chức vụ'}</div>
@@ -1342,11 +1397,11 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
           </div>
           {items.length > 1 && (
             <div className="flex items-center justify-center gap-4 mt-6">
-              <button type="button" onClick={() => setCurrentSlide(prev => prev === 0 ? items.length - 1 : prev - 1)} className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center"><ChevronLeft size={18} /></button>
+              <button type="button" onClick={() => setCurrentSlide(prev => prev === 0 ? items.length - 1 : prev - 1)} className="w-10 h-10 min-h-[44px] rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center hover:scale-105 transition-transform"><ChevronLeft size={18} /></button>
               <div className="flex gap-2">
                 {items.map((_, idx) => (<button key={idx} type="button" onClick={() => setCurrentSlide(idx)} className={cn("w-2.5 h-2.5 rounded-full transition-all", idx === currentSlide ? "w-8" : "bg-slate-300")} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />))}
               </div>
-              <button type="button" onClick={() => setCurrentSlide(prev => (prev + 1) % items.length)} className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center"><ChevronRight size={18} /></button>
+              <button type="button" onClick={() => setCurrentSlide(prev => (prev + 1) % items.length)} className="w-10 h-10 min-h-[44px] rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center hover:scale-105 transition-transform"><ChevronRight size={18} /></button>
             </div>
           )}
         </div>
@@ -1354,26 +1409,178 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
     );
   };
 
-  const renderMasonryStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Khách hàng nói gì về chúng tôi</h3>
-      <div className={cn("columns-1 gap-4", device === 'tablet' && 'columns-2', device === 'desktop' && 'columns-3')}>
-        {items.slice(0, 4).map((item, idx) => (
-          <div key={item.id} className={cn("break-inside-avoid mb-4 bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border", idx % 2 === 0 ? '' : 'pt-6')}>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>{(item.name || 'U')[0]}</div>
-              <div>
-                <div className="font-medium text-sm">{item.name || 'Tên'}</div>
-                <div className="text-xs text-slate-500">{item.role || 'Chức vụ'}</div>
+  // Style 3: Masonry - Pinterest-like layout
+  const renderMasonryStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    const maxVisible = device === 'mobile' ? 3 : 6;
+    const { visible, remaining } = getVisibleItems(maxVisible);
+    
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
+        <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Khách hàng nói gì về chúng tôi</h3>
+        <div className={cn("columns-1 gap-4", device === 'tablet' && 'columns-2', device === 'desktop' && 'columns-3')}>
+          {visible.map((item, idx) => (
+            <div key={item.id} className={cn("break-inside-avoid mb-4 bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700", idx % 2 === 0 ? '' : 'pt-6')}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: brandColor }}>{(item.name || 'U')[0]}</div>
+                <div className="min-w-0">
+                  <div className="font-medium text-sm truncate">{item.name || 'Tên'}</div>
+                  <div className="text-xs text-slate-500 truncate">{item.role || 'Chức vụ'}</div>
+                </div>
+              </div>
+              {renderStars(item.rating)}
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">"{item.content || 'Nội dung...'}"</p>
+            </div>
+          ))}
+        </div>
+        {remaining > 0 && (
+          <div className="text-center mt-4">
+            <span className="text-sm font-medium" style={{ color: brandColor }}>+{remaining} đánh giá khác</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Style 4: Quote - Big quote focused, elegant typography
+  const renderQuoteStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    const current = items[currentSlide] || items[0];
+    
+    return (
+      <div className={cn("py-12 px-4", device === 'mobile' ? 'py-8' : '')} style={{ backgroundColor: `${brandColor}05` }}>
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Large quote mark */}
+          <div className="text-[80px] md:text-[120px] leading-none font-serif mb-[-30px] md:mb-[-50px] select-none" style={{ color: brandColor }}>"</div>
+          
+          <blockquote className={cn("text-slate-800 dark:text-slate-200 leading-relaxed font-medium italic", device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl')}>
+            {current?.content || 'Nội dung đánh giá...'}
+          </blockquote>
+          
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <div className="flex justify-center">{renderStars(current?.rating || 5, 18)}</div>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>
+                {(current?.name || 'U')[0]}
+              </div>
+              <div className="text-left">
+                <div className="font-semibold text-slate-900 dark:text-white">{current?.name || 'Tên khách hàng'}</div>
+                <div className="text-sm text-slate-500">{current?.role || 'Chức vụ'}</div>
               </div>
             </div>
-            {renderStars(item.rating)}
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">"{item.content || 'Nội dung...'}"</p>
           </div>
-        ))}
+          
+          {items.length > 1 && (
+            <div className="flex justify-center gap-2 mt-8">
+              {items.map((_, idx) => (
+                <button 
+                  key={idx} 
+                  type="button" 
+                  onClick={() => setCurrentSlide(idx)} 
+                  className={cn("w-3 h-3 rounded-full transition-all", idx === currentSlide ? "" : "bg-slate-300 hover:bg-slate-400")}
+                  style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  // Style 5: Carousel - Horizontal scroll cards
+  const renderCarouselStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    
+    return (
+      <div className={cn("py-8", device === 'mobile' ? 'py-6' : '')}>
+        <h3 className={cn("font-bold text-center mb-6 px-4", device === 'mobile' ? 'text-lg' : 'text-xl')}>Khách hàng nói gì về chúng tôi</h3>
+        
+        <div className="relative">
+          {/* Scroll container */}
+          <div className="flex gap-4 overflow-x-auto px-4 pb-4 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {items.map((item) => (
+              <div 
+                key={item.id} 
+                className={cn(
+                  "flex-shrink-0 snap-center bg-white dark:bg-slate-800 rounded-xl p-5 shadow-md border flex flex-col",
+                  device === 'mobile' ? 'w-[280px]' : 'w-[320px]'
+                )}
+                style={{ borderColor: `${brandColor}15` }}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ backgroundColor: brandColor }}>
+                    {(item.name || 'U')[0]}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm truncate">{item.name || 'Tên khách hàng'}</div>
+                    <div className="text-xs text-slate-500 truncate">{item.role || 'Chức vụ'}</div>
+                  </div>
+                </div>
+                {renderStars(item.rating, 14)}
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-300 line-clamp-4 flex-1">"{item.content || 'Nội dung đánh giá...'}"</p>
+              </div>
+            ))}
+          </div>
+          
+          {/* Scroll indicators */}
+          {items.length > 2 && (
+            <div className="flex justify-center gap-1.5 mt-4">
+              {items.map((_, idx) => (
+                <div 
+                  key={idx} 
+                  className="w-1.5 h-1.5 rounded-full bg-slate-300"
+                  style={idx === 0 ? { backgroundColor: brandColor } : {}}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Style 6: Minimal - Clean list with accent line
+  const renderMinimalStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    const maxVisible = device === 'mobile' ? 3 : 4;
+    const { visible, remaining } = getVisibleItems(maxVisible);
+    
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
+        <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Khách hàng nói gì về chúng tôi</h3>
+        <div className="max-w-3xl mx-auto space-y-4">
+          {visible.map((item) => (
+            <div 
+              key={item.id} 
+              className="flex gap-4 p-4 rounded-lg bg-white dark:bg-slate-800 border-l-4 shadow-sm"
+              style={{ borderLeftColor: brandColor }}
+            >
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ backgroundColor: brandColor }}>
+                {(item.name || 'U')[0]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="font-medium text-sm">{item.name || 'Tên khách hàng'}</span>
+                  <span className="text-xs text-slate-500">•</span>
+                  <span className="text-xs text-slate-500 truncate">{item.role || 'Chức vụ'}</span>
+                  <div className="ml-auto">{renderStars(item.rating, 10)}</div>
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">"{item.content || 'Nội dung...'}"</p>
+              </div>
+            </div>
+          ))}
+          {remaining > 0 && (
+            <div className="text-center pt-2">
+              <button type="button" className="text-sm font-medium px-4 py-2 rounded-lg transition-colors" style={{ color: brandColor, backgroundColor: `${brandColor}10` }}>
+                Xem thêm {remaining} đánh giá
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <PreviewWrapper title="Preview Testimonials" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`${items.length} đánh giá`}>
@@ -1381,101 +1588,551 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
         {previewStyle === 'cards' && renderCardsStyle()}
         {previewStyle === 'slider' && renderSliderStyle()}
         {previewStyle === 'masonry' && renderMasonryStyle()}
-      </BrowserFrame>
-    </PreviewWrapper>
-  );
-};
-
-// ============ PRICING PREVIEW ============
-type PricingPlan = { id: number; name: string; price: string; period: string; features: string[]; isPopular: boolean; buttonText: string; buttonLink: string };
-export type PricingStyle = 'cards' | 'horizontal' | 'minimal';
-export const PricingPreview = ({ plans, brandColor, selectedStyle, onStyleChange }: { plans: PricingPlan[]; brandColor: string; selectedStyle?: PricingStyle; onStyleChange?: (style: PricingStyle) => void }) => {
-  const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'cards';
-  const setPreviewStyle = (s: string) => onStyleChange?.(s as PricingStyle);
-  const styles = [{ id: 'cards', label: 'Cards' }, { id: 'horizontal', label: 'Ngang' }, { id: 'minimal', label: 'Minimal' }];
-
-  const renderCardsStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h3 className={cn("font-bold text-center mb-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>Bảng giá dịch vụ</h3>
-      <p className="text-center text-sm text-slate-500 mb-6">Chọn gói phù hợp với nhu cầu của bạn</p>
-      <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
-        {plans.slice(0, 3).map((plan) => (
-          <div key={plan.id} className={cn("bg-white dark:bg-slate-800 rounded-xl p-5 border-2 relative", plan.isPopular ? "border-accent shadow-lg scale-105" : "border-slate-200 dark:border-slate-700")} style={plan.isPopular ? { borderColor: brandColor } : {}}>
-            {plan.isPopular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-medium text-white" style={{ backgroundColor: brandColor }}>Phổ biến</div>}
-            <h4 className="font-semibold text-center">{plan.name || 'Tên gói'}</h4>
-            <div className="text-center my-4">
-              <span className={cn("font-bold", device === 'mobile' ? 'text-2xl' : 'text-3xl')} style={{ color: brandColor }}>{plan.price || '0'}d</span>
-              <span className="text-sm text-slate-500">{plan.period}</span>
-            </div>
-            <ul className="space-y-2 mb-4">
-              {(plan.features.length > 0 ? plan.features : ['Tính năng 1', 'Tính năng 2']).slice(0, 4).map((f, idx) => (<li key={idx} className="flex items-center gap-2 text-sm"><Check size={14} style={{ color: brandColor }} /><span>{f}</span></li>))}
-            </ul>
-            <button className={cn("w-full py-2 rounded-lg font-medium text-sm", plan.isPopular ? "text-white" : "border")} style={plan.isPopular ? { backgroundColor: brandColor } : { borderColor: brandColor, color: brandColor }}>{plan.buttonText || 'Chọn gói'}</button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderHorizontalStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Bảng giá dịch vụ</h3>
-      <div className="space-y-3">
-        {plans.slice(0, 3).map((plan) => (
-          <div key={plan.id} className={cn("bg-white dark:bg-slate-800 rounded-xl p-4 border flex items-center justify-between", device === 'mobile' ? 'flex-col gap-3 text-center' : '', plan.isPopular ? "border-accent" : "border-slate-200")} style={plan.isPopular ? { borderColor: brandColor } : {}}>
-            <div className={cn(device === 'mobile' ? '' : 'flex items-center gap-4')}>
-              <h4 className="font-semibold">{plan.name || 'Tên gói'}</h4>
-              {plan.isPopular && <span className="px-2 py-0.5 rounded-full text-xs font-medium text-white" style={{ backgroundColor: brandColor }}>Hot</span>}
-            </div>
-            <div className="text-sm text-slate-500">{(plan.features.length > 0 ? plan.features : ['Tính năng']).slice(0, 2).join(' • ')}</div>
-            <div className="flex items-center gap-4">
-              <span className="font-bold text-lg" style={{ color: brandColor }}>{plan.price || '0'}d<span className="text-sm font-normal text-slate-500">{plan.period}</span></span>
-              <button className="px-4 py-1.5 rounded-lg text-sm text-white" style={{ backgroundColor: brandColor }}>{plan.buttonText || 'Chọn'}</button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderMinimalStyle = () => (
-    <div className={cn("py-10 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h3 className={cn("font-bold text-center mb-8", device === 'mobile' ? 'text-lg' : 'text-xl')}>Bảng giá dịch vụ</h3>
-      <div className={cn("max-w-6xl mx-auto", device === 'mobile' ? '' : 'border rounded-2xl overflow-hidden')}>
-        {plans.slice(0, 3).map((plan, idx) => (
-          <div key={plan.id} className={cn("flex items-center gap-4 p-5 bg-white dark:bg-slate-800 transition-all", device === 'mobile' ? 'flex-col text-center rounded-xl border mb-3' : '', device !== 'mobile' && idx !== plans.slice(0, 3).length - 1 && 'border-b')} style={plan.isPopular ? { backgroundColor: `${brandColor}08` } : {}}>
-            {plan.isPopular && <div className={cn("absolute px-3 py-1 rounded-full text-xs font-medium text-white", device === 'mobile' ? '-top-2 left-1/2 -translate-x-1/2' : 'top-2 right-4')} style={{ backgroundColor: brandColor }}>Phổ biến</div>}
-            <div className={cn("flex-1", device === 'mobile' ? 'pt-2' : '')}>
-              <h4 className="font-semibold text-base">{plan.name || 'Tên gói'}</h4>
-              <div className="text-xs text-slate-500">{(plan.features.length > 0 ? plan.features : ['Tính năng']).slice(0, 2).join(' • ')}</div>
-            </div>
-            <div className={cn("flex items-center gap-4", device === 'mobile' ? 'flex-col gap-3 mt-3' : '')}>
-              <span className="text-2xl font-bold" style={{ color: brandColor }}>{plan.price || '0'}d<span className="text-sm text-slate-500">{plan.period}</span></span>
-              <button className={cn("px-5 py-2 rounded-lg text-sm font-medium", plan.isPopular ? "text-white shadow-md" : "border-2")} style={plan.isPopular ? { backgroundColor: brandColor } : { borderColor: brandColor, color: brandColor }}>{plan.buttonText || 'Chọn gói'}</button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  return (
-    <PreviewWrapper title="Preview Pricing" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`${plans.length} gói`}>
-      <BrowserFrame url="yoursite.com/pricing">
-        {previewStyle === 'cards' && renderCardsStyle()}
-        {previewStyle === 'horizontal' && renderHorizontalStyle()}
+        {previewStyle === 'quote' && renderQuoteStyle()}
+        {previewStyle === 'carousel' && renderCarouselStyle()}
         {previewStyle === 'minimal' && renderMinimalStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );
 };
 
+// ============ PRICING PREVIEW ============
+// 6 Styles: cards, horizontal, minimal, comparison, featured, compact
+// Best Practices: Monthly/Yearly toggle, highlight popular, feature comparison, CTA hierarchy
+type PricingPlan = { 
+  id: number; 
+  name: string; 
+  price: string; 
+  yearlyPrice?: string;
+  period: string; 
+  features: string[]; 
+  isPopular: boolean; 
+  buttonText: string; 
+  buttonLink: string;
+};
+export type PricingConfig = {
+  subtitle?: string;
+  showBillingToggle?: boolean;
+  monthlyLabel?: string;
+  yearlyLabel?: string;
+  yearlySavingText?: string;
+};
+export type PricingStyle = 'cards' | 'horizontal' | 'minimal' | 'comparison' | 'featured' | 'compact';
+
+export const PricingPreview = ({ 
+  plans, 
+  brandColor, 
+  selectedStyle, 
+  onStyleChange,
+  config 
+}: { 
+  plans: PricingPlan[]; 
+  brandColor: string; 
+  selectedStyle?: PricingStyle; 
+  onStyleChange?: (style: PricingStyle) => void;
+  config?: PricingConfig;
+}) => {
+  const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const [isYearly, setIsYearly] = useState(false);
+  const previewStyle = selectedStyle || 'cards';
+  const setPreviewStyle = (s: string) => onStyleChange?.(s as PricingStyle);
+  
+  const styles = [
+    { id: 'cards', label: 'Cards' }, 
+    { id: 'horizontal', label: 'Ngang' }, 
+    { id: 'minimal', label: 'Minimal' },
+    { id: 'comparison', label: 'So sánh' },
+    { id: 'featured', label: 'Nổi bật' },
+    { id: 'compact', label: 'Gọn' }
+  ];
+
+  // Config defaults
+  const subtitle = config?.subtitle || 'Chọn gói phù hợp với nhu cầu của bạn';
+  const showBillingToggle = config?.showBillingToggle ?? true;
+  const monthlyLabel = config?.monthlyLabel || 'Hàng tháng';
+  const yearlyLabel = config?.yearlyLabel || 'Hàng năm';
+  const yearlySavingText = config?.yearlySavingText || 'Tiết kiệm 17%';
+
+  // Get display price based on billing period
+  const getPrice = (plan: PricingPlan) => {
+    if (isYearly && plan.yearlyPrice) return plan.yearlyPrice;
+    return plan.price || '0';
+  };
+  const getPeriod = () => isYearly ? '/năm' : '/tháng';
+
+  // Empty state
+  const renderEmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+        <Tag size={32} style={{ color: brandColor }} />
+      </div>
+      <p className="text-sm font-medium">Chưa có gói nào</p>
+      <p className="text-xs mt-1">Thêm gói để xem preview</p>
+    </div>
+  );
+
+  // Billing Toggle Component (ARIA accessible)
+  const BillingToggle = () => showBillingToggle ? (
+    <div className="flex items-center justify-center gap-3 mb-6">
+      <span className={cn("text-sm font-medium transition-colors", !isYearly ? 'text-slate-900 dark:text-white' : 'text-slate-400')}>
+        {monthlyLabel}
+      </span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={isYearly}
+        onClick={() => setIsYearly(!isYearly)}
+        className={cn(
+          "relative w-12 h-6 rounded-full transition-colors",
+          isYearly ? '' : 'bg-slate-200 dark:bg-slate-700'
+        )}
+        style={isYearly ? { backgroundColor: brandColor } : {}}
+      >
+        <span className={cn(
+          "absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm",
+          isYearly ? 'translate-x-7' : 'translate-x-1'
+        )} />
+      </button>
+      <span className={cn("text-sm font-medium transition-colors", isYearly ? 'text-slate-900 dark:text-white' : 'text-slate-400')}>
+        {yearlyLabel}
+      </span>
+      {isYearly && yearlySavingText && (
+        <span className="px-2 py-0.5 text-xs font-medium rounded-full text-white" style={{ backgroundColor: brandColor }}>
+          {yearlySavingText}
+        </span>
+      )}
+    </div>
+  ) : null;
+
+  // Centered layout helper for few items
+  const getGridClass = (count: number) => {
+    if (device === 'mobile') return 'grid-cols-1';
+    if (device === 'tablet') return count <= 2 ? 'grid-cols-2' : 'grid-cols-2';
+    if (count === 1) return 'grid-cols-1 max-w-md mx-auto';
+    if (count === 2) return 'grid-cols-2 max-w-2xl mx-auto';
+    return 'grid-cols-3';
+  };
+
+  // Style 1: Cards - Classic pricing cards with feature list
+  const renderCardsStyle = () => {
+    if (plans.length === 0) return renderEmptyState();
+    const displayPlans = plans.slice(0, 6);
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
+        <h3 className={cn("font-bold text-center mb-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>Bảng giá dịch vụ</h3>
+        <p className="text-center text-sm text-slate-500 mb-4">{subtitle}</p>
+        <BillingToggle />
+        <div className={cn("grid gap-4", getGridClass(displayPlans.length))}>
+          {displayPlans.map((plan) => (
+            <div 
+              key={plan.id} 
+              className={cn(
+                "bg-white dark:bg-slate-800 rounded-xl border-2 relative flex flex-col h-full",
+                device === 'mobile' ? 'p-4' : 'p-5',
+                plan.isPopular ? "shadow-lg" : ""
+              )} 
+              style={{ 
+                borderColor: plan.isPopular ? brandColor : '#e2e8f0',
+                transform: plan.isPopular && device === 'desktop' ? 'scale(1.02)' : undefined
+              }}
+            >
+              {plan.isPopular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap" style={{ backgroundColor: brandColor }}>
+                  Phổ biến
+                </div>
+              )}
+              <h4 className="font-semibold text-center line-clamp-1">{plan.name || 'Tên gói'}</h4>
+              <div className="text-center my-4">
+                <span className={cn("font-bold tabular-nums", device === 'mobile' ? 'text-2xl' : 'text-3xl')} style={{ color: brandColor }}>
+                  {getPrice(plan)}đ
+                </span>
+                <span className="text-sm text-slate-500">{getPeriod()}</span>
+              </div>
+              <ul className="space-y-2 mb-4 flex-1 min-h-[80px]">
+                {(plan.features.length > 0 ? plan.features : ['Tính năng 1', 'Tính năng 2']).slice(0, 5).map((f, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-sm">
+                    <Check size={14} className="flex-shrink-0 mt-0.5" style={{ color: brandColor }} />
+                    <span className="line-clamp-1">{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <button 
+                className={cn("w-full py-2.5 rounded-lg font-medium text-sm transition-opacity hover:opacity-90", plan.isPopular ? "text-white" : "border-2")} 
+                style={plan.isPopular ? { backgroundColor: brandColor } : { borderColor: brandColor, color: brandColor }}
+              >
+                {plan.buttonText || 'Chọn gói'}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Style 2: Horizontal - Compact horizontal rows
+  const renderHorizontalStyle = () => {
+    if (plans.length === 0) return renderEmptyState();
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
+        <h3 className={cn("font-bold text-center mb-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>Bảng giá dịch vụ</h3>
+        <p className="text-center text-sm text-slate-500 mb-4">{subtitle}</p>
+        <BillingToggle />
+        <div className="space-y-3 max-w-3xl mx-auto">
+          {plans.slice(0, 5).map((plan) => (
+            <div 
+              key={plan.id} 
+              className={cn(
+                "bg-white dark:bg-slate-800 rounded-xl p-4 border-2 flex items-center justify-between transition-all",
+                device === 'mobile' ? 'flex-col gap-3 text-center' : ''
+              )} 
+              style={{ borderColor: plan.isPopular ? brandColor : '#e2e8f0' }}
+            >
+              <div className={cn(device === 'mobile' ? '' : 'flex items-center gap-3 min-w-0 flex-1')}>
+                <h4 className="font-semibold truncate">{plan.name || 'Tên gói'}</h4>
+                {plan.isPopular && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-medium text-white flex-shrink-0" style={{ backgroundColor: brandColor }}>
+                    Hot
+                  </span>
+                )}
+              </div>
+              <div className={cn("text-sm text-slate-500 truncate", device === 'mobile' ? '' : 'flex-1 text-center')}>
+                {(plan.features.length > 0 ? plan.features : ['Tính năng']).slice(0, 2).join(' • ')}
+              </div>
+              <div className={cn("flex items-center gap-4", device === 'mobile' ? 'flex-col gap-2' : 'flex-shrink-0')}>
+                <span className="font-bold text-lg tabular-nums whitespace-nowrap" style={{ color: brandColor }}>
+                  {getPrice(plan)}đ<span className="text-sm font-normal text-slate-500">{getPeriod()}</span>
+                </span>
+                <button className="px-4 py-2 rounded-lg text-sm text-white font-medium whitespace-nowrap" style={{ backgroundColor: brandColor }}>
+                  {plan.buttonText || 'Chọn'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Style 3: Minimal - Clean list style
+  const renderMinimalStyle = () => {
+    if (plans.length === 0) return renderEmptyState();
+    return (
+      <div className={cn("py-10 px-4", device === 'mobile' ? 'py-6' : '')}>
+        <h3 className={cn("font-bold text-center mb-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>Bảng giá dịch vụ</h3>
+        <p className="text-center text-sm text-slate-500 mb-4">{subtitle}</p>
+        <BillingToggle />
+        <div className={cn("max-w-3xl mx-auto", device === 'mobile' ? '' : 'border rounded-2xl overflow-hidden')}>
+          {plans.slice(0, 5).map((plan, idx) => (
+            <div 
+              key={plan.id} 
+              className={cn(
+                "flex items-center gap-4 p-5 bg-white dark:bg-slate-800 transition-all relative",
+                device === 'mobile' ? 'flex-col text-center rounded-xl border mb-3' : '',
+                device !== 'mobile' && idx !== Math.min(plans.length, 5) - 1 && 'border-b'
+              )} 
+              style={plan.isPopular ? { backgroundColor: `${brandColor}08` } : {}}
+            >
+              {plan.isPopular && (
+                <div 
+                  className={cn(
+                    "absolute px-3 py-1 rounded-full text-xs font-medium text-white",
+                    device === 'mobile' ? '-top-2 left-1/2 -translate-x-1/2' : 'top-3 right-4'
+                  )} 
+                  style={{ backgroundColor: brandColor }}
+                >
+                  Phổ biến
+                </div>
+              )}
+              <div className={cn("flex-1 min-w-0", device === 'mobile' ? 'pt-2' : '')}>
+                <h4 className="font-semibold text-base truncate">{plan.name || 'Tên gói'}</h4>
+                <div className="text-xs text-slate-500 truncate">
+                  {(plan.features.length > 0 ? plan.features : ['Tính năng']).slice(0, 2).join(' • ')}
+                </div>
+              </div>
+              <div className={cn("flex items-center gap-4", device === 'mobile' ? 'flex-col gap-3 mt-3' : '')}>
+                <span className="text-2xl font-bold tabular-nums whitespace-nowrap" style={{ color: brandColor }}>
+                  {getPrice(plan)}đ<span className="text-sm text-slate-500">{getPeriod()}</span>
+                </span>
+                <button 
+                  className={cn("px-5 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap", plan.isPopular ? "text-white shadow-md" : "border-2")} 
+                  style={plan.isPopular ? { backgroundColor: brandColor } : { borderColor: brandColor, color: brandColor }}
+                >
+                  {plan.buttonText || 'Chọn gói'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Style 4: Comparison - Feature comparison table
+  const renderComparisonStyle = () => {
+    if (plans.length === 0) return renderEmptyState();
+    const displayPlans = plans.slice(0, device === 'mobile' ? 2 : 4);
+    const allFeatures = [...new Set(displayPlans.flatMap(p => p.features))].slice(0, 8);
+    
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-2' : '')}>
+        <h3 className={cn("font-bold text-center mb-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>So sánh các gói</h3>
+        <p className="text-center text-sm text-slate-500 mb-4">{subtitle}</p>
+        <BillingToggle />
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className="p-3 text-left text-sm font-medium text-slate-500 border-b">Tính năng</th>
+                {displayPlans.map((plan) => (
+                  <th 
+                    key={plan.id} 
+                    className={cn("p-3 text-center border-b min-w-[120px]", device === 'mobile' ? 'text-xs' : 'text-sm')}
+                    style={plan.isPopular ? { backgroundColor: `${brandColor}08` } : {}}
+                  >
+                    <div className="font-semibold">{plan.name || 'Gói'}</div>
+                    <div className="font-bold mt-1" style={{ color: brandColor }}>
+                      {getPrice(plan)}đ
+                    </div>
+                    {plan.isPopular && (
+                      <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium text-white" style={{ backgroundColor: brandColor }}>
+                        Khuyên dùng
+                      </span>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {allFeatures.map((feature, fIdx) => (
+                <tr key={fIdx} className={fIdx % 2 === 0 ? 'bg-slate-50 dark:bg-slate-800/50' : ''}>
+                  <td className="p-3 text-sm border-b">{feature}</td>
+                  {displayPlans.map((plan) => (
+                    <td 
+                      key={plan.id} 
+                      className="p-3 text-center border-b"
+                      style={plan.isPopular ? { backgroundColor: `${brandColor}05` } : {}}
+                    >
+                      {plan.features.includes(feature) ? (
+                        <Check size={18} className="mx-auto" style={{ color: brandColor }} />
+                      ) : (
+                        <X size={18} className="mx-auto text-slate-300" />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td className="p-3"></td>
+                {displayPlans.map((plan) => (
+                  <td key={plan.id} className="p-3 text-center" style={plan.isPopular ? { backgroundColor: `${brandColor}08` } : {}}>
+                    <button 
+                      className={cn("px-4 py-2 rounded-lg text-sm font-medium w-full", plan.isPopular ? "text-white" : "border-2")} 
+                      style={plan.isPopular ? { backgroundColor: brandColor } : { borderColor: brandColor, color: brandColor }}
+                    >
+                      {plan.buttonText || 'Chọn'}
+                    </button>
+                  </td>
+                ))}
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  // Style 5: Featured - One plan highlighted large
+  const renderFeaturedStyle = () => {
+    if (plans.length === 0) return renderEmptyState();
+    const popularPlan = plans.find(p => p.isPopular) || plans[0];
+    const otherPlans = plans.filter(p => p.id !== popularPlan.id).slice(0, 2);
+    
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
+        <h3 className={cn("font-bold text-center mb-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>Bảng giá dịch vụ</h3>
+        <p className="text-center text-sm text-slate-500 mb-4">{subtitle}</p>
+        <BillingToggle />
+        
+        <div className={cn("max-w-4xl mx-auto", device === 'mobile' ? '' : 'flex gap-6 items-stretch')}>
+          {/* Featured Plan */}
+          <div 
+            className={cn(
+              "bg-white dark:bg-slate-800 rounded-2xl border-2 relative flex flex-col",
+              device === 'mobile' ? 'p-5 mb-4' : 'p-8 flex-1'
+            )}
+            style={{ 
+              borderColor: brandColor,
+              boxShadow: `0 8px 30px ${brandColor}20`
+            }}
+          >
+            <div 
+              className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold text-white"
+              style={{ backgroundColor: brandColor }}
+            >
+              ★ Phổ biến nhất
+            </div>
+            <h4 className={cn("font-bold text-center", device === 'mobile' ? 'text-lg mt-2' : 'text-xl mt-4')}>
+              {popularPlan.name || 'Gói phổ biến'}
+            </h4>
+            <div className="text-center my-6">
+              <span className={cn("font-bold tabular-nums", device === 'mobile' ? 'text-3xl' : 'text-4xl')} style={{ color: brandColor }}>
+                {getPrice(popularPlan)}đ
+              </span>
+              <span className="text-slate-500">{getPeriod()}</span>
+            </div>
+            <ul className="space-y-3 mb-6 flex-1">
+              {(popularPlan.features.length > 0 ? popularPlan.features : ['Tính năng 1', 'Tính năng 2', 'Tính năng 3']).slice(0, 6).map((f, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <Check size={18} className="flex-shrink-0 mt-0.5" style={{ color: brandColor }} />
+                  <span className="line-clamp-1">{f}</span>
+                </li>
+              ))}
+            </ul>
+            <button 
+              className="w-full py-3 rounded-xl font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
+            >
+              {popularPlan.buttonText || 'Bắt đầu ngay'}
+            </button>
+          </div>
+
+          {/* Other Plans */}
+          {otherPlans.length > 0 && (
+            <div className={cn("flex gap-4", device === 'mobile' ? 'flex-col' : 'flex-col justify-center w-64')}>
+              {otherPlans.map((plan) => (
+                <div 
+                  key={plan.id}
+                  className="bg-white dark:bg-slate-800 rounded-xl border p-4 flex flex-col"
+                  style={{ borderColor: `${brandColor}20` }}
+                >
+                  <h5 className="font-semibold text-sm">{plan.name || 'Gói'}</h5>
+                  <div className="my-2">
+                    <span className="font-bold text-lg tabular-nums" style={{ color: brandColor }}>
+                      {getPrice(plan)}đ
+                    </span>
+                    <span className="text-xs text-slate-500">{getPeriod()}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 line-clamp-2 flex-1 mb-3">
+                    {plan.features.slice(0, 2).join(', ') || 'Các tính năng cơ bản'}
+                  </p>
+                  <button 
+                    className="w-full py-2 rounded-lg text-sm font-medium border-2"
+                    style={{ borderColor: brandColor, color: brandColor }}
+                  >
+                    {plan.buttonText || 'Chọn'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Style 6: Compact - Small dense cards
+  const renderCompactStyle = () => {
+    if (plans.length === 0) return renderEmptyState();
+    const displayPlans = plans.slice(0, device === 'mobile' ? 4 : 6);
+    
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
+        <h3 className={cn("font-bold text-center mb-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>Bảng giá dịch vụ</h3>
+        <p className="text-center text-sm text-slate-500 mb-4">{subtitle}</p>
+        <BillingToggle />
+        
+        <div className={cn(
+          "grid gap-3",
+          device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-3 max-w-3xl mx-auto'
+        )}>
+          {displayPlans.map((plan) => (
+            <div 
+              key={plan.id}
+              className={cn(
+                "bg-white dark:bg-slate-800 rounded-lg border-2 p-3 relative flex flex-col text-center",
+                plan.isPopular && "ring-2 ring-offset-2"
+              )}
+              style={{ 
+                borderColor: plan.isPopular ? brandColor : '#e2e8f0',
+                ...(plan.isPopular && { ringColor: brandColor })
+              }}
+            >
+              {plan.isPopular && (
+                <div 
+                  className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[10px] font-bold text-white"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  HOT
+                </div>
+              )}
+              <h5 className="font-semibold text-sm truncate mt-1">{plan.name || 'Gói'}</h5>
+              <div className="my-2">
+                <span className={cn("font-bold tabular-nums", device === 'mobile' ? 'text-lg' : 'text-xl')} style={{ color: brandColor }}>
+                  {getPrice(plan)}đ
+                </span>
+                <span className="text-[10px] text-slate-500 block">{getPeriod()}</span>
+              </div>
+              <p className="text-[11px] text-slate-500 line-clamp-2 min-h-[2rem] mb-2">
+                {plan.features.slice(0, 2).join(', ') || 'Tính năng cơ bản'}
+              </p>
+              <button 
+                className={cn(
+                  "w-full py-1.5 rounded text-xs font-medium mt-auto",
+                  plan.isPopular ? "text-white" : "border"
+                )}
+                style={plan.isPopular ? { backgroundColor: brandColor } : { borderColor: brandColor, color: brandColor }}
+              >
+                {plan.buttonText || 'Chọn'}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Style hints for each style
+  const getStyleHint = () => {
+    const hints: Record<PricingStyle, string> = {
+      cards: 'Classic cards với feature list đầy đủ, phù hợp 2-4 gói',
+      horizontal: 'Dạng hàng ngang gọn, phù hợp hiển thị nhiều gói',
+      minimal: 'Tối giản dạng list, phù hợp trang đơn giản',
+      comparison: 'Bảng so sánh tính năng chi tiết giữa các gói',
+      featured: 'Highlight 1 gói phổ biến, các gói khác nhỏ hơn',
+      compact: 'Cards nhỏ gọn, phù hợp sidebar hoặc nhiều gói'
+    };
+    return hints[previewStyle];
+  };
+
+  return (
+    <PreviewWrapper 
+      title="Preview Pricing" 
+      device={device} 
+      setDevice={setDevice} 
+      previewStyle={previewStyle} 
+      setPreviewStyle={setPreviewStyle} 
+      styles={styles} 
+      info={`${plans.length} gói • ${getStyleHint()}`}
+    >
+      <BrowserFrame url="yoursite.com/pricing">
+        {previewStyle === 'cards' && renderCardsStyle()}
+        {previewStyle === 'horizontal' && renderHorizontalStyle()}
+        {previewStyle === 'minimal' && renderMinimalStyle()}
+        {previewStyle === 'comparison' && renderComparisonStyle()}
+        {previewStyle === 'featured' && renderFeaturedStyle()}
+        {previewStyle === 'compact' && renderCompactStyle()}
+      </BrowserFrame>
+    </PreviewWrapper>
+  );
+};
+
 // ============ GALLERY/PARTNERS PREVIEW ============
-// Gallery: 3 Professional Styles from pure-visual-gallery (Spotlight, Explore, Stories)
-// Partners: 4 Professional Styles from partner-&-logo-manager (Grid, Marquee, Mono, Badge)
+// Gallery: 6 Professional Styles (Spotlight, Explore, Stories, Grid, Marquee, Masonry)
+// Partners: 6 Professional Styles (Grid, Marquee, Mono, Badge, Carousel, Featured)
 type GalleryItem = { id: number; url: string; link: string };
-export type GalleryStyle = 'spotlight' | 'explore' | 'stories' | 'grid' | 'marquee' | 'mono' | 'badge' | 'carousel' | 'featured';
+export type GalleryStyle = 'spotlight' | 'explore' | 'stories' | 'grid' | 'marquee' | 'masonry' | 'mono' | 'badge' | 'carousel' | 'featured';
 
 // Auto Scroll Slider Component for Marquee/Mono styles
 const AutoScrollSlider = ({ children, className, speed = 0.5, isPaused }: { 
@@ -1524,21 +2181,39 @@ const AutoScrollSlider = ({ children, className, speed = 0.5, isPaused }: {
   );
 };
 
-// Lightbox Component for Gallery
-const GalleryLightbox = ({ photo, onClose }: { photo: { url: string } | null; onClose: () => void }) => {
+// Lightbox Component for Gallery - with Arrow Keys Navigation
+const GalleryLightbox = ({ 
+  photo, 
+  onClose,
+  photos,
+  currentIndex,
+  onNavigate
+}: { 
+  photo: { url: string } | null; 
+  onClose: () => void;
+  photos?: Array<{ url: string }>;
+  currentIndex?: number;
+  onNavigate?: (direction: 'prev' | 'next') => void;
+}) => {
   React.useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft' && onNavigate) onNavigate('prev');
+      if (e.key === 'ArrowRight' && onNavigate) onNavigate('next');
+    };
     if (photo) {
       document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleEsc);
+      window.addEventListener('keydown', handleKeyDown);
     }
     return () => {
       document.body.style.overflow = 'unset';
-      window.removeEventListener('keydown', handleEsc);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [photo, onClose]);
+  }, [photo, onClose, onNavigate]);
 
   if (!photo || !photo.url) return null;
+
+  const hasMultiple = photos && photos.length > 1 && onNavigate;
 
   return (
     <div 
@@ -1548,9 +2223,38 @@ const GalleryLightbox = ({ photo, onClose }: { photo: { url: string } | null; on
       <button 
         onClick={onClose}
         className="absolute top-4 right-4 p-2 text-white/50 hover:text-white transition-colors z-[70]"
+        aria-label="Đóng"
       >
         <X size={24} />
       </button>
+      
+      {/* Navigation Arrows */}
+      {hasMultiple && (
+        <>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onNavigate('prev'); }}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-[70]"
+            aria-label="Ảnh trước"
+          >
+            <ChevronLeft size={24} className="text-white" />
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onNavigate('next'); }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-[70]"
+            aria-label="Ảnh sau"
+          >
+            <ChevronRight size={24} className="text-white" />
+          </button>
+        </>
+      )}
+      
+      {/* Counter */}
+      {hasMultiple && typeof currentIndex === 'number' && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-sm z-[70]">
+          {currentIndex + 1} / {photos.length}
+        </div>
+      )}
+      
       <div className="w-full h-full p-4 flex flex-col items-center justify-center" onClick={e => e.stopPropagation()}>
         <img 
           src={photo.url} 
@@ -1576,12 +2280,29 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
   const previewStyle = selectedStyle || (componentType === 'Gallery' ? 'spotlight' : 'grid');
   const setPreviewStyle = (s: string) => onStyleChange?.(s as GalleryStyle);
   
-  // Styles phụ thuộc vào componentType
+  // Lightbox navigation handler
+  const handleLightboxNavigate = (direction: 'prev' | 'next') => {
+    if (!selectedPhoto) return;
+    const currentIdx = items.findIndex(item => item.id === selectedPhoto.id);
+    if (currentIdx === -1) return;
+    const newIdx = direction === 'prev' 
+      ? (currentIdx - 1 + items.length) % items.length 
+      : (currentIdx + 1) % items.length;
+    setSelectedPhoto(items[newIdx]);
+  };
+
+  // Get current photo index for lightbox
+  const currentPhotoIndex = selectedPhoto ? items.findIndex(item => item.id === selectedPhoto.id) : -1;
+
+  // Styles phụ thuộc vào componentType - Gallery có 6 styles BẮT BUỘC
   const styles = componentType === 'Gallery' 
     ? [
         { id: 'spotlight', label: 'Tiêu điểm' }, 
         { id: 'explore', label: 'Khám phá' },
-        { id: 'stories', label: 'Câu chuyện' }
+        { id: 'stories', label: 'Câu chuyện' },
+        { id: 'grid', label: 'Grid' },
+        { id: 'marquee', label: 'Marquee' },
+        { id: 'masonry', label: 'Masonry' }
       ]
     : componentType === 'Partners' 
     ? [
@@ -1724,6 +2445,190 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
             </div>
           );
         })}
+      </div>
+    );
+  };
+
+  // ============ GALLERY STYLES 4-6 (Grid, Marquee, Masonry) ============
+  // Best Practices: Lightbox with keyboard nav, lazy loading, +N pattern
+
+  // Gallery Empty State with brandColor
+  const renderGalleryEmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+        <ImageIcon size={32} style={{ color: brandColor }} />
+      </div>
+      <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có hình ảnh nào</h3>
+      <p className="text-sm text-slate-500">Thêm ảnh đầu tiên để bắt đầu</p>
+    </div>
+  );
+
+  // Style 4: Gallery Grid - Clean equal squares grid
+  const renderGalleryGridStyle = () => {
+    if (items.length === 0) return renderGalleryEmptyState();
+
+    const MAX_VISIBLE = device === 'mobile' ? 6 : device === 'tablet' ? 9 : 12;
+    const visibleItems = items.slice(0, MAX_VISIBLE);
+    const remainingCount = items.length - MAX_VISIBLE;
+
+    // Centered layout for 1-2 items
+    if (items.length <= 2) {
+      return (
+        <div className="py-8 px-4">
+          <div className={cn("mx-auto flex items-center justify-center gap-4", items.length === 1 ? 'max-w-sm' : 'max-w-xl')}>
+            {items.map((photo) => (
+              <div 
+                key={photo.id} 
+                className="flex-1 aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group"
+                onClick={() => setSelectedPhoto(photo)}
+              >
+                {photo.url ? (
+                  <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center"><ImageIcon size={40} className="text-slate-300" /></div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="py-8 px-4">
+        <div className={cn(
+          "grid gap-2",
+          device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4'
+        )}>
+          {visibleItems.map((photo) => (
+            <div 
+              key={photo.id} 
+              className="aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group relative"
+              onClick={() => setSelectedPhoto(photo)}
+            >
+              {photo.url ? (
+                <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center"><ImageIcon size={28} className="text-slate-300" /></div>
+              )}
+              {/* Hover overlay */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+            </div>
+          ))}
+          {/* +N remaining */}
+          {remainingCount > 0 && (
+            <div 
+              className="aspect-square rounded-lg overflow-hidden flex flex-col items-center justify-center cursor-pointer"
+              style={{ backgroundColor: `${brandColor}10` }}
+            >
+              <Plus size={28} style={{ color: brandColor }} className="mb-1" />
+              <span className="text-lg font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+              <span className="text-xs text-slate-500">ảnh khác</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Style 5: Gallery Marquee - Auto scroll horizontal
+  const renderGalleryMarqueeStyle = () => {
+    if (items.length === 0) return renderGalleryEmptyState();
+
+    return (
+      <div className="py-8">
+        <div className="w-full relative" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
+          <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none"></div>
+          <AutoScrollSlider speed={0.6} isPaused={isPaused}>
+            {items.map((photo) => (
+              <div 
+                key={`gallery-marquee-${photo.id}`} 
+                className="shrink-0 h-48 md:h-64 aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group"
+                onClick={() => setSelectedPhoto(photo)}
+              >
+                {photo.url ? (
+                  <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                    <ImageIcon size={32} className="text-slate-300" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </AutoScrollSlider>
+        </div>
+      </div>
+    );
+  };
+
+  // Style 6: Gallery Masonry - Pinterest-like varying heights
+  const renderGalleryMasonryStyle = () => {
+    if (items.length === 0) return renderGalleryEmptyState();
+
+    const MAX_VISIBLE = device === 'mobile' ? 6 : 10;
+    const visibleItems = items.slice(0, MAX_VISIBLE);
+    const remainingCount = items.length - MAX_VISIBLE;
+
+    // Centered layout for 1-2 items
+    if (items.length <= 2) {
+      return (
+        <div className="py-8 px-4">
+          <div className={cn("mx-auto flex items-center justify-center gap-4", items.length === 1 ? 'max-w-md' : 'max-w-2xl')}>
+            {items.map((photo, idx) => (
+              <div 
+                key={photo.id} 
+                className={cn("flex-1 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group", idx % 2 === 0 ? 'aspect-[3/4]' : 'aspect-[4/3]')}
+                onClick={() => setSelectedPhoto(photo)}
+              >
+                {photo.url ? (
+                  <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center"><ImageIcon size={40} className="text-slate-300" /></div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Masonry layout with CSS columns
+    return (
+      <div className="py-8 px-4">
+        <div className={cn(
+          "gap-3",
+          device === 'mobile' ? 'columns-2' : device === 'tablet' ? 'columns-3' : 'columns-4'
+        )}>
+          {visibleItems.map((photo, idx) => {
+            // Varying heights for masonry effect
+            const heights = ['h-48', 'h-64', 'h-56', 'h-72', 'h-52', 'h-60'];
+            const heightClass = heights[idx % heights.length];
+            
+            return (
+              <div 
+                key={photo.id} 
+                className={cn("mb-3 break-inside-avoid rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group relative", heightClass)}
+                onClick={() => setSelectedPhoto(photo)}
+              >
+                {photo.url ? (
+                  <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center"><ImageIcon size={28} className="text-slate-300" /></div>
+                )}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+              </div>
+            );
+          })}
+        </div>
+        {/* +N remaining */}
+        {remainingCount > 0 && (
+          <div className="flex items-center justify-center mt-4">
+            <span className="text-sm font-medium px-4 py-2 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>
+              +{remainingCount} ảnh khác
+            </span>
+          </div>
+        )}
       </div>
     );
   };
@@ -2070,7 +2975,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     );
   };
 
-  // Render Gallery styles with container and Lightbox
+  // Render Gallery styles with container and Lightbox (with keyboard navigation)
   const renderGalleryContent = () => (
     <section className="w-full bg-white dark:bg-slate-900">
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-[1600px] py-8 md:py-12">
@@ -2078,9 +2983,18 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
           {previewStyle === 'spotlight' && renderSpotlightStyle()}
           {previewStyle === 'explore' && renderExploreStyle()}
           {previewStyle === 'stories' && renderStoriesStyle()}
+          {previewStyle === 'grid' && renderGalleryGridStyle()}
+          {previewStyle === 'marquee' && renderGalleryMarqueeStyle()}
+          {previewStyle === 'masonry' && renderGalleryMasonryStyle()}
         </div>
       </div>
-      <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+      <GalleryLightbox 
+        photo={selectedPhoto} 
+        onClose={() => setSelectedPhoto(null)}
+        photos={items}
+        currentIndex={currentPhotoIndex}
+        onNavigate={handleLightboxNavigate}
+      />
     </section>
   );
 
