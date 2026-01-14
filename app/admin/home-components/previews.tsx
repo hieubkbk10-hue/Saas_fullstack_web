@@ -2998,6 +2998,35 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     </section>
   );
 
+  // Generate image size info based on style and item count
+  const getGalleryImageSizeInfo = () => {
+    if (componentType !== 'Gallery') return `${items.length} logo`;
+    
+    const count = items.length;
+    switch (previewStyle) {
+      case 'spotlight':
+        if (count === 0) return 'Chưa có ảnh';
+        if (count === 1) return 'Ảnh 1: 1200×800px (3:2)';
+        if (count <= 4) return `Ảnh 1: 1200×800px • Ảnh 2-${count}: 600×600px`;
+        return `Ảnh 1: 1200×800px • Ảnh 2-4: 600×600px (+${count - 4} ảnh)`;
+      case 'explore':
+        return `${count} ảnh • Tất cả: 600×600px (1:1)`;
+      case 'stories':
+        if (count === 0) return 'Chưa có ảnh';
+        const largeCount = Math.ceil(count / 4) * 2; // ảnh 1,4,5,8... chiếm 2 cột
+        const smallCount = count - largeCount;
+        return `${largeCount} ảnh lớn: 1200×600px • ${smallCount} ảnh nhỏ: 800×600px`;
+      case 'grid':
+        return `${count} ảnh • Tất cả: 800×800px (1:1)`;
+      case 'marquee':
+        return `${count} ảnh • Tất cả: 800×600px (4:3)`;
+      case 'masonry':
+        return `${count} ảnh • Ngang: 600×400px • Dọc: 600×900px • Vuông: 600×600px`;
+      default:
+        return `${count} ảnh`;
+    }
+  };
+
   return (
     <PreviewWrapper 
       title={`Preview ${componentType === 'Gallery' ? 'Thư viện ảnh' : componentType}`} 
@@ -3006,7 +3035,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
       previewStyle={previewStyle} 
       setPreviewStyle={setPreviewStyle} 
       styles={styles} 
-      info={`${items.length} ảnh`}
+      info={getGalleryImageSizeInfo()}
     >
       <BrowserFrame>
         {componentType === 'Gallery' ? (

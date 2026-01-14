@@ -3155,39 +3155,137 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
     );
   }
 
-  // Style 4: Framed Wall - Certificate frames hanging on wall (default)
+  // Style 4: Framed Wall - Certificate frames hanging on wall
+  if (style === 'wall') {
+    return (
+      <section className="w-full py-14 md:py-20 bg-slate-100">
+        <div className="container max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
+          </div>
+          <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+            {items.map((item, idx) => (
+              <div 
+                key={idx} 
+                onClick={() => setSelectedCert(item)}
+                className="group relative bg-white p-3 md:p-4 shadow-md rounded-sm border border-slate-200 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-zoom-in w-40 h-52 md:w-52 md:h-64"
+              >
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-12 bg-gradient-to-b from-slate-300 to-transparent opacity-50 z-0"></div>
+                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-slate-300 shadow-inner z-10"></div>
+                <div className="flex-1 flex items-center justify-center bg-white border border-slate-100 p-4 relative z-10 overflow-hidden">
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors z-20 pointer-events-none"></div>
+                  {item.url ? (
+                    <img src={item.url} className="w-full h-full object-contain" alt={item.name || ''} />
+                  ) : (
+                    <ImageIcon size={32} className="text-slate-300" />
+                  )}
+                </div>
+                <div className="h-8 md:h-10 flex items-center justify-center relative z-10">
+                  <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors text-center truncate px-1">
+                    {item.name ? (item.name.length > 20 ? item.name.substring(0, 18) + '...' : item.name) : 'Certificate'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
+      </section>
+    );
+  }
+
+  // Style 5: Carousel - Horizontal scroll with grayscale hover
+  if (style === 'carousel') {
+    return (
+      <section className="w-full py-12 md:py-16 bg-white">
+        <div className="container max-w-7xl mx-auto px-4">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
+          </div>
+          <div className="relative">
+            <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+              <div className="flex gap-4 md:gap-6">
+                {items.map((item, idx) => (
+                  <div 
+                    key={idx}
+                    onClick={() => setSelectedCert(item)}
+                    className="flex-shrink-0 w-[200px] md:w-[250px] group cursor-zoom-in"
+                  >
+                    <div 
+                      className="aspect-square rounded-xl flex items-center justify-center p-5 md:p-6 transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1"
+                      style={{ backgroundColor: `${brandColor}08`, border: `1px solid ${brandColor}15` }}
+                    >
+                      {item.url ? (
+                        <img src={item.url} className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100 transition-all" alt={item.name || ''} />
+                      ) : (
+                        <ImageIcon size={32} className="text-slate-300" />
+                      )}
+                    </div>
+                    {item.name && (
+                      <p className="text-center text-xs font-medium text-slate-500 mt-2 truncate px-1">{item.name}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
+      </section>
+    );
+  }
+
+  // Style 6: Featured - 1 featured + grid (default fallback)
+  const featuredItem = items[0];
+  const otherItems = items.slice(1, 7);
   return (
-    <section className="w-full py-14 md:py-20 bg-slate-100">
+    <section className="w-full py-12 md:py-16 bg-white">
       <div className="container max-w-7xl mx-auto px-4">
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
         </div>
-        <div className="flex flex-wrap justify-center gap-6 md:gap-10">
-          {items.map((item, idx) => (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {featuredItem && (
             <div 
-              key={idx} 
-              onClick={() => setSelectedCert(item)}
-              className="group relative bg-white p-3 md:p-4 shadow-md rounded-sm border border-slate-200 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-zoom-in w-40 h-52 md:w-52 md:h-64"
+              onClick={() => setSelectedCert(featuredItem)}
+              className="group cursor-zoom-in rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl"
+              style={{ backgroundColor: `${brandColor}08`, border: `2px solid ${brandColor}20` }}
             >
-              {/* Hanging Wire */}
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-12 bg-gradient-to-b from-slate-300 to-transparent opacity-50 z-0"></div>
-              <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-slate-300 shadow-inner z-10"></div>
-              
-              <div className="flex-1 flex items-center justify-center bg-white border border-slate-100 p-4 relative z-10 overflow-hidden">
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors z-20 pointer-events-none"></div>
-                {item.url ? (
-                  <img src={item.url} className="w-full h-full object-contain" alt={item.name || ''} />
+              <div className="aspect-[4/3] flex items-center justify-center p-8 md:p-10 relative">
+                {featuredItem.url ? (
+                  <img src={featuredItem.url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt={featuredItem.name || ''} />
                 ) : (
-                  <ImageIcon size={32} className="text-slate-300" />
+                  <ImageIcon size={64} className="text-slate-300" />
                 )}
+                <div className="absolute top-3 left-3">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: brandColor }}>
+                    NỔI BẬT
+                  </span>
+                </div>
               </div>
-              <div className="h-8 md:h-10 flex items-center justify-center relative z-10">
-                <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors text-center truncate px-1">
-                  {item.name ? (item.name.length > 20 ? item.name.substring(0, 18) + '...' : item.name) : 'Certificate'}
+              <div className="py-4 text-center border-t" style={{ borderColor: `${brandColor}15` }}>
+                <span className="font-bold text-base" style={{ color: brandColor }}>
+                  {featuredItem.name || 'Chứng nhận nổi bật'}
                 </span>
               </div>
             </div>
-          ))}
+          )}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {otherItems.map((item, idx) => (
+              <div 
+                key={idx}
+                onClick={() => setSelectedCert(item)}
+                className="group aspect-square rounded-xl flex items-center justify-center p-4 cursor-zoom-in transition-all duration-300 hover:shadow-md"
+                style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
+              >
+                {item.url ? (
+                  <img src={item.url} className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-50 group-hover:opacity-100 transition-all" alt={item.name || ''} />
+                ) : (
+                  <ImageIcon size={24} className="text-slate-300" />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
