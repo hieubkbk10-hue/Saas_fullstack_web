@@ -7588,8 +7588,9 @@ function ProcessSection({ config, brandColor, title }: { config: Record<string, 
 }
 
 // ============ CLIENTS MARQUEE SECTION ============
-// Auto-scroll Logo Marquee - 4 Styles: marquee, marqueeReverse, wave, logoWall
-type ClientsStyle = 'marquee' | 'marqueeReverse' | 'wave' | 'logoWall';
+// Auto-scroll Logo Marquee - 6 Styles: marquee, dualRow, wave, grid, carousel, featured
+// Best Practices: pause on hover, a11y, prefers-reduced-motion
+type ClientsStyle = 'marquee' | 'dualRow' | 'wave' | 'grid' | 'carousel' | 'featured';
 
 function ClientsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ url: string; link: string; name?: string }>) || [];
@@ -7599,7 +7600,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
     return null;
   }
 
-  // CSS keyframes for marquee animation
+  // CSS keyframes với pause on hover và prefers-reduced-motion
   const marqueeStyles = `
     @keyframes clients-marquee {
       0% { transform: translateX(0); }
@@ -7613,49 +7614,49 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-8px); }
     }
+    .clients-track { animation: clients-marquee var(--duration, 30s) linear infinite; }
+    .clients-track-reverse { animation: clients-marquee-reverse var(--duration, 30s) linear infinite; }
+    .clients-float { animation: clients-float 3s ease-in-out infinite; }
+    .clients-container:hover .clients-track,
+    .clients-container:hover .clients-track-reverse,
+    .clients-container:focus-within .clients-track,
+    .clients-container:focus-within .clients-track-reverse {
+      animation-play-state: paused;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .clients-track, .clients-track-reverse, .clients-float { animation: none !important; }
+    }
   `;
 
-  // Logo item renderer
+  // Logo item renderer with accessibility
   const renderLogoItem = (item: { url: string; link: string; name?: string }, idx: number, grayscale = false) => {
     const logo = item.url ? (
       <img 
         src={item.url} 
-        alt={item.name || `Client ${idx + 1}`}
-        className={`h-10 md:h-12 w-auto object-contain select-none pointer-events-none transition-all duration-500 ${
-          grayscale ? 'grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100' : ''
-        }`}
+        alt={item.name || `Khách hàng ${idx + 1}`}
+        className={`h-10 md:h-12 w-auto object-contain select-none pointer-events-none transition-all duration-500 ${grayscale ? 'grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100' : ''}`}
       />
     ) : (
-      <div 
-        className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center"
-        style={{ backgroundColor: `${brandColor}15` }}
-      >
+      <div className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
         <ImageIcon size={20} style={{ color: brandColor }} className="opacity-40" />
       </div>
     );
 
     return item.link ? (
-      <a 
-        key={`logo-${idx}`}
-        href={item.link} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="shrink-0 group"
-      >
+      <a key={`logo-${idx}`} href={item.link} target="_blank" rel="noopener noreferrer" className="shrink-0 group" role="listitem" aria-label={item.name || `Khách hàng ${idx + 1}`}>
         {logo}
       </a>
     ) : (
-      <div key={`logo-${idx}`} className="shrink-0 group">{logo}</div>
+      <div key={`logo-${idx}`} className="shrink-0 group" role="listitem">{logo}</div>
     );
   };
 
-  // Calculate animation duration based on items count
   const baseDuration = Math.max(20, items.length * 4);
 
   // Style 1: Simple Marquee
   if (style === 'marquee') {
     return (
-      <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40">
+      <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40" aria-label={title}>
         <style>{marqueeStyles}</style>
         <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -7664,21 +7665,8 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
               {title}
             </h2>
           </div>
-          
-          <div 
-            className="relative py-6 overflow-hidden"
-            style={{ 
-              maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)',
-              WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)'
-            }}
-          >
-            <div 
-              className="flex items-center gap-12 md:gap-16"
-              style={{ 
-                animation: `clients-marquee ${baseDuration}s linear infinite`,
-                width: 'max-content'
-              }}
-            >
+          <div className="clients-container relative py-6 overflow-hidden" role="list" style={{ maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)' }}>
+            <div className="clients-track flex items-center gap-12 md:gap-16" style={{ '--duration': `${baseDuration}s`, width: 'max-content' } as React.CSSProperties}>
               {items.map((item, idx) => renderLogoItem(item, idx))}
               {items.map((item, idx) => renderLogoItem(item, idx + items.length))}
             </div>
@@ -7688,10 +7676,10 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
     );
   }
 
-  // Style 2: Dual Row Marquee
-  if (style === 'marqueeReverse') {
+  // Style 2: Dual Row Marquee (formerly marqueeReverse)
+  if (style === 'dualRow') {
     return (
-      <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40">
+      <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40" aria-label={title}>
         <style>{marqueeStyles}</style>
         <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -7700,43 +7688,15 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
               {title}
             </h2>
           </div>
-          
-          <div className="space-y-4">
-            {/* Row 1 */}
-            <div 
-              className="relative py-4 overflow-hidden"
-              style={{ 
-                maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)',
-                WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)'
-              }}
-            >
-              <div 
-                className="flex items-center gap-12 md:gap-16"
-                style={{ 
-                  animation: `clients-marquee ${baseDuration + 5}s linear infinite`,
-                  width: 'max-content'
-                }}
-              >
+          <div className="space-y-4" role="list">
+            <div className="clients-container relative py-4 overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)' }}>
+              <div className="clients-track flex items-center gap-12 md:gap-16" style={{ '--duration': `${baseDuration + 5}s`, width: 'max-content' } as React.CSSProperties}>
                 {items.map((item, idx) => renderLogoItem(item, idx, true))}
                 {items.map((item, idx) => renderLogoItem(item, idx + items.length, true))}
               </div>
             </div>
-            
-            {/* Row 2 - Reverse */}
-            <div 
-              className="relative py-4 overflow-hidden"
-              style={{ 
-                maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)',
-                WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)'
-              }}
-            >
-              <div 
-                className="flex items-center gap-12 md:gap-16"
-                style={{ 
-                  animation: `clients-marquee-reverse ${baseDuration + 10}s linear infinite`,
-                  width: 'max-content'
-                }}
-              >
+            <div className="clients-container relative py-4 overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)' }}>
+              <div className="clients-track-reverse flex items-center gap-12 md:gap-16" style={{ '--duration': `${baseDuration + 10}s`, width: 'max-content' } as React.CSSProperties}>
                 {[...items].reverse().map((item, idx) => renderLogoItem(item, idx, true))}
                 {[...items].reverse().map((item, idx) => renderLogoItem(item, idx + items.length, true))}
               </div>
@@ -7750,48 +7710,20 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
   // Style 3: Wave
   if (style === 'wave') {
     return (
-      <section className="w-full py-10 md:py-16 bg-gradient-to-b from-slate-50 to-white border-b border-slate-200/40 overflow-hidden">
+      <section className="w-full py-10 md:py-16 bg-gradient-to-b from-slate-50 to-white border-b border-slate-200/40 overflow-hidden" aria-label={title}>
         <style>{marqueeStyles}</style>
         <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
           <div className="text-center space-y-2">
-            <div 
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
-              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-            >
-              Đối tác & Khách hàng
-            </div>
-            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">
-              {title}
-            </h2>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Đối tác & Khách hàng</div>
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
           </div>
-          
-          <div 
-            className="relative py-8 overflow-hidden"
-            style={{ 
-              maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
-              WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
-            }}
-          >
-            <div 
-              className="flex items-center gap-14 md:gap-20"
-              style={{ 
-                animation: `clients-marquee ${baseDuration + 15}s linear infinite`,
-                width: 'max-content'
-              }}
-            >
+          <div className="clients-container relative py-8 overflow-hidden" role="list" style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}>
+            <div className="clients-track flex items-center gap-14 md:gap-20" style={{ '--duration': `${baseDuration + 15}s`, width: 'max-content' } as React.CSSProperties}>
               {items.map((item, idx) => (
-                <div 
-                  key={`wave-${idx}`}
-                  className="shrink-0"
-                  style={{ animation: `clients-float 3s ease-in-out infinite`, animationDelay: `${idx * 0.3}s` }}
-                >
+                <div key={`wave-${idx}`} className="shrink-0 clients-float" style={{ animationDelay: `${idx * 0.3}s` }} role="listitem">
                   {item.url ? (
                     <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100">
-                      <img 
-                        src={item.url} 
-                        alt={item.name || `Client ${idx + 1}`}
-                        className="h-8 md:h-10 w-auto object-contain select-none pointer-events-none"
-                      />
+                      <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-8 md:h-10 w-auto object-contain select-none pointer-events-none" />
                     </div>
                   ) : (
                     <div className="h-16 w-28 rounded-xl flex items-center justify-center bg-white shadow-sm border border-slate-100">
@@ -7801,18 +7733,10 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
                 </div>
               ))}
               {items.map((item, idx) => (
-                <div 
-                  key={`wave2-${idx}`}
-                  className="shrink-0"
-                  style={{ animation: `clients-float 3s ease-in-out infinite`, animationDelay: `${(idx + items.length) * 0.3}s` }}
-                >
+                <div key={`wave2-${idx}`} className="shrink-0 clients-float" style={{ animationDelay: `${(idx + items.length) * 0.3}s` }} role="listitem">
                   {item.url ? (
                     <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100">
-                      <img 
-                        src={item.url} 
-                        alt={item.name || `Client ${idx + 1}`}
-                        className="h-8 md:h-10 w-auto object-contain select-none pointer-events-none"
-                      />
+                      <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-8 md:h-10 w-auto object-contain select-none pointer-events-none" />
                     </div>
                   ) : (
                     <div className="h-16 w-28 rounded-xl flex items-center justify-center bg-white shadow-sm border border-slate-100">
@@ -7823,110 +7747,140 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
               ))}
             </div>
           </div>
-          
         </div>
       </section>
     );
   }
 
-  // Style 4: Logo Wall (default) - Grid or Marquee based on items count
-  return (
-    <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40">
-      <style>{marqueeStyles}</style>
-      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
-            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }} />
-            {title}
-          </h2>
-        </div>
-        
-        {items.length > 8 ? (
-          /* Marquee for many logos */
-          <div 
-            className="relative py-6 overflow-hidden"
-            style={{ 
-              maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
-              WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
-            }}
-          >
-            <div 
-              className="flex items-center gap-10 md:gap-14"
-              style={{ 
-                animation: `clients-marquee ${baseDuration + 20}s linear infinite`,
-                width: 'max-content'
-              }}
-            >
-              {items.map((item, idx) => (
-                <div 
-                  key={`wall-${idx}`}
-                  className="shrink-0 group p-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer"
-                >
-                  {item.url ? (
-                    <img 
-                      src={item.url} 
-                      alt={item.name || `Client ${idx + 1}`}
-                      className="h-10 md:h-12 w-auto object-contain select-none pointer-events-none grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
-                    />
-                  ) : (
-                    <div className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
-                      <ImageIcon size={18} className="text-slate-300" />
-                    </div>
-                  )}
-                </div>
-              ))}
-              {items.map((item, idx) => (
-                <div 
-                  key={`wall2-${idx}`}
-                  className="shrink-0 group p-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer"
-                >
-                  {item.url ? (
-                    <img 
-                      src={item.url} 
-                      alt={item.name || `Client ${idx + 1}`}
-                      className="h-10 md:h-12 w-auto object-contain select-none pointer-events-none grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
-                    />
-                  ) : (
-                    <div className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
-                      <ImageIcon size={18} className="text-slate-300" />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+  // Style 4: Grid - Static responsive grid
+  if (style === 'grid') {
+    const MAX_VISIBLE = 12;
+    const visibleItems = items.slice(0, MAX_VISIBLE);
+    const remainingCount = Math.max(0, items.length - MAX_VISIBLE);
+    return (
+      <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40" aria-label={title}>
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }} />
+              {title}
+            </h2>
+            {items.length > 0 && <span className="text-xs px-2.5 py-1 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>{items.length} đối tác</span>}
           </div>
-        ) : (
-          /* Static Grid for fewer logos */
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 items-center justify-items-center py-6">
-            {items.map((item, idx) => (
-              <div 
-                key={`static-${idx}`}
-                className="group p-4 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer w-full flex flex-col items-center"
-              >
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 py-6" role="list">
+            {visibleItems.map((item, idx) => (
+              <div key={`grid-${idx}`} className="group p-4 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center" role="listitem">
                 {item.url ? (
-                  <img 
-                    src={item.url} 
-                    alt={item.name || `Client ${idx + 1}`}
-                    className="h-10 md:h-12 w-auto object-contain select-none pointer-events-none grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
-                  />
+                  <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-10 md:h-12 w-auto object-contain select-none pointer-events-none grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" />
                 ) : (
                   <div className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
                     <ImageIcon size={18} className="text-slate-300" />
                   </div>
                 )}
-                {item.name && (
-                  <div className="text-[10px] text-slate-400 text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity truncate max-w-full">
-                    {item.name}
-                  </div>
-                )}
+                {item.name && <span className="text-[10px] text-slate-400 text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity truncate max-w-full">{item.name}</span>}
               </div>
             ))}
+            {remainingCount > 0 && (
+              <div className="p-4 rounded-xl flex flex-col items-center justify-center" style={{ backgroundColor: `${brandColor}08` }} role="listitem">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center mb-1" style={{ backgroundColor: `${brandColor}15` }}>
+                  <Plus size={20} style={{ color: brandColor }} />
+                </div>
+                <span className="text-sm font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+                <span className="text-[10px] text-slate-400">đối tác khác</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Carousel - Horizontal scroll with navigation
+  if (style === 'carousel') {
+    const carouselId = `clients-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    return (
+      <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40" aria-label={title}>
+        <style>{`#${carouselId}::-webkit-scrollbar { display: none; }`}</style>
+        <div className="w-full max-w-7xl mx-auto space-y-6">
+          <div className="px-4 md:px-6 flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }} />
+                {title}
+              </h2>
+              <p className="text-slate-400 mt-1 pl-4 text-sm">Vuốt hoặc kéo để xem thêm →</p>
+            </div>
+            {items.length > 3 && (
+              <div className="flex gap-2">
+                <button type="button" onClick={() => { const el = document.getElementById(carouselId); if (el) el.scrollBy({ left: -176, behavior: 'smooth' }); }} className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all border border-slate-200" aria-label="Cuộn trái"><ChevronLeft size={16} /></button>
+                <button type="button" onClick={() => { const el = document.getElementById(carouselId); if (el) el.scrollBy({ left: 176, behavior: 'smooth' }); }} className="w-9 h-9 rounded-full flex items-center justify-center text-white transition-all" style={{ backgroundColor: brandColor }} aria-label="Cuộn phải"><ChevronRight size={16} /></button>
+              </div>
+            )}
+          </div>
+          <div className="relative overflow-hidden mx-4 md:mx-6 rounded-xl">
+            <div className="absolute left-0 top-0 bottom-0 w-8 md:w-12 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-8 md:w-12 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+            <div id={carouselId} className="flex overflow-x-auto snap-x snap-mandatory gap-4 py-4 px-2 cursor-grab active:cursor-grabbing select-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }} role="list"
+              onMouseDown={(e) => { const el = e.currentTarget; el.dataset.isDown = 'true'; el.dataset.startX = String(e.pageX - el.offsetLeft); el.dataset.scrollLeft = String(el.scrollLeft); el.style.scrollBehavior = 'auto'; }}
+              onMouseLeave={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseMove={(e) => { const el = e.currentTarget; if (el.dataset.isDown !== 'true') return; e.preventDefault(); const x = e.pageX - el.offsetLeft; const walk = (x - Number(el.dataset.startX)) * 1.5; el.scrollLeft = Number(el.dataset.scrollLeft) - walk; }}>
+              {items.map((item, idx) => (
+                <div key={`carousel-${idx}`} className="flex-shrink-0 snap-start w-40" role="listitem">
+                  <div className="h-full p-4 rounded-xl border bg-slate-50 flex flex-col items-center justify-center transition-all hover:shadow-md" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; }}>
+                    {item.url ? <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-10 w-auto object-contain select-none pointer-events-none" /> : <div className="h-10 w-full flex items-center justify-center"><ImageIcon size={24} className="text-slate-300" /></div>}
+                    {item.name && <span className="text-[10px] text-slate-500 text-center mt-2 truncate w-full">{item.name}</span>}
+                  </div>
+                </div>
+              ))}
+              <div className="flex-shrink-0 w-4" />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Featured - Showcase với featured logos (default fallback)
+  const featuredItems = items.slice(0, 4);
+  const otherItems = items.slice(4);
+  const MAX_OTHER = 8;
+  const visibleOthers = otherItems.slice(0, MAX_OTHER);
+  const remainingCount = Math.max(0, otherItems.length - MAX_OTHER);
+
+  return (
+    <section className="w-full py-12 md:py-16 bg-gradient-to-b from-white to-slate-50 border-b border-slate-200/40" aria-label={title}>
+      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+        <div className="text-center space-y-2">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
+          <p className="text-slate-500 text-sm">Được tin tưởng bởi các thương hiệu hàng đầu</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4" role="list">
+          {featuredItems.map((item, idx) => (
+            <div key={`featured-${idx}`} className="group rounded-2xl border bg-white flex flex-col items-center justify-center p-6 md:p-8 transition-all hover:shadow-lg" style={{ borderColor: `${brandColor}20`, boxShadow: `0 4px 12px ${brandColor}08` }} role="listitem">
+              {item.url ? <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 md:h-14 w-auto object-contain select-none pointer-events-none transition-transform duration-300 group-hover:scale-105" /> : <div className="h-14 w-full flex items-center justify-center"><ImageIcon size={28} className="text-slate-300" /></div>}
+              {item.name && <span className="font-medium text-slate-600 text-center mt-3 truncate w-full text-sm">{item.name}</span>}
+            </div>
+          ))}
+        </div>
+        {visibleOthers.length > 0 && (
+          <div className="pt-6 border-t border-slate-200">
+            <p className="text-center text-slate-400 mb-4 text-sm">Và nhiều đối tác khác</p>
+            <div className="flex flex-wrap justify-center items-center gap-6 md:gap-8" role="list">
+              {visibleOthers.map((item, idx) => (
+                <div key={`other-${idx}`} className="group" role="listitem">
+                  {item.url ? <img src={item.url} alt={item.name || `Khách hàng`} className="h-7 md:h-8 w-auto object-contain select-none pointer-events-none grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" /> : <div className="h-8 w-16 flex items-center justify-center"><ImageIcon size={16} className="text-slate-300" /></div>}
+                </div>
+              ))}
+              {remainingCount > 0 && <span className="text-sm font-medium px-3 py-1 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>+{remainingCount}</span>}
+            </div>
           </div>
         )}
       </div>
     </section>
   );
 }
+
 
 // ============ VIDEO SECTION ============
 // 6 Styles: centered, split, fullwidth, cinema, minimal, parallax
@@ -8220,6 +8174,19 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
   const style = (config.style as CountdownStyle) || 'banner';
 
   const timeLeft = useCountdownTimer(endDate);
+  
+  // Popup dismiss state - show once per session, dismiss on X/background/skip click
+  const [isPopupDismissed, setIsPopupDismissed] = React.useState(() => {
+    if (typeof window === 'undefined') return false;
+    return sessionStorage.getItem('countdown-popup-dismissed') === 'true';
+  });
+  
+  const dismissPopup = () => {
+    setIsPopupDismissed(true);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('countdown-popup-dismissed', 'true');
+    }
+  };
 
   // Time Unit Component
   const TimeUnit = ({ value, label, variant = 'default' }: { value: number; label: string; variant?: 'default' | 'light' | 'outlined' }) => {
@@ -8499,16 +8466,29 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
   }
 
   // Style 6: Popup - Full screen modal overlay (default fallback)
+  // Only show once per session, can dismiss by clicking X, background, or "Để sau"
+  if (style === 'popup' && isPopupDismissed) {
+    return null; // Don't render if already dismissed this session
+  }
+  
   return (
     <div 
       className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[9999]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="countdown-popup-title"
+      onClick={dismissPopup} // Click background to dismiss
     >
-      <div className="bg-white rounded-2xl shadow-2xl overflow-hidden relative w-full max-w-md animate-in fade-in zoom-in-95 duration-300">
+      <div 
+        className="bg-white rounded-2xl shadow-2xl overflow-hidden relative w-full max-w-md animate-in fade-in zoom-in-95 duration-300"
+        onClick={(e) => e.stopPropagation()} // Prevent dismiss when clicking popup content
+      >
         {/* Close button */}
-        <button type="button" className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 z-10 transition-colors">
+        <button 
+          type="button" 
+          onClick={dismissPopup}
+          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 z-10 transition-colors"
+        >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -8545,7 +8525,7 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
             </a>
           )}
           {/* Skip link */}
-          <button type="button" className="text-slate-400 text-xs mt-3 hover:text-slate-600 transition-colors">
+          <button type="button" onClick={dismissPopup} className="text-slate-400 text-xs mt-3 hover:text-slate-600 transition-colors">
             Để sau
           </button>
         </div>
