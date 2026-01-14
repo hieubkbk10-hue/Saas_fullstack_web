@@ -8498,72 +8498,59 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
     );
   }
 
-  // Style 6: Popup - Modal/Dialog style with overlay (synced with preview)
+  // Style 6: Popup - Full screen modal overlay (default fallback)
   return (
-    <section className="relative min-h-[400px] bg-slate-100">
-      {/* Simulated page content behind popup */}
-      <div className="absolute inset-0 p-6 opacity-30 pointer-events-none">
-        <div className="max-w-4xl mx-auto">
-          <div className="h-8 bg-slate-300 rounded mb-4 w-3/4" />
-          <div className="h-4 bg-slate-300 rounded mb-2 w-full" />
-          <div className="h-4 bg-slate-300 rounded mb-2 w-5/6" />
-          <div className="h-4 bg-slate-300 rounded w-4/6" />
-        </div>
-      </div>
-      
-      {/* Popup overlay */}
-      <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-4">
+    <div 
+      className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[9999]"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="countdown-popup-title"
+    >
+      <div className="bg-white rounded-2xl shadow-2xl overflow-hidden relative w-full max-w-md animate-in fade-in zoom-in-95 duration-300">
+        {/* Close button */}
+        <button type="button" className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 z-10 transition-colors">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        
+        {/* Image/Visual header */}
         <div 
-          className="bg-white rounded-2xl shadow-2xl overflow-hidden relative w-full max-w-md"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="countdown-popup-title"
+          className="h-36 md:h-44 flex items-center justify-center"
+          style={{ 
+            background: backgroundImage 
+              ? `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${backgroundImage}) center/cover`
+              : `linear-gradient(135deg, ${brandColor}ee 0%, ${brandColor} 100%)`
+          }}
         >
-          {/* Close button */}
-          <button type="button" className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 z-10">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          
-          {/* Image/Visual header */}
-          <div 
-            className="h-32 md:h-40 flex items-center justify-center"
-            style={{ 
-              background: backgroundImage 
-                ? `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${backgroundImage}) center/cover`
-                : `linear-gradient(135deg, ${brandColor}ee 0%, ${brandColor} 100%)`
-            }}
-          >
-            {discountText && (
-              <div className="text-center text-white">
-                <div className="text-4xl md:text-5xl font-black">{discountText}</div>
-                <div className="text-sm font-medium opacity-80 mt-1">{subHeading || 'GIẢM GIÁ'}</div>
-              </div>
-            )}
-          </div>
-          
-          {/* Content */}
-          <div className="p-5 md:p-6 text-center">
-            <h3 id="countdown-popup-title" className="text-xl md:text-2xl font-bold text-slate-900 mb-2">{heading}</h3>
-            {description && <p className="text-slate-500 text-sm mb-4 line-clamp-2">{description}</p>}
-            <div className="mb-4">
-              <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Còn lại</p>
-              {timeLeft.isExpired ? <ExpiredState /> : <TimerDisplay variant="default" />}
+          {discountText && (
+            <div className="text-center text-white">
+              <div className="text-5xl md:text-6xl font-black">{discountText}</div>
+              <div className="text-sm font-medium opacity-80 mt-1">{subHeading || 'GIẢM GIÁ'}</div>
             </div>
-            {buttonText && !timeLeft.isExpired && (
-              <a href={buttonLink} className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90" style={{ backgroundColor: brandColor }}>
-                {buttonText}
-              </a>
-            )}
-            {/* Skip link */}
-            <button type="button" className="text-slate-400 text-xs mt-3 hover:text-slate-600 transition-colors">
-              Để sau
-            </button>
+          )}
+        </div>
+        
+        {/* Content */}
+        <div className="p-5 md:p-6 text-center">
+          <h3 id="countdown-popup-title" className="text-xl md:text-2xl font-bold text-slate-900 mb-2">{heading}</h3>
+          {description && <p className="text-slate-500 text-sm mb-4 line-clamp-2">{description}</p>}
+          <div className="mb-4">
+            <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Còn lại</p>
+            {timeLeft.isExpired ? <ExpiredState /> : <TimerDisplay variant="default" />}
           </div>
+          {buttonText && !timeLeft.isExpired && (
+            <a href={buttonLink} className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90" style={{ backgroundColor: brandColor }}>
+              {buttonText}
+            </a>
+          )}
+          {/* Skip link */}
+          <button type="button" className="text-slate-400 text-xs mt-3 hover:text-slate-600 transition-colors">
+            Để sau
+          </button>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
