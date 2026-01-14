@@ -192,6 +192,9 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [categoryProductsShowViewAll, setCategoryProductsShowViewAll] = useState(true);
   const [categoryProductsColsDesktop, setCategoryProductsColsDesktop] = useState(4);
   const [categoryProductsColsMobile, setCategoryProductsColsMobile] = useState(2);
+  // CategoryProducts Drag & Drop states
+  const [categoryProductsDraggedId, setCategoryProductsDraggedId] = useState<number | null>(null);
+  const [categoryProductsDragOverId, setCategoryProductsDragOverId] = useState<number | null>(null);
   // Team states
   const [teamMembers, setTeamMembers] = useState<{id: number, name: string, role: string, avatar: string, bio: string, facebook: string, linkedin: string, twitter: string, email: string}[]>([]);
   const [teamStyle, setTeamStyle] = useState<TeamStyle>('grid');
@@ -2992,9 +2995,35 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                   </p>
                 ) : (
                   categoryProductsSections.map((item, idx) => (
-                    <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+                    <div 
+                      key={item.id} 
+                      draggable
+                      onDragStart={() => setCategoryProductsDraggedId(item.id)}
+                      onDragEnd={() => { setCategoryProductsDraggedId(null); setCategoryProductsDragOverId(null); }}
+                      onDragOver={(e) => { e.preventDefault(); if (categoryProductsDraggedId !== item.id) setCategoryProductsDragOverId(item.id); }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (!categoryProductsDraggedId || categoryProductsDraggedId === item.id) return;
+                        const newSections = [...categoryProductsSections];
+                        const draggedIndex = newSections.findIndex(s => s.id === categoryProductsDraggedId);
+                        const targetIndex = newSections.findIndex(s => s.id === item.id);
+                        const [draggedItem] = newSections.splice(draggedIndex, 1);
+                        newSections.splice(targetIndex, 0, draggedItem);
+                        setCategoryProductsSections(newSections);
+                        setCategoryProductsDraggedId(null);
+                        setCategoryProductsDragOverId(null);
+                      }}
+                      className={cn(
+                        "p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3 transition-all",
+                        categoryProductsDraggedId === item.id && "opacity-50 scale-[0.98]",
+                        categoryProductsDragOverId === item.id && "ring-2 ring-blue-500 ring-offset-2"
+                      )}
+                    >
                       <div className="flex items-center justify-between">
-                        <Label className="font-semibold">Section {idx + 1}</Label>
+                        <div className="flex items-center gap-2">
+                          <GripVertical size={16} className="text-slate-400 cursor-grab active:cursor-grabbing" />
+                          <Label className="font-semibold">Section {idx + 1}</Label>
+                        </div>
                         <Button 
                           type="button" 
                           variant="ghost" 

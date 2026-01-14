@@ -9162,9 +9162,11 @@ export const SpeedDialPreview = ({
 };
 
 // ============ PRODUCT CATEGORIES PREVIEW ============
+// Best Practices: Clear navigation, visual appeal, mobile optimization, hover effects
+// 6 styles: grid, carousel, cards, minimal, showcase, marquee
 type CategoryConfigItem = { id: number; categoryId: string; customImage?: string; imageMode?: 'default' | 'icon' | 'upload' | 'url' };
 type CategoryData = { _id: string; name: string; slug: string; image?: string; description?: string };
-export type ProductCategoriesStyle = 'grid' | 'carousel' | 'cards';
+export type ProductCategoriesStyle = 'grid' | 'carousel' | 'cards' | 'minimal' | 'showcase' | 'marquee';
 
 // Import icon render helper
 import { getCategoryIcon } from '@/app/admin/components/CategoryImageSelector';
@@ -9189,6 +9191,8 @@ export const ProductCategoriesPreview = ({
   categoriesData: CategoryData[];
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const isMobile = device === 'mobile';
+  const isTablet = device === 'tablet';
   const previewStyle = selectedStyle || config.style || 'grid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ProductCategoriesStyle);
   
@@ -9196,6 +9200,9 @@ export const ProductCategoriesPreview = ({
     { id: 'grid', label: 'Grid' },
     { id: 'carousel', label: 'Carousel' },
     { id: 'cards', label: 'Cards' },
+    { id: 'minimal', label: 'Minimal' },
+    { id: 'showcase', label: 'Showcase' },
+    { id: 'marquee', label: 'Marquee' },
   ];
 
   const categoryMap = React.useMemo(() => {
@@ -9231,12 +9238,8 @@ export const ProductCategoriesPreview = ({
     .filter(Boolean) as (CategoryData & { displayImage?: string; displayIcon?: string; imageMode: string })[];
 
   const getGridCols = () => {
-    if (device === 'mobile') {
-      return config.columnsMobile === 3 ? 'grid-cols-3' : 'grid-cols-2';
-    }
-    if (device === 'tablet') {
-      return 'grid-cols-3';
-    }
+    if (isMobile) return config.columnsMobile === 3 ? 'grid-cols-3' : 'grid-cols-2';
+    if (isTablet) return 'grid-cols-3';
     switch (config.columnsDesktop) {
       case 3: return 'grid-cols-3';
       case 5: return 'grid-cols-5';
@@ -9245,77 +9248,124 @@ export const ProductCategoriesPreview = ({
     }
   };
 
-  // Style 1: Grid - Classic grid with hover effect
-  const renderGridStyle = () => (
-    <section className="w-full py-8 md:py-12">
-      <div className="max-w-7xl mx-auto px-4">
-        <h2 className={cn(
-          "font-bold mb-6 text-center",
-          device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl'
-        )}>Danh mục sản phẩm</h2>
-        
-        {resolvedCategories.length === 0 ? (
-          <div className="text-center py-12 text-slate-400">
-            <Package size={48} className="mx-auto mb-4 opacity-30" />
-            <p className="text-sm">Chưa chọn danh mục nào</p>
-          </div>
-        ) : (
-          <div className={cn("grid gap-4", getGridCols())}>
-            {resolvedCategories.map((cat) => {
-              const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
-              return (
+  // Max visible items for "+N" pattern
+  const MAX_VISIBLE = isMobile ? 4 : isTablet ? 6 : 8;
+  const visibleCategories = resolvedCategories.slice(0, MAX_VISIBLE);
+  const remainingCount = resolvedCategories.length - MAX_VISIBLE;
+
+  // Empty state với brandColor
+  const renderEmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div 
+        className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+        style={{ backgroundColor: `${brandColor}10` }}
+      >
+        <Package size={32} style={{ color: brandColor }} />
+      </div>
+      <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có danh mục nào</h3>
+      <p className="text-sm text-slate-500">Thêm danh mục để bắt đầu hiển thị</p>
+    </div>
+  );
+
+  // Render category image/icon helper
+  const renderCategoryVisual = (cat: typeof resolvedCategories[0], size: 'sm' | 'md' | 'lg' = 'md') => {
+    const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
+    const iconSizes = { sm: isMobile ? 24 : 28, md: isMobile ? 32 : 40, lg: isMobile ? 40 : 56 };
+    const iconSize = iconSizes[size];
+    
+    if (cat.displayIcon && iconData) {
+      return (
+        <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>
+          {React.createElement(iconData.icon, { size: iconSize, className: 'text-white' })}
+        </div>
+      );
+    }
+    if (cat.displayImage) {
+      return <img src={cat.displayImage} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />;
+    }
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+        <Package size={iconSize} className="text-slate-300" />
+      </div>
+    );
+  };
+
+  // Style 1: Grid - Classic grid with hover effect + monochromatic
+  const renderGridStyle = () => {
+    // Centered layout for few items
+    const gridItems = resolvedCategories.length <= 2 
+      ? resolvedCategories 
+      : visibleCategories;
+    const containerClass = resolvedCategories.length === 1 
+      ? 'max-w-xs mx-auto' 
+      : resolvedCategories.length === 2 
+        ? 'max-w-lg mx-auto grid grid-cols-2 gap-4'
+        : cn("grid gap-4", getGridCols());
+
+    return (
+      <section className={cn("w-full", isMobile ? 'py-6 px-3' : 'py-10 px-6')}>
+        <div className="max-w-7xl mx-auto">
+          <h2 className={cn("font-bold mb-6 text-center", isMobile ? 'text-lg' : 'text-xl md:text-2xl')}>
+            Danh mục sản phẩm
+          </h2>
+          
+          {resolvedCategories.length === 0 ? renderEmptyState() : (
+            <div className={containerClass}>
+              {gridItems.map((cat) => (
                 <div 
                   key={cat._id} 
-                  className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer"
+                  className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer transition-all duration-300"
+                  style={{ 
+                    boxShadow: `0 2px 8px ${brandColor}10`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = `0 8px 24px ${brandColor}25`;
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = `0 2px 8px ${brandColor}10`;
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
                 >
-                  {cat.displayIcon && iconData ? (
-                    <div 
-                      className="w-full h-full flex items-center justify-center"
-                      style={{ backgroundColor: brandColor }}
-                    >
-                      {React.createElement(iconData.icon, { size: device === 'mobile' ? 32 : 48, className: 'text-white' })}
-                    </div>
-                  ) : cat.displayImage ? (
-                    <img 
-                      src={cat.displayImage} 
-                      alt={cat.name} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package size={32} className="text-slate-300" />
-                    </div>
-                  )}
+                  {renderCategoryVisual(cat, 'lg')}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 text-white">
-                    <h3 className={cn(
-                      "font-semibold truncate",
-                      device === 'mobile' ? 'text-sm' : 'text-base'
-                    )}>{cat.name}</h3>
+                  <div className={cn("absolute bottom-0 left-0 right-0 text-white", isMobile ? 'p-3' : 'p-4')}>
+                    <h3 className={cn("font-semibold line-clamp-1", isMobile ? 'text-sm' : 'text-base')}>{cat.name}</h3>
                     {config.showProductCount && (
                       <p className="text-xs opacity-80 mt-0.5">12 sản phẩm</p>
                     )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </section>
-  );
+              ))}
+              
+              {/* +N more pattern */}
+              {remainingCount > 0 && resolvedCategories.length > 2 && (
+                <div 
+                  className="flex flex-col items-center justify-center aspect-square rounded-xl cursor-pointer transition-all"
+                  style={{ backgroundColor: `${brandColor}08`, border: `2px dashed ${brandColor}30` }}
+                >
+                  <Plus size={isMobile ? 24 : 32} style={{ color: brandColor }} className="mb-2" />
+                  <span className={cn("font-bold", isMobile ? 'text-base' : 'text-lg')} style={{ color: brandColor }}>
+                    +{remainingCount}
+                  </span>
+                  <p className="text-xs text-slate-500 mt-1">danh mục khác</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  };
 
-  // Style 2: Carousel - Horizontal scroll
+  // Style 2: Carousel - Horizontal scroll with navigation
   const renderCarouselStyle = () => (
-    <section className="w-full py-8 md:py-12">
+    <section className={cn("w-full", isMobile ? 'py-6' : 'py-10')}>
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between px-4 mb-6">
-          <h2 className={cn(
-            "font-bold",
-            device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl'
-          )}>Danh mục sản phẩm</h2>
+        <div className={cn("flex items-center justify-between mb-6", isMobile ? 'px-3' : 'px-6')}>
+          <h2 className={cn("font-bold", isMobile ? 'text-lg' : 'text-xl md:text-2xl')}>Danh mục sản phẩm</h2>
           <button 
-            className="text-sm font-medium flex items-center gap-1 hover:underline"
+            className="text-sm font-medium flex items-center gap-1 hover:underline whitespace-nowrap"
             style={{ color: brandColor }}
           >
             Xem tất cả <ChevronRight size={16} />
@@ -9323,53 +9373,31 @@ export const ProductCategoriesPreview = ({
         </div>
         
         {resolvedCategories.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 px-4">
-            <Package size={48} className="mx-auto mb-4 opacity-30" />
-            <p className="text-sm">Chưa chọn danh mục nào</p>
-          </div>
+          <div className={cn(isMobile ? 'px-3' : 'px-6')}>{renderEmptyState()}</div>
         ) : (
-          <div className="overflow-x-auto pb-4 px-4 scrollbar-hide">
-            <div className="flex gap-4">
-              {resolvedCategories.map((cat) => {
-                const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
-                return (
+          <div className={cn("overflow-x-auto pb-4 scrollbar-hide", isMobile ? 'px-3' : 'px-6')}>
+            <div className={cn("flex", isMobile ? 'gap-3' : 'gap-4')}>
+              {resolvedCategories.map((cat) => (
+                <div 
+                  key={cat._id} 
+                  className={cn("flex-shrink-0 group cursor-pointer", isMobile ? 'w-28' : 'w-40')}
+                >
                   <div 
-                    key={cat._id} 
-                    className={cn(
-                      "flex-shrink-0 group cursor-pointer",
-                      device === 'mobile' ? 'w-32' : 'w-44'
-                    )}
+                    className="aspect-square rounded-xl overflow-hidden mb-2 transition-all"
+                    style={{ border: `2px solid ${brandColor}15` }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; }}
                   >
-                    <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2">
-                      {cat.displayIcon && iconData ? (
-                        <div 
-                          className="w-full h-full flex items-center justify-center"
-                          style={{ backgroundColor: brandColor }}
-                        >
-                          {React.createElement(iconData.icon, { size: device === 'mobile' ? 32 : 40, className: 'text-white' })}
-                        </div>
-                      ) : cat.displayImage ? (
-                        <img 
-                          src={cat.displayImage} 
-                          alt={cat.name} 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package size={32} className="text-slate-300" />
-                        </div>
-                      )}
-                    </div>
-                    <h3 className={cn(
-                      "font-medium text-center truncate",
-                      device === 'mobile' ? 'text-sm' : 'text-base'
-                    )}>{cat.name}</h3>
-                    {config.showProductCount && (
-                      <p className="text-xs text-slate-500 text-center">12 sản phẩm</p>
-                    )}
+                    {renderCategoryVisual(cat, 'md')}
                   </div>
-                );
-              })}
+                  <h3 className={cn("font-medium text-center line-clamp-1", isMobile ? 'text-xs' : 'text-sm')}>
+                    {cat.name}
+                  </h3>
+                  {config.showProductCount && (
+                    <p className="text-xs text-slate-500 text-center">12 sản phẩm</p>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -9377,67 +9405,102 @@ export const ProductCategoriesPreview = ({
     </section>
   );
 
-  // Style 3: Cards - Modern cards with description
-  const renderCardsStyle = () => (
-    <section className="w-full py-8 md:py-12 bg-slate-50 dark:bg-slate-800/30">
-      <div className="max-w-7xl mx-auto px-4">
-        <h2 className={cn(
-          "font-bold mb-6 text-center",
-          device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl'
-        )}>Khám phá theo danh mục</h2>
+  // Style 3: Cards - Modern horizontal cards with description
+  const renderCardsStyle = () => {
+    const displayItems = isMobile ? resolvedCategories.slice(0, 3) : resolvedCategories.slice(0, 6);
+    
+    return (
+      <section className={cn("w-full", isMobile ? 'py-6 px-3' : 'py-10 px-6')} style={{ backgroundColor: `${brandColor}05` }}>
+        <div className="max-w-7xl mx-auto">
+          <h2 className={cn("font-bold mb-6 text-center", isMobile ? 'text-lg' : 'text-xl md:text-2xl')}>
+            Khám phá theo danh mục
+          </h2>
+          
+          {resolvedCategories.length === 0 ? renderEmptyState() : (
+            <div className={cn("grid", isMobile ? 'grid-cols-1 gap-3' : isTablet ? 'grid-cols-2 gap-4' : 'grid-cols-3 gap-4')}>
+              {displayItems.map((cat) => (
+                <div 
+                  key={cat._id} 
+                  className="group bg-white dark:bg-slate-800 rounded-xl overflow-hidden flex cursor-pointer transition-all"
+                  style={{ border: `1px solid ${brandColor}15` }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = `${brandColor}40`;
+                    e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}15`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = `${brandColor}15`;
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div className={cn("flex-shrink-0", isMobile ? 'w-20 h-20' : 'w-28 h-28')}>
+                    {renderCategoryVisual(cat, 'sm')}
+                  </div>
+                  <div className={cn("flex-1 flex flex-col justify-center", isMobile ? 'p-3' : 'p-4')}>
+                    <h3 className={cn("font-semibold line-clamp-1 mb-1", isMobile ? 'text-sm' : 'text-base')}>{cat.name}</h3>
+                    {cat.description && (
+                      <p className="text-xs text-slate-500 line-clamp-2 mb-2 min-h-[2rem]">{cat.description}</p>
+                    )}
+                    <span className="text-xs font-medium flex items-center gap-1" style={{ color: brandColor }}>
+                      Xem sản phẩm <ArrowRight size={12} />
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  // Style 4: Minimal - Text-based with small icons, compact layout
+  const renderMinimalStyle = () => (
+    <section className={cn("w-full", isMobile ? 'py-6 px-3' : 'py-10 px-6')}>
+      <div className="max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className={cn("font-bold", isMobile ? 'text-lg' : 'text-xl')}>Danh mục</h2>
+          <button className="text-sm font-medium hover:underline" style={{ color: brandColor }}>
+            Tất cả →
+          </button>
+        </div>
         
-        {resolvedCategories.length === 0 ? (
-          <div className="text-center py-12 text-slate-400">
-            <Package size={48} className="mx-auto mb-4 opacity-30" />
-            <p className="text-sm">Chưa chọn danh mục nào</p>
-          </div>
-        ) : (
-          <div className={cn("grid gap-4 md:gap-6", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
-            {resolvedCategories.slice(0, device === 'mobile' ? 3 : 6).map((cat) => {
+        {resolvedCategories.length === 0 ? renderEmptyState() : (
+          <div className={cn("flex flex-wrap", isMobile ? 'gap-2' : 'gap-3')}>
+            {resolvedCategories.map((cat) => {
               const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
               return (
                 <div 
                   key={cat._id} 
-                  className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow cursor-pointer flex"
+                  className={cn(
+                    "flex items-center gap-2 rounded-full cursor-pointer transition-all",
+                    isMobile ? 'px-3 py-2' : 'px-4 py-2.5'
+                  )}
+                  style={{ 
+                    backgroundColor: `${brandColor}08`,
+                    border: `1px solid ${brandColor}20`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = `${brandColor}15`;
+                    e.currentTarget.style.borderColor = `${brandColor}40`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = `${brandColor}08`;
+                    e.currentTarget.style.borderColor = `${brandColor}20`;
+                  }}
                 >
-                  <div className={cn(
-                    "flex-shrink-0 bg-slate-100 dark:bg-slate-700",
-                    device === 'mobile' ? 'w-24 h-24' : 'w-32 h-32'
-                  )}>
-                    {cat.displayIcon && iconData ? (
-                      <div 
-                        className="w-full h-full flex items-center justify-center"
-                        style={{ backgroundColor: brandColor }}
-                      >
-                        {React.createElement(iconData.icon, { size: device === 'mobile' ? 28 : 36, className: 'text-white' })}
-                      </div>
-                    ) : cat.displayImage ? (
-                      <img 
-                        src={cat.displayImage} 
-                        alt={cat.name} 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package size={32} className="text-slate-300" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 p-4 flex flex-col justify-center">
-                    <h3 className={cn(
-                      "font-semibold mb-1",
-                      device === 'mobile' ? 'text-sm' : 'text-base'
-                    )}>{cat.name}</h3>
-                    {cat.description && (
-                      <p className="text-xs text-slate-500 line-clamp-2 mb-2">{cat.description}</p>
-                    )}
-                    <span 
-                      className="text-xs font-medium flex items-center gap-1"
-                      style={{ color: brandColor }}
-                    >
-                      Xem sản phẩm <ChevronRight size={14} />
-                    </span>
-                  </div>
+                  {cat.displayIcon && iconData ? (
+                    React.createElement(iconData.icon, { size: isMobile ? 14 : 16, style: { color: brandColor } })
+                  ) : cat.displayImage ? (
+                    <img src={cat.displayImage} alt="" className={cn("rounded-full object-cover", isMobile ? 'w-5 h-5' : 'w-6 h-6')} />
+                  ) : (
+                    <Package size={isMobile ? 14 : 16} style={{ color: brandColor }} />
+                  )}
+                  <span className={cn("font-medium whitespace-nowrap", isMobile ? 'text-xs' : 'text-sm')}>
+                    {cat.name}
+                  </span>
+                  {config.showProductCount && (
+                    <span className="text-xs text-slate-400">(12)</span>
+                  )}
                 </div>
               );
             })}
@@ -9447,22 +9510,224 @@ export const ProductCategoriesPreview = ({
     </section>
   );
 
+  // Style 5: Showcase - Featured first item + grid of smaller items
+  const renderShowcaseStyle = () => {
+    if (resolvedCategories.length === 0) return (
+      <section className={cn("w-full", isMobile ? 'py-6 px-3' : 'py-10 px-6')}>
+        <div className="max-w-7xl mx-auto">{renderEmptyState()}</div>
+      </section>
+    );
+    
+    const [featured, ...others] = resolvedCategories;
+    const displayOthers = others.slice(0, isMobile ? 3 : 5);
+
+    return (
+      <section className={cn("w-full", isMobile ? 'py-6 px-3' : 'py-10 px-6')}>
+        <div className="max-w-7xl mx-auto">
+          <h2 className={cn("font-bold mb-6 text-center", isMobile ? 'text-lg' : 'text-xl md:text-2xl')}>
+            Danh mục nổi bật
+          </h2>
+          
+          <div className={cn("grid gap-4", isMobile ? 'grid-cols-1' : 'grid-cols-3')}>
+            {/* Featured category */}
+            <div 
+              className={cn(
+                "relative rounded-2xl overflow-hidden cursor-pointer group",
+                isMobile ? 'aspect-[4/3]' : 'row-span-2 aspect-auto'
+              )}
+              style={{ boxShadow: `0 8px 30px ${brandColor}20` }}
+            >
+              {renderCategoryVisual(featured, 'lg')}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+              <div className={cn("absolute bottom-0 left-0 right-0 text-white", isMobile ? 'p-4' : 'p-6')}>
+                <span 
+                  className="inline-block px-2 py-1 text-xs font-bold rounded mb-2"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  NỔI BẬT
+                </span>
+                <h3 className={cn("font-bold line-clamp-1", isMobile ? 'text-lg' : 'text-xl')}>{featured.name}</h3>
+                {featured.description && (
+                  <p className="text-sm opacity-80 line-clamp-2 mt-1">{featured.description}</p>
+                )}
+                {config.showProductCount && (
+                  <p className="text-sm opacity-70 mt-2">12 sản phẩm</p>
+                )}
+              </div>
+            </div>
+            
+            {/* Other categories grid */}
+            <div className={cn("grid gap-3", isMobile ? 'grid-cols-2' : 'col-span-2 grid-cols-2 lg:grid-cols-3')}>
+              {displayOthers.map((cat) => (
+                <div 
+                  key={cat._id} 
+                  className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group transition-all"
+                  style={{ border: `2px solid ${brandColor}15` }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = `${brandColor}40`;
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = `${brandColor}15`;
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  {renderCategoryVisual(cat, 'md')}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                  <div className={cn("absolute bottom-0 left-0 right-0 text-white", isMobile ? 'p-2' : 'p-3')}>
+                    <h3 className={cn("font-semibold line-clamp-1", isMobile ? 'text-xs' : 'text-sm')}>{cat.name}</h3>
+                  </div>
+                </div>
+              ))}
+              
+              {/* +N more */}
+              {others.length > displayOthers.length && (
+                <div 
+                  className="flex flex-col items-center justify-center aspect-[4/3] rounded-xl cursor-pointer"
+                  style={{ backgroundColor: `${brandColor}08`, border: `2px dashed ${brandColor}30` }}
+                >
+                  <Plus size={20} style={{ color: brandColor }} />
+                  <span className="font-bold text-sm mt-1" style={{ color: brandColor }}>
+                    +{others.length - displayOthers.length}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  // Style 6: Marquee - Auto-scrolling horizontal animation
+  const renderMarqueeStyle = () => (
+    <section className={cn("w-full overflow-hidden", isMobile ? 'py-6' : 'py-10')}>
+      <div className="max-w-7xl mx-auto">
+        <h2 className={cn("font-bold mb-6 text-center", isMobile ? 'text-lg px-3' : 'text-xl md:text-2xl')}>
+          Khám phá danh mục
+        </h2>
+        
+        {resolvedCategories.length === 0 ? (
+          <div className={cn(isMobile ? 'px-3' : 'px-6')}>{renderEmptyState()}</div>
+        ) : (
+          <div className="relative">
+            {/* Gradient masks */}
+            <div className="absolute left-0 top-0 bottom-0 w-12 z-10 bg-gradient-to-r from-white dark:from-slate-900 to-transparent pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-12 z-10 bg-gradient-to-l from-white dark:from-slate-900 to-transparent pointer-events-none" />
+            
+            {/* Marquee track */}
+            <div className="flex animate-marquee">
+              {[...resolvedCategories, ...resolvedCategories].map((cat, idx) => (
+                <div 
+                  key={`${cat._id}-${idx}`} 
+                  className={cn(
+                    "flex-shrink-0 flex items-center gap-3 rounded-full cursor-pointer mx-2 transition-all",
+                    isMobile ? 'px-3 py-2' : 'px-4 py-3'
+                  )}
+                  style={{ 
+                    backgroundColor: 'white',
+                    border: `2px solid ${brandColor}20`,
+                    boxShadow: `0 2px 8px ${brandColor}10`
+                  }}
+                >
+                  <div className={cn("rounded-full overflow-hidden flex-shrink-0", isMobile ? 'w-8 h-8' : 'w-10 h-10')}>
+                    {renderCategoryVisual(cat, 'sm')}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className={cn("font-semibold whitespace-nowrap", isMobile ? 'text-xs' : 'text-sm')}>
+                      {cat.name}
+                    </h3>
+                    {config.showProductCount && (
+                      <p className="text-xs text-slate-400 whitespace-nowrap">12 sản phẩm</p>
+                    )}
+                  </div>
+                  <ArrowUpRight size={14} style={{ color: brandColor }} className="flex-shrink-0" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <style jsx>{`
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+          animation: marquee 20s linear infinite;
+        }
+        .animate-marquee:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+    </section>
+  );
+
+  // Dynamic info bar với image size recommendations
+  const getPreviewInfo = () => {
+    const count = resolvedCategories.length;
+    if (count === 0) return 'Chưa có danh mục';
+    
+    const sizeRecommendations: Record<string, string> = {
+      grid: `${count} danh mục • Ảnh: 400×400px (1:1)`,
+      carousel: `${count} danh mục • Ảnh: 300×300px (1:1)`,
+      cards: `${count} danh mục • Ảnh: 200×200px (1:1)`,
+      minimal: `${count} danh mục • Icon/Ảnh: 48×48px`,
+      showcase: `${count} danh mục • Featured: 600×800px (3:4) • Others: 400×300px (4:3)`,
+      marquee: `${count} danh mục • Ảnh: 80×80px (1:1)`,
+    };
+    return sizeRecommendations[previewStyle] || `${count} danh mục`;
+  };
+
   return (
-    <PreviewWrapper 
-      title="Preview Danh mục sản phẩm" 
-      device={device} 
-      setDevice={setDevice} 
-      previewStyle={previewStyle} 
-      setPreviewStyle={setPreviewStyle} 
-      styles={styles} 
-      info={`${resolvedCategories.length} danh mục`}
-    >
-      <BrowserFrame>
-        {previewStyle === 'grid' && renderGridStyle()}
-        {previewStyle === 'carousel' && renderCarouselStyle()}
-        {previewStyle === 'cards' && renderCardsStyle()}
-      </BrowserFrame>
-    </PreviewWrapper>
+    <>
+      <PreviewWrapper 
+        title="Preview Danh mục sản phẩm" 
+        device={device} 
+        setDevice={setDevice} 
+        previewStyle={previewStyle} 
+        setPreviewStyle={setPreviewStyle} 
+        styles={styles} 
+        info={getPreviewInfo()}
+      >
+        <BrowserFrame>
+          {previewStyle === 'grid' && renderGridStyle()}
+          {previewStyle === 'carousel' && renderCarouselStyle()}
+          {previewStyle === 'cards' && renderCardsStyle()}
+          {previewStyle === 'minimal' && renderMinimalStyle()}
+          {previewStyle === 'showcase' && renderShowcaseStyle()}
+          {previewStyle === 'marquee' && renderMarqueeStyle()}
+        </BrowserFrame>
+      </PreviewWrapper>
+      
+      {/* Image size guidelines - BẮT BUỘC cho component có ảnh */}
+      <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+        <div className="flex items-start gap-2">
+          <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+          <div className="text-xs text-slate-600 dark:text-slate-400">
+            {previewStyle === 'grid' && (
+              <p><strong>400×400px</strong> (1:1) • Ảnh vuông cho grid đều, overlay gradient tự động</p>
+            )}
+            {previewStyle === 'carousel' && (
+              <p><strong>300×300px</strong> (1:1) • Ảnh vuông nhỏ gọn cho carousel horizontal</p>
+            )}
+            {previewStyle === 'cards' && (
+              <p><strong>200×200px</strong> (1:1) • Thumbnail nhỏ bên trái card</p>
+            )}
+            {previewStyle === 'minimal' && (
+              <p><strong>48×48px</strong> hoặc icon • Style text-based, ảnh chỉ làm accent</p>
+            )}
+            {previewStyle === 'showcase' && (
+              <p><strong>Featured:</strong> 600×800px (3:4) • <strong>Others:</strong> 400×300px (4:3)</p>
+            )}
+            {previewStyle === 'marquee' && (
+              <p><strong>80×80px</strong> (1:1) • Avatar nhỏ trong pill, auto-scroll animation</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 
@@ -9563,10 +9828,57 @@ export const CategoryProductsPreview = ({
     return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
   };
 
-  // Product Card Component
+  // Get info for PreviewWrapper based on style with image size recommendations
+  const getPreviewInfo = () => {
+    const sectionCount = resolvedSections.length;
+    const totalProducts = resolvedSections.reduce((sum, s) => sum + s.products.length, 0);
+    
+    if (sectionCount === 0) return 'Chưa có section nào';
+    
+    switch (previewStyle) {
+      case 'grid':
+        return `${sectionCount} section • ${totalProducts} SP • Ảnh: 800×800px (1:1)`;
+      case 'carousel':
+        return `${sectionCount} section • ${totalProducts} SP • Ảnh: 800×800px (1:1)`;
+      case 'cards':
+        return `${sectionCount} section • ${totalProducts} SP • Ảnh: 800×800px (1:1)`;
+      case 'bento':
+        return `${sectionCount} section • Featured: 800×800px • Others: 600×400px`;
+      case 'magazine':
+        return `${sectionCount} section • Category: 600×800px • Products: 800×800px`;
+      case 'showcase':
+        return `${sectionCount} section • Featured: 1200×800px (3:2) • Others: 600×600px`;
+      default:
+        return `${sectionCount} section • ${totalProducts} sản phẩm`;
+    }
+  };
+
+  // Empty State Component with brandColor
+  const EmptyState = ({ message, size = 'normal' }: { message: string; size?: 'small' | 'normal' }) => (
+    <div 
+      className={cn(
+        "text-center rounded-xl flex flex-col items-center justify-center",
+        size === 'small' ? 'py-6' : 'py-12'
+      )}
+      style={{ backgroundColor: `${brandColor}05` }}
+    >
+      <div 
+        className={cn(
+          "rounded-full flex items-center justify-center mb-3",
+          size === 'small' ? 'w-12 h-12' : 'w-16 h-16'
+        )}
+        style={{ backgroundColor: `${brandColor}10` }}
+      >
+        <Package size={size === 'small' ? 24 : 32} style={{ color: `${brandColor}50` }} />
+      </div>
+      <p className="text-sm text-slate-500">{message}</p>
+    </div>
+  );
+
+  // Product Card Component with Equal Height (line-clamp + min-height)
   const ProductCard = ({ product }: { product: ProductData }) => (
-    <div className="group cursor-pointer">
-      <div className="aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2">
+    <div className="group cursor-pointer flex flex-col h-full">
+      <div className="aspect-square rounded-lg overflow-hidden mb-2" style={{ backgroundColor: `${brandColor}08` }}>
         {product.image ? (
           <img 
             src={product.image} 
@@ -9575,15 +9887,15 @@ export const CategoryProductsPreview = ({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Package size={24} className="text-slate-300" />
+            <Package size={24} style={{ color: `${brandColor}40` }} />
           </div>
         )}
       </div>
       <h4 className={cn(
-        "font-medium line-clamp-2 mb-1",
-        device === 'mobile' ? 'text-xs' : 'text-sm'
-      )}>{product.name}</h4>
-      <div className="flex flex-col">
+        "font-medium line-clamp-2",
+        device === 'mobile' ? 'text-xs min-h-[2rem]' : 'text-sm min-h-[2.5rem]'
+      )}>{product.name || 'Tên sản phẩm'}</h4>
+      <div className="flex flex-col mt-auto">
         {product.salePrice && product.salePrice < (product.price || 0) ? (
           <>
             <span className={cn("font-bold", device === 'mobile' ? 'text-xs' : 'text-sm')} style={{ color: brandColor }}>
@@ -9604,9 +9916,8 @@ export const CategoryProductsPreview = ({
   const renderGridStyle = () => (
     <div className="w-full py-4 space-y-8 md:space-y-12">
       {resolvedSections.length === 0 ? (
-        <div className="text-center py-12 text-slate-400 px-4">
-          <Package size={48} className="mx-auto mb-4 opacity-30" />
-          <p className="text-sm">Chưa chọn danh mục nào</p>
+        <div className="px-4">
+          <EmptyState message="Chưa chọn danh mục nào" />
         </div>
       ) : (
         resolvedSections.map((section) => (
@@ -9628,10 +9939,7 @@ export const CategoryProductsPreview = ({
               </div>
               
               {section.products.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-lg">
-                  <Package size={32} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Chưa có sản phẩm trong danh mục này</p>
-                </div>
+                <EmptyState message="Chưa có sản phẩm trong danh mục này" size="small" />
               ) : (
                 <div className={cn("grid gap-4", getGridCols())}>
                   {section.products.map((product) => (
@@ -9650,9 +9958,8 @@ export const CategoryProductsPreview = ({
   const renderCarouselStyle = () => (
     <div className="w-full py-4 space-y-8 md:space-y-12">
       {resolvedSections.length === 0 ? (
-        <div className="text-center py-12 text-slate-400 px-4">
-          <Package size={48} className="mx-auto mb-4 opacity-30" />
-          <p className="text-sm">Chưa chọn danh mục nào</p>
+        <div className="px-4">
+          <EmptyState message="Chưa chọn danh mục nào" />
         </div>
       ) : (
         resolvedSections.map((section) => (
@@ -9674,9 +9981,8 @@ export const CategoryProductsPreview = ({
               </div>
               
               {section.products.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-lg mx-4">
-                  <Package size={32} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Chưa có sản phẩm</p>
+                <div className="mx-4">
+                  <EmptyState message="Chưa có sản phẩm" size="small" />
                 </div>
               ) : (
                 <div className="overflow-x-auto pb-4 px-4 scrollbar-hide">
@@ -9725,9 +10031,8 @@ export const CategoryProductsPreview = ({
   const renderCardsStyle = () => (
     <div className="w-full py-4 space-y-8 md:space-y-12">
       {resolvedSections.length === 0 ? (
-        <div className="text-center py-12 text-slate-400 px-4">
-          <Package size={48} className="mx-auto mb-4 opacity-30" />
-          <p className="text-sm">Chưa chọn danh mục nào</p>
+        <div className="px-4">
+          <EmptyState message="Chưa chọn danh mục nào" />
         </div>
       ) : (
         resolvedSections.map((section) => (
@@ -9794,9 +10099,8 @@ export const CategoryProductsPreview = ({
   const renderBentoStyle = () => (
     <div className="w-full py-4 space-y-10 md:space-y-16">
       {resolvedSections.length === 0 ? (
-        <div className="text-center py-12 text-slate-400 px-4">
-          <Package size={48} className="mx-auto mb-4 opacity-30" />
-          <p className="text-sm">Chưa chọn danh mục nào</p>
+        <div className="px-4">
+          <EmptyState message="Chưa chọn danh mục nào" />
         </div>
       ) : (
         resolvedSections.map((section) => {
@@ -9917,9 +10221,8 @@ export const CategoryProductsPreview = ({
   const renderMagazineStyle = () => (
     <div className="w-full py-4 space-y-10 md:space-y-16">
       {resolvedSections.length === 0 ? (
-        <div className="text-center py-12 text-slate-400 px-4">
-          <Package size={48} className="mx-auto mb-4 opacity-30" />
-          <p className="text-sm">Chưa chọn danh mục nào</p>
+        <div className="px-4">
+          <EmptyState message="Chưa chọn danh mục nào" />
         </div>
       ) : (
         resolvedSections.map((section, sectionIdx) => {
@@ -10036,9 +10339,8 @@ export const CategoryProductsPreview = ({
   const renderShowcaseStyle = () => (
     <div className="w-full py-4 space-y-10 md:space-y-16">
       {resolvedSections.length === 0 ? (
-        <div className="text-center py-12 text-slate-400 px-4">
-          <Package size={48} className="mx-auto mb-4 opacity-30" />
-          <p className="text-sm">Chưa chọn danh mục nào</p>
+        <div className="px-4">
+          <EmptyState message="Chưa chọn danh mục nào" />
         </div>
       ) : (
         resolvedSections.map((section) => (
@@ -10185,7 +10487,7 @@ export const CategoryProductsPreview = ({
       previewStyle={previewStyle} 
       setPreviewStyle={setPreviewStyle} 
       styles={styles} 
-      info={`${resolvedSections.length} section`}
+      info={getPreviewInfo()}
     >
       <BrowserFrame>
         {previewStyle === 'grid' && renderGridStyle()}
@@ -10223,6 +10525,64 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
     { id: 'spotlight', label: 'Spotlight' }
   ];
 
+  // Dynamic image size info based on style (Best Practice)
+  const getImageSizeInfo = () => {
+    const count = members.length;
+    if (count === 0) return 'Chưa có thành viên';
+    switch (previewStyle) {
+      case 'grid': return `${count} thành viên • Avatar: 400×400px (1:1)`;
+      case 'cards': return `${count} thành viên • Avatar: 160×160px (1:1)`;
+      case 'carousel': return `${count} thành viên • Avatar: 600×800px (3:4)`;
+      case 'hexagon': return `${count} thành viên • Avatar: 300×300px (1:1)`;
+      case 'timeline': return `${count} thành viên • Avatar: 100×100px (1:1)`;
+      case 'spotlight': return `${count} thành viên • Avatar: 400×400px (1:1)`;
+      default: return `${count} thành viên`;
+    }
+  };
+
+  // Max visible items per device for +N pattern
+  const getMaxVisible = () => {
+    switch (previewStyle) {
+      case 'grid': return device === 'mobile' ? 4 : 8;
+      case 'cards': return device === 'mobile' ? 3 : 6;
+      case 'carousel': return members.length;
+      case 'hexagon': return device === 'mobile' ? 4 : 6;
+      case 'timeline': return device === 'mobile' ? 3 : 4;
+      case 'spotlight': return device === 'mobile' ? 3 : 6;
+      default: return 6;
+    }
+  };
+
+  const maxVisible = getMaxVisible();
+  const visibleMembers = members.slice(0, maxVisible);
+  const remainingCount = members.length - maxVisible;
+
+  // +N remaining card component
+  const RemainingCard = ({ isHexagon = false }: { isHexagon?: boolean }) => {
+    if (isHexagon) {
+      return (
+        <div className="group relative">
+          <div className={cn("relative", device === 'mobile' ? 'w-28 h-32' : 'w-36 h-40')} style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}>
+            <div className="absolute inset-1 flex items-center justify-center" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)', backgroundColor: '#f1f5f9' }}>
+              <div className="text-center">
+                <span className="text-lg font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+                <p className="text-[10px] text-slate-400">khác</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-2xl aspect-square max-w-[180px] mx-auto">
+        <div className="text-center">
+          <span className="text-xl font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+          <p className="text-xs text-slate-400">thành viên</p>
+        </div>
+      </div>
+    );
+  };
+
   const SocialIcon = ({ type, url }: { type: 'facebook' | 'linkedin' | 'twitter' | 'email'; url: string }) => {
     if (!url) return null;
     const icons = {
@@ -10244,7 +10604,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
     );
   };
 
-  // Style 1: Grid - Clean grid với hover effects
+  // Style 1: Grid - Clean grid với hover effects + "+N" pattern
   const renderGridStyle = () => (
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
       <h3 className={cn("font-bold text-center mb-8", device === 'mobile' ? 'text-lg' : 'text-2xl')}>Đội ngũ của chúng tôi</h3>
@@ -10252,7 +10612,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
         "grid gap-6",
         device === 'mobile' ? 'grid-cols-2 gap-4' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4'
       )}>
-        {members.slice(0, device === 'mobile' ? 4 : 8).map((member) => (
+        {visibleMembers.map((member) => (
           <div key={member.id} className="group text-center">
             <div className="relative mb-4 mx-auto overflow-hidden rounded-2xl aspect-square max-w-[180px]">
               {member.avatar ? (
@@ -10281,11 +10641,18 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
             <p className="text-sm mt-1" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
           </div>
         ))}
+        {/* +N remaining */}
+        {remainingCount > 0 && (
+          <div className="text-center">
+            <RemainingCard />
+            <p className="text-sm mt-4 text-slate-500">thành viên</p>
+          </div>
+        )}
       </div>
     </div>
   );
 
-  // Style 2: Cards - Horizontal cards với bio
+  // Style 2: Cards - Horizontal cards với bio + equal height + "+N" pattern
   const renderCardsStyle = () => (
     <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
       <h3 className={cn("font-bold text-center mb-8", device === 'mobile' ? 'text-lg' : 'text-2xl')}>Đội ngũ của chúng tôi</h3>
@@ -10293,10 +10660,10 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
         "grid gap-6",
         device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
       )}>
-        {members.slice(0, device === 'mobile' ? 3 : 6).map((member) => (
+        {visibleMembers.map((member) => (
           <div 
             key={member.id} 
-            className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex gap-4 items-start group hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 flex gap-4 items-start group hover:shadow-md transition-shadow h-full"
           >
             <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden">
               {member.avatar ? (
@@ -10310,11 +10677,12 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                 </div>
               )}
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 flex flex-col">
               <h4 className="font-semibold text-slate-900 dark:text-slate-100 truncate">{member.name || 'Họ và tên'}</h4>
               <p className="text-sm mb-2" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{member.bio || 'Giới thiệu ngắn...'}</p>
-              <div className="flex gap-1.5 mt-3">
+              {/* Equal height bio with min-height */}
+              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[2.5rem]">{member.bio || ''}</p>
+              <div className="flex gap-1.5 mt-auto pt-3">
                 {member.facebook && <SocialIcon type="facebook" url={member.facebook} />}
                 {member.linkedin && <SocialIcon type="linkedin" url={member.linkedin} />}
                 {member.twitter && <SocialIcon type="twitter" url={member.twitter} />}
@@ -10323,6 +10691,15 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
             </div>
           </div>
         ))}
+        {/* +N remaining */}
+        {remainingCount > 0 && (
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 border border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center">
+            <div className="text-center">
+              <span className="text-2xl font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+              <p className="text-sm text-slate-500 mt-1">thành viên khác</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -10711,7 +11088,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
       previewStyle={previewStyle} 
       setPreviewStyle={setPreviewStyle} 
       styles={styles} 
-      info={`${members.length} thành viên`}
+      info={getImageSizeInfo()}
     >
       <BrowserFrame>
         {previewStyle === 'grid' && renderGridStyle()}

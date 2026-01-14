@@ -5277,9 +5277,12 @@ function SpeedDialSection({ config, brandColor }: { config: Record<string, unkno
 }
 
 // ============ PRODUCT CATEGORIES SECTION ============
+// Best Practices: Clear navigation, visual appeal, mobile optimization, hover effects
+// 6 styles: grid, carousel, cards, minimal, showcase, marquee
 import { getCategoryIcon } from '@/app/admin/components/CategoryImageSelector';
 
-type ProductCategoriesStyle = 'grid' | 'carousel' | 'cards';
+type ProductCategoriesStyle = 'grid' | 'carousel' | 'cards' | 'minimal' | 'showcase' | 'marquee';
+
 function ProductCategoriesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const categoriesConfig = (config.categories as Array<{ categoryId: string; customImage?: string; imageMode?: string }>) || [];
   const style = (config.style as ProductCategoriesStyle) || 'grid';
@@ -5351,46 +5354,192 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
     return columnsMobile === 3 ? 'grid-cols-3' : 'grid-cols-2';
   };
 
-  // Style 1: Grid
+  // Helper: Render category visual (image or icon)
+  const renderCategoryVisual = (cat: typeof resolvedCategories[0], iconSize: number = 48) => {
+    const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
+    if (cat.displayIcon && iconData) {
+      return (
+        <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>
+          {React.createElement(iconData.icon, { size: iconSize, className: 'text-white' })}
+        </div>
+      );
+    }
+    if (cat.displayImage) {
+      return <img src={cat.displayImage} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />;
+    }
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-slate-100">
+        <Package size={iconSize} className="text-slate-300" />
+      </div>
+    );
+  };
+
+  // Style 1: Grid - Classic grid with hover effect + monochromatic
   if (style === 'grid') {
     return (
-      <section className="py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">{title}</h2>
-          <div className={`grid gap-4 md:gap-6 ${getMobileGridCols()} ${getGridCols()}`}>
+      <section className="py-10 md:py-16">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-center">{title}</h2>
+          <div className={`grid gap-3 md:gap-4 lg:gap-6 ${getMobileGridCols()} ${getGridCols()}`}>
+            {resolvedCategories.map((cat) => (
+              <a 
+                key={cat.id}
+                href={`/danh-muc/${cat.slug}`}
+                className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer transition-all duration-300"
+                style={{ boxShadow: `0 2px 8px ${brandColor}10` }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow = `0 8px 24px ${brandColor}25`;
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = `0 2px 8px ${brandColor}10`;
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                {renderCategoryVisual(cat, 48)}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 text-white">
+                  <h3 className="font-semibold text-sm md:text-base line-clamp-1">{cat.name}</h3>
+                  {showProductCount && (
+                    <p className="text-xs opacity-80 mt-0.5">{cat.productCount} sản phẩm</p>
+                  )}
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 2: Carousel - Horizontal scroll with navigation
+  if (style === 'carousel') {
+    return (
+      <section className="py-10 md:py-16">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between px-4 md:px-6 mb-6 md:mb-8">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold">{title}</h2>
+            <a 
+              href="/danh-muc"
+              className="text-sm font-medium flex items-center gap-1 hover:underline whitespace-nowrap"
+              style={{ color: brandColor }}
+            >
+              Xem tất cả
+              <ArrowRight size={16} />
+            </a>
+          </div>
+          <div className="overflow-x-auto pb-4 px-4 md:px-6 scrollbar-hide">
+            <div className="flex gap-3 md:gap-4">
+              {resolvedCategories.map((cat) => (
+                <a 
+                  key={cat.id}
+                  href={`/danh-muc/${cat.slug}`}
+                  className="flex-shrink-0 w-32 md:w-40 group cursor-pointer"
+                >
+                  <div 
+                    className="aspect-square rounded-xl overflow-hidden mb-2 transition-all"
+                    style={{ border: `2px solid ${brandColor}15` }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; }}
+                  >
+                    {renderCategoryVisual(cat, 40)}
+                  </div>
+                  <h3 className="font-medium text-center text-sm line-clamp-1">{cat.name}</h3>
+                  {showProductCount && (
+                    <p className="text-xs text-slate-500 text-center">{cat.productCount} sản phẩm</p>
+                  )}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 3: Cards - Modern horizontal cards with description
+  if (style === 'cards') {
+    return (
+      <section className="py-10 md:py-16" style={{ backgroundColor: `${brandColor}05` }}>
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-center">{title}</h2>
+          <div className="grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {resolvedCategories.map((cat) => (
+              <a 
+                key={cat.id}
+                href={`/danh-muc/${cat.slug}`}
+                className="group bg-white rounded-xl overflow-hidden flex cursor-pointer transition-all"
+                style={{ border: `1px solid ${brandColor}15` }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = `${brandColor}40`;
+                  e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}15`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = `${brandColor}15`;
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div className="w-24 h-24 md:w-28 md:h-28 flex-shrink-0">
+                  {renderCategoryVisual(cat, 32)}
+                </div>
+                <div className="flex-1 p-3 md:p-4 flex flex-col justify-center">
+                  <h3 className="font-semibold text-sm md:text-base line-clamp-1 mb-1">{cat.name}</h3>
+                  {cat.description && (
+                    <p className="text-xs text-slate-500 line-clamp-2 mb-2 min-h-[2rem]">{cat.description}</p>
+                  )}
+                  <span className="text-xs font-medium flex items-center gap-1" style={{ color: brandColor }}>
+                    {showProductCount ? `${cat.productCount} sản phẩm` : 'Xem sản phẩm'}
+                    <ArrowRight size={12} />
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 4: Minimal - Text-based with small icons, compact layout
+  if (style === 'minimal') {
+    return (
+      <section className="py-10 md:py-16">
+        <div className="max-w-5xl mx-auto px-4 md:px-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg md:text-xl font-bold">{title}</h2>
+            <a href="/danh-muc" className="text-sm font-medium hover:underline" style={{ color: brandColor }}>
+              Tất cả →
+            </a>
+          </div>
+          <div className="flex flex-wrap gap-2 md:gap-3">
             {resolvedCategories.map((cat) => {
               const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
               return (
                 <a 
                   key={cat.id}
                   href={`/danh-muc/${cat.slug}`}
-                  className="group relative aspect-square rounded-xl overflow-hidden bg-slate-100"
+                  className="flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-full cursor-pointer transition-all"
+                  style={{ backgroundColor: `${brandColor}08`, border: `1px solid ${brandColor}20` }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = `${brandColor}15`;
+                    e.currentTarget.style.borderColor = `${brandColor}40`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = `${brandColor}08`;
+                    e.currentTarget.style.borderColor = `${brandColor}20`;
+                  }}
                 >
                   {cat.displayIcon && iconData ? (
-                    <div 
-                      className="w-full h-full flex items-center justify-center"
-                      style={{ backgroundColor: brandColor }}
-                    >
-                      {React.createElement(iconData.icon, { size: 56, className: 'text-white' })}
-                    </div>
+                    React.createElement(iconData.icon, { size: 16, style: { color: brandColor } })
                   ) : cat.displayImage ? (
-                    <img 
-                      src={cat.displayImage} 
-                      alt={cat.name} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                    />
+                    <img src={cat.displayImage} alt="" className="w-5 h-5 md:w-6 md:h-6 rounded-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package size={48} className="text-slate-300" />
-                    </div>
+                    <Package size={16} style={{ color: brandColor }} />
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5 text-white">
-                    <h3 className="font-semibold text-base md:text-lg truncate">{cat.name}</h3>
-                    {showProductCount && (
-                      <p className="text-sm opacity-80 mt-1">{cat.productCount} sản phẩm</p>
-                    )}
-                  </div>
+                  <span className="font-medium text-xs md:text-sm whitespace-nowrap">{cat.name}</span>
+                  {showProductCount && (
+                    <span className="text-xs text-slate-400">({cat.productCount})</span>
+                  )}
                 </a>
               );
             })}
@@ -5400,61 +5549,82 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
     );
   }
 
-  // Style 2: Carousel
-  if (style === 'carousel') {
+  // Style 5: Showcase - Featured first item + grid of smaller items
+  if (style === 'showcase') {
+    const [featured, ...others] = resolvedCategories;
+    if (!featured) return null;
+    
     return (
-      <section className="py-12 md:py-16">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between px-4 mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold">{title}</h2>
+      <section className="py-10 md:py-16">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-center">{title}</h2>
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+            {/* Featured category */}
             <a 
-              href="/danh-muc"
-              className="text-sm font-medium flex items-center gap-1 hover:underline"
-              style={{ color: brandColor }}
+              href={`/danh-muc/${featured.slug}`}
+              className="relative rounded-2xl overflow-hidden cursor-pointer group md:row-span-2"
+              style={{ boxShadow: `0 8px 30px ${brandColor}20` }}
             >
-              Xem tất cả
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <div className="aspect-[4/3] md:aspect-auto md:h-full">
+                {renderCategoryVisual(featured, 56)}
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white">
+                <span 
+                  className="inline-block px-2 py-1 text-xs font-bold rounded mb-2"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  NỔI BẬT
+                </span>
+                <h3 className="font-bold text-lg md:text-xl line-clamp-1">{featured.name}</h3>
+                {featured.description && (
+                  <p className="text-sm opacity-80 line-clamp-2 mt-1">{featured.description}</p>
+                )}
+                {showProductCount && (
+                  <p className="text-sm opacity-70 mt-2">{featured.productCount} sản phẩm</p>
+                )}
+              </div>
             </a>
-          </div>
-          <div className="overflow-x-auto pb-4 px-4 scrollbar-hide">
-            <div className="flex gap-4 md:gap-6">
-              {resolvedCategories.map((cat) => {
-                const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
-                return (
-                  <a 
-                    key={cat.id}
-                    href={`/danh-muc/${cat.slug}`}
-                    className="flex-shrink-0 w-36 md:w-48 group cursor-pointer"
-                  >
-                    <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 mb-3">
-                      {cat.displayIcon && iconData ? (
-                        <div 
-                          className="w-full h-full flex items-center justify-center"
-                          style={{ backgroundColor: brandColor }}
-                        >
-                          {React.createElement(iconData.icon, { size: 48, className: 'text-white' })}
-                        </div>
-                      ) : cat.displayImage ? (
-                        <img 
-                          src={cat.displayImage} 
-                          alt={cat.name} 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package size={40} className="text-slate-300" />
-                        </div>
-                      )}
-                    </div>
-                    <h3 className="font-medium text-center truncate">{cat.name}</h3>
+            
+            {/* Other categories grid */}
+            <div className="grid gap-3 grid-cols-2 md:col-span-2 md:grid-cols-2 lg:grid-cols-3">
+              {others.slice(0, 5).map((cat) => (
+                <a 
+                  key={cat.id}
+                  href={`/danh-muc/${cat.slug}`}
+                  className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group transition-all"
+                  style={{ border: `2px solid ${brandColor}15` }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = `${brandColor}40`;
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = `${brandColor}15`;
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  {renderCategoryVisual(cat, 36)}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-2 md:p-3 text-white">
+                    <h3 className="font-semibold text-xs md:text-sm line-clamp-1">{cat.name}</h3>
                     {showProductCount && (
-                      <p className="text-sm text-slate-500 text-center">{cat.productCount} sản phẩm</p>
+                      <p className="text-xs opacity-70">{cat.productCount} sp</p>
                     )}
-                  </a>
-                );
-              })}
+                  </div>
+                </a>
+              ))}
+              
+              {/* +N more */}
+              {others.length > 5 && (
+                <a 
+                  href="/danh-muc"
+                  className="flex flex-col items-center justify-center aspect-[4/3] rounded-xl cursor-pointer"
+                  style={{ backgroundColor: `${brandColor}08`, border: `2px dashed ${brandColor}30` }}
+                >
+                  <span className="font-bold text-lg" style={{ color: brandColor }}>+{others.length - 5}</span>
+                  <span className="text-xs text-slate-500 mt-1">danh mục khác</span>
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -5462,60 +5632,53 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
     );
   }
 
-  // Style 3: Cards
+  // Style 6: Marquee - Auto-scrolling horizontal animation (default fallback)
   return (
-    <section className="py-12 md:py-16 bg-slate-50">
-      <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">{title}</h2>
-        <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {resolvedCategories.map((cat) => {
-            const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
-            return (
+    <section className="py-10 md:py-16 overflow-hidden">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-center px-4">{title}</h2>
+        <div className="relative">
+          {/* Gradient masks */}
+          <div className="absolute left-0 top-0 bottom-0 w-12 z-10 bg-gradient-to-r from-white to-transparent pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-12 z-10 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+          
+          {/* Marquee track */}
+          <div className="flex animate-marquee-categories">
+            {[...resolvedCategories, ...resolvedCategories].map((cat, idx) => (
               <a 
-                key={cat.id}
+                key={`${cat.id}-${idx}`}
                 href={`/danh-muc/${cat.slug}`}
-                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow flex"
+                className="flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-full cursor-pointer mx-2 bg-white"
+                style={{ border: `2px solid ${brandColor}20`, boxShadow: `0 2px 8px ${brandColor}10` }}
               >
-                <div className="w-28 h-28 md:w-36 md:h-36 flex-shrink-0 bg-slate-100">
-                  {cat.displayIcon && iconData ? (
-                    <div 
-                      className="w-full h-full flex items-center justify-center"
-                      style={{ backgroundColor: brandColor }}
-                    >
-                      {React.createElement(iconData.icon, { size: 40, className: 'text-white' })}
-                    </div>
-                  ) : cat.displayImage ? (
-                    <img 
-                      src={cat.displayImage} 
-                      alt={cat.name} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package size={40} className="text-slate-300" />
-                    </div>
+                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                  {renderCategoryVisual(cat, 24)}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm whitespace-nowrap">{cat.name}</h3>
+                  {showProductCount && (
+                    <p className="text-xs text-slate-400 whitespace-nowrap">{cat.productCount} sản phẩm</p>
                   )}
                 </div>
-                <div className="flex-1 p-4 md:p-5 flex flex-col justify-center">
-                  <h3 className="font-semibold text-base md:text-lg mb-1">{cat.name}</h3>
-                  {cat.description && (
-                    <p className="text-sm text-slate-500 line-clamp-2 mb-2">{cat.description}</p>
-                  )}
-                  <span 
-                    className="text-sm font-medium flex items-center gap-1"
-                    style={{ color: brandColor }}
-                  >
-                    {showProductCount && `${cat.productCount} sản phẩm`}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </span>
-                </div>
+                <ArrowUpRight size={14} style={{ color: brandColor }} className="flex-shrink-0" />
               </a>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </div>
+      
+      <style jsx>{`
+        @keyframes marquee-categories {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee-categories {
+          animation: marquee-categories 25s linear infinite;
+        }
+        .animate-marquee-categories:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
     </section>
   );
 }
@@ -5575,10 +5738,10 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
     return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
   };
 
-  // Product Card Component
+  // Product Card Component with Equal Height (line-clamp + min-height)
   const ProductCard = ({ product }: { product: { _id: string; name: string; image?: string; price?: number; salePrice?: number; slug?: string } }) => (
-    <a href={`/san-pham/${product.slug || product._id}`} className="group cursor-pointer block">
-      <div className="aspect-square rounded-lg overflow-hidden bg-slate-100 mb-2">
+    <a href={`/san-pham/${product.slug || product._id}`} className="group cursor-pointer flex flex-col h-full">
+      <div className="aspect-square rounded-lg overflow-hidden mb-2" style={{ backgroundColor: `${brandColor}08` }}>
         {product.image ? (
           <img 
             src={product.image} 
@@ -5587,12 +5750,12 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Package size={24} className="text-slate-300" />
+            <Package size={24} style={{ color: `${brandColor}40` }} />
           </div>
         )}
       </div>
-      <h4 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h4>
-      <div className="flex flex-col">
+      <h4 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{product.name || 'Tên sản phẩm'}</h4>
+      <div className="flex flex-col mt-auto">
         {product.salePrice && product.salePrice < (product.price || 0) ? (
           <>
             <span className="font-bold text-sm" style={{ color: brandColor }}>
@@ -5607,6 +5770,22 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
         )}
       </div>
     </a>
+  );
+
+  // Empty State Component with brandColor
+  const EmptyProductsState = ({ message }: { message: string }) => (
+    <div 
+      className="text-center py-8 rounded-xl flex flex-col items-center justify-center"
+      style={{ backgroundColor: `${brandColor}05` }}
+    >
+      <div 
+        className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
+        style={{ backgroundColor: `${brandColor}10` }}
+      >
+        <Package size={24} style={{ color: `${brandColor}50` }} />
+      </div>
+      <p className="text-sm text-slate-500">{message}</p>
+    </div>
   );
 
   if (resolvedSections.length === 0) {
@@ -5643,10 +5822,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-lg">
-                  <Package size={32} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Chưa có sản phẩm trong danh mục này</p>
-                </div>
+                <EmptyProductsState message="Chưa có sản phẩm trong danh mục này" />
               )}
             </div>
           </section>
@@ -5709,9 +5885,8 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-lg mx-4">
-                  <Package size={32} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Chưa có sản phẩm</p>
+                <div className="mx-4">
+                  <EmptyProductsState message="Chưa có sản phẩm" />
                 </div>
               )}
             </div>
@@ -5772,10 +5947,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-slate-400">
-                      <Package size={32} className="mx-auto mb-2 opacity-30" />
-                      <p className="text-sm">Chưa có sản phẩm</p>
-                    </div>
+                    <EmptyProductsState message="Chưa có sản phẩm" />
                   )}
                 </div>
               </div>
@@ -5821,10 +5993,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                 </div>
                 
                 {section.products.length === 0 ? (
-                  <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-2xl">
-                    <Package size={40} className="mx-auto mb-3 opacity-30" />
-                    <p className="text-sm">Chưa có sản phẩm</p>
-                  </div>
+                  <EmptyProductsState message="Chưa có sản phẩm" />
                 ) : (
                   <>
                     {/* Mobile: 2 columns grid */}
@@ -5963,12 +6132,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                   {/* Products Side */}
                   <div className="flex-1 min-w-0">
                     {section.products.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-slate-400 bg-slate-50 rounded-xl">
-                        <div className="text-center py-8">
-                          <Package size={32} className="mx-auto mb-2 opacity-30" />
-                          <p className="text-sm">Chưa có sản phẩm</p>
-                        </div>
-                      </div>
+                      <EmptyProductsState message="Chưa có sản phẩm" />
                     ) : (
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 h-full">
                         {section.products.slice(0, 6).map((product, idx) => (

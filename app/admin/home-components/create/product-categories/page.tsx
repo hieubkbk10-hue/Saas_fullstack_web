@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Card, CardContent, CardHeader, CardTitle, Label, Button } from '../../../components/ui';
+import { cn, Card, CardContent, CardHeader, CardTitle, Label, Button } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { ProductCategoriesPreview, type ProductCategoriesStyle } from '../../previews';
 import { CategoryImageSelector } from '../../../components/CategoryImageSelector';
@@ -28,6 +28,10 @@ export default function ProductCategoriesCreatePage() {
   const [columnsDesktop, setColumnsDesktop] = useState(4);
   const [columnsMobile, setColumnsMobile] = useState(2);
 
+  // Drag & Drop states
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+
   const addCategory = () => {
     if (!categoriesData || categoriesData.length === 0) return;
     const newId = Math.max(0, ...selectedCategories.map(c => c.id)) + 1;
@@ -40,6 +44,39 @@ export default function ProductCategoriesCreatePage() {
 
   const updateCategory = (id: number, updates: Partial<CategoryItem>) => {
     setSelectedCategories(selectedCategories.map(c => c.id === id ? { ...c, ...updates } : c));
+  };
+
+  // Drag & Drop handlers
+  const handleDragStart = (id: number) => {
+    setDraggedId(id);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, id: number) => {
+    e.preventDefault();
+    if (draggedId !== id) {
+      setDragOverId(id);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: number) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) return;
+    
+    const newItems = [...selectedCategories];
+    const draggedIndex = newItems.findIndex(i => i.id === draggedId);
+    const targetIndex = newItems.findIndex(i => i.id === targetId);
+    
+    const [moved] = newItems.splice(draggedIndex, 1);
+    newItems.splice(targetIndex, 0, moved);
+    
+    setSelectedCategories(newItems);
+    setDraggedId(null);
+    setDragOverId(null);
   };
 
   // Get category image for preview
@@ -144,10 +181,22 @@ export default function ProductCategoriesCreatePage() {
             </p>
           ) : (
             selectedCategories.map((item, idx) => (
-              <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+              <div 
+                key={item.id} 
+                draggable
+                onDragStart={() => handleDragStart(item.id)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleDragOver(e, item.id)}
+                onDrop={(e) => handleDrop(e, item.id)}
+                className={cn(
+                  "p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3 transition-all",
+                  draggedId === item.id && "opacity-50",
+                  dragOverId === item.id && "ring-2 ring-blue-500"
+                )}
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <GripVertical size={16} className="text-slate-400 cursor-move" />
+                    <GripVertical size={16} className="text-slate-400 cursor-grab active:cursor-grabbing" />
                     <Label>Danh mục {idx + 1}</Label>
                   </div>
                   <Button 
@@ -193,7 +242,7 @@ export default function ProductCategoriesCreatePage() {
           )}
           
           <p className="text-xs text-slate-500">
-            Tối đa 12 danh mục. Mỗi danh mục có thể: sử dụng ảnh gốc, chọn icon, upload ảnh, hoặc nhập URL.
+            Tối đa 12 danh mục. Kéo thả để sắp xếp thứ tự. Mỗi danh mục có thể: sử dụng ảnh gốc, chọn icon, upload ảnh, hoặc nhập URL.
           </p>
         </CardContent>
       </Card>

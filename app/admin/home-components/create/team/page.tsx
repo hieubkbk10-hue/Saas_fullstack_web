@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
-import { Plus, Trash2, Upload, ChevronDown, ChevronUp, GripVertical, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Upload, ChevronDown, ChevronUp, GripVertical, Loader2, Users } from 'lucide-react';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
@@ -20,6 +20,33 @@ interface TeamMember {
   linkedin: string;
   twitter: string;
   email: string;
+}
+
+// Drag & Drop reorder hook
+function useDragReorder<T extends { id: number }>(items: T[], setItems: (items: T[]) => void) {
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+
+  const dragProps = (id: number) => ({
+    draggable: true,
+    onDragStart: () => setDraggedId(id),
+    onDragEnd: () => { setDraggedId(null); setDragOverId(null); },
+    onDragOver: (e: React.DragEvent) => { e.preventDefault(); if (draggedId !== id) setDragOverId(id); },
+    onDrop: (e: React.DragEvent) => {
+      e.preventDefault();
+      if (!draggedId || draggedId === id) return;
+      const newItems = [...items];
+      const draggedIdx = items.findIndex(i => i.id === draggedId);
+      const dropIdx = items.findIndex(i => i.id === id);
+      const [moved] = newItems.splice(draggedIdx, 1);
+      newItems.splice(dropIdx, 0, moved);
+      setItems(newItems);
+      setDraggedId(null); 
+      setDragOverId(null);
+    }
+  });
+
+  return { draggedId, dragOverId, dragProps };
 }
 
 // Compact Avatar Upload Component
@@ -161,6 +188,9 @@ export default function TeamCreatePage() {
   const [style, setStyle] = useState<TeamStyle>('grid');
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
+  // Drag & Drop
+  const { draggedId, dragOverId, dragProps } = useDragReorder(members, setMembers);
+
   const updateMember = (id: number, field: keyof TeamMember, value: string) => {
     setMembers(members.map(m => m.id === id ? { ...m, [field]: value } : m));
   };
@@ -182,10 +212,38 @@ export default function TeamCreatePage() {
           </Button>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
+          {/* Empty State */}
+          {members.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+                <Users size={28} style={{ color: brandColor }} />
+              </div>
+              <h4 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có thành viên nào</h4>
+              <p className="text-sm text-slate-500 mb-4">Thêm thành viên đầu tiên để bắt đầu</p>
+              <Button type="button" variant="outline" size="sm" onClick={() => setMembers([{ id: Date.now(), name: '', role: '', avatar: '', bio: '', facebook: '', linkedin: '', twitter: '', email: '' }])} className="gap-1">
+                <Plus size={14} /> Thêm thành viên
+              </Button>
+            </div>
+          )}
+          
           {members.map((member, idx) => (
-            <div key={member.id} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+            <div 
+              key={member.id} 
+              {...dragProps(member.id)}
+              className={cn(
+                "border rounded-lg overflow-hidden transition-all cursor-grab active:cursor-grabbing",
+                draggedId === member.id && "opacity-50 scale-[0.98]",
+                dragOverId === member.id && "ring-2 ring-blue-500 ring-offset-1",
+                "border-slate-200 dark:border-slate-700"
+              )}
+            >
               {/* Compact Row */}
               <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900">
+                {/* Drag Handle */}
+                <div className="flex-shrink-0 text-slate-300 dark:text-slate-600 hover:text-slate-400 cursor-grab">
+                  <GripVertical size={16} />
+                </div>
+                
                 <AvatarUpload value={member.avatar} onChange={(url) => updateMember(member.id, 'avatar', url)} brandColor={brandColor} />
                 
                 <div className="flex-1 min-w-0 space-y-1.5">
@@ -219,7 +277,7 @@ export default function TeamCreatePage() {
                   </div>
                 </div>
 
-                <Button type="button" variant="ghost" size="icon" className="text-slate-400 hover:text-red-500 h-8 w-8 flex-shrink-0" onClick={() => members.length > 1 && setMembers(members.filter(m => m.id !== member.id))}>
+                <Button type="button" variant="ghost" size="icon" className="text-slate-400 hover:text-red-500 h-8 w-8 flex-shrink-0" onClick={() => setMembers(members.filter(m => m.id !== member.id))}>
                   <Trash2 size={14} />
                 </Button>
               </div>
