@@ -1305,6 +1305,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [isPaused, setIsPaused] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryItem | null>(null);
+  const [carouselIndex, setCarouselIndex] = useState(0); // For carousel style pagination
   const previewStyle = selectedStyle || (componentType === 'Gallery' ? 'spotlight' : 'grid');
   const setPreviewStyle = (s: string) => onStyleChange?.(s as GalleryStyle);
   
@@ -1782,7 +1783,6 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
 
   // Style 5: Carousel - Horizontal scroll with navigation arrows
   const renderCarouselStyle = () => {
-    const [carouselIndex, setCarouselIndex] = React.useState(0);
     const itemsPerPage = device === 'mobile' ? 2 : device === 'tablet' ? 4 : 6;
     const totalPages = Math.ceil(items.length / itemsPerPage);
     
