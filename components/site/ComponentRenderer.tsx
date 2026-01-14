@@ -7114,8 +7114,14 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 5: Carousel - Horizontal scroll with snap
+  // Style 5: Carousel - Horizontal scroll with navigation
   if (style === 'carousel') {
+    const scrollRef = React.useRef<HTMLDivElement>(null);
+    const scroll = (direction: 'left' | 'right') => {
+      if (!scrollRef.current) return;
+      const cardWidth = 320 + 20; // card width + gap
+      scrollRef.current.scrollBy({ left: direction === 'left' ? -cardWidth : cardWidth, behavior: 'smooth' });
+    };
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto">
@@ -7124,10 +7130,18 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
             </div>
+            {items.length > 3 && (
+              <div className="flex gap-2">
+                <button onClick={() => scroll('left')} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"><ChevronLeft size={20} /></button>
+                <button onClick={() => scroll('right')} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"><ChevronRight size={20} /></button>
+              </div>
+            )}
           </div>
           <div 
-            className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory"
+            ref={scrollRef}
+            className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            onWheel={(e) => { if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) { e.currentTarget.scrollLeft += e.deltaY; } }}
           >
             {items.map((item, idx) => {
               const IconComponent = getIcon(item.icon);
