@@ -6584,144 +6584,128 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
     );
   }
 
-  // Style 4: Overlap - Creative stacked/overlap layout (Modern team unity display)
+  // Style 4: Marquee - Modern infinite scroll with featured member
   if (style === 'hexagon') {
-    const displayMembers = members.slice(0, 5);
-    const remainingCount = members.length - 5;
-    const avatarSize = 100; // px
-    const overlap = 32; // px
+    const featured = members[0];
+    const marqueeMembers = members.length > 1 ? [...members, ...members] : members;
+    const cardSize = 160;
     
     return (
-      <section className="py-16 md:py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <span 
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium mb-4"
-              style={{ backgroundColor: `${brandColor}10`, color: brandColor }}
-            >
-              <Users size={16} />
-              Đội ngũ của chúng tôi
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">{title}</h2>
-            <p className="text-slate-500 mt-3 max-w-xl mx-auto">
-              Đội ngũ tài năng và đam mê đứng sau thành công của chúng tôi
-            </p>
-          </div>
+      <section className="py-16 md:py-20 overflow-hidden">
+        {/* Header */}
+        <div className="text-center mb-10 px-4">
+          <span 
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium mb-4"
+            style={{ backgroundColor: `${brandColor}10`, color: brandColor }}
+          >
+            <Users size={16} />
+            Đội ngũ của chúng tôi
+          </span>
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900">{title}</h2>
+          <p className="text-slate-500 mt-3 max-w-xl mx-auto">
+            Đội ngũ tài năng và đam mê đứng sau thành công của chúng tôi
+          </p>
+        </div>
+
+        {/* Marquee Row - Infinite scroll */}
+        <div className="relative mb-12">
+          <div className="absolute left-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-20 md:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
           
-          {/* Stacked Avatars - Center showcase */}
-          <div className="flex flex-col items-center mb-12">
-            {/* Overlapping avatars row */}
-            <div className="flex items-center justify-center mb-4">
-              {displayMembers.map((member, idx) => (
-                <div 
-                  key={idx}
-                  className="relative group"
-                  style={{ 
-                    marginLeft: idx === 0 ? 0 : -overlap,
-                    zIndex: displayMembers.length - idx 
-                  }}
-                >
-                  {/* Avatar with ring */}
-                  <div 
-                    className="relative rounded-full overflow-hidden border-4 border-white shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:z-50"
-                    style={{ width: avatarSize, height: avatarSize }}
-                  >
-                    {member.avatar ? (
-                      <img 
-                        src={member.avatar} 
-                        alt={member.name} 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div 
-                        className="w-full h-full flex items-center justify-center text-3xl font-bold text-white"
-                        style={{ backgroundColor: brandColor }}
-                      >
-                        {(member.name || 'U').charAt(0)}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Hover tooltip */}
-                  <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50">
-                    <div 
-                      className="bg-white rounded-xl px-4 py-3 shadow-xl border border-slate-100 whitespace-nowrap text-center"
-                      style={{ borderTopColor: brandColor, borderTopWidth: '2px' }}
-                    >
-                      <p className="font-semibold text-slate-900">{member.name || 'Họ và tên'}</p>
-                      <p className="text-sm" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {/* +N indicator if more members */}
-              {remainingCount > 0 && (
-                <div 
-                  className="relative rounded-full flex items-center justify-center border-4 border-white shadow-lg"
-                  style={{ 
-                    marginLeft: -overlap, 
-                    width: avatarSize, 
-                    height: avatarSize,
-                    backgroundColor: `${brandColor}15`
-                  }}
-                >
-                  <span className="text-xl font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
-                </div>
-              )}
-            </div>
-            
-            {/* Team summary text */}
-            <p className="text-slate-500 text-center">
-              <span className="font-semibold" style={{ color: brandColor }}>{members.length}</span> thành viên cùng hợp tác
-            </p>
-          </div>
-          
-          {/* Detail cards - Bento-like grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {displayMembers.slice(0, 3).map((member, idx) => (
+          <div 
+            className="flex gap-5"
+            style={{ 
+              width: 'max-content',
+              animation: members.length > 2 ? 'team-marquee 25s linear infinite' : 'none'
+            }}
+          >
+            {marqueeMembers.map((member, idx) => (
               <div 
                 key={idx}
-                className={`group bg-white rounded-2xl p-5 border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${idx === 0 ? 'lg:col-span-2' : ''}`}
-                style={{ borderLeftColor: brandColor, borderLeftWidth: '3px' }}
+                className="group flex-shrink-0 text-center"
+                style={{ width: cardSize }}
               >
-                <div className={`flex gap-4 ${idx === 0 ? 'items-center' : 'items-start'}`}>
-                  {/* Mini avatar */}
-                  <div className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden">
-                    {member.avatar ? (
-                      <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div 
-                        className="w-full h-full flex items-center justify-center text-xl font-bold text-white"
-                        style={{ backgroundColor: brandColor }}
-                      >
-                        {(member.name || 'U').charAt(0)}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-lg text-slate-900 truncate">{member.name || 'Họ và tên'}</h4>
-                    <p className="text-sm" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
-                    {member.bio && (
-                      <p className={`text-sm text-slate-500 mt-2 ${idx === 0 ? 'line-clamp-2' : 'line-clamp-1'}`}>{member.bio}</p>
-                    )}
-                    
-                    {/* Social links */}
-                    <div className="flex gap-2 mt-3">
+                <div 
+                  className="relative mx-auto mb-3 rounded-2xl overflow-hidden shadow-md transition-all duration-300 group-hover:shadow-xl group-hover:scale-105"
+                  style={{ width: cardSize, height: cardSize }}
+                >
+                  {member.avatar ? (
+                    <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div 
+                      className="w-full h-full flex items-center justify-center text-4xl font-bold text-white"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      {(member.name || 'U').charAt(0)}
+                    </div>
+                  )}
+                  <div 
+                    className="absolute inset-0 flex items-end justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ background: `linear-gradient(to top, ${brandColor}ee, transparent)` }}
+                  >
+                    <div className="flex gap-1 pb-3">
                       <SocialIcon type="facebook" url={member.facebook} brandColor={brandColor} />
                       <SocialIcon type="linkedin" url={member.linkedin} brandColor={brandColor} />
-                      <SocialIcon type="twitter" url={member.twitter} brandColor={brandColor} />
                       <SocialIcon type="email" url={member.email} brandColor={brandColor} />
                     </div>
                   </div>
                 </div>
+                <h4 className="font-semibold text-slate-900 truncate px-1">{member.name || 'Họ và tên'}</h4>
+                <p className="text-sm truncate px-1" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Featured Member Card */}
+        {featured && (
+          <div className="max-w-3xl mx-auto px-4">
+            <div 
+              className="bg-white rounded-2xl p-6 md:p-8 shadow-lg border border-slate-100 flex flex-col md:flex-row gap-6 items-center"
+              style={{ borderTopColor: brandColor, borderTopWidth: '3px' }}
+            >
+              <div className="flex-shrink-0 w-28 h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden shadow-md">
+                {featured.avatar ? (
+                  <img src={featured.avatar} alt={featured.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div 
+                    className="w-full h-full flex items-center justify-center text-4xl font-bold text-white"
+                    style={{ backgroundColor: brandColor }}
+                  >
+                    {(featured.name || 'U').charAt(0)}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h4 className="font-bold text-2xl text-slate-900">{featured.name || 'Họ và tên'}</h4>
+                <p className="text-lg font-medium mb-2" style={{ color: brandColor }}>{featured.role || 'Chức vụ'}</p>
+                {featured.bio && (
+                  <p className="text-slate-500 line-clamp-2 mb-4">{featured.bio}</p>
+                )}
+                <div className="flex gap-2 justify-center md:justify-start">
+                  <SocialIcon type="facebook" url={featured.facebook} brandColor={brandColor} />
+                  <SocialIcon type="linkedin" url={featured.linkedin} brandColor={brandColor} />
+                  <SocialIcon type="twitter" url={featured.twitter} brandColor={brandColor} />
+                  <SocialIcon type="email" url={featured.email} brandColor={brandColor} />
+                </div>
+              </div>
+              <div 
+                className="flex-shrink-0 w-20 h-20 rounded-full flex flex-col items-center justify-center"
+                style={{ backgroundColor: `${brandColor}10` }}
+              >
+                <span className="text-2xl font-bold" style={{ color: brandColor }}>{members.length}</span>
+                <span className="text-xs text-slate-500">members</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <style>{`
+          @keyframes team-marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+        `}</style>
       </section>
     );
   }
