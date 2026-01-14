@@ -6426,19 +6426,18 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
   const copyright = (config.copyright as string) || '© 2024 VietAdmin. All rights reserved.';
   const showSocialLinks = config.showSocialLinks !== false;
 
-  // Utility: Darken a hex color
-  const darkenColor = (hex: string, percent: number): string => {
+  // Best Practice: Dùng brandColor đậm làm nền thay vì màu đen cứng
+  const shadeColor = (hex: string, percent: number): string => {
     const num = parseInt(hex.replace('#', ''), 16);
-    const amt = Math.round(2.55 * percent);
-    const R = Math.max((num >> 16) - amt, 0);
-    const G = Math.max((num >> 8 & 0x00FF) - amt, 0);
-    const B = Math.max((num & 0x0000FF) - amt, 0);
+    const R = Math.round((num >> 16) * (1 - percent / 100));
+    const G = Math.round((num >> 8 & 0x00FF) * (1 - percent / 100));
+    const B = Math.round((num & 0x0000FF) * (1 - percent / 100));
     return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
   };
 
-  const bgDark = darkenColor(brandColor, 70);
-  const bgMedium = darkenColor(brandColor, 60);
-  const borderColor = darkenColor(brandColor, 45);
+  const bgDark = shadeColor(brandColor, 65);
+  const bgMedium = shadeColor(brandColor, 50);
+  const borderColor = shadeColor(brandColor, 30);
 
   const socialColors: Record<string, string> = {
     facebook: '#1877F2', instagram: '#E4405F', youtube: '#FF0000',

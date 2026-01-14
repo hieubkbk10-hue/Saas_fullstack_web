@@ -4018,20 +4018,20 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
     { id: 'stacked', label: '6. Stacked' }
   ];
 
-  // Utility: Darken a hex color
-  const darkenColor = (hex: string, percent: number): string => {
+  // Best Practice: Dùng brandColor đậm làm nền thay vì màu đen cứng
+  // Tạo shade từ brandColor bằng cách blend với đen
+  const shadeColor = (hex: string, percent: number): string => {
     const num = parseInt(hex.replace('#', ''), 16);
-    const amt = Math.round(2.55 * percent);
-    const R = Math.max((num >> 16) - amt, 0);
-    const G = Math.max((num >> 8 & 0x00FF) - amt, 0);
-    const B = Math.max((num & 0x0000FF) - amt, 0);
+    const R = Math.round((num >> 16) * (1 - percent / 100));
+    const G = Math.round((num >> 8 & 0x00FF) * (1 - percent / 100));
+    const B = Math.round((num & 0x0000FF) * (1 - percent / 100));
     return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
   };
 
-  // Background colors from brandColor, text uses neutral colors
-  const bgDark = darkenColor(brandColor, 70);      // Dark background
-  const bgMedium = darkenColor(brandColor, 60);    // Medium dark for cards/sections
-  const borderColor = darkenColor(brandColor, 45); // Border color (subtle)
+  // Brand-based colors: shade của brandColor thay vì đen cứng
+  const bgDark = shadeColor(brandColor, 65);       // Đậm nhất - nền footer
+  const bgMedium = shadeColor(brandColor, 50);     // Medium - cards/sections
+  const borderColor = shadeColor(brandColor, 30); // Nhẹ - borders
 
   // Social media brand colors
   const socialColors: Record<string, string> = {
