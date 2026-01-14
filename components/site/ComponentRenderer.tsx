@@ -1903,7 +1903,7 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
 // ============ GALLERY/PARTNERS SECTION ============
 // Gallery: 3 Professional Styles from pure-visual-gallery (Spotlight, Explore, Stories)
 // Partners: 4 Professional Styles from partner-&-logo-manager (Grid, Marquee, Mono, Badge)
-type GalleryStyle = 'spotlight' | 'explore' | 'stories' | 'grid' | 'marquee' | 'mono' | 'badge';
+type GalleryStyle = 'spotlight' | 'explore' | 'stories' | 'grid' | 'marquee' | 'mono' | 'badge' | 'carousel' | 'featured';
 
 // Auto Scroll Slider Component for Marquee/Mono styles
 const AutoScrollSlider = ({ children, speed = 0.5 }: { children: React.ReactNode; speed?: number }) => {
@@ -2533,6 +2533,113 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
     );
   }
 
+  // Style: Carousel - Paginated grid with navigation
+  if (style === 'carousel') {
+    return (
+      <section className="w-full py-10 bg-white border-b border-slate-200/40">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+          <div className="flex items-center justify-between gap-6">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
+              {title}
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 items-center">
+            {items.slice(0, 6).map((item, idx) => (
+              <a
+                key={idx}
+                href={item.link || '#'}
+                className="group flex flex-col items-center justify-center p-4 rounded-xl border transition-all aspect-[3/2] hover:shadow-lg"
+                style={{ borderColor: `${brandColor}15` }}
+              >
+                {item.url ? (
+                  <img 
+                    src={item.url} 
+                    alt=""
+                    className="h-10 w-auto object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" 
+                  />
+                ) : (
+                  <ImageIcon size={36} className="text-slate-300" />
+                )}
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style: Featured - Large featured + smaller grid
+  if (style === 'featured') {
+    const featured = items[0];
+    const others = items.slice(1, 7);
+    
+    return (
+      <section className="w-full py-10 bg-white border-b border-slate-200/40">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
+              {title}
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Featured Partner */}
+            {featured && (
+              <a
+                href={featured.link || '#'}
+                className="group relative md:row-span-2 rounded-2xl border overflow-hidden flex items-center justify-center p-8 aspect-square md:aspect-auto"
+                style={{ 
+                  borderColor: `${brandColor}20`,
+                  background: `linear-gradient(135deg, ${brandColor}08 0%, ${brandColor}03 100%)`
+                }}
+              >
+                <div className="absolute top-3 left-3">
+                  <span 
+                    className="px-2 py-1 text-[10px] font-bold rounded"
+                    style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                  >
+                    ĐỐI TÁC NỔI BẬT
+                  </span>
+                </div>
+                {featured.url ? (
+                  <img 
+                    src={featured.url} 
+                    alt=""
+                    className="max-h-24 w-auto object-contain group-hover:scale-110 transition-transform duration-500" 
+                  />
+                ) : (
+                  <ImageIcon size={64} className="text-slate-300" />
+                )}
+              </a>
+            )}
+            {/* Other Partners */}
+            <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-3">
+              {others.map((item, idx) => (
+                <a
+                  key={idx}
+                  href={item.link || '#'}
+                  className="group flex items-center justify-center p-4 rounded-xl border transition-all aspect-[3/2] hover:shadow-md"
+                  style={{ borderColor: `${brandColor}15` }}
+                >
+                  {item.url ? (
+                    <img 
+                      src={item.url} 
+                      alt=""
+                      className="h-8 w-auto object-contain grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" 
+                    />
+                  ) : (
+                    <ImageIcon size={28} className="text-slate-300" />
+                  )}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   // Style: Badge - Compact badges with name (default fallback)
   return (
     <section className="w-full py-10 bg-white border-b border-slate-200/40">
@@ -2548,15 +2655,18 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
             <a 
               key={idx} 
               href={item.link || '#'}
-              className="bg-slate-100/50 hover:bg-slate-100 px-4 py-2 rounded-lg border border-transparent hover:border-slate-200/50 transition-all flex items-center gap-3 cursor-pointer"
-              style={{ borderColor: `${brandColor}10` }}
+              className="px-4 py-2 rounded-lg border transition-all flex items-center gap-3 group"
+              style={{ 
+                backgroundColor: `${brandColor}05`,
+                borderColor: `${brandColor}15`
+              }}
             >
               {item.url ? (
-                <img src={item.url} alt="" className="h-5 w-auto grayscale" />
+                <img src={item.url} alt="" className="h-5 w-auto grayscale group-hover:grayscale-0 transition-all" />
               ) : (
                 <ImageIcon size={20} className="text-slate-400" />
               )}
-              <span className="text-xs font-semibold text-slate-500">Partner {idx + 1}</span>
+              <span className="text-xs font-semibold" style={{ color: `${brandColor}cc` }}>Đối tác {idx + 1}</span>
             </a>
           ))}
         </div>

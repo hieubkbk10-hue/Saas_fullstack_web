@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { Image as ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { GalleryPreview, TrustBadgesPreview, type GalleryStyle, type TrustBadgesStyle } from '../../previews';
@@ -94,13 +95,44 @@ function GalleryCreateContent() {
           onStyleChange={setTrustBadgesStyle}
         />
       ) : (
-        <GalleryPreview 
-          items={galleryItems.map((item, idx) => ({ id: idx + 1, url: item.url, link: item.link }))} 
-          brandColor={brandColor} 
-          componentType={type}
-          selectedStyle={style}
-          onStyleChange={setStyle}
-        />
+        <>
+          <GalleryPreview 
+            items={galleryItems.map((item, idx) => ({ id: idx + 1, url: item.url, link: item.link }))} 
+            brandColor={brandColor} 
+            componentType={type}
+            selectedStyle={style}
+            onStyleChange={setStyle}
+          />
+          
+          {/* Image Guidelines - Partners only */}
+          {type === 'Partners' && (
+            <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="flex items-start gap-2">
+                <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+                <div className="text-xs text-slate-600 dark:text-slate-400">
+                  {style === 'grid' && (
+                    <p><strong>200×80px</strong> (5:2) • Logo ngang, nền trong suốt PNG. Grid 8 cột desktop, 2 cột mobile.</p>
+                  )}
+                  {style === 'marquee' && (
+                    <p><strong>160×60px</strong> (8:3) • Logo nhỏ gọn, auto scroll. Hover để dừng.</p>
+                  )}
+                  {style === 'mono' && (
+                    <p><strong>160×60px</strong> (8:3) • Logo grayscale, hover để hiện màu. Scroll chậm.</p>
+                  )}
+                  {style === 'badge' && (
+                    <p><strong>120×48px</strong> (5:2) • Logo nhỏ kèm tên đối tác. Compact badges.</p>
+                  )}
+                  {style === 'carousel' && (
+                    <p><strong>200×100px</strong> (2:1) • Logo cards với navigation. 6 items/trang desktop.</p>
+                  )}
+                  {style === 'featured' && (
+                    <p><strong>Featured: 400×200px</strong> • <strong>Others: 150×75px</strong> • Đối tác nổi bật + grid nhỏ.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </ComponentFormWrapper>
   );
