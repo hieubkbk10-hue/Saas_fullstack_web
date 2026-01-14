@@ -4307,13 +4307,28 @@ function PricingSection({ config, brandColor, title }: { config: Record<string, 
 }
 
 // ============ CAREER SECTION ============
-// 3 Professional Styles: Cards, List, Minimal
-type CareerStyle = 'cards' | 'list' | 'minimal';
+// 6 Professional Styles: Cards, List, Minimal, Table, Featured, Timeline
+type CareerStyle = 'cards' | 'list' | 'minimal' | 'table' | 'featured' | 'timeline';
 function CareerSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const jobs = (config.jobs as Array<{ title: string; department: string; location: string; type: string; salary: string }>) || [];
+  const jobs = (config.jobs as Array<{ title: string; department: string; location: string; type: string; salary: string; description?: string }>) || [];
   const style = (config.style as CareerStyle) || 'cards';
 
-  // Style 1: Cards - Grid layout với hover effects
+  // Empty state
+  if (jobs.length === 0) {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex w-16 h-16 rounded-full items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+            <Briefcase size={32} style={{ color: brandColor }} />
+          </div>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">{title}</h3>
+          <p className="text-slate-500">Hiện tại chưa có vị trí tuyển dụng</p>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 1: Cards - Grid layout với equal height
   if (style === 'cards') {
     return (
       <section className="py-16 px-4 bg-slate-50">
@@ -4324,30 +4339,45 @@ function CareerSection({ config, brandColor, title }: { config: Record<string, u
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {jobs.map((job, idx) => (
-              <div key={idx} className="bg-white rounded-xl p-6 border border-slate-200 hover:shadow-lg hover:border-slate-300 transition-all">
-                <div className="flex items-start justify-between mb-4">
-                  <span className="text-xs font-medium px-3 py-1 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                    {job.department || 'Department'}
-                  </span>
-                  <span className="text-xs text-slate-500">{job.type || 'Full-time'}</span>
-                </div>
-                <h3 className="font-semibold text-lg mb-3 text-slate-900">{job.title || 'Vị trí tuyển dụng'}</h3>
-                <div className="space-y-2 text-sm text-slate-500 mb-4">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    {job.location || 'Hà Nội'}
+              <article 
+                key={idx} 
+                className="bg-white rounded-xl border border-slate-200 flex flex-col h-full transition-all hover:shadow-lg"
+                style={{ borderColor: `${brandColor}15` }}
+              >
+                <div className="p-6 flex-1 flex flex-col">
+                  <div className="flex items-start justify-between mb-4">
+                    <span className="text-xs font-medium px-3 py-1 rounded-full whitespace-nowrap" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                      {job.department || 'Đang cập nhật'}
+                    </span>
+                    <span className="text-xs text-slate-500">{job.type || 'Full-time'}</span>
                   </div>
-                  {job.salary && (
-                    <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      {job.salary}
-                    </div>
+                  <h3 className="font-semibold text-lg text-slate-900 mb-3 line-clamp-2 min-h-[3.5rem]">
+                    {job.title || 'Vị trí tuyển dụng'}
+                  </h3>
+                  {job.description && (
+                    <p className="text-sm text-slate-500 mb-4 line-clamp-2">{job.description}</p>
                   )}
+                  <div className="space-y-2 text-sm text-slate-500 mb-4">
+                    <div className="flex items-center gap-2">
+                      <MapPin size={16} className="flex-shrink-0" />
+                      <span className="truncate">{job.location || 'Remote'}</span>
+                    </div>
+                    {job.salary && (
+                      <div className="flex items-center gap-2 font-medium" style={{ color: brandColor }}>
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {job.salary}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <button className="w-full py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ backgroundColor: brandColor }}>
-                  Ứng tuyển ngay
-                </button>
-              </div>
+                <div className="p-6 pt-0 mt-auto">
+                  <button className="w-full py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ backgroundColor: brandColor }}>
+                    Ứng tuyển ngay
+                  </button>
+                </div>
+              </article>
             ))}
           </div>
         </div>
@@ -4363,51 +4393,265 @@ function CareerSection({ config, brandColor, title }: { config: Record<string, u
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-slate-900">{title}</h2>
           </div>
-          <div className="space-y-3">
+          <ul className="space-y-3" role="list">
             {jobs.map((job, idx) => (
-              <div key={idx} className="bg-white rounded-xl p-5 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
-                <div>
-                  <h3 className="font-semibold text-slate-900">{job.title || 'Vị trí'}</h3>
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 mt-1">
-                    <span>{job.department || 'Department'}</span>
-                    <span className="hidden md:inline">•</span>
-                    <span>{job.location || 'Location'}</span>
-                    <span className="hidden md:inline">•</span>
-                    <span>{job.type || 'Full-time'}</span>
+              <li key={idx}>
+                <article className="bg-white rounded-xl p-5 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-slate-900 line-clamp-1">{job.title || 'Vị trí'}</h3>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 mt-1">
+                      <span className="whitespace-nowrap">{job.department || 'Đang cập nhật'}</span>
+                      <span className="hidden md:inline">•</span>
+                      <span className="whitespace-nowrap">{job.location || 'Remote'}</span>
+                      <span className="hidden md:inline">•</span>
+                      <span className="whitespace-nowrap">{job.type || 'Full-time'}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  {job.salary && <span className="text-sm font-medium" style={{ color: brandColor }}>{job.salary}</span>}
-                  <button className="px-5 py-2 rounded-lg text-sm font-medium text-white whitespace-nowrap" style={{ backgroundColor: brandColor }}>
-                    Ứng tuyển
-                  </button>
-                </div>
-              </div>
+                  <div className="flex items-center gap-4 flex-shrink-0">
+                    {job.salary && <span className="text-sm font-medium whitespace-nowrap" style={{ color: brandColor }}>{job.salary}</span>}
+                    <button className="px-5 py-2 rounded-lg text-sm font-medium text-white whitespace-nowrap transition-opacity hover:opacity-90" style={{ backgroundColor: brandColor }}>
+                      Ứng tuyển
+                    </button>
+                  </div>
+                </article>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
     );
   }
 
   // Style 3: Minimal - Split layout with sidebar
-  return (
-    <section className="py-16 px-4" style={{ backgroundColor: `${brandColor}05` }}>
-      <div className="max-w-5xl mx-auto">
-        <div className="flex flex-col md:flex-row gap-8 md:gap-12">
-          <div className="md:w-1/3 text-center md:text-left">
-            <p className="text-sm font-medium mb-2" style={{ color: brandColor }}>TUYỂN DỤNG</p>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">{title}</h2>
-            <p className="text-slate-500">Chúng tôi đang tìm kiếm những tài năng mới</p>
+  if (style === 'minimal') {
+    return (
+      <section className="py-16 px-4" style={{ backgroundColor: `${brandColor}05` }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12">
+            <div className="md:w-1/3 text-center md:text-left">
+              <p className="text-sm font-medium mb-2 uppercase tracking-wide" style={{ color: brandColor }}>TUYỂN DỤNG</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">{title}</h2>
+              <p className="text-slate-500">Chúng tôi đang tìm kiếm những tài năng mới</p>
+            </div>
+            <div className="flex-1">
+              <ul className="space-y-3" role="list">
+                {jobs.map((job, idx) => (
+                  <li key={idx}>
+                    <article className="bg-white rounded-xl p-5 border border-slate-200 flex items-center justify-between hover:shadow-sm transition-shadow">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-slate-900 line-clamp-1">{job.title || 'Vị trí'}</h3>
+                        <span className="text-sm text-slate-500">{job.location || 'Remote'} • {job.type || 'Full-time'}</span>
+                      </div>
+                      <a href="#" className="text-sm font-medium hover:underline whitespace-nowrap ml-4" style={{ color: brandColor }}>Chi tiết →</a>
+                    </article>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-          <div className="flex-1 space-y-3">
-            {jobs.map((job, idx) => (
-              <div key={idx} className="bg-white rounded-xl p-5 border border-slate-200 flex items-center justify-between hover:shadow-sm transition-shadow">
-                <div>
-                  <h3 className="font-medium text-slate-900">{job.title || 'Vị trí'}</h3>
-                  <span className="text-sm text-slate-500">{job.location} • {job.type}</span>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 4: Table - Spreadsheet-like layout
+  if (style === 'table') {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-4 text-slate-900">{title}</h2>
+          <p className="text-center text-slate-500 mb-10">Danh sách vị trí đang tuyển</p>
+          <div className="overflow-x-auto">
+            <table className="w-full bg-white rounded-xl overflow-hidden border border-slate-200">
+              <thead>
+                <tr className="border-b" style={{ backgroundColor: `${brandColor}05` }}>
+                  <th className="text-left p-4 font-semibold text-sm text-slate-700">Vị trí</th>
+                  <th className="text-left p-4 font-semibold text-sm text-slate-700">Phòng ban</th>
+                  <th className="text-left p-4 font-semibold text-sm text-slate-700">Địa điểm</th>
+                  <th className="text-left p-4 font-semibold text-sm text-slate-700">Loại hình</th>
+                  <th className="text-left p-4 font-semibold text-sm text-slate-700">Mức lương</th>
+                  <th className="text-right p-4 font-semibold text-sm text-slate-700">Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {jobs.map((job, idx) => (
+                  <tr key={idx} className="border-b last:border-0 transition-colors hover:bg-slate-50">
+                    <td className="p-4">
+                      <h4 className="font-medium text-slate-900 line-clamp-1">{job.title || 'Vị trí tuyển dụng'}</h4>
+                    </td>
+                    <td className="p-4 text-sm text-slate-600">{job.department || 'Đang cập nhật'}</td>
+                    <td className="p-4 text-sm text-slate-600 whitespace-nowrap">{job.location || 'Remote'}</td>
+                    <td className="p-4 text-sm text-slate-600">{job.type || 'Full-time'}</td>
+                    <td className="p-4 text-sm font-medium" style={{ color: brandColor }}>{job.salary || 'Thỏa thuận'}</td>
+                    <td className="p-4 text-right">
+                      <button className="px-4 py-1.5 rounded-lg text-xs font-medium text-white transition-opacity hover:opacity-90" style={{ backgroundColor: brandColor }}>
+                        Xem chi tiết
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Featured - Highlight first position
+  if (style === 'featured') {
+    const featuredJob = jobs[0];
+    const otherJobs = jobs.slice(1, 7);
+
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-slate-900">{title}</h2>
+            <p className="text-slate-500 mt-2">Vị trí nổi bật đang tuyển gấp</p>
+          </div>
+          
+          {/* Featured Job */}
+          <article 
+            className="bg-white rounded-2xl border-2 p-8 mb-8 relative"
+            style={{ borderColor: brandColor, boxShadow: `0 8px 30px ${brandColor}20` }}
+          >
+            <div className="absolute top-4 right-4">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: brandColor }}>
+                <Star size={12} fill="currentColor" />
+                HOT
+              </span>
+            </div>
+            <div className="max-w-3xl">
+              <span className="text-xs font-medium px-2 py-1 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                {featuredJob.department || 'Đang cập nhật'}
+              </span>
+              <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mt-3 mb-2">{featuredJob.title || 'Vị trí tuyển dụng'}</h3>
+              {featuredJob.description && (
+                <p className="text-slate-600 mb-4 line-clamp-2">{featuredJob.description}</p>
+              )}
+              <div className="flex flex-wrap gap-4 text-sm text-slate-600 mb-6">
+                <div className="flex items-center gap-2">
+                  <MapPin size={16} />
+                  <span>{featuredJob.location || 'Remote'}</span>
                 </div>
-                <a href="#" className="text-sm font-medium hover:underline" style={{ color: brandColor }}>Chi tiết →</a>
+                <div className="flex items-center gap-2">
+                  <Clock size={16} />
+                  <span>{featuredJob.type || 'Full-time'}</span>
+                </div>
+                {featuredJob.salary && (
+                  <div className="flex items-center gap-2 font-medium" style={{ color: brandColor }}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{featuredJob.salary}</span>
+                  </div>
+                )}
+              </div>
+              <button className="px-8 py-3 rounded-lg font-semibold text-white transition-opacity hover:opacity-90" style={{ backgroundColor: brandColor }}>
+                Ứng tuyển ngay
+              </button>
+            </div>
+          </article>
+
+          {/* Other Jobs */}
+          {otherJobs.length > 0 && (
+            <>
+              <h4 className="font-semibold text-slate-900 mb-4 text-lg">Vị trí khác</h4>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {otherJobs.map((job, idx) => (
+                  <article 
+                    key={idx} 
+                    className="bg-white rounded-lg border border-slate-200 p-4 transition-all hover:shadow-md"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>
+                        {job.department || 'Đang cập nhật'}
+                      </span>
+                      <span className="text-xs text-slate-500">{job.type || 'Full-time'}</span>
+                    </div>
+                    <h5 className="font-medium text-slate-900 mb-2 line-clamp-2 min-h-[2.5rem]">{job.title || 'Vị trí'}</h5>
+                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
+                      <MapPin size={12} />
+                      <span>{job.location || 'Remote'}</span>
+                    </div>
+                    <a href="#" className="text-sm font-medium hover:underline" style={{ color: brandColor }}>Xem chi tiết →</a>
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Timeline - Grouped by department
+  const groupedJobs = jobs.reduce((acc, job) => {
+    const dept = job.department || 'Đang cập nhật';
+    if (!acc[dept]) acc[dept] = [];
+    acc[dept].push(job);
+    return acc;
+  }, {} as Record<string, typeof jobs>);
+
+  return (
+    <section className="py-16 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-slate-900">{title}</h2>
+          <p className="text-slate-500 mt-2">Vị trí theo phòng ban</p>
+        </div>
+        <div className="relative">
+          {/* Timeline line */}
+          <div className="absolute top-0 bottom-0 left-6 w-0.5" style={{ backgroundColor: `${brandColor}20` }} />
+          
+          <div className="space-y-8">
+            {Object.entries(groupedJobs).map(([department, deptJobs], deptIdx) => (
+              <div key={deptIdx} className="relative pl-16">
+                {/* Department badge */}
+                <div 
+                  className="absolute left-0 w-12 h-12 rounded-full border-4 bg-white flex items-center justify-center font-bold text-white text-sm z-10" 
+                  style={{ borderColor: brandColor, backgroundColor: brandColor }}
+                >
+                  {deptJobs.length}
+                </div>
+                
+                <div>
+                  <h4 className="font-bold text-lg text-slate-900 mb-4" style={{ color: brandColor }}>
+                    {department}
+                  </h4>
+                  <ul className="space-y-3" role="list">
+                    {deptJobs.map((job, jobIdx) => (
+                      <li key={jobIdx}>
+                        <article 
+                          className="bg-white rounded-xl border border-slate-200 p-4 transition-all hover:shadow-md"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <h5 className="font-semibold text-slate-900 flex-1 line-clamp-2 pr-2">{job.title || 'Vị trí'}</h5>
+                            <span className="text-xs text-slate-500 whitespace-nowrap">{job.type || 'Full-time'}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-3 text-xs text-slate-500 mb-3">
+                            <div className="flex items-center gap-1">
+                              <MapPin size={12} />
+                              <span>{job.location || 'Remote'}</span>
+                            </div>
+                            {job.salary && (
+                              <div className="flex items-center gap-1 font-medium" style={{ color: brandColor }}>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>{job.salary}</span>
+                              </div>
+                            )}
+                          </div>
+                          <button className="px-5 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ backgroundColor: brandColor }}>
+                            Ứng tuyển
+                          </button>
+                        </article>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             ))}
           </div>

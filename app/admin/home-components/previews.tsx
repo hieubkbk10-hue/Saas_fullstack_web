@@ -5,7 +5,8 @@ import {
   Monitor, Tablet, Smartphone, Eye, ChevronLeft, ChevronRight, ChevronDown,
   Image as ImageIcon, Star, Check, ExternalLink, Globe, Mail, HelpCircle,
   Phone, Package, FileText, Users, MapPin, Tag, ArrowUpRight, Briefcase, Plus, ArrowRight,
-  X, ZoomIn, Maximize2, Building2, Clock, Zap, Shield, Target, Layers, Cpu, Rocket, Settings
+  X, ZoomIn, Maximize2, Building2, Clock, Zap, Shield, Target, Layers, Cpu, Rocket, Settings,
+  Send, Facebook, MessageCircle, Instagram, Twitter, Linkedin, Youtube
 } from 'lucide-react';
 import { cn, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
 
@@ -6956,188 +6957,1005 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
 
 // ============ CASE STUDY / PROJECTS PREVIEW ============
 type ProjectItem = { id: number; title: string; category: string; image: string; description: string; link: string };
-export type CaseStudyStyle = 'grid' | 'featured' | 'list';
+export type CaseStudyStyle = 'grid' | 'featured' | 'list' | 'masonry' | 'carousel' | 'timeline';
 export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleChange }: { projects: ProjectItem[]; brandColor: string; selectedStyle?: CaseStudyStyle; onStyleChange?: (style: CaseStudyStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const previewStyle = selectedStyle || 'grid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as CaseStudyStyle);
-  const styles = [{ id: 'grid', label: 'Grid' }, { id: 'featured', label: 'Featured' }, { id: 'list', label: 'List' }];
+  const styles = [
+    { id: 'grid', label: 'Grid' }, 
+    { id: 'featured', label: 'Featured' }, 
+    { id: 'list', label: 'List' },
+    { id: 'masonry', label: 'Masonry' },
+    { id: 'carousel', label: 'Carousel' },
+    { id: 'timeline', label: 'Timeline' }
+  ];
 
-  const renderGridStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Dự án tiêu biểu</h3>
-      <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
-        {projects.slice(0, 3).map((project) => (
-          <div key={project.id} className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border group">
-            <div className="aspect-video bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
-              {project.image ? <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <ImageIcon size={32} className="text-slate-300" />}
-            </div>
-            <div className="p-4">
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{project.category || 'Category'}</span>
-              <h4 className="font-semibold mt-2 mb-1">{project.title || 'Tên dự án'}</h4>
-              <p className="text-xs text-slate-500 line-clamp-2">{project.description || 'Mô tả dự án...'}</p>
-              <button className="text-sm mt-3" style={{ color: brandColor }}>Xem chi tiết →</button>
-            </div>
-          </div>
-        ))}
+  // Dynamic Image Size Info
+  const getImageSizeInfo = () => {
+    const count = projects.length;
+    if (count === 0) return 'Chưa có dự án';
+    switch (previewStyle) {
+      case 'grid':
+        return `${count} dự án • Tất cả: 1200×800px (3:2)`;
+      case 'featured':
+        if (count === 1) return 'Dự án 1: 1200×800px (3:2)';
+        return `Dự án 1: 1200×800px • Dự án 2-${Math.min(count, 3)}: 600×600px (1:1)`;
+      case 'list':
+        return `${count} dự án • Tất cả: 800×500px (16:10)`;
+      case 'masonry':
+        return `${count} dự án • Ngang: 800×500px • Dọc: 600×900px • Vuông: 800×800px`;
+      case 'carousel':
+        return `${count} dự án • Tất cả: 1000×750px (4:3)`;
+      case 'timeline':
+        return `${count} dự án • Tất cả: 800×600px (4:3)`;
+      default:
+        return `${count} dự án`;
+    }
+  };
+
+  // Empty State
+  const EmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" 
+        style={{ backgroundColor: `${brandColor}10` }}>
+        <FileText size={32} style={{ color: brandColor }} />
       </div>
+      <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có dự án nào</h3>
+      <p className="text-sm text-slate-500">Thêm dự án đầu tiên để bắt đầu</p>
     </div>
   );
 
-  const renderFeaturedStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Dự án nổi bật</h3>
-      <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
-        <div className={cn("bg-white dark:bg-slate-800 rounded-xl overflow-hidden border group", device === 'mobile' ? '' : 'row-span-2')}>
-          <div className="aspect-video bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-            {projects[0]?.image ? <img src={projects[0].image} alt="" className="w-full h-full object-cover" /> : <ImageIcon size={48} className="text-slate-300" />}
+  // Style 1: Grid - Uniform 3-column grid with equal height cards
+  const renderGridStyle = () => {
+    const MAX_VISIBLE = device === 'mobile' ? 4 : device === 'tablet' ? 6 : 9;
+    const visibleProjects = projects.slice(0, MAX_VISIBLE);
+    const remainingCount = projects.length - MAX_VISIBLE;
+
+    return (
+      <div className={cn("px-4", device === 'mobile' ? 'py-4' : 'py-8')}>
+        <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Dự án tiêu biểu</h3>
+        {projects.length === 0 ? <EmptyState /> : (
+          <div className="max-w-6xl mx-auto">
+            <div className={cn("grid", device === 'mobile' ? 'grid-cols-1 gap-3' : device === 'tablet' ? 'grid-cols-2 gap-4' : 'grid-cols-3 gap-6')}>
+              {visibleProjects.map((project) => (
+                <div 
+                  key={project.id} 
+                  className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border group transition-all cursor-pointer"
+                  style={{ borderColor: `${brandColor}15` }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = `${brandColor}40`;
+                    e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = `${brandColor}15`;
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div className="aspect-[3/2] bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+                    {project.image ? (
+                      <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    ) : (
+                      <ImageIcon size={32} className="text-slate-300" />
+                    )}
+                  </div>
+                  <div className={cn("flex flex-col h-full", device === 'mobile' ? 'p-3' : 'p-4')}>
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full w-fit" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                      {project.category || 'Category'}
+                    </span>
+                    <h4 className="font-semibold mt-2 mb-1 line-clamp-2 min-h-[3rem]">{project.title || 'Tên dự án'}</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[2.5rem]">{project.description || 'Mô tả dự án...'}</p>
+                    <div className="mt-3 flex items-center gap-1 text-sm font-medium transition-all" style={{ color: brandColor }}>
+                      Xem chi tiết <ArrowRight size={14} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {/* "+N" pattern */}
+              {remainingCount > 0 && (
+                <div className="flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl aspect-square border" style={{ borderColor: `${brandColor}15` }}>
+                  <div className="text-center">
+                    <Plus size={32} className="mx-auto mb-2 text-slate-400" />
+                    <span className="text-lg font-bold text-slate-600 dark:text-slate-300">+{remainingCount}</span>
+                    <p className="text-xs text-slate-400">dự án khác</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="p-5">
-            <span className="text-xs font-medium" style={{ color: brandColor }}>{projects[0]?.category || 'Category'}</span>
-            <h3 className={cn("font-bold mt-1 mb-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>{projects[0]?.title || 'Dự án chính'}</h3>
-            <p className="text-sm text-slate-500">{projects[0]?.description || 'Mô tả dự án...'}</p>
+        )}
+      </div>
+    );
+  };
+
+  // Style 2: Featured - 1 large + 2 small layout
+  const renderFeaturedStyle = () => (
+    <div className={cn("px-4", device === 'mobile' ? 'py-4' : 'py-8')}>
+      <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Dự án nổi bật</h3>
+      {projects.length === 0 ? <EmptyState /> : (
+        <div className="max-w-6xl mx-auto">
+          <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
+            {/* Featured large card */}
+            {projects[0] && (
+              <div 
+                className={cn("bg-white dark:bg-slate-800 rounded-xl overflow-hidden border group transition-all cursor-pointer", 
+                  device === 'mobile' ? '' : 'row-span-2'
+                )}
+                style={{ borderColor: `${brandColor}15` }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = `${brandColor}40`;
+                  e.currentTarget.style.boxShadow = `0 8px 24px ${brandColor}15`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = `${brandColor}15`;
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div className="aspect-[3/2] bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+                  {projects[0].image ? (
+                    <img src={projects[0].image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <ImageIcon size={48} className="text-slate-300" />
+                  )}
+                </div>
+                <div className="p-5">
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                    {projects[0].category || 'Category'}
+                  </span>
+                  <h3 className={cn("font-bold mt-2 mb-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>{projects[0].title || 'Dự án chính'}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{projects[0].description || 'Mô tả dự án...'}</p>
+                </div>
+              </div>
+            )}
+            {/* Other smaller cards */}
+            {projects.slice(1, 3).map((project) => (
+              <div 
+                key={project.id} 
+                className="bg-white dark:bg-slate-800 rounded-xl p-4 border flex items-center gap-4 group transition-all cursor-pointer"
+                style={{ borderColor: `${brandColor}15` }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = `${brandColor}40`;
+                  e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = `${brandColor}15`;
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div className="w-20 h-20 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {project.image ? (
+                    <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  ) : (
+                    <ImageIcon size={24} className="text-slate-300" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                    {project.category || 'Category'}
+                  </span>
+                  <h4 className="font-semibold text-sm mt-1 truncate">{project.title || 'Tên dự án'}</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{project.description}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        {projects.slice(1, 3).map((project) => (
-          <div key={project.id} className="bg-white dark:bg-slate-800 rounded-xl p-4 border flex items-center gap-4">
-            <div className="w-20 h-20 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
-              {project.image ? <img src={project.image} alt="" className="w-full h-full object-cover" /> : <ImageIcon size={24} className="text-slate-300" />}
-            </div>
-            <div>
-              <span className="text-xs font-medium" style={{ color: brandColor }}>{project.category || 'Category'}</span>
-              <h4 className="font-semibold text-sm mt-1">{project.title || 'Tên dự án'}</h4>
-              <p className="text-xs text-slate-500 mt-1 line-clamp-1">{project.description}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      )}
     </div>
   );
 
-  const renderListStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Danh sách dự án</h3>
-      <div className="max-w-6xl mx-auto space-y-4">
-        {projects.slice(0, 4).map((project) => (
-          <div key={project.id} className={cn("bg-white dark:bg-slate-800 rounded-xl overflow-hidden border flex", device === 'mobile' ? 'flex-col' : 'items-center')}>
-            <div className={cn("bg-slate-100 dark:bg-slate-700 flex items-center justify-center", device === 'mobile' ? 'aspect-video w-full' : 'w-40 h-24 flex-shrink-0')}>
-              {project.image ? <img src={project.image} alt="" className="w-full h-full object-cover" /> : <ImageIcon size={24} className="text-slate-300" />}
+  // Style 3: List - Horizontal list layout
+  const renderListStyle = () => {
+    const MAX_VISIBLE = device === 'mobile' ? 4 : 6;
+    const visibleProjects = projects.slice(0, MAX_VISIBLE);
+    const remainingCount = projects.length - MAX_VISIBLE;
+
+    return (
+      <div className={cn("px-4", device === 'mobile' ? 'py-4' : 'py-8')}>
+        <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Danh sách dự án</h3>
+        {projects.length === 0 ? <EmptyState /> : (
+          <div className="max-w-6xl mx-auto">
+            <div className="space-y-3">
+              {visibleProjects.map((project) => (
+                <div 
+                  key={project.id} 
+                  className={cn("bg-white dark:bg-slate-800 rounded-xl overflow-hidden border flex group transition-all cursor-pointer", 
+                    device === 'mobile' ? 'flex-col' : 'items-center'
+                  )}
+                  style={{ borderColor: `${brandColor}15` }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = `${brandColor}40`;
+                    e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = `${brandColor}15`;
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div className={cn("bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden", 
+                    device === 'mobile' ? 'aspect-video w-full' : 'w-40 h-24 flex-shrink-0'
+                  )}>
+                    {project.image ? (
+                      <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    ) : (
+                      <ImageIcon size={24} className="text-slate-300" />
+                    )}
+                  </div>
+                  <div className="p-4 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                        {project.category || 'Category'}
+                      </span>
+                    </div>
+                    <h4 className="font-semibold truncate">{project.title || 'Tên dự án'}</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{project.description || 'Mô tả...'}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="p-4 flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{project.category || 'Category'}</span>
+            {remainingCount > 0 && (
+              <div className="text-center mt-4">
+                <span className="text-sm font-medium" style={{ color: brandColor }}>+{remainingCount} dự án khác</span>
               </div>
-              <h4 className="font-semibold">{project.title || 'Tên dự án'}</h4>
-              <p className="text-xs text-slate-500 mt-1">{project.description || 'Mô tả...'}</p>
-            </div>
+            )}
           </div>
-        ))}
+        )}
       </div>
-    </div>
-  );
+    );
+  };
+
+  // Style 4: Masonry - Pinterest-style layout
+  const renderMasonryStyle = () => {
+    const MAX_VISIBLE = device === 'mobile' ? 6 : 9;
+    const visibleProjects = projects.slice(0, MAX_VISIBLE);
+    const remainingCount = projects.length - MAX_VISIBLE;
+
+    return (
+      <div className={cn("px-4", device === 'mobile' ? 'py-4' : 'py-8')}>
+        <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Portfolio Masonry</h3>
+        {projects.length === 0 ? <EmptyState /> : (
+          <div className="max-w-6xl mx-auto">
+            <div className={cn("columns-1 gap-4", device === 'tablet' && 'columns-2', device === 'desktop' && 'columns-3')}>
+              {visibleProjects.map((project, idx) => {
+                const heights = ['aspect-[4/5]', 'aspect-[4/3]', 'aspect-square'];
+                const height = heights[idx % 3];
+                return (
+                  <div 
+                    key={project.id} 
+                    className="break-inside-avoid mb-4 bg-white dark:bg-slate-800 rounded-xl overflow-hidden border group transition-all cursor-pointer"
+                    style={{ borderColor: `${brandColor}15` }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = `${brandColor}40`;
+                      e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = `${brandColor}15`;
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    <div className={cn(height, "bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden")}>
+                      {project.image ? (
+                        <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      ) : (
+                        <ImageIcon size={32} className="text-slate-300" />
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                        {project.category || 'Category'}
+                      </span>
+                      <h4 className="font-semibold text-sm mt-2 line-clamp-2">{project.title || 'Tên dự án'}</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{project.description || 'Mô tả...'}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {remainingCount > 0 && (
+              <div className="text-center mt-6">
+                <span className="text-sm font-medium" style={{ color: brandColor }}>+{remainingCount} dự án khác</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Style 5: Carousel - Horizontal scroll carousel
+  const renderCarouselStyle = () => {
+    const itemsPerView = device === 'mobile' ? 1 : device === 'tablet' ? 2 : 3;
+    const maxIndex = Math.max(0, projects.length - itemsPerView);
+
+    return (
+      <div className={cn("px-4", device === 'mobile' ? 'py-4' : 'py-8')}>
+        <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Portfolio Carousel</h3>
+        {projects.length === 0 ? <EmptyState /> : (
+          <div className="max-w-6xl mx-auto relative">
+            {/* Navigation Buttons */}
+            {projects.length > itemsPerView && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setCarouselIndex(Math.max(0, carouselIndex - 1))}
+                  disabled={carouselIndex === 0}
+                  className="absolute -left-2 md:-left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-lg border flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
+                  style={{ borderColor: `${brandColor}20` }}
+                >
+                  <ChevronLeft size={20} style={{ color: brandColor }} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCarouselIndex(Math.min(maxIndex, carouselIndex + 1))}
+                  disabled={carouselIndex >= maxIndex}
+                  className="absolute -right-2 md:-right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-lg border flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
+                  style={{ borderColor: `${brandColor}20` }}
+                >
+                  <ChevronRight size={20} style={{ color: brandColor }} />
+                </button>
+              </>
+            )}
+            {/* Carousel Container */}
+            <div className="overflow-hidden mx-4 md:mx-8">
+              <div 
+                className="flex transition-transform duration-300 ease-out gap-4" 
+                style={{ transform: `translateX(-${carouselIndex * (100 / itemsPerView)}%)` }}
+              >
+                {projects.map((project) => (
+                  <div 
+                    key={project.id} 
+                    className="flex-shrink-0 bg-white dark:bg-slate-800 rounded-xl overflow-hidden border group transition-all"
+                    style={{ 
+                      width: `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 16 / itemsPerView}px)`,
+                      borderColor: `${brandColor}15`
+                    }}
+                  >
+                    <div className="aspect-[4/3] bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+                      {project.image ? (
+                        <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      ) : (
+                        <ImageIcon size={32} className="text-slate-300" />
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                        {project.category || 'Category'}
+                      </span>
+                      <h4 className="font-semibold mt-2 line-clamp-2 min-h-[3rem]">{project.title || 'Tên dự án'}</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 min-h-[2.5rem]">{project.description || 'Mô tả...'}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Dots Indicator */}
+            {projects.length > itemsPerView && (
+              <div className="flex justify-center gap-2 mt-4">
+                {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
+                  <button 
+                    key={idx} 
+                    type="button"
+                    onClick={() => setCarouselIndex(idx)} 
+                    className={cn("h-2 rounded-full transition-all", carouselIndex === idx ? 'w-6' : 'w-2')} 
+                    style={{ backgroundColor: carouselIndex === idx ? brandColor : `${brandColor}30` }} 
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Style 6: Timeline - Vertical timeline với project milestones
+  const renderTimelineStyle = () => {
+    const MAX_VISIBLE = device === 'mobile' ? 4 : 6;
+    const visibleProjects = projects.slice(0, MAX_VISIBLE);
+    const remainingCount = projects.length - MAX_VISIBLE;
+
+    return (
+      <div className={cn("px-4", device === 'mobile' ? 'py-4' : 'py-8')}>
+        <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Timeline Dự án</h3>
+        {projects.length === 0 ? <EmptyState /> : (
+          <div className="max-w-4xl mx-auto relative">
+            {/* Vertical Line */}
+            <div 
+              className={cn("absolute top-0 bottom-0 w-0.5", device === 'mobile' ? 'left-4' : 'left-1/2 -translate-x-px')} 
+              style={{ backgroundColor: `${brandColor}20` }} 
+            />
+            <div className="space-y-6 md:space-y-8">
+              {visibleProjects.map((project, idx) => (
+                <div 
+                  key={project.id} 
+                  className={cn("relative flex items-start", device === 'mobile' ? 'pl-12' : idx % 2 === 0 ? 'flex-row' : 'flex-row-reverse')}
+                >
+                  {/* Dot */}
+                  <div 
+                    className={cn("absolute w-8 h-8 rounded-full border-4 bg-white dark:bg-slate-900 flex items-center justify-center text-xs font-bold z-10", 
+                      device === 'mobile' ? 'left-0' : 'left-1/2 -translate-x-1/2'
+                    )} 
+                    style={{ borderColor: brandColor, color: brandColor }}
+                  >
+                    {idx + 1}
+                  </div>
+                  {/* Content Card */}
+                  <div 
+                    className={cn("bg-white dark:bg-slate-800 rounded-xl overflow-hidden border transition-all", 
+                      device === 'mobile' ? 'w-full' : 'w-5/12'
+                    )}
+                    style={{ borderColor: `${brandColor}15` }}
+                  >
+                    <div className="aspect-[4/3] bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+                      {project.image ? (
+                        <img src={project.image} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <ImageIcon size={32} className="text-slate-300" />
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                        {project.category || 'Category'}
+                      </span>
+                      <h4 className="font-bold text-slate-900 dark:text-slate-100 mt-2 mb-1 line-clamp-2">{project.title || 'Tên dự án'}</h4>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">{project.description || 'Mô tả...'}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {remainingCount > 0 && (
+              <div className="text-center mt-6">
+                <span className="text-sm font-medium" style={{ color: brandColor }}>+{remainingCount} dự án khác</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
-    <PreviewWrapper title="Preview Projects" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`${projects.length} dự án`}>
+    <PreviewWrapper 
+      title="Preview Projects" 
+      device={device} 
+      setDevice={setDevice} 
+      previewStyle={previewStyle} 
+      setPreviewStyle={setPreviewStyle} 
+      styles={styles} 
+      info={getImageSizeInfo()}
+    >
       <BrowserFrame url="yoursite.com/projects">
         {previewStyle === 'grid' && renderGridStyle()}
         {previewStyle === 'featured' && renderFeaturedStyle()}
         {previewStyle === 'list' && renderListStyle()}
+        {previewStyle === 'masonry' && renderMasonryStyle()}
+        {previewStyle === 'carousel' && renderCarouselStyle()}
+        {previewStyle === 'timeline' && renderTimelineStyle()}
       </BrowserFrame>
+      
+      {/* Image Guidelines - BẮT BUỘC */}
+      <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+        <div className="flex items-start gap-2">
+          <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
+          <div className="text-xs text-slate-600 dark:text-slate-400">
+            {previewStyle === 'grid' && (
+              <p><strong>1200×800px</strong> (3:2) • Grid layout đều, hover scale effect</p>
+            )}
+            {previewStyle === 'featured' && (
+              <p><strong>Dự án chính:</strong> 1200×800px (3:2) • <strong>Dự án phụ:</strong> 600×600px (1:1)</p>
+            )}
+            {previewStyle === 'list' && (
+              <p><strong>800×500px</strong> (16:10) • Horizontal list, thumb bên trái</p>
+            )}
+            {previewStyle === 'masonry' && (
+              <p><strong>Pinterest-style:</strong> Ngang 800×500px • Dọc 600×900px • Vuông 800×800px</p>
+            )}
+            {previewStyle === 'carousel' && (
+              <p><strong>1000×750px</strong> (4:3) • Carousel với navigation buttons & dots</p>
+            )}
+            {previewStyle === 'timeline' && (
+              <p><strong>800×600px</strong> (4:3) • Timeline dọc, alternate left-right</p>
+            )}
+          </div>
+        </div>
+      </div>
     </PreviewWrapper>
   );
 };
 
 // ============ CAREER PREVIEW ============
+// 6 Professional Styles: Cards, List, Minimal, Table, Featured, Timeline
+// Best Practices: Accessibility (semantic HTML, ARIA), Equal Height Cards, Line Clamp, Edge Cases
 type JobPosition = { id: number; title: string; department: string; location: string; type: string; salary: string; description: string };
-export type CareerStyle = 'cards' | 'list' | 'minimal';
+export type CareerStyle = 'cards' | 'list' | 'minimal' | 'table' | 'featured' | 'timeline';
 export const CareerPreview = ({ jobs, brandColor, selectedStyle, onStyleChange }: { jobs: JobPosition[]; brandColor: string; selectedStyle?: CareerStyle; onStyleChange?: (style: CareerStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'cards';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as CareerStyle);
-  const styles = [{ id: 'cards', label: 'Cards' }, { id: 'list', label: 'List' }, { id: 'minimal', label: 'Minimal' }];
+  
+  const styles = [
+    { id: 'cards', label: 'Cards' }, 
+    { id: 'list', label: 'List' }, 
+    { id: 'minimal', label: 'Minimal' },
+    { id: 'table', label: 'Table' },
+    { id: 'featured', label: 'Featured' },
+    { id: 'timeline', label: 'Timeline' }
+  ];
 
-  const renderCardsStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <div className="text-center mb-6">
-        <h3 className={cn("font-bold", device === 'mobile' ? 'text-lg' : 'text-xl')}>Cơ hội nghề nghiệp</h3>
-        <p className="text-sm text-slate-500 mt-1">Tham gia đội ngũ của chúng tôi</p>
+  // Dynamic info bar - shows job counts by type or department
+  const getJobsInfo = () => {
+    const count = jobs.length;
+    if (count === 0) return 'Chưa có vị trí';
+    
+    const typeCount = jobs.reduce((acc, job) => {
+      const type = job.type || 'Full-time';
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const typeSummary = Object.entries(typeCount).slice(0, 3).map(([type, cnt]) => `${type} (${cnt})`).join(', ');
+    return count <= 3 ? `${count} vị trí • ${typeSummary}` : `${count} vị trí`;
+  };
+
+  // Empty State Component
+  const EmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+        <Briefcase size={32} style={{ color: brandColor }} />
       </div>
-      <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
-        {jobs.slice(0, 3).map((job) => (
-          <div key={job.id} className="bg-white dark:bg-slate-800 rounded-xl p-5 border hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between mb-3">
-              <span className="text-xs font-medium px-2 py-1 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{job.department || 'Department'}</span>
-              <span className="text-xs text-slate-500">{job.type || 'Full-time'}</span>
-            </div>
-            <h4 className="font-semibold mb-2">{job.title || 'Vị trí tuyển dụng'}</h4>
-            <div className="space-y-1 text-xs text-slate-500 mb-3">
-              <div className="flex items-center gap-1"><MapPin size={12} /> {job.location || 'Hà Nội'}</div>
-              {job.salary && <div className="flex items-center gap-1"><Tag size={12} /> {job.salary}</div>}
-            </div>
-            <button className="w-full py-2 rounded-lg text-sm font-medium text-white" style={{ backgroundColor: brandColor }}>Ứng tuyển ngay</button>
-          </div>
-        ))}
-      </div>
+      <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có vị trí tuyển dụng</h3>
+      <p className="text-sm text-slate-500">Thêm vị trí đầu tiên để bắt đầu</p>
     </div>
   );
 
-  const renderListStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
-      <div className="text-center mb-6">
-        <h3 className={cn("font-bold", device === 'mobile' ? 'text-lg' : 'text-xl')}>Vị trí đang tuyển</h3>
-      </div>
-      <div className="max-w-4xl mx-auto space-y-3">
-        {jobs.slice(0, 4).map((job) => (
-          <div key={job.id} className={cn("bg-white dark:bg-slate-800 rounded-xl p-4 border flex items-center justify-between", device === 'mobile' ? 'flex-col gap-3 text-center' : '')}>
-            <div>
-              <h4 className="font-semibold">{job.title || 'Vị trí'}</h4>
-              <div className="flex items-center gap-3 text-xs text-slate-500 mt-1">
-                <span>{job.department || 'Department'}</span>
-                <span>•</span>
-                <span>{job.location || 'Location'}</span>
-                <span>•</span>
-                <span>{job.type || 'Full-time'}</span>
+  // Header Component
+  const CareerHeader = ({ subtitle }: { subtitle?: string }) => (
+    <div className="text-center mb-8">
+      <h3 className={cn("font-bold text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl')}>
+        Cơ hội nghề nghiệp
+      </h3>
+      {subtitle && <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">{subtitle}</p>}
+    </div>
+  );
+
+  // Style 1: Cards - Grid layout với hover effects (IMPROVED: Equal Height + Line Clamp)
+  const renderCardsStyle = () => {
+    const MAX_DISPLAY = device === 'mobile' ? 4 : 6;
+    const visibleJobs = jobs.slice(0, MAX_DISPLAY);
+    const remainingCount = Math.max(0, jobs.length - MAX_DISPLAY);
+
+    // Edge case: 1-2 items
+    if (jobs.length === 1) {
+      return (
+        <div className={cn("px-4", device === 'mobile' ? 'py-6' : 'py-10 md:py-16')}>
+          <CareerHeader subtitle="Tham gia đội ngũ của chúng tôi" />
+          <div className="max-w-md mx-auto">
+            <JobCard job={jobs[0]} brandColor={brandColor} device={device} />
+          </div>
+        </div>
+      );
+    }
+
+    if (jobs.length === 2) {
+      return (
+        <div className={cn("px-4", device === 'mobile' ? 'py-6' : 'py-10 md:py-16')}>
+          <CareerHeader subtitle="Tham gia đội ngũ của chúng tôi" />
+          <div className="max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+            {jobs.map(job => <JobCard key={job.id} job={job} brandColor={brandColor} device={device} />)}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={cn("px-4", device === 'mobile' ? 'py-6' : 'py-10 md:py-16')}>
+        <CareerHeader subtitle="Tham gia đội ngũ của chúng tôi" />
+        {jobs.length === 0 ? <EmptyState /> : (
+          <>
+            <div className={cn("grid gap-4 max-w-6xl mx-auto", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+              {visibleJobs.map((job) => <JobCard key={job.id} job={job} brandColor={brandColor} device={device} />)}
+            </div>
+            {remainingCount > 0 && (
+              <div className="text-center mt-6">
+                <span className="text-sm font-medium" style={{ color: brandColor }}>+{remainingCount} vị trí khác</span>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              {job.salary && <span className="text-sm font-medium" style={{ color: brandColor }}>{job.salary}</span>}
-              <button className="px-4 py-2 rounded-lg text-sm text-white" style={{ backgroundColor: brandColor }}>Ứng tuyển</button>
-            </div>
-          </div>
-        ))}
+            )}
+          </>
+        )}
       </div>
-    </div>
+    );
+  };
+
+  // Job Card Component - Reusable with Equal Height
+  const JobCard = ({ job, brandColor, device }: { job: JobPosition; brandColor: string; device: PreviewDevice }) => (
+    <article 
+      className="bg-white dark:bg-slate-800 rounded-xl border flex flex-col h-full transition-all"
+      style={{ borderColor: `${brandColor}15` }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = `${brandColor}40`;
+        e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}15`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = `${brandColor}15`;
+        e.currentTarget.style.boxShadow = 'none';
+      }}
+    >
+      <div className={cn("p-4", device === 'mobile' ? 'p-4' : 'p-5')}>
+        <div className="flex items-start justify-between mb-3">
+          <span className="text-xs font-medium px-2 py-1 rounded whitespace-nowrap" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+            {job.department || 'Đang cập nhật'}
+          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">{job.type || 'Full-time'}</span>
+        </div>
+        <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2 line-clamp-2 min-h-[2.5rem]">
+          {job.title || 'Vị trí tuyển dụng'}
+        </h4>
+        {job.description && (
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 line-clamp-2 min-h-[2rem]">
+            {job.description}
+          </p>
+        )}
+        <div className="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 mb-4">
+          <div className="flex items-center gap-1.5">
+            <MapPin size={12} className="flex-shrink-0" />
+            <span className="truncate">{job.location || 'Remote'}</span>
+          </div>
+          {job.salary && (
+            <div className="flex items-center gap-1.5">
+              <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="font-medium" style={{ color: brandColor }}>{job.salary}</span>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className={cn("mt-auto border-t", device === 'mobile' ? 'p-3' : 'p-4')} style={{ borderColor: `${brandColor}10` }}>
+        <button 
+          className={cn("w-full rounded-lg font-medium text-white transition-opacity hover:opacity-90", device === 'mobile' ? 'py-2 text-sm' : 'py-2.5 text-sm')} 
+          style={{ backgroundColor: brandColor }}
+        >
+          Ứng tuyển ngay
+        </button>
+      </div>
+    </article>
   );
 
+  // Style 2: List - Compact horizontal layout
+  const renderListStyle = () => {
+    const MAX_DISPLAY = device === 'mobile' ? 5 : 8;
+    const visibleJobs = jobs.slice(0, MAX_DISPLAY);
+    const remainingCount = Math.max(0, jobs.length - MAX_DISPLAY);
+
+    return (
+      <div className={cn("px-4", device === 'mobile' ? 'py-6' : 'py-10 md:py-16')}>
+        <CareerHeader />
+        {jobs.length === 0 ? <EmptyState /> : (
+          <div className="max-w-4xl mx-auto">
+            <ul className="space-y-3" role="list" aria-label="Danh sách vị trí tuyển dụng">
+              {visibleJobs.map((job) => (
+                <li key={job.id}>
+                  <article 
+                    className={cn("bg-white dark:bg-slate-800 rounded-xl border flex items-center justify-between transition-all", device === 'mobile' ? 'flex-col gap-3 text-center p-4' : 'p-5')}
+                    style={{ borderColor: `${brandColor}15` }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = `${brandColor}30`;
+                      e.currentTarget.style.boxShadow = `0 2px 8px ${brandColor}10`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = `${brandColor}15`;
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-slate-900 dark:text-slate-100 line-clamp-1">{job.title || 'Vị trí'}</h4>
+                      <div className={cn("flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-1", device === 'mobile' ? 'flex-wrap justify-center' : '')}>
+                        <span className="whitespace-nowrap">{job.department || 'Đang cập nhật'}</span>
+                        <span className="hidden md:inline">•</span>
+                        <span className="whitespace-nowrap">{job.location || 'Remote'}</span>
+                        <span className="hidden md:inline">•</span>
+                        <span className="whitespace-nowrap">{job.type || 'Full-time'}</span>
+                      </div>
+                    </div>
+                    <div className={cn("flex items-center gap-3 flex-shrink-0", device === 'mobile' ? 'w-full' : '')}>
+                      {job.salary && <span className="text-sm font-medium whitespace-nowrap" style={{ color: brandColor }}>{job.salary}</span>}
+                      <button className={cn("rounded-lg font-medium text-white whitespace-nowrap", device === 'mobile' ? 'flex-1 py-2.5 text-sm' : 'px-5 py-2 text-sm')} style={{ backgroundColor: brandColor }}>
+                        Ứng tuyển
+                      </button>
+                    </div>
+                  </article>
+                </li>
+              ))}
+            </ul>
+            {remainingCount > 0 && (
+              <div className="text-center mt-6">
+                <span className="text-sm font-medium" style={{ color: brandColor }}>+{remainingCount} vị trí khác</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Style 3: Minimal - Split layout with sidebar
   const renderMinimalStyle = () => (
-    <div className={cn("py-10 px-6", device === 'mobile' ? 'py-6 px-4' : '')} style={{ backgroundColor: `${brandColor}05` }}>
-      <div className={cn("max-w-4xl mx-auto", device === 'mobile' ? '' : 'flex gap-8')}>
-        <div className={cn(device === 'mobile' ? 'text-center mb-6' : 'w-1/3')}>
-          <p className="text-sm font-medium mb-2" style={{ color: brandColor }}>TUYỂN DỤNG</p>
-          <h3 className={cn("font-bold mb-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>Gia nhập đội ngũ</h3>
-          <p className="text-sm text-slate-500">Chúng tôi đang tìm kiếm những tài năng mới</p>
+    <div className={cn("px-4", device === 'mobile' ? 'py-6' : 'py-10 md:py-16')} style={{ backgroundColor: `${brandColor}05` }}>
+      {jobs.length === 0 ? (
+        <div className="max-w-5xl mx-auto">
+          <EmptyState />
         </div>
-        <div className="flex-1 space-y-3">
-          {jobs.slice(0, 3).map((job) => (
-            <div key={job.id} className="bg-white dark:bg-slate-800 rounded-xl p-4 border flex items-center justify-between">
-              <div>
-                <h4 className="font-medium">{job.title || 'Vị trí'}</h4>
-                <span className="text-xs text-slate-500">{job.location} • {job.type}</span>
-              </div>
-              <button className="text-sm" style={{ color: brandColor }}>Chi tiết →</button>
+      ) : (
+        <div className="max-w-5xl mx-auto">
+          <div className={cn("flex gap-8", device === 'mobile' ? 'flex-col' : 'md:flex-row md:gap-12')}>
+            <div className={cn("text-center md:text-left", device === 'mobile' ? 'mb-6' : 'md:w-1/3')}>
+              <p className="text-sm font-medium mb-2 uppercase tracking-wide" style={{ color: brandColor }}>TUYỂN DỤNG</p>
+              <h3 className={cn("font-bold text-slate-900 dark:text-slate-100 mb-3", device === 'mobile' ? 'text-lg' : 'text-2xl')}>
+                Gia nhập đội ngũ
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Chúng tôi đang tìm kiếm những tài năng mới</p>
             </div>
-          ))}
+            <div className="flex-1">
+              <ul className="space-y-3" role="list">
+                {jobs.slice(0, 6).map((job) => (
+                  <li key={job.id}>
+                    <article className="bg-white dark:bg-slate-800 rounded-xl p-4 md:p-5 border flex items-center justify-between transition-shadow hover:shadow-sm" style={{ borderColor: `${brandColor}15` }}>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">{job.title || 'Vị trí'}</h4>
+                        <span className="text-sm text-slate-500 dark:text-slate-400">{job.location || 'Remote'} • {job.type || 'Full-time'}</span>
+                      </div>
+                      <a href="#" className="text-sm font-medium hover:underline whitespace-nowrap ml-4" style={{ color: brandColor }}>Chi tiết →</a>
+                    </article>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
+
+  // Style 4: Table - Spreadsheet-like layout (NEW)
+  const renderTableStyle = () => (
+    <div className={cn("px-4", device === 'mobile' ? 'py-6' : 'py-10 md:py-16')}>
+      <CareerHeader subtitle="Danh sách vị trí đang tuyển" />
+      {jobs.length === 0 ? <EmptyState /> : (
+        <div className="max-w-6xl mx-auto overflow-x-auto">
+          <table className="w-full bg-white dark:bg-slate-800 rounded-xl overflow-hidden border" style={{ borderColor: `${brandColor}15` }}>
+            <thead>
+              <tr className="border-b" style={{ backgroundColor: `${brandColor}05`, borderColor: `${brandColor}15` }}>
+                <th className="text-left p-4 font-semibold text-sm text-slate-700 dark:text-slate-300">Vị trí</th>
+                {device !== 'mobile' && <th className="text-left p-4 font-semibold text-sm text-slate-700 dark:text-slate-300">Phòng ban</th>}
+                <th className="text-left p-4 font-semibold text-sm text-slate-700 dark:text-slate-300">Địa điểm</th>
+                {device !== 'mobile' && <th className="text-left p-4 font-semibold text-sm text-slate-700 dark:text-slate-300">Loại hình</th>}
+                {device !== 'mobile' && <th className="text-left p-4 font-semibold text-sm text-slate-700 dark:text-slate-300">Mức lương</th>}
+                <th className="text-right p-4 font-semibold text-sm text-slate-700 dark:text-slate-300">Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.slice(0, 10).map((job, idx) => (
+                <tr key={job.id} className="border-b last:border-0 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/50" style={{ borderColor: `${brandColor}10` }}>
+                  <td className="p-4">
+                    <h4 className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">{job.title || 'Vị trí tuyển dụng'}</h4>
+                    {device === 'mobile' && job.description && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{job.description}</p>
+                    )}
+                  </td>
+                  {device !== 'mobile' && <td className="p-4 text-sm text-slate-600 dark:text-slate-400">{job.department || 'Đang cập nhật'}</td>}
+                  <td className="p-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{job.location || 'Remote'}</td>
+                  {device !== 'mobile' && <td className="p-4 text-sm text-slate-600 dark:text-slate-400">{job.type || 'Full-time'}</td>}
+                  {device !== 'mobile' && <td className="p-4 text-sm font-medium" style={{ color: brandColor }}>{job.salary || 'Thỏa thuận'}</td>}
+                  <td className="p-4 text-right">
+                    <button className="px-4 py-1.5 rounded-lg text-xs font-medium text-white whitespace-nowrap" style={{ backgroundColor: brandColor }}>
+                      {device === 'mobile' ? 'Ứng tuyển' : 'Xem chi tiết'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+
+  // Style 5: Featured - Highlight 1-2 hot positions (NEW)
+  const renderFeaturedStyle = () => {
+    if (jobs.length === 0) {
+      return (
+        <div className={cn("px-4", device === 'mobile' ? 'py-6' : 'py-10 md:py-16')}>
+          <EmptyState />
+        </div>
+      );
+    }
+
+    const featuredJob = jobs[0];
+    const otherJobs = jobs.slice(1, 7);
+
+    return (
+      <div className={cn("px-4", device === 'mobile' ? 'py-6' : 'py-10 md:py-16')}>
+        <CareerHeader subtitle="Vị trí nổi bật đang tuyển gấp" />
+        <div className="max-w-6xl mx-auto">
+          {/* Featured Job - Large Card */}
+          <article 
+            className="bg-white dark:bg-slate-800 rounded-2xl border-2 p-6 md:p-8 mb-6 relative overflow-hidden"
+            style={{ borderColor: brandColor, boxShadow: `0 8px 30px ${brandColor}20` }}
+          >
+            <div className="absolute top-4 right-4">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-white" style={{ backgroundColor: brandColor }}>
+                <Star size={12} fill="currentColor" />
+                HOT
+              </span>
+            </div>
+            <div className="max-w-3xl">
+              <span className="text-xs font-medium px-2 py-1 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                {featuredJob.department || 'Đang cập nhật'}
+              </span>
+              <h3 className={cn("font-bold text-slate-900 dark:text-slate-100 mt-3 mb-2", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+                {featuredJob.title || 'Vị trí tuyển dụng'}
+              </h3>
+              {featuredJob.description && (
+                <p className="text-slate-600 dark:text-slate-400 mb-4 line-clamp-2">{featuredJob.description}</p>
+              )}
+              <div className="flex flex-wrap gap-4 text-sm text-slate-600 dark:text-slate-400 mb-6">
+                <div className="flex items-center gap-2">
+                  <MapPin size={16} />
+                  <span>{featuredJob.location || 'Remote'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock size={16} />
+                  <span>{featuredJob.type || 'Full-time'}</span>
+                </div>
+                {featuredJob.salary && (
+                  <div className="flex items-center gap-2 font-medium" style={{ color: brandColor }}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{featuredJob.salary}</span>
+                  </div>
+                )}
+              </div>
+              <button className="px-8 py-3 rounded-lg font-semibold text-white transition-opacity hover:opacity-90" style={{ backgroundColor: brandColor }}>
+                Ứng tuyển ngay
+              </button>
+            </div>
+          </article>
+
+          {/* Other Jobs - Compact Grid */}
+          {otherJobs.length > 0 && (
+            <>
+              <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-4 text-lg">Vị trí khác</h4>
+              <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+                {otherJobs.map((job) => (
+                  <article 
+                    key={job.id} 
+                    className="bg-white dark:bg-slate-800 rounded-lg border p-4 transition-all hover:shadow-md"
+                    style={{ borderColor: `${brandColor}15` }}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>
+                        {job.department || 'Đang cập nhật'}
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{job.type || 'Full-time'}</span>
+                    </div>
+                    <h5 className="font-medium text-slate-900 dark:text-slate-100 mb-2 line-clamp-2 min-h-[2.5rem]">{job.title || 'Vị trí'}</h5>
+                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-3">
+                      <MapPin size={12} />
+                      <span>{job.location || 'Remote'}</span>
+                    </div>
+                    <a href="#" className="text-sm font-medium hover:underline" style={{ color: brandColor }}>Xem chi tiết →</a>
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Style 6: Timeline - Grouped by department (NEW)
+  const renderTimelineStyle = () => {
+    if (jobs.length === 0) {
+      return (
+        <div className={cn("px-4", device === 'mobile' ? 'py-6' : 'py-10 md:py-16')}>
+          <EmptyState />
+        </div>
+      );
+    }
+
+    // Group jobs by department
+    const groupedJobs = jobs.reduce((acc, job) => {
+      const dept = job.department || 'Đang cập nhật';
+      if (!acc[dept]) acc[dept] = [];
+      acc[dept].push(job);
+      return acc;
+    }, {} as Record<string, JobPosition[]>);
+
+    return (
+      <div className={cn("px-4", device === 'mobile' ? 'py-6' : 'py-10 md:py-16')}>
+        <CareerHeader subtitle="Vị trí theo phòng ban" />
+        <div className="max-w-4xl mx-auto relative">
+          {/* Vertical timeline line */}
+          <div className={cn("absolute top-0 bottom-0 w-0.5", device === 'mobile' ? 'left-4' : 'left-6')} style={{ backgroundColor: `${brandColor}20` }} />
+          
+          <div className="space-y-8">
+            {Object.entries(groupedJobs).map(([department, deptJobs], deptIdx) => (
+              <div key={deptIdx} className={cn("relative", device === 'mobile' ? 'pl-12' : 'pl-16')}>
+                {/* Department Dot */}
+                <div 
+                  className={cn("absolute rounded-full border-4 bg-white dark:bg-slate-900 flex items-center justify-center font-bold text-white z-10", device === 'mobile' ? 'w-8 h-8 left-0 text-xs' : 'w-12 h-12 left-0 text-sm')} 
+                  style={{ borderColor: brandColor, backgroundColor: brandColor }}
+                >
+                  {deptJobs.length}
+                </div>
+                
+                {/* Department Content */}
+                <div>
+                  <h4 className={cn("font-bold text-slate-900 dark:text-slate-100 mb-4", device === 'mobile' ? 'text-base' : 'text-lg')} style={{ color: brandColor }}>
+                    {department}
+                  </h4>
+                  <ul className="space-y-3" role="list">
+                    {deptJobs.map((job) => (
+                      <li key={job.id}>
+                        <article 
+                          className="bg-white dark:bg-slate-800 rounded-xl border p-4 transition-all hover:shadow-md"
+                          style={{ borderColor: `${brandColor}15` }}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <h5 className="font-semibold text-slate-900 dark:text-slate-100 flex-1 line-clamp-2 pr-2">{job.title || 'Vị trí'}</h5>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{job.type || 'Full-time'}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400 mb-3">
+                            <div className="flex items-center gap-1">
+                              <MapPin size={12} />
+                              <span>{job.location || 'Remote'}</span>
+                            </div>
+                            {job.salary && (
+                              <div className="flex items-center gap-1 font-medium" style={{ color: brandColor }}>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>{job.salary}</span>
+                              </div>
+                            )}
+                          </div>
+                          <button className={cn("rounded-lg font-medium text-white", device === 'mobile' ? 'w-full py-2 text-sm' : 'px-5 py-2 text-sm')} style={{ backgroundColor: brandColor }}>
+                            Ứng tuyển
+                          </button>
+                        </article>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <PreviewWrapper title="Preview Careers" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`${jobs.length} vị trí`}>
+    <PreviewWrapper 
+      title="Preview Careers" 
+      device={device} 
+      setDevice={setDevice} 
+      previewStyle={previewStyle} 
+      setPreviewStyle={setPreviewStyle} 
+      styles={styles} 
+      info={getJobsInfo()}
+    >
       <BrowserFrame url="yoursite.com/careers">
         {previewStyle === 'cards' && renderCardsStyle()}
         {previewStyle === 'list' && renderListStyle()}
         {previewStyle === 'minimal' && renderMinimalStyle()}
+        {previewStyle === 'table' && renderTableStyle()}
+        {previewStyle === 'featured' && renderFeaturedStyle()}
+        {previewStyle === 'timeline' && renderTimelineStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );
