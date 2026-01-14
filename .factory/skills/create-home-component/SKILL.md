@@ -911,34 +911,183 @@ const getImageSizeInfo = () => {
 | Gradient fade không đẹp | Gradient nằm TRONG container overflow-hidden |
 | Animation giật | Duplicate items `[...items, ...items]` để infinite smooth |
 
-### Carousel Horizontal Scroll (Non-animated)
+### Carousel Horizontal Scroll (COMPLETE PATTERN)
+
+**Carousel chuẩn cần có:**
+1. Navigation buttons (< >) 
+2. Mouse drag scroll trên desktop
+3. Touch scroll trên mobile
+4. Hidden scrollbar
+5. Fade edges
+6. Snap-to-card
 
 ```tsx
-// Carousel scroll (không phải marquee animation)
-<div className="max-w-7xl mx-auto px-4">
-  <div className="relative overflow-hidden">
-    {/* Fade edges */}
-    <div className="absolute left-0 ... bg-gradient-to-r from-white to-transparent z-10" />
-    <div className="absolute right-0 ... bg-gradient-to-l from-white to-transparent z-10" />
-    
-    {/* Scrollable container */}
-    <div 
-      className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth"
-      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-    >
-      {items.map(item => (
-        <div key={item.id} className="flex-shrink-0 snap-start w-[280px]">
-          {/* Card */}
+// Carousel scroll hoàn chỉnh với navigation + mouse drag
+const MyCarousel = ({ items, brandColor }: Props) => {
+  const carouselId = `carousel-${Math.random().toString(36).substr(2, 9)}`;
+  const cardWidth = 300;
+  const gap = 20;
+
+  return (
+    <section className="py-12">
+      {/* Header với Navigation Buttons */}
+      <div className="flex items-center justify-between mb-8 px-4 md:px-8 max-w-7xl mx-auto">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold">Tiêu đề</h2>
+          <p className="text-sm text-slate-500 mt-1">Vuốt để xem thêm →</p>
         </div>
-      ))}
-      {/* End spacer for partial peek effect */}
-      <div className="flex-shrink-0 w-4" />
-    </div>
-  </div>
-</div>
+        {/* Navigation arrows - chỉ hiện khi có > 2 items */}
+        {items.length > 2 && (
+          <div className="flex gap-2">
+            <button 
+              type="button"
+              onClick={() => {
+                const container = document.getElementById(carouselId);
+                if (container) container.scrollBy({ left: -cardWidth - gap, behavior: 'smooth' });
+              }}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-md hover:shadow-lg text-slate-700 transition-all border border-slate-200"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button 
+              type="button"
+              onClick={() => {
+                const container = document.getElementById(carouselId);
+                if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+              }}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md hover:shadow-lg transition-all"
+              style={{ backgroundColor: brandColor }}
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
+      </div>
+      
+      {/* Carousel Container - Contained */}
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <div className="relative overflow-hidden rounded-xl">
+          {/* Fade edges */}
+          <div className="absolute left-0 top-0 bottom-0 w-12 md:w-20 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-12 md:w-20 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+          
+          {/* Scrollable area với Mouse Drag */}
+          <div 
+            id={carouselId}
+            className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-5 py-4 px-2 cursor-grab active:cursor-grabbing select-none"
+            style={{ 
+              scrollbarWidth: 'none', 
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+            // Mouse Drag Handlers
+            onMouseDown={(e) => {
+              const el = e.currentTarget;
+              el.dataset.isDown = 'true';
+              el.dataset.startX = String(e.pageX - el.offsetLeft);
+              el.dataset.scrollLeft = String(el.scrollLeft);
+              el.style.scrollBehavior = 'auto';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.dataset.isDown = 'false';
+              e.currentTarget.style.scrollBehavior = 'smooth';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.dataset.isDown = 'false';
+              e.currentTarget.style.scrollBehavior = 'smooth';
+            }}
+            onMouseMove={(e) => {
+              const el = e.currentTarget;
+              if (el.dataset.isDown !== 'true') return;
+              e.preventDefault();
+              const x = e.pageX - el.offsetLeft;
+              const walk = (x - Number(el.dataset.startX)) * 1.5; // 1.5x multiplier
+              el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+            }}
+          >
+            {items.map(item => (
+              <div key={item.id} className="flex-shrink-0 snap-start w-[280px] md:w-[300px]">
+                {/* Card content */}
+              </div>
+            ))}
+            {/* End spacer for partial peek */}
+            <div className="flex-shrink-0 w-4" />
+          </div>
+        </div>
+      </div>
+
+      {/* CSS để ẩn scrollbar trên webkit browsers */}
+      <style>{`
+        #${carouselId}::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+    </section>
+  );
+};
 ```
 
-### CSS Animation
+### Mouse Drag Scroll Pattern
+
+**Tại sao cần?** Native scroll chỉ work với touch/trackpad, mouse wheel. Cần thêm mouse drag cho desktop UX tốt hơn.
+
+```tsx
+// Mouse Drag Handlers - thêm vào scrollable container
+onMouseDown={(e) => {
+  const el = e.currentTarget;
+  el.dataset.isDown = 'true';
+  el.dataset.startX = String(e.pageX - el.offsetLeft);
+  el.dataset.scrollLeft = String(el.scrollLeft);
+  el.style.scrollBehavior = 'auto'; // Tắt smooth để drag mượt
+}}
+onMouseLeave={(e) => {
+  e.currentTarget.dataset.isDown = 'false';
+  e.currentTarget.style.scrollBehavior = 'smooth';
+}}
+onMouseUp={(e) => {
+  e.currentTarget.dataset.isDown = 'false';
+  e.currentTarget.style.scrollBehavior = 'smooth';
+}}
+onMouseMove={(e) => {
+  const el = e.currentTarget;
+  if (el.dataset.isDown !== 'true') return;
+  e.preventDefault();
+  const x = e.pageX - el.offsetLeft;
+  const walk = (x - Number(el.dataset.startX)) * 1.5; // Multiplier cho feel tốt
+  el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+}}
+
+// CSS classes cần thêm
+className="cursor-grab active:cursor-grabbing select-none"
+```
+
+### Hidden Scrollbar CSS (CRITICAL)
+
+**Problem:** `scrollbarWidth: 'none'` không work cho webkit browsers (Chrome, Safari, Edge)
+
+```tsx
+// ❌ KHÔNG ĐỦ - chỉ work cho Firefox
+style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+
+// ✅ ĐÚNG - thêm CSS cho webkit
+<style>{`
+  .my-carousel::-webkit-scrollbar {
+    display: none;
+  }
+`}</style>
+
+// Hoặc dùng class + global CSS
+// globals.css
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+```
+
+### CSS Animation (Marquee)
 
 ```tsx
 // Keyframes cho marquee - translateX(-50%) vì items duplicate
@@ -950,15 +1099,40 @@ const getImageSizeInfo = () => {
 `}</style>
 ```
 
-### Checklist Contained Carousel/Marquee
+### Checklist Carousel/Marquee Hoàn Chỉnh
 
+**Container & Layout:**
 - [ ] Outer container có `max-w-7xl mx-auto px-4` (hoặc tương đương)
 - [ ] Inner container có `overflow-hidden rounded-xl`
 - [ ] Gradient fade edges nằm TRONG overflow-hidden container
 - [ ] Section có `overflow-hidden` nếu animation có thể tràn
-- [ ] Items được duplicate cho infinite loop smooth
-- [ ] Animation translateX(-50%) khớp với duplicate ratio
+
+**Navigation:**
+- [ ] Navigation buttons < > cho desktop
+- [ ] Buttons chỉ hiện khi items.length > 2
+- [ ] Buttons dùng `scrollBy()` với `behavior: 'smooth'`
+
+**Scrolling:**
+- [ ] Mouse drag scroll với onMouseDown/Move/Up/Leave
+- [ ] `cursor-grab active:cursor-grabbing select-none`
+- [ ] Touch scroll native (không cần code thêm)
+- [ ] Snap scroll với `snap-x snap-mandatory` và `snap-start`
+
+**Hidden Scrollbar:**
+- [ ] `scrollbarWidth: 'none'` cho Firefox
+- [ ] `msOverflowStyle: 'none'` cho IE/Edge cũ
+- [ ] CSS `::-webkit-scrollbar { display: none }` cho Chrome/Safari/Edge mới
+
+**Animation (nếu marquee):**
+- [ ] Items được duplicate `[...items, ...items]`
+- [ ] `translateX(-50%)` khớp với duplicate ratio
+- [ ] `animation: marquee Xs linear infinite`
+
+**Testing:**
 - [ ] Test trên mobile - không có horizontal scrollbar
+- [ ] Test mouse drag trên desktop
+- [ ] Test navigation buttons
+- [ ] Test touch scroll trên mobile/tablet
 
 ---
 
