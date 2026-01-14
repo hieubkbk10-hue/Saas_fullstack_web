@@ -220,11 +220,10 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
     );
   }
 
-  // Style 4: Magazine - Bento grid layout
+  // Style 4: Magazine - Clean 3-column grid layout
   if (style === 'magazine') {
     const [featured, ...rest] = posts;
-    const secondary = rest.slice(0, 2);
-    const others = rest.slice(2, 5);
+    const otherPosts = rest.slice(0, 4);
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto">
@@ -245,7 +244,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
           <div className="lg:hidden space-y-4">
             {featured && (
               <Link href={`/posts/${featured.slug}`} className="group block">
-                <article className="relative rounded-xl overflow-hidden aspect-[4/3]" style={{ boxShadow: `0 4px 20px ${brandColor}15` }}>
+                <article className="relative rounded-xl overflow-hidden aspect-[16/9]" style={{ boxShadow: `0 4px 20px ${brandColor}15` }}>
                   {featured.thumbnail ? <img src={featured.thumbnail} alt={featured.title} className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}30, ${brandColor}60)` }} />}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -256,48 +255,50 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
               </Link>
             )}
             <div className="grid grid-cols-2 gap-3">
-              {secondary.concat(others).slice(0, 4).map((post) => (
+              {otherPosts.map((post) => (
                 <Link key={post._id} href={`/posts/${post.slug}`} className="group">
-                  <article className="rounded-xl border p-2 transition-all" style={{ borderColor: `${brandColor}15` }}>
-                    <div className="aspect-[4/3] rounded-lg overflow-hidden mb-2">
+                  <article className="rounded-xl border overflow-hidden transition-all h-full" style={{ borderColor: `${brandColor}15` }}>
+                    <div className="aspect-[16/10] overflow-hidden">
                       {post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><FileText size={20} style={{ color: `${brandColor}40` }} /></div>}
                     </div>
-                    <h4 className="text-sm font-medium text-slate-900 line-clamp-2">{post.title}</h4>
-                    <time className="text-[10px] text-slate-500 mt-1 block">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
+                    <div className="p-3">
+                      <h4 className="text-sm font-medium text-slate-900 line-clamp-2">{post.title}</h4>
+                      <time className="text-[10px] text-slate-500 mt-1 block">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
+                    </div>
                   </article>
                 </Link>
               ))}
             </div>
           </div>
-          {/* Desktop layout */}
-          <div className="hidden lg:grid grid-cols-4 grid-rows-2 gap-4">
+          {/* Desktop layout - Clean 3 column */}
+          <div className="hidden lg:grid lg:grid-cols-3 gap-6">
+            {/* Featured - Large card */}
             {featured && (
-              <Link href={`/posts/${featured.slug}`} className="col-span-2 row-span-2 group">
-                <article className="relative rounded-2xl overflow-hidden h-full min-h-[400px]" style={{ boxShadow: `0 8px 30px ${brandColor}20` }}>
+              <Link href={`/posts/${featured.slug}`} className="lg:row-span-2 group">
+                <article className="relative rounded-2xl overflow-hidden h-full min-h-[420px]" style={{ boxShadow: `0 8px 30px ${brandColor}20` }}>
                   {featured.thumbnail ? <img src={featured.thumbnail} alt={featured.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}80)` }} />}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-6">
                     <span className="px-2.5 py-1 text-xs font-bold rounded mb-3 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{categoryMap.get(featured.categoryId) || 'Nổi bật'}</span>
-                    <h3 className="text-xl md:text-2xl font-bold text-white leading-tight line-clamp-2 mb-2">{featured.title}</h3>
+                    <h3 className="text-xl font-bold text-white leading-tight line-clamp-2 mb-2">{featured.title}</h3>
                     {featured.excerpt && <p className="text-sm text-slate-200 line-clamp-2 mb-3">{featured.excerpt}</p>}
                     <time className="text-sm text-slate-300">{featured.publishedAt ? new Date(featured.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
                   </div>
                 </article>
               </Link>
             )}
-            {secondary.map((post) => (
+            {/* Other posts - Uniform cards */}
+            {otherPosts.map((post) => (
               <Link key={post._id} href={`/posts/${post.slug}`} className="group">
-                <article className="rounded-xl border overflow-hidden h-full transition-all" style={{ borderColor: `${brandColor}15` }}>
-                  <div className="aspect-[16/9] overflow-hidden">{post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><FileText size={24} style={{ color: `${brandColor}40` }} /></div>}</div>
-                  <div className="p-3"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) || 'Tin tức'}</span><h4 className="text-sm font-semibold text-slate-900 line-clamp-2 mt-1">{post.title}</h4></div>
-                </article>
-              </Link>
-            ))}
-            {others.slice(0, 2).map((post) => (
-              <Link key={post._id} href={`/posts/${post.slug}`} className="group">
-                <article className="flex items-center gap-3 rounded-xl border p-3 h-full transition-all" style={{ borderColor: `${brandColor}15` }}>
-                  <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">{post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><FileText size={16} style={{ color: `${brandColor}40` }} /></div>}</div>
-                  <div className="flex-1 min-w-0"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) || 'Tin tức'}</span><h4 className="text-sm font-medium text-slate-900 line-clamp-2">{post.title}</h4></div>
+                <article className="rounded-xl border overflow-hidden h-full flex flex-col transition-all" style={{ borderColor: `${brandColor}15` }}>
+                  <div className="aspect-[16/10] overflow-hidden flex-shrink-0">
+                    {post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><FileText size={28} style={{ color: `${brandColor}40` }} /></div>}
+                  </div>
+                  <div className="p-4 flex flex-col flex-1">
+                    <span className="text-[10px] font-bold uppercase mb-1" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) || 'Tin tức'}</span>
+                    <h4 className="text-base font-semibold text-slate-900 line-clamp-2 mb-2 group-hover:opacity-80 transition-colors">{post.title}</h4>
+                    <time className="text-xs text-slate-500 mt-auto">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
+                  </div>
                 </article>
               </Link>
             ))}
@@ -328,16 +329,16 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
             }}
           >
             <style>{`.carousel-scroll::-webkit-scrollbar { display: none; }`}</style>
-            <div className="carousel-scroll flex gap-4 md:gap-5" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div className="carousel-scroll flex gap-4 md:gap-5 items-stretch" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {posts.slice(0, 6).map((post) => (
                 <Link key={post._id} href={`/posts/${post.slug}`} className="flex-shrink-0 w-[280px] md:w-[320px] lg:w-[360px] group">
-                  <article className="rounded-xl border overflow-hidden transition-all" style={{ borderColor: `${brandColor}15` }}>
-                    <div className="aspect-[16/10] overflow-hidden">{post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><FileText size={32} style={{ color: `${brandColor}40` }} /></div>}</div>
-                    <div className="p-4">
+                  <article className="rounded-xl border overflow-hidden transition-all h-full flex flex-col" style={{ borderColor: `${brandColor}15` }}>
+                    <div className="aspect-[16/10] overflow-hidden flex-shrink-0">{post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><FileText size={32} style={{ color: `${brandColor}40` }} /></div>}</div>
+                    <div className="p-4 flex flex-col flex-1">
                       <div className="flex items-center gap-2 mb-2"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) || 'Tin tức'}</span></div>
                       <h3 className="font-bold text-slate-900 line-clamp-2 mb-2 group-hover:opacity-80 transition-colors">{post.title}</h3>
-                      {post.excerpt && <p className="text-sm text-slate-500 line-clamp-2 mb-3">{post.excerpt}</p>}
-                      <div className="flex items-center justify-between"><time className="text-xs text-slate-500">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time><ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} /></div>
+                      <p className="text-sm text-slate-500 line-clamp-2 mb-3 flex-1">{post.excerpt || ''}</p>
+                      <div className="flex items-center justify-between mt-auto"><time className="text-xs text-slate-500">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time><ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} /></div>
                     </div>
                   </article>
                 </Link>
