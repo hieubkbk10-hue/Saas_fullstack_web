@@ -6620,7 +6620,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
     const cardSize = 160;
     
     return (
-      <section className="py-16 md:py-20 overflow-hidden">
+      <section className="py-16 md:py-20 overflow-hidden max-w-full">
         {/* Header */}
         <div className="text-center mb-10 px-4">
           <span 
@@ -6637,16 +6637,15 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
         </div>
 
         {/* Marquee Row - Contained infinite scroll */}
-        <div className="max-w-7xl mx-auto px-4 mb-12">
-          <div className="relative overflow-hidden rounded-xl">
+        <div className="w-full overflow-hidden mb-12">
+          <div className="relative overflow-hidden">
             {/* Gradient fade edges */}
             <div className="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
             <div className="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
             
             <div 
-              className="flex gap-5 py-4"
+              className="flex gap-5 py-4 w-max"
               style={{ 
-                width: 'max-content',
                 animation: members.length > 2 ? 'team-marquee 25s linear infinite' : 'none'
               }}
             >
