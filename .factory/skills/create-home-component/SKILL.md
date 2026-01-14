@@ -255,6 +255,46 @@ case 'ComponentName':
   return <ComponentSection config={config} brandColor={brandColor} title={title} />;
 ```
 
+#### ⚠️ CRITICAL: Style Fallback Order trong ComponentSection
+
+**BUG THƯỜNG GẶP**: Default return (fallback style) đặt **TRƯỚC** các `if (style === '...')` → các styles sau không bao giờ được render!
+
+```tsx
+// ❌ SAI - Bug: minimal và centered KHÔNG BAO GIỜ được render
+function ComponentSection({ config, brandColor }) {
+  const style = config.style || 'modern';
+
+  if (style === 'modern') { return <ModernLayout />; }
+  if (style === 'grid') { return <GridLayout />; }
+  
+  // Default fallback - return VÔ ĐIỀU KIỆN
+  return <ElegantLayout />;  // ← Function exits here!
+  
+  // ⚠️ Code dưới đây KHÔNG BAO GIỜ chạy
+  if (style === 'minimal') { return <MinimalLayout />; }
+  if (style === 'centered') { return <CenteredLayout />; }
+}
+
+// ✅ ĐÚNG - Tất cả if statements TRƯỚC default return
+function ComponentSection({ config, brandColor }) {
+  const style = config.style || 'modern';
+
+  if (style === 'modern') { return <ModernLayout />; }
+  if (style === 'grid') { return <GridLayout />; }
+  if (style === 'minimal') { return <MinimalLayout />; }
+  if (style === 'centered') { return <CenteredLayout />; }
+  
+  // Default fallback - CUỐI CÙNG
+  return <ElegantLayout />;
+}
+```
+
+**Checklist tránh bug fallback:**
+- [ ] Tất cả `if (style === '...')` statements đặt TRƯỚC default return
+- [ ] Default return là statement CUỐI CÙNG trong function
+- [ ] Test TẤT CẢ 6 styles trên trang chủ, không chỉ trong preview
+- [ ] Đặt comment `// Default fallback` trước return cuối để dễ nhận biết
+
 ### Step 5: Cập nhật Edit Page
 
 1. Import: `import { ComponentPreview, ComponentStyle } from '../../previews';`
@@ -1071,6 +1111,8 @@ function ComponentSection({ config, brandColor, title }) {
 - [ ] **6 styles preview**, responsive (desktop/tablet/mobile)
 - [ ] Edit page load/save đúng
 - [ ] ComponentRenderer render đúng **tất cả 6 styles**
+- [ ] **⚠️ Fallback order**: Tất cả `if (style === '...')` đặt TRƯỚC default return
+- [ ] **⚠️ Test mỗi style trên trang chủ thật** (không chỉ preview) - chọn style trong edit → verify trên homepage
 - [ ] Drag & drop hoạt động (nếu có)
 
 ### Brand Color Sync (CRITICAL)
