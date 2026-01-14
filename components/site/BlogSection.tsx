@@ -4,10 +4,10 @@ import React from 'react';
 import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { FileText, Loader2 } from 'lucide-react';
+import { FileText, Loader2, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
-// Modern News Feed UI/UX - 3 Variants from modern-news-feed
-type BlogStyle = 'grid' | 'list' | 'featured';
+// Modern News Feed UI/UX - 6 Variants (synced with BlogPreview)
+type BlogStyle = 'grid' | 'list' | 'featured' | 'magazine' | 'carousel' | 'minimal';
 
 interface BlogSectionProps {
   config: Record<string, unknown>;
