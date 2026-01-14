@@ -8797,7 +8797,7 @@ export const TrustBadgesPreview = ({
 
 // ============ SPEED DIAL PREVIEW ============
 type SpeedDialAction = { id: number; icon: string; label: string; url: string; bgColor: string };
-export type SpeedDialStyle = 'fab' | 'sidebar' | 'pills';
+export type SpeedDialStyle = 'fab' | 'sidebar' | 'pills' | 'stack' | 'dock' | 'minimal';
 
 const SpeedDialIcon = ({ name, size = 20 }: { name: string; size?: number }) => {
   const icons: Record<string, React.ReactNode> = {

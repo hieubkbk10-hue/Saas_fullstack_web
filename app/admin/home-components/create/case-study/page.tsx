@@ -21,6 +21,13 @@ export default function CaseStudyCreatePage() {
   const brandColor = useBrandColor();
   const [caseStudyStyle, setCaseStudyStyle] = useState<CaseStudyStyle>('grid');
   
+  // Reset carousel index when changing away from carousel style
+  React.useEffect(() => {
+    if (caseStudyStyle !== 'carousel') {
+      // No need to reset anything in create page
+    }
+  }, [caseStudyStyle]);
+  
   const [projects, setProjects] = useState<Project[]>([
     { id: 'project-1', title: 'Dự án Website ABC Corp', category: 'Website', image: '', description: 'Thiết kế và phát triển website doanh nghiệp', link: '' },
     { id: 'project-2', title: 'Ứng dụng Mobile XYZ', category: 'Mobile App', image: '', description: 'Ứng dụng đặt hàng cho chuỗi F&B', link: '' }
