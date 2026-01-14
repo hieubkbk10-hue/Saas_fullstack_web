@@ -940,7 +940,7 @@ const MyCarousel = ({ items, brandColor }: Props) => {
         {items.length > 2 && (
           <div className="flex gap-2">
             <button 
-              type="button"
+              type="button"  {/* ⚠️ CRITICAL: ngăn trigger form submission */}
               onClick={() => {
                 const container = document.getElementById(carouselId);
                 if (container) container.scrollBy({ left: -cardWidth - gap, behavior: 'smooth' });
@@ -950,7 +950,7 @@ const MyCarousel = ({ items, brandColor }: Props) => {
               <ChevronLeft size={18} />
             </button>
             <button 
-              type="button"
+              type="button"  {/* ⚠️ CRITICAL: ngăn trigger form submission */}
               onClick={() => {
                 const container = document.getElementById(carouselId);
                 if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
@@ -1061,6 +1061,69 @@ onMouseMove={(e) => {
 className="cursor-grab active:cursor-grabbing select-none"
 ```
 
+### Button type="button" trong Preview (CRITICAL)
+
+**Problem:** Buttons trong popup preview không có `type="button"` sẽ **trigger form submission** khi click, gây submit form không mong muốn.
+
+**Nguyên nhân:** Default type của `<button>` trong HTML là `type="submit"`. Khi button nằm trong `<form>`, click sẽ submit form.
+
+```tsx
+// ❌ SAI - Button trigger form submission
+<button onClick={handleClick}>
+  <ChevronLeft size={18} />
+</button>
+
+// ✅ ĐÚNG - Button KHÔNG trigger form submission
+<button type="button" onClick={handleClick}>
+  <ChevronLeft size={18} />
+</button>
+```
+
+**Quy tắc:** TẤT CẢ buttons trong Preview components (navigation arrows, play/pause, close modal, style selector, device toggle...) PHẢI có `type="button"`.
+
+**Checklist Buttons trong Preview:**
+- [ ] Navigation buttons (< >) có `type="button"`
+- [ ] Play/Pause buttons có `type="button"`
+- [ ] Close/dismiss buttons có `type="button"`
+- [ ] Style selector buttons có `type="button"`
+- [ ] Device toggle buttons có `type="button"`
+- [ ] Any button trong popup/modal có `type="button"`
+
+**Ví dụ đầy đủ:**
+```tsx
+// Navigation buttons trong carousel
+<button 
+  type="button"  // ← CRITICAL
+  onClick={() => {
+    const container = document.getElementById(carouselId);
+    if (container) container.scrollBy({ left: -cardWidth - gap, behavior: 'smooth' });
+  }}
+  className="w-10 h-10 rounded-full flex items-center justify-center"
+>
+  <ChevronLeft size={18} />
+</button>
+
+// Play/Pause button
+<button 
+  type="button"  // ← CRITICAL
+  onClick={() => setIsPlaying(!isPlaying)}
+  className="absolute bottom-4 right-4 p-2 rounded-full bg-white/80"
+>
+  {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+</button>
+
+// Style selector button
+<button
+  type="button"  // ← CRITICAL
+  onClick={() => onStyleChange?.('grid')}
+  className={cn("px-3 py-1 rounded", selectedStyle === 'grid' && "bg-blue-500 text-white")}
+>
+  Grid
+</button>
+```
+
+---
+
 ### Hidden Scrollbar CSS (CRITICAL)
 
 **Problem:** `scrollbarWidth: 'none'` không work cho webkit browsers (Chrome, Safari, Edge)
@@ -1111,6 +1174,7 @@ style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
 - [ ] Navigation buttons < > cho desktop
 - [ ] Buttons chỉ hiện khi items.length > 2
 - [ ] Buttons dùng `scrollBy()` với `behavior: 'smooth'`
+- [ ] **⚠️ CRITICAL: Buttons phải có `type="button"`** (xem section bên dưới)
 
 **Scrolling:**
 - [ ] Mouse drag scroll với onMouseDown/Move/Up/Leave
@@ -1398,6 +1462,7 @@ function ComponentSection({ config, brandColor, title }) {
 - [ ] **⚠️ Fallback order**: Tất cả `if (style === '...')` đặt TRƯỚC default return
 - [ ] **⚠️ Test mỗi style trên trang chủ thật** (không chỉ preview) - chọn style trong edit → verify trên homepage
 - [ ] Drag & drop hoạt động (nếu có)
+- [ ] **⚠️ Buttons trong preview có `type="button"`** - click không trigger form submission
 
 ### Brand Color Sync (CRITICAL)
 - [ ] **Preview = Frontend** về visual output
