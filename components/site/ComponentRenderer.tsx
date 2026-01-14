@@ -2782,68 +2782,6 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
     );
   }
 
-  // Style 4: Elegant Clean - Header section + chia đôi info/bản đồ
-  return (
-    <section className="py-12 md:py-16 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white border border-slate-200/40 rounded-xl shadow-sm overflow-hidden">
-          {/* Top Header Section */}
-          <div className="bg-slate-50/80 p-8 border-b border-slate-200 text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>
-              <Building2 size={24} />
-            </div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">Văn phòng của chúng tôi</h2>
-            <p className="text-slate-500 mt-2 max-w-lg mx-auto">
-              Thông tin liên hệ và vị trí bản đồ chính xác.
-            </p>
-          </div>
-
-          <div className="flex flex-col md:flex-row">
-            {/* Left Info List */}
-            <div className="md:w-5/12 p-8 space-y-0 divide-y divide-slate-200">
-              <div className="py-4 first:pt-0">
-                <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Địa chỉ</p>
-                <div className="flex items-start gap-3">
-                  <MapPin size={18} className="text-slate-600 shrink-0 mt-0.5" />
-                  <span className="text-sm font-medium text-slate-900">{address || '123 Nguyễn Huệ, Q1, TP.HCM'}</span>
-                </div>
-              </div>
-
-              <div className="py-4">
-                <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Liên lạc</p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Phone size={18} className="text-slate-600 shrink-0" />
-                    <span className="text-sm font-medium text-slate-900">{phone || '1900 1234'}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Mail size={18} className="text-slate-600 shrink-0" />
-                    <span className="text-sm font-medium text-slate-900">{email || 'contact@example.com'}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="py-4 last:pb-0">
-                <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Thời gian</p>
-                <div className="flex items-center gap-3">
-                  <Clock size={18} className="text-slate-600 shrink-0" />
-                  <span className="text-sm font-medium text-slate-900">{workingHours || 'T2-T6: 8:00-17:00'}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Map */}
-            {showMap !== false && (
-              <div className="md:w-7/12 min-h-[350px] bg-slate-100 relative border-t md:border-t-0 md:border-l border-slate-200">
-                {renderMapOrPlaceholder("absolute inset-0")}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-
   // Style 5: Minimal - Layout tối giản với info cards ngang hàng
   if (style === 'minimal') {
     return (
@@ -2930,6 +2868,68 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
       </section>
     );
   }
+
+  // Style 4: Elegant Clean - Header section + chia đôi info/bản đồ (Default fallback)
+  return (
+    <section className="py-12 md:py-16 px-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-white border border-slate-200/40 rounded-xl shadow-sm overflow-hidden">
+          {/* Top Header Section */}
+          <div className="bg-slate-50/80 p-8 border-b border-slate-200 text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>
+              <Building2 size={24} />
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">Văn phòng của chúng tôi</h2>
+            <p className="text-slate-500 mt-2 max-w-lg mx-auto">
+              Thông tin liên hệ và vị trí bản đồ chính xác.
+            </p>
+          </div>
+
+          <div className="flex flex-col md:flex-row">
+            {/* Left Info List */}
+            <div className="md:w-5/12 p-8 space-y-0 divide-y divide-slate-200">
+              <div className="py-4 first:pt-0">
+                <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Địa chỉ</p>
+                <div className="flex items-start gap-3">
+                  <MapPin size={18} className="text-slate-600 shrink-0 mt-0.5" />
+                  <span className="text-sm font-medium text-slate-900">{address || '123 Nguyễn Huệ, Q1, TP.HCM'}</span>
+                </div>
+              </div>
+
+              <div className="py-4">
+                <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Liên lạc</p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Phone size={18} className="text-slate-600 shrink-0" />
+                    <span className="text-sm font-medium text-slate-900">{phone || '1900 1234'}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Mail size={18} className="text-slate-600 shrink-0" />
+                    <span className="text-sm font-medium text-slate-900">{email || 'contact@example.com'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="py-4 last:pb-0">
+                <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Thời gian</p>
+                <div className="flex items-center gap-3">
+                  <Clock size={18} className="text-slate-600 shrink-0" />
+                  <span className="text-sm font-medium text-slate-900">{workingHours || 'T2-T6: 8:00-17:00'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Map */}
+            {showMap !== false && (
+              <div className="md:w-7/12 min-h-[350px] bg-slate-100 relative border-t md:border-t-0 md:border-l border-slate-200">
+                {renderMapOrPlaceholder("absolute inset-0")}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 // ============ GALLERY/PARTNERS SECTION ============
