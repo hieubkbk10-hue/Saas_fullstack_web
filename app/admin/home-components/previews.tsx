@@ -9214,7 +9214,7 @@ export const ProductCategoriesPreview = ({
   }, [categoriesData]);
 
   const resolvedCategories = config.categories
-    .map(item => {
+    .map((item, idx) => {
       const cat = categoryMap[item.categoryId];
       if (!cat) return null;
       const imageMode = item.imageMode || 'default';
@@ -9230,12 +9230,13 @@ export const ProductCategoriesPreview = ({
       
       return {
         ...cat,
+        itemId: item.id || idx, // Unique key from config item
         displayImage,
         displayIcon,
         imageMode,
       };
     })
-    .filter(Boolean) as (CategoryData & { displayImage?: string; displayIcon?: string; imageMode: string })[];
+    .filter(Boolean) as (CategoryData & { itemId: number; displayImage?: string; displayIcon?: string; imageMode: string })[];
 
   const getGridCols = () => {
     if (isMobile) return config.columnsMobile === 3 ? 'grid-cols-3' : 'grid-cols-2';
@@ -9313,7 +9314,7 @@ export const ProductCategoriesPreview = ({
             <div className={containerClass}>
               {gridItems.map((cat) => (
                 <div 
-                  key={cat._id} 
+                  key={cat.itemId} 
                   className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer transition-all duration-300"
                   style={{ 
                     boxShadow: `0 2px 8px ${brandColor}10`,
@@ -9379,7 +9380,7 @@ export const ProductCategoriesPreview = ({
             <div className={cn("flex", isMobile ? 'gap-3' : 'gap-4')}>
               {resolvedCategories.map((cat) => (
                 <div 
-                  key={cat._id} 
+                  key={cat.itemId} 
                   className={cn("flex-shrink-0 group cursor-pointer", isMobile ? 'w-28' : 'w-40')}
                 >
                   <div 
@@ -9420,7 +9421,7 @@ export const ProductCategoriesPreview = ({
             <div className={cn("grid", isMobile ? 'grid-cols-1 gap-3' : isTablet ? 'grid-cols-2 gap-4' : 'grid-cols-3 gap-4')}>
               {displayItems.map((cat) => (
                 <div 
-                  key={cat._id} 
+                  key={cat.itemId} 
                   className="group bg-white dark:bg-slate-800 rounded-xl overflow-hidden flex cursor-pointer transition-all"
                   style={{ border: `1px solid ${brandColor}15` }}
                   onMouseEnter={(e) => {
@@ -9470,7 +9471,7 @@ export const ProductCategoriesPreview = ({
               const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
               return (
                 <div 
-                  key={cat._id} 
+                  key={cat.itemId} 
                   className={cn(
                     "flex items-center gap-2 rounded-full cursor-pointer transition-all",
                     isMobile ? 'px-3 py-2' : 'px-4 py-2.5'
@@ -9560,7 +9561,7 @@ export const ProductCategoriesPreview = ({
             <div className={cn("grid gap-3", isMobile ? 'grid-cols-2' : 'col-span-2 grid-cols-2 lg:grid-cols-3')}>
               {displayOthers.map((cat) => (
                 <div 
-                  key={cat._id} 
+                  key={cat.itemId} 
                   className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group transition-all"
                   style={{ border: `2px solid ${brandColor}15` }}
                   onMouseEnter={(e) => {
