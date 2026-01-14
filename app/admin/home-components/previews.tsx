@@ -9846,7 +9846,7 @@ export const CategoryProductsPreview = ({
       case 'bento':
         return `${sectionCount} section • Featured: 800×800px • Others: 600×400px`;
       case 'magazine':
-        return `${sectionCount} section • Category: 600×800px • Products: 800×800px`;
+        return `${sectionCount} section • Featured: 800×1000px (4:5) • Grid: 600×600px`;
       case 'showcase':
         return `${sectionCount} section • Featured: 1200×800px (3:2) • Others: 600×600px`;
       default:
@@ -10218,116 +10218,162 @@ export const CategoryProductsPreview = ({
     </div>
   );
 
-  // Style 5: Magazine - Layout tạp chí với category banner bên cạnh
+  // Style 5: Magazine - Editorial Grid với Featured Item + Grid nhỏ
   const renderMagazineStyle = () => (
-    <div className="w-full py-4 space-y-10 md:space-y-16">
+    <div className="w-full py-4 space-y-12 md:space-y-16">
       {resolvedSections.length === 0 ? (
         <div className="px-4">
           <EmptyState message="Chưa chọn danh mục nào" />
         </div>
       ) : (
-        resolvedSections.map((section, sectionIdx) => {
-          const isReversed = sectionIdx % 2 === 1;
+        resolvedSections.map((section) => {
+          const featured = section.products[0];
+          const gridItems = section.products.slice(1, 5);
           
           return (
             <section key={section.id} className="px-4">
               <div className="max-w-7xl mx-auto">
-                <div className={cn(
-                  "flex gap-6",
-                  device === 'mobile' ? 'flex-col' : isReversed ? 'flex-row-reverse' : 'flex-row'
-                )}>
-                  {/* Category Banner Side */}
-                  <div className={cn(
-                    "relative rounded-2xl overflow-hidden",
-                    device === 'mobile' ? 'h-40 w-full' : 'w-72 flex-shrink-0'
-                  )}>
-                    {section.category.image ? (
-                      <img 
-                        src={section.category.image} 
-                        alt={section.category.name} 
-                        className="w-full h-full object-cover" 
-                      />
-                    ) : (
-                      <div 
-                        className="w-full h-full"
-                        style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}99 100%)` }}
-                      />
-                    )}
-                    {/* Overlay */}
-                    <div 
-                      className="absolute inset-0"
-                      style={{ background: `linear-gradient(135deg, ${brandColor}ee 0%, ${brandColor}88 100%)` }}
-                    />
-                    {/* Content */}
-                    <div className="absolute inset-0 p-5 flex flex-col justify-between text-white">
-                      <div>
-                        <span className="text-xs font-medium uppercase tracking-wider opacity-80">Danh mục</span>
-                        <h2 className={cn(
-                          "font-bold mt-1",
-                          device === 'mobile' ? 'text-xl' : 'text-2xl'
-                        )}>{section.category.name}</h2>
-                      </div>
-                      {config.showViewAll && (
-                        <button className="self-start flex items-center gap-2 text-sm font-medium bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full transition-colors backdrop-blur-sm">
-                          Khám phá <ArrowRight size={14} />
-                        </button>
-                      )}
-                    </div>
+                {/* Editorial Header */}
+                <div className="flex items-end justify-between mb-6 pb-4 border-b-2" style={{ borderColor: `${brandColor}20` }}>
+                  <div>
+                    <span 
+                      className="text-xs font-bold uppercase tracking-widest"
+                      style={{ color: brandColor }}
+                    >
+                      Bộ sưu tập
+                    </span>
+                    <h2 className={cn(
+                      "font-bold tracking-tight mt-1",
+                      device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl'
+                    )}>{section.category.name}</h2>
                   </div>
-                  
-                  {/* Products Side */}
-                  <div className="flex-1 min-w-0">
-                    {section.products.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-xl">
-                        <div className="text-center py-8">
-                          <Package size={32} className="mx-auto mb-2 opacity-30" />
-                          <p className="text-sm">Chưa có sản phẩm</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={cn(
-                        "grid gap-4 h-full",
-                        device === 'mobile' ? 'grid-cols-2' : 'grid-cols-3'
-                      )}>
-                        {section.products.slice(0, device === 'mobile' ? 4 : 6).map((product, idx) => (
-                          <div 
-                            key={product._id} 
-                            className={cn(
-                              "group cursor-pointer",
-                              // First item spans 2 rows on desktop
-                              !device.includes('mobile') && idx === 0 && 'row-span-2'
-                            )}
+                  {config.showViewAll && (
+                    <button 
+                      className={cn(
+                        "font-semibold flex items-center gap-2 transition-all hover:gap-3",
+                        device === 'mobile' ? 'text-sm' : 'text-base'
+                      )}
+                      style={{ color: brandColor }}
+                    >
+                      Xem tất cả <ArrowRight size={device === 'mobile' ? 16 : 18} />
+                    </button>
+                  )}
+                </div>
+                
+                {section.products.length === 0 ? (
+                  <EmptyState message="Chưa có sản phẩm" size="small" />
+                ) : device === 'mobile' ? (
+                  // Mobile: Simple 2-col grid
+                  <div className="grid grid-cols-2 gap-3">
+                    {section.products.slice(0, 4).map((product) => (
+                      <ProductCard key={product._id} product={product} />
+                    ))}
+                  </div>
+                ) : (
+                  // Desktop: Featured (50%) + Grid 2x2 (50%)
+                  <div className="grid grid-cols-2 gap-6">
+                    {/* Featured Item - Large */}
+                    {featured && (
+                      <div className="group cursor-pointer relative rounded-2xl overflow-hidden aspect-[4/5]" style={{ backgroundColor: `${brandColor}08` }}>
+                        {featured.image ? (
+                          <img 
+                            src={featured.image} 
+                            alt={featured.name} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package size={48} style={{ color: `${brandColor}30` }} />
+                          </div>
+                        )}
+                        {/* Gradient overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                        {/* Content */}
+                        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                          <span 
+                            className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
+                            style={{ backgroundColor: brandColor }}
                           >
-                            <div className={cn(
-                              "rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2",
-                              !device.includes('mobile') && idx === 0 ? 'h-full' : 'aspect-square'
-                            )}>
-                              {product.image ? (
-                                <img 
-                                  src={product.image} 
-                                  alt={product.name} 
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <Package size={24} className="text-slate-300" />
-                                </div>
-                              )}
-                            </div>
-                            {!(device !== 'mobile' && idx === 0) && (
+                            Nổi bật
+                          </span>
+                          <h3 className="font-bold text-xl md:text-2xl line-clamp-2 mb-2">{featured.name}</h3>
+                          <div className="flex items-baseline gap-3">
+                            {featured.salePrice && featured.salePrice < (featured.price || 0) ? (
                               <>
-                                <h4 className="font-medium text-sm line-clamp-1">{product.name}</h4>
-                                <span className="font-bold text-sm" style={{ color: brandColor }}>
-                                  {formatPrice(product.salePrice || product.price)}
-                                </span>
+                                <span className="font-bold text-2xl">{formatPrice(featured.salePrice)}</span>
+                                <span className="text-sm text-white/60 line-through">{formatPrice(featured.price)}</span>
                               </>
+                            ) : (
+                              <span className="font-bold text-2xl">{formatPrice(featured.price)}</span>
                             )}
                           </div>
-                        ))}
+                        </div>
                       </div>
                     )}
+                    
+                    {/* Grid 2x2 */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {gridItems.map((product) => (
+                        <div key={product._id} className="group cursor-pointer">
+                          <div 
+                            className="aspect-square rounded-xl overflow-hidden mb-3 relative"
+                            style={{ backgroundColor: `${brandColor}08` }}
+                          >
+                            {product.image ? (
+                              <img 
+                                src={product.image} 
+                                alt={product.name} 
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package size={24} style={{ color: `${brandColor}30` }} />
+                              </div>
+                            )}
+                            {/* Quick view overlay */}
+                            <div 
+                              className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              style={{ backgroundColor: `${brandColor}20` }}
+                            >
+                              <span 
+                                className="px-4 py-2 rounded-full text-sm font-medium text-white"
+                                style={{ backgroundColor: brandColor }}
+                              >
+                                Xem nhanh
+                              </span>
+                            </div>
+                          </div>
+                          <h4 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{product.name}</h4>
+                          <div className="flex items-baseline gap-2 mt-1">
+                            {product.salePrice && product.salePrice < (product.price || 0) ? (
+                              <>
+                                <span className="font-bold text-sm" style={{ color: brandColor }}>
+                                  {formatPrice(product.salePrice)}
+                                </span>
+                                <span className="text-xs text-slate-400 line-through">{formatPrice(product.price)}</span>
+                              </>
+                            ) : (
+                              <span className="font-bold text-sm" style={{ color: brandColor }}>
+                                {formatPrice(product.price)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Fill empty slots if less than 4 items */}
+                      {gridItems.length < 4 && Array.from({ length: 4 - gridItems.length }).map((_, i) => (
+                        <div 
+                          key={`empty-${i}`} 
+                          className="aspect-square rounded-xl flex items-center justify-center"
+                          style={{ backgroundColor: `${brandColor}05`, border: `2px dashed ${brandColor}20` }}
+                        >
+                          <Package size={24} style={{ color: `${brandColor}20` }} />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </section>
           );
