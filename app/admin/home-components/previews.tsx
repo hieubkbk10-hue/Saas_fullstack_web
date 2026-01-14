@@ -4463,53 +4463,78 @@ export const CTAPreview = ({ config, brandColor, selectedStyle, onStyleChange }:
     </section>
   );
 
-  // Style 3: Split - 2 columns layout
+  // Style 3: Split - Card với icon và border accent (khác Banner)
   const renderSplitStyle = () => (
-    <section 
-      className={cn("w-full", device === 'mobile' ? 'py-8 px-4' : 'py-12 px-6')} 
-      style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)` }}
-    >
-      <div className={cn(
-        "max-w-4xl mx-auto grid gap-6",
-        device === 'mobile' ? 'grid-cols-1 text-center' : 'grid-cols-2 items-center'
-      )}>
-        <div>
-          {config.badge && (
-            <span className="inline-block px-3 py-1 mb-3 rounded-full text-xs font-semibold bg-white/20 text-white">
-              {config.badge}
-            </span>
-          )}
-          <h3 className={cn(
-            "font-bold text-white line-clamp-2",
-            device === 'mobile' ? 'text-xl' : 'text-2xl'
-          )}>
-            {config.title || 'Sẵn sàng bắt đầu?'}
-          </h3>
-          <p className={cn(
-            "text-white/80 mt-2 line-clamp-2",
-            device === 'mobile' ? 'text-sm' : 'text-base'
-          )}>
-            {config.description || 'Đăng ký ngay để nhận ưu đãi đặc biệt'}
-          </p>
-        </div>
-        <div className={cn("flex gap-3", device === 'mobile' ? 'flex-col' : 'justify-end')}>
-          <button 
+    <section className={cn("w-full bg-slate-50 dark:bg-slate-900", device === 'mobile' ? 'py-8 px-4' : 'py-12 px-6')}>
+      <div 
+        className={cn(
+          "max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border-l-4",
+          device === 'mobile' ? 'p-5' : 'p-8'
+        )}
+        style={{ borderLeftColor: brandColor, boxShadow: `0 4px 20px ${brandColor}10` }}
+      >
+        <div className={cn(
+          "flex items-start gap-5",
+          device === 'mobile' ? 'flex-col' : ''
+        )}>
+          {/* Icon */}
+          <div 
             className={cn(
-              "bg-white rounded-lg font-medium whitespace-nowrap transition-all hover:scale-105",
-              device === 'mobile' ? 'px-5 py-3 min-h-[44px] text-sm' : 'px-6 py-3'
-            )} 
-            style={{ color: brandColor, boxShadow: `0 8px 20px rgba(0,0,0,0.2)` }}
+              "rounded-xl flex items-center justify-center flex-shrink-0",
+              device === 'mobile' ? 'w-12 h-12' : 'w-14 h-14'
+            )}
+            style={{ backgroundColor: `${brandColor}15` }}
           >
-            {config.buttonText || 'Bắt đầu ngay'}
-          </button>
-          {config.secondaryButtonText && (
-            <button className={cn(
-              "border-2 border-white/50 text-white rounded-lg font-medium whitespace-nowrap hover:bg-white/10 transition-all",
-              device === 'mobile' ? 'px-5 py-3 min-h-[44px] text-sm' : 'px-6 py-3'
+            <Rocket size={device === 'mobile' ? 24 : 28} style={{ color: brandColor }} />
+          </div>
+          
+          {/* Content */}
+          <div className="flex-1">
+            {config.badge && (
+              <span 
+                className="inline-block px-2.5 py-0.5 mb-2 rounded text-xs font-semibold"
+                style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+              >
+                {config.badge}
+              </span>
+            )}
+            <h3 className={cn(
+              "font-bold text-slate-900 dark:text-white line-clamp-2",
+              device === 'mobile' ? 'text-lg' : 'text-xl'
             )}>
-              {config.secondaryButtonText}
-            </button>
-          )}
+              {config.title || 'Sẵn sàng bắt đầu?'}
+            </h3>
+            <p className={cn(
+              "text-slate-600 dark:text-slate-400 mt-1.5 line-clamp-2",
+              device === 'mobile' ? 'text-sm' : 'text-base'
+            )}>
+              {config.description || 'Đăng ký ngay để nhận ưu đãi đặc biệt'}
+            </p>
+            
+            {/* Buttons */}
+            <div className={cn("flex gap-3 mt-4", device === 'mobile' ? 'flex-col' : '')}>
+              <button 
+                className={cn(
+                  "rounded-lg font-medium text-white whitespace-nowrap transition-all hover:scale-105",
+                  device === 'mobile' ? 'px-5 py-3 min-h-[44px] text-sm' : 'px-5 py-2.5'
+                )} 
+                style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
+              >
+                {config.buttonText || 'Bắt đầu ngay'}
+              </button>
+              {config.secondaryButtonText && (
+                <button 
+                  className={cn(
+                    "border rounded-lg font-medium whitespace-nowrap transition-all hover:bg-slate-50 dark:hover:bg-slate-700",
+                    device === 'mobile' ? 'px-5 py-3 min-h-[44px] text-sm' : 'px-5 py-2.5'
+                  )}
+                  style={{ borderColor: `${brandColor}30`, color: brandColor }}
+                >
+                  {config.secondaryButtonText}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </section>

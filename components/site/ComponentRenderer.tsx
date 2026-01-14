@@ -1710,38 +1710,58 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
     );
   }
 
-  // Style 3: Split - 2 columns layout
+  // Style 3: Split - Card với icon và border accent (khác Banner)
   if (style === 'split') {
     return (
-      <section className="py-12 md:py-16 px-4" style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)` }}>
-        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6 md:gap-8 items-center">
-          <div className="text-white text-center md:text-left">
-            {badge && (
-              <span className="inline-block px-3 py-1 mb-3 rounded-full text-xs font-semibold bg-white/20 text-white">
-                {badge}
-              </span>
-            )}
-            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 line-clamp-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
-            <p className="opacity-90 line-clamp-2 text-sm md:text-base">{description}</p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-end">
-            {buttonText && (
-              <a 
-                href={buttonLink || '#'} 
-                className="px-6 py-3 min-h-[44px] bg-white rounded-lg font-medium transition-all hover:scale-105 text-center whitespace-nowrap" 
-                style={{ color: brandColor, boxShadow: `0 8px 20px rgba(0,0,0,0.2)` }}
-              >
-                {buttonText}
-              </a>
-            )}
-            {secondaryButtonText && (
-              <a 
-                href={secondaryButtonLink || '#'} 
-                className="px-6 py-3 min-h-[44px] border-2 border-white/50 text-white rounded-lg font-medium hover:bg-white/10 transition-all text-center whitespace-nowrap"
-              >
-                {secondaryButtonText}
-              </a>
-            )}
+      <section className="py-12 md:py-16 px-4 bg-slate-50 dark:bg-slate-900">
+        <div 
+          className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-8 overflow-hidden border-l-4"
+          style={{ borderLeftColor: brandColor, boxShadow: `0 4px 20px ${brandColor}10` }}
+        >
+          <div className="flex flex-col md:flex-row items-start gap-5">
+            {/* Icon */}
+            <div 
+              className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: `${brandColor}15` }}
+            >
+              <Rocket size={28} style={{ color: brandColor }} />
+            </div>
+            
+            {/* Content */}
+            <div className="flex-1">
+              {badge && (
+                <span 
+                  className="inline-block px-2.5 py-0.5 mb-2 rounded text-xs font-semibold"
+                  style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                >
+                  {badge}
+                </span>
+              )}
+              <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white line-clamp-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
+              <p className="text-slate-600 dark:text-slate-400 mt-1.5 text-sm md:text-base line-clamp-2">{description}</p>
+              
+              {/* Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                {buttonText && (
+                  <a 
+                    href={buttonLink || '#'} 
+                    className="px-5 py-2.5 min-h-[44px] rounded-lg font-medium text-white transition-all hover:scale-105 text-center whitespace-nowrap" 
+                    style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
+                  >
+                    {buttonText}
+                  </a>
+                )}
+                {secondaryButtonText && (
+                  <a 
+                    href={secondaryButtonLink || '#'} 
+                    className="px-5 py-2.5 min-h-[44px] border rounded-lg font-medium transition-all hover:bg-slate-50 dark:hover:bg-slate-700 text-center whitespace-nowrap"
+                    style={{ borderColor: `${brandColor}30`, color: brandColor }}
+                  >
+                    {secondaryButtonText}
+                  </a>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </section>
