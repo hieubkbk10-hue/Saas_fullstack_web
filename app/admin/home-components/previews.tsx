@@ -5405,60 +5405,80 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
     </section>
   );
 
-  // Style 6: Showcase - Featured image lớn với text overlay
+  // Style 6: Showcase - Card nổi bật với ảnh lớn và stats gradient
   const renderShowcaseStyle = () => (
-    <section className="relative w-full overflow-hidden">
-      {/* Background Image */}
-      <div className={cn(
-        "relative w-full",
-        device === 'mobile' ? 'h-[400px]' : 'h-[500px] md:h-[600px]'
-      )}>
-        {config.image ? (
-          <>
-            <img src={config.image} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
-          </>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-r from-slate-900 to-slate-700" />
-        )}
-        
-        {/* Content Overlay */}
-        <div className={cn(
-          "absolute inset-0 flex flex-col justify-center",
-          device === 'mobile' ? 'px-4' : 'px-8 md:px-16'
-        )}>
-          <div className={cn("max-w-xl space-y-4", device === 'mobile' ? 'space-y-3' : 'md:space-y-6')}>
-            {config.subHeading && (
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm text-white">
-                {config.subHeading}
-              </div>
-            )}
-            <h2 className={cn("font-bold text-white leading-tight", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-5xl')}>
-              {config.heading || 'Câu chuyện thương hiệu'}
-            </h2>
-            <p className={cn("text-white/80 leading-relaxed", device === 'mobile' ? 'text-sm line-clamp-3' : 'text-base md:text-lg')}>
-              {config.description || 'Mô tả về công ty...'}
-            </p>
-            
-            {/* Stats row */}
-            {config.stats.length > 0 && (
-              <div className="flex gap-8 pt-4">
-                {config.stats.slice(0, 3).map((stat) => (
-                  <div key={stat.id} className="text-center">
-                    <span className={cn("block font-bold text-white", device === 'mobile' ? 'text-xl' : 'text-3xl')}>{stat.value || '0'}</span>
-                    <span className="text-xs text-white/70 uppercase tracking-wide">{stat.label || 'Label'}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+    <section className={cn("py-8", device === 'mobile' ? 'px-3' : 'py-10 px-6')}>
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          {config.subHeading && (
+            <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+              {config.subHeading}
+            </span>
+          )}
+          <h2 className={cn("font-bold text-slate-900 dark:text-slate-100 mb-2", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
+            {config.heading || 'Câu chuyện thương hiệu'}
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto text-sm">
+            {config.description || 'Mô tả về công ty...'}
+          </p>
+        </div>
 
+        {/* Main Content Grid */}
+        <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2 gap-5')}>
+          {/* Image Card */}
+          <div className={cn("relative rounded-2xl overflow-hidden group", device === 'mobile' ? 'aspect-[4/3]' : 'aspect-auto min-h-[320px]')}>
+            {config.image ? (
+              <>
+                <img src={config.image} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              </>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+                <ImageIcon size={48} className="text-slate-300" />
+              </div>
+            )}
             {config.buttonText && (
-              <div className="pt-2">
-                <button className={cn("font-medium rounded-lg text-white", device === 'mobile' ? 'px-4 py-2.5 text-sm' : 'px-6 py-3')} style={{ backgroundColor: brandColor }}>
+              <div className="absolute bottom-3 left-3 right-3">
+                <button 
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-white text-sm backdrop-blur-sm transition-all hover:scale-105"
+                  style={{ backgroundColor: brandColor }}
+                >
                   {config.buttonText}
+                  <ArrowRight size={14} />
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Stats Cards Grid */}
+          <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-2' : 'grid-cols-2 gap-4')}>
+            {config.stats.slice(0, 4).map((stat, idx) => (
+              <div 
+                key={stat.id} 
+                className="rounded-xl p-4 flex flex-col justify-center text-center transition-all hover:scale-[1.02]"
+                style={{ 
+                  backgroundColor: idx === 0 ? brandColor : `${brandColor}${10 + idx * 5}`,
+                }}
+              >
+                <span className={cn("font-bold mb-1", device === 'mobile' ? 'text-2xl' : 'text-3xl')} style={{ color: idx === 0 ? 'white' : brandColor }}>
+                  {stat.value || '0'}
+                </span>
+                <span className={cn("text-xs font-medium", idx === 0 ? 'text-white/80' : 'text-slate-600 dark:text-slate-400')}>
+                  {stat.label || 'Label'}
+                </span>
+              </div>
+            ))}
+            {/* Fill empty slots */}
+            {config.stats.length < 4 && Array.from({ length: 4 - config.stats.length }).map((_, idx) => (
+              <div 
+                key={`empty-${idx}`} 
+                className="rounded-xl p-4 flex items-center justify-center"
+                style={{ backgroundColor: `${brandColor}08` }}
+              >
+                <Plus size={16} className="text-slate-300" />
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -5476,7 +5496,7 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
           {previewStyle === 'minimal' && <p><strong>800×600px</strong> (4:3) • Ảnh bên phải chiếm 45%, object-cover</p>}
           {previewStyle === 'split' && <p><strong>960×600px</strong> (8:5) • Ảnh bên phải 50%, subject đặt giữa/trái</p>}
           {previewStyle === 'timeline' && <p><strong>1200×400px</strong> (3:1) • Banner ngang cuối section, optional</p>}
-          {previewStyle === 'showcase' && <p><strong>1920×1080px</strong> (16:9) • Fullscreen background, subject đặt bên phải</p>}
+          {previewStyle === 'showcase' && <p><strong>800×600px</strong> (4:3) • Ảnh trái card lớn, subject đặt giữa/trái</p>}
         </div>
       </div>
     </div>

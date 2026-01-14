@@ -899,69 +899,71 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
   }
 
   // Style 3: Minimal - Safe/Boring Design, Boxed Layout
-  return (
-    <section className="py-8 md:py-12 px-4 md:px-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-          <div className="flex flex-col lg:flex-row h-full min-h-[400px] md:min-h-[500px]">
-            {/* Left: Content */}
-            <div className="flex-1 p-6 md:p-10 lg:p-16 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-slate-200">
-              <div className="max-w-xl space-y-6 md:space-y-8">
-                {subHeading && (
-                  <AboutBadge text={subHeading} variant="minimal" brandColor={brandColor} />
-                )}
-                
-                <div className="space-y-3 md:space-y-4">
-                  <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight text-slate-900">
-                    {heading || title}
-                  </h2>
-                  <p className="text-base md:text-lg text-slate-600 leading-relaxed">
-                    {description}
-                  </p>
-                </div>
-
-                {/* Stats with vertical bar */}
-                {stats && stats.length > 0 && (
-                  <div className="flex gap-6 md:gap-8 py-4">
-                    {stats.slice(0, 2).map((stat, idx) => (
-                      <AboutStatBox key={idx} stat={stat} variant="minimal" brandColor={brandColor} />
-                    ))}
+  if (aboutStyle === 'minimal') {
+    return (
+      <section className="py-8 md:py-12 px-4 md:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+            <div className="flex flex-col lg:flex-row h-full min-h-[400px] md:min-h-[500px]">
+              {/* Left: Content */}
+              <div className="flex-1 p-6 md:p-10 lg:p-16 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-slate-200">
+                <div className="max-w-xl space-y-6 md:space-y-8">
+                  {subHeading && (
+                    <AboutBadge text={subHeading} variant="minimal" brandColor={brandColor} />
+                  )}
+                  
+                  <div className="space-y-3 md:space-y-4">
+                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight text-slate-900">
+                      {heading || title}
+                    </h2>
+                    <p className="text-base md:text-lg text-slate-600 leading-relaxed">
+                      {description}
+                    </p>
                   </div>
-                )}
 
-                {buttonText && (
-                  <div>
-                    <a 
-                      href={buttonLink || '#'}
-                      className="inline-flex h-12 px-6 rounded-md font-medium transition-colors items-center justify-center hover:opacity-90"
-                      style={{ backgroundColor: brandColor, color: 'white' }}
-                    >
-                      {buttonText}
-                    </a>
+                  {/* Stats with vertical bar */}
+                  {stats && stats.length > 0 && (
+                    <div className="flex gap-6 md:gap-8 py-4">
+                      {stats.slice(0, 2).map((stat, idx) => (
+                        <AboutStatBox key={idx} stat={stat} variant="minimal" brandColor={brandColor} />
+                      ))}
+                    </div>
+                  )}
+
+                  {buttonText && (
+                    <div>
+                      <a 
+                        href={buttonLink || '#'}
+                        className="inline-flex h-12 px-6 rounded-md font-medium transition-colors items-center justify-center hover:opacity-90"
+                        style={{ backgroundColor: brandColor, color: 'white' }}
+                      >
+                        {buttonText}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right: Image */}
+              <div className="relative bg-slate-100 h-64 lg:h-auto lg:w-[45%]">
+                {image ? (
+                  <img 
+                    src={image} 
+                    alt="Brand" 
+                    className="absolute inset-0 w-full h-full object-cover" 
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <ImageIcon size={48} className="text-slate-300" />
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Right: Image */}
-            <div className="relative bg-slate-100 h-64 lg:h-auto lg:w-[45%]">
-              {image ? (
-                <img 
-                  src={image} 
-                  alt="Brand" 
-                  className="absolute inset-0 w-full h-full object-cover" 
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <ImageIcon size={48} className="text-slate-300" />
-                </div>
-              )}
-            </div>
           </div>
         </div>
-      </div>
-    </section>
-  );
+      </section>
+    );
+  }
 
   // Style 4: Split - Layout chia đôi (Content trái, Image phải)
   if (aboutStyle === 'split') {
@@ -1076,54 +1078,84 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
     );
   }
 
-  // Style 6: Showcase - Featured image lớn với text overlay (default fallback)
+  // Style 6: Showcase - Card nổi bật với ảnh lớn và stats gradient (default fallback)
   return (
-    <section className="relative w-full overflow-hidden">
-      {/* Background Image */}
-      <div className="relative w-full h-[400px] md:h-[500px] lg:h-[600px]">
-        {image ? (
-          <>
-            <img src={image} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
-          </>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-r from-slate-900 to-slate-700" />
-        )}
-        
-        {/* Content Overlay */}
-        <div className="absolute inset-0 flex flex-col justify-center px-4 md:px-8 lg:px-16">
-          <div className="max-w-xl space-y-4 md:space-y-6">
-            {subHeading && (
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm text-white">
-                {subHeading}
-              </div>
-            )}
-            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-              {heading || title}
-            </h2>
-            <p className="text-white/80 leading-relaxed text-sm md:text-lg">
-              {description || ''}
-            </p>
-            
-            {/* Stats row */}
-            {(stats ?? []).length > 0 && (
-              <div className="flex gap-8 pt-4">
-                {(stats ?? []).slice(0, 3).map((stat, idx) => (
-                  <div key={idx} className="text-center">
-                    <span className="block text-xl md:text-3xl font-bold text-white">{stat.value || ''}</span>
-                    <span className="text-xs text-white/70 uppercase tracking-wide">{stat.label || ''}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+    <section className="py-12 md:py-16 px-4 md:px-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-10">
+          {subHeading && (
+            <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider mb-4" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+              {subHeading}
+            </span>
+          )}
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-3">
+            {heading || title}
+          </h2>
+          <p className="text-slate-600 max-w-2xl mx-auto">
+            {description || ''}
+          </p>
+        </div>
 
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Image Card */}
+          <div className="relative rounded-2xl overflow-hidden aspect-[4/3] lg:aspect-auto lg:min-h-[400px] group">
+            {image ? (
+              <>
+                <img src={image} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              </>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-slate-100">
+                <ImageIcon size={48} className="text-slate-300" />
+              </div>
+            )}
             {buttonText && (
-              <div className="pt-2">
-                <a href={buttonLink || '#'} className="inline-block px-6 py-3 font-medium rounded-lg text-white" style={{ backgroundColor: brandColor }}>
+              <div className="absolute bottom-4 left-4 right-4">
+                <a 
+                  href={buttonLink || '#'} 
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white backdrop-blur-sm transition-all hover:scale-105"
+                  style={{ backgroundColor: brandColor }}
+                >
                   {buttonText}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
                 </a>
               </div>
             )}
+          </div>
+
+          {/* Stats Cards Grid */}
+          <div className="grid grid-cols-2 gap-4">
+            {(stats ?? []).slice(0, 4).map((stat, idx) => (
+              <div 
+                key={idx} 
+                className="rounded-xl p-5 flex flex-col justify-center text-center transition-all hover:scale-[1.02]"
+                style={{ 
+                  backgroundColor: idx === 0 ? brandColor : `${brandColor}${10 + idx * 5}`,
+                  color: idx === 0 ? 'white' : 'inherit'
+                }}
+              >
+                <span className={`text-3xl md:text-4xl font-bold mb-1 ${idx === 0 ? 'text-white' : ''}`} style={idx !== 0 ? { color: brandColor } : {}}>
+                  {stat.value || '0'}
+                </span>
+                <span className={`text-sm font-medium ${idx === 0 ? 'text-white/80' : 'text-slate-600'}`}>
+                  {stat.label || ''}
+                </span>
+              </div>
+            ))}
+            {/* Fill empty slots if less than 4 stats */}
+            {(stats ?? []).length < 4 && Array.from({ length: 4 - (stats ?? []).length }).map((_, idx) => (
+              <div 
+                key={`empty-${idx}`} 
+                className="rounded-xl p-5 flex items-center justify-center"
+                style={{ backgroundColor: `${brandColor}08` }}
+              >
+                <span className="text-slate-300 text-sm">+</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
