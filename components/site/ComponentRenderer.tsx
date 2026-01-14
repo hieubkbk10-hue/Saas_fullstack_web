@@ -5635,16 +5635,16 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
   // Style 6: Marquee - Auto-scrolling horizontal animation (default fallback)
   return (
     <section className="py-10 md:py-16 overflow-hidden">
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full overflow-hidden">
         <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-center px-4">{title}</h2>
-        <div className="relative group/marquee">
+        <div className="relative overflow-hidden">
           {/* Gradient masks */}
-          <div className="absolute left-0 top-0 bottom-0 w-12 z-10 bg-gradient-to-r from-white to-transparent pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-12 z-10 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+          <div className="absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-white to-transparent pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-white to-transparent pointer-events-none" />
           
-          {/* Marquee track - using inline animation */}
+          {/* Marquee track */}
           <div 
-            className="flex hover:[animation-play-state:paused]"
+            className="flex w-max hover:[animation-play-state:paused]"
             style={{
               animation: 'marquee-scroll 25s linear infinite',
             }}
@@ -6501,14 +6501,44 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
 
   // Style 3: Carousel - Horizontal scroll với cards (Best Practice: partial peek, snap-scroll, contained)
   if (style === 'carousel') {
+    const carouselId = `team-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const cardWidth = 300;
+    const gap = 20;
+    
     return (
       <section className="py-12 md:py-16">
-        {/* Header */}
+        {/* Header với navigation */}
         <div className="flex items-center justify-between mb-8 px-4 md:px-8 max-w-7xl mx-auto">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{title}</h2>
             <p className="text-sm text-slate-500 mt-1">Vuốt để xem thêm →</p>
           </div>
+          {/* Navigation arrows */}
+          {members.length > 2 && (
+            <div className="flex gap-2">
+              <button 
+                type="button"
+                onClick={() => {
+                  const container = document.getElementById(carouselId);
+                  if (container) container.scrollBy({ left: -cardWidth - gap, behavior: 'smooth' });
+                }}
+                className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-md hover:shadow-lg text-slate-700 transition-all border border-slate-200"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  const container = document.getElementById(carouselId);
+                  if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                }}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md hover:shadow-lg transition-all"
+                style={{ backgroundColor: brandColor }}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          )}
         </div>
         
         {/* Carousel container - contained within max-w-7xl */}
@@ -6520,6 +6550,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
             
             {/* Scrollable area - no visible scrollbar */}
             <div 
+              id={carouselId}
               className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 md:gap-5 py-4 px-2"
               style={{ 
                 scrollbarWidth: 'none', 

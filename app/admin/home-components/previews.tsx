@@ -10759,12 +10759,40 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
     
     return (
       <div className={cn("py-8 relative", device === 'mobile' ? 'py-6' : '')}>
-        {/* Header */}
-        <div className={cn("mb-6", device === 'mobile' ? 'px-4' : 'px-6')}>
-          <h3 className={cn("font-bold text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg' : 'text-2xl')}>
-            Đội ngũ của chúng tôi
-          </h3>
-          <p className="text-sm text-slate-500 mt-1">Vuốt để xem thêm →</p>
+        {/* Header với navigation */}
+        <div className={cn("flex items-center justify-between mb-6", device === 'mobile' ? 'px-4' : 'px-6')}>
+          <div>
+            <h3 className={cn("font-bold text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg' : 'text-2xl')}>
+              Đội ngũ của chúng tôi
+            </h3>
+            <p className="text-sm text-slate-500 mt-1">Vuốt để xem thêm →</p>
+          </div>
+          {/* Navigation arrows */}
+          {members.length > 2 && (
+            <div className="flex gap-2">
+              <button 
+                type="button"
+                onClick={() => {
+                  const container = document.getElementById(`team-carousel-${device}`);
+                  if (container) container.scrollBy({ left: -cardWidth - gap, behavior: 'smooth' });
+                }}
+                className="w-9 h-9 rounded-full flex items-center justify-center bg-white dark:bg-slate-800 shadow-md hover:shadow-lg text-slate-700 dark:text-slate-300 transition-all border border-slate-200 dark:border-slate-600"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  const container = document.getElementById(`team-carousel-${device}`);
+                  if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                }}
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white shadow-md hover:shadow-lg transition-all"
+                style={{ backgroundColor: brandColor }}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          )}
         </div>
         
         {/* Carousel container - contained với fade edges */}
@@ -10776,6 +10804,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
             
             {/* Scrollable area - hidden scrollbar */}
             <div 
+              id={`team-carousel-${device}`}
               className="team-carousel-scroll flex overflow-x-auto snap-x snap-mandatory scroll-smooth py-3 px-2"
               style={{ gap: `${gap}px` }}
             >
