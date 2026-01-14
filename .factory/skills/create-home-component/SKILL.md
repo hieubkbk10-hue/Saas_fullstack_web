@@ -411,21 +411,125 @@ const deviceWidths = {
 )}>
 ```
 
-### Brand Color Integration
+### Brand Color Integration (Monochromatic Design)
+
+**QUAN TRỌNG**: Preview (admin) và Frontend (site) PHẢI đồng bộ 100% về cách sử dụng brandColor!
+
+#### Opacity Scale (Monochromatic Pattern)
 
 ```tsx
-// Primary background
-<div style={{ backgroundColor: brandColor }}>
-
-// Light tint background
-<div style={{ backgroundColor: `${brandColor}10` }}>
-
-// Border with brand color
-<div style={{ borderColor: brandColor }}>
-
-// Text with brand color
-<span style={{ color: brandColor }}>
+// Opacity levels cho brandColor - từ nhẹ đến đậm
+`${brandColor}05`  // 5% - hover background cực nhẹ
+`${brandColor}08`  // 8% - shadow nhẹ
+`${brandColor}10`  // 10% - border mặc định, background nhẹ
+`${brandColor}12`  // 12% - shadow hover
+`${brandColor}15`  // 15% - border default, shadow
+`${brandColor}20`  // 20% - border hover, shadow đậm hơn
+`${brandColor}30`  // 30% - border active
+`${brandColor}40`  // 40% - border focus, button outline
+`${brandColor}80`  // 80% - text secondary
+`${brandColor}cc`  // ~80% - accent labels
+`${brandColor}`    // 100% - primary text, icons, buttons
 ```
+
+#### Elements nên dùng brandColor (~10-15% coverage)
+
+| Element | Opacity | Ví dụ |
+|---------|---------|-------|
+| **Border mặc định** | 10-15% | `borderColor: ${brandColor}15` |
+| **Border hover** | 30-40% | `borderColor: ${brandColor}40` |
+| **Shadow mặc định** | 08-10% | `boxShadow: 0 4px 12px ${brandColor}10` |
+| **Shadow hover** | 12-20% | `boxShadow: 0 8px 24px ${brandColor}20` |
+| **Background hover** | 05% | `backgroundColor: ${brandColor}05` |
+| **Price text** | 100% | `color: brandColor` |
+| **Icons (hover)** | 100% | `color: brandColor` |
+| **Accent labels** | 80% | `color: ${brandColor}cc` |
+| **Buttons** | 100% | `backgroundColor: brandColor` |
+| **Button shadow** | 40% | `boxShadow: 0 4px 12px ${brandColor}40` |
+| **Tags/Badges** | 100% | `backgroundColor: brandColor` (for "Hot") |
+
+#### Implementation Pattern với onMouseEnter/Leave
+
+```tsx
+// Pattern chuẩn cho hover effects với brandColor
+<div 
+  className="border rounded-lg p-3 transition-all"
+  style={{ borderColor: `${brandColor}15` }}
+  onMouseEnter={(e) => { 
+    (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}40`; 
+    (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 12px ${brandColor}10`; 
+  }}
+  onMouseLeave={(e) => { 
+    (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}15`; 
+    (e.currentTarget as HTMLElement).style.boxShadow = 'none'; 
+  }}
+>
+  <h3>Title</h3>
+  <span style={{ color: brandColor }}>Price</span>
+  <ArrowUpRight style={{ color: brandColor }} className="opacity-0 group-hover:opacity-100" />
+</div>
+```
+
+#### Featured Item với Enhanced brandColor
+
+```tsx
+// Featured/Highlight item có shadow đậm hơn
+<article 
+  className="rounded-2xl overflow-hidden" 
+  style={{ boxShadow: `0 8px 30px ${brandColor}20` }}
+>
+  {/* Overlay label dùng brandColor với opacity */}
+  <span style={{ color: `${brandColor}cc` }}>Dịch vụ nổi bật</span>
+  
+  {/* Button với shadow */}
+  <button 
+    style={{ 
+      backgroundColor: brandColor, 
+      boxShadow: `0 4px 12px ${brandColor}40` 
+    }}
+  >
+    Xem chi tiết
+  </button>
+</article>
+```
+
+#### CRITICAL: Sync Preview và Frontend
+
+Khi tạo component mới, **BẮT BUỘC** phải đảm bảo:
+
+1. **Cùng opacity values** - Nếu preview dùng `${brandColor}15` cho border thì frontend cũng phải dùng `${brandColor}15`
+
+2. **Cùng hover effects** - onMouseEnter/Leave handlers phải giống nhau
+
+3. **Cùng elements** - Nếu preview có brandColor trên price, arrow, border thì frontend cũng phải có
+
+4. **Cùng visual output** - User nhìn preview phải giống y hệt khi render trên site
+
+```tsx
+// ❌ BAD - Preview và Frontend khác nhau
+// Preview:
+<span style={{ color: brandColor }}>{price}</span>
+// Frontend:
+<span className="text-slate-700">{price}</span>
+
+// ✅ GOOD - Sync hoàn toàn
+// Preview:
+<span style={{ color: brandColor }}>{price}</span>
+// Frontend:
+<span style={{ color: brandColor }}>{price}</span>
+```
+
+#### Checklist Sync brandColor
+
+- [ ] Border default opacity giống nhau (10-15%)
+- [ ] Border hover opacity giống nhau (30-40%)
+- [ ] Shadow values giống nhau
+- [ ] Price text dùng brandColor
+- [ ] Arrow/icon colors dùng brandColor
+- [ ] Button backgrounds dùng brandColor
+- [ ] Accent labels dùng brandColor với opacity
+- [ ] Featured items có enhanced shadow
+- [ ] onMouseEnter/Leave handlers sync
 
 ## Common Patterns
 
@@ -729,6 +833,7 @@ const DragHandle = ({ className }: { className?: string }) => (
 
 ## Testing Checklist
 
+### Functionality
 - [ ] Create page render đúng form
 - [ ] Có ít nhất 3 styles preview
 - [ ] Preview responsive (desktop/tablet/mobile)
@@ -737,11 +842,22 @@ const DragHandle = ({ className }: { className?: string }) => (
 - [ ] Edit page cập nhật được tất cả fields
 - [ ] ComponentRenderer render đúng trên site chính
 - [ ] Tất cả styles render đúng trên site chính
-- [ ] Brand color được áp dụng chính xác
 - [ ] Image upload hoạt động (nếu có)
 - [ ] Form validation hoạt động
 - [ ] **Drag & drop reorder hoạt động** (nếu component có items)
 - [ ] **Order được lưu đúng vào DB** sau khi reorder
+
+### Brand Color & Style Sync (CRITICAL)
+- [ ] **Preview và Frontend render GIỐNG NHAU** - So sánh visual output
+- [ ] Border colors dùng cùng opacity (`${brandColor}15` default, `${brandColor}40` hover)
+- [ ] Shadow values giống nhau giữa preview và frontend
+- [ ] Price/amount text dùng brandColor (không dùng text-slate-xxx)
+- [ ] Icons hover dùng brandColor
+- [ ] Buttons dùng brandColor background + shadow
+- [ ] Accent labels dùng brandColor với opacity (`${brandColor}cc`)
+- [ ] Featured items có enhanced shadow (`${brandColor}20`)
+- [ ] onMouseEnter/Leave handlers sync giữa preview và frontend
+- [ ] **Test với nhiều màu khác nhau** - đổi brandColor xem có đúng không
 
 ## Files cần tạo/cập nhật
 
