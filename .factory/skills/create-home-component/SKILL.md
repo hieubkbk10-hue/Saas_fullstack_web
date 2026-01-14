@@ -755,6 +755,61 @@ const processedUrl = await sharp(imageBuffer)
 | 1:1 | 800×800 | Square cards, avatar, logo |
 | 2:3 | 600×900 | Portrait cards, stories |
 
+### Dynamic Image Size Info trong Preview Info Bar (BẮT BUỘC)
+
+**CRITICAL**: Thay vì chỉ hiển thị "4 ảnh" trong info bar của PreviewWrapper, PHẢI hiển thị kích thước ảnh tối ưu cụ thể cho từng style.
+
+#### Implementation Pattern
+
+```tsx
+// Tạo function để generate info dựa trên style và số lượng items
+const getImageSizeInfo = () => {
+  const count = items.length;
+  switch (previewStyle) {
+    case 'spotlight':
+      if (count === 0) return 'Chưa có ảnh';
+      if (count === 1) return 'Ảnh 1: 1200×800px (3:2)';
+      if (count <= 4) return `Ảnh 1: 1200×800px • Ảnh 2-${count}: 600×600px`;
+      return `Ảnh 1: 1200×800px • Ảnh 2-4: 600×600px (+${count - 4} ảnh)`;
+    case 'grid':
+      return `${count} ảnh • Tất cả: 800×800px (1:1)`;
+    case 'masonry':
+      return `${count} ảnh • Ngang: 600×400px • Dọc: 600×900px • Vuông: 600×600px`;
+    // ... các styles khác
+    default:
+      return `${count} ảnh`;
+  }
+};
+
+// Sử dụng trong PreviewWrapper
+<PreviewWrapper 
+  title="Preview Gallery"
+  device={device}
+  setDevice={setDevice}
+  previewStyle={previewStyle}
+  setPreviewStyle={setPreviewStyle}
+  styles={styles}
+  info={getImageSizeInfo()}  // Dynamic info thay vì `${items.length} ảnh`
+>
+```
+
+#### Ví dụ Output trong Info Bar
+
+| Style | Số ảnh | Info Bar hiển thị |
+|-------|--------|-------------------|
+| Spotlight | 4 | `Ảnh 1: 1200×800px • Ảnh 2-4: 600×600px` |
+| Spotlight | 6 | `Ảnh 1: 1200×800px • Ảnh 2-4: 600×600px (+2 ảnh)` |
+| Grid | 8 | `8 ảnh • Tất cả: 800×800px (1:1)` |
+| Masonry | 10 | `10 ảnh • Ngang: 600×400px • Dọc: 600×900px • Vuông: 600×600px` |
+| Carousel | 5 | `5 ảnh • Tất cả: 800×600px (4:3)` |
+
+#### Lợi ích
+
+1. **User biết ngay** kích thước ảnh cần chuẩn bị
+2. **Không cần cuộn xuống** để xem hướng dẫn
+3. **Dynamic theo số ảnh** - ví dụ Spotlight chỉ cần 4 ảnh, nếu có 6 thì hiện "(+2 ảnh)"
+4. **Phân biệt vị trí ảnh** - Ảnh 1 vs Ảnh 2-4 cho styles có featured image
+
 ---
 
 ## Drag & Drop (nếu có items)
@@ -998,14 +1053,14 @@ function ComponentSection({ config, brandColor, title }) {
 - Hero Banner: slider, fade, bento, fullscreen, split, parallax
 - Stats: horizontal, cards, icons, gradient, minimal, counter
 - ProductList/ServiceList: commerce, minimal, bento, carousel, compact, showcase
+- Gallery: spotlight, explore, stories, grid, marquee, masonry ✅
+- Partners: grid, marquee, mono, badge, carousel, featured ✅
+- Services/Benefits: elegantGrid, modernList, bigNumber, cards, carousel, timeline ✅
 
 ### Cần bổ sung thêm styles ❌
-- FAQ: 3 styles → cần thêm 3 (minimal, timeline, tabbed)
-- Testimonials: 3 styles → cần thêm 3 (quote, carousel, minimal)
+- FAQ: 6 styles (accordion, cards, two-column, minimal, timeline, tabbed) ✅
+- Testimonials: 6 styles (cards, slider, masonry, quote, carousel, minimal) ✅
 - Pricing: 3 styles → cần thêm 3 (comparison, featured, compact)
-- Gallery: 3 styles → cần thêm 3 (grid, marquee, masonry)
-- Partners: 4 styles → cần thêm 2 (carousel, featured)
-- Services/Benefits: 3 styles → cần thêm 3 (cards, carousel, timeline)
 
 ---
 
@@ -1042,6 +1097,7 @@ function ComponentSection({ config, brandColor, title }) {
 ### Image (nếu có)
 - [ ] Form upload hỗ trợ: paste link, upload file, drag & drop
 - [ ] Mỗi style có hướng dẫn tỉ lệ ảnh cụ thể
+- [ ] **Info bar hiển thị kích thước ảnh tối ưu** (không chỉ "N ảnh")
 - [ ] Image được process: WebP 85%, sharp resize
 - [ ] Cleanup observer xóa ảnh không dùng
 
