@@ -8040,23 +8040,7 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
     );
   };
 
-  const renderContactForm = (variant: 'compact' | 'full' = 'full') => {
-    const fields = config.formFields || ['name', 'email', 'phone', 'message'];
-    return (
-      <div className="space-y-4" role="group" aria-label="Contact form preview">
-        {fields.includes('name') && (<div><span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Họ và tên <span className="text-red-500">*</span></span><div className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-400">Nguyễn Văn A</div></div>)}
-        <div className={cn(variant === 'full' && fields.includes('email') && fields.includes('phone') ? 'grid grid-cols-2 gap-4' : '')}>
-          {fields.includes('email') && (<div><span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email <span className="text-red-500">*</span></span><div className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-400">email@example.com</div></div>)}
-          {fields.includes('phone') && (<div><span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Số điện thoại</span><div className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-400">0901 234 567</div></div>)}
-        </div>
-        {fields.includes('message') && (<div><span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Nội dung tin nhắn <span className="text-red-500">*</span></span><div className={cn("w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-400", variant === 'compact' ? 'h-20' : 'h-28')}>Nhập nội dung tin nhắn...</div></div>)}
-        <div className="flex items-center justify-between gap-4">
-          <div className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-white font-medium text-sm" style={{ backgroundColor: brandColor }}><Send size={16} />{config.submitButtonText || 'Gửi tin nhắn'}</div>
-          {config.responseTimeText && (<span className="text-xs text-slate-500 dark:text-slate-400">{config.responseTimeText}</span>)}
-        </div>
-      </div>
-    );
-  };
+
 
   const renderMapOrPlaceholder = (className: string = "w-full h-full") => {
     if (config.mapEmbed) {
@@ -8296,50 +8280,77 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
     </div>
   );
 
-  // Style 5: Minimal Form - Form liên hệ bên trái, thông tin bên phải
+  // Style 5: Minimal - Layout tối giản với info ngang hàng
   const renderMinimalStyle = () => (
     <div className="w-full bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-700/40 rounded-xl overflow-hidden shadow-sm">
-      <div className={cn("flex", device === 'mobile' ? 'flex-col' : 'flex-row')}>
-        <div className={cn("p-6 lg:p-8", device === 'mobile' ? 'w-full' : 'w-3/5 border-r border-slate-200 dark:border-slate-700')}>
-          <h2 className={cn("font-bold tracking-tight mb-2 text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{config.formTitle || 'Gửi tin nhắn cho chúng tôi'}</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">{config.formDescription || 'Điền thông tin bên dưới, chúng tôi sẽ phản hồi sớm nhất.'}</p>
-          {renderContactForm('full')}
+      <div className={cn("p-6 lg:p-10", device === 'mobile' ? '' : '')}>
+        <div className="text-center mb-8">
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl')}>Liên hệ với chúng tôi</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">Chúng tôi luôn sẵn sàng hỗ trợ bạn</p>
         </div>
-        <div className={cn("p-6 lg:p-8 bg-slate-50 dark:bg-slate-800/50", device === 'mobile' ? 'w-full' : 'w-2/5')}>
-          <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-5">Thông tin liên hệ</h3>
-          <div className="space-y-4">
-            <div className="flex items-start gap-3"><div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><MapPin size={14} /></div><div><p className="text-xs text-slate-500 mb-0.5">Địa chỉ</p><p className="text-sm font-medium text-slate-900 dark:text-slate-100">{config.address || '123 Nguyễn Huệ, Q1, TP.HCM'}</p></div></div>
-            <div className="flex items-start gap-3"><div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Phone size={14} /></div><div><p className="text-xs text-slate-500 mb-0.5">Điện thoại</p><p className="text-sm font-medium text-slate-900 dark:text-slate-100">{config.phone || '1900 1234'}</p></div></div>
-            <div className="flex items-start gap-3"><div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Mail size={14} /></div><div><p className="text-xs text-slate-500 mb-0.5">Email</p><p className="text-sm font-medium text-slate-900 dark:text-slate-100">{config.email || 'contact@example.com'}</p></div></div>
-            <div className="flex items-start gap-3"><div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Clock size={14} /></div><div><p className="text-xs text-slate-500 mb-0.5">Giờ làm việc</p><p className="text-sm font-medium text-slate-900 dark:text-slate-100">{config.workingHours || 'T2-T6: 8:00-17:00'}</p></div></div>
+        <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-4')}>
+          <a href={`tel:${config.phone}`} className="flex flex-col items-center p-5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md transition-all text-center group">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Phone size={20} /></div>
+            <span className="text-xs text-slate-500 mb-1">Điện thoại</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{config.phone || '1900 1234'}</span>
+          </a>
+          <a href={`mailto:${config.email}`} className="flex flex-col items-center p-5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md transition-all text-center group">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Mail size={20} /></div>
+            <span className="text-xs text-slate-500 mb-1">Email</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate max-w-full">{config.email || 'contact@example.com'}</span>
+          </a>
+          <div className="flex flex-col items-center p-5 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><MapPin size={20} /></div>
+            <span className="text-xs text-slate-500 mb-1">Địa chỉ</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2">{config.address || '123 Nguyễn Huệ, Q1, TP.HCM'}</span>
           </div>
-          {renderSocialLinks(14, "mt-6 pt-5 border-t border-slate-200 dark:border-slate-700")}
-          {config.showMap && (<div className="mt-5 rounded-lg overflow-hidden h-36">{renderMapOrPlaceholder()}</div>)}
+          <div className="flex flex-col items-center p-5 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Clock size={20} /></div>
+            <span className="text-xs text-slate-500 mb-1">Giờ làm việc</span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{config.workingHours || 'T2-T6: 8:00-17:00'}</span>
+          </div>
         </div>
+        {(activeSocials.length > 0 || config.showMap) && (
+          <div className={cn("mt-8 pt-6 border-t border-slate-200 dark:border-slate-700", device === 'mobile' ? 'flex flex-col gap-4' : 'flex items-center justify-between')}>
+            {renderSocialLinks(18, "")}
+            {config.showMap && (<div className={cn("rounded-lg overflow-hidden", device === 'mobile' ? 'w-full h-48' : 'w-80 h-32')}>{renderMapOrPlaceholder()}</div>)}
+          </div>
+        )}
       </div>
     </div>
   );
 
-  // Style 6: Centered - Centered layout với form và thông tin
+  // Style 6: Centered - Layout centered với icon lớn
   const renderCenteredStyle = () => (
     <div className="w-full bg-white dark:bg-slate-900 border border-slate-200/40 dark:border-slate-700/40 rounded-xl overflow-hidden shadow-sm">
-      <div className="text-center p-6 lg:p-8 border-b border-slate-200 dark:border-slate-700">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Send size={24} /></div>
-        <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{config.formTitle || 'Liên hệ với chúng tôi'}</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 max-w-md mx-auto">{config.formDescription || 'Có câu hỏi hoặc cần hỗ trợ? Hãy để lại tin nhắn, chúng tôi sẽ phản hồi trong vòng 24h.'}</p>
+      <div className="text-center p-6 lg:p-10" style={{ backgroundColor: `${brandColor}05` }}>
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-5" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Phone size={28} /></div>
+        <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-2", device === 'mobile' ? 'text-xl' : 'text-2xl')}>Hãy kết nối với chúng tôi</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm max-w-md mx-auto">Đội ngũ của chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn</p>
       </div>
-      <div className={cn("p-6 lg:p-8", device === 'mobile' ? '' : 'flex gap-8')}>
-        <div className={cn(device === 'mobile' ? 'w-full mb-6' : 'flex-1')}>{renderContactForm('full')}</div>
-        <div className={cn("border-t pt-6 lg:border-t-0 lg:pt-0 lg:border-l lg:pl-8 border-slate-200 dark:border-slate-700", device === 'mobile' ? 'w-full' : 'w-72 shrink-0')}>
-          <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-4 text-sm">Hoặc liên hệ trực tiếp</h3>
-          <div className="space-y-3">
-            <a href={`tel:${config.phone}`} className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"><Phone size={16} style={{ color: brandColor }} /><span className="text-sm font-medium text-slate-900 dark:text-slate-100">{config.phone || '1900 1234'}</span></a>
-            <a href={`mailto:${config.email}`} className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"><Mail size={16} style={{ color: brandColor }} /><span className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{config.email || 'contact@example.com'}</span></a>
-            <div className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700"><Clock size={16} style={{ color: brandColor }} /><span className="text-sm text-slate-600 dark:text-slate-400">{config.workingHours || 'T2-T6: 8:00-17:00'}</span></div>
+      <div className="p-6 lg:p-8">
+        <div className={cn("grid gap-6", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-3')}>
+          <a href={`tel:${config.phone}`} className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Phone size={18} /></div>
+            <div><p className="text-xs text-slate-500 mb-0.5">Hotline</p><p className="text-sm font-bold text-slate-900 dark:text-slate-100">{config.phone || '1900 1234'}</p></div>
+          </a>
+          <a href={`mailto:${config.email}`} className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Mail size={18} /></div>
+            <div><p className="text-xs text-slate-500 mb-0.5">Email</p><p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{config.email || 'contact@example.com'}</p></div>
+          </a>
+          <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+            <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Clock size={18} /></div>
+            <div><p className="text-xs text-slate-500 mb-0.5">Giờ làm việc</p><p className="text-sm font-bold text-slate-900 dark:text-slate-100">{config.workingHours || 'T2-T6: 8:00-17:00'}</p></div>
           </div>
-          {renderSocialLinks(16, "mt-4 justify-center")}
-          {config.showMap && (<div className="mt-4 rounded-lg overflow-hidden h-32">{renderMapOrPlaceholder()}</div>)}
         </div>
+        <div className={cn("mt-6 p-5 rounded-xl bg-slate-50 dark:bg-slate-800/50", device === 'mobile' ? '' : 'flex items-start gap-6')}>
+          <div className="flex items-start gap-3 flex-1">
+            <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><MapPin size={18} /></div>
+            <div><p className="text-xs text-slate-500 mb-0.5">Địa chỉ văn phòng</p><p className="text-sm font-medium text-slate-900 dark:text-slate-100">{config.address || '123 Nguyễn Huệ, Q1, TP.HCM'}</p></div>
+          </div>
+          {config.showMap && (<div className={cn("rounded-lg overflow-hidden shrink-0", device === 'mobile' ? 'w-full h-40 mt-4' : 'w-64 h-28')}>{renderMapOrPlaceholder()}</div>)}
+        </div>
+        {activeSocials.length > 0 && (<div className="mt-6 text-center">{renderSocialLinks(20, "justify-center")}</div>)}
       </div>
     </div>
   );

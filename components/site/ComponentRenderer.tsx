@@ -2832,39 +2832,45 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
     </section>
   );
 
-  // Style 5: Minimal Form - Form liên hệ bên trái, thông tin bên phải
+  // Style 5: Minimal - Layout tối giản với info cards ngang hàng
   if (style === 'minimal') {
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="bg-white border border-slate-200/40 rounded-xl overflow-hidden shadow-sm">
-            <div className="flex flex-col md:flex-row">
-              <div className="md:w-3/5 md:border-r border-slate-200 p-8 lg:p-10">
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2 text-slate-900">{formTitle || 'Gửi tin nhắn cho chúng tôi'}</h2>
-                <p className="text-slate-500 mb-8">{formDescription || 'Điền thông tin bên dưới, chúng tôi sẽ phản hồi sớm nhất.'}</p>
-                <form className="space-y-5">
-                  <div><label className="block text-sm font-medium text-slate-700 mb-2">Họ và tên <span className="text-red-500">*</span></label><input type="text" className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm" placeholder="Nguyễn Văn A" /></div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><label className="block text-sm font-medium text-slate-700 mb-2">Email <span className="text-red-500">*</span></label><input type="email" className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm" placeholder="email@example.com" /></div>
-                    <div><label className="block text-sm font-medium text-slate-700 mb-2">Số điện thoại</label><input type="tel" className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm" placeholder="0901 234 567" /></div>
-                  </div>
-                  <div><label className="block text-sm font-medium text-slate-700 mb-2">Nội dung <span className="text-red-500">*</span></label><textarea rows={4} className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm resize-none" placeholder="Nhập nội dung..." /></div>
-                  <div className="flex items-center justify-between gap-4">
-                    <button type="submit" className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium" style={{ backgroundColor: brandColor }}><Send size={18} />{submitButtonText || 'Gửi tin nhắn'}</button>
-                    {responseTimeText && <span className="text-sm text-slate-500">{responseTimeText}</span>}
-                  </div>
-                </form>
+            <div className="p-8 lg:p-12">
+              <div className="text-center mb-10">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Liên hệ với chúng tôi</h2>
+                <p className="text-slate-500 mt-2">Chúng tôi luôn sẵn sàng hỗ trợ bạn</p>
               </div>
-              <div className="md:w-2/5 p-8 lg:p-10 bg-slate-50">
-                <h3 className="font-semibold text-slate-900 mb-6">Thông tin liên hệ</h3>
-                <div className="space-y-5">
-                  <div className="flex items-start gap-3"><div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><MapPin size={16} /></div><div><p className="text-xs text-slate-500 mb-1">Địa chỉ</p><p className="text-sm font-medium text-slate-900">{address || '123 Nguyễn Huệ, Q1, TP.HCM'}</p></div></div>
-                  <div className="flex items-start gap-3"><div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Phone size={16} /></div><div><p className="text-xs text-slate-500 mb-1">Điện thoại</p><p className="text-sm font-medium text-slate-900">{phone || '1900 1234'}</p></div></div>
-                  <div className="flex items-start gap-3"><div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Mail size={16} /></div><div><p className="text-xs text-slate-500 mb-1">Email</p><p className="text-sm font-medium text-slate-900">{email || 'contact@example.com'}</p></div></div>
-                  <div className="flex items-start gap-3"><div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Clock size={16} /></div><div><p className="text-xs text-slate-500 mb-1">Giờ làm việc</p><p className="text-sm font-medium text-slate-900">{workingHours || 'T2-T6: 8:00-17:00'}</p></div></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <a href={`tel:${phone}`} className="flex flex-col items-center p-6 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all text-center group">
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Phone size={22} /></div>
+                  <span className="text-xs text-slate-500 mb-1">Điện thoại</span>
+                  <span className="text-sm font-semibold text-slate-900">{phone || '1900 1234'}</span>
+                </a>
+                <a href={`mailto:${email}`} className="flex flex-col items-center p-6 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all text-center group">
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Mail size={22} /></div>
+                  <span className="text-xs text-slate-500 mb-1">Email</span>
+                  <span className="text-sm font-semibold text-slate-900 truncate max-w-full">{email || 'contact@example.com'}</span>
+                </a>
+                <div className="flex flex-col items-center p-6 rounded-xl border border-slate-200 text-center">
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><MapPin size={22} /></div>
+                  <span className="text-xs text-slate-500 mb-1">Địa chỉ</span>
+                  <span className="text-sm font-semibold text-slate-900 line-clamp-2">{address || '123 Nguyễn Huệ, Q1, TP.HCM'}</span>
                 </div>
-                {showMap !== false && (<div className="mt-6 rounded-lg overflow-hidden h-40">{renderMapOrPlaceholder()}</div>)}
+                <div className="flex flex-col items-center p-6 rounded-xl border border-slate-200 text-center">
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Clock size={22} /></div>
+                  <span className="text-xs text-slate-500 mb-1">Giờ làm việc</span>
+                  <span className="text-sm font-semibold text-slate-900">{workingHours || 'T2-T6: 8:00-17:00'}</span>
+                </div>
               </div>
+              {(activeSocials.length > 0 || showMap !== false) && (
+                <div className="mt-10 pt-8 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-6">
+                  {activeSocials.length > 0 && (<div className="flex items-center gap-3">{activeSocials.map((social, idx) => (<a key={idx} href={social.url} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full flex items-center justify-center border border-slate-200 hover:border-slate-300 transition-colors" style={{ color: brandColor }}>{getSocialIcon(social.platform)}</a>))}</div>)}
+                  {showMap !== false && (<div className="w-full md:w-96 h-36 rounded-lg overflow-hidden">{renderMapOrPlaceholder()}</div>)}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -2872,41 +2878,40 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
     );
   }
 
-  // Style 6: Centered - Form centered với thông tin bên cạnh
+  // Style 6: Centered - Layout centered với icon lớn
   if (style === 'centered') {
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="bg-white border border-slate-200/40 rounded-xl overflow-hidden shadow-sm">
-            <div className="text-center p-8 lg:p-10 border-b border-slate-200">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Send size={28} /></div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{formTitle || 'Liên hệ với chúng tôi'}</h2>
-              <p className="text-slate-500 mt-2 max-w-lg mx-auto">{formDescription || 'Có câu hỏi hoặc cần hỗ trợ? Hãy để lại tin nhắn, chúng tôi sẽ phản hồi trong vòng 24h.'}</p>
+            <div className="text-center p-8 lg:p-12" style={{ backgroundColor: `${brandColor}05` }}>
+              <div className="inline-flex items-center justify-center w-18 h-18 rounded-full mb-6" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Phone size={32} /></div>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 mb-2">Hãy kết nối với chúng tôi</h2>
+              <p className="text-slate-500 max-w-lg mx-auto">Đội ngũ của chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn</p>
             </div>
-            <div className="p-8 lg:p-10 flex flex-col md:flex-row gap-10">
-              <div className="flex-1">
-                <form className="space-y-5">
-                  <div><label className="block text-sm font-medium text-slate-700 mb-2">Họ và tên <span className="text-red-500">*</span></label><input type="text" className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm" placeholder="Nguyễn Văn A" /></div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><label className="block text-sm font-medium text-slate-700 mb-2">Email <span className="text-red-500">*</span></label><input type="email" className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm" placeholder="email@example.com" /></div>
-                    <div><label className="block text-sm font-medium text-slate-700 mb-2">Số điện thoại</label><input type="tel" className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm" placeholder="0901 234 567" /></div>
-                  </div>
-                  <div><label className="block text-sm font-medium text-slate-700 mb-2">Nội dung <span className="text-red-500">*</span></label><textarea rows={4} className="w-full px-4 py-3 rounded-lg border border-slate-300 text-sm resize-none" placeholder="Nhập nội dung..." /></div>
-                  <div className="flex items-center justify-between gap-4">
-                    <button type="submit" className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium" style={{ backgroundColor: brandColor }}><Send size={18} />{submitButtonText || 'Gửi tin nhắn'}</button>
-                    {responseTimeText && <span className="text-sm text-slate-500">{responseTimeText}</span>}
-                  </div>
-                </form>
-              </div>
-              <div className="md:w-80 shrink-0 md:border-l md:pl-10 border-slate-200">
-                <h3 className="font-semibold text-slate-900 mb-5 text-sm">Hoặc liên hệ trực tiếp</h3>
-                <div className="space-y-4">
-                  <a href={`tel:${phone}`} className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"><Phone size={18} style={{ color: brandColor }} /><span className="text-sm font-medium text-slate-900">{phone || '1900 1234'}</span></a>
-                  <a href={`mailto:${email}`} className="flex items-center gap-3 p-4 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"><Mail size={18} style={{ color: brandColor }} /><span className="text-sm font-medium text-slate-900 truncate">{email || 'contact@example.com'}</span></a>
-                  <div className="flex items-center gap-3 p-4 rounded-lg border border-slate-200"><Clock size={18} style={{ color: brandColor }} /><span className="text-sm text-slate-600">{workingHours || 'T2-T6: 8:00-17:00'}</span></div>
+            <div className="p-8 lg:p-10">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <a href={`tel:${phone}`} className="flex items-center gap-4 p-5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Phone size={20} /></div>
+                  <div><p className="text-xs text-slate-500 mb-0.5">Hotline</p><p className="text-base font-bold text-slate-900">{phone || '1900 1234'}</p></div>
+                </a>
+                <a href={`mailto:${email}`} className="flex items-center gap-4 p-5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Mail size={20} /></div>
+                  <div><p className="text-xs text-slate-500 mb-0.5">Email</p><p className="text-base font-bold text-slate-900 truncate">{email || 'contact@example.com'}</p></div>
+                </a>
+                <div className="flex items-center gap-4 p-5 rounded-xl bg-slate-50">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Clock size={20} /></div>
+                  <div><p className="text-xs text-slate-500 mb-0.5">Giờ làm việc</p><p className="text-base font-bold text-slate-900">{workingHours || 'T2-T6: 8:00-17:00'}</p></div>
                 </div>
-                {showMap !== false && (<div className="mt-5 rounded-lg overflow-hidden h-36">{renderMapOrPlaceholder()}</div>)}
               </div>
+              <div className="mt-6 p-6 rounded-xl bg-slate-50 flex flex-col md:flex-row items-start gap-6">
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><MapPin size={20} /></div>
+                  <div><p className="text-xs text-slate-500 mb-0.5">Địa chỉ văn phòng</p><p className="text-sm font-medium text-slate-900">{address || '123 Nguyễn Huệ, Q1, TP.HCM'}</p></div>
+                </div>
+                {showMap !== false && (<div className="w-full md:w-72 h-32 rounded-lg overflow-hidden shrink-0">{renderMapOrPlaceholder()}</div>)}
+              </div>
+              {activeSocials.length > 0 && (<div className="mt-8 text-center"><div className="flex items-center justify-center gap-3">{activeSocials.map((social, idx) => (<a key={idx} href={social.url} target="_blank" rel="noopener noreferrer" className="w-11 h-11 rounded-full flex items-center justify-center border border-slate-200 hover:border-slate-300 transition-colors" style={{ color: brandColor }}>{getSocialIcon(social.platform)}</a>))}</div></div>)}
             </div>
           </div>
         </div>
