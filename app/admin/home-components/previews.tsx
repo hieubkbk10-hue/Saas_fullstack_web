@@ -7542,7 +7542,7 @@ export const TrustBadgesPreview = ({
     </div>
   ) : null;
 
-  // Style 1: Square Grid - Grayscale hover to color, with zoom icon
+  // Style 1: Square Grid - Full color, with zoom icon
   const renderGridStyle = () => (
     <section className={cn("w-full bg-white dark:bg-slate-900", device === 'mobile' ? 'py-8 px-3' : 'py-12 px-6')}>
       <div className="container max-w-7xl mx-auto">
@@ -7558,7 +7558,7 @@ export const TrustBadgesPreview = ({
                   key={item.id} 
                   className="group relative aspect-square bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300"
                   style={{ 
-                    padding: device === 'mobile' ? '16px' : '24px',
+                    padding: device === 'mobile' ? '16px' : '20px',
                     border: `1px solid ${brandColor}15`
                   }}
                   onMouseEnter={(e) => { 
@@ -7573,11 +7573,7 @@ export const TrustBadgesPreview = ({
                   }}
                 >
                   {item.url ? (
-                    <img 
-                      src={item.url} 
-                      className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100 transition-all duration-300" 
-                      alt={item.name || 'Chứng nhận'} 
-                    />
+                    <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || 'Chứng nhận'} />
                   ) : (
                     <ImageIcon size={device === 'mobile' ? 32 : 40} className="text-slate-300" />
                   )}
@@ -7684,10 +7680,10 @@ export const TrustBadgesPreview = ({
           {items.map((item) => (
             <div 
               key={item.id} 
-              className={cn("w-auto flex items-center justify-center px-4 opacity-50 hover:opacity-100 hover:scale-110 transition-all duration-300 cursor-pointer relative group", device === 'mobile' ? 'h-20' : 'h-28 md:h-32')}
+              className={cn("w-auto flex items-center justify-center px-4 hover:scale-110 transition-all duration-300 cursor-pointer relative group", device === 'mobile' ? 'h-20' : 'h-24 md:h-28')}
             >
               {item.url ? (
-                <img src={item.url} className="h-full w-auto object-contain max-w-[200px] filter grayscale group-hover:grayscale-0 transition-all" alt={item.name || 'Chứng nhận'} />
+                <img src={item.url} className="h-full w-auto object-contain max-w-[200px] transition-transform" alt={item.name || 'Chứng nhận'} />
               ) : (
                 <div className="h-16 w-28 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
                   <ImageIcon size={28} className="text-slate-400" />
@@ -7710,18 +7706,21 @@ export const TrustBadgesPreview = ({
     const wallItems = items.slice(0, device === 'mobile' ? 4 : 6);
     const wallRemaining = items.length - wallItems.length;
     return (
-      <section className={cn("w-full", device === 'mobile' ? 'py-10 px-3' : 'py-14 px-6')} style={{ backgroundColor: `${brandColor}05` }}>
+      <section className={cn("w-full", device === 'mobile' ? 'py-10 px-3' : 'py-12 px-6')} style={{ backgroundColor: `${brandColor}05` }}>
         <div className="container max-w-7xl mx-auto">
           <SectionHeader />
           {items.length === 0 ? <EmptyState /> : (
             <>
-              <div className={cn("flex flex-wrap justify-center", device === 'mobile' ? 'gap-4' : 'gap-8')}>
+              <div className={cn(
+                "grid gap-4 md:gap-6 justify-items-center",
+                device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4 xl:grid-cols-6'
+              )}>
                 {wallItems.map((item) => (
                   <div 
                     key={item.id} 
                     className={cn(
                       "group relative bg-white dark:bg-slate-800 shadow-md rounded-sm flex flex-col cursor-pointer transition-all duration-300",
-                      device === 'mobile' ? 'w-[140px] h-[180px] p-2' : 'w-[180px] h-[230px] p-3'
+                      device === 'mobile' ? 'w-[140px] h-[180px] p-2' : 'w-[160px] h-[210px] p-3'
                     )}
                     style={{ border: `1px solid ${brandColor}15` }}
                     onMouseEnter={(e) => { 
@@ -7742,7 +7741,7 @@ export const TrustBadgesPreview = ({
                         <ImageIcon size={28} className="text-slate-300" />
                       )}
                     </div>
-                    <div className={cn("flex items-center justify-center", device === 'mobile' ? 'h-7 mt-1' : 'h-9 mt-2')}>
+                    <div className={cn("flex items-center justify-center", device === 'mobile' ? 'h-7 mt-1' : 'h-8 mt-1')}>
                       <span className={cn("font-semibold uppercase tracking-wider text-center truncate px-1", device === 'mobile' ? 'text-[8px]' : 'text-[9px]')} style={{ color: `${brandColor}cc` }}>
                         {item.name ? (item.name.length > 18 ? item.name.substring(0, 16) + '...' : item.name) : 'Certificate'}
                       </span>
@@ -7798,18 +7797,20 @@ export const TrustBadgesPreview = ({
                     >
                       <div 
                         className="aspect-square rounded-xl flex items-center justify-center transition-all duration-300"
-                        style={{ padding: device === 'mobile' ? '12px' : '20px', backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
+                        style={{ padding: device === 'mobile' ? '12px' : '16px', backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
                         onMouseEnter={(e) => { 
                           e.currentTarget.style.borderColor = `${brandColor}40`; 
                           e.currentTarget.style.boxShadow = `0 8px 20px ${brandColor}15`; 
+                          e.currentTarget.style.transform = 'translateY(-4px)';
                         }}
                         onMouseLeave={(e) => { 
                           e.currentTarget.style.borderColor = `${brandColor}15`; 
                           e.currentTarget.style.boxShadow = 'none';
+                          e.currentTarget.style.transform = 'translateY(0)';
                         }}
                       >
                         {item.url ? (
-                          <img src={item.url} className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100 transition-all" alt={item.name || 'Chứng nhận'} />
+                          <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || 'Chứng nhận'} />
                         ) : (
                           <ImageIcon size={32} className="text-slate-300" />
                         )}
@@ -7888,7 +7889,7 @@ export const TrustBadgesPreview = ({
                   <div 
                     key={item.id} 
                     className="group aspect-square rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300"
-                    style={{ padding: device === 'mobile' ? '12px' : '16px', backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
+                    style={{ padding: device === 'mobile' ? '10px' : '12px', backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
                     onMouseEnter={(e) => { 
                       e.currentTarget.style.borderColor = `${brandColor}40`; 
                       e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`; 
@@ -7899,7 +7900,7 @@ export const TrustBadgesPreview = ({
                     }}
                   >
                     {item.url ? (
-                      <img src={item.url} className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-50 group-hover:opacity-100 transition-all" alt={item.name || 'Chứng nhận'} />
+                      <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || 'Chứng nhận'} />
                     ) : (
                       <ImageIcon size={24} className="text-slate-300" />
                     )}
@@ -7929,7 +7930,7 @@ export const TrustBadgesPreview = ({
         <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
         <div className="text-xs text-slate-600 dark:text-slate-400">
           {previewStyle === 'grid' && (
-            <p><strong>300×300px</strong> (1:1) • Ảnh vuông, nền trong suốt PNG. Grayscale → color on hover.</p>
+            <p><strong>300×300px</strong> (1:1) • Ảnh vuông, nền trong suốt PNG. Scale up on hover.</p>
           )}
           {previewStyle === 'cards' && (
             <p><strong>400×320px</strong> (5:4) • Ảnh chứng nhận rõ ràng, zoom on hover.</p>

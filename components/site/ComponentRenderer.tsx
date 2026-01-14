@@ -10,7 +10,7 @@ import { ServiceListSection } from './ServiceListSection';
 import { 
   LayoutTemplate, Package, FileText, HelpCircle, MousePointerClick, 
   Users, Star, Phone, Briefcase, Image as ImageIcon, Check, ZoomIn, Maximize2, X,
-  Building2, Clock, MapPin, Mail, Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, ArrowRight,
+  Building2, Clock, MapPin, Mail, Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, ArrowRight, ArrowUpRight,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
 
@@ -3034,7 +3034,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
   const style = (config.style as TrustBadgesStyle) || 'cards';
   const [selectedCert, setSelectedCert] = React.useState<TrustBadgeItem | null>(null);
 
-  // Style 1: Square Grid - Grayscale hover to color, clickable to lightbox
+  // Style 1: Square Grid - Full color, clickable to lightbox
   if (style === 'grid') {
     return (
       <section className="w-full py-12 md:py-16 bg-white">
@@ -3042,28 +3042,35 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
             {items.map((item, idx) => (
               <div 
                 key={idx} 
                 onClick={() => setSelectedCert(item)}
-                className="group relative aspect-square bg-white border border-slate-200 rounded-xl flex items-center justify-center p-6 md:p-8 cursor-zoom-in hover:border-blue-500 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                className="group relative aspect-square bg-white rounded-xl flex items-center justify-center p-5 md:p-6 cursor-zoom-in transition-all duration-300 hover:-translate-y-1"
+                style={{ border: `1px solid ${brandColor}15` }}
+                onMouseEnter={(e) => { 
+                  e.currentTarget.style.borderColor = `${brandColor}40`; 
+                  e.currentTarget.style.boxShadow = `0 8px 24px ${brandColor}15`; 
+                }}
+                onMouseLeave={(e) => { 
+                  e.currentTarget.style.borderColor = `${brandColor}15`; 
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               >
                 {item.url ? (
-                  <img 
-                    src={item.url} 
-                    className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-70 group-hover:opacity-100 transition-all duration-300" 
-                    alt={item.name || ''} 
-                  />
+                  <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} />
                 ) : (
                   <ImageIcon size={40} className="text-slate-300" />
                 )}
-                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Maximize2 className="w-5 h-5 text-blue-500" />
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
+                    <Maximize2 size={14} style={{ color: brandColor }} />
+                  </div>
                 </div>
                 {item.name && (
                   <div className="absolute bottom-2 left-2 right-2 text-center">
-                    <span className="text-[10px] font-medium text-slate-500 truncate block px-2">{item.name}</span>
+                    <span className="text-[10px] font-medium text-slate-500 truncate block">{item.name}</span>
                   </div>
                 )}
               </div>
@@ -3075,7 +3082,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
     );
   }
 
-  // Style 2: Feature Cards - Large cards with title, hover zoom (BEST)
+  // Style 2: Feature Cards - Large cards with title, hover zoom
   if (style === 'cards') {
     return (
       <section className="w-full py-12 md:py-16 bg-white">
@@ -3083,34 +3090,39 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {items.map((item, idx) => (
               <div 
                 key={idx} 
                 onClick={() => setSelectedCert(item)}
-                className="group relative flex flex-col border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-2xl hover:border-blue-200 transition-all duration-500 cursor-zoom-in h-full"
+                className="group relative flex flex-col rounded-2xl overflow-hidden bg-white shadow-sm cursor-zoom-in h-full transition-all duration-300"
+                style={{ border: `1px solid ${brandColor}15` }}
+                onMouseEnter={(e) => { 
+                  e.currentTarget.style.borderColor = `${brandColor}30`; 
+                  e.currentTarget.style.boxShadow = `0 12px 32px ${brandColor}15`; 
+                }}
+                onMouseLeave={(e) => { 
+                  e.currentTarget.style.borderColor = `${brandColor}15`; 
+                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                }}
               >
-                <div className="aspect-[5/4] bg-slate-50/50 flex items-center justify-center p-8 md:p-12 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-blue-50/0 group-hover:bg-blue-50/30 transition-colors duration-300" />
+                <div className="aspect-[5/4] bg-slate-50/50 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
                   {item.url ? (
-                    <img 
-                      src={item.url} 
-                      className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" 
-                      alt={item.name || ''} 
-                    />
+                    <img src={item.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" alt={item.name || ''} />
                   ) : (
                     <ImageIcon size={48} className="text-slate-300" />
                   )}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-                    <span className="bg-white/90 text-slate-800 px-4 py-2 rounded-full shadow-lg font-medium flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform text-sm">
+                    <span className="bg-white/90 px-4 py-2 rounded-full shadow-lg font-medium flex items-center gap-2 text-sm" style={{ color: brandColor }}>
                       <ZoomIn size={16} /> Xem chi tiết
                     </span>
                   </div>
                 </div>
-                <div className="py-4 px-5 bg-white border-t border-slate-100 flex items-center justify-between group-hover:bg-slate-50 transition-colors">
-                  <span className="font-semibold truncate transition-colors text-sm" style={{ color: brandColor }}>
+                <div className="py-4 px-5 bg-white border-t flex items-center justify-between group-hover:bg-slate-50 transition-colors" style={{ borderColor: `${brandColor}10` }}>
+                  <span className="font-semibold truncate text-sm" style={{ color: brandColor }}>
                     {item.name || 'Chứng nhận'}
                   </span>
+                  <ArrowUpRight size={16} className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} />
                 </div>
               </div>
             ))}
@@ -3121,10 +3133,10 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
     );
   }
 
-  // Style 3: Marquee - Auto scroll slider with tooltip
+  // Style 3: Marquee - Auto scroll slider with tooltip, full color
   if (style === 'marquee') {
     return (
-      <section className="w-full py-16 md:py-20 bg-slate-50 border-y border-slate-200">
+      <section className="w-full py-14 md:py-20 border-y" style={{ backgroundColor: `${brandColor}05`, borderColor: `${brandColor}15` }}>
         <div className="container max-w-7xl mx-auto px-4 mb-10 text-center">
           <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
         </div>
@@ -3133,17 +3145,17 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
             <div 
               key={idx} 
               onClick={() => setSelectedCert(item)}
-              className="h-28 md:h-36 w-auto flex items-center justify-center px-4 opacity-60 hover:opacity-100 hover:scale-110 transition-all duration-300 cursor-zoom-in relative group"
+              className="h-24 md:h-32 w-auto flex items-center justify-center px-4 hover:scale-110 transition-all duration-300 cursor-zoom-in relative group"
             >
               {item.url ? (
-                <img src={item.url} className="h-full w-auto object-contain max-w-[250px]" alt={item.name || ''} />
+                <img src={item.url} className="h-full w-auto object-contain max-w-[200px]" alt={item.name || ''} />
               ) : (
-                <div className="h-20 w-32 bg-slate-200 rounded flex items-center justify-center">
-                  <ImageIcon size={32} className="text-slate-400" />
+                <div className="h-16 w-28 bg-slate-200 rounded flex items-center justify-center">
+                  <ImageIcon size={28} className="text-slate-400" />
                 </div>
               )}
               {item.name && (
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">
+                <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded text-xs font-medium opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none text-white" style={{ backgroundColor: brandColor }}>
                   {item.name}
                 </div>
               )}
@@ -3158,31 +3170,39 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
   // Style 4: Framed Wall - Certificate frames hanging on wall
   if (style === 'wall') {
     return (
-      <section className="w-full py-14 md:py-20 bg-slate-100">
+      <section className="w-full py-12 md:py-16" style={{ backgroundColor: `${brandColor}05` }}>
         <div className="container max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
           </div>
-          <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6 justify-items-center">
             {items.map((item, idx) => (
               <div 
                 key={idx} 
                 onClick={() => setSelectedCert(item)}
-                className="group relative bg-white p-3 md:p-4 shadow-md rounded-sm border border-slate-200 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-zoom-in w-40 h-52 md:w-52 md:h-64"
+                className="group relative bg-white p-2 md:p-3 shadow-md rounded-sm flex flex-col cursor-zoom-in w-[140px] h-[180px] md:w-[160px] md:h-[210px] transition-all duration-300"
+                style={{ border: `1px solid ${brandColor}15` }}
+                onMouseEnter={(e) => { 
+                  e.currentTarget.style.boxShadow = `0 12px 24px ${brandColor}20`; 
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                }}
+                onMouseLeave={(e) => { 
+                  e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
               >
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-1.5 h-12 bg-gradient-to-b from-slate-300 to-transparent opacity-50 z-0"></div>
-                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-slate-300 shadow-inner z-10"></div>
-                <div className="flex-1 flex items-center justify-center bg-white border border-slate-100 p-4 relative z-10 overflow-hidden">
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors z-20 pointer-events-none"></div>
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-1 h-10 bg-gradient-to-b from-slate-400 to-transparent opacity-40"></div>
+                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full shadow-inner" style={{ backgroundColor: `${brandColor}60` }}></div>
+                <div className="flex-1 flex items-center justify-center p-3 relative overflow-hidden" style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}10` }}>
                   {item.url ? (
                     <img src={item.url} className="w-full h-full object-contain" alt={item.name || ''} />
                   ) : (
-                    <ImageIcon size={32} className="text-slate-300" />
+                    <ImageIcon size={28} className="text-slate-300" />
                   )}
                 </div>
-                <div className="h-8 md:h-10 flex items-center justify-center relative z-10">
-                  <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors text-center truncate px-1">
-                    {item.name ? (item.name.length > 20 ? item.name.substring(0, 18) + '...' : item.name) : 'Certificate'}
+                <div className="h-7 md:h-8 flex items-center justify-center mt-1">
+                  <span className="text-[8px] md:text-[9px] font-semibold uppercase tracking-wider text-center truncate px-1" style={{ color: `${brandColor}cc` }}>
+                    {item.name ? (item.name.length > 18 ? item.name.substring(0, 16) + '...' : item.name) : 'Certificate'}
                   </span>
                 </div>
               </div>
@@ -3194,7 +3214,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
     );
   }
 
-  // Style 5: Carousel - Horizontal scroll with grayscale hover
+  // Style 5: Carousel - Horizontal scroll, full color
   if (style === 'carousel') {
     return (
       <section className="w-full py-12 md:py-16 bg-white">
@@ -3204,19 +3224,29 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
           </div>
           <div className="relative">
             <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-              <div className="flex gap-4 md:gap-6">
+              <div className="flex gap-4 md:gap-5">
                 {items.map((item, idx) => (
                   <div 
                     key={idx}
                     onClick={() => setSelectedCert(item)}
-                    className="flex-shrink-0 w-[200px] md:w-[250px] group cursor-zoom-in"
+                    className="flex-shrink-0 w-[180px] md:w-[220px] group cursor-zoom-in"
                   >
                     <div 
-                      className="aspect-square rounded-xl flex items-center justify-center p-5 md:p-6 transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1"
-                      style={{ backgroundColor: `${brandColor}08`, border: `1px solid ${brandColor}15` }}
+                      className="aspect-square rounded-xl flex items-center justify-center p-4 md:p-5 transition-all duration-300"
+                      style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
+                      onMouseEnter={(e) => { 
+                        e.currentTarget.style.borderColor = `${brandColor}40`; 
+                        e.currentTarget.style.boxShadow = `0 8px 20px ${brandColor}15`; 
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                      }}
+                      onMouseLeave={(e) => { 
+                        e.currentTarget.style.borderColor = `${brandColor}15`; 
+                        e.currentTarget.style.boxShadow = 'none';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                      }}
                     >
                       {item.url ? (
-                        <img src={item.url} className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-60 group-hover:opacity-100 transition-all" alt={item.name || ''} />
+                        <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} />
                       ) : (
                         <ImageIcon size={32} className="text-slate-300" />
                       )}
@@ -3235,7 +3265,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
     );
   }
 
-  // Style 6: Featured - 1 featured + grid (default fallback)
+  // Style 6: Featured - 1 featured + grid (default fallback), full color
   const featuredItem = items[0];
   const otherItems = items.slice(1, 7);
   return (
@@ -3244,14 +3274,22 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
         <div className="text-center mb-10">
           <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
           {featuredItem && (
             <div 
               onClick={() => setSelectedCert(featuredItem)}
-              className="group cursor-zoom-in rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl"
+              className="group cursor-zoom-in rounded-2xl overflow-hidden transition-all duration-300"
               style={{ backgroundColor: `${brandColor}08`, border: `2px solid ${brandColor}20` }}
+              onMouseEnter={(e) => { 
+                e.currentTarget.style.borderColor = `${brandColor}40`; 
+                e.currentTarget.style.boxShadow = `0 12px 32px ${brandColor}15`; 
+              }}
+              onMouseLeave={(e) => { 
+                e.currentTarget.style.borderColor = `${brandColor}20`; 
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
-              <div className="aspect-[4/3] flex items-center justify-center p-8 md:p-10 relative">
+              <div className="aspect-[4/3] flex items-center justify-center p-6 md:p-8 relative">
                 {featuredItem.url ? (
                   <img src={featuredItem.url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt={featuredItem.name || ''} />
                 ) : (
@@ -3262,9 +3300,14 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                     NỔI BẬT
                   </span>
                 </div>
+                <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-lg" style={{ color: brandColor }}>
+                    <ZoomIn size={20} />
+                  </div>
+                </div>
               </div>
-              <div className="py-4 text-center border-t" style={{ borderColor: `${brandColor}15` }}>
-                <span className="font-bold text-base" style={{ color: brandColor }}>
+              <div className="py-3 md:py-4 text-center border-t" style={{ borderColor: `${brandColor}15` }}>
+                <span className="font-bold text-sm md:text-base" style={{ color: brandColor }}>
                   {featuredItem.name || 'Chứng nhận nổi bật'}
                 </span>
               </div>
@@ -3275,11 +3318,19 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
               <div 
                 key={idx}
                 onClick={() => setSelectedCert(item)}
-                className="group aspect-square rounded-xl flex items-center justify-center p-4 cursor-zoom-in transition-all duration-300 hover:shadow-md"
+                className="group aspect-square rounded-xl flex items-center justify-center p-3 md:p-4 cursor-zoom-in transition-all duration-300"
                 style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
+                onMouseEnter={(e) => { 
+                  e.currentTarget.style.borderColor = `${brandColor}40`; 
+                  e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`; 
+                }}
+                onMouseLeave={(e) => { 
+                  e.currentTarget.style.borderColor = `${brandColor}15`; 
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               >
                 {item.url ? (
-                  <img src={item.url} className="w-full h-full object-contain filter grayscale group-hover:grayscale-0 opacity-50 group-hover:opacity-100 transition-all" alt={item.name || ''} />
+                  <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} />
                 ) : (
                   <ImageIcon size={24} className="text-slate-300" />
                 )}
