@@ -1462,19 +1462,19 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
   };
 
   // ============ PARTNERS STYLES (Grid, Marquee, Mono, Badge, Carousel, Featured) ============
+  // Compact spacing, larger logos (+10%), no hover effects
 
-  // Style 1: Classic Grid - Hover effect, responsive grid (improved with brandColor & edge cases)
+  // Style 1: Classic Grid - Clean responsive grid
   const renderGridStyle = () => {
-    // Edge case: Empty state
     if (items.length === 0) {
       return (
-        <section className="w-full py-10 bg-white dark:bg-slate-900">
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
-              <Building2 size={32} style={{ color: brandColor }} />
+        <section className="w-full py-6 bg-white dark:bg-slate-900">
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: `${brandColor}10` }}>
+              <Building2 size={28} style={{ color: brandColor }} />
             </div>
             <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có đối tác nào</h3>
-            <p className="text-sm text-slate-500">Thêm logo đối tác đầu tiên để bắt đầu</p>
+            <p className="text-sm text-slate-500">Thêm logo đối tác đầu tiên</p>
           </div>
         </section>
       );
@@ -1484,37 +1484,15 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     const visibleItems = items.slice(0, MAX_VISIBLE);
     const remainingCount = items.length - MAX_VISIBLE;
 
-    // Centered layout for 1-2 items
     if (items.length <= 2) {
       return (
-        <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
-          <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 text-center">
-              Đối tác của chúng tôi
-            </h2>
-            <div className={cn("mx-auto flex items-center justify-center gap-8", items.length === 1 ? 'max-w-xs' : 'max-w-lg')}>
+        <section className="w-full py-6 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+          <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-4">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 text-center">Đối tác</h2>
+            <div className={cn("mx-auto flex items-center justify-center gap-6", items.length === 1 ? 'max-w-xs' : 'max-w-md')}>
               {items.map((item) => (
-                <a
-                  key={item.id}
-                  href={item.link || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group p-6 rounded-xl border transition-all"
-                  style={{ borderColor: `${brandColor}15` }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = `${brandColor}40`;
-                    e.currentTarget.style.boxShadow = `0 8px 24px ${brandColor}15`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = `${brandColor}15`;
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  {item.url ? (
-                    <img src={item.url} alt="" className="h-12 w-auto object-contain group-hover:scale-105 transition-transform" />
-                  ) : (
-                    <ImageIcon size={48} className="text-slate-300" />
-                  )}
+                <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer" className="p-4 rounded-lg border" style={{ borderColor: `${brandColor}15` }}>
+                  {item.url ? <img src={item.url} alt="" className="h-14 w-auto object-contain" /> : <ImageIcon size={44} className="text-slate-300" />}
                 </a>
               ))}
             </div>
@@ -1524,54 +1502,26 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     }
 
     return (
-      <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-4">
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
-              Đối tác của chúng tôi
-            </h2>
-          </div>
+      <section className="w-full py-6 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-4">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-3">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full" style={{ backgroundColor: brandColor }}></span>
+            Đối tác
+          </h2>
           <div className={cn(
-            "grid gap-6 items-center justify-items-center",
+            "grid gap-3 items-center justify-items-center",
             device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-4' : 'grid-cols-4 lg:grid-cols-8'
           )}>
             {visibleItems.map((item) => (
-              <a 
-                key={item.id}
-                href={item.link || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center p-4 rounded-xl border transition-all group"
-                style={{ borderColor: `${brandColor}10` }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = `${brandColor}40`;
-                  e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = `${brandColor}10`;
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                {item.url ? (
-                  <img 
-                    src={item.url} 
-                    alt="" 
-                    className="h-10 w-auto object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" 
-                  />
-                ) : (
-                  <ImageIcon size={40} className="text-slate-300" />
-                )}
+              <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer"
+                className="w-full flex items-center justify-center p-3 rounded-lg border" style={{ borderColor: `${brandColor}10` }}>
+                {item.url ? <img src={item.url} alt="" className="h-11 w-auto object-contain" /> : <ImageIcon size={36} className="text-slate-300" />}
               </a>
             ))}
-            {/* +N pattern */}
             {remainingCount > 0 && (
-              <div 
-                className="w-full flex flex-col items-center justify-center p-4 rounded-xl border"
-                style={{ borderColor: `${brandColor}20`, backgroundColor: `${brandColor}05` }}
-              >
-                <Plus size={24} style={{ color: brandColor }} className="mb-1" />
-                <span className="text-sm font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+              <div className="w-full flex flex-col items-center justify-center p-3 rounded-lg border" style={{ borderColor: `${brandColor}20`, backgroundColor: `${brandColor}05` }}>
+                <Plus size={20} style={{ color: brandColor }} />
+                <span className="text-xs font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
               </div>
             )}
           </div>
@@ -1580,61 +1530,36 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     );
   };
 
-  // Style 2: Marquee - Auto scroll, swipeable (improved with empty state)
+  // Style 2: Marquee - Auto scroll
   const renderMarqueeStyle = () => {
-    // Edge case: Empty state
     if (items.length === 0) {
       return (
-        <section className="w-full py-10 bg-white dark:bg-slate-900">
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
-              <Building2 size={32} style={{ color: brandColor }} />
+        <section className="w-full py-6 bg-white dark:bg-slate-900">
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: `${brandColor}10` }}>
+              <Building2 size={28} style={{ color: brandColor }} />
             </div>
             <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có đối tác nào</h3>
-            <p className="text-sm text-slate-500">Thêm logo đối tác đầu tiên để bắt đầu</p>
+            <p className="text-sm text-slate-500">Thêm logo đối tác đầu tiên</p>
           </div>
         </section>
       );
     }
 
     return (
-      <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-4">
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
-              Đối tác tin cậy
-            </h2>
-          </div>
-          <div 
-            className="w-full relative group py-8"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-          >
-            {/* Fade Edges */}
-            <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none"></div>
-            <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none"></div>
-            
+      <section className="w-full py-6 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-4">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-3">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full" style={{ backgroundColor: brandColor }}></span>
+            Đối tác
+          </h2>
+          <div className="w-full relative py-4" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
+            <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none"></div>
             <AutoScrollSlider speed={0.8} isPaused={isPaused}>
               {items.map((item) => (
-                <a 
-                  key={`marquee-${item.id}`} 
-                  href={item.link || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 group/item"
-                >
-                  {item.url ? (
-                    <img 
-                      src={item.url} 
-                      alt="" 
-                      className="h-11 w-auto object-contain hover:scale-110 transition-transform duration-300 select-none" 
-                    />
-                  ) : (
-                    <div className="h-11 w-24 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
-                      <ImageIcon size={24} className="text-slate-400" />
-                    </div>
-                  )}
+                <a key={`marquee-${item.id}`} href={item.link || '#'} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                  {item.url ? <img src={item.url} alt="" className="h-12 w-auto object-contain select-none" /> : <div className="h-12 w-24 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center"><ImageIcon size={24} className="text-slate-400" /></div>}
                 </a>
               ))}
             </AutoScrollSlider>
@@ -1644,57 +1569,34 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     );
   };
 
-  // Style 3: Mono - Grayscale, hover to color (improved with empty state)
+  // Style 3: Mono - Grayscale scroll
   const renderMonoStyle = () => {
-    // Edge case: Empty state
     if (items.length === 0) {
       return (
-        <section className="w-full py-10 bg-white dark:bg-slate-900">
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
-              <Building2 size={32} style={{ color: brandColor }} />
+        <section className="w-full py-6 bg-white dark:bg-slate-900">
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: `${brandColor}10` }}>
+              <Building2 size={28} style={{ color: brandColor }} />
             </div>
             <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có đối tác nào</h3>
-            <p className="text-sm text-slate-500">Thêm logo đối tác đầu tiên để bắt đầu</p>
+            <p className="text-sm text-slate-500">Thêm logo đối tác đầu tiên</p>
           </div>
         </section>
       );
     }
 
     return (
-      <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-4">
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
-              Đối tác đồng hành
-            </h2>
-          </div>
-          <div 
-            className="w-full relative py-6"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-          >
+      <section className="w-full py-6 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-4">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-3">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full" style={{ backgroundColor: brandColor }}></span>
+            Đối tác
+          </h2>
+          <div className="w-full relative py-3" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
             <AutoScrollSlider speed={0.5} isPaused={isPaused}>
               {items.map((item) => (
-                <a 
-                  key={`mono-${item.id}`} 
-                  href={item.link || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 group"
-                >
-                  {item.url ? (
-                    <img 
-                      src={item.url} 
-                      alt="" 
-                      className="h-10 w-auto object-contain grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 select-none" 
-                    />
-                  ) : (
-                    <div className="h-10 w-24 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center opacity-50">
-                      <ImageIcon size={22} className="text-slate-400" />
-                    </div>
-                  )}
+                <a key={`mono-${item.id}`} href={item.link || '#'} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                  {item.url ? <img src={item.url} alt="" className="h-11 w-auto object-contain grayscale opacity-60 select-none" /> : <div className="h-11 w-24 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center opacity-50"><ImageIcon size={22} className="text-slate-400" /></div>}
                 </a>
               ))}
             </AutoScrollSlider>
@@ -1704,18 +1606,17 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     );
   };
 
-  // Style: Badge - Compact badges with name (improved with brandColor hover)
+  // Style 4: Badge - Compact badges with name
   const renderBadgeStyle = () => {
-    // Edge case: Empty state
     if (items.length === 0) {
       return (
-        <section className="w-full py-10 bg-white dark:bg-slate-900">
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
-              <Building2 size={32} style={{ color: brandColor }} />
+        <section className="w-full py-6 bg-white dark:bg-slate-900">
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: `${brandColor}10` }}>
+              <Building2 size={28} style={{ color: brandColor }} />
             </div>
             <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có đối tác nào</h3>
-            <p className="text-sm text-slate-500">Thêm logo đối tác đầu tiên để bắt đầu</p>
+            <p className="text-sm text-slate-500">Thêm logo đối tác đầu tiên</p>
           </div>
         </section>
       );
@@ -1726,52 +1627,26 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     const remainingCount = items.length - MAX_VISIBLE;
 
     return (
-      <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-4">
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
-              Đối tác tin cậy
-            </h2>
-          </div>
-          <div className="w-full flex flex-wrap items-center justify-center gap-3">
+      <section className="w-full py-6 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-4">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-3">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full" style={{ backgroundColor: brandColor }}></span>
+            Đối tác
+          </h2>
+          <div className="w-full flex flex-wrap items-center justify-center gap-2">
             {visibleItems.map((item, idx) => (
-              <a 
-                key={item.id}
-                href={item.link || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 rounded-lg border transition-all flex items-center gap-3 group"
-                style={{ 
-                  backgroundColor: `${brandColor}05`,
-                  borderColor: `${brandColor}15`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = `${brandColor}40`;
-                  e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = `${brandColor}15`;
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                {item.url ? (
-                  <img src={item.url} alt="" className="h-5 w-auto grayscale group-hover:grayscale-0 transition-all duration-300" />
-                ) : (
-                  <ImageIcon size={20} className="text-slate-400" />
-                )}
+              <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer"
+                className="px-3 py-2 rounded-lg border flex items-center gap-2"
+                style={{ backgroundColor: `${brandColor}05`, borderColor: `${brandColor}15` }}>
+                {item.url ? <img src={item.url} alt="" className="h-6 w-auto" /> : <ImageIcon size={20} className="text-slate-400" />}
                 <span className="text-xs font-semibold truncate max-w-[100px]" style={{ color: `${brandColor}cc` }}>
                   {(item as GalleryItem & { name?: string }).name || `Đối tác ${idx + 1}`}
                 </span>
               </a>
             ))}
-            {/* +N pattern */}
             {remainingCount > 0 && (
-              <div 
-                className="px-4 py-2 rounded-lg border flex items-center gap-2"
-                style={{ backgroundColor: `${brandColor}08`, borderColor: `${brandColor}20` }}
-              >
-                <Plus size={16} style={{ color: brandColor }} />
+              <div className="px-3 py-2 rounded-lg border flex items-center gap-2" style={{ backgroundColor: `${brandColor}08`, borderColor: `${brandColor}20` }}>
+                <Plus size={14} style={{ color: brandColor }} />
                 <span className="text-xs font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
               </div>
             )}
@@ -1781,21 +1656,20 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     );
   };
 
-  // Style 5: Carousel - Horizontal scroll with navigation arrows
+  // Style 5: Carousel - Paginated grid with navigation
   const renderCarouselStyle = () => {
     const itemsPerPage = device === 'mobile' ? 2 : device === 'tablet' ? 4 : 6;
     const totalPages = Math.ceil(items.length / itemsPerPage);
     
-    // Edge case: Empty state
     if (items.length === 0) {
       return (
-        <section className="w-full py-10 bg-white dark:bg-slate-900">
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
-              <Building2 size={32} style={{ color: brandColor }} />
+        <section className="w-full py-6 bg-white dark:bg-slate-900">
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: `${brandColor}10` }}>
+              <Building2 size={28} style={{ color: brandColor }} />
             </div>
             <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có đối tác nào</h3>
-            <p className="text-sm text-slate-500">Thêm logo đối tác đầu tiên để bắt đầu</p>
+            <p className="text-sm text-slate-500">Thêm logo đối tác đầu tiên</p>
           </div>
         </section>
       );
@@ -1806,98 +1680,44 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     const canNext = carouselIndex < totalPages - 1;
 
     return (
-      <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
-          {/* Header with navigation */}
-          <div className="flex items-center justify-between gap-6">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-4">
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
-              Đối tác của chúng tôi
+      <section className="w-full py-6 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-3">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full" style={{ backgroundColor: brandColor }}></span>
+              Đối tác
             </h2>
             {totalPages > 1 && (
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCarouselIndex(prev => Math.max(0, prev - 1))}
-                  disabled={!canPrev}
-                  className="w-9 h-9 rounded-full border flex items-center justify-center transition-all disabled:opacity-30"
-                  style={{ 
-                    borderColor: `${brandColor}30`,
-                    color: brandColor
-                  }}
-                >
-                  <ChevronLeft size={18} />
+                <button onClick={() => setCarouselIndex(prev => Math.max(0, prev - 1))} disabled={!canPrev}
+                  className="w-8 h-8 rounded-full border flex items-center justify-center disabled:opacity-30"
+                  style={{ borderColor: `${brandColor}30`, color: brandColor }}>
+                  <ChevronLeft size={16} />
                 </button>
-                <span className="text-xs font-medium text-slate-500 tabular-nums w-12 text-center">
-                  {carouselIndex + 1} / {totalPages}
-                </span>
-                <button
-                  onClick={() => setCarouselIndex(prev => Math.min(totalPages - 1, prev + 1))}
-                  disabled={!canNext}
-                  className="w-9 h-9 rounded-full border flex items-center justify-center transition-all disabled:opacity-30"
-                  style={{ 
-                    borderColor: `${brandColor}30`,
-                    color: brandColor
-                  }}
-                >
-                  <ChevronRight size={18} />
+                <span className="text-xs font-medium text-slate-500 tabular-nums">{carouselIndex + 1}/{totalPages}</span>
+                <button onClick={() => setCarouselIndex(prev => Math.min(totalPages - 1, prev + 1))} disabled={!canNext}
+                  className="w-8 h-8 rounded-full border flex items-center justify-center disabled:opacity-30"
+                  style={{ borderColor: `${brandColor}30`, color: brandColor }}>
+                  <ChevronRight size={16} />
                 </button>
               </div>
             )}
           </div>
-
-          {/* Carousel Grid */}
-          <div className={cn(
-            "grid gap-6 items-center",
-            device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-4' : 'grid-cols-6'
-          )}>
+          <div className={cn("grid gap-3 items-center", device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-4' : 'grid-cols-6')}>
             {visibleItems.map((item) => (
-              <a
-                key={item.id}
-                href={item.link || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col items-center justify-center p-4 rounded-xl border transition-all aspect-[3/2]"
-                style={{ 
-                  borderColor: `${brandColor}15`,
-                  backgroundColor: `${brandColor}03`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = `${brandColor}40`;
-                  e.currentTarget.style.boxShadow = `0 8px 20px ${brandColor}15`;
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = `${brandColor}15`;
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                {item.url ? (
-                  <img 
-                    src={item.url} 
-                    alt=""
-                    className="h-10 w-auto object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" 
-                  />
-                ) : (
-                  <ImageIcon size={36} className="text-slate-300" />
-                )}
+              <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center p-3 rounded-lg border aspect-[3/2]"
+                style={{ borderColor: `${brandColor}15`, backgroundColor: `${brandColor}03` }}>
+                {item.url ? <img src={item.url} alt="" className="h-11 w-auto object-contain" /> : <ImageIcon size={32} className="text-slate-300" />}
               </a>
             ))}
           </div>
-
-          {/* Progress dots */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1.5">
+            <div className="flex items-center justify-center gap-1">
               {Array.from({ length: totalPages }).map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCarouselIndex(idx)}
-                  className={cn(
-                    "h-1.5 rounded-full transition-all",
-                    idx === carouselIndex ? "w-6" : "w-1.5 bg-slate-200 dark:bg-slate-700"
-                  )}
-                  style={idx === carouselIndex ? { backgroundColor: brandColor } : {}}
-                />
+                <button key={idx} onClick={() => setCarouselIndex(idx)}
+                  className={cn("h-1.5 rounded-full", idx === carouselIndex ? "w-5" : "w-1.5 bg-slate-200 dark:bg-slate-700")}
+                  style={idx === carouselIndex ? { backgroundColor: brandColor } : {}} />
               ))}
             </div>
           )}
@@ -1906,18 +1726,17 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     );
   };
 
-  // Style 6: Featured - Showcase with 1 large featured + list
+  // Style 6: Featured - Large featured + smaller grid
   const renderFeaturedStyle = () => {
-    // Edge case: Empty state
     if (items.length === 0) {
       return (
-        <section className="w-full py-10 bg-white dark:bg-slate-900">
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
-              <Building2 size={32} style={{ color: brandColor }} />
+        <section className="w-full py-6 bg-white dark:bg-slate-900">
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: `${brandColor}10` }}>
+              <Building2 size={28} style={{ color: brandColor }} />
             </div>
             <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có đối tác nào</h3>
-            <p className="text-sm text-slate-500">Thêm logo đối tác đầu tiên để bắt đầu</p>
+            <p className="text-sm text-slate-500">Thêm logo đối tác đầu tiên</p>
           </div>
         </section>
       );
@@ -1928,35 +1747,16 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     const MAX_OTHERS = device === 'mobile' ? 4 : 6;
     const remainingCount = Math.max(0, items.length - 1 - MAX_OTHERS);
 
-    // Centered layout for 1-2 items
     if (items.length <= 2) {
       return (
-        <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
-          <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 text-center">
-              Đối tác chiến lược
-            </h2>
-            <div className={cn("mx-auto flex items-center justify-center gap-8", items.length === 1 ? 'max-w-xs' : 'max-w-lg')}>
+        <section className="w-full py-6 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+          <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-4">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 text-center">Đối tác</h2>
+            <div className={cn("mx-auto flex items-center justify-center gap-6", items.length === 1 ? 'max-w-xs' : 'max-w-md')}>
               {items.map((item) => (
-                <a
-                  key={item.id}
-                  href={item.link || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group p-6 rounded-2xl border transition-all"
-                  style={{ borderColor: `${brandColor}20` }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = `0 8px 30px ${brandColor}20`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  {item.url ? (
-                    <img src={item.url} alt="" className="h-16 w-auto object-contain group-hover:scale-105 transition-transform" />
-                  ) : (
-                    <ImageIcon size={64} className="text-slate-300" />
-                  )}
+                <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer"
+                  className="p-5 rounded-xl border" style={{ borderColor: `${brandColor}20` }}>
+                  {item.url ? <img src={item.url} alt="" className="h-16 w-auto object-contain" /> : <ImageIcon size={56} className="text-slate-300" />}
                 </a>
               ))}
             </div>
@@ -1966,99 +1766,34 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
     }
 
     return (
-      <section className="w-full py-10 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-4">
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
-              Đối tác chiến lược
-            </h2>
-          </div>
-
-          <div className={cn("grid gap-6", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-3')}>
-            {/* Featured Partner - Large card */}
-            <a
-              href={featured.link || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(
-                "group relative rounded-2xl border overflow-hidden transition-all",
-                device === 'mobile' ? 'aspect-video' : 'row-span-2 aspect-square'
-              )}
-              style={{ 
-                borderColor: `${brandColor}20`,
-                background: `linear-gradient(135deg, ${brandColor}08 0%, ${brandColor}03 100%)`
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = `0 12px 40px ${brandColor}20`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              <div className="absolute top-3 left-3">
-                <span 
-                  className="px-2 py-1 text-[10px] font-bold rounded"
-                  style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-                >
-                  ĐỐI TÁC NỔI BẬT
-                </span>
+      <section className="w-full py-6 bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-4">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 relative pl-3">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full" style={{ backgroundColor: brandColor }}></span>
+            Đối tác
+          </h2>
+          <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-3')}>
+            <a href={featured.link || '#'} target="_blank" rel="noopener noreferrer"
+              className={cn("relative rounded-xl border overflow-hidden", device === 'mobile' ? 'aspect-video' : 'row-span-2 aspect-square')}
+              style={{ borderColor: `${brandColor}20`, background: `linear-gradient(135deg, ${brandColor}08 0%, ${brandColor}03 100%)` }}>
+              <div className="absolute top-2 left-2">
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>NỔI BẬT</span>
               </div>
-              <div className="w-full h-full flex items-center justify-center p-8">
-                {featured.url ? (
-                  <img 
-                    src={featured.url} 
-                    alt=""
-                    className="max-h-24 w-auto object-contain group-hover:scale-110 transition-transform duration-500" 
-                  />
-                ) : (
-                  <ImageIcon size={64} className="text-slate-300" />
-                )}
-              </div>
-              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink size={16} style={{ color: brandColor }} />
+              <div className="w-full h-full flex items-center justify-center p-6">
+                {featured.url ? <img src={featured.url} alt="" className="max-h-28 w-auto object-contain" /> : <ImageIcon size={56} className="text-slate-300" />}
               </div>
             </a>
-
-            {/* Other Partners Grid */}
-            <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-2' : 'col-span-2 grid-cols-3')}>
+            <div className={cn("grid gap-2", device === 'mobile' ? 'grid-cols-2' : 'col-span-2 grid-cols-3')}>
               {others.slice(0, MAX_OTHERS).map((item) => (
-                <a
-                  key={item.id}
-                  href={item.link || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-center justify-center p-4 rounded-xl border transition-all aspect-[3/2]"
-                  style={{ borderColor: `${brandColor}15` }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = `${brandColor}40`;
-                    e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = `${brandColor}15`;
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  {item.url ? (
-                    <img 
-                      src={item.url} 
-                      alt=""
-                      className="h-8 w-auto object-contain grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" 
-                    />
-                  ) : (
-                    <ImageIcon size={28} className="text-slate-300" />
-                  )}
+                <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center p-3 rounded-lg border aspect-[3/2]" style={{ borderColor: `${brandColor}15` }}>
+                  {item.url ? <img src={item.url} alt="" className="h-9 w-auto object-contain" /> : <ImageIcon size={28} className="text-slate-300" />}
                 </a>
               ))}
-              {/* +N remaining */}
               {remainingCount > 0 && (
-                <div 
-                  className="flex flex-col items-center justify-center rounded-xl border aspect-[3/2]"
-                  style={{ borderColor: `${brandColor}20`, backgroundColor: `${brandColor}05` }}
-                >
-                  <Plus size={24} style={{ color: brandColor }} className="mb-1" />
+                <div className="flex flex-col items-center justify-center rounded-lg border aspect-[3/2]" style={{ borderColor: `${brandColor}20`, backgroundColor: `${brandColor}05` }}>
+                  <Plus size={20} style={{ color: brandColor }} />
                   <span className="text-sm font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
-                  <span className="text-[10px] text-slate-400">đối tác khác</span>
                 </div>
               )}
             </div>
