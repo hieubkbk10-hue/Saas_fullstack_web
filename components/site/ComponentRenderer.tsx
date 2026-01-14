@@ -5637,13 +5637,18 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
     <section className="py-10 md:py-16 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-center px-4">{title}</h2>
-        <div className="relative">
+        <div className="relative group/marquee">
           {/* Gradient masks */}
           <div className="absolute left-0 top-0 bottom-0 w-12 z-10 bg-gradient-to-r from-white to-transparent pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-12 z-10 bg-gradient-to-l from-white to-transparent pointer-events-none" />
           
-          {/* Marquee track */}
-          <div className="flex animate-marquee-categories">
+          {/* Marquee track - using inline animation */}
+          <div 
+            className="flex hover:[animation-play-state:paused]"
+            style={{
+              animation: 'marquee-scroll 25s linear infinite',
+            }}
+          >
             {[...resolvedCategories, ...resolvedCategories].map((cat, idx) => (
               <a 
                 key={`${cat.id}-${idx}`}
@@ -5666,19 +5671,6 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
           </div>
         </div>
       </div>
-      
-      <style jsx>{`
-        @keyframes marquee-categories {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee-categories {
-          animation: marquee-categories 25s linear infinite;
-        }
-        .animate-marquee-categories:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
     </section>
   );
 }

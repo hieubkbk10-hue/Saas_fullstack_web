@@ -10759,47 +10759,12 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
     
     return (
       <div className={cn("py-8 relative", device === 'mobile' ? 'py-6' : '')}>
-        {/* Header với navigation */}
-        <div className={cn("flex items-center justify-between mb-6", device === 'mobile' ? 'px-4' : 'px-6')}>
-          <div>
-            <h3 className={cn("font-bold text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg' : 'text-2xl')}>
-              Đội ngũ của chúng tôi
-            </h3>
-            <p className="text-sm text-slate-500 mt-1">Kéo để xem thêm →</p>
-          </div>
-          {/* Navigation arrows - desktop only */}
-          {device !== 'mobile' && members.length > 3 && (
-            <div className="flex gap-2">
-              <button 
-                type="button"
-                onClick={() => setCurrentSlide(prev => Math.max(0, prev - 1))}
-                disabled={currentSlide === 0}
-                className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-                  currentSlide === 0 
-                    ? "bg-slate-100 text-slate-300 cursor-not-allowed" 
-                    : "bg-white shadow-md hover:shadow-lg text-slate-700"
-                )}
-                style={currentSlide > 0 ? { borderColor: `${brandColor}30` } : {}}
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <button 
-                type="button"
-                onClick={() => setCurrentSlide(prev => Math.min(members.length - 3, prev + 1))}
-                disabled={currentSlide >= members.length - 3}
-                className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-                  currentSlide >= members.length - 3 
-                    ? "bg-slate-100 text-slate-300 cursor-not-allowed" 
-                    : "text-white shadow-md hover:shadow-lg"
-                )}
-                style={currentSlide < members.length - 3 ? { backgroundColor: brandColor } : {}}
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          )}
+        {/* Header */}
+        <div className={cn("mb-6", device === 'mobile' ? 'px-4' : 'px-6')}>
+          <h3 className={cn("font-bold text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg' : 'text-2xl')}>
+            Đội ngũ của chúng tôi
+          </h3>
+          <p className="text-sm text-slate-500 mt-1">Vuốt để xem thêm →</p>
         </div>
         
         {/* Carousel container - contained với fade edges */}
@@ -10811,14 +10776,10 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
             
             {/* Scrollable area - hidden scrollbar */}
             <div 
-              className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth py-3 px-2"
-              style={{ 
-                gap: `${gap}px`,
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none'
-              }}
+              className="team-carousel-scroll flex overflow-x-auto snap-x snap-mandatory scroll-smooth py-3 px-2"
+              style={{ gap: `${gap}px` }}
             >
-            {members.map((member, idx) => (
+            {members.map((member) => (
               <div 
                 key={member.id} 
                 className="flex-shrink-0 snap-start group"
@@ -10826,7 +10787,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
               >
                 {/* Card */}
                 <div 
-                  className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1"
+                  className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1 h-full"
                   style={{ borderBottomColor: brandColor, borderBottomWidth: '3px' }}
                 >
                   {/* Avatar */}
@@ -10839,32 +10800,27 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                       />
                     ) : (
                       <div 
-                        className="w-full h-full flex items-center justify-center text-4xl font-bold text-white"
+                        className="w-full h-full flex items-center justify-center text-5xl font-bold text-white"
                         style={{ backgroundColor: brandColor }}
                       >
                         {(member.name || 'U').charAt(0)}
                       </div>
                     )}
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                   
                   {/* Info */}
-                  <div className="p-4">
-                    <h4 className="font-bold text-slate-900 dark:text-slate-100 truncate">{member.name || 'Họ và tên'}</h4>
+                  <div className="p-5">
+                    <h4 className="font-bold text-lg text-slate-900 dark:text-slate-100 truncate">{member.name || 'Họ và tên'}</h4>
                     <p className="text-sm mt-0.5 truncate" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
                     {member.bio && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2 min-h-[2rem]">{member.bio}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 line-clamp-2">{member.bio}</p>
                     )}
-                    {/* Social - compact */}
-                    <div className="flex gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                    {/* Social */}
+                    <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
                       {member.facebook && <SocialIcon type="facebook" url={member.facebook} />}
                       {member.linkedin && <SocialIcon type="linkedin" url={member.linkedin} />}
                       {member.twitter && <SocialIcon type="twitter" url={member.twitter} />}
                       {member.email && <SocialIcon type="email" url={member.email} />}
-                      {!member.facebook && !member.linkedin && !member.twitter && !member.email && (
-                        <span className="text-xs text-slate-400">Chưa có liên kết</span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -10875,22 +10831,17 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
             </div>
           </div>
         </div>
-        
-        {/* Mobile: Dot indicators */}
-        {device === 'mobile' && members.length > 1 && (
-          <div className="flex justify-center gap-1.5 mt-4">
-            {members.map((_, idx) => (
-              <div 
-                key={idx} 
-                className={cn(
-                  "h-1.5 rounded-full transition-all",
-                  idx === currentSlide ? "w-4" : "w-1.5 bg-slate-300 dark:bg-slate-600"
-                )}
-                style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
-              />
-            ))}
-          </div>
-        )}
+
+        {/* CSS to hide scrollbar */}
+        <style>{`
+          .team-carousel-scroll {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+          }
+          .team-carousel-scroll::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
       </div>
     );
   };
