@@ -10802,11 +10802,34 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
             <div className="absolute left-0 top-0 bottom-0 w-10 md:w-16 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
             <div className="absolute right-0 top-0 bottom-0 w-10 md:w-16 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
             
-            {/* Scrollable area - hidden scrollbar */}
+            {/* Scrollable area - hidden scrollbar, mouse drag enabled */}
             <div 
               id={`team-carousel-${device}`}
-              className="team-carousel-scroll flex overflow-x-auto snap-x snap-mandatory scroll-smooth py-3 px-2"
+              className="team-carousel-scroll flex overflow-x-auto snap-x snap-mandatory py-3 px-2 cursor-grab active:cursor-grabbing select-none"
               style={{ gap: `${gap}px` }}
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el.dataset.isDown = 'true';
+                el.dataset.startX = String(e.pageX - el.offsetLeft);
+                el.dataset.scrollLeft = String(el.scrollLeft);
+                el.style.scrollBehavior = 'auto';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (el.dataset.isDown !== 'true') return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - Number(el.dataset.startX)) * 1.5;
+                el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+              }}
             >
             {members.map((member) => (
               <div 

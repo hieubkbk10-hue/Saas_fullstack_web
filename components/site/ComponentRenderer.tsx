@@ -5634,17 +5634,17 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
 
   // Style 6: Marquee - Auto-scrolling horizontal animation (default fallback)
   return (
-    <section className="py-10 md:py-16 overflow-hidden">
-      <div className="w-full overflow-hidden">
+    <section className="py-10 md:py-16 overflow-hidden max-w-[100vw]">
+      <div className="w-full max-w-full overflow-hidden">
         <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-6 md:mb-8 text-center px-4">{title}</h2>
-        <div className="relative overflow-hidden">
+        <div className="relative w-full max-w-full overflow-hidden">
           {/* Gradient masks */}
           <div className="absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-white to-transparent pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-white to-transparent pointer-events-none" />
           
           {/* Marquee track */}
           <div 
-            className="flex w-max hover:[animation-play-state:paused]"
+            className="inline-flex hover:[animation-play-state:paused]"
             style={{
               animation: 'marquee-scroll 25s linear infinite',
             }}
@@ -6548,14 +6548,37 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
             <div className="absolute left-0 top-0 bottom-0 w-12 md:w-20 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
             <div className="absolute right-0 top-0 bottom-0 w-12 md:w-20 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
             
-            {/* Scrollable area - no visible scrollbar */}
+            {/* Scrollable area - no visible scrollbar, mouse drag enabled */}
             <div 
               id={carouselId}
-              className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 md:gap-5 py-4 px-2"
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-5 py-4 px-2 cursor-grab active:cursor-grabbing select-none"
               style={{ 
                 scrollbarWidth: 'none', 
                 msOverflowStyle: 'none',
                 WebkitOverflowScrolling: 'touch'
+              }}
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el.dataset.isDown = 'true';
+                el.dataset.startX = String(e.pageX - el.offsetLeft);
+                el.dataset.scrollLeft = String(el.scrollLeft);
+                el.style.scrollBehavior = 'auto';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (el.dataset.isDown !== 'true') return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - Number(el.dataset.startX)) * 1.5;
+                el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
               }}
             >
             {members.map((member, idx) => (
