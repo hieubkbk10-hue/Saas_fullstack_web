@@ -8043,18 +8043,18 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
   const renderContactForm = (variant: 'compact' | 'full' = 'full') => {
     const fields = config.formFields || ['name', 'email', 'phone', 'message'];
     return (
-      <form className="space-y-4" onSubmit={(e) => e.preventDefault()} aria-label="Contact form">
-        {fields.includes('name') && (<div><label htmlFor="contact-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Họ và tên <span className="text-red-500">*</span></label><input type="text" id="contact-name" required placeholder="Nguyễn Văn A" className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:border-transparent transition-colors" style={{ '--tw-ring-color': `${brandColor}40` } as React.CSSProperties} /></div>)}
+      <div className="space-y-4" role="group" aria-label="Contact form preview">
+        {fields.includes('name') && (<div><span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Họ và tên <span className="text-red-500">*</span></span><div className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-400">Nguyễn Văn A</div></div>)}
         <div className={cn(variant === 'full' && fields.includes('email') && fields.includes('phone') ? 'grid grid-cols-2 gap-4' : '')}>
-          {fields.includes('email') && (<div><label htmlFor="contact-email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email <span className="text-red-500">*</span></label><input type="email" id="contact-email" required placeholder="email@example.com" className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:border-transparent transition-colors" style={{ '--tw-ring-color': `${brandColor}40` } as React.CSSProperties} /></div>)}
-          {fields.includes('phone') && (<div><label htmlFor="contact-phone" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Số điện thoại</label><input type="tel" id="contact-phone" placeholder="0901 234 567" className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:border-transparent transition-colors" style={{ '--tw-ring-color': `${brandColor}40` } as React.CSSProperties} /></div>)}
+          {fields.includes('email') && (<div><span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email <span className="text-red-500">*</span></span><div className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-400">email@example.com</div></div>)}
+          {fields.includes('phone') && (<div><span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Số điện thoại</span><div className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-400">0901 234 567</div></div>)}
         </div>
-        {fields.includes('message') && (<div><label htmlFor="contact-message" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Nội dung tin nhắn <span className="text-red-500">*</span></label><textarea id="contact-message" required rows={variant === 'compact' ? 3 : 4} placeholder="Nhập nội dung tin nhắn..." className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:border-transparent transition-colors resize-none" style={{ '--tw-ring-color': `${brandColor}40` } as React.CSSProperties} /></div>)}
+        {fields.includes('message') && (<div><span className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Nội dung tin nhắn <span className="text-red-500">*</span></span><div className={cn("w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-400", variant === 'compact' ? 'h-20' : 'h-28')}>Nhập nội dung tin nhắn...</div></div>)}
         <div className="flex items-center justify-between gap-4">
-          <button type="submit" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-white font-medium text-sm transition-all hover:opacity-90" style={{ backgroundColor: brandColor }}><Send size={16} />{config.submitButtonText || 'Gửi tin nhắn'}</button>
+          <div className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-white font-medium text-sm" style={{ backgroundColor: brandColor }}><Send size={16} />{config.submitButtonText || 'Gửi tin nhắn'}</div>
           {config.responseTimeText && (<span className="text-xs text-slate-500 dark:text-slate-400">{config.responseTimeText}</span>)}
         </div>
-      </form>
+      </div>
     );
   };
 
