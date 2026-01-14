@@ -265,6 +265,129 @@ case 'ComponentName':
 
 ---
 
+## Spacing & Density Best Practices
+
+**CRITICAL**: Spacing ảnh hưởng trực tiếp đến readability và visual hierarchy. Giảm spacing hợp lý giúp UI gọn gàng, chuyên nghiệp hơn.
+
+### Spacing Scale (Tailwind)
+
+| Size | Class | Pixels | Dùng cho |
+|------|-------|--------|----------|
+| xs | `gap-1`, `p-1` | 4px | Icon-text gap, badge padding |
+| sm | `gap-2`, `p-2` | 8px | Tight cards, compact items |
+| md | `gap-3`, `p-3` | 12px | Default card padding |
+| base | `gap-4`, `p-4` | 16px | Standard section padding |
+| lg | `gap-6`, `p-6` | 24px | Section gaps, spacious cards |
+| xl | `gap-8`, `py-8` | 32px | Section vertical padding |
+
+### Responsive Spacing Pattern
+
+```tsx
+// Section padding - giảm trên mobile
+<section className={cn(
+  "w-full",
+  device === 'mobile' ? 'py-6 px-3' : 'py-10 px-6'
+)}>
+
+// Grid gap - giảm trên mobile
+<div className={cn(
+  "grid",
+  device === 'mobile' ? 'grid-cols-2 gap-3' : 'grid-cols-4 gap-6'
+)}>
+
+// Card padding - giảm trên mobile
+<div className={cn(
+  "rounded-xl border",
+  device === 'mobile' ? 'p-3' : 'p-5'
+)}>
+```
+
+### Density Levels cho 6 Styles
+
+| Style Type | Density | Spacing Pattern |
+|------------|---------|-----------------|
+| Compact | High | `gap-2`, `p-2`, nhiều items/row |
+| Grid | Medium | `gap-4`, `p-4`, 3-4 items/row |
+| Cards | Medium | `gap-4`, `p-5`, 2-3 items/row |
+| List | Low-Medium | `gap-3`, `py-3`, 1 item/row |
+| Showcase | Low | `gap-6`, `p-6`, featured item lớn |
+| Carousel | Medium | `gap-4`, scroll horizontal |
+
+### Anti-Cramped UI Techniques
+
+```tsx
+// 1. Tránh padding quá nhỏ trên card
+// BAD: p-1 hoặc p-2 cho card lớn
+// GOOD: p-3 minimum cho card có nhiều content
+
+// 2. Gap giữa icon và text
+<div className="flex items-center gap-2"> {/* Minimum gap-2 */}
+  <Icon size={16} />
+  <span>Label</span>
+</div>
+
+// 3. Line-height cho readability
+<p className="leading-relaxed"> {/* hoặc leading-6 */}
+
+// 4. Margin between sections
+<div className="space-y-2"> {/* Tight: headings */}
+<div className="space-y-4"> {/* Normal: content blocks */}
+<div className="space-y-6"> {/* Spacious: sections */}
+
+// 5. Button padding - đừng quá tight
+<button className="px-4 py-2"> {/* Minimum cho touch target */}
+<button className="px-6 py-2.5"> {/* Comfortable */}
+```
+
+### Touch Target Guidelines (Mobile)
+
+```tsx
+// Minimum touch target: 44x44px (Apple HIG) / 48x48px (Material)
+<button className={cn(
+  "rounded-lg font-medium",
+  device === 'mobile' 
+    ? 'min-h-[44px] px-4 py-2.5 text-sm'  // Touch-friendly
+    : 'px-6 py-2 text-base'                // Desktop
+)}>
+
+// Clickable cards - đủ padding để tap
+<div className={cn(
+  "cursor-pointer",
+  device === 'mobile' ? 'p-4' : 'p-3'  // Lớn hơn trên mobile!
+)}>
+```
+
+### Whitespace Balance
+
+```tsx
+// Section với breathing room
+<section className="py-12 md:py-16"> {/* Vertical breathing */}
+  <div className="max-w-6xl mx-auto px-4 md:px-6"> {/* Horizontal containment */}
+    <header className="mb-8 md:mb-12"> {/* Header-content gap */}
+      <h2>Title</h2>
+      <p className="mt-2">Subtitle</p> {/* Tight title-subtitle */}
+    </header>
+    <div className="grid gap-6"> {/* Content grid */}
+      {/* items */}
+    </div>
+  </div>
+</section>
+
+// Card internal spacing
+<article className="p-5">
+  <header className="mb-3">  {/* Header section */}
+    <h3>Title</h3>
+    <span className="mt-1">Subtitle</span>
+  </header>
+  <p className="mb-4">Description</p>  {/* Body */}
+  <footer className="pt-3 border-t">  {/* Footer với separator */}
+    <button>Action</button>
+  </footer>
+</article>
+```
+
+---
+
 ## Monochromatic Brand Color System
 
 **CRITICAL**: Triết lý Monochromatic - 1 main color + tints/shades
