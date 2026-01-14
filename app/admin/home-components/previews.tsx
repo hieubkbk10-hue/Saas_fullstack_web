@@ -11103,214 +11103,233 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
 };
 
 // ============ FEATURES PREVIEW (Product Features) ============
-// 3 Professional Styles: Icon Grid, Alternating, Compact
-// Khác với Benefits (focuses on "why choose us"), Features focuses on product/service features
-
+// 6 Professional Styles: Icon Grid, Alternating, Compact, Cards, Carousel, Timeline
 type FeatureItem = { id: number; icon: string; title: string; description: string };
-export type FeaturesStyle = 'iconGrid' | 'alternating' | 'compact';
+export type FeaturesStyle = 'iconGrid' | 'alternating' | 'compact' | 'cards' | 'carousel' | 'timeline';
 
-// Icon mapping for features
-const featureIcons: Record<string, React.ElementType> = {
-  Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, Check, Star
-};
+const featureIcons: Record<string, React.ElementType> = { Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, Check, Star };
 
 export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: FeatureItem[]; brandColor: string; selectedStyle?: FeaturesStyle; onStyleChange?: (style: FeaturesStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const previewStyle = selectedStyle || 'iconGrid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as FeaturesStyle);
   const styles = [
-    { id: 'iconGrid', label: 'Icon Grid' }, 
-    { id: 'alternating', label: 'Alternating' }, 
-    { id: 'compact', label: 'Compact' }
+    { id: 'iconGrid', label: 'Icon Grid' }, { id: 'alternating', label: 'Alternating' }, { id: 'compact', label: 'Compact' },
+    { id: 'cards', label: 'Cards' }, { id: 'carousel', label: 'Carousel' }, { id: 'timeline', label: 'Timeline' }
   ];
 
-  const getIcon = (iconName: string) => {
-    return featureIcons[iconName] || Zap;
+  const getIcon = (iconName: string) => featureIcons[iconName] || Zap;
+  const MAX_VISIBLE = device === 'mobile' ? 4 : 6;
+
+  const renderEmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}><Zap size={32} style={{ color: brandColor }} /></div>
+      <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có tính năng nào</h3>
+      <p className="text-sm text-slate-500">Thêm tính năng đầu tiên để bắt đầu</p>
+    </div>
+  );
+
+  const renderIconGridStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    const visibleItems = items.slice(0, MAX_VISIBLE);
+    const remainingCount = items.length - MAX_VISIBLE;
+    const gridClass = cn("grid gap-4 md:gap-6", items.length === 1 ? 'max-w-md mx-auto' : items.length === 2 ? 'max-w-2xl mx-auto grid-cols-2' : device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3');
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+        <div className="text-center mb-8 md:mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-3", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>Tính năng nổi bật</h2>
+          <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">Khám phá những tính năng ưu việt giúp bạn đạt hiệu quả tối đa</p>
+        </div>
+        <div className={gridClass}>
+          {visibleItems.map((item) => {
+            const IconComponent = getIcon(item.icon);
+            return (
+              <div key={item.id} className="group bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 hover:border-transparent hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 duration-300" style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`, boxShadow: `0 8px 16px -4px ${brandColor}40` }}><IconComponent size={24} className="text-white" strokeWidth={2} /></div>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 mb-2 line-clamp-1">{item.title || 'Tên tính năng'}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2 min-h-[2.5rem]">{item.description || 'Mô tả tính năng...'}</p>
+              </div>
+            );
+          })}
+          {remainingCount > 0 && (<div className="flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-2xl aspect-square border-2 border-dashed border-slate-300 dark:border-slate-600"><div className="text-center"><Plus size={32} className="mx-auto mb-2 text-slate-400" /><span className="text-lg font-bold text-slate-600 dark:text-slate-300">+{remainingCount}</span><p className="text-xs text-slate-400">tính năng khác</p></div></div>)}
+        </div>
+      </div>
+    );
   };
 
-  // Style 1: Icon Grid - Grid với icon nổi bật, hover effects
-  const renderIconGridStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
-      {/* Header */}
-      <div className="text-center mb-8 md:mb-12">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-          <Zap size={12} />
-          Tính năng
+  const renderAlternatingStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+        <div className="text-center mb-8 md:mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>Tính năng nổi bật</h2>
         </div>
-        <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-3", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>
-          Tính năng nổi bật
-        </h2>
-        <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
-          Khám phá những tính năng ưu việt giúp bạn đạt hiệu quả tối đa
-        </p>
-      </div>
-      
-      {/* Grid */}
-      <div className={cn(
-        "grid gap-4 md:gap-6",
-        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
-      )}>
-        {items.slice(0, device === 'mobile' ? 4 : 6).map((item, idx) => {
-          const IconComponent = getIcon(item.icon);
-          return (
-            <div 
-              key={item.id} 
-              className="group bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 hover:border-transparent hover:shadow-xl transition-all duration-300"
-              style={{ '--hover-shadow': `0 20px 25px -5px ${brandColor}15` } as React.CSSProperties}
-            >
-              {/* Icon với background gradient */}
-              <div 
-                className="w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 duration-300"
-                style={{ 
-                  background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`,
-                  boxShadow: `0 8px 16px -4px ${brandColor}40`
-                }}
-              >
-                <IconComponent size={24} className="text-white" strokeWidth={2} />
-              </div>
-              
-              <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 mb-2">
-                {item.title || 'Tên tính năng'}
-              </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                {item.description || 'Mô tả tính năng...'}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  // Style 2: Alternating - Layout xen kẽ trái/phải với number
-  const renderAlternatingStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
-      {/* Header */}
-      <div className="text-center mb-8 md:mb-12">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-          <Zap size={12} />
-          Tính năng
-        </div>
-        <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>
-          Tính năng nổi bật
-        </h2>
-      </div>
-      
-      {/* Features List */}
-      <div className="max-w-4xl mx-auto space-y-6">
-        {items.slice(0, 4).map((item, idx) => {
-          const IconComponent = getIcon(item.icon);
-          const isEven = idx % 2 === 0;
-          return (
-            <div 
-              key={item.id} 
-              className={cn(
-                "flex items-center gap-6 p-4 md:p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700",
-                device !== 'mobile' && !isEven && 'flex-row-reverse'
-              )}
-            >
-              {/* Icon + Number */}
-              <div className="relative flex-shrink-0">
-                <div 
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center"
-                  style={{ 
-                    background: `linear-gradient(135deg, ${brandColor}15 0%, ${brandColor}05 100%)`,
-                    border: `2px solid ${brandColor}20`
-                  }}
-                >
-                  <IconComponent size={device === 'mobile' ? 28 : 32} style={{ color: brandColor }} strokeWidth={1.5} />
+        <div className="max-w-4xl mx-auto space-y-6">
+          {items.slice(0, 4).map((item, idx) => {
+            const IconComponent = getIcon(item.icon);
+            const isEven = idx % 2 === 0;
+            return (
+              <div key={item.id} className={cn("flex items-center gap-6 p-4 md:p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700", device !== 'mobile' && !isEven && 'flex-row-reverse')}>
+                <div className="relative flex-shrink-0">
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}15 0%, ${brandColor}05 100%)`, border: `2px solid ${brandColor}20` }}><IconComponent size={device === 'mobile' ? 28 : 32} style={{ color: brandColor }} strokeWidth={1.5} /></div>
+                  <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full text-xs font-bold text-white flex items-center justify-center" style={{ backgroundColor: brandColor }}>{idx + 1}</span>
                 </div>
-                {/* Number badge */}
-                <span 
-                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full text-xs font-bold text-white flex items-center justify-center"
-                  style={{ backgroundColor: brandColor }}
-                >
-                  {idx + 1}
-                </span>
+                <div className={cn("flex-1 min-w-0", device !== 'mobile' && !isEven && 'text-right')}>
+                  <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 mb-1 line-clamp-1">{item.title || 'Tên tính năng'}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">{item.description || 'Mô tả tính năng...'}</p>
+                </div>
               </div>
-              
-              {/* Content */}
-              <div className={cn("flex-1", device !== 'mobile' && !isEven && 'text-right')}>
-                <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 mb-1">
-                  {item.title || 'Tên tính năng'}
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {item.description || 'Mô tả tính năng...'}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  // Style 3: Compact - Danh sách nhỏ gọn với icon inline
-  const renderCompactStyle = () => (
-    <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-6" style={{ borderColor: `${brandColor}20` }}>
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-            <Zap size={12} />
-            Tính năng
-          </div>
-          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>
-            Tính năng nổi bật
-          </h2>
+            );
+          })}
         </div>
       </div>
-      
-      {/* Compact Grid */}
-      <div className={cn(
-        "grid gap-3",
-        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'
-      )}>
-        {items.slice(0, device === 'mobile' ? 4 : 8).map((item) => {
-          const IconComponent = getIcon(item.icon);
-          return (
-            <div 
-              key={item.id} 
-              className="flex items-start gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
-            >
-              {/* Small Icon */}
-              <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: `${brandColor}15` }}
-              >
-                <IconComponent size={18} style={{ color: brandColor }} strokeWidth={2} />
+    );
+  };
+
+  const renderCompactStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    const maxItems = device === 'mobile' ? 4 : 8;
+    const visibleItems = items.slice(0, maxItems);
+    const remainingCount = items.length - maxItems;
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-6" style={{ borderColor: `${brandColor}20` }}>
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+            <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>Tính năng nổi bật</h2>
+          </div>
+          {remainingCount > 0 && <span className="text-sm text-slate-500">+{remainingCount} tính năng khác</span>}
+        </div>
+        <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4')}>
+          {visibleItems.map((item) => {
+            const IconComponent = getIcon(item.icon);
+            return (
+              <div key={item.id} className="flex items-start gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${brandColor}15` }}><IconComponent size={18} style={{ color: brandColor }} strokeWidth={2} /></div>
+                <div className="flex-1 min-w-0"><h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 mb-0.5 truncate">{item.title || 'Tính năng'}</h3><p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 min-h-[2rem]">{item.description || 'Mô tả...'}</p></div>
               </div>
-              
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 mb-0.5 truncate">
-                  {item.title || 'Tính năng'}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
-                  {item.description || 'Mô tả...'}
-                </p>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  const renderCardsStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    const visibleItems = items.slice(0, MAX_VISIBLE);
+    const remainingCount = items.length - MAX_VISIBLE;
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+        <div className="text-center mb-8 md:mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100 mb-3", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>Tính năng nổi bật</h2>
+        </div>
+        <div className={cn("grid gap-5", items.length === 1 ? 'max-w-sm mx-auto' : items.length === 2 ? 'max-w-2xl mx-auto grid-cols-2' : device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+          {visibleItems.map((item, idx) => {
+            const IconComponent = getIcon(item.icon);
+            return (
+              <div key={item.id} className="group relative bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 flex flex-col">
+                <div className="h-1" style={{ backgroundColor: brandColor }} />
+                <div className="p-6 flex flex-col flex-1">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}><IconComponent size={22} style={{ color: brandColor }} strokeWidth={2} /></div>
+                    <span className="text-3xl font-bold opacity-20" style={{ color: brandColor }}>{String(idx + 1).padStart(2, '0')}</span>
+                  </div>
+                  <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 mb-2 line-clamp-1">{item.title || 'Tên tính năng'}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3 min-h-[3.75rem] flex-1">{item.description || 'Mô tả tính năng...'}</p>
+                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700"><span className="inline-flex items-center gap-1 text-sm font-medium group-hover:gap-2 transition-all" style={{ color: brandColor }}>Tìm hiểu thêm <ArrowRight size={14} /></span></div>
+                </div>
+              </div>
+            );
+          })}
+          {remainingCount > 0 && (<div className="flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 min-h-[250px]"><div className="text-center"><Plus size={32} className="mx-auto mb-2 text-slate-400" /><span className="text-lg font-bold text-slate-600 dark:text-slate-300">+{remainingCount}</span><p className="text-xs text-slate-400">tính năng khác</p></div></div>)}
+        </div>
+      </div>
+    );
+  };
+
+  const renderCarouselStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    const itemsPerView = device === 'mobile' ? 1 : device === 'tablet' ? 2 : 3;
+    const maxIndex = Math.max(0, items.length - itemsPerView);
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+            <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>Tính năng nổi bật</h2>
+          </div>
+          {items.length > itemsPerView && (<div className="flex gap-2">
+            <button onClick={() => setCarouselIndex(Math.max(0, carouselIndex - 1))} disabled={carouselIndex === 0} className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><ChevronLeft size={20} /></button>
+            <button onClick={() => setCarouselIndex(Math.min(maxIndex, carouselIndex + 1))} disabled={carouselIndex >= maxIndex} className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><ChevronRight size={20} /></button>
+          </div>)}
+        </div>
+        <div className="overflow-hidden">
+          <div className="flex gap-5 transition-transform duration-300" style={{ transform: `translateX(-${carouselIndex * (100 / itemsPerView)}%)`, width: `${(items.length / itemsPerView) * 100}%` }}>
+            {items.map((item) => {
+              const IconComponent = getIcon(item.icon);
+              return (
+                <div key={item.id} className="flex-shrink-0" style={{ width: `${100 / items.length}%` }}>
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 h-full flex flex-col">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`, boxShadow: `0 8px 16px -4px ${brandColor}40` }}><IconComponent size={24} className="text-white" strokeWidth={2} /></div>
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 mb-2 line-clamp-1">{item.title || 'Tên tính năng'}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3 min-h-[3.75rem]">{item.description || 'Mô tả tính năng...'}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {items.length > itemsPerView && (<div className="flex justify-center gap-2 mt-6">{Array.from({ length: maxIndex + 1 }).map((_, idx) => (<button key={idx} onClick={() => setCarouselIndex(idx)} className={cn("w-2 h-2 rounded-full transition-all", idx === carouselIndex ? 'w-6' : 'bg-slate-300 dark:bg-slate-600')} style={idx === carouselIndex ? { backgroundColor: brandColor } : {}} />))}</div>)}
+      </div>
+    );
+  };
+
+  const renderTimelineStyle = () => {
+    if (items.length === 0) return renderEmptyState();
+    return (
+      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
+        <div className="text-center mb-8 md:mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>Tính năng nổi bật</h2>
+        </div>
+        <div className="max-w-3xl mx-auto relative">
+          <div className={cn("absolute top-0 bottom-0 w-0.5", device === 'mobile' ? 'left-4' : 'left-1/2 -translate-x-1/2')} style={{ backgroundColor: `${brandColor}20` }} />
+          <div className="relative space-y-8">
+            {items.slice(0, 5).map((item, idx) => {
+              const IconComponent = getIcon(item.icon);
+              const isEven = idx % 2 === 0;
+              return (
+                <div key={item.id} className={cn("relative flex items-start gap-4 md:gap-8", device === 'mobile' ? 'pl-12' : (isEven ? 'md:flex-row' : 'md:flex-row-reverse'), device !== 'mobile' && 'justify-center')}>
+                  <div className={cn("absolute flex items-center justify-center w-8 h-8 rounded-full border-4 border-white dark:border-slate-900 shadow-lg z-10", device === 'mobile' ? 'left-0' : 'left-1/2 -translate-x-1/2')} style={{ backgroundColor: brandColor }}><IconComponent size={14} className="text-white" strokeWidth={2.5} /></div>
+                  <div className={cn("bg-white dark:bg-slate-800 rounded-xl p-4 md:p-5 shadow-sm border border-slate-200 dark:border-slate-700", device === 'mobile' ? 'flex-1' : 'w-[calc(50%-3rem)]')}>
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: brandColor }}>Tính năng {idx + 1}</span>
+                    <h3 className="font-bold text-base md:text-lg text-slate-900 dark:text-slate-100 mt-1 mb-2 line-clamp-1">{item.title || 'Tên tính năng'}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">{item.description || 'Mô tả tính năng...'}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {items.length > 5 && (<div className="text-center mt-8"><span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>+{items.length - 5} tính năng khác</span></div>)}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <PreviewWrapper 
-      title="Preview Features" 
-      device={device} 
-      setDevice={setDevice} 
-      previewStyle={previewStyle} 
-      setPreviewStyle={setPreviewStyle} 
-      styles={styles} 
-      info={`${items.length} tính năng`}
-    >
+    <PreviewWrapper title="Preview Features" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={`${items.length} tính năng`}>
       <BrowserFrame>
         {previewStyle === 'iconGrid' && renderIconGridStyle()}
         {previewStyle === 'alternating' && renderAlternatingStyle()}
         {previewStyle === 'compact' && renderCompactStyle()}
+        {previewStyle === 'cards' && renderCardsStyle()}
+        {previewStyle === 'carousel' && renderCarouselStyle()}
+        {previewStyle === 'timeline' && renderTimelineStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );

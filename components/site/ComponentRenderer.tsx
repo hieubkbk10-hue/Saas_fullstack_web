@@ -6217,10 +6217,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
             </div>
             
             {section.products.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-2xl">
-                <Package size={40} className="mx-auto mb-3 opacity-30" />
-                <p className="text-sm">Chưa có sản phẩm</p>
-              </div>
+              <EmptyProductsState message="Chưa có sản phẩm" />
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
                 {section.products.map((product) => (
@@ -6885,68 +6882,36 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
 }
 
 // ============ FEATURES SECTION ============
-// 3 Professional Styles: Icon Grid, Alternating, Compact
-type FeaturesStyle = 'iconGrid' | 'alternating' | 'compact';
+// 6 Professional Styles: Icon Grid, Alternating, Compact, Cards, Carousel, Timeline
+type FeaturesStyle = 'iconGrid' | 'alternating' | 'compact' | 'cards' | 'carousel' | 'timeline';
 
-// Icon mapping for features
-const featureIcons: Record<string, React.ElementType> = {
-  Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, Check, Star
-};
+const featureIcons: Record<string, React.ElementType> = { Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, Check, Star };
 
 function FeaturesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
   const style = (config.style as FeaturesStyle) || 'iconGrid';
+  const getIcon = (iconName?: string) => featureIcons[iconName || 'Zap'] || Zap;
 
-  const getIcon = (iconName?: string) => {
-    return featureIcons[iconName || 'Zap'] || Zap;
-  };
-
-  // Style 1: Icon Grid - Grid với icon nổi bật
+  // Style 1: Icon Grid
   if (style === 'iconGrid') {
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
           <div className="text-center mb-10 md:mb-14">
-            <div 
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
-              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-            >
-              <Zap size={12} />
-              Tính năng
-            </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-3">{title}</h2>
-            <p className="text-slate-500 max-w-2xl mx-auto">
-              Khám phá những tính năng ưu việt giúp bạn đạt hiệu quả tối đa
-            </p>
+            <p className="text-slate-500 max-w-2xl mx-auto">Khám phá những tính năng ưu việt giúp bạn đạt hiệu quả tối đa</p>
           </div>
-          
-          {/* Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item, idx) => {
               const IconComponent = getIcon(item.icon);
               return (
-                <div 
-                  key={idx} 
-                  className="group bg-white rounded-2xl p-6 border border-slate-200 hover:border-transparent hover:shadow-xl transition-all duration-300"
-                >
-                  {/* Icon với background gradient */}
-                  <div 
-                    className="w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 duration-300"
-                    style={{ 
-                      background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`,
-                      boxShadow: `0 8px 16px -4px ${brandColor}40`
-                    }}
-                  >
+                <div key={idx} className="group bg-white rounded-2xl p-6 border border-slate-200 hover:border-transparent hover:shadow-xl transition-all duration-300">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 duration-300" style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`, boxShadow: `0 8px 16px -4px ${brandColor}40` }}>
                     <IconComponent size={24} className="text-white" strokeWidth={2} />
                   </div>
-                  
-                  <h3 className="font-bold text-lg text-slate-900 mb-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">
-                    {item.description}
-                  </p>
+                  <h3 className="font-bold text-lg text-slate-900 mb-2 line-clamp-1">{item.title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">{item.description}</p>
                 </div>
               );
             })}
@@ -6956,61 +6921,30 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 2: Alternating - Layout xen kẽ trái/phải
+  // Style 2: Alternating
   if (style === 'alternating') {
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
           <div className="text-center mb-10 md:mb-14">
-            <div 
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
-              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-            >
-              <Zap size={12} />
-              Tính năng
-            </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
           </div>
-          
-          {/* Features List */}
           <div className="max-w-4xl mx-auto space-y-6">
             {items.map((item, idx) => {
               const IconComponent = getIcon(item.icon);
               const isEven = idx % 2 === 0;
               return (
-                <div 
-                  key={idx} 
-                  className={`flex items-center gap-6 p-6 rounded-2xl bg-slate-50 border border-slate-100 ${!isEven ? 'md:flex-row-reverse' : ''}`}
-                >
-                  {/* Icon + Number */}
+                <div key={idx} className={`flex items-center gap-6 p-6 rounded-2xl bg-slate-50 border border-slate-100 ${!isEven ? 'md:flex-row-reverse' : ''}`}>
                   <div className="relative flex-shrink-0">
-                    <div 
-                      className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center"
-                      style={{ 
-                        background: `linear-gradient(135deg, ${brandColor}15 0%, ${brandColor}05 100%)`,
-                        border: `2px solid ${brandColor}20`
-                      }}
-                    >
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}15 0%, ${brandColor}05 100%)`, border: `2px solid ${brandColor}20` }}>
                       <IconComponent size={32} style={{ color: brandColor }} strokeWidth={1.5} />
                     </div>
-                    {/* Number badge */}
-                    <span 
-                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full text-xs font-bold text-white flex items-center justify-center"
-                      style={{ backgroundColor: brandColor }}
-                    >
-                      {idx + 1}
-                    </span>
+                    <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full text-xs font-bold text-white flex items-center justify-center" style={{ backgroundColor: brandColor }}>{idx + 1}</span>
                   </div>
-                  
-                  {/* Content */}
                   <div className={`flex-1 ${!isEven ? 'md:text-right' : ''}`}>
-                    <h3 className="font-bold text-lg text-slate-900 mb-1">
-                      {item.title}
-                    </h3>
-                    <p className="text-sm text-slate-500 leading-relaxed">
-                      {item.description}
-                    </p>
+                    <h3 className="font-bold text-lg text-slate-900 mb-1 line-clamp-1">{item.title}</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">{item.description}</p>
                   </div>
                 </div>
               );
@@ -7021,53 +6955,129 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 3: Compact - Danh sách nhỏ gọn với icon inline
+  // Style 3: Compact
+  if (style === 'compact') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-8" style={{ borderColor: `${brandColor}20` }}>
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {items.map((item, idx) => {
+              const IconComponent = getIcon(item.icon);
+              return (
+                <div key={idx} className="flex items-start gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition-colors">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${brandColor}15` }}><IconComponent size={18} style={{ color: brandColor }} strokeWidth={2} /></div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm text-slate-900 mb-0.5 truncate">{item.title}</h3>
+                    <p className="text-xs text-slate-500 line-clamp-2">{item.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 4: Cards
+  if (style === 'cards') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10 md:mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-3">{title}</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {items.map((item, idx) => {
+              const IconComponent = getIcon(item.icon);
+              return (
+                <div key={idx} className="group relative bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+                  <div className="h-1" style={{ backgroundColor: brandColor }} />
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}><IconComponent size={22} style={{ color: brandColor }} strokeWidth={2} /></div>
+                      <span className="text-3xl font-bold opacity-20" style={{ color: brandColor }}>{String(idx + 1).padStart(2, '0')}</span>
+                    </div>
+                    <h3 className="font-bold text-lg text-slate-900 mb-2 line-clamp-1">{item.title}</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-3">{item.description}</p>
+                    <div className="mt-4 pt-4 border-t border-slate-100">
+                      <span className="inline-flex items-center gap-1 text-sm font-medium group-hover:gap-2 transition-all" style={{ color: brandColor }}>Tìm hiểu thêm <ArrowRight size={14} /></span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Carousel (static version for frontend)
+  if (style === 'carousel') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {items.slice(0, 6).map((item, idx) => {
+              const IconComponent = getIcon(item.icon);
+              return (
+                <div key={idx} className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-xl transition-all">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`, boxShadow: `0 8px 16px -4px ${brandColor}40` }}>
+                    <IconComponent size={24} className="text-white" strokeWidth={2} />
+                  </div>
+                  <h3 className="font-bold text-lg text-slate-900 mb-2 line-clamp-1">{item.title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed line-clamp-3">{item.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Timeline (default fallback)
   return (
     <section className="py-12 md:py-16 px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2 mb-8" style={{ borderColor: `${brandColor}20` }}>
-          <div className="space-y-2">
-            <div 
-              className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider"
-              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-            >
-              <Zap size={12} />
-              Tính năng
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
-          </div>
+        <div className="text-center mb-10 md:mb-14">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
         </div>
-        
-        {/* Compact Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          {items.map((item, idx) => {
-            const IconComponent = getIcon(item.icon);
-            return (
-              <div 
-                key={idx} 
-                className="flex items-start gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition-colors"
-              >
-                {/* Small Icon */}
-                <div 
-                  className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: `${brandColor}15` }}
-                >
-                  <IconComponent size={18} style={{ color: brandColor }} strokeWidth={2} />
+        <div className="max-w-3xl mx-auto relative">
+          <div className="absolute top-0 bottom-0 left-4 md:left-1/2 md:-translate-x-1/2 w-0.5" style={{ backgroundColor: `${brandColor}20` }} />
+          <div className="relative space-y-8">
+            {items.map((item, idx) => {
+              const IconComponent = getIcon(item.icon);
+              const isEven = idx % 2 === 0;
+              return (
+                <div key={idx} className={`relative flex items-start gap-4 md:gap-8 pl-12 md:pl-0 ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} md:justify-center`}>
+                  <div className="absolute left-0 md:left-1/2 md:-translate-x-1/2 flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shadow-lg z-10" style={{ backgroundColor: brandColor }}>
+                    <IconComponent size={14} className="text-white" strokeWidth={2.5} />
+                  </div>
+                  <div className={`bg-white rounded-xl p-4 md:p-5 shadow-sm border border-slate-200 flex-1 md:w-[calc(50%-3rem)]`}>
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: brandColor }}>Tính năng {idx + 1}</span>
+                    <h3 className="font-bold text-base md:text-lg text-slate-900 mt-1 mb-2 line-clamp-1">{item.title}</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">{item.description}</p>
+                  </div>
                 </div>
-                
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm text-slate-900 mb-0.5 truncate">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 line-clamp-2">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

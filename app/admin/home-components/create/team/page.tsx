@@ -6,7 +6,7 @@ import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
+import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { TeamPreview, type TeamStyle } from '../../previews';
 
@@ -50,7 +50,7 @@ function useDragReorder<T extends { id: number }>(items: T[], setItems: (items: 
 }
 
 // Compact Avatar Upload Component
-function AvatarUpload({ value, onChange, brandColor }: { value: string; onChange: (url: string) => void; brandColor: string }) {
+function AvatarUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -109,7 +109,7 @@ function AvatarUpload({ value, onChange, brandColor }: { value: string; onChange
       <input ref={inputRef} type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} className="hidden" />
       <div
         onClick={() => !isUploading && inputRef.current?.click()}
-        onDrop={(e) => { e.preventDefault(); setIsDragOver(false); e.dataTransfer.files[0] && handleFile(e.dataTransfer.files[0]); }}
+        onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }}
         onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
         onDragLeave={() => setIsDragOver(false)}
         className={cn(
@@ -226,7 +226,7 @@ export default function TeamCreatePage() {
             </div>
           )}
           
-          {members.map((member, idx) => (
+          {members.map((member) => (
             <div 
               key={member.id} 
               {...dragProps(member.id)}
@@ -244,7 +244,7 @@ export default function TeamCreatePage() {
                   <GripVertical size={16} />
                 </div>
                 
-                <AvatarUpload value={member.avatar} onChange={(url) => updateMember(member.id, 'avatar', url)} brandColor={brandColor} />
+                <AvatarUpload value={member.avatar} onChange={(url) => updateMember(member.id, 'avatar', url)} />
                 
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex gap-2">

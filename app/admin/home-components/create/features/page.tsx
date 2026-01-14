@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
+import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { FeaturesPreview, type FeaturesStyle } from '../../previews';
 
@@ -19,6 +19,28 @@ export default function FeaturesCreatePage() {
     { id: 6, icon: 'Target', title: 'Phân tích sâu', description: 'Dashboard trực quan, theo dõi KPIs real-time.' }
   ]);
   const [style, setStyle] = useState<FeaturesStyle>('iconGrid');
+  
+  // Drag & Drop states
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+
+  const dragProps = (id: number) => ({
+    draggable: true,
+    onDragStart: () => setDraggedId(id),
+    onDragEnd: () => { setDraggedId(null); setDragOverId(null); },
+    onDragOver: (e: React.DragEvent) => { e.preventDefault(); if (draggedId !== id) setDragOverId(id); },
+    onDrop: (e: React.DragEvent) => {
+      e.preventDefault();
+      if (!draggedId || draggedId === id) return;
+      const newItems = [...featuresItems];
+      const draggedIdx = newItems.findIndex(i => i.id === draggedId);
+      const targetIdx = newItems.findIndex(i => i.id === id);
+      const [moved] = newItems.splice(draggedIdx, 1);
+      newItems.splice(targetIdx, 0, moved);
+      setFeaturesItems(newItems);
+      setDraggedId(null); setDragOverId(null);
+    }
+  });
 
   const onSubmit = (e: React.FormEvent) => {
     handleSubmit(e, { items: featuresItems.map(f => ({ icon: f.icon, title: f.title, description: f.description })), style });
@@ -49,9 +71,20 @@ export default function FeaturesCreatePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {featuresItems.map((item, idx) => (
-            <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
+            <div 
+              key={item.id} 
+              {...dragProps(item.id)}
+              className={cn(
+                "p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3 cursor-grab active:cursor-grabbing transition-all",
+                draggedId === item.id && "opacity-50",
+                dragOverId === item.id && "ring-2 ring-blue-500"
+              )}
+            >
               <div className="flex items-center justify-between">
-                <Label>Tính năng {idx + 1}</Label>
+                <div className="flex items-center gap-2">
+                  <GripVertical size={16} className="text-slate-400" />
+                  <Label>Tính năng {idx + 1}</Label>
+                </div>
                 <Button 
                   type="button" 
                   variant="ghost" 
