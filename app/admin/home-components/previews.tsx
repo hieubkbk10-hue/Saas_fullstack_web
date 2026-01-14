@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { 
-  Monitor, Tablet, Smartphone, Eye, ChevronLeft, ChevronRight, 
-  Image as ImageIcon, Star, Check, ExternalLink, Globe, Mail, 
+  Monitor, Tablet, Smartphone, Eye, ChevronLeft, ChevronRight, ChevronDown,
+  Image as ImageIcon, Star, Check, ExternalLink, Globe, Mail, HelpCircle,
   Phone, Package, FileText, Users, MapPin, Tag, ArrowUpRight, Briefcase, Plus, ArrowRight,
   X, ZoomIn, Maximize2, Building2, Clock, Zap, Shield, Target, Layers, Cpu, Rocket, Settings
 } from 'lucide-react';
@@ -943,66 +943,326 @@ export const StatsPreview = ({ items, brandColor, selectedStyle, onStyleChange }
 
 // ============ FAQ PREVIEW ============
 type FaqItem = { id: number; question: string; answer: string };
-export type FaqStyle = 'accordion' | 'cards' | 'two-column';
+export type FaqStyle = 'accordion' | 'cards' | 'two-column' | 'minimal' | 'timeline' | 'tabbed';
 export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: FaqItem[]; brandColor: string; selectedStyle?: FaqStyle; onStyleChange?: (style: FaqStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'accordion';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as FaqStyle);
   const [openIndex, setOpenIndex] = useState(0);
-  const styles = [{ id: 'accordion', label: 'Accordion' }, { id: 'cards', label: 'Cards' }, { id: 'two-column', label: '2 Cột' }];
+  const [activeTab, setActiveTab] = useState(0);
+  const styles = [
+    { id: 'accordion', label: 'Accordion' }, 
+    { id: 'cards', label: 'Cards' }, 
+    { id: 'two-column', label: '2 Cột' },
+    { id: 'minimal', label: 'Minimal' },
+    { id: 'timeline', label: 'Timeline' },
+    { id: 'tabbed', label: 'Tabbed' }
+  ];
 
-  const renderAccordionStyle = () => (
-    <div className={cn("p-6", device === 'mobile' ? 'p-4' : '')}>
-      <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Câu hỏi thường gặp</h3>
-      <div className="space-y-2 max-w-3xl mx-auto">
-        {items.map((item, idx) => (
-          <div key={item.id} className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-            <button type="button" onClick={() => setOpenIndex(openIndex === idx ? -1 : idx)}
-              className={cn("w-full px-4 py-3 flex items-center justify-between text-left font-medium transition-colors", openIndex === idx ? "bg-slate-50 dark:bg-slate-800" : "hover:bg-slate-50", device === 'mobile' ? 'text-sm' : '')}>
-              <span>{item.question || `Câu hỏi ${idx + 1}`}</span>
-              <ChevronRight size={16} className={cn("transition-transform", openIndex === idx && "rotate-90")} style={{ color: brandColor }} />
-            </button>
-            {openIndex === idx && <div className={cn("px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 text-sm")}>{item.answer || 'Câu trả lời...'}</div>}
+  const MAX_VISIBLE = device === 'mobile' ? 4 : 6;
+  const visibleItems = items.slice(0, MAX_VISIBLE);
+  const remainingCount = items.length - MAX_VISIBLE;
+
+  // Empty state
+  if (items.length === 0) {
+    return (
+      <PreviewWrapper title="Preview FAQ" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info="0 câu hỏi">
+        <BrowserFrame url="yoursite.com/faq">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+              <HelpCircle size={32} style={{ color: brandColor }} />
+            </div>
+            <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có câu hỏi nào</h3>
+            <p className="text-sm text-slate-500">Thêm câu hỏi đầu tiên để bắt đầu</p>
           </div>
-        ))}
+        </BrowserFrame>
+      </PreviewWrapper>
+    );
+  }
+
+  // Style 1: Accordion - with ARIA, keyboard nav, brandColor hover
+  const renderAccordionStyle = () => (
+    <div className={cn("py-10 px-4", device === 'mobile' && 'py-6 px-3')}>
+      <h3 className={cn("font-bold text-center mb-8 text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg mb-6' : 'text-2xl')}>Câu hỏi thường gặp</h3>
+      <div className="space-y-3 max-w-3xl mx-auto" role="region" aria-label="Câu hỏi thường gặp">
+        {visibleItems.map((item, idx) => {
+          const isOpen = openIndex === idx;
+          const panelId = `faq-panel-${idx}`;
+          const buttonId = `faq-button-${idx}`;
+          return (
+            <div 
+              key={item.id} 
+              className="rounded-xl overflow-hidden transition-all"
+              style={{ 
+                border: `1px solid ${isOpen ? brandColor + '40' : brandColor + '15'}`,
+                boxShadow: isOpen ? `0 4px 12px ${brandColor}10` : 'none'
+              }}
+            >
+              <button 
+                type="button" 
+                id={buttonId}
+                aria-expanded={isOpen}
+                aria-controls={panelId}
+                onClick={() => setOpenIndex(isOpen ? -1 : idx)}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowDown') { e.preventDefault(); setOpenIndex(Math.min(idx + 1, items.length - 1)); }
+                  if (e.key === 'ArrowUp') { e.preventDefault(); setOpenIndex(Math.max(idx - 1, 0)); }
+                }}
+                className={cn(
+                  "w-full flex items-center justify-between text-left font-medium transition-colors",
+                  device === 'mobile' ? 'px-4 py-3 min-h-[44px] text-sm' : 'px-5 py-4 text-base',
+                  isOpen ? "bg-slate-50 dark:bg-slate-800" : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                )}
+              >
+                <span className="pr-4">{item.question || `Câu hỏi ${idx + 1}`}</span>
+                <ChevronDown 
+                  size={device === 'mobile' ? 16 : 18} 
+                  className={cn("flex-shrink-0 transition-transform duration-200", isOpen && "rotate-180")} 
+                  style={{ color: brandColor }} 
+                />
+              </button>
+              <div 
+                id={panelId}
+                role="region"
+                aria-labelledby={buttonId}
+                className={cn(
+                  "overflow-hidden transition-all duration-200",
+                  isOpen ? "max-h-96" : "max-h-0"
+                )}
+              >
+                <div className={cn(
+                  "bg-slate-50 dark:bg-slate-800/50 border-t text-slate-600 dark:text-slate-300 leading-relaxed",
+                  device === 'mobile' ? 'px-4 py-3 text-sm' : 'px-5 py-4'
+                )} style={{ borderColor: `${brandColor}15` }}>
+                  {item.answer || 'Câu trả lời...'}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        {remainingCount > 0 && (
+          <div className="flex items-center justify-center py-4">
+            <span className="text-sm font-medium px-4 py-2 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>
+              +{remainingCount} câu hỏi khác
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
 
+  // Style 2: Cards - with brandColor hover
   const renderCardsStyle = () => (
-    <div className={cn("p-6", device === 'mobile' ? 'p-4' : '')}>
-      <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Câu hỏi thường gặp</h3>
-      <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
-        {items.slice(0, 4).map((item, idx) => (
-          <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+    <div className={cn("py-10 px-4", device === 'mobile' && 'py-6 px-3')}>
+      <h3 className={cn("font-bold text-center mb-8 text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg mb-6' : 'text-2xl')}>Câu hỏi thường gặp</h3>
+      <div className={cn("grid gap-4 max-w-5xl mx-auto", device === 'mobile' ? 'grid-cols-1 gap-3' : 'grid-cols-2')}>
+        {visibleItems.slice(0, device === 'mobile' ? 4 : 6).map((item, idx) => (
+          <div 
+            key={item.id} 
+            className="bg-white dark:bg-slate-800 rounded-xl transition-all cursor-pointer group"
+            style={{ 
+              padding: device === 'mobile' ? '14px' : '20px',
+              border: `1px solid ${brandColor}15`,
+            }}
+            onMouseEnter={(e) => { 
+              e.currentTarget.style.borderColor = `${brandColor}40`; 
+              e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`; 
+            }}
+            onMouseLeave={(e) => { 
+              e.currentTarget.style.borderColor = `${brandColor}15`; 
+              e.currentTarget.style.boxShadow = 'none'; 
+            }}
+          >
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold" style={{ backgroundColor: brandColor }}>?</div>
-              <div>
-                <h4 className={cn("font-medium mb-2", device === 'mobile' ? 'text-sm' : '')}>{item.question || `Câu hỏi ${idx + 1}`}</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{item.answer || 'Câu trả lời...'}</p>
+              <div 
+                className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold"
+                style={{ backgroundColor: brandColor }}
+              >
+                ?
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className={cn("font-semibold text-slate-900 dark:text-slate-100 mb-2 line-clamp-2", device === 'mobile' ? 'text-sm' : 'text-base')}>
+                  {item.question || `Câu hỏi ${idx + 1}`}
+                </h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                  {item.answer || 'Câu trả lời...'}
+                </p>
               </div>
             </div>
           </div>
         ))}
       </div>
+      {remainingCount > 0 && (
+        <div className="flex items-center justify-center mt-6">
+          <span className="text-sm font-medium px-4 py-2 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>
+            +{remainingCount} câu hỏi khác
+          </span>
+        </div>
+      )}
     </div>
   );
 
+  // Style 3: Two Column
   const renderTwoColumnStyle = () => (
-    <div className={cn("p-6", device === 'mobile' ? 'p-4' : '')}>
-      <div className={cn("grid gap-8", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
-        <div>
-          <h3 className={cn("font-bold mb-4", device === 'mobile' ? 'text-lg' : 'text-xl')} style={{ color: brandColor }}>Câu hỏi thường gặp</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Tìm câu trả lời cho các thắc mắc phổ biến của bạn</p>
-          <button className="px-4 py-2 rounded-lg text-sm text-white" style={{ backgroundColor: brandColor }}>Liên hệ hỗ trợ</button>
+    <div className={cn("py-10 px-4", device === 'mobile' && 'py-6 px-3')}>
+      <div className={cn("max-w-5xl mx-auto", device === 'mobile' ? 'space-y-6' : 'grid grid-cols-5 gap-10')}>
+        <div className={cn(device === 'mobile' ? '' : 'col-span-2')}>
+          <h3 className={cn("font-bold mb-3 text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg' : 'text-2xl')} style={{ color: brandColor }}>
+            Câu hỏi thường gặp
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-5 leading-relaxed">
+            Tìm câu trả lời cho các thắc mắc phổ biến của bạn
+          </p>
+          <button 
+            className={cn("rounded-lg text-white font-medium transition-all", device === 'mobile' ? 'px-4 py-2.5 text-sm min-h-[44px]' : 'px-5 py-2.5')}
+            style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}30` }}
+          >
+            Liên hệ hỗ trợ
+          </button>
         </div>
-        <div className="space-y-4">
-          {items.slice(0, 3).map((item, idx) => (
-            <div key={item.id} className="border-b border-slate-200 dark:border-slate-700 pb-4">
-              <h4 className={cn("font-medium mb-1", device === 'mobile' ? 'text-sm' : '')}>{item.question || `Câu hỏi ${idx + 1}`}</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{item.answer || 'Câu trả lời...'}</p>
+        <div className={cn("space-y-4", device === 'mobile' ? '' : 'col-span-3')}>
+          {visibleItems.slice(0, device === 'mobile' ? 3 : 5).map((item, idx) => (
+            <div key={item.id} className="pb-4" style={{ borderBottom: `1px solid ${brandColor}15` }}>
+              <h4 className={cn("font-semibold mb-2 text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-sm' : '')}>
+                {item.question || `Câu hỏi ${idx + 1}`}
+              </h4>
+              <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+                {item.answer || 'Câu trả lời...'}
+              </p>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Style 4: Minimal - clean, simple, numbered
+  const renderMinimalStyle = () => (
+    <div className={cn("py-10 px-4", device === 'mobile' && 'py-6 px-3')}>
+      <div className="max-w-3xl mx-auto">
+        <h3 className={cn("font-bold mb-8 text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg mb-6' : 'text-2xl')}>
+          Câu hỏi thường gặp
+        </h3>
+        <div className="space-y-6">
+          {visibleItems.map((item, idx) => (
+            <div key={item.id} className="flex gap-4">
+              <span 
+                className={cn("font-bold flex-shrink-0", device === 'mobile' ? 'text-lg' : 'text-xl')}
+                style={{ color: brandColor }}
+              >
+                {String(idx + 1).padStart(2, '0')}
+              </span>
+              <div className="flex-1">
+                <h4 className={cn("font-semibold mb-2 text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-sm' : '')}>
+                  {item.question || `Câu hỏi ${idx + 1}`}
+                </h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {item.answer || 'Câu trả lời...'}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        {remainingCount > 0 && (
+          <div className="mt-6 pt-4" style={{ borderTop: `1px solid ${brandColor}15` }}>
+            <span className="text-sm" style={{ color: brandColor }}>+{remainingCount} câu hỏi khác</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Style 5: Timeline - vertical line connector
+  const renderTimelineStyle = () => (
+    <div className={cn("py-10 px-4", device === 'mobile' && 'py-6 px-3')}>
+      <h3 className={cn("font-bold text-center mb-8 text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg mb-6' : 'text-2xl')}>
+        Câu hỏi thường gặp
+      </h3>
+      <div className="max-w-3xl mx-auto relative">
+        {/* Vertical line */}
+        <div 
+          className="absolute left-4 top-0 bottom-0 w-0.5"
+          style={{ backgroundColor: `${brandColor}20` }}
+        />
+        <div className="space-y-6">
+          {visibleItems.map((item, idx) => (
+            <div key={item.id} className="relative pl-12">
+              {/* Dot */}
+              <div 
+                className="absolute left-2 top-1.5 w-5 h-5 rounded-full border-4 bg-white dark:bg-slate-900"
+                style={{ borderColor: brandColor }}
+              />
+              <div className={cn("rounded-xl p-4", device === 'mobile' && 'p-3')} style={{ backgroundColor: `${brandColor}05` }}>
+                <h4 className={cn("font-semibold mb-2 text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-sm' : '')}>
+                  {item.question || `Câu hỏi ${idx + 1}`}
+                </h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {item.answer || 'Câu trả lời...'}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        {remainingCount > 0 && (
+          <div className="relative pl-12 mt-6">
+            <div 
+              className="absolute left-2 top-1.5 w-5 h-5 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: `${brandColor}20` }}
+            >
+              <Plus size={12} style={{ color: brandColor }} />
+            </div>
+            <span className="text-sm font-medium" style={{ color: brandColor }}>+{remainingCount} câu hỏi khác</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Style 6: Tabbed - horizontal tabs navigation
+  const renderTabbedStyle = () => (
+    <div className={cn("py-10 px-4", device === 'mobile' && 'py-6 px-3')}>
+      <h3 className={cn("font-bold text-center mb-6 text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg' : 'text-2xl')}>
+        Câu hỏi thường gặp
+      </h3>
+      <div className="max-w-4xl mx-auto">
+        {/* Tabs */}
+        <div className={cn("flex gap-2 mb-6 overflow-x-auto pb-2", device === 'mobile' && 'gap-1')}>
+          {visibleItems.slice(0, device === 'mobile' ? 3 : 5).map((item, idx) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(idx)}
+              className={cn(
+                "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0",
+                device === 'mobile' && 'px-3 py-1.5 text-xs min-h-[36px]',
+                activeTab === idx ? 'text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+              )}
+              style={activeTab === idx ? { backgroundColor: brandColor } : {}}
+            >
+              Q{idx + 1}
+            </button>
+          ))}
+          {remainingCount > 0 && (
+            <span className="px-3 py-2 text-xs text-slate-400 flex items-center">+{remainingCount}</span>
+          )}
+        </div>
+        {/* Content */}
+        <div 
+          className="rounded-xl p-6"
+          style={{ 
+            backgroundColor: `${brandColor}05`,
+            border: `1px solid ${brandColor}15`
+          }}
+        >
+          {visibleItems[activeTab] && (
+            <>
+              <h4 className={cn("font-semibold mb-3 text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-base' : 'text-lg')}>
+                {visibleItems[activeTab].question || `Câu hỏi ${activeTab + 1}`}
+              </h4>
+              <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                {visibleItems[activeTab].answer || 'Câu trả lời...'}
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -1014,6 +1274,9 @@ export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange }: 
         {previewStyle === 'accordion' && renderAccordionStyle()}
         {previewStyle === 'cards' && renderCardsStyle()}
         {previewStyle === 'two-column' && renderTwoColumnStyle()}
+        {previewStyle === 'minimal' && renderMinimalStyle()}
+        {previewStyle === 'timeline' && renderTimelineStyle()}
+        {previewStyle === 'tabbed' && renderTabbedStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );
@@ -4069,52 +4332,371 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 };
 
 // ============ CTA PREVIEW ============
-type CTAConfig = { title: string; description: string; buttonText: string; buttonLink: string; secondaryButtonText: string; secondaryButtonLink: string };
-export type CTAStyle = 'banner' | 'centered' | 'split';
+// 6 Styles: banner, centered, split, floating, gradient, minimal
+// Best Practices: Clear CTA, Urgency indicators, Visual hierarchy, Touch-friendly (44px min), Whitespace, Action-oriented text
+type CTAConfig = { 
+  title: string; 
+  description: string; 
+  buttonText: string; 
+  buttonLink: string; 
+  secondaryButtonText: string; 
+  secondaryButtonLink: string;
+  badge?: string;
+  backgroundImage?: string;
+};
+export type CTAStyle = 'banner' | 'centered' | 'split' | 'floating' | 'gradient' | 'minimal';
 export const CTAPreview = ({ config, brandColor, selectedStyle, onStyleChange }: { config: CTAConfig; brandColor: string; selectedStyle?: CTAStyle; onStyleChange?: (style: CTAStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'banner';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as CTAStyle);
-  const styles = [{ id: 'banner', label: 'Banner' }, { id: 'centered', label: 'Centered' }, { id: 'split', label: 'Split' }];
+  const styles = [
+    { id: 'banner', label: 'Banner' }, 
+    { id: 'centered', label: 'Centered' }, 
+    { id: 'split', label: 'Split' },
+    { id: 'floating', label: 'Floating' },
+    { id: 'gradient', label: 'Gradient' },
+    { id: 'minimal', label: 'Minimal' }
+  ];
 
+  // Style 1: Banner - Full width với solid background
   const renderBannerStyle = () => (
-    <div className={cn("py-12 px-6", device === 'mobile' ? 'py-8 px-4' : '')} style={{ backgroundColor: brandColor }}>
-      <div className={cn("max-w-4xl mx-auto flex items-center justify-between", device === 'mobile' ? 'flex-col text-center gap-6' : '')}>
-        <div>
-          <h3 className={cn("font-bold text-white", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{config.title || 'Sẵn sàng bắt đầu?'}</h3>
-          <p className="text-white/80 mt-2">{config.description || 'Đăng ký ngay để nhận ưu đãi đặc biệt'}</p>
+    <section 
+      className={cn("w-full", device === 'mobile' ? 'py-8 px-4' : 'py-12 px-6')} 
+      style={{ backgroundColor: brandColor }}
+    >
+      <div className={cn(
+        "max-w-4xl mx-auto flex items-center justify-between",
+        device === 'mobile' ? 'flex-col text-center gap-6' : 'gap-8'
+      )}>
+        <div className={cn("flex-1", device === 'mobile' ? '' : 'max-w-lg')}>
+          {config.badge && (
+            <span className="inline-block px-3 py-1 mb-3 rounded-full text-xs font-semibold bg-white/20 text-white">
+              {config.badge}
+            </span>
+          )}
+          <h3 className={cn(
+            "font-bold text-white line-clamp-2",
+            device === 'mobile' ? 'text-xl' : 'text-2xl'
+          )}>
+            {config.title || 'Sẵn sàng bắt đầu?'}
+          </h3>
+          <p className={cn(
+            "text-white/80 mt-2 line-clamp-2",
+            device === 'mobile' ? 'text-sm' : 'text-base'
+          )}>
+            {config.description || 'Đăng ký ngay để nhận ưu đãi đặc biệt'}
+          </p>
         </div>
-        <div className={cn("flex gap-3", device === 'mobile' ? 'flex-col w-full' : '')}>
-          <button className="px-6 py-3 bg-white rounded-lg font-medium" style={{ color: brandColor }}>{config.buttonText || 'Bắt đầu ngay'}</button>
-          {config.secondaryButtonText && <button className="px-6 py-3 border-2 border-white/50 text-white rounded-lg font-medium">{config.secondaryButtonText}</button>}
+        <div className={cn("flex gap-3 flex-shrink-0", device === 'mobile' ? 'flex-col w-full' : '')}>
+          <button 
+            className={cn(
+              "bg-white rounded-lg font-medium whitespace-nowrap transition-all hover:shadow-lg hover:scale-105",
+              device === 'mobile' ? 'px-5 py-3 min-h-[44px] text-sm' : 'px-6 py-3'
+            )} 
+            style={{ color: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
+          >
+            {config.buttonText || 'Bắt đầu ngay'}
+          </button>
+          {config.secondaryButtonText && (
+            <button className={cn(
+              "border-2 border-white/50 text-white rounded-lg font-medium whitespace-nowrap hover:bg-white/10 transition-all",
+              device === 'mobile' ? 'px-5 py-3 min-h-[44px] text-sm' : 'px-6 py-3'
+            )}>
+              {config.secondaryButtonText}
+            </button>
+          )}
         </div>
       </div>
-    </div>
+    </section>
   );
 
+  // Style 2: Centered - Text center với subtle background
   const renderCenteredStyle = () => (
-    <div className={cn("py-16 px-6 text-center", device === 'mobile' ? 'py-10 px-4' : '')} style={{ backgroundColor: `${brandColor}10` }}>
-      <h3 className={cn("font-bold", device === 'mobile' ? 'text-xl' : 'text-3xl')} style={{ color: brandColor }}>{config.title || 'Sẵn sàng bắt đầu?'}</h3>
-      <p className="text-slate-600 mt-3 max-w-xl mx-auto">{config.description || 'Đăng ký ngay để nhận ưu đãi đặc biệt'}</p>
-      <div className={cn("flex justify-center gap-3 mt-6", device === 'mobile' ? 'flex-col' : '')}>
-        <button className="px-8 py-3 rounded-lg font-medium text-white" style={{ backgroundColor: brandColor }}>{config.buttonText || 'Bắt đầu ngay'}</button>
-        {config.secondaryButtonText && <button className="px-8 py-3 border-2 rounded-lg font-medium" style={{ borderColor: brandColor, color: brandColor }}>{config.secondaryButtonText}</button>}
+    <section 
+      className={cn("w-full text-center", device === 'mobile' ? 'py-10 px-4' : 'py-16 px-6')} 
+      style={{ backgroundColor: `${brandColor}10` }}
+    >
+      <div className="max-w-2xl mx-auto">
+        {config.badge && (
+          <span 
+            className="inline-block px-3 py-1 mb-4 rounded-full text-xs font-semibold"
+            style={{ backgroundColor: `${brandColor}20`, color: brandColor }}
+          >
+            {config.badge}
+          </span>
+        )}
+        <h3 
+          className={cn("font-bold line-clamp-2", device === 'mobile' ? 'text-xl' : 'text-3xl')} 
+          style={{ color: brandColor }}
+        >
+          {config.title || 'Sẵn sàng bắt đầu?'}
+        </h3>
+        <p className={cn(
+          "text-slate-600 dark:text-slate-400 mt-3 line-clamp-3",
+          device === 'mobile' ? 'text-sm' : 'text-base'
+        )}>
+          {config.description || 'Đăng ký ngay để nhận ưu đãi đặc biệt'}
+        </p>
+        <div className={cn("flex justify-center gap-3 mt-6", device === 'mobile' ? 'flex-col' : '')}>
+          <button 
+            className={cn(
+              "rounded-lg font-medium text-white whitespace-nowrap transition-all hover:scale-105",
+              device === 'mobile' ? 'px-6 py-3 min-h-[44px] text-sm' : 'px-8 py-3'
+            )} 
+            style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
+          >
+            {config.buttonText || 'Bắt đầu ngay'}
+          </button>
+          {config.secondaryButtonText && (
+            <button 
+              className={cn(
+                "border-2 rounded-lg font-medium whitespace-nowrap hover:bg-opacity-10 transition-all",
+                device === 'mobile' ? 'px-6 py-3 min-h-[44px] text-sm' : 'px-8 py-3'
+              )} 
+              style={{ borderColor: brandColor, color: brandColor }}
+            >
+              {config.secondaryButtonText}
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </section>
   );
 
+  // Style 3: Split - 2 columns layout
   const renderSplitStyle = () => (
-    <div className={cn("py-12 px-6", device === 'mobile' ? 'py-8 px-4' : '')} style={{ background: `linear-gradient(135deg, ${brandColor} 50%, ${brandColor}dd 100%)` }}>
-      <div className={cn("max-w-4xl mx-auto grid gap-8", device === 'mobile' ? 'grid-cols-1 text-center' : 'grid-cols-2 items-center')}>
+    <section 
+      className={cn("w-full", device === 'mobile' ? 'py-8 px-4' : 'py-12 px-6')} 
+      style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)` }}
+    >
+      <div className={cn(
+        "max-w-4xl mx-auto grid gap-6",
+        device === 'mobile' ? 'grid-cols-1 text-center' : 'grid-cols-2 items-center'
+      )}>
         <div>
-          <h3 className={cn("font-bold text-white", device === 'mobile' ? 'text-xl' : 'text-2xl')}>{config.title || 'Sẵn sàng bắt đầu?'}</h3>
-          <p className="text-white/80 mt-2">{config.description || 'Đăng ký ngay để nhận ưu đãi đặc biệt'}</p>
+          {config.badge && (
+            <span className="inline-block px-3 py-1 mb-3 rounded-full text-xs font-semibold bg-white/20 text-white">
+              {config.badge}
+            </span>
+          )}
+          <h3 className={cn(
+            "font-bold text-white line-clamp-2",
+            device === 'mobile' ? 'text-xl' : 'text-2xl'
+          )}>
+            {config.title || 'Sẵn sàng bắt đầu?'}
+          </h3>
+          <p className={cn(
+            "text-white/80 mt-2 line-clamp-2",
+            device === 'mobile' ? 'text-sm' : 'text-base'
+          )}>
+            {config.description || 'Đăng ký ngay để nhận ưu đãi đặc biệt'}
+          </p>
         </div>
         <div className={cn("flex gap-3", device === 'mobile' ? 'flex-col' : 'justify-end')}>
-          <button className="px-6 py-3 bg-white rounded-lg font-medium shadow-lg" style={{ color: brandColor }}>{config.buttonText || 'Bắt đầu ngay'}</button>
+          <button 
+            className={cn(
+              "bg-white rounded-lg font-medium whitespace-nowrap transition-all hover:scale-105",
+              device === 'mobile' ? 'px-5 py-3 min-h-[44px] text-sm' : 'px-6 py-3'
+            )} 
+            style={{ color: brandColor, boxShadow: `0 8px 20px rgba(0,0,0,0.2)` }}
+          >
+            {config.buttonText || 'Bắt đầu ngay'}
+          </button>
+          {config.secondaryButtonText && (
+            <button className={cn(
+              "border-2 border-white/50 text-white rounded-lg font-medium whitespace-nowrap hover:bg-white/10 transition-all",
+              device === 'mobile' ? 'px-5 py-3 min-h-[44px] text-sm' : 'px-6 py-3'
+            )}>
+              {config.secondaryButtonText}
+            </button>
+          )}
         </div>
       </div>
-    </div>
+    </section>
+  );
+
+  // Style 4: Floating - Card nổi với shadow
+  const renderFloatingStyle = () => (
+    <section className={cn("w-full bg-slate-50 dark:bg-slate-900", device === 'mobile' ? 'py-8 px-4' : 'py-12 px-6')}>
+      <div 
+        className={cn(
+          "max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-2xl border overflow-hidden",
+          device === 'mobile' ? 'p-5' : 'p-8'
+        )}
+        style={{ 
+          borderColor: `${brandColor}20`,
+          boxShadow: `0 20px 40px ${brandColor}15`
+        }}
+      >
+        <div className={cn(
+          "flex items-center justify-between",
+          device === 'mobile' ? 'flex-col text-center gap-5' : 'gap-8'
+        )}>
+          <div className={cn("flex-1", device === 'mobile' ? '' : 'max-w-md')}>
+            {config.badge && (
+              <span 
+                className="inline-flex items-center gap-2 px-3 py-1 mb-3 rounded-full text-xs font-semibold"
+                style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+              >
+                <Zap size={12} />
+                {config.badge}
+              </span>
+            )}
+            <h3 className={cn(
+              "font-bold text-slate-900 dark:text-white line-clamp-2",
+              device === 'mobile' ? 'text-lg' : 'text-2xl'
+            )}>
+              {config.title || 'Sẵn sàng bắt đầu?'}
+            </h3>
+            <p className={cn(
+              "text-slate-600 dark:text-slate-400 mt-2 line-clamp-2",
+              device === 'mobile' ? 'text-sm' : 'text-base'
+            )}>
+              {config.description || 'Đăng ký ngay để nhận ưu đãi đặc biệt'}
+            </p>
+          </div>
+          <div className={cn("flex gap-3 flex-shrink-0", device === 'mobile' ? 'flex-col w-full' : '')}>
+            <button 
+              className={cn(
+                "rounded-xl font-medium text-white whitespace-nowrap transition-all hover:scale-105",
+                device === 'mobile' ? 'px-5 py-3 min-h-[44px] text-sm' : 'px-6 py-3'
+              )} 
+              style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
+            >
+              {config.buttonText || 'Bắt đầu ngay'}
+            </button>
+            {config.secondaryButtonText && (
+              <button 
+                className={cn(
+                  "rounded-xl font-medium whitespace-nowrap transition-all hover:bg-slate-100 dark:hover:bg-slate-700",
+                  device === 'mobile' ? 'px-5 py-3 min-h-[44px] text-sm' : 'px-6 py-3'
+                )}
+                style={{ color: brandColor }}
+              >
+                {config.secondaryButtonText}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 5: Gradient - Multi-color gradient với decorative elements
+  const renderGradientStyle = () => (
+    <section 
+      className={cn("w-full relative overflow-hidden", device === 'mobile' ? 'py-10 px-4' : 'py-16 px-6')}
+      style={{ 
+        background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 50%, ${brandColor}99 100%)`
+      }}
+    >
+      {/* Decorative circles */}
+      <div 
+        className="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-20"
+        style={{ backgroundColor: 'white' }}
+      />
+      <div 
+        className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full opacity-10"
+        style={{ backgroundColor: 'white' }}
+      />
+      
+      <div className="max-w-3xl mx-auto text-center relative z-10">
+        {config.badge && (
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-sm">
+            <Star size={12} className="fill-white" />
+            {config.badge}
+          </span>
+        )}
+        <h3 className={cn(
+          "font-bold text-white line-clamp-2",
+          device === 'mobile' ? 'text-2xl' : 'text-4xl'
+        )}>
+          {config.title || 'Sẵn sàng bắt đầu?'}
+        </h3>
+        <p className={cn(
+          "text-white/90 mt-4 max-w-xl mx-auto line-clamp-3",
+          device === 'mobile' ? 'text-sm' : 'text-lg'
+        )}>
+          {config.description || 'Đăng ký ngay để nhận ưu đãi đặc biệt'}
+        </p>
+        <div className={cn("flex justify-center gap-4 mt-8", device === 'mobile' ? 'flex-col' : '')}>
+          <button 
+            className={cn(
+              "bg-white rounded-full font-semibold whitespace-nowrap transition-all hover:scale-105 hover:shadow-xl",
+              device === 'mobile' ? 'px-6 py-3 min-h-[44px] text-sm' : 'px-8 py-4'
+            )} 
+            style={{ color: brandColor, boxShadow: `0 8px 24px rgba(0,0,0,0.2)` }}
+          >
+            {config.buttonText || 'Bắt đầu ngay'}
+          </button>
+          {config.secondaryButtonText && (
+            <button className={cn(
+              "border-2 border-white text-white rounded-full font-semibold whitespace-nowrap hover:bg-white/10 transition-all",
+              device === 'mobile' ? 'px-6 py-3 min-h-[44px] text-sm' : 'px-8 py-4'
+            )}>
+              {config.secondaryButtonText}
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+
+  // Style 6: Minimal - Clean, simple với accent line
+  const renderMinimalStyle = () => (
+    <section className={cn(
+      "w-full border-y",
+      device === 'mobile' ? 'py-8 px-4' : 'py-12 px-6'
+    )} style={{ borderColor: `${brandColor}20` }}>
+      <div className={cn(
+        "max-w-4xl mx-auto flex items-center",
+        device === 'mobile' ? 'flex-col text-center gap-5' : 'justify-between gap-8'
+      )}>
+        <div className="flex items-center gap-4">
+          {/* Accent line */}
+          <div 
+            className={cn("w-1 rounded-full flex-shrink-0", device === 'mobile' ? 'hidden' : 'h-16')}
+            style={{ backgroundColor: brandColor }}
+          />
+          <div>
+            <h3 className={cn(
+              "font-bold text-slate-900 dark:text-white line-clamp-1",
+              device === 'mobile' ? 'text-lg' : 'text-xl'
+            )}>
+              {config.title || 'Sẵn sàng bắt đầu?'}
+            </h3>
+            <p className={cn(
+              "text-slate-500 dark:text-slate-400 mt-1 line-clamp-1",
+              device === 'mobile' ? 'text-sm' : 'text-base'
+            )}>
+              {config.description || 'Đăng ký ngay để nhận ưu đãi đặc biệt'}
+            </p>
+          </div>
+        </div>
+        <div className={cn("flex gap-3 flex-shrink-0", device === 'mobile' ? 'w-full' : '')}>
+          <button 
+            className={cn(
+              "rounded-lg font-medium text-white whitespace-nowrap transition-all hover:scale-105",
+              device === 'mobile' ? 'flex-1 px-4 py-3 min-h-[44px] text-sm' : 'px-6 py-2.5'
+            )} 
+            style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}30` }}
+          >
+            {config.buttonText || 'Bắt đầu ngay'}
+          </button>
+          {config.secondaryButtonText && (
+            <button 
+              className={cn(
+                "border rounded-lg font-medium whitespace-nowrap transition-all hover:bg-slate-50 dark:hover:bg-slate-800",
+                device === 'mobile' ? 'flex-1 px-4 py-3 min-h-[44px] text-sm' : 'px-6 py-2.5'
+              )}
+              style={{ borderColor: `${brandColor}30`, color: brandColor }}
+            >
+              {config.secondaryButtonText}
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
   );
 
   return (
@@ -4123,6 +4705,9 @@ export const CTAPreview = ({ config, brandColor, selectedStyle, onStyleChange }:
         {previewStyle === 'banner' && renderBannerStyle()}
         {previewStyle === 'centered' && renderCenteredStyle()}
         {previewStyle === 'split' && renderSplitStyle()}
+        {previewStyle === 'floating' && renderFloatingStyle()}
+        {previewStyle === 'gradient' && renderGradientStyle()}
+        {previewStyle === 'minimal' && renderMinimalStyle()}
       </BrowserFrame>
     </PreviewWrapper>
   );

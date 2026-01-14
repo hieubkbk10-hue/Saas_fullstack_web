@@ -15,7 +15,8 @@ export default function CTACreatePage() {
     buttonText: 'Đăng ký ngay',
     buttonLink: '/register',
     secondaryButtonText: 'Tìm hiểu thêm',
-    secondaryButtonLink: '/about'
+    secondaryButtonLink: '/about',
+    badge: ''
   });
   const [style, setStyle] = useState<CTAStyle>('banner');
 
@@ -38,6 +39,15 @@ export default function CTACreatePage() {
           <CardTitle className="text-base">Nội dung CTA</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Badge (tùy chọn)</Label>
+            <Input 
+              value={ctaConfig.badge} 
+              onChange={(e) => setCtaConfig({...ctaConfig, badge: e.target.value})} 
+              placeholder="VD: Ưu đãi có hạn, Hot deal, Mới..." 
+            />
+            <p className="text-xs text-slate-500">Hiển thị nhãn nổi bật phía trên tiêu đề (urgency indicator)</p>
+          </div>
           <div className="space-y-2">
             <Label>Tiêu đề</Label>
             <Input 

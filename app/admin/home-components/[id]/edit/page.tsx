@@ -139,7 +139,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [trustBadgesStyle, setTrustBadgesStyle] = useState<TrustBadgesStyle>('cards');
   const [statsItems, setStatsItems] = useState<{id: number, value: string, label: string}[]>([]);
   const [statsStyle, setStatsStyle] = useState<StatsStyle>('horizontal');
-  const [ctaConfig, setCtaConfig] = useState({ title: '', description: '', buttonText: '', buttonLink: '', secondaryButtonText: '', secondaryButtonLink: '' });
+  const [ctaConfig, setCtaConfig] = useState({ title: '', description: '', buttonText: '', buttonLink: '', secondaryButtonText: '', secondaryButtonLink: '', badge: '' });
   const [ctaStyle, setCtaStyle] = useState<CTAStyle>('banner');
   const [faqItems, setFaqItems] = useState<{id: number, question: string, answer: string}[]>([]);
   const [faqStyle, setFaqStyle] = useState<FaqStyle>('accordion');
@@ -313,7 +313,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           setStatsStyle((config.style as StatsStyle) || 'horizontal');
           break;
         case 'CTA':
-          setCtaConfig({ title: config.title || '', description: config.description || '', buttonText: config.buttonText || '', buttonLink: config.buttonLink || '', secondaryButtonText: config.secondaryButtonText || '', secondaryButtonLink: config.secondaryButtonLink || '' });
+          setCtaConfig({ title: config.title || '', description: config.description || '', buttonText: config.buttonText || '', buttonLink: config.buttonLink || '', secondaryButtonText: config.secondaryButtonText || '', secondaryButtonLink: config.secondaryButtonLink || '', badge: config.badge || '' });
           setCtaStyle((config.style as CTAStyle) || 'banner');
           break;
         case 'FAQ':
@@ -888,6 +888,11 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               <CardHeader><CardTitle className="text-base">Nội dung CTA</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
+                  <Label>Badge (tùy chọn)</Label>
+                  <Input value={ctaConfig.badge} onChange={(e) => setCtaConfig({...ctaConfig, badge: e.target.value})} placeholder="VD: Ưu đãi có hạn, Hot deal, Mới..." />
+                  <p className="text-xs text-slate-500">Hiển thị nhãn nổi bật phía trên tiêu đề (urgency indicator)</p>
+                </div>
+                <div className="space-y-2">
                   <Label>Tiêu đề CTA</Label>
                   <Input value={ctaConfig.title} onChange={(e) => setCtaConfig({...ctaConfig, title: e.target.value})} />
                 </div>
@@ -916,32 +921,13 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
 
         {/* FAQ */}
         {component.type === 'FAQ' && (
-          <>
-            <Card className="mb-6">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">Câu hỏi thường gặp</CardTitle>
-                <Button type="button" variant="outline" size="sm" onClick={() => setFaqItems([...faqItems, { id: Date.now(), question: '', answer: '' }])} className="gap-2"><Plus size={14} /> Thêm</Button>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {faqItems.map((item, idx) => (
-                  <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label>Câu hỏi {idx + 1}</Label>
-                      <Button type="button" variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => faqItems.length > 1 && setFaqItems(faqItems.filter(f => f.id !== item.id))}><Trash2 size={14} /></Button>
-                    </div>
-                    <Input placeholder="Nhập câu hỏi..." value={item.question} onChange={(e) => setFaqItems(faqItems.map(f => f.id === item.id ? {...f, question: e.target.value} : f))} />
-                    <textarea placeholder="Nhập câu trả lời..." value={item.answer} onChange={(e) => setFaqItems(faqItems.map(f => f.id === item.id ? {...f, answer: e.target.value} : f))} className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-            <FaqPreview 
-              items={faqItems} 
-              brandColor={brandColor}
-              selectedStyle={faqStyle}
-              onStyleChange={setFaqStyle}
-            />
-          </>
+          <FaqEditSection
+            faqItems={faqItems}
+            setFaqItems={setFaqItems}
+            faqStyle={faqStyle}
+            setFaqStyle={setFaqStyle}
+            brandColor={brandColor}
+          />
         )}
 
         {/* Footer */}

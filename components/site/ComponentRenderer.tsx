@@ -1331,53 +1331,134 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
 }
 
 // ============ FAQ SECTION ============
-type FaqStyle = 'accordion' | 'cards' | 'two-column';
+// ============ FAQ SECTION ============
+// 6 Styles: accordion, cards, two-column, minimal, timeline, tabbed
+// Best Practices: ARIA, keyboard nav, brandColor hover, responsive, SEO schema, touch targets
+type FaqStyle = 'accordion' | 'cards' | 'two-column' | 'minimal' | 'timeline' | 'tabbed';
 function FAQSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ question: string; answer: string }>) || [];
   const style = (config.style as FaqStyle) || 'accordion';
   const [openIndex, setOpenIndex] = React.useState<number | null>(0);
+  const [activeTab, setActiveTab] = React.useState(0);
 
-  // Style 1: Accordion
-  if (style === 'accordion') {
+  // Empty state
+  if (items.length === 0) {
     return (
       <section className="py-16 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${brandColor}10` }}>
+            <HelpCircle size={32} style={{ color: brandColor }} />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">{title || 'Câu hỏi thường gặp'}</h2>
+          <p className="text-slate-500">Chưa có câu hỏi nào</p>
+        </div>
+      </section>
+    );
+  }
+
+  // FAQ Schema for SEO
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": items.map(item => ({
+      "@type": "Question",
+      "name": item.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": item.answer
+      }
+    }))
+  };
+
+  // Style 1: Accordion - with ARIA, keyboard nav, brandColor monochromatic
+  if (style === 'accordion') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-          <div className="space-y-4">
-            {items.map((item, idx) => (
-              <div key={idx} className="border border-slate-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
-                  className="w-full px-6 py-4 text-left flex items-center justify-between font-medium text-slate-900 hover:bg-slate-50"
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-slate-900">{title}</h2>
+          <div className="space-y-3" role="region" aria-label="Câu hỏi thường gặp">
+            {items.map((item, idx) => {
+              const isOpen = openIndex === idx;
+              const panelId = `faq-panel-${idx}`;
+              const buttonId = `faq-button-${idx}`;
+              return (
+                <div 
+                  key={idx} 
+                  className="rounded-xl overflow-hidden transition-all"
+                  style={{ 
+                    border: `1px solid ${isOpen ? brandColor + '40' : brandColor + '15'}`,
+                    boxShadow: isOpen ? `0 4px 12px ${brandColor}10` : 'none'
+                  }}
                 >
-                  {item.question}
-                  <span className={`transition-transform ${openIndex === idx ? 'rotate-180' : ''}`} style={{ color: brandColor }}>▼</span>
-                </button>
-                {openIndex === idx && (
-                  <div className="px-6 py-4 bg-slate-50 text-slate-600 border-t">{item.answer}</div>
-                )}
-              </div>
-            ))}
+                  <button
+                    id={buttonId}
+                    aria-expanded={isOpen}
+                    aria-controls={panelId}
+                    onClick={() => setOpenIndex(isOpen ? null : idx)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowDown') { e.preventDefault(); setOpenIndex(Math.min((openIndex ?? -1) + 1, items.length - 1)); }
+                      if (e.key === 'ArrowUp') { e.preventDefault(); setOpenIndex(Math.max((openIndex ?? 1) - 1, 0)); }
+                    }}
+                    className={`w-full px-5 py-4 md:px-6 md:py-5 min-h-[44px] text-left flex items-center justify-between font-medium text-slate-900 transition-colors ${isOpen ? 'bg-slate-50' : 'hover:bg-slate-50'}`}
+                  >
+                    <span className="pr-4">{item.question || 'Câu hỏi'}</span>
+                    <svg 
+                      className={`w-5 h-5 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
+                      style={{ color: brandColor }}
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div 
+                    id={panelId}
+                    role="region"
+                    aria-labelledby={buttonId}
+                    className={`overflow-hidden transition-all duration-200 ${isOpen ? 'max-h-[500px]' : 'max-h-0'}`}
+                  >
+                    <div className="px-5 py-4 md:px-6 md:py-5 bg-slate-50 text-slate-600 border-t leading-relaxed" style={{ borderColor: `${brandColor}15` }}>
+                      {item.answer || 'Câu trả lời'}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
     );
   }
 
-  // Style 2: Cards
+  // Style 2: Cards - with brandColor hover
   if (style === 'cards') {
     return (
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-          <div className="grid md:grid-cols-2 gap-6">
+      <section className="py-12 md:py-16 px-4">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-slate-900">{title}</h2>
+          <div className="grid md:grid-cols-2 gap-4 md:gap-6">
             {items.map((item, idx) => (
-              <div key={idx} className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+              <div 
+                key={idx} 
+                className="bg-white rounded-xl p-5 md:p-6 transition-all group"
+                style={{ 
+                  border: `1px solid ${brandColor}15`,
+                }}
+                onMouseEnter={(e) => { 
+                  e.currentTarget.style.borderColor = `${brandColor}40`; 
+                  e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`; 
+                }}
+                onMouseLeave={(e) => { 
+                  e.currentTarget.style.borderColor = `${brandColor}15`; 
+                  e.currentTarget.style.boxShadow = 'none'; 
+                }}
+              >
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold" style={{ backgroundColor: brandColor }}>?</div>
-                  <div>
-                    <h4 className="font-semibold mb-2 text-slate-900">{item.question}</h4>
-                    <p className="text-sm text-slate-500">{item.answer}</p>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold mb-2 text-slate-900 line-clamp-2">{item.question || 'Câu hỏi'}</h4>
+                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-3">{item.answer || 'Câu trả lời'}</p>
                   </div>
                 </div>
               </div>
@@ -1389,23 +1470,145 @@ function FAQSection({ config, brandColor, title }: { config: Record<string, unkn
   }
 
   // Style 3: Two Column
-  return (
-    <section className="py-16 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-12">
-          <div>
-            <h2 className="text-3xl font-bold mb-4 text-slate-900" style={{ color: brandColor }}>{title}</h2>
-            <p className="text-slate-500 mb-6">Tìm câu trả lời cho các thắc mắc phổ biến của bạn</p>
-            <button className="px-6 py-3 rounded-lg text-white" style={{ backgroundColor: brandColor }}>Liên hệ hỗ trợ</button>
+  if (style === 'two-column') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-5 gap-8 md:gap-12">
+            <div className="md:col-span-2">
+              <h2 className="text-2xl md:text-3xl font-bold mb-4 text-slate-900" style={{ color: brandColor }}>{title}</h2>
+              <p className="text-slate-500 mb-6 leading-relaxed">Tìm câu trả lời cho các thắc mắc phổ biến của bạn</p>
+              <button 
+                className="px-6 py-3 min-h-[44px] rounded-lg text-white font-medium transition-all" 
+                style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}30` }}
+              >
+                Liên hệ hỗ trợ
+              </button>
+            </div>
+            <div className="md:col-span-3 space-y-5">
+              {items.map((item, idx) => (
+                <div key={idx} className="pb-5" style={{ borderBottom: `1px solid ${brandColor}15` }}>
+                  <h4 className="font-semibold mb-2 text-slate-900">{item.question || 'Câu hỏi'}</h4>
+                  <p className="text-sm text-slate-500 leading-relaxed">{item.answer || 'Câu trả lời'}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="space-y-6">
+        </div>
+      </section>
+    );
+  }
+
+  // Style 4: Minimal - clean, numbered
+  if (style === 'minimal') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-bold mb-8 md:mb-12 text-slate-900">{title}</h2>
+          <div className="space-y-6 md:space-y-8">
             {items.map((item, idx) => (
-              <div key={idx} className="border-b border-slate-200 pb-4">
-                <h4 className="font-semibold mb-2 text-slate-900">{item.question}</h4>
-                <p className="text-sm text-slate-500">{item.answer}</p>
+              <div key={idx} className="flex gap-4 md:gap-6">
+                <span 
+                  className="text-xl md:text-2xl font-bold flex-shrink-0"
+                  style={{ color: brandColor }}
+                >
+                  {String(idx + 1).padStart(2, '0')}
+                </span>
+                <div className="flex-1">
+                  <h4 className="font-semibold mb-2 text-slate-900">{item.question || 'Câu hỏi'}</h4>
+                  <p className="text-sm md:text-base text-slate-500 leading-relaxed">{item.answer || 'Câu trả lời'}</p>
+                </div>
               </div>
             ))}
           </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Timeline - vertical connector
+  if (style === 'timeline') {
+    return (
+      <section className="py-12 md:py-16 px-4">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-slate-900">{title}</h2>
+          <div className="relative">
+            {/* Vertical line */}
+            <div 
+              className="absolute left-4 md:left-5 top-0 bottom-0 w-0.5"
+              style={{ backgroundColor: `${brandColor}20` }}
+            />
+            <div className="space-y-6 md:space-y-8">
+              {items.map((item, idx) => (
+                <div key={idx} className="relative pl-12 md:pl-14">
+                  {/* Dot */}
+                  <div 
+                    className="absolute left-2 md:left-3 top-2 w-5 h-5 rounded-full border-4 bg-white"
+                    style={{ borderColor: brandColor }}
+                  />
+                  <div className="rounded-xl p-4 md:p-5" style={{ backgroundColor: `${brandColor}05` }}>
+                    <h4 className="font-semibold mb-2 text-slate-900">{item.question || 'Câu hỏi'}</h4>
+                    <p className="text-sm text-slate-500 leading-relaxed">{item.answer || 'Câu trả lời'}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Tabbed
+  return (
+    <section className="py-12 md:py-16 px-4">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-8 text-slate-900">{title}</h2>
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2" role="tablist">
+          {items.slice(0, 6).map((_, idx) => (
+            <button
+              key={idx}
+              role="tab"
+              aria-selected={activeTab === idx}
+              aria-controls={`tabpanel-${idx}`}
+              onClick={() => setActiveTab(idx)}
+              className={`px-4 py-2 min-h-[44px] rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                activeTab === idx ? 'text-white' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+              style={activeTab === idx ? { backgroundColor: brandColor } : {}}
+            >
+              Q{idx + 1}
+            </button>
+          ))}
+          {items.length > 6 && (
+            <span className="px-3 py-2 text-sm text-slate-400 flex items-center">+{items.length - 6}</span>
+          )}
+        </div>
+        {/* Content */}
+        <div 
+          id={`tabpanel-${activeTab}`}
+          role="tabpanel"
+          className="rounded-xl p-6 md:p-8"
+          style={{ 
+            backgroundColor: `${brandColor}05`,
+            border: `1px solid ${brandColor}15`
+          }}
+        >
+          {items[activeTab] && (
+            <>
+              <h4 className="text-lg md:text-xl font-semibold mb-3 text-slate-900">
+                {items[activeTab].question || 'Câu hỏi'}
+              </h4>
+              <p className="text-slate-600 leading-relaxed">
+                {items[activeTab].answer || 'Câu trả lời'}
+              </p>
+            </>
+          )}
         </div>
       </div>
     </section>
@@ -1413,34 +1616,53 @@ function FAQSection({ config, brandColor, title }: { config: Record<string, unkn
 }
 
 // ============ CTA SECTION ============
-type CTAStyle = 'banner' | 'centered' | 'split';
+// 6 Styles: banner, centered, split, floating, gradient, minimal
+// Best Practices: Clear CTA, Touch-friendly (44px min), Visual hierarchy, Action-oriented text, Box-shadow brandColor
+type CTAStyle = 'banner' | 'centered' | 'split' | 'floating' | 'gradient' | 'minimal';
 function CTASection({ config, brandColor }: { config: Record<string, unknown>; brandColor: string }) {
-  const { title, description, buttonText, buttonLink, secondaryButtonText, secondaryButtonLink, style: ctaStyle } = config as {
+  const { title, description, buttonText, buttonLink, secondaryButtonText, secondaryButtonLink, badge, style: ctaStyle } = config as {
     title?: string;
     description?: string;
     buttonText?: string;
     buttonLink?: string;
     secondaryButtonText?: string;
     secondaryButtonLink?: string;
+    badge?: string;
     style?: CTAStyle;
   };
   const style = ctaStyle || 'banner';
 
-  // Style 1: Banner (default)
+  // Style 1: Banner (default) - Full width solid background
   if (style === 'banner') {
     return (
-      <section className="py-16 px-4" style={{ backgroundColor: brandColor }}>
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="text-white text-center md:text-left">
-            <h2 className="text-2xl md:text-3xl font-bold mb-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
-            <p className="opacity-90">{description}</p>
+      <section className="py-12 md:py-16 px-4" style={{ backgroundColor: brandColor }}>
+        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
+          <div className="text-white text-center md:text-left flex-1 max-w-lg">
+            {badge && (
+              <span className="inline-block px-3 py-1 mb-3 rounded-full text-xs font-semibold bg-white/20 text-white">
+                {badge}
+              </span>
+            )}
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 line-clamp-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
+            <p className="opacity-90 line-clamp-2 text-sm md:text-base">{description}</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0 w-full sm:w-auto">
             {buttonText && (
-              <a href={buttonLink || '#'} className="px-8 py-3 bg-white rounded-lg font-medium hover:bg-slate-100 transition-colors" style={{ color: brandColor }}>{buttonText}</a>
+              <a 
+                href={buttonLink || '#'} 
+                className="px-6 py-3 min-h-[44px] bg-white rounded-lg font-medium hover:bg-slate-100 transition-all hover:scale-105 text-center whitespace-nowrap" 
+                style={{ color: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
+              >
+                {buttonText}
+              </a>
             )}
             {secondaryButtonText && (
-              <a href={secondaryButtonLink || '#'} className="px-8 py-3 border-2 border-white/50 text-white rounded-lg font-medium hover:bg-white/10">{secondaryButtonText}</a>
+              <a 
+                href={secondaryButtonLink || '#'} 
+                className="px-6 py-3 min-h-[44px] border-2 border-white/50 text-white rounded-lg font-medium hover:bg-white/10 transition-all text-center whitespace-nowrap"
+              >
+                {secondaryButtonText}
+              </a>
             )}
           </div>
         </div>
@@ -1448,19 +1670,39 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
     );
   }
 
-  // Style 2: Centered
+  // Style 2: Centered - Text center với subtle background
   if (style === 'centered') {
     return (
-      <section className="py-20 px-4" style={{ backgroundColor: `${brandColor}10` }}>
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: brandColor }}>{title || 'Sẵn sàng bắt đầu?'}</h2>
-          <p className="text-slate-600 text-lg mb-8">{description}</p>
+      <section className="py-12 md:py-20 px-4" style={{ backgroundColor: `${brandColor}10` }}>
+        <div className="max-w-2xl mx-auto text-center">
+          {badge && (
+            <span 
+              className="inline-block px-3 py-1 mb-4 rounded-full text-xs font-semibold"
+              style={{ backgroundColor: `${brandColor}20`, color: brandColor }}
+            >
+              {badge}
+            </span>
+          )}
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 line-clamp-2" style={{ color: brandColor }}>{title || 'Sẵn sàng bắt đầu?'}</h2>
+          <p className="text-slate-600 text-base md:text-lg mb-8 line-clamp-3">{description}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {buttonText && (
-              <a href={buttonLink || '#'} className="px-8 py-3 rounded-lg font-medium text-white" style={{ backgroundColor: brandColor }}>{buttonText}</a>
+              <a 
+                href={buttonLink || '#'} 
+                className="px-8 py-3 min-h-[44px] rounded-lg font-medium text-white transition-all hover:scale-105 whitespace-nowrap" 
+                style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
+              >
+                {buttonText}
+              </a>
             )}
             {secondaryButtonText && (
-              <a href={secondaryButtonLink || '#'} className="px-8 py-3 border-2 rounded-lg font-medium" style={{ borderColor: brandColor, color: brandColor }}>{secondaryButtonText}</a>
+              <a 
+                href={secondaryButtonLink || '#'} 
+                className="px-8 py-3 min-h-[44px] border-2 rounded-lg font-medium transition-all hover:bg-opacity-10 whitespace-nowrap" 
+                style={{ borderColor: brandColor, color: brandColor }}
+              >
+                {secondaryButtonText}
+              </a>
             )}
           </div>
         </div>
@@ -1468,17 +1710,166 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
     );
   }
 
-  // Style 3: Split
-  return (
-    <section className="py-16 px-4" style={{ background: `linear-gradient(135deg, ${brandColor} 50%, ${brandColor}dd 100%)` }}>
-      <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-center">
-        <div className="text-white text-center md:text-left">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
-          <p className="opacity-90">{description}</p>
+  // Style 3: Split - 2 columns layout
+  if (style === 'split') {
+    return (
+      <section className="py-12 md:py-16 px-4" style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}dd 100%)` }}>
+        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6 md:gap-8 items-center">
+          <div className="text-white text-center md:text-left">
+            {badge && (
+              <span className="inline-block px-3 py-1 mb-3 rounded-full text-xs font-semibold bg-white/20 text-white">
+                {badge}
+              </span>
+            )}
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 line-clamp-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
+            <p className="opacity-90 line-clamp-2 text-sm md:text-base">{description}</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-end">
+            {buttonText && (
+              <a 
+                href={buttonLink || '#'} 
+                className="px-6 py-3 min-h-[44px] bg-white rounded-lg font-medium transition-all hover:scale-105 text-center whitespace-nowrap" 
+                style={{ color: brandColor, boxShadow: `0 8px 20px rgba(0,0,0,0.2)` }}
+              >
+                {buttonText}
+              </a>
+            )}
+            {secondaryButtonText && (
+              <a 
+                href={secondaryButtonLink || '#'} 
+                className="px-6 py-3 min-h-[44px] border-2 border-white/50 text-white rounded-lg font-medium hover:bg-white/10 transition-all text-center whitespace-nowrap"
+              >
+                {secondaryButtonText}
+              </a>
+            )}
+          </div>
         </div>
-        <div className="flex justify-center md:justify-end">
+      </section>
+    );
+  }
+
+  // Style 4: Floating - Card nổi với shadow
+  if (style === 'floating') {
+    return (
+      <section className="py-12 md:py-16 px-4 bg-slate-50 dark:bg-slate-900">
+        <div 
+          className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-8 border overflow-hidden"
+          style={{ borderColor: `${brandColor}20`, boxShadow: `0 20px 40px ${brandColor}15` }}
+        >
+          <div className="flex flex-col md:flex-row items-center justify-between gap-5 md:gap-8">
+            <div className="text-center md:text-left flex-1 max-w-md">
+              {badge && (
+                <span 
+                  className="inline-flex items-center gap-2 px-3 py-1 mb-3 rounded-full text-xs font-semibold"
+                  style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                >
+                  <Zap size={12} />
+                  {badge}
+                </span>
+              )}
+              <h2 className="text-lg md:text-2xl font-bold text-slate-900 dark:text-white line-clamp-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
+              <p className="text-slate-600 dark:text-slate-400 mt-2 text-sm md:text-base line-clamp-2">{description}</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0 w-full md:w-auto">
+              {buttonText && (
+                <a 
+                  href={buttonLink || '#'} 
+                  className="px-6 py-3 min-h-[44px] rounded-xl font-medium text-white transition-all hover:scale-105 text-center whitespace-nowrap" 
+                  style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
+                >
+                  {buttonText}
+                </a>
+              )}
+              {secondaryButtonText && (
+                <a 
+                  href={secondaryButtonLink || '#'} 
+                  className="px-6 py-3 min-h-[44px] rounded-xl font-medium transition-all hover:bg-slate-100 dark:hover:bg-slate-700 text-center whitespace-nowrap"
+                  style={{ color: brandColor }}
+                >
+                  {secondaryButtonText}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 5: Gradient - Multi-color gradient với decorative elements
+  if (style === 'gradient') {
+    return (
+      <section 
+        className="py-12 md:py-20 px-4 relative overflow-hidden"
+        style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 50%, ${brandColor}99 100%)` }}
+      >
+        {/* Decorative circles */}
+        <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-white/20 pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-white/10 pointer-events-none" />
+        
+        <div className="max-w-3xl mx-auto text-center relative z-10">
+          {badge && (
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-sm">
+              <Star size={12} className="fill-white" />
+              {badge}
+            </span>
+          )}
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white line-clamp-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
+          <p className="text-white/90 mt-4 text-sm md:text-lg max-w-xl mx-auto line-clamp-3">{description}</p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
+            {buttonText && (
+              <a 
+                href={buttonLink || '#'} 
+                className="px-8 py-3 md:py-4 min-h-[44px] bg-white rounded-full font-semibold transition-all hover:scale-105 hover:shadow-xl text-center whitespace-nowrap" 
+                style={{ color: brandColor, boxShadow: `0 8px 24px rgba(0,0,0,0.2)` }}
+              >
+                {buttonText}
+              </a>
+            )}
+            {secondaryButtonText && (
+              <a 
+                href={secondaryButtonLink || '#'} 
+                className="px-8 py-3 md:py-4 min-h-[44px] border-2 border-white text-white rounded-full font-semibold hover:bg-white/10 transition-all text-center whitespace-nowrap"
+              >
+                {secondaryButtonText}
+              </a>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Minimal - Clean, simple với accent line
+  return (
+    <section className="py-10 md:py-12 px-4 border-y" style={{ borderColor: `${brandColor}20` }}>
+      <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-5 md:gap-8">
+        <div className="flex items-center gap-4 text-center md:text-left">
+          {/* Accent line */}
+          <div className="hidden md:block w-1 h-16 rounded-full flex-shrink-0" style={{ backgroundColor: brandColor }} />
+          <div>
+            <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white line-clamp-1">{title || 'Sẵn sàng bắt đầu?'}</h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm md:text-base line-clamp-1">{description}</p>
+          </div>
+        </div>
+        <div className="flex gap-3 flex-shrink-0 w-full md:w-auto">
           {buttonText && (
-            <a href={buttonLink || '#'} className="px-8 py-3 bg-white rounded-lg font-medium shadow-lg" style={{ color: brandColor }}>{buttonText}</a>
+            <a 
+              href={buttonLink || '#'} 
+              className="flex-1 md:flex-none px-6 py-3 min-h-[44px] rounded-lg font-medium text-white transition-all hover:scale-105 text-center whitespace-nowrap" 
+              style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}30` }}
+            >
+              {buttonText}
+            </a>
+          )}
+          {secondaryButtonText && (
+            <a 
+              href={secondaryButtonLink || '#'} 
+              className="flex-1 md:flex-none px-6 py-3 min-h-[44px] border rounded-lg font-medium transition-all hover:bg-slate-50 dark:hover:bg-slate-800 text-center whitespace-nowrap"
+              style={{ borderColor: `${brandColor}30`, color: brandColor }}
+            >
+              {secondaryButtonText}
+            </a>
           )}
         </div>
       </div>
