@@ -463,7 +463,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
           {/* Featured Large Item */}
           {featuredService && (
             <Link href={`/services/${featuredService.slug}`} className="lg:row-span-2 group">
-              <article className="cursor-pointer relative rounded-2xl overflow-hidden h-full min-h-[300px] lg:min-h-[500px]">
+              <article className="cursor-pointer relative rounded-2xl overflow-hidden h-full min-h-[300px] lg:min-h-[500px]" style={{ boxShadow: `0 8px 30px ${brandColor}20` }}>
                 {featuredService.thumbnail ? (
                   <img src={featuredService.thumbnail} alt={featuredService.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                 ) : (
@@ -472,12 +472,12 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                 <div className="absolute top-4 left-4"><ServiceBadge isHot={true} brandColor={brandColor} /></div>
                 <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <span className="text-xs text-white/70 uppercase tracking-wider font-medium">Dịch vụ nổi bật</span>
+                  <span className="text-xs uppercase tracking-wider font-medium" style={{ color: `${brandColor}cc` }}>Dịch vụ nổi bật</span>
                   <h3 className="text-xl md:text-2xl font-semibold text-white mt-2 leading-tight line-clamp-2">{featuredService.title}</h3>
                   {featuredService.excerpt && <p className="text-sm text-white/80 mt-2 line-clamp-2">{stripHtml(featuredService.excerpt)}</p>}
                   <div className="flex items-center justify-between mt-4">
                     <span className="text-lg font-semibold text-white">{formatServicePrice(featuredService.price)}</span>
-                    <span className="px-4 py-2 text-white text-sm font-medium rounded-lg" style={{ backgroundColor: brandColor }}>Xem chi tiết</span>
+                    <span className="px-5 py-2.5 text-white text-sm font-medium rounded-lg whitespace-nowrap transition-all hover:opacity-90" style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}>Xem chi tiết</span>
                   </div>
                 </div>
               </article>
@@ -488,7 +488,12 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
           <div className="lg:col-span-2 grid grid-cols-2 gap-3">
             {otherServices.map((service, idx) => (
               <Link key={service._id} href={`/services/${service.slug}`} className="group">
-                <article className="cursor-pointer bg-white border border-slate-200/50 rounded-xl p-3 hover:shadow-md hover:border-slate-300 transition-all h-full">
+                <article 
+                  className="cursor-pointer bg-white border rounded-xl p-3 transition-all h-full hover:shadow-md" 
+                  style={{ borderColor: `${brandColor}15` }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}40`; (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 12px ${brandColor}10`; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}15`; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+                >
                   <div className="relative overflow-hidden bg-slate-100 rounded-lg aspect-[4/3] mb-3">
                     {service.thumbnail ? (
                       <img src={service.thumbnail} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
@@ -499,8 +504,8 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   </div>
                   <h4 className="font-medium text-sm text-slate-900 line-clamp-1 group-hover:text-slate-600 transition-colors">{service.title}</h4>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-sm font-semibold text-slate-700">{formatServicePrice(service.price)}</span>
-                    <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <span className="text-sm font-semibold" style={{ color: brandColor }}>{formatServicePrice(service.price)}</span>
+                    <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} />
                   </div>
                 </article>
               </Link>

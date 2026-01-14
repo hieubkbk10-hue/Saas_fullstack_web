@@ -2963,7 +2963,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
         {device === 'mobile' ? (
           <div className="space-y-4">
             {featuredItem && (
-              <div className="group cursor-pointer relative rounded-2xl overflow-hidden aspect-[4/3]">
+              <div className="group cursor-pointer relative rounded-2xl overflow-hidden aspect-[4/3]" style={{ boxShadow: `0 4px 20px ${brandColor}15` }}>
                 {featuredItem.image ? (
                   <img src={featuredItem.image} alt={featuredItem.name} className="w-full h-full object-cover" />
                 ) : (
@@ -2972,7 +2972,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 {featuredItem.tag && <div className="absolute top-3 left-3"><ServiceBadge tag={featuredItem.tag} brandColor={brandColor} /></div>}
                 <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <span className="text-xs text-white/70 uppercase tracking-wider">Nổi bật</span>
+                  <span className="text-xs uppercase tracking-wider font-medium" style={{ color: `${brandColor}cc` }}>Nổi bật</span>
                   <h3 className="text-lg font-semibold text-white mt-1">{featuredItem.name}</h3>
                   <span className="text-sm font-medium text-white/90 mt-1 block">{formatServicePrice(featuredItem.price)}</span>
                 </div>
@@ -2980,12 +2980,12 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
             )}
             <div className="grid grid-cols-2 gap-3">
               {otherItems.map((item) => (
-                <div key={item.id} className="group cursor-pointer">
+                <div key={item.id} className="group cursor-pointer rounded-xl p-2 transition-all" style={{ backgroundColor: 'transparent' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${brandColor}05`; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}>
                   <div className="relative overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-xl aspect-square mb-2">
                     {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Briefcase size={24} className="text-slate-300" /></div>}
                   </div>
                   <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 line-clamp-1">{item.name}</h4>
-                  <span className="text-xs text-slate-600 dark:text-slate-400">{formatServicePrice(item.price)}</span>
+                  <span className="text-xs font-semibold" style={{ color: brandColor }}>{formatServicePrice(item.price)}</span>
                 </div>
               ))}
             </div>
@@ -2993,7 +2993,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
         ) : (
           <div className={cn("grid gap-4", device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
             {featuredItem && (
-              <div className={cn("group cursor-pointer relative rounded-2xl overflow-hidden", device === 'desktop' ? 'row-span-2' : 'col-span-1')}>
+              <div className={cn("group cursor-pointer relative rounded-2xl overflow-hidden", device === 'desktop' ? 'row-span-2' : 'col-span-1')} style={{ boxShadow: `0 8px 30px ${brandColor}20` }}>
                 <div className="h-full min-h-[400px]">
                   {featuredItem.image ? (
                     <img src={featuredItem.image} alt={featuredItem.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
@@ -3004,27 +3004,33 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                 {featuredItem.tag && <div className="absolute top-4 left-4"><ServiceBadge tag={featuredItem.tag} brandColor={brandColor} /></div>}
                 <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <span className="text-xs text-white/70 uppercase tracking-wider font-medium">Dịch vụ nổi bật</span>
+                  <span className="text-xs uppercase tracking-wider font-medium" style={{ color: `${brandColor}cc` }}>Dịch vụ nổi bật</span>
                   <h3 className="text-xl md:text-2xl font-semibold text-white mt-2 leading-tight">{featuredItem.name}</h3>
                   {featuredItem.description && <p className="text-sm text-white/80 mt-2 line-clamp-2">{featuredItem.description}</p>}
                   <div className="flex items-center justify-between mt-4">
                     <span className="text-lg font-semibold text-white">{formatServicePrice(featuredItem.price)}</span>
-                    <button className="px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors" style={{ backgroundColor: brandColor }}>Xem chi tiết</button>
+                    <button className="px-5 py-2.5 text-white text-sm font-medium rounded-lg transition-all hover:opacity-90 whitespace-nowrap" style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}>Xem chi tiết</button>
                   </div>
                 </div>
               </div>
             )}
             <div className={cn("grid gap-3", device === 'desktop' ? 'col-span-2 grid-cols-2' : 'grid-cols-2')}>
               {otherItems.map((item) => (
-                <div key={item.id} className="group cursor-pointer bg-white dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700 rounded-xl p-3 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all">
+                <div 
+                  key={item.id} 
+                  className="group cursor-pointer bg-white dark:bg-slate-800 border rounded-xl p-3 transition-all" 
+                  style={{ borderColor: `${brandColor}15` }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; }}
+                >
                   <div className="relative overflow-hidden bg-slate-100 dark:bg-slate-700 rounded-lg aspect-[4/3] mb-3">
                     {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center"><Briefcase size={28} className="text-slate-300" /></div>}
                     {item.tag && <div className="absolute top-2 left-2"><ServiceBadge tag={item.tag} brandColor={brandColor} /></div>}
                   </div>
                   <h4 className="font-medium text-sm text-slate-900 dark:text-slate-100 line-clamp-1 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">{item.name}</h4>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{formatServicePrice(item.price)}</span>
-                    <ArrowUpRight className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <span className="text-sm font-semibold" style={{ color: brandColor }}>{formatServicePrice(item.price)}</span>
+                    <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} />
                   </div>
                 </div>
               ))}
