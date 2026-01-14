@@ -2,32 +2,12 @@
 
 import React, { useState } from 'react';
 import { Plus, Trash2, GripVertical, Briefcase, Shield, Star, Users, Phone, Target, Zap, Globe, Rocket, Settings, Layers, Cpu, Clock, MapPin, Mail, Building2, Check, Package } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui';
+import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { ServicesPreview, type ServicesStyle } from '../../previews';
-import { cn } from '@/lib/utils';
 
 // Available icons for services
-const AVAILABLE_ICONS = [
-  { name: 'Briefcase', icon: Briefcase, label: 'Briefcase' },
-  { name: 'Shield', icon: Shield, label: 'Shield' },
-  { name: 'Star', icon: Star, label: 'Star' },
-  { name: 'Users', icon: Users, label: 'Users' },
-  { name: 'Phone', icon: Phone, label: 'Phone' },
-  { name: 'Target', icon: Target, label: 'Target' },
-  { name: 'Zap', icon: Zap, label: 'Zap' },
-  { name: 'Globe', icon: Globe, label: 'Globe' },
-  { name: 'Rocket', icon: Rocket, label: 'Rocket' },
-  { name: 'Settings', icon: Settings, label: 'Settings' },
-  { name: 'Layers', icon: Layers, label: 'Layers' },
-  { name: 'Cpu', icon: Cpu, label: 'Cpu' },
-  { name: 'Clock', icon: Clock, label: 'Clock' },
-  { name: 'MapPin', icon: MapPin, label: 'MapPin' },
-  { name: 'Mail', icon: Mail, label: 'Mail' },
-  { name: 'Building2', icon: Building2, label: 'Building2' },
-  { name: 'Check', icon: Check, label: 'Check' },
-  { name: 'Package', icon: Package, label: 'Package' },
-];
+const AVAILABLE_ICONS = ['Briefcase', 'Shield', 'Star', 'Users', 'Phone', 'Target', 'Zap', 'Globe', 'Rocket', 'Settings', 'Layers', 'Cpu', 'Clock', 'MapPin', 'Mail', 'Building2', 'Check', 'Package'];
 
 export default function ServicesCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Dịch vụ chi tiết', 'Services');
@@ -76,8 +56,8 @@ export default function ServicesCreatePage() {
 
   // Get icon component
   const getIconComponent = (iconName: string) => {
-    const found = AVAILABLE_ICONS.find(i => i.name === iconName);
-    return found ? found.icon : Star;
+    const icons: Record<string, React.ComponentType<{ size?: number; style?: React.CSSProperties }>> = { Briefcase, Shield, Star, Users, Phone, Target, Zap, Globe, Rocket, Settings, Layers, Cpu, Clock, MapPin, Mail, Building2, Check, Package };
+    return icons[iconName] || Star;
   };
 
   return (
@@ -128,21 +108,15 @@ export default function ServicesCreatePage() {
                   </Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <Select value={item.icon} onValueChange={(v) => handleUpdateService(item.id, 'icon', v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn icon" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {AVAILABLE_ICONS.map(({ name, icon: Icon, label }) => (
-                        <SelectItem key={name} value={name}>
-                          <div className="flex items-center gap-2">
-                            <Icon size={14} />
-                            <span>{label}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <select 
+                    value={item.icon} 
+                    onChange={(e) => handleUpdateService(item.id, 'icon', e.target.value)}
+                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    {AVAILABLE_ICONS.map((icon) => (
+                      <option key={icon} value={icon}>{icon}</option>
+                    ))}
+                  </select>
                   <Input 
                     placeholder="Tiêu đề" 
                     value={item.title} 

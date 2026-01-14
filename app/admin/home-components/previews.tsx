@@ -2120,7 +2120,7 @@ export type ServicesStyle = 'elegantGrid' | 'modernList' | 'bigNumber' | 'cards'
 // Dynamic Icon component for Services
 const ServiceIcon = ({ name, size = 24, className, style }: { name: string; size?: number; className?: string; style?: React.CSSProperties }) => {
   const icons: Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>> = {
-    Briefcase, Shield, Truck: Package, Star, Users, Phone, Target, Zap, Globe, Rocket, Settings, Layers, Cpu, Clock, MapPin, Mail, Building2, Check, HelpCircle, MousePointerClick, FileText, ImageIcon: ImageIcon
+    Briefcase, Shield, Package, Star, Users, Phone, Target, Zap, Globe, Rocket, Settings, Layers, Cpu, Clock, MapPin, Mail, Building2, Check, HelpCircle, FileText
   };
   const IconComponent = icons[name] || Star;
   return <IconComponent size={size} className={className} style={style} />;

@@ -1609,26 +1609,23 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 5: Carousel - Horizontal scroll với swipe
+  // Style 5: Carousel - Grid layout (fallback from interactive carousel)
   if (style === 'carousel') {
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto space-y-8">
           <BenefitsHeader />
-          <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-            <div className="flex gap-4" style={{ width: 'max-content' }}>
-              {items.map((item, idx) => (
-                <div key={idx} className="w-[280px] md:w-[320px] flex-shrink-0 rounded-xl p-5 md:p-6 border shadow-sm" style={{ backgroundColor: idx === 0 ? brandColor : `${brandColor}08`, borderColor: `${brandColor}20` }}>
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${idx === 0 ? 'bg-white/20' : ''}`} style={idx !== 0 ? { backgroundColor: brandColor } : {}}>
-                    <Check size={18} strokeWidth={3} className="text-white" />
-                  </div>
-                  <h3 className={`font-bold text-base mb-2 line-clamp-2 ${idx === 0 ? 'text-white' : ''}`} style={idx !== 0 ? { color: brandColor } : {}}>{item.title}</h3>
-                  <p className={`text-sm leading-relaxed line-clamp-3 ${idx === 0 ? 'text-white/80' : 'text-slate-500'}`}>{item.description}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {items.map((item, idx) => (
+              <div key={idx} className="rounded-xl p-5 md:p-6 border shadow-sm" style={{ backgroundColor: idx === 0 ? brandColor : `${brandColor}08`, borderColor: `${brandColor}20` }}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${idx === 0 ? 'bg-white/20' : ''}`} style={idx !== 0 ? { backgroundColor: brandColor } : {}}>
+                  <Check size={18} strokeWidth={3} className="text-white" />
                 </div>
-              ))}
-            </div>
+                <h3 className={`font-bold text-base mb-2 line-clamp-2 ${idx === 0 ? 'text-white' : ''}`} style={idx !== 0 ? { color: brandColor } : {}}>{item.title}</h3>
+                <p className={`text-sm leading-relaxed line-clamp-3 ${idx === 0 ? 'text-white/80' : 'text-slate-500'}`}>{item.description}</p>
+              </div>
+            ))}
           </div>
-          <p className="text-xs text-center text-slate-400">Vuốt sang trái/phải để xem thêm</p>
         </div>
       </section>
     );
