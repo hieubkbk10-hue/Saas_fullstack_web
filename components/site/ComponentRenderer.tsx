@@ -10,7 +10,8 @@ import { ServiceListSection } from './ServiceListSection';
 import { 
   LayoutTemplate, Package, FileText, HelpCircle, MousePointerClick, 
   Users, Star, Phone, Briefcase, Image as ImageIcon, Check, ZoomIn, Maximize2, X,
-  Building2, Clock, MapPin, Mail, Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, ArrowRight
+  Building2, Clock, MapPin, Mail, Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, ArrowRight,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 interface HomeComponent {
@@ -1609,22 +1610,55 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 5: Carousel - Grid layout (fallback from interactive carousel)
+  // Style 5: Carousel - Horizontal scroll với navigation arrows
   if (style === 'carousel') {
+    const scrollRef = React.useRef<HTMLDivElement>(null);
+    const scroll = (direction: 'left' | 'right') => {
+      if (!scrollRef.current) return;
+      const cardWidth = 320 + 16; // card width + gap
+      scrollRef.current.scrollBy({ left: direction === 'left' ? -cardWidth : cardWidth, behavior: 'smooth' });
+    };
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto space-y-8">
           <BenefitsHeader />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {items.map((item, idx) => (
-              <div key={idx} className="rounded-xl p-5 md:p-6 border shadow-sm" style={{ backgroundColor: idx === 0 ? brandColor : `${brandColor}08`, borderColor: `${brandColor}20` }}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${idx === 0 ? 'bg-white/20' : ''}`} style={idx !== 0 ? { backgroundColor: brandColor } : {}}>
-                  <Check size={18} strokeWidth={3} className="text-white" />
+          <div className="relative group">
+            {/* Navigation Arrows */}
+            <button
+              onClick={() => scroll('left')}
+              className="absolute -left-2 md:-left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border flex items-center justify-center transition-all hover:scale-110 opacity-0 group-hover:opacity-100"
+              style={{ borderColor: `${brandColor}20` }}
+            >
+              <ChevronLeft size={20} style={{ color: brandColor }} />
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              className="absolute -right-2 md:-right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border flex items-center justify-center transition-all hover:scale-110 opacity-0 group-hover:opacity-100"
+              style={{ borderColor: `${brandColor}20` }}
+            >
+              <ChevronRight size={20} style={{ color: brandColor }} />
+            </button>
+            {/* Carousel Container - hidden scrollbar */}
+            <div 
+              ref={scrollRef}
+              className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              <style>{`.benefits-carousel::-webkit-scrollbar { display: none; }`}</style>
+              {items.map((item, idx) => (
+                <div 
+                  key={idx} 
+                  className="w-[280px] md:w-[320px] flex-shrink-0 snap-start rounded-xl p-5 md:p-6 border shadow-sm"
+                  style={{ backgroundColor: idx === 0 ? brandColor : `${brandColor}08`, borderColor: `${brandColor}20` }}
+                >
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${idx === 0 ? 'bg-white/20' : ''}`} style={idx !== 0 ? { backgroundColor: brandColor } : {}}>
+                    <Check size={18} strokeWidth={3} className="text-white" />
+                  </div>
+                  <h3 className={`font-bold text-base mb-2 line-clamp-2 ${idx === 0 ? 'text-white' : ''}`} style={idx !== 0 ? { color: brandColor } : {}}>{item.title}</h3>
+                  <p className={`text-sm leading-relaxed line-clamp-3 ${idx === 0 ? 'text-white/80' : 'text-slate-500'}`}>{item.description}</p>
                 </div>
-                <h3 className={`font-bold text-base mb-2 line-clamp-2 ${idx === 0 ? 'text-white' : ''}`} style={idx !== 0 ? { color: brandColor } : {}}>{item.title}</h3>
-                <p className={`text-sm leading-relaxed line-clamp-3 ${idx === 0 ? 'text-white/80' : 'text-slate-500'}`}>{item.description}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
