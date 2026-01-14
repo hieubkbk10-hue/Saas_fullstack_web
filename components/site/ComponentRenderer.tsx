@@ -8498,15 +8498,35 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
     );
   }
 
-  // Style 6: Popup - Centered card (default fallback)
+  // Style 6: Popup - Modal/Dialog style with overlay (synced with preview)
   return (
-    <section className="py-8 md:py-12 px-4">
-      <div className="max-w-md mx-auto">
+    <section className="relative min-h-[400px] bg-slate-100">
+      {/* Simulated page content behind popup */}
+      <div className="absolute inset-0 p-6 opacity-30 pointer-events-none">
+        <div className="max-w-4xl mx-auto">
+          <div className="h-8 bg-slate-300 rounded mb-4 w-3/4" />
+          <div className="h-4 bg-slate-300 rounded mb-2 w-full" />
+          <div className="h-4 bg-slate-300 rounded mb-2 w-5/6" />
+          <div className="h-4 bg-slate-300 rounded w-4/6" />
+        </div>
+      </div>
+      
+      {/* Popup overlay */}
+      <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-4">
         <div 
-          className="bg-white rounded-2xl shadow-2xl overflow-hidden"
-          role="article"
+          className="bg-white rounded-2xl shadow-2xl overflow-hidden relative w-full max-w-md"
+          role="dialog"
+          aria-modal="true"
           aria-labelledby="countdown-popup-title"
         >
+          {/* Close button */}
+          <button type="button" className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 z-10">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          
+          {/* Image/Visual header */}
           <div 
             className="h-32 md:h-40 flex items-center justify-center"
             style={{ 
@@ -8522,6 +8542,8 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
               </div>
             )}
           </div>
+          
+          {/* Content */}
           <div className="p-5 md:p-6 text-center">
             <h3 id="countdown-popup-title" className="text-xl md:text-2xl font-bold text-slate-900 mb-2">{heading}</h3>
             {description && <p className="text-slate-500 text-sm mb-4 line-clamp-2">{description}</p>}
@@ -8534,6 +8556,10 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
                 {buttonText}
               </a>
             )}
+            {/* Skip link */}
+            <button type="button" className="text-slate-400 text-xs mt-3 hover:text-slate-600 transition-colors">
+              Để sau
+            </button>
           </div>
         </div>
       </div>
