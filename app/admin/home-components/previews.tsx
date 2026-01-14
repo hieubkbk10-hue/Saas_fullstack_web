@@ -10802,23 +10802,22 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
           )}
         </div>
         
-        {/* Carousel container với fade edges */}
-        <div className="relative">
-          {/* Fade left */}
-          {currentSlide > 0 && device !== 'mobile' && (
-            <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
-          )}
-          
-          {/* Scrollable area */}
-          <div 
-            className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth"
-            style={{ 
-              paddingLeft: device === 'mobile' ? 16 : 24, 
-              paddingRight: device === 'mobile' ? 16 : 24,
-              gap: `${gap}px`,
-              scrollPaddingLeft: device === 'mobile' ? 16 : 24
-            }}
-          >
+        {/* Carousel container - contained với fade edges */}
+        <div className="px-4 md:px-6">
+          <div className="relative overflow-hidden rounded-xl">
+            {/* Fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-10 md:w-16 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-10 md:w-16 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
+            
+            {/* Scrollable area - hidden scrollbar */}
+            <div 
+              className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth py-3 px-2"
+              style={{ 
+                gap: `${gap}px`,
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
+              }}
+            >
             {members.map((member, idx) => (
               <div 
                 key={member.id} 
@@ -10873,12 +10872,8 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
             ))}
             {/* Spacer for partial peek effect */}
             <div className="flex-shrink-0 w-4" />
+            </div>
           </div>
-          
-          {/* Fade right */}
-          {device !== 'mobile' && (
-            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
-          )}
         </div>
         
         {/* Mobile: Dot indicators */}

@@ -6507,7 +6507,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
     );
   }
 
-  // Style 3: Carousel - Horizontal scroll với cards (Best Practice: partial peek, snap-scroll)
+  // Style 3: Carousel - Horizontal scroll với cards (Best Practice: partial peek, snap-scroll, contained)
   if (style === 'carousel') {
     return (
       <section className="py-12 md:py-16">
@@ -6519,17 +6519,22 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
           </div>
         </div>
         
-        {/* Carousel container */}
-        <div className="relative">
-          {/* Scrollable area - no visible scrollbar */}
-          <div 
-            className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 md:gap-5 px-4 md:px-8"
-            style={{ 
-              scrollbarWidth: 'none', 
-              msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch'
-            }}
-          >
+        {/* Carousel container - contained within max-w-7xl */}
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
+          <div className="relative overflow-hidden rounded-xl">
+            {/* Fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-12 md:w-20 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-12 md:w-20 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+            
+            {/* Scrollable area - no visible scrollbar */}
+            <div 
+              className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 md:gap-5 py-4 px-2"
+              style={{ 
+                scrollbarWidth: 'none', 
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch'
+              }}
+            >
             {members.map((member, idx) => (
               <div 
                 key={idx} 
@@ -6578,6 +6583,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
             ))}
             {/* End spacer for partial peek */}
             <div className="flex-shrink-0 w-4" />
+            </div>
           </div>
         </div>
       </section>
