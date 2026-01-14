@@ -45,10 +45,11 @@ export default function VideoCreatePage() {
   };
 
   // Helper: Extract video type from URL
-  const getVideoType = (url: string): 'youtube' | 'vimeo' | 'direct' | null => {
+  const getVideoType = (url: string): 'youtube' | 'vimeo' | 'drive' | 'direct' | null => {
     if (!url) return null;
     if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
     if (url.includes('vimeo.com')) return 'vimeo';
+    if (url.includes('drive.google.com')) return 'drive';
     return 'direct';
   };
 
@@ -79,14 +80,15 @@ export default function VideoCreatePage() {
               type="url"
               value={videoUrl} 
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVideoUrl(e.target.value)} 
-              placeholder="https://www.youtube.com/watch?v=... hoặc link video trực tiếp"
+              placeholder="YouTube, YouTube Shorts, Google Drive hoặc link trực tiếp"
               required
             />
             {videoType && (
               <p className="text-xs text-slate-500">
                 Loại video: <span className="font-medium capitalize" style={{ color: brandColor }}>{videoType}</span>
-                {videoType === 'youtube' && ' - Hỗ trợ embed tự động'}
+                {videoType === 'youtube' && ' - Hỗ trợ embed tự động (YouTube, Shorts)'}
                 {videoType === 'vimeo' && ' - Hỗ trợ embed tự động'}
+                {videoType === 'drive' && ' - Hỗ trợ Google Drive embed'}
                 {videoType === 'direct' && ' - Sẽ sử dụng thẻ video HTML5'}
               </p>
             )}

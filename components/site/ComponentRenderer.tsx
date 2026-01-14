@@ -11,7 +11,7 @@ import {
   LayoutTemplate, Package, FileText, HelpCircle, MousePointerClick, 
   Users, Star, Phone, Briefcase, Image as ImageIcon, Check, ZoomIn, Maximize2, X,
   Building2, Clock, MapPin, Mail, Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, ArrowRight, ArrowUpRight,
-  ChevronLeft, ChevronRight, Send, Facebook, MessageCircle, Instagram, Twitter, Linkedin, Youtube
+  ChevronLeft, ChevronRight, ChevronDown, Send, Facebook, MessageCircle, Instagram, Twitter, Linkedin, Youtube, Plus
 } from 'lucide-react';
 
 const getSocialIcon = (platform: string) => {
@@ -7253,126 +7253,87 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
 }
 
 // ============ PROCESS SECTION ============
-// 6 Professional Styles: Timeline, Steps, Cards, Zigzag, Minimal, Numbered
-type ProcessStyle = 'timeline' | 'steps' | 'cards' | 'zigzag' | 'minimal' | 'numbered';
+// 6 Professional Styles: Horizontal, Stepper, Cards, Accordion, Minimal, Grid
+type ProcessStyle = 'horizontal' | 'stepper' | 'cards' | 'accordion' | 'minimal' | 'grid';
 
 function ProcessSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const steps = (config.steps as Array<{ icon: string; title: string; description: string }>) || [];
-  const style = (config.style as ProcessStyle) || 'timeline';
+  const style = (config.style as ProcessStyle) || 'horizontal';
+  const [activeAccordion, setActiveAccordion] = React.useState<number>(0);
 
-  // Style 1: Timeline - Vertical timeline với connecting line
-  if (style === 'timeline') {
+  if (steps.length === 0) return null;
+
+  // Style 1: Horizontal - Compact progress bar layout
+  if (style === 'horizontal') {
+    const visibleSteps = steps.slice(0, 5);
     return (
-      <section className="py-12 md:py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-10 md:mb-14">
-            <div 
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
-              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-            >
-              Quy trình
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+      <section className="py-10 md:py-14 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
           </div>
           
-          {/* Timeline */}
-          <div className="max-w-3xl mx-auto relative">
-            {/* Vertical Line */}
-            <div 
-              className="absolute top-0 bottom-0 left-4 md:left-1/2 md:-translate-x-1/2 w-0.5"
-              style={{ backgroundColor: `${brandColor}20` }}
-            />
-            
-            {/* Steps */}
-            <div className="relative space-y-8 md:space-y-12">
-              {steps.map((step, idx) => {
-                const isEven = idx % 2 === 0;
-                return (
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="relative flex items-center justify-between max-w-2xl mx-auto">
+              <div className="absolute left-0 right-0 top-1/2 h-0.5 -translate-y-1/2" style={{ backgroundColor: `${brandColor}20` }} />
+              <div className="absolute left-0 top-1/2 h-0.5 -translate-y-1/2" style={{ backgroundColor: brandColor, width: `${((visibleSteps.length - 1) / Math.max(visibleSteps.length - 1, 1)) * 100}%` }} />
+              {visibleSteps.map((step, idx) => (
+                <div key={idx} className="relative z-10 flex flex-col items-center">
                   <div 
-                    key={idx} 
-                    className={`relative flex items-start gap-4 md:gap-8 pl-12 md:pl-0 ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'} md:justify-center`}
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-white font-bold text-sm border-2 border-white"
+                    style={{ backgroundColor: brandColor, boxShadow: `0 2px 8px ${brandColor}40` }}
                   >
-                    {/* Circle Marker */}
-                    <div 
-                      className="absolute left-0 md:left-1/2 md:-translate-x-1/2 flex items-center justify-center w-8 h-8 rounded-full text-white font-bold text-sm border-4 border-white shadow-lg z-10"
-                      style={{ backgroundColor: brandColor }}
-                    >
-                      {step.icon || idx + 1}
-                    </div>
-                    
-                    {/* Content Card */}
-                    <div 
-                      className={`flex-1 md:w-[calc(50%-3rem)] bg-white rounded-xl p-5 md:p-6 shadow-sm border border-slate-200 ${isEven ? 'md:text-right' : 'md:text-left'}`}
-                    >
-                      <h3 className="font-bold text-base md:text-lg text-slate-900 mb-1">
-                        {step.title || `Bước ${idx + 1}`}
-                      </h3>
-                      <p className="text-sm text-slate-500 leading-relaxed">
-                        {step.description}
-                      </p>
-                    </div>
+                    {step.icon || idx + 1}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
+          </div>
+          
+          {/* Steps Detail */}
+          <div className={`grid gap-4 grid-cols-2 md:grid-cols-${Math.min(visibleSteps.length, 5)}`}>
+            {visibleSteps.map((step, idx) => (
+              <div key={idx} className="text-center">
+                <h4 className="font-semibold text-sm text-slate-900 mb-1 line-clamp-1">{step.title || `Bước ${idx + 1}`}</h4>
+                <p className="text-xs text-slate-500 line-clamp-2">{step.description || 'Mô tả...'}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
     );
   }
 
-  // Style 2: Steps - Horizontal steps với connector arrows
-  if (style === 'steps') {
+  // Style 2: Stepper - Dot stepper vertical
+  if (style === 'stepper') {
     return (
-      <section className="py-12 md:py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-10 md:mb-14">
-            <div 
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
-              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-            >
+      <section className="py-10 md:py-14 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
               Quy trình
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
           </div>
           
-          {/* Steps Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="max-w-xl mx-auto">
             {steps.map((step, idx) => (
-              <div key={idx} className="relative">
-                {/* Connector Arrow */}
-                {idx < steps.length - 1 && (
+              <div key={idx} className="flex gap-4">
+                <div className="flex flex-col items-center">
                   <div 
-                    className="hidden lg:block absolute top-10 -right-2 w-4 h-4 z-10"
-                    style={{ color: brandColor }}
-                  >
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
-                      <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/>
-                    </svg>
-                  </div>
-                )}
-                
-                {/* Step Card */}
-                <div className="bg-white rounded-xl p-5 md:p-6 border border-slate-200 text-center h-full">
-                  {/* Step Number */}
-                  <div 
-                    className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-lg md:text-xl"
-                    style={{ 
-                      backgroundColor: brandColor,
-                      boxShadow: `0 4px 14px ${brandColor}40`
-                    }}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                    style={{ backgroundColor: brandColor }}
                   >
                     {step.icon || idx + 1}
                   </div>
-                  
-                  <h3 className="font-bold text-base md:text-lg text-slate-900 mb-2">
-                    {step.title || `Bước ${idx + 1}`}
-                  </h3>
-                  <p className="text-sm text-slate-500 leading-relaxed">
-                    {step.description}
-                  </p>
+                  {idx < steps.length - 1 && (
+                    <div className="w-0.5 flex-1 my-2" style={{ backgroundColor: `${brandColor}30` }} />
+                  )}
+                </div>
+                <div className={`flex-1 ${idx === steps.length - 1 ? 'pb-0' : 'pb-8'}`}>
+                  <h4 className="font-semibold text-base text-slate-900 mb-1">{step.title || `Bước ${idx + 1}`}</h4>
+                  <p className="text-sm text-slate-500 leading-relaxed">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -7442,79 +7403,25 @@ function ProcessSection({ config, brandColor, title }: { config: Record<string, 
     );
   }
 
-  // Style 4: Zigzag - Alternating layout với số lớn
-  if (style === 'zigzag') {
+  // Style 4: Accordion - Interactive expandable
+  if (style === 'accordion') {
     return (
-      <section className="py-12 md:py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10 md:mb-14">
-            <div 
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
-              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-            >
+      <section className="py-10 md:py-14 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
               Quy trình
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
           </div>
           
-          <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
-            {steps.map((step, idx) => {
-              const isEven = idx % 2 === 0;
-              return (
-                <div 
-                  key={idx} 
-                  className={`flex items-center gap-6 md:gap-8 ${!isEven ? 'md:flex-row-reverse' : ''}`}
-                >
-                  <div className="relative flex-shrink-0" style={{ minWidth: '80px' }}>
-                    <span 
-                      className="text-6xl md:text-7xl font-black leading-none"
-                      style={{ color: brandColor, opacity: 0.15 }}
-                    >
-                      {String(idx + 1).padStart(2, '0')}
-                    </span>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div 
-                        className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-white font-bold"
-                        style={{ backgroundColor: brandColor }}
-                      >
-                        {step.icon || idx + 1}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className={`flex-1 bg-slate-50 rounded-xl p-5 md:p-6 border border-slate-100 ${!isEven ? 'md:text-right' : ''}`}>
-                    <h3 className="font-bold text-base md:text-lg text-slate-900 mb-1 line-clamp-1">
-                      {step.title || `Bước ${idx + 1}`}
-                    </h3>
-                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">
-                      {step.description}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // Style 5: Minimal - Compact list with subtle styling
-  if (style === 'minimal') {
-    return (
-      <section className="py-12 md:py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8 md:mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
-            <p className="text-sm text-slate-500 mt-2">Đơn giản • Hiệu quả • Chuyên nghiệp</p>
-          </div>
-          
-          <div className="max-w-2xl mx-auto">
-            <div className="space-y-3">
-              {steps.map((step, idx) => (
-                <div 
-                  key={idx} 
-                  className="flex items-center gap-4 p-4 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+          <div className="space-y-2">
+            {steps.map((step, idx) => (
+              <div key={idx} className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <button 
+                  type="button"
+                  className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50 transition-colors"
+                  onClick={() => setActiveAccordion(activeAccordion === idx ? -1 : idx)}
                 >
                   <div 
                     className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
@@ -7522,61 +7429,81 @@ function ProcessSection({ config, brandColor, title }: { config: Record<string, 
                   >
                     {step.icon || idx + 1}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm text-slate-900 truncate">
-                      {step.title || `Bước ${idx + 1}`}
-                    </h3>
-                    <p className="text-xs text-slate-500 truncate">
-                      {step.description}
-                    </p>
+                  <span className="flex-1 font-semibold text-sm text-slate-900">{step.title || `Bước ${idx + 1}`}</span>
+                  <ChevronDown 
+                    size={18} 
+                    className={`text-slate-400 transition-transform ${activeAccordion === idx ? 'rotate-180' : ''}`} 
+                  />
+                </button>
+                {activeAccordion === idx && (
+                  <div className="px-4 pb-4 pt-0 pl-15">
+                    <p className="text-sm text-slate-500 pl-11 leading-relaxed">{step.description}</p>
                   </div>
-                  <ArrowRight size={16} className="text-slate-300 flex-shrink-0" />
-                </div>
-              ))}
-            </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>
     );
   }
 
-  // Style 6: Numbered - Big numbers with grid layout (default fallback)
+  // Style 5: Minimal - Compact list
+  if (style === 'minimal') {
+    return (
+      <section className="py-10 md:py-14 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
+          </div>
+          
+          <div className="space-y-2">
+            {steps.map((step, idx) => (
+              <div 
+                key={idx} 
+                className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+              >
+                <div 
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {step.icon || idx + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-sm text-slate-900 truncate">{step.title || `Bước ${idx + 1}`}</h4>
+                  <p className="text-xs text-slate-500 truncate">{step.description}</p>
+                </div>
+                <ArrowRight size={14} className="text-slate-300 flex-shrink-0" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Style 6: Grid - Compact 2-3 column grid (default fallback)
   return (
-    <section className="py-12 md:py-16 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-10 md:mb-14">
-          <div 
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3"
-            style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-          >
+    <section className="py-10 md:py-14 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
             Quy trình
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">{title}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {steps.map((step, idx) => (
-            <div key={idx} className="text-center">
-              <div className="relative mb-4">
-                <span 
-                  className="text-7xl md:text-8xl font-black"
-                  style={{ color: brandColor, opacity: 0.1 }}
-                >
-                  {String(idx + 1).padStart(2, '0')}
-                </span>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div 
-                    className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center text-white font-bold text-lg"
-                    style={{ backgroundColor: brandColor, boxShadow: `0 4px 14px ${brandColor}40` }}
-                  >
-                    {step.icon || idx + 1}
-                  </div>
-                </div>
+            <div key={idx} className="bg-white rounded-lg p-4 border border-slate-200 text-center">
+              <div 
+                className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm mx-auto mb-3"
+                style={{ backgroundColor: brandColor }}
+              >
+                {step.icon || idx + 1}
               </div>
-              <h3 className="font-bold text-base md:text-lg text-slate-900 mb-2 line-clamp-1">
-                {step.title || `Bước ${idx + 1}`}
-              </h3>
-              <p className="text-sm text-slate-500 leading-relaxed line-clamp-2">
+              <h4 className="font-semibold text-sm text-slate-900 mb-1 line-clamp-1">{step.title || `Bước ${idx + 1}`}</h4>
+              <p className="text-xs text-slate-500 line-clamp-2">
                 {step.description}
               </p>
             </div>
@@ -7589,84 +7516,60 @@ function ProcessSection({ config, brandColor, title }: { config: Record<string, 
 
 // ============ CLIENTS MARQUEE SECTION ============
 // Auto-scroll Logo Marquee - 6 Styles: marquee, dualRow, wave, grid, carousel, featured
-// Best Practices: pause on hover, a11y, prefers-reduced-motion
+// Best Practices: pause on hover, a11y, prefers-reduced-motion, compact spacing, full color (no grayscale)
 type ClientsStyle = 'marquee' | 'dualRow' | 'wave' | 'grid' | 'carousel' | 'featured';
 
 function ClientsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ url: string; link: string; name?: string }>) || [];
   const style = (config.style as ClientsStyle) || 'marquee';
 
-  if (items.length === 0) {
-    return null;
-  }
+  if (items.length === 0) return null;
 
   // CSS keyframes với pause on hover và prefers-reduced-motion
   const marqueeStyles = `
-    @keyframes clients-marquee {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-    @keyframes clients-marquee-reverse {
-      0% { transform: translateX(-50%); }
-      100% { transform: translateX(0); }
-    }
-    @keyframes clients-float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
-    }
+    @keyframes clients-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes clients-marquee-reverse { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+    @keyframes clients-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
     .clients-track { animation: clients-marquee var(--duration, 30s) linear infinite; }
     .clients-track-reverse { animation: clients-marquee-reverse var(--duration, 30s) linear infinite; }
     .clients-float { animation: clients-float 3s ease-in-out infinite; }
     .clients-container:hover .clients-track,
     .clients-container:hover .clients-track-reverse,
     .clients-container:focus-within .clients-track,
-    .clients-container:focus-within .clients-track-reverse {
-      animation-play-state: paused;
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .clients-track, .clients-track-reverse, .clients-float { animation: none !important; }
-    }
+    .clients-container:focus-within .clients-track-reverse { animation-play-state: paused; }
+    @media (prefers-reduced-motion: reduce) { .clients-track, .clients-track-reverse, .clients-float { animation: none !important; } }
   `;
 
-  // Logo item renderer with accessibility
-  const renderLogoItem = (item: { url: string; link: string; name?: string }, idx: number, grayscale = false) => {
+  // Logo item renderer - tăng 20% size, bỏ grayscale
+  const renderLogoItem = (item: { url: string; link: string; name?: string }, idx: number) => {
     const logo = item.url ? (
-      <img 
-        src={item.url} 
-        alt={item.name || `Khách hàng ${idx + 1}`}
-        className={`h-10 md:h-12 w-auto object-contain select-none pointer-events-none transition-all duration-500 ${grayscale ? 'grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100' : ''}`}
-      />
+      <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none" />
     ) : (
-      <div className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
-        <ImageIcon size={20} style={{ color: brandColor }} className="opacity-40" />
+      <div className="h-14 md:h-16 w-28 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
+        <ImageIcon size={22} style={{ color: brandColor }} className="opacity-40" />
       </div>
     );
-
     return item.link ? (
-      <a key={`logo-${idx}`} href={item.link} target="_blank" rel="noopener noreferrer" className="shrink-0 group" role="listitem" aria-label={item.name || `Khách hàng ${idx + 1}`}>
-        {logo}
-      </a>
+      <a key={`logo-${idx}`} href={item.link} target="_blank" rel="noopener noreferrer" className="shrink-0" role="listitem" aria-label={item.name || `Khách hàng ${idx + 1}`}>{logo}</a>
     ) : (
-      <div key={`logo-${idx}`} className="shrink-0 group" role="listitem">{logo}</div>
+      <div key={`logo-${idx}`} className="shrink-0" role="listitem">{logo}</div>
     );
   };
 
   const baseDuration = Math.max(20, items.length * 4);
 
-  // Style 1: Simple Marquee
+  // Style 1: Simple Marquee - compact
   if (style === 'marquee') {
     return (
-      <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40" aria-label={title}>
+      <section className="w-full py-8 bg-white border-b border-slate-200/40" aria-label={title}>
         <style>{marqueeStyles}</style>
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }} />
-              {title}
-            </h2>
-          </div>
-          <div className="clients-container relative py-6 overflow-hidden" role="list" style={{ maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)' }}>
-            <div className="clients-track flex items-center gap-12 md:gap-16" style={{ '--duration': `${baseDuration}s`, width: 'max-content' } as React.CSSProperties}>
+        <div className="w-full max-w-7xl mx-auto px-4 space-y-4">
+          <h2 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 relative pl-3">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full" style={{ backgroundColor: brandColor }} />
+            {title}
+          </h2>
+          <div className="clients-container relative py-4 overflow-hidden" role="list" style={{ maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
+            <div className="clients-track flex items-center gap-10 md:gap-12" style={{ '--duration': `${baseDuration}s`, width: 'max-content' } as React.CSSProperties}>
               {items.map((item, idx) => renderLogoItem(item, idx))}
               {items.map((item, idx) => renderLogoItem(item, idx + items.length))}
             </div>
@@ -7676,29 +7579,27 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
     );
   }
 
-  // Style 2: Dual Row Marquee (formerly marqueeReverse)
+  // Style 2: Dual Row Marquee - compact, no grayscale
   if (style === 'dualRow') {
     return (
-      <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40" aria-label={title}>
+      <section className="w-full py-8 bg-white border-b border-slate-200/40" aria-label={title}>
         <style>{marqueeStyles}</style>
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }} />
-              {title}
-            </h2>
-          </div>
-          <div className="space-y-4" role="list">
-            <div className="clients-container relative py-4 overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)' }}>
-              <div className="clients-track flex items-center gap-12 md:gap-16" style={{ '--duration': `${baseDuration + 5}s`, width: 'max-content' } as React.CSSProperties}>
-                {items.map((item, idx) => renderLogoItem(item, idx, true))}
-                {items.map((item, idx) => renderLogoItem(item, idx + items.length, true))}
+        <div className="w-full max-w-7xl mx-auto px-4 space-y-4">
+          <h2 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 relative pl-3">
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full" style={{ backgroundColor: brandColor }} />
+            {title}
+          </h2>
+          <div className="space-y-2" role="list">
+            <div className="clients-container relative py-2 overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
+              <div className="clients-track flex items-center gap-10 md:gap-12" style={{ '--duration': `${baseDuration + 5}s`, width: 'max-content' } as React.CSSProperties}>
+                {items.map((item, idx) => renderLogoItem(item, idx))}
+                {items.map((item, idx) => renderLogoItem(item, idx + items.length))}
               </div>
             </div>
-            <div className="clients-container relative py-4 overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)' }}>
-              <div className="clients-track-reverse flex items-center gap-12 md:gap-16" style={{ '--duration': `${baseDuration + 10}s`, width: 'max-content' } as React.CSSProperties}>
-                {[...items].reverse().map((item, idx) => renderLogoItem(item, idx, true))}
-                {[...items].reverse().map((item, idx) => renderLogoItem(item, idx + items.length, true))}
+            <div className="clients-container relative py-2 overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
+              <div className="clients-track-reverse flex items-center gap-10 md:gap-12" style={{ '--duration': `${baseDuration + 10}s`, width: 'max-content' } as React.CSSProperties}>
+                {[...items].reverse().map((item, idx) => renderLogoItem(item, idx))}
+                {[...items].reverse().map((item, idx) => renderLogoItem(item, idx + items.length))}
               </div>
             </div>
           </div>
@@ -7707,26 +7608,26 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
     );
   }
 
-  // Style 3: Wave
+  // Style 3: Wave - compact, larger images
   if (style === 'wave') {
     return (
-      <section className="w-full py-10 md:py-16 bg-gradient-to-b from-slate-50 to-white border-b border-slate-200/40 overflow-hidden" aria-label={title}>
+      <section className="w-full py-10 bg-gradient-to-b from-slate-50 to-white border-b border-slate-200/40 overflow-hidden" aria-label={title}>
         <style>{marqueeStyles}</style>
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
-          <div className="text-center space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Đối tác & Khách hàng</div>
-            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
+        <div className="w-full max-w-7xl mx-auto px-4 space-y-5">
+          <div className="text-center space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Đối tác & Khách hàng</div>
+            <h2 className="text-lg md:text-xl font-bold tracking-tight text-slate-900">{title}</h2>
           </div>
-          <div className="clients-container relative py-8 overflow-hidden" role="list" style={{ maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)' }}>
-            <div className="clients-track flex items-center gap-14 md:gap-20" style={{ '--duration': `${baseDuration + 15}s`, width: 'max-content' } as React.CSSProperties}>
+          <div className="clients-container relative py-4 overflow-hidden" role="list" style={{ maskImage: 'linear-gradient(to right, transparent, black 4%, black 96%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 4%, black 96%, transparent)' }}>
+            <div className="clients-track flex items-center gap-8 md:gap-10" style={{ '--duration': `${baseDuration + 15}s`, width: 'max-content' } as React.CSSProperties}>
               {items.map((item, idx) => (
                 <div key={`wave-${idx}`} className="shrink-0 clients-float" style={{ animationDelay: `${idx * 0.3}s` }} role="listitem">
                   {item.url ? (
-                    <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100">
-                      <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-8 md:h-10 w-auto object-contain select-none pointer-events-none" />
+                    <div className="p-3 bg-white rounded-lg shadow-sm border border-slate-100">
+                      <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" />
                     </div>
                   ) : (
-                    <div className="h-16 w-28 rounded-xl flex items-center justify-center bg-white shadow-sm border border-slate-100">
+                    <div className="h-[4.5rem] w-28 rounded-lg flex items-center justify-center bg-white shadow-sm border border-slate-100">
                       <ImageIcon size={20} className="text-slate-300" />
                     </div>
                   )}
@@ -7735,11 +7636,11 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
               {items.map((item, idx) => (
                 <div key={`wave2-${idx}`} className="shrink-0 clients-float" style={{ animationDelay: `${(idx + items.length) * 0.3}s` }} role="listitem">
                   {item.url ? (
-                    <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-100">
-                      <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-8 md:h-10 w-auto object-contain select-none pointer-events-none" />
+                    <div className="p-3 bg-white rounded-lg shadow-sm border border-slate-100">
+                      <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" />
                     </div>
                   ) : (
-                    <div className="h-16 w-28 rounded-xl flex items-center justify-center bg-white shadow-sm border border-slate-100">
+                    <div className="h-[4.5rem] w-28 rounded-lg flex items-center justify-center bg-white shadow-sm border border-slate-100">
                       <ImageIcon size={20} className="text-slate-300" />
                     </div>
                   )}
@@ -7752,41 +7653,41 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
     );
   }
 
-  // Style 4: Grid - Static responsive grid
+  // Style 4: Grid - compact, no grayscale, larger images
   if (style === 'grid') {
     const MAX_VISIBLE = 12;
     const visibleItems = items.slice(0, MAX_VISIBLE);
     const remainingCount = Math.max(0, items.length - MAX_VISIBLE);
     return (
-      <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40" aria-label={title}>
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }} />
+      <section className="w-full py-8 bg-white border-b border-slate-200/40" aria-label={title}>
+        <div className="w-full max-w-7xl mx-auto px-4 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 relative pl-3">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full" style={{ backgroundColor: brandColor }} />
               {title}
             </h2>
-            {items.length > 0 && <span className="text-xs px-2.5 py-1 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>{items.length} đối tác</span>}
+            {items.length > 0 && <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>{items.length} đối tác</span>}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 py-6" role="list">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 py-3" role="list">
             {visibleItems.map((item, idx) => (
-              <div key={`grid-${idx}`} className="group p-4 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center" role="listitem">
+              <div key={`grid-${idx}`} className="p-3 rounded-lg border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center" role="listitem">
                 {item.url ? (
-                  <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-10 md:h-12 w-auto object-contain select-none pointer-events-none grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" />
+                  <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none" />
                 ) : (
-                  <div className="h-10 md:h-12 w-24 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
+                  <div className="h-14 md:h-16 w-24 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
                     <ImageIcon size={18} className="text-slate-300" />
                   </div>
                 )}
-                {item.name && <span className="text-[10px] text-slate-400 text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity truncate max-w-full">{item.name}</span>}
+                {item.name && <span className="text-[10px] text-slate-400 text-center mt-1.5 truncate max-w-full">{item.name}</span>}
               </div>
             ))}
             {remainingCount > 0 && (
-              <div className="p-4 rounded-xl flex flex-col items-center justify-center" style={{ backgroundColor: `${brandColor}08` }} role="listitem">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center mb-1" style={{ backgroundColor: `${brandColor}15` }}>
-                  <Plus size={20} style={{ color: brandColor }} />
+              <div className="p-3 rounded-lg flex flex-col items-center justify-center" style={{ backgroundColor: `${brandColor}08` }} role="listitem">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center mb-1" style={{ backgroundColor: `${brandColor}15` }}>
+                  <Plus size={18} style={{ color: brandColor }} />
                 </div>
                 <span className="text-sm font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
-                <span className="text-[10px] text-slate-400">đối tác khác</span>
+                <span className="text-[10px] text-slate-400">khác</span>
               </div>
             )}
           </div>
@@ -7795,45 +7696,45 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
     );
   }
 
-  // Style 5: Carousel - Horizontal scroll with navigation
+  // Style 5: Carousel - compact, larger images
   if (style === 'carousel') {
     const carouselId = `clients-carousel-${Math.random().toString(36).substr(2, 9)}`;
     return (
-      <section className="w-full py-10 md:py-12 bg-white border-b border-slate-200/40" aria-label={title}>
+      <section className="w-full py-8 bg-white border-b border-slate-200/40" aria-label={title}>
         <style>{`#${carouselId}::-webkit-scrollbar { display: none; }`}</style>
-        <div className="w-full max-w-7xl mx-auto space-y-6">
-          <div className="px-4 md:px-6 flex items-center justify-between gap-4">
+        <div className="w-full max-w-7xl mx-auto space-y-4">
+          <div className="px-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }} />
+              <h2 className="text-lg md:text-xl font-bold tracking-tight text-slate-900 relative pl-3">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full" style={{ backgroundColor: brandColor }} />
                 {title}
               </h2>
-              <p className="text-slate-400 mt-1 pl-4 text-sm">Vuốt hoặc kéo để xem thêm →</p>
+              <p className="text-slate-400 pl-3 text-xs">Vuốt để xem thêm →</p>
             </div>
             {items.length > 3 && (
-              <div className="flex gap-2">
-                <button type="button" onClick={() => { const el = document.getElementById(carouselId); if (el) el.scrollBy({ left: -176, behavior: 'smooth' }); }} className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all border border-slate-200" aria-label="Cuộn trái"><ChevronLeft size={16} /></button>
-                <button type="button" onClick={() => { const el = document.getElementById(carouselId); if (el) el.scrollBy({ left: 176, behavior: 'smooth' }); }} className="w-9 h-9 rounded-full flex items-center justify-center text-white transition-all" style={{ backgroundColor: brandColor }} aria-label="Cuộn phải"><ChevronRight size={16} /></button>
+              <div className="flex gap-1.5">
+                <button type="button" onClick={() => { const el = document.getElementById(carouselId); if (el) el.scrollBy({ left: -182, behavior: 'smooth' }); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all border border-slate-200" aria-label="Cuộn trái"><ChevronLeft size={14} /></button>
+                <button type="button" onClick={() => { const el = document.getElementById(carouselId); if (el) el.scrollBy({ left: 182, behavior: 'smooth' }); }} className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-all" style={{ backgroundColor: brandColor }} aria-label="Cuộn phải"><ChevronRight size={14} /></button>
               </div>
             )}
           </div>
-          <div className="relative overflow-hidden mx-4 md:mx-6 rounded-xl">
-            <div className="absolute left-0 top-0 bottom-0 w-8 md:w-12 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-8 md:w-12 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
-            <div id={carouselId} className="flex overflow-x-auto snap-x snap-mandatory gap-4 py-4 px-2 cursor-grab active:cursor-grabbing select-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }} role="list"
+          <div className="relative overflow-hidden mx-4 rounded-lg">
+            <div className="absolute left-0 top-0 bottom-0 w-6 md:w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-6 md:w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+            <div id={carouselId} className="flex overflow-x-auto snap-x snap-mandatory gap-3 py-3 px-1.5 cursor-grab active:cursor-grabbing select-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }} role="list"
               onMouseDown={(e) => { const el = e.currentTarget; el.dataset.isDown = 'true'; el.dataset.startX = String(e.pageX - el.offsetLeft); el.dataset.scrollLeft = String(el.scrollLeft); el.style.scrollBehavior = 'auto'; }}
               onMouseLeave={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
               onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
               onMouseMove={(e) => { const el = e.currentTarget; if (el.dataset.isDown !== 'true') return; e.preventDefault(); const x = e.pageX - el.offsetLeft; const walk = (x - Number(el.dataset.startX)) * 1.5; el.scrollLeft = Number(el.dataset.scrollLeft) - walk; }}>
               {items.map((item, idx) => (
-                <div key={`carousel-${idx}`} className="flex-shrink-0 snap-start w-40" role="listitem">
-                  <div className="h-full p-4 rounded-xl border bg-slate-50 flex flex-col items-center justify-center transition-all hover:shadow-md" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; }}>
-                    {item.url ? <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-10 w-auto object-contain select-none pointer-events-none" /> : <div className="h-10 w-full flex items-center justify-center"><ImageIcon size={24} className="text-slate-300" /></div>}
-                    {item.name && <span className="text-[10px] text-slate-500 text-center mt-2 truncate w-full">{item.name}</span>}
+                <div key={`carousel-${idx}`} className="flex-shrink-0 snap-start w-[170px]" role="listitem">
+                  <div className="h-full p-3 rounded-lg border bg-slate-50 flex flex-col items-center justify-center transition-all hover:shadow-md" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; }}>
+                    {item.url ? <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" /> : <div className="h-12 w-full flex items-center justify-center"><ImageIcon size={22} className="text-slate-300" /></div>}
+                    {item.name && <span className="text-[10px] text-slate-500 text-center mt-1.5 truncate w-full">{item.name}</span>}
                   </div>
                 </div>
               ))}
-              <div className="flex-shrink-0 w-4" />
+              <div className="flex-shrink-0 w-3" />
             </div>
           </div>
         </div>
@@ -7841,7 +7742,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
     );
   }
 
-  // Style 6: Featured - Showcase với featured logos (default fallback)
+  // Style 6: Featured - compact, no grayscale, larger images (default fallback)
   const featuredItems = items.slice(0, 4);
   const otherItems = items.slice(4);
   const MAX_OTHER = 8;
@@ -7849,30 +7750,30 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
   const remainingCount = Math.max(0, otherItems.length - MAX_OTHER);
 
   return (
-    <section className="w-full py-12 md:py-16 bg-gradient-to-b from-white to-slate-50 border-b border-slate-200/40" aria-label={title}>
-      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
-        <div className="text-center space-y-2">
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
-          <p className="text-slate-500 text-sm">Được tin tưởng bởi các thương hiệu hàng đầu</p>
+    <section className="w-full py-10 bg-gradient-to-b from-white to-slate-50 border-b border-slate-200/40" aria-label={title}>
+      <div className="w-full max-w-7xl mx-auto px-4 space-y-5">
+        <div className="text-center space-y-1">
+          <h2 className="text-lg md:text-xl font-bold tracking-tight text-slate-900">{title}</h2>
+          <p className="text-slate-500 text-xs">Được tin tưởng bởi các thương hiệu hàng đầu</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4" role="list">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3" role="list">
           {featuredItems.map((item, idx) => (
-            <div key={`featured-${idx}`} className="group rounded-2xl border bg-white flex flex-col items-center justify-center p-6 md:p-8 transition-all hover:shadow-lg" style={{ borderColor: `${brandColor}20`, boxShadow: `0 4px 12px ${brandColor}08` }} role="listitem">
-              {item.url ? <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 md:h-14 w-auto object-contain select-none pointer-events-none transition-transform duration-300 group-hover:scale-105" /> : <div className="h-14 w-full flex items-center justify-center"><ImageIcon size={28} className="text-slate-300" /></div>}
-              {item.name && <span className="font-medium text-slate-600 text-center mt-3 truncate w-full text-sm">{item.name}</span>}
+            <div key={`featured-${idx}`} className="group rounded-xl border bg-white flex flex-col items-center justify-center p-5 transition-all hover:shadow-lg" style={{ borderColor: `${brandColor}20`, boxShadow: `0 2px 8px ${brandColor}08` }} role="listitem">
+              {item.url ? <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none transition-transform duration-300 group-hover:scale-105" /> : <div className="h-16 w-full flex items-center justify-center"><ImageIcon size={26} className="text-slate-300" /></div>}
+              {item.name && <span className="font-medium text-slate-600 text-center mt-2 truncate w-full text-xs">{item.name}</span>}
             </div>
           ))}
         </div>
         {visibleOthers.length > 0 && (
-          <div className="pt-6 border-t border-slate-200">
-            <p className="text-center text-slate-400 mb-4 text-sm">Và nhiều đối tác khác</p>
-            <div className="flex flex-wrap justify-center items-center gap-6 md:gap-8" role="list">
+          <div className="pt-4 border-t border-slate-200">
+            <p className="text-center text-slate-400 mb-3 text-xs">Và nhiều đối tác khác</p>
+            <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6" role="list">
               {visibleOthers.map((item, idx) => (
-                <div key={`other-${idx}`} className="group" role="listitem">
-                  {item.url ? <img src={item.url} alt={item.name || `Khách hàng`} className="h-7 md:h-8 w-auto object-contain select-none pointer-events-none grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" /> : <div className="h-8 w-16 flex items-center justify-center"><ImageIcon size={16} className="text-slate-300" /></div>}
+                <div key={`other-${idx}`} role="listitem">
+                  {item.url ? <img src={item.url} alt={item.name || `Khách hàng`} className="h-9 md:h-10 w-auto object-contain select-none pointer-events-none" /> : <div className="h-10 w-16 flex items-center justify-center"><ImageIcon size={16} className="text-slate-300" /></div>}
                 </div>
               ))}
-              {remainingCount > 0 && <span className="text-sm font-medium px-3 py-1 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>+{remainingCount}</span>}
+              {remainingCount > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>+{remainingCount}</span>}
             </div>
           </div>
         )}
@@ -7889,12 +7790,17 @@ import { Play, Video as VideoIcon } from 'lucide-react';
 type VideoStyle = 'centered' | 'split' | 'fullwidth' | 'cinema' | 'minimal' | 'parallax';
 
 // Helper: Extract video ID and type
-const getVideoInfo = (url: string): { type: 'youtube' | 'vimeo' | 'direct'; id?: string } => {
+const getVideoInfo = (url: string): { type: 'youtube' | 'vimeo' | 'drive' | 'direct'; id?: string } => {
   if (!url) return { type: 'direct' };
-  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&?/]+)/);
+  // YouTube: regular, shorts, embed, youtu.be
+  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([^&?/]+)/);
   if (ytMatch) return { type: 'youtube', id: ytMatch[1] };
+  // Vimeo
   const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
   if (vimeoMatch) return { type: 'vimeo', id: vimeoMatch[1] };
+  // Google Drive
+  const driveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([^/&?]+)/);
+  if (driveMatch) return { type: 'drive', id: driveMatch[1] };
   return { type: 'direct' };
 };
 
@@ -7926,6 +7832,9 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
     }
     if (videoInfo.type === 'vimeo' && videoInfo.id) {
       return <iframe src={`https://player.vimeo.com/video/${videoInfo.id}?autoplay=1${loopParams}${muteParams}`} className="absolute inset-0 w-full h-full" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />;
+    }
+    if (videoInfo.type === 'drive' && videoInfo.id) {
+      return <iframe src={`https://drive.google.com/file/d/${videoInfo.id}/preview`} className="absolute inset-0 w-full h-full" allow="autoplay; fullscreen" allowFullScreen />;
     }
     return <video src={videoUrl} className="absolute inset-0 w-full h-full object-cover" controls autoPlay={autoplay} loop={loop} muted={muted} />;
   };

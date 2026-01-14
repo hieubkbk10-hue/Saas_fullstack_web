@@ -204,7 +204,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
   const [featuresStyle, setFeaturesStyle] = useState<FeaturesStyle>('iconGrid');
   // Process states
   const [processSteps, setProcessSteps] = useState<{id: number, icon: string, title: string, description: string}[]>([]);
-  const [processStyle, setProcessStyle] = useState<ProcessStyle>('timeline');
+  const [processStyle, setProcessStyle] = useState<ProcessStyle>('horizontal');
   // Clients states
   const [clientItems, setClientItems] = useState<GalleryItem[]>([]);
   const [clientsStyle, setClientsStyle] = useState<ClientsStyle>('marquee');
@@ -481,7 +481,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
           break;
         case 'Process':
           setProcessSteps(config.steps?.map((step: {icon: string, title: string, description: string}, i: number) => ({ id: i, icon: step.icon || String(i + 1), title: step.title, description: step.description })) || []);
-          setProcessStyle((config.style as ProcessStyle) || 'timeline');
+          setProcessStyle((config.style as ProcessStyle) || 'horizontal');
           break;
         case 'Clients':
           setClientItems(config.items?.map((item: {url: string, link: string, name?: string}, i: number) => ({ id: `item-${i}`, url: item.url, link: item.link || '', name: item.name || '' })) || []);

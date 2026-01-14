@@ -23,7 +23,7 @@ export default function ProcessCreatePage() {
     { id: 3, icon: '3', title: 'Triển khai', description: 'Thực hiện dự án theo đúng tiến độ và chất lượng cam kết.' },
     { id: 4, icon: '4', title: 'Bàn giao & Hỗ trợ', description: 'Bàn giao sản phẩm và hỗ trợ sau bán hàng tận tâm.' }
   ]);
-  const [style, setStyle] = useState<ProcessStyle>('timeline');
+  const [style, setStyle] = useState<ProcessStyle>('horizontal');
 
   // Drag & Drop state
   const [draggedId, setDraggedId] = useState<number | null>(null);
