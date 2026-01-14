@@ -6986,6 +6986,9 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
 
   // Style 1: Icon Grid
   if (style === 'iconGrid') {
+    const MAX_ITEMS = 6;
+    const visibleItems = items.slice(0, MAX_ITEMS);
+    const remainingCount = items.length - MAX_ITEMS;
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto">
@@ -6995,7 +6998,7 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
             <p className="text-slate-500 max-w-2xl mx-auto">Khám phá những tính năng ưu việt giúp bạn đạt hiệu quả tối đa</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item, idx) => {
+            {visibleItems.map((item, idx) => {
               const IconComponent = getIcon(item.icon);
               return (
                 <div key={idx} className="group bg-white rounded-2xl p-6 border border-slate-200 hover:border-transparent hover:shadow-xl transition-all duration-300">
@@ -7007,6 +7010,7 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
                 </div>
               );
             })}
+            {remainingCount > 0 && (<div className="flex items-center justify-center bg-slate-100 rounded-2xl aspect-square border-2 border-dashed border-slate-300"><div className="text-center"><span className="text-2xl font-bold text-slate-600">+{remainingCount}</span><p className="text-xs text-slate-400 mt-1">tính năng khác</p></div></div>)}
           </div>
         </div>
       </section>
@@ -7015,15 +7019,18 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
 
   // Style 2: Alternating - Compact 2-column grid
   if (style === 'alternating') {
+    const MAX_ITEMS = 6;
+    const visibleItems = items.slice(0, MAX_ITEMS);
+    const remainingCount = items.length - MAX_ITEMS;
     return (
       <section className="py-10 md:py-12 px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <div className="text-center mb-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {items.map((item, idx) => {
+            {visibleItems.map((item, idx) => {
               const IconComponent = getIcon(item.icon);
               return (
                 <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
@@ -7041,6 +7048,7 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
               );
             })}
           </div>
+          {remainingCount > 0 && (<div className="text-center mt-4"><span className="text-sm" style={{ color: brandColor }}>+{remainingCount} tính năng khác</span></div>)}
         </div>
       </section>
     );
@@ -7048,6 +7056,9 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
 
   // Style 3: Compact
   if (style === 'compact') {
+    const MAX_ITEMS = 8;
+    const visibleItems = items.slice(0, MAX_ITEMS);
+    const remainingCount = items.length - MAX_ITEMS;
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto">
@@ -7056,9 +7067,10 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
             </div>
+            {remainingCount > 0 && <span className="text-sm text-slate-500">+{remainingCount} tính năng khác</span>}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            {items.map((item, idx) => {
+            {visibleItems.map((item, idx) => {
               const IconComponent = getIcon(item.icon);
               return (
                 <div key={idx} className="flex items-start gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition-colors">
@@ -7078,6 +7090,9 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
 
   // Style 4: Cards
   if (style === 'cards') {
+    const MAX_ITEMS = 6;
+    const visibleItems = items.slice(0, MAX_ITEMS);
+    const remainingCount = items.length - MAX_ITEMS;
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto">
@@ -7086,7 +7101,7 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-3">{title}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {items.map((item, idx) => {
+            {visibleItems.map((item, idx) => {
               const IconComponent = getIcon(item.icon);
               return (
                 <div key={idx} className="group relative bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
@@ -7105,6 +7120,7 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
                 </div>
               );
             })}
+            {remainingCount > 0 && (<div className="flex items-center justify-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300 min-h-[250px]"><div className="text-center"><span className="text-2xl font-bold text-slate-600">+{remainingCount}</span><p className="text-xs text-slate-400 mt-1">tính năng khác</p></div></div>)}
           </div>
         </div>
       </section>
@@ -7142,9 +7158,12 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
   }
 
   // Style 6: Timeline (default fallback) - Compact vertical timeline
+  const MAX_ITEMS = 6;
+  const visibleItems = items.slice(0, MAX_ITEMS);
+  const remainingCount = items.length - MAX_ITEMS;
   return (
     <section className="py-10 md:py-12 px-4">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
@@ -7152,7 +7171,7 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
         <div className="relative">
           <div className="absolute top-0 bottom-0 left-3 md:left-1/2 w-px" style={{ backgroundColor: `${brandColor}30` }} />
           <div className="relative space-y-4">
-            {items.map((item, idx) => {
+            {visibleItems.map((item, idx) => {
               const IconComponent = getIcon(item.icon);
               const isEven = idx % 2 === 0;
               return (
@@ -7171,6 +7190,7 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
               );
             })}
           </div>
+          {remainingCount > 0 && (<div className="text-center mt-4"><span className="text-sm" style={{ color: brandColor }}>+{remainingCount} tính năng khác</span></div>)}
         </div>
       </div>
     </section>

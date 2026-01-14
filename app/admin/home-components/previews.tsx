@@ -10567,7 +10567,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
     { id: 'grid', label: 'Grid' }, 
     { id: 'cards', label: 'Cards' }, 
     { id: 'carousel', label: 'Carousel' },
-    { id: 'hexagon', label: 'Overlap' },
+    { id: 'hexagon', label: 'Marquee' },
     { id: 'timeline', label: 'Timeline' },
     { id: 'spotlight', label: 'Spotlight' }
   ];
@@ -10580,7 +10580,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
       case 'grid': return `${count} thành viên • Avatar: 400×400px (1:1)`;
       case 'cards': return `${count} thành viên • Avatar: 160×160px (1:1)`;
       case 'carousel': return `${count} thành viên • Avatar: 600×450px (4:3) - Horizontal scroll`;
-      case 'hexagon': return `${count} thành viên • Avatar: 200×200px (1:1) - Overlap style`;
+      case 'hexagon': return `${count} thành viên • Avatar: 160×160px (1:1) - Marquee scroll`;
       case 'timeline': return `${count} thành viên • Avatar: 100×100px (1:1)`;
       case 'spotlight': return `${count} thành viên • Avatar: 400×400px (1:1)`;
       default: return `${count} thành viên`;
@@ -10900,18 +10900,16 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
     );
   };
 
-  // Style 4: Overlap - Creative stacked/overlap layout (Best Practice: Modern, playful, shows team unity)
+  // Style 4: Marquee - Modern infinite scroll with featured member (Best Practice: Eye-catching, dynamic)
   const renderHexagonStyle = () => {
-    const maxDisplay = device === 'mobile' ? 4 : 5;
-    const displayMembers = members.slice(0, maxDisplay);
-    const localRemainingCount = Math.max(0, members.length - maxDisplay);
-    const avatarSize = device === 'mobile' ? 80 : 100;
-    const overlap = device === 'mobile' ? 24 : 32;
+    const featured = members[0];
+    const marqueeMembers = members.length > 1 ? [...members, ...members] : members; // Duplicate for infinite effect
+    const cardSize = device === 'mobile' ? 140 : 160;
     
     return (
-      <div className={cn("py-10 px-4", device === 'mobile' ? 'py-8' : '')}>
+      <div className={cn("py-10 overflow-hidden", device === 'mobile' ? 'py-8' : '')}>
         {/* Header */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8 px-4">
           <span 
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium mb-3"
             style={{ backgroundColor: `${brandColor}10`, color: brandColor }}
@@ -10926,24 +10924,32 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
             Đội ngũ tài năng và đam mê đứng sau thành công của chúng tôi
           </p>
         </div>
-        
-        {/* Stacked Avatars - Center showcase */}
-        <div className="flex flex-col items-center mb-8">
-          {/* Overlapping avatars row */}
-          <div className="flex items-center justify-center mb-6">
-            {displayMembers.map((member, idx) => (
+
+        {/* Marquee Row - Infinite scroll effect */}
+        <div className="relative mb-8">
+          {/* Gradient fade left */}
+          <div className="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
+          {/* Gradient fade right */}
+          <div className="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
+          
+          {/* Scrolling container */}
+          <div 
+            className="flex gap-4 animate-marquee"
+            style={{ 
+              width: 'max-content',
+              animation: members.length > 2 ? 'marquee 20s linear infinite' : 'none'
+            }}
+          >
+            {marqueeMembers.map((member, idx) => (
               <div 
-                key={member.id}
-                className="relative group"
-                style={{ 
-                  marginLeft: idx === 0 ? 0 : -overlap,
-                  zIndex: displayMembers.length - idx 
-                }}
+                key={`${member.id}-${idx}`}
+                className="group flex-shrink-0 text-center"
+                style={{ width: cardSize }}
               >
-                {/* Avatar with ring */}
+                {/* Avatar */}
                 <div 
-                  className="relative rounded-full overflow-hidden border-4 border-white dark:border-slate-900 shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:z-50"
-                  style={{ width: avatarSize, height: avatarSize }}
+                  className="relative mx-auto mb-3 rounded-2xl overflow-hidden shadow-md transition-all duration-300 group-hover:shadow-xl group-hover:scale-105"
+                  style={{ width: cardSize, height: cardSize }}
                 >
                   {member.avatar ? (
                     <img 
@@ -10953,103 +10959,95 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                     />
                   ) : (
                     <div 
-                      className="w-full h-full flex items-center justify-center text-2xl font-bold text-white"
+                      className="w-full h-full flex items-center justify-center text-4xl font-bold text-white"
                       style={{ backgroundColor: brandColor }}
                     >
                       {(member.name || 'U').charAt(0)}
                     </div>
                   )}
-                </div>
-                
-                {/* Hover tooltip */}
-                <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50">
+                  {/* Hover overlay */}
                   <div 
-                    className="bg-white dark:bg-slate-800 rounded-xl px-4 py-2 shadow-xl border border-slate-100 dark:border-slate-700 whitespace-nowrap"
-                    style={{ borderTopColor: brandColor, borderTopWidth: '2px' }}
+                    className="absolute inset-0 flex items-end justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ background: `linear-gradient(to top, ${brandColor}ee, transparent)` }}
                   >
-                    <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{member.name || 'Họ và tên'}</p>
-                    <p className="text-xs" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+                    <div className="flex gap-1 pb-3">
+                      {member.facebook && <SocialIcon type="facebook" url={member.facebook} />}
+                      {member.linkedin && <SocialIcon type="linkedin" url={member.linkedin} />}
+                      {member.email && <SocialIcon type="email" url={member.email} />}
+                    </div>
                   </div>
-                  {/* Arrow */}
-                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-white dark:bg-slate-800 border-t border-l border-slate-100 dark:border-slate-700" style={{ borderTopColor: brandColor }} />
                 </div>
+                {/* Name & Role */}
+                <h4 className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate px-1">
+                  {member.name || 'Họ và tên'}
+                </h4>
+                <p className="text-xs truncate px-1" style={{ color: brandColor }}>
+                  {member.role || 'Chức vụ'}
+                </p>
               </div>
             ))}
-            
-            {/* +N indicator if more members */}
-            {localRemainingCount > 0 && (
-              <div 
-                className="relative rounded-full flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-lg"
-                style={{ 
-                  marginLeft: -overlap, 
-                  width: avatarSize, 
-                  height: avatarSize,
-                  backgroundColor: `${brandColor}15`
-                }}
-              >
-                <span className="font-bold" style={{ color: brandColor }}>+{localRemainingCount}</span>
-              </div>
-            )}
           </div>
-          
-          {/* Team summary text */}
-          <p className="text-sm text-slate-500 text-center">
-            <span className="font-semibold" style={{ color: brandColor }}>{members.length}</span> thành viên cùng hợp tác
-          </p>
         </div>
-        
-        {/* Detail cards - Bento-like grid */}
-        <div className={cn(
-          "grid gap-4 max-w-4xl mx-auto",
-          device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3'
-        )}>
-          {displayMembers.slice(0, device === 'mobile' ? 2 : 3).map((member, idx) => (
+
+        {/* Featured Member Card */}
+        {featured && (
+          <div className="max-w-2xl mx-auto px-4">
             <div 
-              key={member.id}
-              className={cn(
-                "group bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
-                idx === 0 && device !== 'mobile' && "lg:col-span-2 lg:row-span-1"
-              )}
-              style={{ borderLeftColor: brandColor, borderLeftWidth: '3px' }}
+              className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-slate-100 dark:border-slate-700 flex flex-col md:flex-row gap-5 items-center"
+              style={{ borderTopColor: brandColor, borderTopWidth: '3px' }}
             >
-              <div className={cn("flex gap-4", idx === 0 && device !== 'mobile' ? "items-center" : "items-start")}>
-                {/* Mini avatar */}
-                <div className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden">
-                  {member.avatar ? (
-                    <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div 
-                      className="w-full h-full flex items-center justify-center text-lg font-bold text-white"
-                      style={{ backgroundColor: brandColor }}
-                    >
-                      {(member.name || 'U').charAt(0)}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-slate-900 dark:text-slate-100 truncate">{member.name || 'Họ và tên'}</h4>
-                  <p className="text-sm truncate" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
-                  {member.bio && (
-                    <p className={cn(
-                      "text-xs text-slate-500 dark:text-slate-400 mt-2",
-                      idx === 0 && device !== 'mobile' ? "line-clamp-2" : "line-clamp-1"
-                    )}>{member.bio}</p>
-                  )}
-                  
-                  {/* Social links */}
-                  <div className="flex gap-1.5 mt-3">
-                    {member.facebook && <SocialIcon type="facebook" url={member.facebook} />}
-                    {member.linkedin && <SocialIcon type="linkedin" url={member.linkedin} />}
-                    {member.twitter && <SocialIcon type="twitter" url={member.twitter} />}
-                    {member.email && <SocialIcon type="email" url={member.email} />}
+              {/* Large Avatar */}
+              <div className="flex-shrink-0 w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden shadow-md">
+                {featured.avatar ? (
+                  <img src={featured.avatar} alt={featured.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div 
+                    className="w-full h-full flex items-center justify-center text-3xl font-bold text-white"
+                    style={{ backgroundColor: brandColor }}
+                  >
+                    {(featured.name || 'U').charAt(0)}
                   </div>
+                )}
+              </div>
+              {/* Info */}
+              <div className="flex-1 text-center md:text-left">
+                <h4 className="font-bold text-xl text-slate-900 dark:text-slate-100">
+                  {featured.name || 'Họ và tên'}
+                </h4>
+                <p className="text-sm font-medium mb-2" style={{ color: brandColor }}>
+                  {featured.role || 'Chức vụ'}
+                </p>
+                {featured.bio && (
+                  <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">
+                    {featured.bio}
+                  </p>
+                )}
+                <div className="flex gap-2 justify-center md:justify-start">
+                  {featured.facebook && <SocialIcon type="facebook" url={featured.facebook} />}
+                  {featured.linkedin && <SocialIcon type="linkedin" url={featured.linkedin} />}
+                  {featured.twitter && <SocialIcon type="twitter" url={featured.twitter} />}
+                  {featured.email && <SocialIcon type="email" url={featured.email} />}
                 </div>
+              </div>
+              {/* Team count badge */}
+              <div 
+                className="flex-shrink-0 w-16 h-16 rounded-full flex flex-col items-center justify-center"
+                style={{ backgroundColor: `${brandColor}10` }}
+              >
+                <span className="text-xl font-bold" style={{ color: brandColor }}>{members.length}</span>
+                <span className="text-[10px] text-slate-500">members</span>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {/* CSS Animation */}
+        <style>{`
+          @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+        `}</style>
       </div>
     );
   };
