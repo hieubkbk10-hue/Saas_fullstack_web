@@ -386,6 +386,83 @@ case 'ComponentName':
 </article>
 ```
 
+### Equal Height Cards (CRITICAL)
+
+**Vấn đề**: Cards cao thấp khác nhau vì có/không có excerpt, description dài/ngắn → Grid không đều, xấu UI.
+
+```tsx
+// PROBLEM: Cards không đều chiều cao
+<div className="grid grid-cols-3 gap-4">
+  <Card>Short title</Card>           {/* Thấp */}
+  <Card>Title + long description</Card>  {/* Cao */}
+  <Card>Title only</Card>            {/* Thấp */}
+</div>
+
+// SOLUTION 1: Flex + min-height cho description area
+<article className="flex flex-col h-full">
+  <img className="aspect-[4/3] object-cover" />
+  <div className="flex-1 flex flex-col p-4">
+    <h3 className="font-bold line-clamp-2">{title}</h3>
+    
+    {/* Description area với min-height cố định */}
+    <p className="text-sm text-slate-500 line-clamp-2 min-h-[2.5rem] mt-2">
+      {description || ''} {/* Empty string nếu không có */}
+    </p>
+    
+    {/* Footer luôn ở bottom */}
+    <div className="mt-auto pt-3">
+      <span className="font-bold">{price}</span>
+    </div>
+  </div>
+</article>
+
+// SOLUTION 2: CSS Grid với subgrid (modern browsers)
+<div className="grid grid-cols-3 gap-4">
+  {items.map(item => (
+    <article className="grid grid-rows-[auto_1fr_auto] h-full">
+      <img />           {/* Row 1: Image */}
+      <div>             {/* Row 2: Content - stretches */}
+        <h3>{title}</h3>
+        <p className="line-clamp-2">{description}</p>
+      </div>
+      <footer>          {/* Row 3: Footer - bottom aligned */}
+        <button>Action</button>
+      </footer>
+    </article>
+  ))}
+</div>
+
+// SOLUTION 3: Fixed content height với truncation
+<article className="h-[320px] flex flex-col"> {/* Fixed total height */}
+  <img className="h-[160px] object-cover" />   {/* Fixed image height */}
+  <div className="flex-1 p-4 flex flex-col">
+    <h3 className="line-clamp-1">{title}</h3>  {/* Max 1 line */}
+    <p className="line-clamp-2 flex-1">{desc}</p> {/* Max 2 lines */}
+    <span>{price}</span>
+  </div>
+</article>
+```
+
+### Line Clamp Cheat Sheet
+
+| Content Type | Lines | Class | Min-height gợi ý |
+|--------------|-------|-------|------------------|
+| Title | 1-2 | `line-clamp-1` / `line-clamp-2` | `min-h-[1.5rem]` / `min-h-[3rem]` |
+| Description | 2-3 | `line-clamp-2` / `line-clamp-3` | `min-h-[2.5rem]` / `min-h-[4rem]` |
+| Excerpt | 3-4 | `line-clamp-3` / `line-clamp-4` | `min-h-[4rem]` / `min-h-[5.5rem]` |
+
+```tsx
+// Pattern: line-clamp + min-height để giữ đều
+<p className="line-clamp-2 min-h-[2.5rem] text-sm">
+  {description || <span className="invisible">placeholder</span>}
+</p>
+
+// Hoặc dùng empty string + min-height
+<p className="line-clamp-2 min-h-[2.5rem] text-sm">
+  {description || ''}
+</p>
+```
+
 ---
 
 ## Monochromatic Brand Color System
