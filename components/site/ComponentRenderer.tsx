@@ -6105,7 +6105,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                   </div>
                   {showViewAll && (
                     <a 
-                      href={`/danh-muc/${section.category.slug || section.category._id}`}
+                      href={`/products?category=${section.category.slug || section.category._id}`}
                       className="font-semibold flex items-center gap-2 transition-all hover:gap-3"
                       style={{ color: brandColor }}
                     >
