@@ -6507,131 +6507,125 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
     );
   }
 
-  // Style 3: Carousel - Single member spotlight với navigation
+  // Style 3: Carousel - Horizontal scroll với cards (Best Practice: partial peek, snap-scroll)
   if (style === 'carousel') {
-    const current = members[currentSlide] || members[0];
     return (
-      <section className="py-16 md:py-20 px-4 bg-slate-50">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-          
+      <section className="py-12 md:py-16">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8 px-4 md:px-8 max-w-7xl mx-auto">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{title}</h2>
+            <p className="text-sm text-slate-500 mt-1">Vuốt để xem thêm →</p>
+          </div>
+        </div>
+        
+        {/* Carousel container */}
+        <div className="relative">
+          {/* Scrollable area - no visible scrollbar */}
           <div 
-            className="bg-white rounded-2xl shadow-xl overflow-hidden"
-            style={{ borderTop: `4px solid ${brandColor}` }}
+            className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 md:gap-5 px-4 md:px-8"
+            style={{ 
+              scrollbarWidth: 'none', 
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
           >
-            <div className="flex flex-col md:flex-row">
-              {/* Avatar side */}
-              <div className="flex-shrink-0 w-full md:w-1/3 aspect-square md:aspect-[3/4] max-h-[300px] md:max-h-none bg-slate-100">
-                {current.avatar ? (
-                  <img src={current.avatar} alt={current.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div 
-                    className="w-full h-full flex items-center justify-center text-6xl font-bold text-white"
-                    style={{ backgroundColor: brandColor }}
-                  >
-                    {(current.name || 'U').charAt(0)}
-                  </div>
-                )}
-              </div>
-
-              {/* Info side */}
-              <div className="flex-1 p-6 md:p-10 flex flex-col justify-center">
-                <span 
-                  className="text-sm font-semibold uppercase tracking-wider mb-2"
-                  style={{ color: brandColor }}
+            {members.map((member, idx) => (
+              <div 
+                key={idx} 
+                className="flex-shrink-0 snap-start w-[280px] md:w-[300px] group"
+              >
+                {/* Card */}
+                <div 
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 h-full"
+                  style={{ borderBottomColor: brandColor, borderBottomWidth: '3px' }}
                 >
-                  {current.role || 'Chức vụ'}
-                </span>
-                <h4 className="text-2xl md:text-4xl font-bold text-slate-900 mb-4">
-                  {current.name || 'Họ và tên'}
-                </h4>
-                <p className="text-slate-500 leading-relaxed mb-6">
-                  {current.bio || 'Giới thiệu về thành viên này...'}
-                </p>
-                <div className="flex gap-3">
-                  <SocialIcon type="facebook" url={current.facebook} brandColor={brandColor} />
-                  <SocialIcon type="linkedin" url={current.linkedin} brandColor={brandColor} />
-                  <SocialIcon type="twitter" url={current.twitter} brandColor={brandColor} />
-                  <SocialIcon type="email" url={current.email} brandColor={brandColor} />
+                  {/* Avatar */}
+                  <div className="aspect-[4/3] relative overflow-hidden bg-slate-100">
+                    {member.avatar ? (
+                      <img 
+                        src={member.avatar} 
+                        alt={member.name} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                      />
+                    ) : (
+                      <div 
+                        className="w-full h-full flex items-center justify-center text-5xl font-bold text-white"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        {(member.name || 'U').charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Info */}
+                  <div className="p-5">
+                    <h4 className="font-bold text-lg text-slate-900 truncate">{member.name || 'Họ và tên'}</h4>
+                    <p className="text-sm mt-0.5 truncate" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+                    {member.bio && (
+                      <p className="text-sm text-slate-500 mt-3 line-clamp-2">{member.bio}</p>
+                    )}
+                    {/* Social */}
+                    <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100">
+                      <SocialIcon type="facebook" url={member.facebook} brandColor={brandColor} />
+                      <SocialIcon type="linkedin" url={member.linkedin} brandColor={brandColor} />
+                      <SocialIcon type="twitter" url={member.twitter} brandColor={brandColor} />
+                      <SocialIcon type="email" url={member.email} brandColor={brandColor} />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
+            {/* End spacer for partial peek */}
+            <div className="flex-shrink-0 w-4" />
           </div>
-
-          {/* Navigation */}
-          {members.length > 1 && (
-            <div className="flex items-center justify-center gap-4 mt-8">
-              <button 
-                onClick={() => setCurrentSlide(prev => prev === 0 ? members.length - 1 : prev - 1)} 
-                className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              </button>
-              <div className="flex gap-2">
-                {members.map((_, idx) => (
-                  <button 
-                    key={idx} 
-                    onClick={() => setCurrentSlide(idx)} 
-                    className={`h-2.5 rounded-full transition-all ${idx === currentSlide ? 'w-8' : 'w-2.5 bg-slate-300 hover:bg-slate-400'}`}
-                    style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
-                  />
-                ))}
-              </div>
-              <button 
-                onClick={() => setCurrentSlide(prev => (prev + 1) % members.length)} 
-                className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-              </button>
-            </div>
-          )}
         </div>
       </section>
     );
   }
 
-  // Style 4: Hexagon - Hình lục giác sáng tạo với hiệu ứng hover
+  // Style 4: Overlap - Creative stacked/overlap layout (Modern team unity display)
   if (style === 'hexagon') {
+    const displayMembers = members.slice(0, 5);
+    const remainingCount = members.length - 5;
+    const avatarSize = 100; // px
+    const overlap = 32; // px
+    
     return (
-      <section className="py-16 md:py-20 px-4 overflow-hidden">
-        <div className="max-w-6xl mx-auto">
+      <section className="py-16 md:py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
           <div className="text-center mb-12">
             <span 
-              className="inline-block px-4 py-1.5 rounded-full text-sm font-medium mb-4"
-              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium mb-4"
+              style={{ backgroundColor: `${brandColor}10`, color: brandColor }}
             >
+              <Users size={16} />
               Đội ngũ của chúng tôi
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900">{title}</h2>
+            <p className="text-slate-500 mt-3 max-w-xl mx-auto">
+              Đội ngũ tài năng và đam mê đứng sau thành công của chúng tôi
+            </p>
           </div>
           
-          <div className="flex flex-wrap justify-center gap-6 md:gap-8">
-            {members.map((member, idx) => (
-              <div key={idx} className="group relative">
-                {/* Hexagon container */}
+          {/* Stacked Avatars - Center showcase */}
+          <div className="flex flex-col items-center mb-12">
+            {/* Overlapping avatars row */}
+            <div className="flex items-center justify-center mb-4">
+              {displayMembers.map((member, idx) => (
                 <div 
-                  className="relative w-36 h-40 md:w-44 md:h-48"
-                  style={{
-                    clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+                  key={idx}
+                  className="relative group"
+                  style={{ 
+                    marginLeft: idx === 0 ? 0 : -overlap,
+                    zIndex: displayMembers.length - idx 
                   }}
                 >
-                  {/* Background glow effect */}
+                  {/* Avatar with ring */}
                   <div 
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{ 
-                      background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}20)`,
-                      filter: 'blur(20px)',
-                      transform: 'scale(1.2)'
-                    }}
-                  />
-                  
-                  {/* Main hexagon */}
-                  <div 
-                    className="absolute inset-1 transition-transform duration-500 group-hover:scale-[0.98]"
-                    style={{
-                      clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-                      backgroundColor: '#f1f5f9'
-                    }}
+                    className="relative rounded-full overflow-hidden border-4 border-white shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:z-50"
+                    style={{ width: avatarSize, height: avatarSize }}
                   >
                     {member.avatar ? (
                       <img 
@@ -6641,52 +6635,88 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
                       />
                     ) : (
                       <div 
-                        className="w-full h-full flex items-center justify-center text-4xl font-bold text-white"
+                        className="w-full h-full flex items-center justify-center text-3xl font-bold text-white"
                         style={{ backgroundColor: brandColor }}
                       >
                         {(member.name || 'U').charAt(0)}
                       </div>
                     )}
-                    
-                    {/* Overlay on hover */}
-                    <div 
-                      className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
-                      style={{ backgroundColor: `${brandColor}ee` }}
-                    >
-                      <div className="flex gap-2">
-                        {member.facebook && (
-                          <a href={member.facebook} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors">
-                            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                          </a>
-                        )}
-                        {member.linkedin && (
-                          <a href={member.linkedin} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors">
-                            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                          </a>
-                        )}
-                        {member.email && (
-                          <a href={`mailto:${member.email}`} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-colors">
-                            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                          </a>
-                        )}
-                      </div>
-                    </div>
                   </div>
                   
-                  {/* Border effect */}
-                  <div 
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{
-                      clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-                      background: `linear-gradient(135deg, ${brandColor}, ${brandColor}60)`,
-                    }}
-                  />
+                  {/* Hover tooltip */}
+                  <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50">
+                    <div 
+                      className="bg-white rounded-xl px-4 py-3 shadow-xl border border-slate-100 whitespace-nowrap text-center"
+                      style={{ borderTopColor: brandColor, borderTopWidth: '2px' }}
+                    >
+                      <p className="font-semibold text-slate-900">{member.name || 'Họ và tên'}</p>
+                      <p className="text-sm" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+                    </div>
+                  </div>
                 </div>
-                
-                {/* Info below hexagon */}
-                <div className="text-center mt-4">
-                  <h4 className="font-semibold text-slate-900">{member.name || 'Họ và tên'}</h4>
-                  <p className="text-sm mt-0.5" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+              ))}
+              
+              {/* +N indicator if more members */}
+              {remainingCount > 0 && (
+                <div 
+                  className="relative rounded-full flex items-center justify-center border-4 border-white shadow-lg"
+                  style={{ 
+                    marginLeft: -overlap, 
+                    width: avatarSize, 
+                    height: avatarSize,
+                    backgroundColor: `${brandColor}15`
+                  }}
+                >
+                  <span className="text-xl font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Team summary text */}
+            <p className="text-slate-500 text-center">
+              <span className="font-semibold" style={{ color: brandColor }}>{members.length}</span> thành viên cùng hợp tác
+            </p>
+          </div>
+          
+          {/* Detail cards - Bento-like grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {displayMembers.slice(0, 3).map((member, idx) => (
+              <div 
+                key={idx}
+                className={`group bg-white rounded-2xl p-5 border border-slate-100 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${idx === 0 ? 'lg:col-span-2' : ''}`}
+                style={{ borderLeftColor: brandColor, borderLeftWidth: '3px' }}
+              >
+                <div className={`flex gap-4 ${idx === 0 ? 'items-center' : 'items-start'}`}>
+                  {/* Mini avatar */}
+                  <div className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden">
+                    {member.avatar ? (
+                      <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div 
+                        className="w-full h-full flex items-center justify-center text-xl font-bold text-white"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        {(member.name || 'U').charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-lg text-slate-900 truncate">{member.name || 'Họ và tên'}</h4>
+                    <p className="text-sm" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+                    {member.bio && (
+                      <p className={`text-sm text-slate-500 mt-2 ${idx === 0 ? 'line-clamp-2' : 'line-clamp-1'}`}>{member.bio}</p>
+                    )}
+                    
+                    {/* Social links */}
+                    <div className="flex gap-2 mt-3">
+                      <SocialIcon type="facebook" url={member.facebook} brandColor={brandColor} />
+                      <SocialIcon type="linkedin" url={member.linkedin} brandColor={brandColor} />
+                      <SocialIcon type="twitter" url={member.twitter} brandColor={brandColor} />
+                      <SocialIcon type="email" url={member.email} brandColor={brandColor} />
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}

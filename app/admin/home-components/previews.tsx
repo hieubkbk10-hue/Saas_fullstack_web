@@ -10902,7 +10902,9 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
 
   // Style 4: Overlap - Creative stacked/overlap layout (Best Practice: Modern, playful, shows team unity)
   const renderHexagonStyle = () => {
-    const displayMembers = members.slice(0, device === 'mobile' ? 4 : 5);
+    const maxDisplay = device === 'mobile' ? 4 : 5;
+    const displayMembers = members.slice(0, maxDisplay);
+    const localRemainingCount = Math.max(0, members.length - maxDisplay);
     const avatarSize = device === 'mobile' ? 80 : 100;
     const overlap = device === 'mobile' ? 24 : 32;
     
@@ -10975,7 +10977,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
             ))}
             
             {/* +N indicator if more members */}
-            {remainingCount > 0 && (
+            {localRemainingCount > 0 && (
               <div 
                 className="relative rounded-full flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-lg"
                 style={{ 
@@ -10985,7 +10987,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                   backgroundColor: `${brandColor}15`
                 }}
               >
-                <span className="font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+                <span className="font-bold" style={{ color: brandColor }}>+{localRemainingCount}</span>
               </div>
             )}
           </div>
@@ -11330,30 +11332,33 @@ export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChang
 
   const renderAlternatingStyle = () => {
     if (items.length === 0) return renderEmptyState();
+    const maxItems = device === 'mobile' ? 4 : 6;
+    const visibleItems = items.slice(0, maxItems);
+    const remainingCount = items.length - maxItems;
     return (
-      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
-        <div className="text-center mb-8 md:mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
-          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>Tính năng nổi bật</h2>
+      <div className={cn("py-6 px-4", device === 'mobile' ? 'py-4 px-3' : 'md:py-10 md:px-6')}>
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>Tính năng nổi bật</h2>
         </div>
-        <div className="max-w-4xl mx-auto space-y-6">
-          {items.slice(0, 4).map((item, idx) => {
+        <div className={cn("max-w-3xl mx-auto", device === 'mobile' ? 'space-y-2' : 'grid grid-cols-2 gap-3')}>
+          {visibleItems.map((item, idx) => {
             const IconComponent = getIcon(item.icon);
-            const isEven = idx % 2 === 0;
             return (
-              <div key={item.id} className={cn("flex items-center gap-6 p-4 md:p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700", device !== 'mobile' && !isEven && 'flex-row-reverse')}>
+              <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
                 <div className="relative flex-shrink-0">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}15 0%, ${brandColor}05 100%)`, border: `2px solid ${brandColor}20` }}><IconComponent size={device === 'mobile' ? 28 : 32} style={{ color: brandColor }} strokeWidth={1.5} /></div>
-                  <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full text-xs font-bold text-white flex items-center justify-center" style={{ backgroundColor: brandColor }}>{idx + 1}</span>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}><IconComponent size={18} style={{ color: brandColor }} strokeWidth={2} /></div>
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[10px] font-bold text-white flex items-center justify-center" style={{ backgroundColor: brandColor }}>{idx + 1}</span>
                 </div>
-                <div className={cn("flex-1 min-w-0", device !== 'mobile' && !isEven && 'text-right')}>
-                  <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 mb-1 line-clamp-1">{item.title || 'Tên tính năng'}</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">{item.description || 'Mô tả tính năng...'}</p>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 line-clamp-1">{item.title || 'Tên tính năng'}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{item.description || 'Mô tả tính năng...'}</p>
                 </div>
               </div>
             );
           })}
         </div>
+        {remainingCount > 0 && (<div className="text-center mt-4"><span className="text-sm" style={{ color: brandColor }}>+{remainingCount} tính năng khác</span></div>)}
       </div>
     );
   };
@@ -11460,31 +11465,36 @@ export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChang
 
   const renderTimelineStyle = () => {
     if (items.length === 0) return renderEmptyState();
+    const maxItems = device === 'mobile' ? 4 : 6;
+    const visibleItems = items.slice(0, maxItems);
+    const remainingCount = items.length - maxItems;
     return (
-      <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
-        <div className="text-center mb-8 md:mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
-          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>Tính năng nổi bật</h2>
+      <div className={cn("py-6 px-4", device === 'mobile' ? 'py-4 px-3' : 'md:py-10 md:px-6')}>
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Zap size={12} />Tính năng</div>
+          <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>Tính năng nổi bật</h2>
         </div>
-        <div className="max-w-3xl mx-auto relative">
-          <div className={cn("absolute top-0 bottom-0 w-0.5", device === 'mobile' ? 'left-4' : 'left-1/2 -translate-x-1/2')} style={{ backgroundColor: `${brandColor}20` }} />
-          <div className="relative space-y-8">
-            {items.slice(0, 5).map((item, idx) => {
+        <div className="max-w-2xl mx-auto relative">
+          <div className={cn("absolute top-0 bottom-0 w-px", device === 'mobile' ? 'left-3' : 'left-1/2')} style={{ backgroundColor: `${brandColor}30` }} />
+          <div className={cn("relative", device === 'mobile' ? 'space-y-3' : 'space-y-4')}>
+            {visibleItems.map((item, idx) => {
               const IconComponent = getIcon(item.icon);
               const isEven = idx % 2 === 0;
               return (
-                <div key={item.id} className={cn("relative flex items-start gap-4 md:gap-8", device === 'mobile' ? 'pl-12' : (isEven ? 'md:flex-row' : 'md:flex-row-reverse'), device !== 'mobile' && 'justify-center')}>
-                  <div className={cn("absolute flex items-center justify-center w-8 h-8 rounded-full border-4 border-white dark:border-slate-900 shadow-lg z-10", device === 'mobile' ? 'left-0' : 'left-1/2 -translate-x-1/2')} style={{ backgroundColor: brandColor }}><IconComponent size={14} className="text-white" strokeWidth={2.5} /></div>
-                  <div className={cn("bg-white dark:bg-slate-800 rounded-xl p-4 md:p-5 shadow-sm border border-slate-200 dark:border-slate-700", device === 'mobile' ? 'flex-1' : 'w-[calc(50%-3rem)]')}>
-                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: brandColor }}>Tính năng {idx + 1}</span>
-                    <h3 className="font-bold text-base md:text-lg text-slate-900 dark:text-slate-100 mt-1 mb-2 line-clamp-1">{item.title || 'Tên tính năng'}</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">{item.description || 'Mô tả tính năng...'}</p>
+                <div key={item.id} className={cn("relative flex items-center", device === 'mobile' ? 'pl-8' : (isEven ? 'flex-row pr-[52%]' : 'flex-row-reverse pl-[52%]'))}>
+                  <div className={cn("absolute flex items-center justify-center w-6 h-6 rounded-full border-2 border-white dark:border-slate-900 shadow z-10", device === 'mobile' ? 'left-0' : 'left-1/2 -translate-x-1/2')} style={{ backgroundColor: brandColor }}><IconComponent size={12} className="text-white" strokeWidth={2.5} /></div>
+                  <div className="flex-1 bg-white dark:bg-slate-800 rounded-lg p-3 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{idx + 1}</span>
+                      <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 line-clamp-1">{item.title || 'Tên tính năng'}</h3>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 pl-6">{item.description || 'Mô tả tính năng...'}</p>
                   </div>
                 </div>
               );
             })}
           </div>
-          {items.length > 5 && (<div className="text-center mt-8"><span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>+{items.length - 5} tính năng khác</span></div>)}
+          {remainingCount > 0 && (<div className="text-center mt-4"><span className="text-sm" style={{ color: brandColor }}>+{remainingCount} tính năng khác</span></div>)}
         </div>
       </div>
     );
