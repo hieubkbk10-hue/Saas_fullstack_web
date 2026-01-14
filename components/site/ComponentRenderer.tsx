@@ -11,8 +11,20 @@ import {
   LayoutTemplate, Package, FileText, HelpCircle, MousePointerClick, 
   Users, Star, Phone, Briefcase, Image as ImageIcon, Check, ZoomIn, Maximize2, X,
   Building2, Clock, MapPin, Mail, Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, ArrowRight, ArrowUpRight,
-  ChevronLeft, ChevronRight, Send
+  ChevronLeft, ChevronRight, Send, Facebook, MessageCircle, Instagram, Twitter, Linkedin, Youtube
 } from 'lucide-react';
+
+const getSocialIcon = (platform: string) => {
+  const icons: Record<string, React.ReactNode> = {
+    facebook: <Facebook size={18} />,
+    zalo: <MessageCircle size={18} />,
+    instagram: <Instagram size={18} />,
+    twitter: <Twitter size={18} />,
+    linkedin: <Linkedin size={18} />,
+    youtube: <Youtube size={18} />,
+  };
+  return icons[platform] || <Globe size={18} />;
+};
 
 interface HomeComponent {
   _id: string;
