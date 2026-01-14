@@ -93,7 +93,7 @@ function ProductListCreateContent() {
       .filter((s): s is NonNullable<typeof s> => s !== undefined);
   }, [servicesData, selectedServiceIds]);
 
-  // Convert selectedServices to preview format
+  // Convert selectedServices to preview format (manual mode)
   const servicePreviewItems: ServiceListPreviewItem[] = useMemo(() => {
     return selectedServices.map((s, idx) => ({
       id: s._id,
@@ -104,6 +104,22 @@ function ProductListCreateContent() {
       tag: idx === 0 ? 'hot' as const : idx === 1 ? 'new' as const : undefined
     }));
   }, [selectedServices]);
+
+  // Convert servicesData to preview format (auto mode)
+  const autoServicePreviewItems: ServiceListPreviewItem[] = useMemo(() => {
+    if (!servicesData) return [];
+    return servicesData
+      .filter(s => s.status === 'Published')
+      .slice(0, itemCount)
+      .map((s, idx) => ({
+        id: s._id,
+        name: s.title,
+        image: s.thumbnail,
+        price: s.price?.toString(),
+        description: s.excerpt,
+        tag: idx === 0 ? 'hot' as const : idx === 1 ? 'new' as const : undefined
+      }));
+  }, [servicesData, itemCount]);
 
   const filteredPosts = useMemo(() => {
     if (!postsData) return [];
@@ -447,7 +463,18 @@ function ProductListCreateContent() {
       {type === 'Blog' ? (
         <BlogPreview brandColor={brandColor} postCount={selectionMode === 'manual' ? selectedPostIds.length : itemCount} selectedStyle={blogStyle} onStyleChange={setBlogStyle} />
       ) : type === 'ServiceList' ? (
-        <ServiceListPreview brandColor={brandColor} itemCount={selectionMode === 'manual' ? selectedServiceIds.length : itemCount} selectedStyle={serviceStyle} onStyleChange={setServiceStyle} items={selectionMode === 'manual' ? servicePreviewItems : undefined} />
+        <ServiceListPreview 
+          brandColor={brandColor} 
+          itemCount={selectionMode === 'manual' ? selectedServiceIds.length : itemCount} 
+          selectedStyle={serviceStyle} 
+          onStyleChange={setServiceStyle} 
+          items={selectionMode === 'manual' && servicePreviewItems.length > 0 
+            ? servicePreviewItems 
+            : autoServicePreviewItems.length > 0 
+              ? autoServicePreviewItems 
+              : undefined
+          } 
+        />
       ) : (
         <ProductListPreview brandColor={brandColor} itemCount={selectionMode === 'manual' ? selectedProductIds.length : itemCount} componentType="ProductList" selectedStyle={productStyle} onStyleChange={setProductStyle} subTitle={subTitle} sectionTitle={sectionTitle} />
       )}
