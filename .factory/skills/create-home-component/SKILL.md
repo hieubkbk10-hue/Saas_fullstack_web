@@ -793,6 +793,205 @@ const dragProps = (id: number) => ({
 
 ---
 
+## Dependent Fields (Style-specific Config)
+
+**CRITICAL**: Tránh hardcode text/links trong styles. Nếu một style có nội dung đặc thù (CTA button, description, links...), PHẢI tạo config fields và chỉ hiển thị khi chọn style đó.
+
+### Khi nào cần Dependent Fields?
+
+| Style có... | Cần config |
+|-------------|------------|
+| CTA Button | `buttonText`, `buttonLink` |
+| Description riêng | `description` |
+| Secondary Button | `secondaryButtonText`, `secondaryButtonLink` |
+| Badge/Label | `badge` |
+| Custom heading | `subHeading` |
+
+### Pattern Implementation
+
+#### 1. Định nghĩa Config Type (previews.tsx)
+
+```tsx
+export type ComponentConfig = { 
+  description?: string; 
+  buttonText?: string; 
+  buttonLink?: string;
+};
+
+export const ComponentPreview = ({ 
+  items, brandColor, selectedStyle, onStyleChange, config 
+}: { 
+  items: Item[]; 
+  brandColor: string; 
+  selectedStyle?: ComponentStyle; 
+  onStyleChange?: (style: ComponentStyle) => void;
+  config?: ComponentConfig;  // Thêm config prop
+}) => {
+```
+
+#### 2. Sử dụng trong Preview
+
+```tsx
+// Style có CTA - dùng config thay vì hardcode
+const renderTwoColumnStyle = () => (
+  <div>
+    <p>{config?.description || 'Mô tả mặc định'}</p>
+    
+    {/* Chỉ render button nếu có buttonText */}
+    {config?.buttonText && (
+      <a href={config?.buttonLink || '#'}>
+        {config.buttonText}
+      </a>
+    )}
+  </div>
+);
+```
+
+#### 3. Create Page - Conditional Form
+
+```tsx
+// State cho config
+const [componentConfig, setComponentConfig] = useState<ComponentConfig>({
+  description: 'Mô tả mặc định',
+  buttonText: 'Liên hệ',
+  buttonLink: '/lien-he'
+});
+
+// Form CHỈ hiển thị khi chọn style cần config
+{style === 'two-column' && (
+  <Card className="mb-6">
+    <CardHeader>
+      <CardTitle>Cấu hình style 2 Cột</CardTitle>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      <div>
+        <Label>Mô tả ngắn</Label>
+        <Input 
+          value={componentConfig.description || ''} 
+          onChange={(e) => setComponentConfig({...componentConfig, description: e.target.value})} 
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Nút CTA - Text</Label>
+          <Input 
+            value={componentConfig.buttonText || ''} 
+            onChange={(e) => setComponentConfig({...componentConfig, buttonText: e.target.value})} 
+          />
+        </div>
+        <div>
+          <Label>Nút CTA - Link</Label>
+          <Input 
+            value={componentConfig.buttonLink || ''} 
+            onChange={(e) => setComponentConfig({...componentConfig, buttonLink: e.target.value})} 
+          />
+        </div>
+      </div>
+      <p className="text-xs text-slate-500">Để trống nếu không muốn hiển thị nút</p>
+    </CardContent>
+  </Card>
+)}
+
+// Submit với config
+const onSubmit = (e: React.FormEvent) => {
+  handleSubmit(e, { 
+    items: items.map(i => ({...})), 
+    style,
+    ...componentConfig  // Spread config vào payload
+  });
+};
+
+// Preview với config
+<ComponentPreview 
+  items={items} 
+  brandColor={brandColor} 
+  selectedStyle={style} 
+  onStyleChange={setStyle}
+  config={componentConfig}  // Pass config
+/>
+```
+
+#### 4. Edit Page - Load & Save Config
+
+```tsx
+// State
+const [componentConfig, setComponentConfig] = useState<ComponentConfig>({});
+
+// useEffect - load config
+case 'ComponentName':
+  setItems(config.items?.map(...) || []);
+  setStyle((config.style as ComponentStyle) || 'default');
+  setComponentConfig({
+    description: config.description || '',
+    buttonText: config.buttonText || '',
+    buttonLink: config.buttonLink || ''
+  });
+  break;
+
+// buildConfig - save config
+case 'ComponentName':
+  return { 
+    items: items.map(...), 
+    style, 
+    ...componentConfig  // Include config in save
+  };
+```
+
+#### 5. ComponentRenderer - Use Config
+
+```tsx
+function ComponentSection({ config, brandColor, title }) {
+  const items = (config.items as Array<...>) || [];
+  const style = (config.style as ComponentStyle) || 'default';
+  
+  // Extract config fields
+  const description = (config.description as string) || '';
+  const buttonText = (config.buttonText as string) || '';
+  const buttonLink = (config.buttonLink as string) || '';
+
+  if (style === 'two-column') {
+    return (
+      <section>
+        <p>{description || 'Default description'}</p>
+        {buttonText && (
+          <a href={buttonLink || '#'}>{buttonText}</a>
+        )}
+      </section>
+    );
+  }
+  // ...
+}
+```
+
+### Ví dụ thực tế: FAQ Two-Column Style
+
+**Trước (hardcode - BAD):**
+```tsx
+<p>Tìm câu trả lời cho các thắc mắc phổ biến của bạn</p>
+<button>Liên hệ hỗ trợ</button>
+```
+
+**Sau (config - GOOD):**
+```tsx
+<p>{config?.description || 'Tìm câu trả lời...'}</p>
+{config?.buttonText && (
+  <a href={config?.buttonLink || '#'}>{config.buttonText}</a>
+)}
+```
+
+### Checklist Dependent Fields
+
+- [ ] Xác định styles nào có nội dung đặc thù
+- [ ] Định nghĩa `Config` type với optional fields
+- [ ] Thêm `config` prop vào Preview component
+- [ ] Form config chỉ show khi `style === 'specific-style'`
+- [ ] Submit spread `...config` vào payload
+- [ ] Edit page load config từ DB
+- [ ] ComponentRenderer extract và sử dụng config
+- [ ] Fallback cho missing config values
+
+---
+
 ## Existing Components Status
 
 ### Đã đủ 6 styles ✅
