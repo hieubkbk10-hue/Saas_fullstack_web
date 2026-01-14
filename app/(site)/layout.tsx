@@ -79,11 +79,11 @@ export default async function SiteLayout({
   });
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       <JsonLd data={organizationSchema} />
       <JsonLd data={websiteSchema} />
       <Header />
-      <main className="flex-1">
+      <main className="flex-1 overflow-x-hidden">
         {children}
       </main>
       <DynamicFooter />
