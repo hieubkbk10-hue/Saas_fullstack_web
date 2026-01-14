@@ -10567,7 +10567,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
     { id: 'grid', label: 'Grid' }, 
     { id: 'cards', label: 'Cards' }, 
     { id: 'carousel', label: 'Carousel' },
-    { id: 'hexagon', label: 'Hexagon' },
+    { id: 'hexagon', label: 'Overlap' },
     { id: 'timeline', label: 'Timeline' },
     { id: 'spotlight', label: 'Spotlight' }
   ];
@@ -10579,8 +10579,8 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
     switch (previewStyle) {
       case 'grid': return `${count} thành viên • Avatar: 400×400px (1:1)`;
       case 'cards': return `${count} thành viên • Avatar: 160×160px (1:1)`;
-      case 'carousel': return `${count} thành viên • Avatar: 600×800px (3:4)`;
-      case 'hexagon': return `${count} thành viên • Avatar: 300×300px (1:1)`;
+      case 'carousel': return `${count} thành viên • Avatar: 600×450px (4:3) - Horizontal scroll`;
+      case 'hexagon': return `${count} thành viên • Avatar: 200×200px (1:1) - Overlap style`;
       case 'timeline': return `${count} thành viên • Avatar: 100×100px (1:1)`;
       case 'spotlight': return `${count} thành viên • Avatar: 400×400px (1:1)`;
       default: return `${count} thành viên`;
@@ -10592,8 +10592,8 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
     switch (previewStyle) {
       case 'grid': return device === 'mobile' ? 4 : 8;
       case 'cards': return device === 'mobile' ? 3 : 6;
-      case 'carousel': return members.length;
-      case 'hexagon': return device === 'mobile' ? 4 : 6;
+      case 'carousel': return members.length; // All members scrollable
+      case 'hexagon': return device === 'mobile' ? 4 : 5; // Overlap style shows 4-5 avatars
       case 'timeline': return device === 'mobile' ? 3 : 4;
       case 'spotlight': return device === 'mobile' ? 3 : 6;
       default: return 6;
@@ -10751,184 +10751,306 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
     </div>
   );
 
-  // Style 3: Carousel - Single member spotlight với navigation
+  // Style 3: Carousel - Horizontal scroll với partial peek (Best Practice: 10-20% của card tiếp theo visible)
   const renderCarouselStyle = () => {
-    const current = members[currentSlide] || members[0];
-    if (!current) return null;
-
+    const itemsPerView = device === 'mobile' ? 1.15 : device === 'tablet' ? 2.2 : 3.15; // Partial peek
+    const cardWidth = device === 'mobile' ? 280 : device === 'tablet' ? 260 : 280;
+    const gap = device === 'mobile' ? 12 : 16;
+    
     return (
-      <div className={cn("py-12 px-4 relative", device === 'mobile' ? 'py-8' : '')}>
-        <h3 className={cn("font-bold text-center mb-8", device === 'mobile' ? 'text-lg' : 'text-2xl')}>Đội ngũ của chúng tôi</h3>
-        
-        <div className="max-w-4xl mx-auto">
-          <div 
-            className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden"
-            style={{ borderTop: `4px solid ${brandColor}` }}
-          >
-            <div className={cn(
-              "flex",
-              device === 'mobile' ? 'flex-col' : 'flex-row'
-            )}>
-              {/* Avatar side */}
-              <div className={cn(
-                "flex-shrink-0 bg-slate-100 dark:bg-slate-700",
-                device === 'mobile' ? 'w-full aspect-square max-h-[250px]' : 'w-1/3 aspect-[3/4]'
-              )}>
-                {current.avatar ? (
-                  <img src={current.avatar} alt={current.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div 
-                    className="w-full h-full flex items-center justify-center text-6xl font-bold text-white"
-                    style={{ backgroundColor: brandColor }}
-                  >
-                    {(current.name || 'U').charAt(0)}
-                  </div>
-                )}
-              </div>
-
-              {/* Info side */}
-              <div className={cn("flex-1 p-8 flex flex-col justify-center", device === 'mobile' ? 'p-5' : '')}>
-                <span 
-                  className="text-xs font-semibold uppercase tracking-wider mb-2"
-                  style={{ color: brandColor }}
-                >
-                  {current.role || 'Chức vụ'}
-                </span>
-                <h4 className={cn("font-bold text-slate-900 dark:text-slate-100 mb-4", device === 'mobile' ? 'text-xl' : 'text-3xl')}>
-                  {current.name || 'Họ và tên'}
-                </h4>
-                <p className="text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
-                  {current.bio || 'Giới thiệu về thành viên này...'}
-                </p>
-                <div className="flex gap-3">
-                  {current.facebook && <SocialIcon type="facebook" url={current.facebook} />}
-                  {current.linkedin && <SocialIcon type="linkedin" url={current.linkedin} />}
-                  {current.twitter && <SocialIcon type="twitter" url={current.twitter} />}
-                  {current.email && <SocialIcon type="email" url={current.email} />}
-                </div>
-              </div>
-            </div>
+      <div className={cn("py-8 relative", device === 'mobile' ? 'py-6' : '')}>
+        {/* Header với navigation */}
+        <div className={cn("flex items-center justify-between mb-6", device === 'mobile' ? 'px-4' : 'px-6')}>
+          <div>
+            <h3 className={cn("font-bold text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg' : 'text-2xl')}>
+              Đội ngũ của chúng tôi
+            </h3>
+            <p className="text-sm text-slate-500 mt-1">Kéo để xem thêm →</p>
           </div>
-
-          {/* Navigation */}
-          {members.length > 1 && (
-            <div className="flex items-center justify-center gap-4 mt-6">
+          {/* Navigation arrows - desktop only */}
+          {device !== 'mobile' && members.length > 3 && (
+            <div className="flex gap-2">
               <button 
                 type="button"
-                onClick={() => setCurrentSlide(prev => prev === 0 ? members.length - 1 : prev - 1)} 
-                className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                onClick={() => setCurrentSlide(prev => Math.max(0, prev - 1))}
+                disabled={currentSlide === 0}
+                className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                  currentSlide === 0 
+                    ? "bg-slate-100 text-slate-300 cursor-not-allowed" 
+                    : "bg-white shadow-md hover:shadow-lg text-slate-700"
+                )}
+                style={currentSlide > 0 ? { borderColor: `${brandColor}30` } : {}}
               >
                 <ChevronLeft size={18} />
               </button>
-              <div className="flex gap-2">
-                {members.map((_, idx) => (
-                  <button 
-                    key={idx} 
-                    type="button"
-                    onClick={() => setCurrentSlide(idx)} 
-                    className={cn("h-2.5 rounded-full transition-all", idx === currentSlide ? 'w-8' : 'w-2.5 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400')}
-                    style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
-                  />
-                ))}
-              </div>
               <button 
                 type="button"
-                onClick={() => setCurrentSlide(prev => (prev + 1) % members.length)} 
-                className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                onClick={() => setCurrentSlide(prev => Math.min(members.length - 3, prev + 1))}
+                disabled={currentSlide >= members.length - 3}
+                className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                  currentSlide >= members.length - 3 
+                    ? "bg-slate-100 text-slate-300 cursor-not-allowed" 
+                    : "text-white shadow-md hover:shadow-lg"
+                )}
+                style={currentSlide < members.length - 3 ? { backgroundColor: brandColor } : {}}
               >
                 <ChevronRight size={18} />
               </button>
             </div>
           )}
         </div>
+        
+        {/* Carousel container với fade edges */}
+        <div className="relative">
+          {/* Fade left */}
+          {currentSlide > 0 && device !== 'mobile' && (
+            <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
+          )}
+          
+          {/* Scrollable area */}
+          <div 
+            className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth"
+            style={{ 
+              paddingLeft: device === 'mobile' ? 16 : 24, 
+              paddingRight: device === 'mobile' ? 16 : 24,
+              gap: `${gap}px`,
+              scrollPaddingLeft: device === 'mobile' ? 16 : 24
+            }}
+          >
+            {members.map((member, idx) => (
+              <div 
+                key={member.id} 
+                className="flex-shrink-0 snap-start group"
+                style={{ width: cardWidth }}
+              >
+                {/* Card */}
+                <div 
+                  className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700 transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1"
+                  style={{ borderBottomColor: brandColor, borderBottomWidth: '3px' }}
+                >
+                  {/* Avatar */}
+                  <div className="aspect-[4/3] relative overflow-hidden bg-slate-100 dark:bg-slate-700">
+                    {member.avatar ? (
+                      <img 
+                        src={member.avatar} 
+                        alt={member.name} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                      />
+                    ) : (
+                      <div 
+                        className="w-full h-full flex items-center justify-center text-4xl font-bold text-white"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        {(member.name || 'U').charAt(0)}
+                      </div>
+                    )}
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  
+                  {/* Info */}
+                  <div className="p-4">
+                    <h4 className="font-bold text-slate-900 dark:text-slate-100 truncate">{member.name || 'Họ và tên'}</h4>
+                    <p className="text-sm mt-0.5 truncate" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+                    {member.bio && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2 min-h-[2rem]">{member.bio}</p>
+                    )}
+                    {/* Social - compact */}
+                    <div className="flex gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                      {member.facebook && <SocialIcon type="facebook" url={member.facebook} />}
+                      {member.linkedin && <SocialIcon type="linkedin" url={member.linkedin} />}
+                      {member.twitter && <SocialIcon type="twitter" url={member.twitter} />}
+                      {member.email && <SocialIcon type="email" url={member.email} />}
+                      {!member.facebook && !member.linkedin && !member.twitter && !member.email && (
+                        <span className="text-xs text-slate-400">Chưa có liên kết</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {/* Spacer for partial peek effect */}
+            <div className="flex-shrink-0 w-4" />
+          </div>
+          
+          {/* Fade right */}
+          {device !== 'mobile' && (
+            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
+          )}
+        </div>
+        
+        {/* Mobile: Dot indicators */}
+        {device === 'mobile' && members.length > 1 && (
+          <div className="flex justify-center gap-1.5 mt-4">
+            {members.map((_, idx) => (
+              <div 
+                key={idx} 
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  idx === currentSlide ? "w-4" : "w-1.5 bg-slate-300 dark:bg-slate-600"
+                )}
+                style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
+              />
+            ))}
+          </div>
+        )}
       </div>
     );
   };
 
-  // Style 4: Hexagon - Hình lục giác sáng tạo
-  const renderHexagonStyle = () => (
-    <div className={cn("py-8 px-4 overflow-hidden", device === 'mobile' ? 'py-6' : '')}>
-      <div className="text-center mb-8">
-        <span 
-          className="inline-block px-4 py-1.5 rounded-full text-xs font-medium mb-3"
-          style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-        >
-          Đội ngũ của chúng tôi
-        </span>
-        <h3 className={cn("font-bold text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-lg' : 'text-2xl')}>
-          Đội ngũ của chúng tôi
-        </h3>
-      </div>
-      
-      <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-        {members.slice(0, device === 'mobile' ? 4 : 6).map((member) => (
-          <div key={member.id} className="group relative">
-            {/* Hexagon container */}
-            <div 
-              className={cn(
-                "relative",
-                device === 'mobile' ? 'w-28 h-32' : 'w-36 h-40'
-              )}
-              style={{
-                clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-              }}
-            >
-              {/* Main hexagon */}
+  // Style 4: Overlap - Creative stacked/overlap layout (Best Practice: Modern, playful, shows team unity)
+  const renderHexagonStyle = () => {
+    const displayMembers = members.slice(0, device === 'mobile' ? 4 : 5);
+    const avatarSize = device === 'mobile' ? 80 : 100;
+    const overlap = device === 'mobile' ? 24 : 32;
+    
+    return (
+      <div className={cn("py-10 px-4", device === 'mobile' ? 'py-8' : '')}>
+        {/* Header */}
+        <div className="text-center mb-10">
+          <span 
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium mb-3"
+            style={{ backgroundColor: `${brandColor}10`, color: brandColor }}
+          >
+            <Users size={14} />
+            Đội ngũ của chúng tôi
+          </span>
+          <h3 className={cn("font-bold text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl')}>
+            Những con người tuyệt vời
+          </h3>
+          <p className="text-sm text-slate-500 mt-2 max-w-md mx-auto">
+            Đội ngũ tài năng và đam mê đứng sau thành công của chúng tôi
+          </p>
+        </div>
+        
+        {/* Stacked Avatars - Center showcase */}
+        <div className="flex flex-col items-center mb-8">
+          {/* Overlapping avatars row */}
+          <div className="flex items-center justify-center mb-6">
+            {displayMembers.map((member, idx) => (
               <div 
-                className="absolute inset-1 transition-transform duration-500 group-hover:scale-[0.98]"
-                style={{
-                  clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-                  backgroundColor: '#f1f5f9'
+                key={member.id}
+                className="relative group"
+                style={{ 
+                  marginLeft: idx === 0 ? 0 : -overlap,
+                  zIndex: displayMembers.length - idx 
                 }}
               >
-                {member.avatar ? (
-                  <img 
-                    src={member.avatar} 
-                    alt={member.name} 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div 
-                    className="w-full h-full flex items-center justify-center text-3xl font-bold text-white"
-                    style={{ backgroundColor: brandColor }}
-                  >
-                    {(member.name || 'U').charAt(0)}
-                  </div>
-                )}
-                
-                {/* Overlay on hover */}
+                {/* Avatar with ring */}
                 <div 
-                  className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
-                  style={{ backgroundColor: `${brandColor}ee` }}
+                  className="relative rounded-full overflow-hidden border-4 border-white dark:border-slate-900 shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:z-50"
+                  style={{ width: avatarSize, height: avatarSize }}
                 >
-                  <div className="flex gap-1.5">
+                  {member.avatar ? (
+                    <img 
+                      src={member.avatar} 
+                      alt={member.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div 
+                      className="w-full h-full flex items-center justify-center text-2xl font-bold text-white"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      {(member.name || 'U').charAt(0)}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Hover tooltip */}
+                <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50">
+                  <div 
+                    className="bg-white dark:bg-slate-800 rounded-xl px-4 py-2 shadow-xl border border-slate-100 dark:border-slate-700 whitespace-nowrap"
+                    style={{ borderTopColor: brandColor, borderTopWidth: '2px' }}
+                  >
+                    <p className="font-semibold text-sm text-slate-900 dark:text-slate-100">{member.name || 'Họ và tên'}</p>
+                    <p className="text-xs" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+                  </div>
+                  {/* Arrow */}
+                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 bg-white dark:bg-slate-800 border-t border-l border-slate-100 dark:border-slate-700" style={{ borderTopColor: brandColor }} />
+                </div>
+              </div>
+            ))}
+            
+            {/* +N indicator if more members */}
+            {remainingCount > 0 && (
+              <div 
+                className="relative rounded-full flex items-center justify-center border-4 border-white dark:border-slate-900 shadow-lg"
+                style={{ 
+                  marginLeft: -overlap, 
+                  width: avatarSize, 
+                  height: avatarSize,
+                  backgroundColor: `${brandColor}15`
+                }}
+              >
+                <span className="font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Team summary text */}
+          <p className="text-sm text-slate-500 text-center">
+            <span className="font-semibold" style={{ color: brandColor }}>{members.length}</span> thành viên cùng hợp tác
+          </p>
+        </div>
+        
+        {/* Detail cards - Bento-like grid */}
+        <div className={cn(
+          "grid gap-4 max-w-4xl mx-auto",
+          device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3'
+        )}>
+          {displayMembers.slice(0, device === 'mobile' ? 2 : 3).map((member, idx) => (
+            <div 
+              key={member.id}
+              className={cn(
+                "group bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
+                idx === 0 && device !== 'mobile' && "lg:col-span-2 lg:row-span-1"
+              )}
+              style={{ borderLeftColor: brandColor, borderLeftWidth: '3px' }}
+            >
+              <div className={cn("flex gap-4", idx === 0 && device !== 'mobile' ? "items-center" : "items-start")}>
+                {/* Mini avatar */}
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden">
+                  {member.avatar ? (
+                    <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div 
+                      className="w-full h-full flex items-center justify-center text-lg font-bold text-white"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      {(member.name || 'U').charAt(0)}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-slate-900 dark:text-slate-100 truncate">{member.name || 'Họ và tên'}</h4>
+                  <p className="text-sm truncate" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
+                  {member.bio && (
+                    <p className={cn(
+                      "text-xs text-slate-500 dark:text-slate-400 mt-2",
+                      idx === 0 && device !== 'mobile' ? "line-clamp-2" : "line-clamp-1"
+                    )}>{member.bio}</p>
+                  )}
+                  
+                  {/* Social links */}
+                  <div className="flex gap-1.5 mt-3">
                     {member.facebook && <SocialIcon type="facebook" url={member.facebook} />}
                     {member.linkedin && <SocialIcon type="linkedin" url={member.linkedin} />}
+                    {member.twitter && <SocialIcon type="twitter" url={member.twitter} />}
                     {member.email && <SocialIcon type="email" url={member.email} />}
                   </div>
                 </div>
               </div>
-              
-              {/* Border effect */}
-              <div 
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                style={{
-                  clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-                  background: `linear-gradient(135deg, ${brandColor}, ${brandColor}60)`,
-                }}
-              />
             </div>
-            
-            {/* Info below hexagon */}
-            <div className="text-center mt-3">
-              <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">{member.name || 'Họ và tên'}</h4>
-              <p className="text-xs mt-0.5" style={{ color: brandColor }}>{member.role || 'Chức vụ'}</p>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Style 5: Timeline - Dạng timeline sang trọng
   const renderTimelineStyle = () => (
