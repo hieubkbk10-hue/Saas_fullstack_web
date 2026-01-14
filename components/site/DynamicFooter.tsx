@@ -15,7 +15,7 @@ type FooterConfig = {
   socialLinks?: SocialLinkItem[];
   copyright?: string;
   showSocialLinks?: boolean;
-  style?: 'classic' | 'modern' | 'corporate' | 'minimal';
+  style?: 'classic' | 'modern' | 'corporate' | 'minimal' | 'centered' | 'stacked';
 };
 
 // Custom TikTok icon (Lucide không có)
@@ -346,26 +346,168 @@ export function DynamicFooter() {
   }
 
   // Style 4: Minimal - Compact single row
-  return (
-    <footer className="w-full text-white py-4 md:py-5" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
-      <div className="container max-w-7xl mx-auto px-4 md:px-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-          
-          {/* Left: Logo & Copy */}
-          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3">
-            {logo ? (
-              <img src={logo} alt={siteName} className="h-5 w-5 opacity-80" />
-            ) : (
-              <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>
-                {(siteName || 'V').charAt(0)}
+  if (style === 'minimal') {
+    return (
+      <footer className="w-full text-white py-4 md:py-5" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
+        <div className="container max-w-7xl mx-auto px-4 md:px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+            
+            {/* Left: Logo & Copy */}
+            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3">
+              {logo ? (
+                <img src={logo} alt={siteName} className="h-5 w-5 opacity-80" />
+              ) : (
+                <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>
+                  {(siteName || 'V').charAt(0)}
+                </div>
+              )}
+              <span className="text-xs font-medium text-white/60">
+                {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
+              </span>
+            </div>
+
+            {/* Right: Socials only */}
+            {config.showSocialLinks !== false && (
+              <div className="flex gap-2">
+                {socials.map((s, idx) => (
+                  <a 
+                    key={s.id || `social-${idx}`} 
+                    href={s.url || '#'} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-5 w-5 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
+                    style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}
+                  >
+                    <SocialIcon platform={s.platform} size={14} />
+                  </a>
+                ))}
               </div>
             )}
-            <span className="text-xs font-medium text-white/60">
-              {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
-            </span>
+          </div>
+        </div>
+      </footer>
+    );
+  }
+
+  // Style 5: Centered - Logo + social giữa, columns dàn 2 rows
+  if (style === 'centered') {
+    return (
+      <footer className="w-full text-white py-8 md:py-10" style={{ backgroundColor: bgDark }}>
+        <div className="container max-w-6xl mx-auto px-4 md:px-6 text-center">
+          
+          {/* Brand Center */}
+          <div className="flex flex-col items-center gap-3 mb-6">
+            <div 
+              className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg"
+              style={{ backgroundColor: `${brandColor}20`, border: `2px solid ${brandColor}40` }}
+            >
+              {logo ? (
+                <img src={logo} alt={siteName} className="h-7 w-7 object-contain" />
+              ) : (
+                <div className="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>
+                  {(siteName || 'V').charAt(0)}
+                </div>
+              )}
+            </div>
+            <h2 className="text-lg font-bold text-white tracking-tight">{siteName || 'VietAdmin'}</h2>
+            <p className="text-xs leading-relaxed text-white/70 max-w-xs md:max-w-md">
+              {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}
+            </p>
           </div>
 
-          {/* Right: Socials only */}
+          {/* Columns in grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
+            {columns.slice(0, 4).map((col, colIdx) => (
+              <div key={col.id || `col-${colIdx}`} className="text-center">
+                <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-2">{col.title}</h4>
+                <ul className="space-y-1">
+                  {col.links.slice(0, 4).map((link, lIdx) => (
+                    <li key={lIdx}>
+                      <Link 
+                        href={link.url || '#'} 
+                        className="text-xs text-white/60 hover:text-white transition-colors inline-block"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div className="w-16 h-px mx-auto mb-5" style={{ background: `linear-gradient(to right, transparent, ${brandColor}, transparent)` }}></div>
+
+          {/* Socials Center */}
+          {config.showSocialLinks !== false && (
+            <div className="flex justify-center gap-3 mb-4">
+              {socials.map((s, idx) => (
+                <a 
+                  key={s.id || `social-${idx}`} 
+                  href={s.url || '#'} 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-8 w-8 flex items-center justify-center rounded-full transition-all hover:scale-110"
+                  style={{ backgroundColor: `${brandColor}20`, color: '#fff', border: `1px solid ${brandColor}30` }}
+                >
+                  <SocialIcon platform={s.platform} size={16} />
+                </a>
+              ))}
+            </div>
+          )}
+
+          {/* Copyright */}
+          <p className="text-[10px] text-white/50">
+            {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
+          </p>
+        </div>
+      </footer>
+    );
+  }
+
+  // Style 6: Stacked - Tất cả elements xếp chồng vertical, mobile-first compact (default)
+  return (
+    <footer className="w-full text-white py-6" style={{ backgroundColor: bgDark, borderTop: `3px solid ${brandColor}` }}>
+      <div className="container max-w-4xl mx-auto px-4 md:px-6">
+        
+        {/* Logo + Description */}
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-5 text-center md:text-left">
+          <div 
+            className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: brandColor }}
+          >
+            {logo ? (
+              <img src={logo} alt={siteName} className="h-6 w-6 object-contain brightness-110" />
+            ) : (
+              <span className="text-white font-bold text-sm">{(siteName || 'V').charAt(0)}</span>
+            )}
+          </div>
+          <div className="md:flex-1">
+            <h3 className="text-sm font-bold text-white mb-1">{siteName || 'VietAdmin'}</h3>
+            <p className="text-xs text-white/70 leading-relaxed line-clamp-2">
+              {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}
+            </p>
+          </div>
+        </div>
+
+        {/* Links in single row (flat) */}
+        <div className="mb-5 pb-4" style={{ borderBottom: `1px solid ${borderColor}` }}>
+          <div className="flex flex-wrap justify-center md:justify-start gap-x-4 gap-y-2">
+            {columns.flatMap(col => col.links).slice(0, 10).map((link, i) => (
+              <Link 
+                key={i} 
+                href={link.url || '#'} 
+                className="text-xs font-medium text-white/60 hover:text-white transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom: Socials + Copyright */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
           {config.showSocialLinks !== false && (
             <div className="flex gap-2">
               {socials.map((s, idx) => (
@@ -374,14 +516,17 @@ export function DynamicFooter() {
                   href={s.url || '#'} 
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-5 w-5 flex items-center justify-center rounded-full hover:opacity-80 transition-all duration-300"
-                  style={{ backgroundColor: '#ffffff', color: socialColors[s.platform] || '#94a3b8' }}
+                  className="h-7 w-7 flex items-center justify-center rounded-lg transition-all"
+                  style={{ backgroundColor: `${brandColor}15`, color: '#fff' }}
                 >
                   <SocialIcon platform={s.platform} size={14} />
                 </a>
               ))}
             </div>
           )}
+          <p className="text-[10px] text-white/50">
+            {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
+          </p>
         </div>
       </div>
     </footer>
