@@ -852,6 +852,116 @@ const getImageSizeInfo = () => {
 
 ---
 
+## Contained Marquee / Carousel (CRITICAL)
+
+**BUG THƯỜNG GẶP**: Marquee hoặc carousel với `width: max-content` bị tràn ra ngoài viewport, gây ugly horizontal scrollbar.
+
+### Problem
+
+```tsx
+// ❌ SAI - Marquee tràn ra ngoài container
+<section className="py-16">
+  <div className="relative"> {/* Không có overflow-hidden! */}
+    <div style={{ width: 'max-content', animation: 'marquee 20s linear infinite' }}>
+      {items.map(...)} {/* Tràn ra ngoài viewport */}
+    </div>
+  </div>
+</section>
+```
+
+### Solution: Contained Marquee Pattern
+
+```tsx
+// ✅ ĐÚNG - Marquee được contain trong max-w-7xl + overflow-hidden
+<section className="py-16 overflow-hidden"> {/* overflow-hidden trên section nếu cần */}
+  {/* Outer container với max-width */}
+  <div className="max-w-7xl mx-auto px-4 mb-12">
+    {/* Inner container với overflow-hidden + rounded */}
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Gradient fade edges - NẰM TRONG container */}
+      <div className="absolute left-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-16 md:w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+      
+      {/* Scrolling content */}
+      <div 
+        className="flex gap-5 py-4"
+        style={{ 
+          width: 'max-content',
+          animation: items.length > 3 ? 'marquee 25s linear infinite' : 'none'
+        }}
+      >
+        {/* Duplicate items for infinite loop */}
+        {[...items, ...items].map((item, idx) => (
+          <div key={idx} className="flex-shrink-0" style={{ width: 160 }}>
+            {/* Card content */}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+```
+
+### Key Points
+
+| Vấn đề | Giải pháp |
+|--------|-----------|
+| Marquee tràn viewport | Wrap trong `max-w-7xl mx-auto px-4` |
+| Nội dung bị cắt xấu | Thêm `overflow-hidden rounded-xl` cho inner container |
+| Gradient fade không đẹp | Gradient nằm TRONG container overflow-hidden |
+| Animation giật | Duplicate items `[...items, ...items]` để infinite smooth |
+
+### Carousel Horizontal Scroll (Non-animated)
+
+```tsx
+// Carousel scroll (không phải marquee animation)
+<div className="max-w-7xl mx-auto px-4">
+  <div className="relative overflow-hidden">
+    {/* Fade edges */}
+    <div className="absolute left-0 ... bg-gradient-to-r from-white to-transparent z-10" />
+    <div className="absolute right-0 ... bg-gradient-to-l from-white to-transparent z-10" />
+    
+    {/* Scrollable container */}
+    <div 
+      className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth"
+      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+    >
+      {items.map(item => (
+        <div key={item.id} className="flex-shrink-0 snap-start w-[280px]">
+          {/* Card */}
+        </div>
+      ))}
+      {/* End spacer for partial peek effect */}
+      <div className="flex-shrink-0 w-4" />
+    </div>
+  </div>
+</div>
+```
+
+### CSS Animation
+
+```tsx
+// Keyframes cho marquee - translateX(-50%) vì items duplicate
+<style>{`
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+`}</style>
+```
+
+### Checklist Contained Carousel/Marquee
+
+- [ ] Outer container có `max-w-7xl mx-auto px-4` (hoặc tương đương)
+- [ ] Inner container có `overflow-hidden rounded-xl`
+- [ ] Gradient fade edges nằm TRONG overflow-hidden container
+- [ ] Section có `overflow-hidden` nếu animation có thể tràn
+- [ ] Items được duplicate cho infinite loop smooth
+- [ ] Animation translateX(-50%) khớp với duplicate ratio
+- [ ] Test trên mobile - không có horizontal scrollbar
+
+---
+
 ## Drag & Drop (nếu có items)
 
 ### Recommended: useDragReorder Hook
