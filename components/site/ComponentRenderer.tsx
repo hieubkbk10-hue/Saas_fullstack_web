@@ -6445,6 +6445,7 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
 
 // ============ FOOTER SECTION ============
 // 6 Styles: classic, modern, corporate, minimal, centered, stacked
+// Synced with previews.tsx FooterPreview
 type FooterStyle = 'classic' | 'modern' | 'corporate' | 'minimal' | 'centered' | 'stacked';
 type FooterColumn = { title: string; links: Array<{ label: string; url: string }> };
 type SocialLinkItem = { platform: string; url: string; icon: string };
@@ -6508,42 +6509,42 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
   // Style 1: Classic Dark
   if (style === 'classic') {
     return (
-      <footer className="w-full text-white py-8 md:py-12" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
-        <div className="container max-w-7xl mx-auto px-4">
-          <div className="grid gap-8 md:grid-cols-12">
-            <div className="md:col-span-5 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg" style={{ backgroundColor: bgMedium, border: `1px solid ${borderColor}` }}>
-                  {logo ? <img src={logo} alt="Logo" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 rounded flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: brandColor }}>V</div>}
+      <footer className="w-full text-white py-6 md:py-8" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
+        <div className="max-w-7xl mx-auto px-3 md:px-4">
+          <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-12">
+            <div className="md:col-span-5 space-y-3 text-center md:text-left">
+              <div className="flex items-center gap-2 justify-center md:justify-start">
+                <div className="p-1.5 rounded-lg" style={{ backgroundColor: bgMedium, border: `1px solid ${borderColor}` }}>
+                  {logo ? <img src={logo} alt="Logo" className="h-5 w-5 object-contain brightness-110" /> : <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>}
                 </div>
-                <span className="text-lg font-bold text-white">VietAdmin</span>
+                <span className="text-base font-bold tracking-tight text-white">VietAdmin</span>
               </div>
-              <p className="text-sm leading-relaxed text-white/80 max-w-sm">{description}</p>
+              <p className="text-xs leading-relaxed text-white/80 md:max-w-sm">{description}</p>
               {showSocialLinks && (
-                <div className="flex gap-3">
+                <div className="flex gap-2 justify-center md:justify-start">
                   {getSocials().map((s, i) => (
-                    <a key={i} href={s.url} className="h-8 w-8 flex items-center justify-center rounded-full bg-white transition-all hover:scale-110" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
-                      {renderSocialIcon(s.platform, 16)}
+                    <a key={i} href={s.url} className="h-6 w-6 flex items-center justify-center rounded-full bg-white hover:opacity-80 transition-all" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
+                      {renderSocialIcon(s.platform, 14)}
                     </a>
                   ))}
                 </div>
               )}
             </div>
-            <div className="md:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-8">
+            <div className="md:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-5 text-center md:text-left">
               {getColumns().slice(0, 3).map((col, i) => (
                 <div key={i}>
-                  <h3 className="font-semibold text-white text-sm mb-3">{col.title}</h3>
-                  <ul className="space-y-2">
+                  <h3 className="font-semibold text-white text-xs tracking-wide mb-2">{col.title}</h3>
+                  <ul className="space-y-1.5">
                     {col.links.map((link, j) => (
-                      <li key={j}><a href={link.url} className="text-sm text-white/70 hover:text-white transition-colors">{link.label}</a></li>
+                      <li key={j}><a href={link.url} className="text-xs text-white/70 hover:text-white transition-colors">{link.label}</a></li>
                     ))}
                   </ul>
                 </div>
               ))}
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t" style={{ borderColor: `${borderColor}50` }}>
-            <p className="text-xs text-white/60">{copyright}</p>
+          <div className="mt-6 pt-3 text-center md:text-left" style={{ borderTop: `1px solid ${borderColor}50` }}>
+            <p className="text-[10px] text-white/60">{copyright}</p>
           </div>
         </div>
       </footer>
@@ -6553,31 +6554,31 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
   // Style 2: Modern Center
   if (style === 'modern') {
     return (
-      <footer className="w-full text-white py-10 md:py-14" style={{ backgroundColor: bgDark }}>
-        <div className="container max-w-5xl mx-auto px-4 flex flex-col items-center text-center space-y-6">
-          <div className="flex flex-col items-center gap-3">
-            <div className="h-12 w-12 rounded-xl flex items-center justify-center shadow-lg" style={{ background: `linear-gradient(to top right, ${bgMedium}, ${borderColor})` }}>
-              {logo ? <img src={logo} alt="Logo" className="h-7 w-7 object-contain" /> : <div className="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>V</div>}
+      <footer className="w-full text-white py-6 md:py-8" style={{ backgroundColor: bgDark }}>
+        <div className="max-w-5xl mx-auto px-3 md:px-4 flex flex-col items-center text-center space-y-3 md:space-y-4">
+          <div className="flex flex-col items-center gap-2">
+            <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-lg shadow-black/20 mb-1" style={{ background: `linear-gradient(to top right, ${bgMedium}, ${borderColor})` }}>
+              {logo ? <img src={logo} alt="Logo" className="h-6 w-6 object-contain drop-shadow-md" /> : <div className="h-6 w-6 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: brandColor }}>V</div>}
             </div>
-            <h2 className="text-lg font-bold text-white">VietAdmin</h2>
-            <p className="text-sm text-white/80 max-w-md">{description}</p>
+            <h2 className="text-base font-bold text-white tracking-tight">VietAdmin</h2>
+            <p className="text-xs leading-relaxed text-white/80 max-w-xs md:max-w-md">{description}</p>
           </div>
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+          <div className="flex flex-wrap justify-center gap-x-3 md:gap-x-4 gap-y-1.5">
             {getColumns().flatMap(col => col.links).slice(0, 8).map((link, i) => (
-              <a key={i} href={link.url} className="text-sm font-medium text-white/70 hover:text-white transition-colors">{link.label}</a>
+              <a key={i} href={link.url} className="text-xs font-medium text-white/70 hover:text-white hover:underline underline-offset-4 transition-all" style={{ textDecorationColor: brandColor }}>{link.label}</a>
             ))}
           </div>
-          <div className="w-16 h-px" style={{ background: `linear-gradient(to right, transparent, ${borderColor}, transparent)` }}></div>
+          <div className="w-12 h-px" style={{ background: `linear-gradient(to right, transparent, ${borderColor}, transparent)` }}></div>
           {showSocialLinks && (
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               {getSocials().map((s, i) => (
-                <a key={i} href={s.url} className="h-8 w-8 flex items-center justify-center rounded-full bg-white transition-all hover:scale-110" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
-                  {renderSocialIcon(s.platform, 16)}
+                <a key={i} href={s.url} className="h-6 w-6 flex items-center justify-center rounded-full bg-white hover:opacity-80 transition-all" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
+                  {renderSocialIcon(s.platform, 14)}
                 </a>
               ))}
             </div>
           )}
-          <p className="text-xs text-white/60">{copyright}</p>
+          <p className="text-[10px] font-medium text-white/60">{copyright}</p>
         </div>
       </footer>
     );
@@ -6586,41 +6587,41 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
   // Style 3: Corporate
   if (style === 'corporate') {
     return (
-      <footer className="w-full text-white py-8 md:py-12" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
-        <div className="container max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b" style={{ borderColor }}>
-            <div className="flex items-center gap-3">
-              {logo ? <img src={logo} alt="Logo" className="h-6 w-6 object-contain" /> : <div className="h-6 w-6 rounded flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: brandColor }}>V</div>}
-              <span className="text-base font-bold text-white">VietAdmin</span>
+      <footer className="w-full text-white py-6 md:py-8" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
+        <div className="max-w-7xl mx-auto px-3 md:px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3 pb-4" style={{ borderBottom: `1px solid ${borderColor}` }}>
+            <div className="flex items-center gap-2">
+              {logo ? <img src={logo} alt="Logo" className="h-5 w-5 object-contain" /> : <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>}
+              <span className="text-sm font-bold text-white">VietAdmin</span>
             </div>
             {showSocialLinks && (
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 {getSocials().map((s, i) => (
-                  <a key={i} href={s.url} className="h-7 w-7 flex items-center justify-center rounded-full bg-white" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
-                    {renderSocialIcon(s.platform, 14)}
+                  <a key={i} href={s.url} className="h-5 w-5 flex items-center justify-center rounded-full bg-white hover:opacity-80 transition-all" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
+                    {renderSocialIcon(s.platform, 12)}
                   </a>
                 ))}
               </div>
             )}
           </div>
-          <div className="py-8 grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="md:col-span-2">
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Về Công Ty</h4>
-              <p className="text-sm text-white/80">{description}</p>
+          <div className="py-5 grid grid-cols-1 md:grid-cols-4 gap-5 text-center md:text-left">
+            <div className="md:col-span-2 md:pr-4">
+              <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-2">Về Công Ty</h4>
+              <p className="text-xs leading-relaxed text-white/80">{description}</p>
             </div>
             {getColumns().slice(0, 2).map((col, i) => (
               <div key={i}>
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">{col.title}</h4>
-                <ul className="space-y-2">
+                <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-2">{col.title}</h4>
+                <ul className="space-y-1">
                   {col.links.map((link, j) => (
-                    <li key={j}><a href={link.url} className="text-sm text-white/70 hover:text-white transition-colors">{link.label}</a></li>
+                    <li key={j}><a href={link.url} className="text-xs text-white/70 hover:text-white transition-colors">{link.label}</a></li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
-          <div className="pt-4">
-            <p className="text-xs text-white/60">{copyright}</p>
+          <div className="pt-3 text-center md:text-left">
+            <p className="text-[10px] text-white/60">{copyright}</p>
           </div>
         </div>
       </footer>
@@ -6630,17 +6631,17 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
   // Style 4: Minimal
   if (style === 'minimal') {
     return (
-      <footer className="w-full text-white py-4 md:py-6" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
-        <div className="container max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              {logo ? <img src={logo} alt="Logo" className="h-5 w-5 opacity-80" /> : <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>}
-              <span className="text-xs text-white/60">{copyright}</span>
+      <footer className="w-full text-white py-3 md:py-4" style={{ backgroundColor: bgDark, borderTop: `1px solid ${borderColor}` }}>
+        <div className="max-w-7xl mx-auto px-3 md:px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+            <div className="flex flex-col md:flex-row items-center gap-2">
+              {logo ? <img src={logo} alt="Logo" className="h-4 w-4 opacity-80" /> : <div className="h-4 w-4 rounded flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: brandColor }}>V</div>}
+              <span className="text-[10px] font-medium text-white/60">{copyright}</span>
             </div>
             {showSocialLinks && (
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 {getSocials().map((s, i) => (
-                  <a key={i} href={s.url} className="h-6 w-6 flex items-center justify-center rounded-full bg-white" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
+                  <a key={i} href={s.url} className="h-5 w-5 flex items-center justify-center rounded-full bg-white hover:opacity-80 transition-all" style={{ color: socialColors[s.platform] || '#94a3b8' }}>
                     {renderSocialIcon(s.platform, 12)}
                   </a>
                 ))}
@@ -6655,38 +6656,38 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
   // Style 5: Centered
   if (style === 'centered') {
     return (
-      <footer className="w-full text-white py-10 md:py-14" style={{ backgroundColor: bgDark }}>
-        <div className="container max-w-6xl mx-auto px-4 text-center">
-          <div className="flex flex-col items-center gap-4 mb-8">
-            <div className="h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg" style={{ backgroundColor: `${brandColor}20`, border: `2px solid ${brandColor}40` }}>
-              {logo ? <img src={logo} alt="Logo" className="h-8 w-8 object-contain" /> : <div className="h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: brandColor }}>V</div>}
+      <footer className="w-full text-white py-8 md:py-10" style={{ backgroundColor: bgDark }}>
+        <div className="max-w-6xl mx-auto px-3 md:px-4 text-center">
+          <div className="flex flex-col items-center gap-3 mb-6">
+            <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ backgroundColor: `${brandColor}20`, border: `2px solid ${brandColor}40` }}>
+              {logo ? <img src={logo} alt="Logo" className="h-7 w-7 object-contain" /> : <div className="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>V</div>}
             </div>
-            <h2 className="text-xl font-bold text-white">VietAdmin</h2>
-            <p className="text-sm text-white/70 max-w-md">{description}</p>
+            <h2 className="text-lg font-bold text-white tracking-tight">VietAdmin</h2>
+            <p className="text-xs leading-relaxed text-white/70 max-w-xs md:max-w-md">{description}</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6">
             {getColumns().slice(0, 4).map((col, i) => (
               <div key={i} className="text-center">
-                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2">{col.title}</h4>
+                <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-2">{col.title}</h4>
                 <ul className="space-y-1">
                   {col.links.slice(0, 4).map((link, j) => (
-                    <li key={j}><a href={link.url} className="text-sm text-white/60 hover:text-white transition-colors">{link.label}</a></li>
+                    <li key={j}><a href={link.url} className="text-xs text-white/60 hover:text-white transition-colors">{link.label}</a></li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
-          <div className="w-20 h-px mx-auto mb-6" style={{ background: `linear-gradient(to right, transparent, ${brandColor}, transparent)` }}></div>
+          <div className="w-16 h-px mx-auto mb-5" style={{ background: `linear-gradient(to right, transparent, ${brandColor}, transparent)` }}></div>
           {showSocialLinks && (
-            <div className="flex justify-center gap-4 mb-4">
+            <div className="flex justify-center gap-3 mb-4">
               {getSocials().map((s, i) => (
-                <a key={i} href={s.url} className="h-10 w-10 flex items-center justify-center rounded-full transition-all hover:scale-110" style={{ backgroundColor: `${brandColor}20`, color: '#fff', border: `1px solid ${brandColor}30` }}>
-                  {renderSocialIcon(s.platform, 18)}
+                <a key={i} href={s.url} className="h-8 w-8 flex items-center justify-center rounded-full transition-all hover:scale-110" style={{ backgroundColor: `${brandColor}20`, color: '#fff', border: `1px solid ${brandColor}30` }}>
+                  {renderSocialIcon(s.platform, 16)}
                 </a>
               ))}
             </div>
           )}
-          <p className="text-xs text-white/50">{copyright}</p>
+          <p className="text-[10px] text-white/50">{copyright}</p>
         </div>
       </footer>
     );
@@ -6694,35 +6695,35 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
 
   // Style 6: Stacked (default)
   return (
-    <footer className="w-full text-white py-8" style={{ backgroundColor: bgDark, borderTop: `3px solid ${brandColor}` }}>
-      <div className="container max-w-4xl mx-auto px-4 md:px-6">
-        <div className="flex flex-col md:flex-row items-start gap-4 mb-6">
-          <div className="h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: brandColor }}>
-            {logo ? <img src={logo} alt="Logo" className="h-7 w-7 object-contain" /> : <span className="text-white font-bold">V</span>}
+    <footer className="w-full text-white py-6" style={{ backgroundColor: bgDark, borderTop: `3px solid ${brandColor}` }}>
+      <div className="max-w-4xl mx-auto px-4 md:px-6">
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-5 text-center md:text-left">
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: brandColor }}>
+            {logo ? <img src={logo} alt="Logo" className="h-6 w-6 object-contain brightness-110" /> : <span className="text-white font-bold text-sm">V</span>}
           </div>
-          <div>
-            <h3 className="text-base font-bold text-white mb-1">VietAdmin</h3>
-            <p className="text-sm text-white/70">{description}</p>
+          <div className="md:flex-1">
+            <h3 className="text-sm font-bold text-white mb-1">VietAdmin</h3>
+            <p className="text-xs text-white/70 leading-relaxed line-clamp-2">{description}</p>
           </div>
         </div>
-        <div className="mb-6 pb-4" style={{ borderBottom: `1px solid ${borderColor}` }}>
-          <div className="flex flex-wrap gap-x-5 gap-y-2">
+        <div className="mb-5 pb-4" style={{ borderBottom: `1px solid ${borderColor}` }}>
+          <div className="flex flex-wrap justify-center md:justify-start gap-x-3 md:gap-x-4 gap-y-2">
             {getColumns().flatMap(col => col.links).slice(0, 10).map((link, i) => (
-              <a key={i} href={link.url} className="text-sm text-white/60 hover:text-white transition-colors">{link.label}</a>
+              <a key={i} href={link.url} className="text-xs font-medium text-white/60 hover:text-white transition-colors">{link.label}</a>
             ))}
           </div>
         </div>
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
           {showSocialLinks && (
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               {getSocials().map((s, i) => (
-                <a key={i} href={s.url} className="h-9 w-9 flex items-center justify-center rounded-lg transition-all" style={{ backgroundColor: `${brandColor}15`, color: '#fff' }}>
-                  {renderSocialIcon(s.platform, 16)}
+                <a key={i} href={s.url} className="h-7 w-7 flex items-center justify-center rounded-lg transition-all" style={{ backgroundColor: `${brandColor}15`, color: '#fff' }}>
+                  {renderSocialIcon(s.platform, 14)}
                 </a>
               ))}
             </div>
           )}
-          <p className="text-xs text-white/50">{copyright}</p>
+          <p className="text-[10px] text-white/50">{copyright}</p>
         </div>
       </div>
     </footer>
