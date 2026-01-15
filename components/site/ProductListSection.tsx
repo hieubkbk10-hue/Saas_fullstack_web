@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Package, Loader2, ArrowRight } from 'lucide-react';
+import { Package, Loader2, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // 6 Styles theo mẫu previews.tsx
 // 'minimal' = Luxury Minimal, 'commerce' = Commerce Card, 'bento' = Bento Grid
@@ -257,27 +257,128 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
     );
   }
 
-  // Style 4: Carousel - Horizontal scrollable products
+  // Style 4: Carousel - Horizontal scrollable với arrows
   if (style === 'carousel') {
+    const carouselId = `product-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const cardWidth = 260;
+    const gap = 20;
+
     return (
       <section className="py-10 md:py-16 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
-          <SectionHeader />
-          
-          {/* Carousel */}
-          <div className="relative overflow-x-auto -mx-4 px-4 pb-4 scrollbar-hide">
-            <div className="flex gap-4 md:gap-5">
+          {/* Section Header với navigation arrows */}
+          <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between md:mb-8">
+            <div className="flex items-end justify-between w-full md:w-auto">
+              <div className="space-y-1 md:space-y-2">
+                <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
+                  <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
+                  {subTitle}
+                </div>
+                <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-slate-900">
+                  {sectionTitle}
+                </h2>
+              </div>
+              {/* Mobile arrows */}
+              <div className="flex gap-2 md:hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                  }}
+                  className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                  }}
+                  className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+            {/* Desktop arrows */}
+            <div className="hidden md:flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const container = document.getElementById(carouselId);
+                  if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                }}
+                className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const container = document.getElementById(carouselId);
+                  if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                }}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
+                style={{ backgroundColor: brandColor }}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Carousel Container */}
+          <div className="relative overflow-hidden rounded-xl">
+            {/* Fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+
+            {/* Scrollable area với Mouse Drag */}
+            <div
+              id={carouselId}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-3 md:gap-5 py-4 px-2 cursor-grab active:cursor-grabbing select-none scrollbar-hide"
+              style={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch'
+              }}
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el.dataset.isDown = 'true';
+                el.dataset.startX = String(e.pageX - el.offsetLeft);
+                el.dataset.scrollLeft = String(el.scrollLeft);
+                el.style.scrollBehavior = 'auto';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (el.dataset.isDown !== 'true') return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - Number(el.dataset.startX)) * 1.5;
+                el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+              }}
+            >
               {products.slice(0, 8).map((product) => {
                 const discount = getDiscount(product.price, product.salePrice);
                 return (
-                  <Link 
+                  <Link
                     key={product._id}
                     href={`/products/${product.slug}`}
-                    className="flex-shrink-0 w-[160px] md:w-[220px] lg:w-[260px] group cursor-pointer"
+                    className="flex-shrink-0 snap-start w-[160px] md:w-[220px] lg:w-[260px] group cursor-pointer"
+                    draggable={false}
                   >
                     <div className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 mb-3 border border-transparent hover:border-slate-200 transition-all">
                       {product.image ? (
-                        <img src={product.image} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <img src={product.image} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" draggable={false} />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center"><Package size={40} className="text-slate-300" /></div>
                       )}
@@ -295,8 +396,17 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                   </Link>
                 );
               })}
+              {/* End spacer */}
+              <div className="flex-shrink-0 w-4" />
             </div>
           </div>
+
+          {/* CSS để ẩn scrollbar */}
+          <style>{`
+            #${carouselId}::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
         </div>
       </section>
     );
