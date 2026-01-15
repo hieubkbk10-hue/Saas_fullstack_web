@@ -250,7 +250,7 @@ function HomeComponentsPage() {
         </DndContext>
         {sortedComponents.length > 0 && (
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">
-            Hiển thị {sortedComponents.length} component - Kéo thả để sắp xếp thứ tự
+            Hiển thị {sortedComponents.length} component - Kéo thả,xếp thứ tự
           </div>
         )}
       </Card>
