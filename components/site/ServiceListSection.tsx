@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Briefcase, Loader2, ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
+import { Briefcase, Loader2, ArrowRight, ArrowUpRight, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Luxury Services Gallery UI/UX - 6 Variants (added minimal & showcase)
 type ServiceListStyle = 'grid' | 'bento' | 'list' | 'carousel' | 'minimal' | 'showcase';
@@ -364,50 +364,157 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
     );
   }
 
-  // Style 4: Carousel - Horizontal scroll với snap
+  // Style 4: Carousel - Horizontal scroll với snap và navigation
   if (style === 'carousel') {
+    const carouselId = `service-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const cardWidth = 280;
+    const gap = 16;
+
     return (
-      <section className="py-12 md:py-16">
+      <section className="py-12 md:py-16 px-3 md:px-6">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex flex-row items-center justify-between gap-3 border-b border-slate-200/40 pb-3 mb-6 px-3 md:px-6">
-            <h2 className="text-xl md:text-2xl lg:text-3xl font-light tracking-tight text-slate-900">{title}</h2>
-            {showViewAll && (
-              <Link href="/services" className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors">
-                Xem tất cả <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            )}
-          </div>
-          {/* Carousel Container */}
-          <div className="flex gap-4 overflow-x-auto pb-4 px-3 md:px-6 snap-x snap-mandatory scroll-smooth" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
-            {services.slice(0, 8).map((service, idx) => (
-              <Link key={service._id} href={`/services/${service.slug}`} className="snap-start flex-shrink-0 w-[75vw] sm:w-[280px]">
-                <article 
-                  className="group cursor-pointer relative bg-white border rounded-xl p-3 flex flex-col hover:-translate-y-1 transition-all duration-300 h-full"
-                  style={{ borderColor: `${brandColor}10` }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}30`; (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 20px ${brandColor}12`; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}10`; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+          {/* Header với navigation arrows */}
+          <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between">
+            <div className="flex items-end justify-between w-full md:w-auto">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-light tracking-tight text-slate-900">{title}</h2>
+              {/* Mobile arrows */}
+              <div className="flex gap-2 md:hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                  }}
+                  className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
                 >
-                  {idx < 2 && <div className="absolute z-20 top-5 left-5"><ServiceBadge isHot={idx === 0} isNew={idx === 1} brandColor={brandColor} /></div>}
-                  <div className="relative overflow-hidden bg-slate-100 mb-3 rounded-lg aspect-[4/3] w-full">
-                    {service.thumbnail ? (
-                      <img src={service.thumbnail} alt={service.title} draggable={false} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center"><Briefcase size={32} className="text-slate-300" /></div>
-                    )}
-                  </div>
-                  <div className="flex flex-col justify-between flex-shrink-0 pt-1">
-                    <h3 className="font-medium text-base text-slate-900 leading-tight group-hover:opacity-70 transition-colors line-clamp-2">{service.title}</h3>
-                    <div className="flex items-end justify-between mt-3">
-                      <span className="text-sm font-semibold tracking-wide" style={{ color: brandColor }}>{formatServicePrice(service.price)}</span>
-                      <ArrowUpRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" style={{ color: brandColor }} />
-                    </div>
-                  </div>
-                </article>
-              </Link>
-            ))}
-            <div className="snap-start flex-shrink-0 w-3 md:w-6" aria-hidden="true" />
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                  }}
+                  className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+            {/* Desktop arrows + View All */}
+            <div className="hidden md:flex items-center gap-4">
+              {showViewAll && (
+                <Link href="/services" className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors">
+                  Xem tất cả <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              )}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
           </div>
+
+          {/* Carousel Container */}
+          <div className="relative overflow-hidden rounded-xl">
+            {/* Fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+
+            {/* Scrollable area với Mouse Drag */}
+            <div
+              id={carouselId}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 py-4 px-2 cursor-grab active:cursor-grabbing select-none scrollbar-hide"
+              style={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch'
+              }}
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el.dataset.isDown = 'true';
+                el.dataset.startX = String(e.pageX - el.offsetLeft);
+                el.dataset.scrollLeft = String(el.scrollLeft);
+                el.style.scrollBehavior = 'auto';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (el.dataset.isDown !== 'true') return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - Number(el.dataset.startX)) * 1.5;
+                el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+              }}
+            >
+              {services.slice(0, 8).map((service, idx) => (
+                <Link
+                  key={service._id}
+                  href={`/services/${service.slug}`}
+                  className="snap-start flex-shrink-0 w-[75vw] sm:w-[280px] group"
+                  draggable={false}
+                >
+                  <article
+                    className="cursor-pointer relative bg-white border rounded-xl p-3 flex flex-col hover:-translate-y-1 transition-all duration-300 h-full"
+                    style={{ borderColor: `${brandColor}10` }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}30`; (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 20px ${brandColor}12`; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}10`; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
+                  >
+                    {idx < 2 && <div className="absolute z-20 top-5 left-5"><ServiceBadge isHot={idx === 0} isNew={idx === 1} brandColor={brandColor} /></div>}
+                    <div className="relative overflow-hidden bg-slate-100 mb-3 rounded-lg aspect-[4/3] w-full">
+                      {service.thumbnail ? (
+                        <img src={service.thumbnail} alt={service.title} draggable={false} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center"><Briefcase size={32} className="text-slate-300" /></div>
+                      )}
+                    </div>
+                    <div className="flex flex-col justify-between flex-shrink-0 pt-1">
+                      <h3 className="font-medium text-base text-slate-900 leading-tight group-hover:opacity-70 transition-colors line-clamp-2">{service.title}</h3>
+                      <div className="flex items-end justify-between mt-3">
+                        <span className="text-sm font-semibold tracking-wide" style={{ color: brandColor }}>{formatServicePrice(service.price)}</span>
+                        <ArrowUpRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" style={{ color: brandColor }} />
+                      </div>
+                    </div>
+                  </article>
+                </Link>
+              ))}
+              {/* End spacer */}
+              <div className="flex-shrink-0 w-4" />
+            </div>
+          </div>
+
+          {/* CSS để ẩn scrollbar */}
+          <style>{`
+            #${carouselId}::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
         </div>
       </section>
     );
