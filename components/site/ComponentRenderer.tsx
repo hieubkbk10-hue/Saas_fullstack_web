@@ -1381,32 +1381,100 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 5: Carousel - Horizontal cards layout
+  // Style 5: Carousel - Horizontal scroll với navigation và drag
   if (style === 'carousel') {
+    const carouselId = `services-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const cardWidth = 300;
+    const gap = 20;
+    // Responsive: Desktop ~3-4 items, chỉ hiện arrows khi có nhiều items
+    const showArrowsDesktop = visibleItems.length > 3;
+
     return (
       <section className="py-12 md:py-16 px-4">
-        <div className="max-w-6xl mx-auto space-y-8">
-          <div className="border-b border-slate-200 pb-4">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Header với navigation arrows */}
+          <div className="flex items-center justify-between border-b border-slate-200 pb-4">
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
+            {showArrowsDesktop && (
+              <div className="hidden md:flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {visibleItems.map((item, idx) => (
-              <div key={idx} className="bg-white rounded-xl overflow-hidden border shadow-sm" style={{ borderColor: `${brandColor}15` }}>
-                <div className="h-2 w-full" style={{ background: `linear-gradient(to right, ${brandColor}66, ${brandColor})` }} />
-                <div className="p-5">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${brandColor}10` }}>
-                      <ServiceIconRenderer name={item.icon} size={24} style={{ color: brandColor }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-slate-900 mb-1">{item.title || 'Tiêu đề'}</h3>
-                      <p className="text-sm text-slate-500 line-clamp-2">{item.description || 'Mô tả...'}</p>
+
+          {/* Carousel Container */}
+          <div className="relative overflow-hidden rounded-xl">
+            <div className="absolute left-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-r from-white/10 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-l from-white/10 to-transparent z-10 pointer-events-none" />
+
+            <div
+              id={carouselId}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-5 py-4 px-2 cursor-grab active:cursor-grabbing select-none"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el.dataset.isDown = 'true';
+                el.dataset.startX = String(e.pageX - el.offsetLeft);
+                el.dataset.scrollLeft = String(el.scrollLeft);
+                el.style.scrollBehavior = 'auto';
+              }}
+              onMouseLeave={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (el.dataset.isDown !== 'true') return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - Number(el.dataset.startX)) * 1.5;
+                el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+              }}
+            >
+              {visibleItems.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="snap-start flex-shrink-0 w-[280px] md:w-[300px] bg-white rounded-xl overflow-hidden border shadow-sm"
+                  style={{ borderColor: `${brandColor}15` }}
+                  draggable={false}
+                >
+                  <div className="h-2 w-full" style={{ background: `linear-gradient(to right, ${brandColor}66, ${brandColor})` }} />
+                  <div className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${brandColor}10` }}>
+                        <ServiceIconRenderer name={item.icon} size={24} style={{ color: brandColor }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-slate-900 mb-1">{item.title || 'Tiêu đề'}</h3>
+                        <p className="text-sm text-slate-500 line-clamp-2">{item.description || 'Mô tả...'}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+              <div className="flex-shrink-0 w-4" />
+            </div>
           </div>
+
+          <style>{`#${carouselId}::-webkit-scrollbar { display: none; }`}</style>
         </div>
       </section>
     );
@@ -1622,46 +1690,96 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
     );
   }
 
-  // Style 5: Carousel - Horizontal scroll với navigation arrows
+  // Style 5: Carousel - Horizontal scroll với navigation arrows và drag scroll
   if (style === 'carousel') {
-    const scrollRef = React.useRef<HTMLDivElement>(null);
-    const scroll = (direction: 'left' | 'right') => {
-      if (!scrollRef.current) return;
-      const cardWidth = 320 + 16; // card width + gap
-      scrollRef.current.scrollBy({ left: direction === 'left' ? -cardWidth : cardWidth, behavior: 'smooth' });
-    };
+    const carouselId = `benefits-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const cardWidth = 320;
+    const gap = 16;
+    // Responsive: Desktop ~3 items (320px each), chỉ hiện arrows khi có > 3 items
+    const showArrowsDesktop = items.length > 3;
+
     return (
       <section className="py-12 md:py-16 px-4">
-        <div className="max-w-6xl mx-auto space-y-8">
-          <BenefitsHeader />
-          <div className="relative group">
-            {/* Navigation Arrows */}
-            <button
-              onClick={() => scroll('left')}
-              className="absolute -left-2 md:-left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border flex items-center justify-center transition-all hover:scale-110 opacity-0 group-hover:opacity-100"
-              style={{ borderColor: `${brandColor}20` }}
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Header với navigation arrows */}
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="flex-1">
+              <BenefitsHeader />
+            </div>
+            {/* Desktop arrows - chỉ hiện khi có > 3 items */}
+            {showArrowsDesktop && (
+              <div className="hidden md:flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full border flex items-center justify-center hover:bg-slate-50 transition-colors"
+                  style={{ borderColor: `${brandColor}20` }}
+                >
+                  <ChevronLeft size={20} style={{ color: brandColor }} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Carousel Container */}
+          <div className="relative overflow-hidden rounded-xl">
+            {/* Fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-r from-white/10 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-l from-white/10 to-transparent z-10 pointer-events-none" />
+
+            {/* Scrollable area với Mouse Drag */}
+            <div
+              id={carouselId}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 py-4 px-2 cursor-grab active:cursor-grabbing select-none scrollbar-hide"
+              style={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch'
+              }}
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el.dataset.isDown = 'true';
+                el.dataset.startX = String(e.pageX - el.offsetLeft);
+                el.dataset.scrollLeft = String(el.scrollLeft);
+                el.style.scrollBehavior = 'auto';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (el.dataset.isDown !== 'true') return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - Number(el.dataset.startX)) * 1.5;
+                el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+              }}
             >
-              <ChevronLeft size={20} style={{ color: brandColor }} />
-            </button>
-            <button
-              onClick={() => scroll('right')}
-              className="absolute -right-2 md:-right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border flex items-center justify-center transition-all hover:scale-110 opacity-0 group-hover:opacity-100"
-              style={{ borderColor: `${brandColor}20` }}
-            >
-              <ChevronRight size={20} style={{ color: brandColor }} />
-            </button>
-            {/* Carousel Container - hidden scrollbar */}
-            <div 
-              ref={scrollRef}
-              className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              <style>{`.benefits-carousel::-webkit-scrollbar { display: none; }`}</style>
               {items.map((item, idx) => (
-                <div 
-                  key={idx} 
-                  className="w-[280px] md:w-[320px] flex-shrink-0 snap-start rounded-xl p-5 md:p-6 border shadow-sm"
+                <div
+                  key={idx}
+                  className="snap-start w-[280px] md:w-[320px] flex-shrink-0 rounded-xl p-5 md:p-6 border shadow-sm"
                   style={{ backgroundColor: idx === 0 ? brandColor : `${brandColor}08`, borderColor: `${brandColor}20` }}
+                  draggable={false}
                 >
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${idx === 0 ? 'bg-white/20' : ''}`} style={idx !== 0 ? { backgroundColor: brandColor } : {}}>
                     <Check size={18} strokeWidth={3} className="text-white" />
@@ -1670,8 +1788,17 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
                   <p className={`text-sm leading-relaxed line-clamp-3 ${idx === 0 ? 'text-white/80' : 'text-slate-500'}`}>{item.description}</p>
                 </div>
               ))}
+              {/* End spacer */}
+              <div className="flex-shrink-0 w-4" />
             </div>
           </div>
+
+          {/* CSS để ẩn scrollbar */}
+          <style>{`
+            #${carouselId}::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
         </div>
       </section>
     );
@@ -2481,23 +2608,78 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
     );
   }
 
-  // Style 5: Carousel - Horizontal scroll cards
+  // Style 5: Carousel - Horizontal scroll cards với navigation và drag
   if (style === 'carousel') {
+    const carouselId = `testimonials-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const cardWidth = 360;
+    const gap = 24;
+    // Responsive: Desktop ~3 items (360px each), chỉ hiện arrows khi có > 3 items
+    const showArrowsDesktop = items.length > 3;
+
     return (
       <section className="py-16 px-4 bg-slate-50">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-          
-          <div className="relative">
-            <div 
-              className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory" 
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          <div className="flex items-center justify-between mb-10">
+            <h2 className="text-3xl font-bold text-slate-900">{title}</h2>
+            {showArrowsDesktop && (
+              <div className="hidden md:flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-white transition-colors"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="relative overflow-hidden rounded-xl">
+            <div className="absolute left-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-r from-slate-50/80 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-l from-slate-50/80 to-transparent z-10 pointer-events-none" />
+
+            <div
+              id={carouselId}
+              className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el.dataset.isDown = 'true';
+                el.dataset.startX = String(e.pageX - el.offsetLeft);
+                el.dataset.scrollLeft = String(el.scrollLeft);
+                el.style.scrollBehavior = 'auto';
+              }}
+              onMouseLeave={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (el.dataset.isDown !== 'true') return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - Number(el.dataset.startX)) * 1.5;
+                el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+              }}
             >
               {items.map((item, idx) => (
-                <div 
-                  key={idx} 
-                  className="flex-shrink-0 snap-center w-[320px] md:w-[360px] bg-white rounded-xl p-6 shadow-md border flex flex-col"
+                <div
+                  key={idx}
+                  className="flex-shrink-0 snap-start w-[320px] md:w-[360px] bg-white rounded-xl p-6 shadow-md border flex flex-col"
                   style={{ borderColor: `${brandColor}15` }}
+                  draggable={false}
                 >
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ backgroundColor: brandColor }}>
@@ -2512,20 +2694,11 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
                   <p className="mt-4 text-slate-600 line-clamp-4 flex-1">"{item.content}"</p>
                 </div>
               ))}
+              <div className="flex-shrink-0 w-4" />
             </div>
-            
-            {items.length > 3 && (
-              <div className="flex justify-center gap-2 mt-6">
-                {items.map((_, idx) => (
-                  <div 
-                    key={idx} 
-                    className="w-2 h-2 rounded-full bg-slate-300"
-                    style={idx === 0 ? { backgroundColor: brandColor } : {}}
-                  />
-                ))}
-              </div>
-            )}
           </div>
+
+          <style>{`#${carouselId}::-webkit-scrollbar { display: none; }`}</style>
         </div>
       </section>
     );
@@ -3138,6 +3311,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
   const items = (config.items as TrustBadgeItem[]) || [];
   const style = (config.style as TrustBadgesStyle) || 'cards';
   const [selectedCert, setSelectedCert] = React.useState<TrustBadgeItem | null>(null);
+  const [carouselIndex, setCarouselIndex] = React.useState(0);
 
   // Style 1: Square Grid - Full color, clickable to lightbox
   if (style === 'grid') {
@@ -3320,91 +3494,110 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
     );
   }
 
-  // Style 5: Carousel - Grid with navigation arrows (like preview)
+  // Style 5: Carousel - Horizontal scroll với navigation và drag
   if (style === 'carousel') {
-    const itemsPerView = 4; // Desktop: 4 items per view
-    const [carouselIndex, setCarouselIndex] = React.useState(0);
-    const maxIndex = Math.max(0, items.length - itemsPerView);
-    
+    const carouselId = `trustbadges-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const cardWidth = 180;
+    const gap = 16;
+    // Responsive: Desktop ~6 items (180px each), chỉ hiện arrows khi có > 5 items
+    const showArrowsDesktop = items.length > 5;
+
     return (
       <section className="w-full py-12 md:py-16 bg-white">
         <div className="container max-w-7xl mx-auto px-4">
-          <div className="text-center mb-10">
+          <div className="flex items-center justify-between mb-10">
             <h2 className="text-2xl md:text-3xl font-bold" style={{ color: brandColor }}>{title}</h2>
-          </div>
-          <div className="relative">
-            {items.length > itemsPerView && (
-              <>
+            {showArrowsDesktop && (
+              <div className="hidden md:flex items-center gap-2">
                 <button
-                  onClick={() => setCarouselIndex(Math.max(0, carouselIndex - 1))}
-                  disabled={carouselIndex === 0}
-                  className={`absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center transition-all ${carouselIndex === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110'}`}
-                  style={{ left: '-16px', border: `1px solid ${brandColor}20` }}
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center transition-all hover:scale-110"
+                  style={{ border: `1px solid ${brandColor}20` }}
                 >
                   <ChevronLeft size={20} style={{ color: brandColor }} />
                 </button>
                 <button
-                  onClick={() => setCarouselIndex(Math.min(maxIndex, carouselIndex + 1))}
-                  disabled={carouselIndex >= maxIndex}
-                  className={`absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center transition-all ${carouselIndex >= maxIndex ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110'}`}
-                  style={{ right: '-16px', border: `1px solid ${brandColor}20` }}
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg transition-all hover:scale-110"
+                  style={{ backgroundColor: brandColor }}
                 >
-                  <ChevronRight size={20} style={{ color: brandColor }} />
+                  <ChevronRight size={20} />
                 </button>
-              </>
-            )}
-            <div className="overflow-hidden mx-4">
-              <div 
-                className="flex transition-transform duration-300 ease-out gap-4"
-                style={{ transform: `translateX(-${carouselIndex * (100 / itemsPerView)}%)` }}
-              >
-                {items.map((item, idx) => (
-                  <div 
-                    key={idx}
-                    onClick={() => setSelectedCert(item)}
-                    className="flex-shrink-0 group cursor-zoom-in"
-                    style={{ width: `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 16 / itemsPerView}px)` }}
-                  >
-                    <div 
-                      className="aspect-square rounded-xl flex items-center justify-center p-4 md:p-5 transition-all duration-300"
-                      style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
-                      onMouseEnter={(e) => { 
-                        e.currentTarget.style.borderColor = `${brandColor}40`; 
-                        e.currentTarget.style.boxShadow = `0 8px 20px ${brandColor}15`; 
-                        e.currentTarget.style.transform = 'translateY(-4px)';
-                      }}
-                      onMouseLeave={(e) => { 
-                        e.currentTarget.style.borderColor = `${brandColor}15`; 
-                        e.currentTarget.style.boxShadow = 'none';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                      }}
-                    >
-                      {item.url ? (
-                        <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} />
-                      ) : (
-                        <ImageIcon size={32} className="text-slate-300" />
-                      )}
-                    </div>
-                    {item.name && (
-                      <p className="text-center text-xs font-medium text-slate-500 mt-2 truncate px-1">{item.name}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-            {items.length > itemsPerView && (
-              <div className="flex justify-center gap-2 mt-6">
-                {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
-                  <button 
-                    key={idx} 
-                    onClick={() => setCarouselIndex(idx)} 
-                    className={`h-2 rounded-full transition-all ${carouselIndex === idx ? 'w-6' : 'w-2'}`}
-                    style={{ backgroundColor: carouselIndex === idx ? brandColor : `${brandColor}30` }}
-                  />
-                ))}
               </div>
             )}
           </div>
+
+          <div className="relative overflow-hidden rounded-xl">
+            <div className="absolute left-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-r from-white/10 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-l from-white/10 to-transparent z-10 pointer-events-none" />
+
+            <div
+              id={carouselId}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 py-4 px-2 cursor-grab active:cursor-grabbing select-none"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el.dataset.isDown = 'true';
+                el.dataset.startX = String(e.pageX - el.offsetLeft);
+                el.dataset.scrollLeft = String(el.scrollLeft);
+                el.style.scrollBehavior = 'auto';
+              }}
+              onMouseLeave={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (el.dataset.isDown !== 'true') return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - Number(el.dataset.startX)) * 1.5;
+                el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+              }}
+            >
+              {items.map((item, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => setSelectedCert(item)}
+                  className="snap-start flex-shrink-0 w-[140px] md:w-[180px] group cursor-zoom-in"
+                  draggable={false}
+                >
+                  <div
+                    className="aspect-square rounded-xl flex items-center justify-center p-4 md:p-5 transition-all duration-300"
+                    style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = `${brandColor}40`;
+                      e.currentTarget.style.boxShadow = `0 8px 20px ${brandColor}15`;
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = `${brandColor}15`;
+                      e.currentTarget.style.boxShadow = 'none';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    {item.url ? (
+                      <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} draggable={false} />
+                    ) : (
+                      <ImageIcon size={32} className="text-slate-300" />
+                    )}
+                  </div>
+                  {item.name && (
+                    <p className="text-center text-xs font-medium text-slate-500 mt-2 truncate px-1">{item.name}</p>
+                  )}
+                </div>
+              ))}
+              <div className="flex-shrink-0 w-4" />
+            </div>
+          </div>
+
+          <style>{`#${carouselId}::-webkit-scrollbar { display: none; }`}</style>
         </div>
         <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
       </section>
@@ -3897,37 +4090,121 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
     );
   }
 
-  // Style: Carousel - Paginated grid with navigation
+  // Style: Carousel - Horizontal scrollable với navigation và drag scroll
   if (style === 'carousel') {
+    const carouselId = `partners-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const cardWidth = 180;
+    const gap = 24;
+    // Responsive: Desktop ~6 items (180px each), chỉ hiện arrows khi có > 5 items
+    const showArrowsDesktop = items.length > 5;
+
     return (
       <section className="w-full py-10 bg-white border-b border-slate-200/40">
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-8">
-          <div className="flex items-center justify-between gap-6">
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 space-y-6">
+          {/* Header với navigation arrows */}
+          <div className="flex items-center justify-between gap-4">
             <h2 className="text-2xl font-bold tracking-tight text-slate-900 relative pl-4">
               <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full" style={{ backgroundColor: brandColor }}></span>
               {title}
             </h2>
+            {/* Desktop arrows - chỉ hiện khi có > 5 items */}
+            {showArrowsDesktop && (
+              <div className="hidden md:flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                  }}
+                  className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                  }}
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-white transition-colors"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 items-center">
-            {items.slice(0, 6).map((item, idx) => (
-              <a
-                key={idx}
-                href={item.link || '#'}
-                className="group flex flex-col items-center justify-center p-4 rounded-xl border transition-all aspect-[3/2] hover:shadow-lg"
-                style={{ borderColor: `${brandColor}15` }}
-              >
-                {item.url ? (
-                  <img 
-                    src={item.url} 
-                    alt=""
-                    className="h-10 w-auto object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" 
-                  />
-                ) : (
-                  <ImageIcon size={36} className="text-slate-300" />
-                )}
-              </a>
-            ))}
+
+          {/* Carousel Container */}
+          <div className="relative overflow-hidden rounded-xl">
+            {/* Fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-r from-white/10 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-l from-white/10 to-transparent z-10 pointer-events-none" />
+
+            {/* Scrollable area với Mouse Drag */}
+            <div
+              id={carouselId}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-6 py-4 px-2 cursor-grab active:cursor-grabbing select-none scrollbar-hide"
+              style={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch'
+              }}
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el.dataset.isDown = 'true';
+                el.dataset.startX = String(e.pageX - el.offsetLeft);
+                el.dataset.scrollLeft = String(el.scrollLeft);
+                el.style.scrollBehavior = 'auto';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (el.dataset.isDown !== 'true') return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - Number(el.dataset.startX)) * 1.5;
+                el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+              }}
+            >
+              {items.map((item, idx) => (
+                <a
+                  key={idx}
+                  href={item.link || '#'}
+                  className="snap-start flex-shrink-0 group flex flex-col items-center justify-center p-4 rounded-xl border transition-all w-[140px] md:w-[180px] aspect-[3/2] hover:shadow-lg"
+                  style={{ borderColor: `${brandColor}15` }}
+                  draggable={false}
+                >
+                  {item.url ? (
+                    <img
+                      src={item.url}
+                      alt=""
+                      draggable={false}
+                      className="h-10 w-auto object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                    />
+                  ) : (
+                    <ImageIcon size={36} className="text-slate-300" />
+                  )}
+                </a>
+              ))}
+              {/* End spacer */}
+              <div className="flex-shrink-0 w-4" />
+            </div>
           </div>
+
+          {/* CSS để ẩn scrollbar */}
+          <style>{`
+            #${carouselId}::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
         </div>
       </section>
     );
@@ -4997,85 +5274,100 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
 
   // Style 5: Carousel - Horizontal scroll carousel
   if (style === 'carousel') {
-    const itemsPerView = 3;
-    const maxIndex = Math.max(0, projects.length - itemsPerView);
+    const caseStudyCarouselId = `casestudy-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const cardWidth = 320;
+    const gap = 24;
+    // Responsive: Desktop ~3 items (320px each), chỉ hiện arrows khi có > 3 items
+    const showArrows = projects.length > 3;
 
     return (
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
-          <div className="relative">
-            {/* Navigation Buttons */}
-            {projects.length > itemsPerView && (
-              <>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold text-slate-900">{title}</h2>
+            {showArrows && (
+              <div className="flex gap-2">
                 <button
-                  onClick={() => setCarouselIndex(Math.max(0, carouselIndex - 1))}
-                  disabled={carouselIndex === 0}
-                  className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(caseStudyCarouselId);
+                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full bg-white shadow-md border flex items-center justify-center hover:scale-110 transition-transform"
                   style={{ borderColor: `${brandColor}20` }}
                 >
                   <ChevronLeft size={20} style={{ color: brandColor }} />
                 </button>
                 <button
-                  onClick={() => setCarouselIndex(Math.min(maxIndex, carouselIndex + 1))}
-                  disabled={carouselIndex >= maxIndex}
-                  className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg border flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(caseStudyCarouselId);
+                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full bg-white shadow-md border flex items-center justify-center hover:scale-110 transition-transform"
                   style={{ borderColor: `${brandColor}20` }}
                 >
                   <ChevronRight size={20} style={{ color: brandColor }} />
                 </button>
-              </>
-            )}
-            {/* Carousel Container */}
-            <div className="overflow-hidden mx-8">
-              <div 
-                className="flex transition-transform duration-300 ease-out gap-6" 
-                style={{ transform: `translateX(-${carouselIndex * (100 / itemsPerView)}%)` }}
-              >
-                {projects.map((project, idx) => (
-                  <a 
-                    key={idx} 
-                    href={project.link || '#'} 
-                    className="flex-shrink-0 bg-white rounded-xl overflow-hidden border group"
-                    style={{ 
-                      width: `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 24 / itemsPerView}px)`,
-                      borderColor: `${brandColor}15`
-                    }}
-                  >
-                    <div className="aspect-[4/3] bg-slate-100 overflow-hidden">
-                      {project.image ? (
-                        <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ImageIcon size={32} className="text-slate-300" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-5">
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                        {project.category || 'Category'}
-                      </span>
-                      <h4 className="font-semibold text-slate-900 mt-2 line-clamp-2 min-h-[3rem]">{project.title || 'Tên dự án'}</h4>
-                      <p className="text-sm text-slate-500 mt-1 line-clamp-2 min-h-[2.5rem]">{project.description}</p>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </div>
-            {/* Dots Indicator */}
-            {projects.length > itemsPerView && (
-              <div className="flex justify-center gap-2 mt-6">
-                {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
-                  <button 
-                    key={idx} 
-                    onClick={() => setCarouselIndex(idx)} 
-                    className={`h-2 rounded-full transition-all ${carouselIndex === idx ? 'w-6' : 'w-2'}`} 
-                    style={{ backgroundColor: carouselIndex === idx ? brandColor : `${brandColor}30` }} 
-                  />
-                ))}
               </div>
             )}
           </div>
+          <div className="relative">
+            <div
+              id={caseStudyCarouselId}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-6 py-4 px-2 cursor-grab active:cursor-grabbing select-none"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el.dataset.isDown = 'true';
+                el.dataset.startX = String(e.pageX - el.offsetLeft);
+                el.dataset.scrollLeft = String(el.scrollLeft);
+                el.style.scrollBehavior = 'auto';
+              }}
+              onMouseLeave={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (el.dataset.isDown !== 'true') return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - Number(el.dataset.startX)) * 1.5;
+                el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+              }}
+            >
+              {projects.map((project, idx) => (
+                <a
+                  key={idx}
+                  href={project.link || '#'}
+                  className="snap-start flex-shrink-0 w-[320px] bg-white rounded-xl overflow-hidden border group transition-all hover:shadow-lg"
+                  style={{ borderColor: `${brandColor}15` }}
+                  draggable={false}
+                >
+                  <div className="aspect-[4/3] bg-slate-100 overflow-hidden">
+                    {project.image ? (
+                      <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" draggable={false} />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon size={32} className="text-slate-300" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-5">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                      {project.category || 'Category'}
+                    </span>
+                    <h4 className="font-semibold text-slate-900 mt-2 line-clamp-2 min-h-[3rem]">{project.title || 'Tên dự án'}</h4>
+                    <p className="text-sm text-slate-500 mt-1 line-clamp-2 min-h-[2.5rem]">{project.description}</p>
+                  </div>
+                </a>
+              ))}
+              <div className="flex-shrink-0 w-4" />
+            </div>
+            {/* Fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-l from-white/10 to-transparent pointer-events-none" />
+          </div>
+          <style>{`#${caseStudyCarouselId}::-webkit-scrollbar { display: none; }`}</style>
         </div>
       </section>
     );
@@ -5414,29 +5706,85 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
 
   // Style 2: Carousel - Horizontal scroll with navigation
   if (style === 'carousel') {
+    const productCatCarouselId = `productcat-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const cardWidth = 160;
+    const gap = 16;
+    // Responsive: Desktop ~7 items (160px each), chỉ hiện arrows khi có > 6 items
+    const showArrows = resolvedCategories.length > 6;
+
     return (
       <section className="py-10 md:py-16">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between px-4 md:px-6 mb-6 md:mb-8">
             <h2 className="text-xl md:text-2xl lg:text-3xl font-bold">{title}</h2>
-            <a 
-              href="/products"
-              className="text-sm font-medium flex items-center gap-1 hover:underline whitespace-nowrap"
-              style={{ color: brandColor }}
-            >
-              Xem tất cả
-              <ArrowRight size={16} />
-            </a>
+            <div className="flex items-center gap-2 md:gap-4">
+              {showArrows && (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = document.getElementById(productCatCarouselId);
+                      if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    }}
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white shadow-md border flex items-center justify-center hover:scale-110 transition-transform"
+                    style={{ borderColor: `${brandColor}20` }}
+                  >
+                    <ChevronLeft size={18} style={{ color: brandColor }} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = document.getElementById(productCatCarouselId);
+                      if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    }}
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white shadow-md border flex items-center justify-center hover:scale-110 transition-transform"
+                    style={{ borderColor: `${brandColor}20` }}
+                  >
+                    <ChevronRight size={18} style={{ color: brandColor }} />
+                  </button>
+                </div>
+              )}
+              <a
+                href="/products"
+                className="text-sm font-medium flex items-center gap-1 hover:underline whitespace-nowrap"
+                style={{ color: brandColor }}
+              >
+                Xem tất cả
+                <ArrowRight size={16} />
+              </a>
+            </div>
           </div>
-          <div className="overflow-x-auto pb-4 px-4 md:px-6 scrollbar-hide">
-            <div className="flex gap-3 md:gap-4">
+          <div className="relative px-4 md:px-6">
+            <div
+              id={productCatCarouselId}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-3 md:gap-4 py-2 cursor-grab active:cursor-grabbing select-none"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el.dataset.isDown = 'true';
+                el.dataset.startX = String(e.pageX - el.offsetLeft);
+                el.dataset.scrollLeft = String(el.scrollLeft);
+                el.style.scrollBehavior = 'auto';
+              }}
+              onMouseLeave={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (el.dataset.isDown !== 'true') return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - Number(el.dataset.startX)) * 1.5;
+                el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+              }}
+            >
               {resolvedCategories.map((cat) => (
-                <a 
+                <a
                   key={cat.id}
                   href={`/products?category=${cat.slug}`}
-                  className="flex-shrink-0 w-32 md:w-40 group cursor-pointer"
+                  className="snap-start flex-shrink-0 w-32 md:w-40 group cursor-pointer"
+                  draggable={false}
                 >
-                  <div 
+                  <div
                     className="aspect-square rounded-xl overflow-hidden mb-2 transition-all"
                     style={{ border: `2px solid ${brandColor}15` }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; }}
@@ -5450,8 +5798,13 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
                   )}
                 </a>
               ))}
+              <div className="flex-shrink-0 w-4" />
             </div>
+            {/* Fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-l from-white/10 to-transparent pointer-events-none" />
           </div>
+          <style>{`#${productCatCarouselId}::-webkit-scrollbar { display: none; }`}</style>
         </div>
       </section>
     );
@@ -5825,65 +6178,129 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
 
   // Style 2: Carousel
   if (style === 'carousel') {
+    const cardWidth = 192;
+    const gap = 16;
+
     return (
       <div className="py-8 md:py-12 space-y-10 md:space-y-16">
-        {resolvedSections.map((section, idx) => (
-          <section key={idx}>
-            <div className="max-w-7xl mx-auto">
-              <div className="flex items-center justify-between px-4 mb-6">
-                <h2 className="text-xl md:text-2xl font-bold">{section.category.name}</h2>
-                {showViewAll && (
-                  <a 
-                    href={`/products?category=${section.category.slug || section.category._id}`}
-                    className="text-sm font-medium flex items-center gap-1 hover:underline"
-                    style={{ color: brandColor }}
-                  >
-                    Xem danh mục
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </a>
-                )}
-              </div>
-              
-              {section.products.length > 0 ? (
-                <div className="overflow-x-auto pb-4 px-4">
-                  <div className="flex gap-4">
-                    {section.products.map((product) => (
-                      <a 
-                        key={product._id}
-                        href={`/san-pham/${product.slug || product._id}`}
-                        className="flex-shrink-0 w-40 md:w-48 group cursor-pointer"
+        {resolvedSections.map((section, idx) => {
+          const catProductCarouselId = `catproduct-carousel-${idx}-${Math.random().toString(36).substr(2, 9)}`;
+          // Responsive: Desktop ~5-6 items (192px each), chỉ hiện arrows khi có > 5 items
+          const showArrows = section.products.length > 5;
+          return (
+            <section key={idx}>
+              <div className="max-w-7xl mx-auto">
+                <div className="flex items-center justify-between px-4 mb-6">
+                  <h2 className="text-xl md:text-2xl font-bold">{section.category.name}</h2>
+                  <div className="flex items-center gap-2 md:gap-4">
+                    {showArrows && (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const container = document.getElementById(catProductCarouselId);
+                            if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                          }}
+                          className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white shadow-md border flex items-center justify-center hover:scale-110 transition-transform"
+                          style={{ borderColor: `${brandColor}20` }}
+                        >
+                          <ChevronLeft size={18} style={{ color: brandColor }} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const container = document.getElementById(catProductCarouselId);
+                            if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                          }}
+                          className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white shadow-md border flex items-center justify-center hover:scale-110 transition-transform"
+                          style={{ borderColor: `${brandColor}20` }}
+                        >
+                          <ChevronRight size={18} style={{ color: brandColor }} />
+                        </button>
+                      </div>
+                    )}
+                    {showViewAll && (
+                      <a
+                        href={`/products?category=${section.category.slug || section.category._id}`}
+                        className="text-sm font-medium flex items-center gap-1 hover:underline"
+                        style={{ color: brandColor }}
                       >
-                        <div className="aspect-square rounded-lg overflow-hidden bg-slate-100 mb-2">
-                          {product.image ? (
-                            <img 
-                              src={product.image} 
-                              alt={product.name} 
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Package size={24} className="text-slate-300" />
-                            </div>
-                          )}
-                        </div>
-                        <h4 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h4>
-                        <span className="font-bold text-base" style={{ color: brandColor }}>
-                          {formatPrice(product.salePrice || product.price)}
-                        </span>
+                        Xem danh mục
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
                       </a>
-                    ))}
+                    )}
                   </div>
                 </div>
-              ) : (
-                <div className="mx-4">
-                  <EmptyProductsState message="Chưa có sản phẩm" />
-                </div>
-              )}
-            </div>
-          </section>
-        ))}
+
+                {section.products.length > 0 ? (
+                  <div className="relative px-4">
+                    <div
+                      id={catProductCarouselId}
+                      className="flex overflow-x-auto snap-x snap-mandatory gap-4 py-2 cursor-grab active:cursor-grabbing select-none"
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+                      onMouseDown={(e) => {
+                        const el = e.currentTarget;
+                        el.dataset.isDown = 'true';
+                        el.dataset.startX = String(e.pageX - el.offsetLeft);
+                        el.dataset.scrollLeft = String(el.scrollLeft);
+                        el.style.scrollBehavior = 'auto';
+                      }}
+                      onMouseLeave={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+                      onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+                      onMouseMove={(e) => {
+                        const el = e.currentTarget;
+                        if (el.dataset.isDown !== 'true') return;
+                        e.preventDefault();
+                        const x = e.pageX - el.offsetLeft;
+                        const walk = (x - Number(el.dataset.startX)) * 1.5;
+                        el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+                      }}
+                    >
+                      {section.products.map((product) => (
+                        <a
+                          key={product._id}
+                          href={`/san-pham/${product.slug || product._id}`}
+                          className="snap-start flex-shrink-0 w-40 md:w-48 group cursor-pointer"
+                          draggable={false}
+                        >
+                          <div className="aspect-square rounded-lg overflow-hidden bg-slate-100 mb-2">
+                            {product.image ? (
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                draggable={false}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package size={24} className="text-slate-300" />
+                              </div>
+                            )}
+                          </div>
+                          <h4 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h4>
+                          <span className="font-bold text-base" style={{ color: brandColor }}>
+                            {formatPrice(product.salePrice || product.price)}
+                          </span>
+                        </a>
+                      ))}
+                      <div className="flex-shrink-0 w-4" />
+                    </div>
+                    {/* Fade edges */}
+                    <div className="absolute left-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
+                    <div className="absolute right-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-l from-white/10 to-transparent pointer-events-none" />
+                    <style>{`#${catProductCarouselId}::-webkit-scrollbar { display: none; }`}</style>
+                  </div>
+                ) : (
+                  <div className="mx-4">
+                    <EmptyProductsState message="Chưa có sản phẩm" />
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+        })}
       </div>
     );
   }
@@ -7167,12 +7584,10 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
 
   // Style 5: Carousel - Horizontal scroll with navigation
   if (style === 'carousel') {
-    const scrollRef = React.useRef<HTMLDivElement>(null);
-    const scroll = (direction: 'left' | 'right') => {
-      if (!scrollRef.current) return;
-      const cardWidth = 320 + 20; // card width + gap
-      scrollRef.current.scrollBy({ left: direction === 'left' ? -cardWidth : cardWidth, behavior: 'smooth' });
-    };
+    const featuresCarouselId = `features-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const cardWidth = 320;
+    const gap = 20;
+
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto">
@@ -7183,30 +7598,71 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
             </div>
             {items.length > 3 && (
               <div className="flex gap-2">
-                <button onClick={() => scroll('left')} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"><ChevronLeft size={20} /></button>
-                <button onClick={() => scroll('right')} className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"><ChevronRight size={20} /></button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(featuresCarouselId);
+                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(featuresCarouselId);
+                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
+                >
+                  <ChevronRight size={20} />
+                </button>
               </div>
             )}
           </div>
-          <div 
-            ref={scrollRef}
-            className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            onWheel={(e) => { if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) { e.currentTarget.scrollLeft += e.deltaY; } }}
-          >
-            {items.map((item, idx) => {
-              const IconComponent = getIcon(item.icon);
-              return (
-                <div key={idx} className="flex-shrink-0 w-[280px] md:w-[320px] snap-start bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-xl transition-all">
-                  <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`, boxShadow: `0 8px 16px -4px ${brandColor}40` }}>
-                    <IconComponent size={24} className="text-white" strokeWidth={2} />
+          <div className="relative">
+            <div
+              id={featuresCarouselId}
+              className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el.dataset.isDown = 'true';
+                el.dataset.startX = String(e.pageX - el.offsetLeft);
+                el.dataset.scrollLeft = String(el.scrollLeft);
+                el.style.scrollBehavior = 'auto';
+              }}
+              onMouseLeave={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (el.dataset.isDown !== 'true') return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - Number(el.dataset.startX)) * 1.5;
+                el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+              }}
+            >
+              {items.map((item, idx) => {
+                const IconComponent = getIcon(item.icon);
+                return (
+                  <div key={idx} className="snap-start flex-shrink-0 w-[280px] md:w-[320px] bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-xl transition-all" draggable={false}>
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style={{ background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`, boxShadow: `0 8px 16px -4px ${brandColor}40` }}>
+                      <IconComponent size={24} className="text-white" strokeWidth={2} />
+                    </div>
+                    <h3 className="font-bold text-lg text-slate-900 mb-2 line-clamp-1">{item.title}</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed line-clamp-3">{item.description}</p>
                   </div>
-                  <h3 className="font-bold text-lg text-slate-900 mb-2 line-clamp-1">{item.title}</h3>
-                  <p className="text-sm text-slate-500 leading-relaxed line-clamp-3">{item.description}</p>
-                </div>
-              );
-            })}
+                );
+              })}
+              <div className="flex-shrink-0 w-4" />
+            </div>
+            {/* Fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-l from-white/10 to-transparent pointer-events-none" />
           </div>
+          <style>{`#${featuresCarouselId}::-webkit-scrollbar { display: none; }`}</style>
         </div>
       </section>
     );

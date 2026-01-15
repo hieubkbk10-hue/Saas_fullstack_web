@@ -262,6 +262,10 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
     const carouselId = `product-carousel-${Math.random().toString(36).substr(2, 9)}`;
     const cardWidth = 260;
     const gap = 20;
+    const displayedProducts = products.slice(0, 8);
+    // Responsive: Desktop ~4 items (260px each), Tablet ~3 items, Mobile ~2 items
+    const showArrowsDesktop = displayedProducts.length > 4;
+    const showArrowsMobile = displayedProducts.length > 2;
 
     return (
       <section className="py-10 md:py-16 px-4 md:px-6">
@@ -278,17 +282,44 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                   {sectionTitle}
                 </h2>
               </div>
-              {/* Mobile arrows */}
-              <div className="flex gap-2 md:hidden">
+              {/* Mobile arrows - chỉ hiện khi có > 2 items */}
+              {showArrowsMobile && (
+                <div className="flex gap-2 md:hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = document.getElementById(carouselId);
+                      if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    }}
+                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = document.getElementById(carouselId);
+                      if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    }}
+                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+            {/* Desktop arrows - chỉ hiện khi có > 4 items */}
+            {showArrowsDesktop && (
+              <div className="hidden md:flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     const container = document.getElementById(carouselId);
                     if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
                   }}
-                  className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                  className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
                 >
-                  <ChevronLeft size={16} />
+                  <ChevronLeft size={18} />
                 </button>
                 <button
                   type="button"
@@ -296,43 +327,20 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                     const container = document.getElementById(carouselId);
                     if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
                   }}
-                  className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
+                  style={{ backgroundColor: brandColor }}
                 >
-                  <ChevronRight size={16} />
+                  <ChevronRight size={18} />
                 </button>
               </div>
-            </div>
-            {/* Desktop arrows */}
-            <div className="hidden md:flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  const container = document.getElementById(carouselId);
-                  if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
-                }}
-                className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const container = document.getElementById(carouselId);
-                  if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
-                }}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
-                style={{ backgroundColor: brandColor }}
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
+            )}
           </div>
 
           {/* Carousel Container */}
           <div className="relative overflow-hidden rounded-xl">
             {/* Fade edges */}
-            <div className="absolute left-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute left-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-r from-white/10 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-l from-white/10 to-transparent z-10 pointer-events-none" />
 
             {/* Scrollable area với Mouse Drag */}
             <div
@@ -367,7 +375,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                 el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
               }}
             >
-              {products.slice(0, 8).map((product) => {
+              {displayedProducts.map((product) => {
                 const discount = getDiscount(product.price, product.salePrice);
                 return (
                   <Link

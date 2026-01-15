@@ -308,43 +308,162 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
     );
   }
 
-  // Style 5: Carousel - Horizontal scrollable (hidden scrollbar)
+  // Style 5: Carousel - Horizontal scrollable với navigation và drag scroll
   if (style === 'carousel') {
+    const carouselId = `blog-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const cardWidth = 320;
+    const gap = 20;
+    const displayedPosts = posts.slice(0, 6);
+    // Responsive: Desktop ~3 items, Tablet ~2 items, Mobile ~1 item
+    const showArrowsDesktop = displayedPosts.length > 3;
+    const showArrowsMobile = displayedPosts.length > 1;
+
     return (
-      <section className="py-12 md:py-16 px-4 overflow-hidden">
+      <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-8 md:mb-10">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tighter text-slate-900">{title}</h2>
-            <div className="flex items-center gap-3">
-              <button className="w-9 h-9 rounded-full border flex items-center justify-center transition-colors" style={{ borderColor: `${brandColor}30` }}><ChevronLeft size={18} style={{ color: brandColor }} /></button>
-              <button className="w-9 h-9 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: brandColor }}><ChevronRight size={18} /></button>
+          {/* Header với navigation arrows */}
+          <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between md:mb-8">
+            <div className="flex items-end justify-between w-full md:w-auto">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tighter text-slate-900">{title}</h2>
+              {/* Mobile arrows - chỉ hiện khi có > 1 item */}
+              {showArrowsMobile && (
+                <div className="flex gap-2 md:hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = document.getElementById(carouselId);
+                      if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    }}
+                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = document.getElementById(carouselId);
+                      if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    }}
+                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
             </div>
+            {/* Desktop arrows - chỉ hiện khi có > 3 items */}
+            {showArrowsDesktop && (
+              <div className="hidden md:flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full border flex items-center justify-center transition-colors hover:bg-slate-50"
+                  style={{ borderColor: `${brandColor}30` }}
+                >
+                  <ChevronLeft size={18} style={{ color: brandColor }} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const container = document.getElementById(carouselId);
+                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                  }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
           </div>
-          <div 
-            className="relative -mx-4 px-4 pb-4 overflow-x-auto"
-            style={{ 
-              scrollbarWidth: 'none', 
-              msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch'
-            }}
-          >
-            <style>{`.carousel-scroll::-webkit-scrollbar { display: none; }`}</style>
-            <div className="carousel-scroll flex gap-4 md:gap-5 items-stretch" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              {posts.slice(0, 6).map((post) => (
-                <Link key={post._id} href={`/posts/${post.slug}`} className="flex-shrink-0 w-[280px] md:w-[320px] lg:w-[360px] group">
-                  <article className="rounded-xl border overflow-hidden transition-all h-full flex flex-col" style={{ borderColor: `${brandColor}15` }}>
-                    <div className="aspect-[16/10] overflow-hidden flex-shrink-0">{post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><FileText size={32} style={{ color: `${brandColor}40` }} /></div>}</div>
+
+          {/* Carousel Container */}
+          <div className="relative overflow-hidden rounded-xl">
+            {/* Fade edges */}
+            <div className="absolute left-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-r from-white/10 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-l from-white/10 to-transparent z-10 pointer-events-none" />
+
+            {/* Scrollable area với Mouse Drag */}
+            <div
+              id={carouselId}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-5 py-4 px-2 cursor-grab active:cursor-grabbing select-none scrollbar-hide"
+              style={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch'
+              }}
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el.dataset.isDown = 'true';
+                el.dataset.startX = String(e.pageX - el.offsetLeft);
+                el.dataset.scrollLeft = String(el.scrollLeft);
+                el.style.scrollBehavior = 'auto';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.dataset.isDown = 'false';
+                e.currentTarget.style.scrollBehavior = 'smooth';
+              }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (el.dataset.isDown !== 'true') return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - Number(el.dataset.startX)) * 1.5;
+                el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
+              }}
+            >
+              {displayedPosts.map((post) => (
+                <Link
+                  key={post._id}
+                  href={`/posts/${post.slug}`}
+                  className="snap-start flex-shrink-0 w-[280px] md:w-[320px] lg:w-[360px] group"
+                  draggable={false}
+                >
+                  <article
+                    className="rounded-xl border overflow-hidden transition-all h-full flex flex-col"
+                    style={{ borderColor: `${brandColor}15` }}
+                  >
+                    <div className="aspect-[16/10] overflow-hidden flex-shrink-0">
+                      {post.thumbnail ? (
+                        <img src={post.thumbnail} alt={post.title} draggable={false} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
+                          <FileText size={32} style={{ color: `${brandColor}40` }} />
+                        </div>
+                      )}
+                    </div>
                     <div className="p-4 flex flex-col flex-1">
-                      <div className="flex items-center gap-2 mb-2"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) || 'Tin tức'}</span></div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) || 'Tin tức'}</span>
+                      </div>
                       <h3 className="font-bold text-slate-900 line-clamp-2 mb-2 group-hover:opacity-80 transition-colors">{post.title}</h3>
                       <p className="text-sm text-slate-500 line-clamp-2 mb-3 flex-1">{post.excerpt || ''}</p>
-                      <div className="flex items-center justify-between mt-auto"><time className="text-xs text-slate-500">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time><ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} /></div>
+                      <div className="flex items-center justify-between mt-auto">
+                        <time className="text-xs text-slate-500">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
+                        <ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} />
+                      </div>
                     </div>
                   </article>
                 </Link>
               ))}
+              {/* End spacer */}
+              <div className="flex-shrink-0 w-4" />
             </div>
           </div>
+
+          {/* CSS để ẩn scrollbar */}
+          <style>{`
+            #${carouselId}::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
         </div>
       </section>
     );

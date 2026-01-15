@@ -369,6 +369,10 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
     const carouselId = `service-carousel-${Math.random().toString(36).substr(2, 9)}`;
     const cardWidth = 280;
     const gap = 16;
+    const displayedServices = services.slice(0, 8);
+    // Responsive: Desktop ~4 items (280px each), Tablet ~2-3 items, Mobile ~1 item
+    const showArrowsDesktop = displayedServices.length > 3;
+    const showArrowsMobile = displayedServices.length > 1;
 
     return (
       <section className="py-12 md:py-16 px-3 md:px-6">
@@ -377,68 +381,72 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
           <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between">
             <div className="flex items-end justify-between w-full md:w-auto">
               <h2 className="text-xl md:text-2xl lg:text-3xl font-light tracking-tight text-slate-900">{title}</h2>
-              {/* Mobile arrows */}
-              <div className="flex gap-2 md:hidden">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
-                  }}
-                  className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
-                  }}
-                  className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
+              {/* Mobile arrows - chỉ hiện khi có > 1 item */}
+              {showArrowsMobile && (
+                <div className="flex gap-2 md:hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = document.getElementById(carouselId);
+                      if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    }}
+                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = document.getElementById(carouselId);
+                      if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    }}
+                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
             </div>
-            {/* Desktop arrows + View All */}
+            {/* Desktop arrows + View All - chỉ hiện arrows khi có > 3 items */}
             <div className="hidden md:flex items-center gap-4">
               {showViewAll && (
                 <Link href="/services" className="group flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors">
                   Xem tất cả <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               )}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
-                  }}
-                  className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
-                  }}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
-                  style={{ backgroundColor: brandColor }}
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </div>
+              {showArrowsDesktop && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = document.getElementById(carouselId);
+                      if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    }}
+                    className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const container = document.getElementById(carouselId);
+                      if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    }}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
+                    style={{ backgroundColor: brandColor }}
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Carousel Container */}
           <div className="relative overflow-hidden rounded-xl">
             {/* Fade edges */}
-            <div className="absolute left-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-8 md:w-16 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute left-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-r from-white/10 to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-4 md:w-6 bg-gradient-to-l from-white/10 to-transparent z-10 pointer-events-none" />
 
             {/* Scrollable area với Mouse Drag */}
             <div
@@ -473,7 +481,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                 el.scrollLeft = Number(el.dataset.scrollLeft) - walk;
               }}
             >
-              {services.slice(0, 8).map((service, idx) => (
+              {displayedServices.map((service, idx) => (
                 <Link
                   key={service._id}
                   href={`/services/${service.slug}`}
