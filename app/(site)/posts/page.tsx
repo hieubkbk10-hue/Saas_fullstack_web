@@ -222,6 +222,10 @@ function PostsContent() {
             categories={categories}
             selectedCategory={selectedCategory}
             onCategoryChange={handleCategoryChange}
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            sortBy={sortBy}
+            onSortChange={handleSortChange}
             featuredPosts={featuredPosts ?? []}
             enabledFields={enabledFields}
           />
