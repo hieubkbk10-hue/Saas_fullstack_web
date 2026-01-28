@@ -155,7 +155,7 @@ function PostsContent() {
     <div className="py-6 md:py-10 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-4">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
             Tin tức & Bài viết
           </h1>
@@ -165,7 +165,7 @@ function PostsContent() {
         {layout === 'fullwidth' && (
           <>
             {/* Filter Bar */}
-            <div className="mb-6">
+            <div className="mb-5">
               <PostsFilter
                 categories={categories}
                 selectedCategory={selectedCategory}
