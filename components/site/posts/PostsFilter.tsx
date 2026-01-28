@@ -42,19 +42,9 @@ export function PostsFilter({
   totalResults,
   brandColor,
 }: PostsFilterProps) {
-  const [localSearch, setLocalSearch] = useState(searchQuery);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onSearchChange(localSearch);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [localSearch, onSearchChange]);
 
   const clearFilters = useCallback(() => {
-    setLocalSearch('');
     onSearchChange('');
     onCategoryChange(null);
     onSortChange('newest');
@@ -74,14 +64,14 @@ export function PostsFilter({
             <input
               type="text"
               placeholder="Tìm kiếm..."
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
               className="w-full pl-9 pr-9 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 text-sm"
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             />
-            {localSearch && (
+            {searchQuery && (
               <button
-                onClick={() => { setLocalSearch(''); onSearchChange(''); }}
+                onClick={() => onSearchChange('')}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100"
               >
                 <X className="w-4 h-4 text-slate-400" />
@@ -229,7 +219,7 @@ export function PostsFilter({
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
               &quot;{searchQuery}&quot;
               <button
-                onClick={() => { setLocalSearch(''); onSearchChange(''); }}
+                onClick={() => onSearchChange('')}
                 className="hover:opacity-70"
               >
                 <X className="w-3 h-3" />

@@ -86,6 +86,15 @@ function PostsContent() {
   const [selectedCategory, setSelectedCategory] = useState<Id<"postCategories"> | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Queries
   const categories = useQuery(api.postCategories.listActive, { limit: 20 });
@@ -101,7 +110,7 @@ function PostsContent() {
     }
   }, [searchParams, categories]);
   const posts = useQuery(api.posts.searchPublished, {
-    search: searchQuery || undefined,
+    search: debouncedSearchQuery || undefined,
     categoryId: selectedCategory ?? undefined,
     sortBy,
     limit: 24,
@@ -146,8 +155,10 @@ function PostsContent() {
     setSortBy(sort);
   }, []);
 
-  // Loading state
-  if (posts === undefined || categories === undefined) {
+  // Initial loading state only (not on search/filter changes)
+  const isInitialLoading = categories === undefined;
+
+  if (isInitialLoading) {
     return <PostsListSkeleton />;
   }
 
@@ -174,14 +185,14 @@ function PostsContent() {
                 onSearchChange={handleSearchChange}
                 sortBy={sortBy}
                 onSortChange={handleSortChange}
-                totalResults={totalCount ?? posts.length}
+                totalResults={totalCount ?? (posts?.length || 0)}
                 brandColor={brandColor}
               />
             </div>
 
             {/* Posts */}
             <FullWidthLayout
-              posts={posts}
+              posts={posts ?? []}
               brandColor={brandColor}
               categoryMap={categoryMap}
               enabledFields={enabledFields}
@@ -191,7 +202,7 @@ function PostsContent() {
 
         {layout === 'sidebar' && (
           <SidebarLayout
-            posts={posts}
+            posts={posts ?? []}
             brandColor={brandColor}
             categoryMap={categoryMap}
             categories={categories}
@@ -207,7 +218,7 @@ function PostsContent() {
 
         {layout === 'magazine' && (
           <MagazineLayout
-            posts={posts}
+            posts={posts ?? []}
             brandColor={brandColor}
             categoryMap={categoryMap}
             categories={categories}
@@ -219,7 +230,7 @@ function PostsContent() {
         )}
 
         {/* Load More (for all layouts) */}
-        {posts.length >= 24 && (
+        {(posts?.length || 0) >= 24 && (
           <div className="text-center mt-6">
             <button
               className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 hover:opacity-80"
