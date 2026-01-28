@@ -5,7 +5,6 @@ import { useQuery } from 'convex/react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { LayoutGrid, List } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 import {
   PostsFilter,
@@ -87,7 +86,6 @@ function PostsContent() {
   const [selectedCategory, setSelectedCategory] = useState<Id<"postCategories"> | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Queries
   const categories = useQuery(api.postCategories.listActive, { limit: 20 });
@@ -154,11 +152,11 @@ function PostsContent() {
   }
 
   return (
-    <div className="py-8 md:py-12 px-4">
+    <div className="py-6 md:py-10 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
             Tin tức & Bài viết
           </h1>
         </div>
@@ -167,7 +165,7 @@ function PostsContent() {
         {layout === 'fullwidth' && (
           <>
             {/* Filter Bar */}
-            <div className="mb-8">
+            <div className="mb-6">
               <PostsFilter
                 categories={categories}
                 selectedCategory={selectedCategory}
@@ -181,40 +179,11 @@ function PostsContent() {
               />
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex justify-end mb-4">
-              <div className="flex bg-slate-100 rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'grid'
-                      ? 'bg-white shadow-sm text-slate-900'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                  title="Hiển thị lưới"
-                >
-                  <LayoutGrid size={18} />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'list'
-                      ? 'bg-white shadow-sm text-slate-900'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                  title="Hiển thị danh sách"
-                >
-                  <List size={18} />
-                </button>
-              </div>
-            </div>
-
             {/* Posts */}
             <FullWidthLayout
               posts={posts}
               brandColor={brandColor}
               categoryMap={categoryMap}
-              viewMode={viewMode}
               enabledFields={enabledFields}
             />
           </>
@@ -251,9 +220,9 @@ function PostsContent() {
 
         {/* Load More (for all layouts) */}
         {posts.length >= 24 && (
-          <div className="text-center mt-8">
+          <div className="text-center mt-6">
             <button
-              className="px-6 py-3 rounded-lg font-medium transition-colors duration-200 hover:opacity-80"
+              className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 hover:opacity-80"
               style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
             >
               Xem thêm bài viết
