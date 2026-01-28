@@ -119,8 +119,6 @@ function PostsContent() {
     categoryId: selectedCategory ?? undefined,
   });
   const featuredPosts = useQuery(api.posts.listFeatured, { limit: 5 });
-  const recentPosts = useQuery(api.posts.searchPublished, { sortBy: 'newest', limit: 5 });
-  const popularPosts = useQuery(api.posts.searchPublished, { sortBy: 'popular', limit: 5 });
 
   // Build category map for O(1) lookup
   const categoryMap = useMemo(() => {
@@ -166,7 +164,7 @@ function PostsContent() {
     <div className="py-6 md:py-10 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-3">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
             Tin tức & Bài viết
           </h1>
@@ -210,8 +208,8 @@ function PostsContent() {
             onCategoryChange={handleCategoryChange}
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
-            recentPosts={recentPosts ?? []}
-            popularPosts={popularPosts ?? []}
+            sortBy={sortBy}
+            onSortChange={handleSortChange}
             enabledFields={enabledFields}
           />
         )}
