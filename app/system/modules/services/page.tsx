@@ -96,6 +96,13 @@ export default function ServicesModuleConfigPage() {
 
   const brandColor = (brandColorSetting?.value as string) || '#14b8a6';
 
+  // Get enabled fields for preview synchronization
+  const enabledFields = useMemo(() => {
+    const fields = new Set<string>();
+    localServiceFields.filter(f => f.enabled).forEach(f => fields.add(f.key));
+    return fields;
+  }, [localServiceFields]);
+
   const isLoading = moduleData === undefined || featuresData === undefined || 
                     fieldsData === undefined || categoryFieldsData === undefined || settingsData === undefined;
 
@@ -688,8 +695,8 @@ export default function ServicesModuleConfigPage() {
               <div className={cn("mx-auto transition-all duration-300", deviceWidths[previewDevice])}>
                 <BrowserFrame>
                   {activePreview === 'list' 
-                    ? <ListPreview style={listStyle} brandColor={brandColor} device={previewDevice} />
-                    : <DetailPreview style={detailStyle} brandColor={brandColor} device={previewDevice} />
+                    ? <ListPreview style={listStyle} brandColor={brandColor} device={previewDevice} enabledFields={enabledFields} />
+                    : <DetailPreview style={detailStyle} brandColor={brandColor} device={previewDevice} enabledFields={enabledFields} />
                   }
                 </BrowserFrame>
               </div>
@@ -728,7 +735,7 @@ function BrowserFrame({ children }: { children: React.ReactNode }) {
 }
 
 // List Preview Component
-function ListPreview({ style, brandColor, device }: { style: ServicesListStyle; brandColor: string; device: PreviewDevice }) {
+function ListPreview({ style, brandColor, device, enabledFields }: { style: ServicesListStyle; brandColor: string; device: PreviewDevice; enabledFields: Set<string> }) {
   const mockServices = [
     { category: 'Tư vấn', duration: '2-3 tuần', id: 1, price: 5_000_000, title: 'Dịch vụ tư vấn chuyên nghiệp' },
     { category: 'Thiết kế', duration: '4-6 tuần', id: 2, price: 15_000_000, title: 'Thiết kế website doanh nghiệp' },
@@ -737,6 +744,10 @@ function ListPreview({ style, brandColor, device }: { style: ServicesListStyle; 
   ];
   const categories = ['Tất cả', 'Tư vấn', 'Thiết kế', 'Marketing', 'Phát triển'];
   const formatPrice = (p: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(p);
+  
+  // Sync with actual pages logic
+  const showPrice = enabledFields.has('price');
+  const showDuration = enabledFields.has('duration');
 
   if (style === 'fullwidth') {
     return (
@@ -767,8 +778,9 @@ function ListPreview({ style, brandColor, device }: { style: ServicesListStyle; 
                 <span className="text-xs font-medium" style={{ color: brandColor }}>{service.category}</span>
                 <h3 className="font-medium text-sm mt-1 line-clamp-2">{service.title}</h3>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs text-slate-400">{service.duration}</span>
-                  <span className="font-bold text-sm" style={{ color: brandColor }}>{formatPrice(service.price)}</span>
+                  {showDuration && <span className="text-xs text-slate-400">{service.duration}</span>}
+                  {!showDuration && <span></span>}
+                  {showPrice && <span className="font-bold text-sm" style={{ color: brandColor }}>{formatPrice(service.price)}</span>}
                 </div>
               </div>
             </div>
@@ -806,7 +818,7 @@ function ListPreview({ style, brandColor, device }: { style: ServicesListStyle; 
               <div className="p-2 flex-1">
                 <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{service.category}</span>
                 <h3 className="font-medium text-xs mt-1 line-clamp-1">{service.title}</h3>
-                <span className="text-xs font-bold" style={{ color: brandColor }}>{formatPrice(service.price)}</span>
+                {showPrice && <span className="text-xs font-bold" style={{ color: brandColor }}>{formatPrice(service.price)}</span>}
               </div>
             </div>
           ))}
@@ -829,7 +841,7 @@ function ListPreview({ style, brandColor, device }: { style: ServicesListStyle; 
               <span className="px-2 py-0.5 rounded text-xs font-medium text-white" style={{ backgroundColor: brandColor }}>Nổi bật</span>
             </div>
             <h3 className="font-bold text-sm text-white">{mockServices[0].title}</h3>
-            <span className="text-white font-bold text-sm">{formatPrice(mockServices[0].price)}</span>
+            {showPrice && <span className="text-white font-bold text-sm">{formatPrice(mockServices[0].price)}</span>}
           </div>
         </div>
         {device !== 'mobile' && mockServices.slice(1, 3).map((service) => (
@@ -870,13 +882,24 @@ function ListPreview({ style, brandColor, device }: { style: ServicesListStyle; 
 }
 
 // Detail Preview Component
-function DetailPreview({ style, brandColor, device }: { style: ServicesDetailStyle; brandColor: string; device: PreviewDevice }) {
+function DetailPreview({ style, brandColor, device, enabledFields }: { style: ServicesDetailStyle; brandColor: string; device: PreviewDevice; enabledFields: Set<string> }) {
+  // Sync with actual pages logic
+  const showPrice = enabledFields.has('price');
+  const showDuration = enabledFields.has('duration');
+  const showFeatured = enabledFields.has('featured');
+  
   if (style === 'classic') {
     return (
       <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')}>
         <div className="text-xs text-slate-400 mb-3">Trang chủ › Dịch vụ › Chi tiết</div>
         <div className={cn("flex gap-4", device === 'mobile' ? 'flex-col' : '')}>
           <div className="flex-1">
+            {showFeatured && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium mr-2">
+                <Star size={12} className="fill-amber-400 text-amber-400" />
+                Nổi bật
+              </span>
+            )}
             <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Tư vấn</span>
             <h1 className="font-bold text-lg mt-2 mb-3">Dịch vụ tư vấn chuyên nghiệp</h1>
             <div className="aspect-video bg-slate-100 rounded-lg mb-3 flex items-center justify-center">
@@ -890,9 +913,13 @@ function DetailPreview({ style, brandColor, device }: { style: ServicesDetailSty
           {device !== 'mobile' && (
             <div className="w-1/3">
               <div className="bg-slate-50 rounded-lg p-3 text-center">
-                <p className="text-xs text-slate-500 mb-1">Giá dịch vụ</p>
-                <p className="text-xl font-bold" style={{ color: brandColor }}>5.000.000 ₫</p>
-                <p className="text-xs text-slate-500 mt-2">Thời gian: 2-3 tuần</p>
+                {showPrice && (
+                  <>
+                    <p className="text-xs text-slate-500 mb-1">Giá dịch vụ</p>
+                    <p className="text-xl font-bold" style={{ color: brandColor }}>5.000.000 ₫</p>
+                  </>
+                )}
+                {showDuration && <p className="text-xs text-slate-500 mt-2">Thời gian: 2-3 tuần</p>}
                 <button className="w-full mt-3 py-2 text-white text-xs font-medium rounded-lg" style={{ backgroundColor: brandColor }}>Liên hệ tư vấn</button>
               </div>
             </div>
@@ -906,11 +933,17 @@ function DetailPreview({ style, brandColor, device }: { style: ServicesDetailSty
     return (
       <div className="bg-white">
         <div className={cn("border-b border-slate-100", device === 'mobile' ? 'p-3' : 'p-4')}>
+          {showFeatured && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-400 text-amber-900 text-xs font-semibold rounded-full mr-2">
+              <Star size={12} className="fill-current" />
+              Nổi bật
+            </span>
+          )}
           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: brandColor }}>Tư vấn</span>
           <h1 className={cn("font-bold text-slate-900 leading-tight mt-1", device === 'mobile' ? 'text-base' : 'text-lg')}>
             Dịch vụ tư vấn chuyên nghiệp
           </h1>
-          <p className="text-xl font-bold mt-2" style={{ color: brandColor }}>5.000.000 ₫</p>
+          {showPrice && <p className="text-xl font-bold mt-2" style={{ color: brandColor }}>5.000.000 ₫</p>}
         </div>
         <div className="p-4">
           <div className="aspect-[16/9] bg-slate-100 rounded-lg flex items-center justify-center">
@@ -934,9 +967,14 @@ function DetailPreview({ style, brandColor, device }: { style: ServicesDetailSty
   return (
     <div className={cn("p-6", device === 'mobile' ? 'p-4' : '')}>
       <div className="text-center mb-4">
+        {showFeatured && (
+          <div className="mb-2">
+            <Star size={16} className="inline fill-amber-400 text-amber-400" />
+          </div>
+        )}
         <span className="text-xs font-medium uppercase tracking-wider" style={{ color: brandColor }}>Tư vấn</span>
         <h1 className="font-bold text-lg mt-2">Dịch vụ tư vấn chuyên nghiệp</h1>
-        <p className="text-xl font-bold mt-2" style={{ color: brandColor }}>5.000.000 ₫</p>
+        {showPrice && <p className="text-xl font-bold mt-2" style={{ color: brandColor }}>5.000.000 ₫</p>}
       </div>
       <div className="aspect-[2/1] bg-slate-100 rounded-lg mb-4 flex items-center justify-center">
         <Briefcase size={32} className="text-slate-300" />
