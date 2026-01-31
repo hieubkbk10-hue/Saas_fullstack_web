@@ -211,7 +211,7 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
               </div>
             </header>
 
-            <div className="aspect-video w-full overflow-hidden rounded-xl border bg-muted shadow-sm">
+            <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted shadow-sm">
               {post.thumbnail ? (
                 <img
                   src={post.thumbnail}
@@ -264,7 +264,7 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
                 <div className="p-6 pt-0 px-0 sm:px-6 gap-4 flex flex-col">
                   {relatedPosts.map((p) => (
                     <Link key={p._id} href={`/posts/${p.slug}`} className="group flex gap-4 items-start">
-                      <div className="relative h-20 w-24 flex-shrink-0 overflow-hidden rounded-md border bg-muted">
+                      <div className="relative h-20 w-24 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                         {p.thumbnail ? (
                           <img
                             src={p.thumbnail}
