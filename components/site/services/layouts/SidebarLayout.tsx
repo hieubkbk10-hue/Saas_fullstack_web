@@ -58,6 +58,8 @@ export function SidebarLayout({
   popularServices,
   enabledFields,
 }: SidebarLayoutProps) {
+  const ringStyle = (style?: React.CSSProperties) =>
+    ({ ...style, ['--tw-ring-color' as string]: brandColor } as React.CSSProperties);
   const showExcerpt = enabledFields.has('excerpt');
   const showPrice = enabledFields.has('price');
   const showDuration = enabledFields.has('duration');
@@ -82,7 +84,11 @@ export function SidebarLayout({
               <Search size={16} style={{ color: brandColor }} />
               Tìm kiếm
             </h3>
+            <label htmlFor="services-sidebar-search" className="sr-only">
+              Tìm kiếm dịch vụ
+            </label>
             <input
+              id="services-sidebar-search"
               type="text"
               placeholder="Nhập từ khóa..."
               value={localSearch}
@@ -102,10 +108,12 @@ export function SidebarLayout({
               <li>
                 <button
                   onClick={() => onCategoryChange(null)}
-                  className={`w-full text-left px-3 py-1.5 rounded text-sm transition-colors ${
+                  className={`w-full text-left px-3 py-2.5 rounded text-sm transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                     !selectedCategory ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'
                   }`}
-                  style={!selectedCategory ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}
+                  style={
+                    ringStyle(!selectedCategory ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined)
+                  }
                 >
                   Tất cả
                 </button>
@@ -114,10 +122,12 @@ export function SidebarLayout({
                 <li key={category._id}>
                   <button
                     onClick={() => onCategoryChange(category._id)}
-                    className={`w-full text-left px-3 py-1.5 rounded text-sm transition-colors ${
+                    className={`w-full text-left px-3 py-2.5 rounded text-sm transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                       selectedCategory === category._id ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'
                     }`}
-                    style={selectedCategory === category._id ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}
+                    style={
+                      ringStyle(selectedCategory === category._id ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined)
+                    }
                   >
                     {category.name}
                   </button>
@@ -135,7 +145,12 @@ export function SidebarLayout({
               </h3>
               <div className="space-y-3">
                 {recentServices.slice(0, 4).map((service) => (
-                  <Link key={service._id} href={`/services/${service.slug}`} className="flex gap-2 group">
+                  <Link
+                    key={service._id}
+                    href={`/services/${service.slug}`}
+                    className="flex gap-2 group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                    style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
+                  >
                     <div className="w-14 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0 relative">
                         {service.thumbnail ? (
                           <Image src={service.thumbnail} alt={service.title} fill sizes="64px" className="object-cover" />
@@ -165,7 +180,12 @@ export function SidebarLayout({
               </h3>
               <div className="space-y-2">
                 {popularServices.slice(0, 4).map((service, index) => (
-                  <Link key={service._id} href={`/services/${service.slug}`} className="flex gap-2 group">
+                  <Link
+                    key={service._id}
+                    href={`/services/${service.slug}`}
+                    className="flex gap-2 group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                    style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
+                  >
                     <span
                       className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold flex-shrink-0"
                       style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
@@ -194,7 +214,12 @@ export function SidebarLayout({
         ) : (
           <div className="space-y-3">
             {services.map((service) => (
-              <Link key={service._id} href={`/services/${service.slug}`} className="group block">
+              <Link
+                key={service._id}
+                href={`/services/${service.slug}`}
+                className="group block rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
+              >
                 <article className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100">
                   <div className="flex flex-col sm:flex-row">
                     <div className="sm:w-44 md:w-52 flex-shrink-0">
