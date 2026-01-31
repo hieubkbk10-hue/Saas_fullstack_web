@@ -1,11 +1,11 @@
 'use client';
 
-import React, { use, useEffect, useMemo } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { FileText, Calendar, Eye, ArrowLeft, Share2, Clock, ChevronRight } from 'lucide-react';
+import { FileText, Calendar, Eye, ArrowLeft, Share2, Clock, ChevronRight, Home, Check, Link as LinkIcon, ArrowRight } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 
 type PostDetailStyle = 'classic' | 'modern' | 'minimal';
@@ -114,6 +114,7 @@ interface RelatedPost {
   title: string;
   slug: string;
   thumbnail?: string;
+  excerpt?: string;
   publishedAt?: number;
 }
 
@@ -126,242 +127,516 @@ interface StyleProps {
 
 // Style 1: Classic - Truyền thống với sidebar
 function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isCopied, setIsCopied] = useState(false);
+  const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalScroll = document.documentElement.scrollTop;
+      const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scroll = windowHeight > 0 ? totalScroll / windowHeight : 0;
+      setScrollProgress(scroll);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleShare = async () => {
+    if (navigator?.clipboard) {
+      await navigator.clipboard.writeText(window.location.href);
+      setIsCopied(true);
+      window.setTimeout(() => setIsCopied(false), 2000);
+    }
+  };
+
   return (
-    <div className="py-6 px-4">
-      <div className="max-w-5xl mx-auto">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-sm text-slate-500 mb-4">
-          <Link href="/" className="hover:text-slate-900">Trang chủ</Link>
-          <ChevronRight size={14} />
-          <Link href="/posts" className="hover:text-slate-900">Bài viết</Link>
-          <ChevronRight size={14} />
-          <span className="text-slate-900 truncate max-w-[200px]">{post.title}</span>
+    <div className="min-h-screen bg-background">
+      <div
+        className="fixed top-0 left-0 h-1 z-50 transition-all duration-300"
+        style={{ width: `${scrollProgress * 100}%`, backgroundColor: brandColor }}
+      />
+
+      <main className="container mx-auto px-4 py-8 max-w-7xl">
+        <nav aria-label="Breadcrumb" className="mb-6 flex items-center text-sm text-muted-foreground">
+          <ol className="flex items-center space-x-2">
+            <li>
+              <Link href="/" className="flex items-center hover:text-foreground transition-colors">
+                <Home className="h-4 w-4" />
+                <span className="sr-only">Trang chủ</span>
+              </Link>
+            </li>
+            <li><ChevronRight className="h-4 w-4" /></li>
+            <li>
+              <Link href="/posts" className="hover:text-foreground transition-colors">Bài viết</Link>
+            </li>
+            <li><ChevronRight className="h-4 w-4" /></li>
+            <li className="font-medium text-foreground truncate max-w-[150px] sm:max-w-xs">
+              {post.title}
+            </li>
+          </ol>
         </nav>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <article className="lg:col-span-2">
-            {/* Header */}
-            <header className="mb-6">
-              <span className="inline-block text-xs font-medium px-2.5 py-1 rounded mb-3" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                {post.categoryName}
-              </span>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">{post.title}</h1>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
-                <span className="flex items-center gap-1">
-                  <Calendar size={14} />
-                  {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          <article className="lg:col-span-8 space-y-8">
+            <header className="space-y-4">
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                  style={{ backgroundColor: `${brandColor}15`, color: brandColor, borderColor: `${brandColor}30` }}
+                >
+                  {post.categoryName}
                 </span>
-                <span className="flex items-center gap-1"><Eye size={14} />{post.views}</span>
-                <span className="flex items-center gap-1"><Clock size={14} />{Math.ceil(post.content.length / 1000)} phút</span>
+                <span className="text-sm text-muted-foreground">•</span>
+                <span className="text-sm text-muted-foreground">Tin tức nổi bật</span>
+              </div>
+
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.15]">
+                {post.title}
+              </h1>
+
+              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground pt-2">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4" />
+                  <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Eye className="h-4 w-4" />
+                  <span>{post.views.toLocaleString()} lượt xem</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-4 w-4" />
+                  <span>{readingTime} phút đọc</span>
+                </div>
               </div>
             </header>
 
-            {/* Featured Image */}
-            {post.thumbnail && (
-              <div className="aspect-video rounded-lg overflow-hidden mb-6">
-                <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" />
+            <div className="aspect-video w-full overflow-hidden rounded-xl border bg-muted shadow-sm">
+              {post.thumbnail ? (
+                <img
+                  src={post.thumbnail}
+                  alt={post.title}
+                  className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+                  loading="eager"
+                />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                  <FileText className="h-8 w-8" />
+                </div>
+              )}
+            </div>
+
+            <div className="prose prose-zinc prose-lg max-w-none dark:prose-invert">
+              <div dangerouslySetInnerHTML={{ __html: post.content }} />
+            </div>
+
+            <div className="border-t pt-8 mt-12 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Link
+                  href="/posts"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full sm:w-auto"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Tất cả bài viết
+                </Link>
               </div>
-            )}
 
-            {/* Content */}
-            <div className="prose prose-slate prose-sm max-w-none prose-headings:font-bold prose-a:text-blue-600 prose-img:rounded-lg" dangerouslySetInnerHTML={{ __html: post.content }} />
-
-            {/* Share */}
-            <div className="mt-6 pt-6 border-t border-slate-200 flex items-center gap-3">
-              <span className="text-sm text-slate-600">Chia sẻ:</span>
-              <button aria-label="Chia sẻ bài viết" className="w-9 h-9 rounded-full text-white flex items-center justify-center hover:opacity-80 transition-opacity duration-200" style={{ backgroundColor: brandColor }}>
-                <Share2 size={16} />
-              </button>
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 h-10 px-4 py-2 w-full sm:w-auto min-w-[140px]"
+                  style={{ backgroundColor: isCopied ? `${brandColor}15` : brandColor, color: isCopied ? brandColor : '#fff' }}
+                >
+                  {isCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+                  {isCopied ? 'Đã copy link' : 'Chia sẻ'}
+                </button>
+              </div>
             </div>
           </article>
 
-          {/* Sidebar */}
-          <aside className="lg:col-span-1">
-            <div className="sticky top-24 space-y-4">
-              {relatedPosts.length > 0 && (
-                <div className="bg-slate-50 rounded-lg p-4">
-                  <h3 className="font-semibold text-slate-900 text-sm mb-3">Bài viết liên quan</h3>
-                  <div className="space-y-3">
-                    {relatedPosts.map((p) => (
-                      <Link key={p._id} href={`/posts/${p.slug}`} className="flex gap-2 group">
-                        <div className="w-16 h-12 rounded overflow-hidden flex-shrink-0 bg-slate-200">
-                          {p.thumbnail ? (
-                            <img src={p.thumbnail} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center"><FileText size={14} className="text-slate-400" /></div>
-                          )}
-                        </div>
-                        <h4 className="text-xs font-medium text-slate-900 line-clamp-2 group-hover:opacity-70 transition-opacity duration-200 flex-1">{p.title}</h4>
-                      </Link>
-                    ))}
-                  </div>
+          <aside className="lg:col-span-4 space-y-8">
+            {relatedPosts.length > 0 && (
+              <div className="h-fit sticky top-24 rounded-lg border bg-card text-card-foreground shadow-sm">
+                <div className="flex flex-col space-y-1.5 p-6 px-0 sm:px-6">
+                  <h3 className="text-lg font-semibold">Bài viết liên quan</h3>
                 </div>
-              )}
-              <Link href="/posts" className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-medium transition-colors" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                <ArrowLeft size={16} />
-                Tất cả bài viết
-              </Link>
-            </div>
+                <div className="p-6 pt-0 px-0 sm:px-6 gap-4 flex flex-col">
+                  {relatedPosts.map((p) => (
+                    <Link key={p._id} href={`/posts/${p.slug}`} className="group flex gap-4 items-start">
+                      <div className="relative h-20 w-24 flex-shrink-0 overflow-hidden rounded-md border bg-muted">
+                        {p.thumbnail ? (
+                          <img
+                            src={p.thumbnail}
+                            alt={p.title}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <h4 className="text-sm font-medium leading-snug line-clamp-2 group-hover:opacity-80 transition-colors">
+                          {p.title}
+                        </h4>
+                        <span className="text-xs text-muted-foreground">
+                          {p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('vi-VN') : ''}
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </aside>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
 // Style 2: Modern - Medium/Substack inspired - Focus on typography and reading experience
 function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StyleProps) {
-  const readingTime = Math.ceil(post.content.length / 1000);
+  const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
   const showExcerpt = enabledFields.has('excerpt');
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopyLink = async () => {
+    if (navigator?.clipboard) {
+      await navigator.clipboard.writeText(window.location.href);
+      setIsCopied(true);
+      window.setTimeout(() => setIsCopied(false), 2000);
+    }
+  };
   
   return (
-    <div className="bg-white">
-      {/* Clean Header */}
-      <header className="border-b border-slate-100">
-        <div className="max-w-3xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-4">
-            <Link href="/posts" className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-900 text-sm transition-colors">
-              <ArrowLeft size={14} />
-              <span>Bài viết</span>
+    <div className="min-h-screen bg-background pb-12 font-sans selection:bg-accent/30">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/posts"
+              className="group gap-2 text-muted-foreground hover:text-foreground -ml-2 rounded-full px-4 inline-flex items-center h-9"
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              <span className="hidden sm:inline-block font-medium">Quay lại</span>
             </Link>
-            <span className="text-xs font-medium uppercase tracking-wide" style={{ color: brandColor }}>{post.categoryName}</span>
+            <div className="h-4 w-[1px] bg-border hidden sm:block" />
+            <nav className="flex items-center text-sm text-muted-foreground">
+              <span className="hover:text-foreground cursor-pointer transition-colors">Bài viết</span>
+              <ChevronRight className="h-4 w-4 mx-2 text-muted-foreground/50" />
+              <span className="font-medium text-foreground truncate max-w-[150px] sm:max-w-md">{post.title}</span>
+            </nav>
           </div>
-          
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3">{post.title}</h1>
-          
-          {showExcerpt && post.excerpt && (
-            <p className="text-lg text-slate-600 mb-4">{post.excerpt}</p>
-          )}
-          
-          <div className="flex items-center gap-4 text-sm text-slate-500">
-            <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
-            <span className="w-1 h-1 rounded-full bg-slate-300" />
-            <span>{readingTime} phút đọc</span>
-            <span className="w-1 h-1 rounded-full bg-slate-300" />
-            <span className="flex items-center gap-1"><Eye size={14} />{post.views.toLocaleString()}</span>
-          </div>
+
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            className="inline-flex items-center justify-center rounded-full h-9 w-9 text-muted-foreground hover:text-foreground"
+            aria-label="Copy link"
+          >
+            {isCopied ? <Check className="h-5 w-5" /> : <LinkIcon className="h-5 w-5" />}
+          </button>
         </div>
       </header>
 
-      {/* Featured Image */}
-      {post.thumbnail && (
-        <figure className="max-w-4xl mx-auto px-4 py-6">
-          <div className="aspect-[16/9] rounded-lg overflow-hidden bg-slate-100">
-            <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" />
+      <main className="container mx-auto max-w-7xl px-4 py-8 md:py-12 space-y-8 md:space-y-12">
+        <section className="max-w-4xl mx-auto text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="flex items-center justify-center">
+            <span
+              className="inline-flex items-center rounded-full border px-3 py-1 text-xs uppercase tracking-widest"
+              style={{ backgroundColor: `${brandColor}15`, color: brandColor, borderColor: `${brandColor}30` }}
+            >
+              {post.categoryName}
+            </span>
           </div>
-        </figure>
-      )}
 
-      {/* Article Content */}
-      <article className="max-w-3xl mx-auto px-4 py-6">
-        <div 
-          className="prose prose-slate max-w-none prose-p:text-slate-700 prose-p:leading-relaxed prose-headings:font-bold prose-headings:text-slate-900 prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-blockquote:border-l-4 prose-blockquote:italic prose-img:rounded-lg prose-code:text-sm prose-code:bg-slate-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded"
-          style={{ '--tw-prose-quote-borders': brandColor } as React.CSSProperties}
-          dangerouslySetInnerHTML={{ __html: post.content }}
-        />
-      </article>
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.15]">
+            {post.title}
+          </h1>
 
-      {/* Bottom Section */}
-      <div className="border-t border-slate-100">
-        <div className="max-w-3xl mx-auto px-4 py-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-6 border-b border-slate-100">
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-500">Chủ đề:</span>
-              <span className="text-sm font-medium px-3 py-1 rounded" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>{post.categoryName}</span>
+              <Calendar className="h-4 w-4" />
+              <time className="font-medium">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 rounded text-sm font-medium border border-slate-200 hover:bg-slate-50 transition-colors">
-              <Share2 size={14} />
-              Chia sẻ
+            <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span className="font-medium">{readingTime} phút đọc</span>
+            </div>
+            <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+            <div className="flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              <span className="font-medium">{post.views.toLocaleString()} lượt xem</span>
+            </div>
+          </div>
+        </section>
+
+        {post.thumbnail && (
+          <section className="relative overflow-hidden rounded-2xl shadow-sm border bg-muted aspect-[16/9] md:aspect-[21/9] max-w-6xl mx-auto ring-1 ring-border/50">
+            <img
+              src={post.thumbnail}
+              alt={post.title}
+              className="w-full h-full object-cover transition-transform duration-1000 hover:scale-105"
+              loading="lazy"
+            />
+          </section>
+        )}
+
+        <article className="max-w-4xl mx-auto space-y-6">
+          {showExcerpt && post.excerpt && (
+            <p
+              className="text-xl md:text-2xl leading-relaxed text-foreground/90 font-medium font-sans border-l-4 pl-6 py-1"
+              style={{ borderColor: brandColor }}
+            >
+              {post.excerpt}
+            </p>
+          )}
+
+          <div className="prose prose-lg prose-zinc dark:prose-invert max-w-none text-muted-foreground leading-loose">
+            <div dangerouslySetInnerHTML={{ __html: post.content }} />
+          </div>
+
+          <div className="pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+              <span className="text-sm font-semibold mr-2 text-foreground">Chủ đề:</span>
+              <span
+                className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-normal"
+                style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderColor: `${brandColor}30` }}
+              >
+                {post.categoryName}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-muted h-9 px-4 shrink-0"
+            >
+              <LinkIcon className="h-4 w-4" />
+              {isCopied ? 'Đã copy' : 'Copy link bài viết này'}
             </button>
           </div>
 
-          <div className="py-6 text-center">
-            <Link href="/posts" className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded text-white text-sm font-medium hover:opacity-90 transition-opacity" style={{ backgroundColor: brandColor }}>
-              Khám phá thêm
-              <ChevronRight size={16} />
+          <div className="flex flex-col items-center justify-center py-8 gap-4">
+            <Link
+              href="/posts"
+              className="group font-semibold px-8 h-12 rounded-full shadow-lg transition-all hover:-translate-y-0.5 inline-flex items-center justify-center"
+              style={{ backgroundColor: brandColor, color: '#fff' }}
+            >
+              Tất cả bài viết
+              <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
+            <p className="text-sm text-muted-foreground">Khám phá thêm nhiều nội dung hấp dẫn khác</p>
           </div>
-        </div>
-      </div>
+        </article>
 
-      {/* Related Posts */}
-      {relatedPosts.length > 0 && (
-        <div className="bg-slate-50 py-8 px-4">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-base font-bold text-slate-900 mb-4">Bài viết cùng chủ đề</h2>
-            <div className="grid md:grid-cols-3 gap-4">
-              {relatedPosts.map((p) => (
-                <Link key={p._id} href={`/posts/${p.slug}`} className="group">
-                  <article className="flex md:flex-col gap-3">
-                    <div className="w-20 h-16 md:w-full md:h-auto md:aspect-[16/10] rounded overflow-hidden bg-slate-200 flex-shrink-0">
-                      {p.thumbnail ? (
-                        <img src={p.thumbnail} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center"><FileText size={20} className="text-slate-400" /></div>
-                      )}
-                    </div>
-                    <h3 className="text-sm font-medium text-slate-900 line-clamp-2 group-hover:opacity-70 transition-opacity duration-200">{p.title}</h3>
-                  </article>
+        {relatedPosts.length > 0 && (
+          <section className="pt-10 border-t">
+            <div className="max-w-5xl mx-auto">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold tracking-tight">Bài viết cùng chủ đề</h2>
+                <Link href="/posts" className="text-muted-foreground hover:text-foreground">
+                  Xem thêm
                 </Link>
-              ))}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+                {relatedPosts.map((p) => (
+                  <Link key={p._id} href={`/posts/${p.slug}`} className="group overflow-hidden border-none shadow-none bg-transparent hover:bg-muted/30 transition-all duration-300 p-0 cursor-pointer rounded-xl">
+                    <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted mb-4 relative ring-1 ring-border/50">
+                      {p.thumbnail ? (
+                        <img
+                          src={p.thumbnail}
+                          alt={p.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <h3 className="font-semibold text-lg text-foreground group-hover:opacity-80 transition-colors leading-snug line-clamp-2">
+                      {p.title}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>{p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </section>
+        )}
+      </main>
     </div>
   );
 }
 
 // Style 3: Minimal - Tối giản, tập trung nội dung
 function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
-  return (
-    <div className="py-8 px-4">
-      <article className="max-w-2xl mx-auto">
-        <Link href="/posts" className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-900 text-sm mb-6 transition-colors">
-          <ArrowLeft size={14} />
-          Bài viết
-        </Link>
+  const [isCopied, setIsCopied] = useState(false);
+  const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
 
-        <header className="mb-6 text-center">
-          <span className="text-xs font-medium uppercase tracking-wide" style={{ color: brandColor }}>{post.categoryName}</span>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mt-2 mb-3">{post.title}</h1>
-          <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
-            <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
-            <span>·</span>
-            <span>{Math.ceil(post.content.length / 1000)} phút</span>
-            <span>·</span>
-            <span>{post.views} views</span>
+  const handleShare = async () => {
+    if (navigator?.clipboard) {
+      await navigator.clipboard.writeText(window.location.href);
+      setIsCopied(true);
+      window.setTimeout(() => setIsCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background selection:bg-accent/30 text-foreground pb-20">
+      <nav className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b">
+        <div className="container max-w-7xl mx-auto h-16 flex items-center justify-between px-4">
+          <Link
+            href="/posts"
+            className="group -ml-2 text-muted-foreground hover:text-foreground inline-flex items-center h-9 px-3"
+            aria-label="Quay lại"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2 transition-transform group-hover:-translate-x-1" />
+            <span className="font-medium">Bài viết</span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={handleShare}
+            aria-label="Chia sẻ"
+            className="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-accent"
+          >
+            {isCopied ? <Check className="w-5 h-5 text-muted-foreground" /> : <Share2 className="w-5 h-5 text-muted-foreground" />}
+          </button>
+        </div>
+      </nav>
+
+      <main className="container max-w-7xl mx-auto px-4 py-8 md:py-12 animate-fade-in">
+        <header className="text-center mb-10 space-y-6 max-w-4xl mx-auto">
+          <span
+            className="inline-flex items-center rounded-full border px-3 py-1 text-xs uppercase tracking-widest font-bold"
+            style={{ backgroundColor: `${brandColor}15`, color: brandColor, borderColor: `${brandColor}30` }}
+          >
+            {post.categoryName}
+          </span>
+
+          <h1 className="text-[clamp(2rem,4.5vw,3rem)] font-extrabold leading-[1.1] tracking-tight text-foreground text-balance">
+            {post.title}
+          </h1>
+
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground font-medium">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-muted-foreground/70" />
+              <time>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
+            </div>
+            <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-muted-foreground/70" />
+              <span>{readingTime} phút đọc</span>
+            </div>
+            <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+            <div className="flex items-center gap-2">
+              <Eye className="w-4 h-4 text-muted-foreground/70" />
+              <span>{post.views.toLocaleString()} lượt xem</span>
+            </div>
           </div>
         </header>
 
         {post.thumbnail && (
-          <div className="aspect-[2/1] rounded-lg overflow-hidden mb-6">
-            <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" />
-          </div>
+          <figure className="relative w-full max-w-6xl mx-auto aspect-[21/9] mb-12 overflow-hidden rounded-2xl shadow-sm border bg-muted group">
+            <img
+              src={post.thumbnail}
+              alt={post.title}
+              className="object-cover w-full h-full transition-transform duration-700 hover:scale-105"
+              loading="lazy"
+            />
+          </figure>
         )}
 
-        <div className="prose prose-slate prose-sm max-w-none prose-headings:font-semibold prose-p:text-slate-600 prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-img:rounded-lg" dangerouslySetInnerHTML={{ __html: post.content }} />
+        <article className="prose prose-slate prose-lg md:prose-xl max-w-4xl mx-auto text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-img:rounded-xl">
+          {post.excerpt && (
+            <p
+              className="lead text-xl md:text-2xl text-foreground/90 font-medium leading-relaxed mb-10 border-l-4 pl-6 bg-muted/50 py-2 rounded-r-lg"
+              style={{ borderColor: brandColor }}
+            >
+              {post.excerpt}
+            </p>
+          )}
+          <div dangerouslySetInnerHTML={{ __html: post.content }} />
+        </article>
 
-        <div className="my-8 flex items-center justify-center">
-          <div className="w-12 h-px bg-slate-200"></div>
-          <div className="mx-3 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: brandColor }}></div>
-          <div className="w-12 h-px bg-slate-200"></div>
-        </div>
+        <div className="h-24" />
 
         {relatedPosts.length > 0 && (
-          <div>
-            <h3 className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-4 text-center">Đọc thêm</h3>
-            <div className="space-y-2">
+          <section className="border-t pt-16">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Bài viết liên quan</h2>
+              <Link href="/posts" className="hidden sm:flex items-center gap-1 text-muted-foreground hover:opacity-80">
+                Xem tất cả <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {relatedPosts.map((p) => (
-                <Link key={p._id} href={`/posts/${p.slug}`} className="block py-3 border-b border-slate-100 hover:border-slate-300 transition-colors duration-200 group">
-                  <h4 className="text-sm font-medium text-slate-900 group-hover:opacity-70 transition-opacity duration-200">{p.title}</h4>
+                <Link
+                  key={p._id}
+                  href={`/posts/${p.slug}`}
+                  className="group border-none shadow-none bg-transparent hover:bg-muted/50 transition-colors p-0 overflow-hidden cursor-pointer rounded-xl"
+                >
+                  <div className="aspect-[4/3] rounded-xl overflow-hidden mb-4 bg-muted relative">
+                    {p.thumbnail ? (
+                      <img
+                        src={p.thumbnail}
+                        alt={p.title}
+                        className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                    )}
+                    <span
+                      className="absolute top-4 left-4 bg-white/90 text-foreground shadow-sm border-none rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                    >
+                      {post.categoryName}
+                    </span>
+                  </div>
+                  <div className="p-2">
+                    <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('vi-VN') : ''}
+                    </div>
+                    <h3 className="text-lg font-bold text-foreground leading-snug group-hover:opacity-80 transition-colors mb-2">
+                      {p.title}
+                    </h3>
+                    {p.excerpt && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {p.excerpt}
+                      </p>
+                    )}
+                  </div>
                 </Link>
               ))}
             </div>
-          </div>
+
+            <div className="mt-10 text-center sm:hidden">
+              <Link
+                href="/posts"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full"
+              >
+                Xem tất cả bài viết
+              </Link>
+            </div>
+          </section>
         )}
-      </article>
+      </main>
     </div>
   );
 }
