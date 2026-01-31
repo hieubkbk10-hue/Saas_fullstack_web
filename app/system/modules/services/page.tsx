@@ -5,7 +5,7 @@ import { useMutation, usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Briefcase, Clock, Database, DollarSign, Eye, FolderTree, Loader2, Monitor, Palette, RefreshCw, Settings, Smartphone, Star, Tablet, Trash2 } from 'lucide-react';
+import { Briefcase, Clock, Database, DollarSign, Eye, FolderTree, Loader2, MessageCircle, Monitor, Palette, Phone, RefreshCw, Settings, Smartphone, Star, Tablet, Trash2 } from 'lucide-react';
 import type { FieldConfig } from '@/types/module-config';
 import { 
   Code, ConventionNote, FeaturesCard, FieldsCard,
@@ -25,6 +25,7 @@ const FEATURES_CONFIG = [
 
 type FeaturesState = Record<string, boolean>;
 interface SettingsState { servicesPerPage: number; defaultStatus: string }
+interface ContactSettings { phone: string; zalo: string; messenger: string }
 type TabType = 'config' | 'data' | 'appearance';
 type ServicesListStyle = 'fullwidth' | 'sidebar' | 'magazine';
 type ServicesDetailStyle = 'classic' | 'modern' | 'minimal';
@@ -80,11 +81,17 @@ export default function ServicesModuleConfigPage() {
   const listStyleSetting = useQuery(api.settings.getByKey, { key: 'services_list_style' });
   const detailStyleSetting = useQuery(api.settings.getByKey, { key: 'services_detail_style' });
   const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
+  
+  // Contact settings queries
+  const contactSettingsData = useQuery(api.settings.getMultiple, {
+    keys: ['contact_phone', 'contact_zalo', 'contact_messenger']
+  });
 
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localServiceFields, setLocalServiceFields] = useState<FieldConfig[]>([]);
   const [localCategoryFields, setLocalCategoryFields] = useState<FieldConfig[]>([]);
   const [localSettings, setLocalSettings] = useState<SettingsState>({ defaultStatus: 'draft', servicesPerPage: 10 });
+  const [localContactSettings, setLocalContactSettings] = useState<ContactSettings>({ messenger: '', phone: '', zalo: '' });
   const [isSaving, setIsSaving] = useState(false);
 
   // Appearance tab states
@@ -160,6 +167,17 @@ export default function ServicesModuleConfigPage() {
       setDetailStyle(detailStyleSetting.value as ServicesDetailStyle);
     }
   }, [listStyleSetting, detailStyleSetting]);
+  
+  // Sync contact settings
+  useEffect(() => {
+    if (contactSettingsData) {
+      setLocalContactSettings({
+        messenger: (contactSettingsData.contact_messenger as string) || '',
+        phone: (contactSettingsData.contact_phone as string) || '',
+        zalo: (contactSettingsData.contact_zalo as string) || '',
+      });
+    }
+  }, [contactSettingsData]);
 
   const serverFeatures = useMemo(() => {
     const result: FeaturesState = {};
@@ -176,6 +194,12 @@ export default function ServicesModuleConfigPage() {
     const defaultStatus = settingsData?.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'draft';
     return { defaultStatus, servicesPerPage };
   }, [settingsData]);
+  
+  const serverContactSettings = useMemo(() => ({
+    messenger: (contactSettingsData?.contact_messenger as string) || '',
+    phone: (contactSettingsData?.contact_phone as string) || '',
+    zalo: (contactSettingsData?.contact_zalo as string) || '',
+  }), [contactSettingsData]);
 
   const hasChanges = useMemo(() => {
     const featuresChanged = Object.keys(localFeatures).some(key => localFeatures[key] !== serverFeatures[key]);
@@ -189,7 +213,10 @@ export default function ServicesModuleConfigPage() {
     });
     const settingsChanged = localSettings.servicesPerPage !== serverSettings.servicesPerPage ||
                            localSettings.defaultStatus !== serverSettings.defaultStatus;
-    return featuresChanged || serviceFieldsChanged || categoryFieldsChanged || settingsChanged;
+    const contactChanged = localContactSettings.phone !== serverContactSettings.phone ||
+                          localContactSettings.zalo !== serverContactSettings.zalo ||
+                          localContactSettings.messenger !== serverContactSettings.messenger;
+    return featuresChanged || serviceFieldsChanged || categoryFieldsChanged || settingsChanged || contactChanged;
   }, [localFeatures, serverFeatures, localServiceFields, serverServiceFields, localCategoryFields, serverCategoryFields, localSettings, serverSettings]);
 
   const handleToggleFeature = (key: string) => {
@@ -257,6 +284,21 @@ export default function ServicesModuleConfigPage() {
       }
       if (localSettings.defaultStatus !== serverSettings.defaultStatus) {
         promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'defaultStatus', value: localSettings.defaultStatus }));
+      }
+      
+      // Save contact settings
+      const contactChanges: Array<{ group: string; key: string; value: string }> = [];
+      if (localContactSettings.phone !== serverContactSettings.phone) {
+        contactChanges.push({ group: 'contact', key: 'contact_phone', value: localContactSettings.phone });
+      }
+      if (localContactSettings.zalo !== serverContactSettings.zalo) {
+        contactChanges.push({ group: 'contact', key: 'contact_zalo', value: localContactSettings.zalo });
+      }
+      if (localContactSettings.messenger !== serverContactSettings.messenger) {
+        contactChanges.push({ group: 'contact', key: 'contact_messenger', value: localContactSettings.messenger });
+      }
+      if (contactChanges.length > 0) {
+        promises.push(setMultipleSettings({ settings: contactChanges }));
       }
       
       await Promise.all(promises);
@@ -416,6 +458,61 @@ export default function ServicesModuleConfigPage() {
                 onToggle={handleToggleFeature}
                 toggleColor="bg-teal-500"
               />
+              
+              {/* Contact Settings Card */}
+              <Card className="border-teal-500/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-teal-500/10">
+                      <Phone className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    </div>
+                    Liên hệ tư vấn
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Số điện thoại
+                    </label>
+                    <input
+                      type="tel"
+                      value={localContactSettings.phone}
+                      onChange={(e) =>{  setLocalContactSettings({...localContactSettings, phone: e.target.value}); }}
+                      placeholder="0901234567"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white dark:bg-slate-800"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <MessageCircle size={12} />
+                      Zalo
+                    </label>
+                    <input
+                      type="text"
+                      value={localContactSettings.zalo}
+                      onChange={(e) =>{  setLocalContactSettings({...localContactSettings, zalo: e.target.value}); }}
+                      placeholder="0901234567"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white dark:bg-slate-800"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <MessageCircle size={12} />
+                      Messenger URL
+                    </label>
+                    <input
+                      type="url"
+                      value={localContactSettings.messenger}
+                      onChange={(e) =>{  setLocalContactSettings({...localContactSettings, messenger: e.target.value}); }}
+                      placeholder="https://m.me/yourpage"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white dark:bg-slate-800"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">
+                    Buttons &quot;Liên hệ tư vấn&quot; và &quot;Chat ngay&quot; sẽ sử dụng settings này
+                  </p>
+                </CardContent>
+              </Card>
             </div>
 
             <FieldsCard
