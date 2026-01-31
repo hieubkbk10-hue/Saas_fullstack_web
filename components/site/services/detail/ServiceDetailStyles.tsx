@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { QuickContactButtons, QuickContactCompact } from '@/components/site/QuickContact';
-import { ArrowLeft, ArrowRight, Briefcase, Calendar, CheckCircle2, ChevronRight, Clock, Copy, Eye, Star } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Briefcase, Calendar, ChevronRight, Clock, Copy, Eye, Star } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
 export interface ServiceDetailData {
@@ -46,6 +46,23 @@ function formatPrice(price?: number): string {
 function formatDate(timestamp?: number): string {
   if (!timestamp) {return '';}
   return new Date(timestamp).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function FallbackServiceThumb({ title, brandColor }: { title: string; brandColor: string }) {
+  const initial = title.trim().charAt(0).toUpperCase();
+  return (
+    <div
+      className="w-full h-full flex items-center justify-center text-white"
+      style={{
+        background: `linear-gradient(135deg, ${brandColor}30, ${brandColor}80)`
+      }}
+    >
+      <div className="flex flex-col items-center gap-1">
+        <Briefcase size={24} className="text-white/80" />
+        <span className="text-sm font-semibold">{initial}</span>
+      </div>
+    </div>
+  );
 }
 
 // STYLE 1: CLASSIC - Professional service page with sticky CTA sidebar
@@ -161,20 +178,6 @@ export function ClassicStyle({ service, brandColor, relatedServices, enabledFiel
                   variant="horizontal"
                 />
               </div>
-              <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <CheckCircle2 size={18} className="text-green-500 shrink-0" />
-                  <span>Tư vấn miễn phí</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <CheckCircle2 size={18} className="text-green-500 shrink-0" />
-                  <span>Hỗ trợ 24/7</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <CheckCircle2 size={18} className="text-green-500 shrink-0" />
-                  <span>Cam kết chất lượng</span>
-                </div>
-              </div>
             </div>
 
             <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-strong:text-slate-900">
@@ -223,9 +226,7 @@ export function ClassicStyle({ service, brandColor, relatedServices, enabledFiel
                           {s.thumbnail ? (
                             <Image src={s.thumbnail} alt={s.title} fill sizes="64px" className="object-cover group-hover:scale-110 transition-transform duration-300" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
-                              <Briefcase size={20} style={{ color: brandColor }} />
-                            </div>
+                            <FallbackServiceThumb title={s.title} brandColor={brandColor} />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -383,9 +384,7 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
                         className="object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
-                        <Briefcase size={32} style={{ color: brandColor }} />
-                      </div>
+                      <FallbackServiceThumb title={s.title} brandColor={brandColor} />
                     )}
                   </div>
                   <div className="p-5">
