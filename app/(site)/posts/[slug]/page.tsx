@@ -178,7 +178,7 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          <article className="lg:col-span-8 space-y-8">
+          <article className="lg:col-span-9 space-y-8">
             <header className="space-y-4">
               <div className="flex items-center gap-2">
                 <span
@@ -255,7 +255,7 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
             </div>
           </article>
 
-          <aside className="lg:col-span-4 space-y-6">
+          <aside className="lg:col-span-3 space-y-6">
             {relatedPosts.length > 0 && (
               <div className="h-fit sticky top-24 rounded-lg bg-muted/30">
                 <div className="flex flex-col space-y-1.5 p-6 px-0 sm:px-6">
