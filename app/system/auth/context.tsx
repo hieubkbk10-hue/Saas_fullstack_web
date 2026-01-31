@@ -17,8 +17,10 @@ const SystemAuthContext = createContext<SystemAuthContextType | null>(null);
 const SYSTEM_TOKEN_KEY = 'system_auth_token';
 
 export function SystemAuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(SYSTEM_TOKEN_KEY);
+  });
 
   const loginMutation = useMutation(api.auth.verifySystemLogin);
   const logoutMutation = useMutation(api.auth.logoutSystem);
@@ -29,14 +31,7 @@ export function SystemAuthProvider({ children }: { children: React.ReactNode }) 
     token ? { token } : "skip"
   );
 
-  useEffect(() => {
-    // Load token from localStorage on mount
-    const savedToken = localStorage.getItem(SYSTEM_TOKEN_KEY);
-    if (savedToken) {
-      setToken(savedToken);
-    }
-    setIsLoading(false);
-  }, []);
+  const isLoading = !!token && sessionResult === undefined;
 
   // Check if session is valid
   // isSessionVerified: true khi không có token HOẶC sessionResult đã có data (dù valid hay không)
@@ -47,7 +42,6 @@ export function SystemAuthProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (token && sessionResult && !sessionResult.valid) {
       localStorage.removeItem(SYSTEM_TOKEN_KEY);
-      setToken(null);
     }
   }, [token, sessionResult]);
 
@@ -59,7 +53,7 @@ export function SystemAuthProvider({ children }: { children: React.ReactNode }) 
         setToken(result.token);
       }
       return { success: result.success, message: result.message };
-    } catch (error) {
+    } catch {
       return { success: false, message: 'Có lỗi xảy ra khi đăng nhập' };
     }
   }, [loginMutation]);

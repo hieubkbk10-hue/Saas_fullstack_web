@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -46,6 +47,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
 
   const posts = postsData.page;
   const showViewAll = posts.length > 0;
+  const carouselId = React.useId();
 
   // No posts state
   if (posts.length === 0) {
@@ -74,7 +76,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                 >
                   <div className="relative aspect-[16/10] overflow-hidden">
                     {post.thumbnail ? (
-                      <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      <Image src={post.thumbnail} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
                         <FileText size={32} style={{ color: `${brandColor}40` }} />
@@ -119,9 +121,9 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
             {posts.slice(0, 5).map((post) => (
               <Link key={post._id} href={`/posts/${post.slug}`} className="group block">
                 <article className="flex w-full flex-col sm:flex-row overflow-hidden rounded-lg border bg-white transition-all" style={{ borderColor: `${brandColor}15` }}>
-                  <div className="aspect-[16/9] sm:aspect-[4/3] w-full sm:w-[220px] overflow-hidden flex-shrink-0">
+                  <div className="relative aspect-[16/9] sm:aspect-[4/3] w-full sm:w-[220px] overflow-hidden flex-shrink-0">
                     {post.thumbnail ? (
-                      <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      <Image src={post.thumbnail} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(min-width: 640px) 220px, 100vw" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
                         <FileText size={24} style={{ color: `${brandColor}40` }} />
@@ -172,7 +174,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                 <article className="relative flex h-full min-h-[300px] md:min-h-[400px] lg:min-h-[500px] flex-col justify-end overflow-hidden rounded-xl text-white transition-all" style={{ boxShadow: `0 8px 30px ${brandColor}20` }}>
                   <div className="absolute inset-0 z-0">
                     {featuredPost.thumbnail ? (
-                      <img src={featuredPost.thumbnail} alt={featuredPost.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                      <Image src={featuredPost.thumbnail} alt={featuredPost.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(min-width: 1024px) 70vw, 100vw" />
                     ) : (
                       <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}80)` }} />
                     )}
@@ -198,7 +200,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                   <article className="flex items-center space-x-4 rounded-lg p-2 border transition-all" style={{ borderColor: `${brandColor}10` }}>
                     <div className="relative h-14 w-14 md:h-16 md:w-16 shrink-0 overflow-hidden rounded-md border" style={{ borderColor: `${brandColor}15` }}>
                       {post.thumbnail ? (
-                        <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
+                        <Image src={post.thumbnail} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform" sizes="64px" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
                           <FileText size={16} style={{ color: `${brandColor}40` }} />
@@ -245,7 +247,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
             {featured && (
               <Link href={`/posts/${featured.slug}`} className="group block">
                 <article className="relative rounded-xl overflow-hidden aspect-[16/9]" style={{ boxShadow: `0 4px 20px ${brandColor}15` }}>
-                  {featured.thumbnail ? <img src={featured.thumbnail} alt={featured.title} className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}30, ${brandColor}60)` }} />}
+                  {featured.thumbnail ? <Image src={featured.thumbnail} alt={featured.title} fill className="object-cover" sizes="(min-width: 1024px) 50vw, 100vw" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}30, ${brandColor}60)` }} />}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <span className="px-2 py-1 text-[10px] font-bold rounded mb-2 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{categoryMap.get(featured.categoryId) || 'Tin tức'}</span>
@@ -258,8 +260,8 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
               {otherPosts.map((post) => (
                 <Link key={post._id} href={`/posts/${post.slug}`} className="group">
                   <article className="rounded-xl border overflow-hidden transition-all h-full" style={{ borderColor: `${brandColor}15` }}>
-                    <div className="aspect-[16/10] overflow-hidden">
-                      {post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><FileText size={20} style={{ color: `${brandColor}40` }} /></div>}
+                    <div className="relative aspect-[16/10] overflow-hidden">
+                      {post.thumbnail ? <Image src={post.thumbnail} alt={post.title} fill className="object-cover" sizes="(min-width: 1024px) 33vw, 50vw" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><FileText size={20} style={{ color: `${brandColor}40` }} /></div>}
                     </div>
                     <div className="p-3">
                       <h4 className="text-sm font-medium text-slate-900 line-clamp-2">{post.title}</h4>
@@ -276,7 +278,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
             {featured && (
               <Link href={`/posts/${featured.slug}`} className="lg:row-span-2 group">
                 <article className="relative rounded-2xl overflow-hidden h-full min-h-[420px]" style={{ boxShadow: `0 8px 30px ${brandColor}20` }}>
-                  {featured.thumbnail ? <img src={featured.thumbnail} alt={featured.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}80)` }} />}
+                  {featured.thumbnail ? <Image src={featured.thumbnail} alt={featured.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(min-width: 1024px) 50vw, 100vw" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}80)` }} />}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-6">
                     <span className="px-2.5 py-1 text-xs font-bold rounded mb-3 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{categoryMap.get(featured.categoryId) || 'Nổi bật'}</span>
@@ -291,8 +293,8 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
             {otherPosts.map((post) => (
               <Link key={post._id} href={`/posts/${post.slug}`} className="group">
                 <article className="rounded-xl border overflow-hidden h-full flex flex-col transition-all" style={{ borderColor: `${brandColor}15` }}>
-                  <div className="aspect-[16/10] overflow-hidden flex-shrink-0">
-                    {post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><FileText size={28} style={{ color: `${brandColor}40` }} /></div>}
+                  <div className="relative aspect-[16/10] overflow-hidden flex-shrink-0">
+                    {post.thumbnail ? <Image src={post.thumbnail} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(min-width: 1024px) 33vw, 50vw" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><FileText size={28} style={{ color: `${brandColor}40` }} /></div>}
                   </div>
                   <div className="p-4 flex flex-col flex-1">
                     <span className="text-[10px] font-bold uppercase mb-1" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) || 'Tin tức'}</span>
@@ -310,7 +312,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
 
   // Style 5: Carousel - Horizontal scrollable với navigation và drag scroll
   if (style === 'carousel') {
-    const carouselId = `blog-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const carouselDomId = `blog-carousel-${carouselId}`;
     const cardWidth = 320;
     const gap = 20;
     const displayedPosts = posts.slice(0, 6);
@@ -331,7 +333,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselId);
+                      const container = document.getElementById(carouselDomId);
                       if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
                     }}
                     className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
@@ -341,7 +343,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselId);
+                      const container = document.getElementById(carouselDomId);
                       if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
                     }}
                     className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
@@ -357,7 +359,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
+                    const container = document.getElementById(carouselDomId);
                     if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
                   }}
                   className="w-10 h-10 rounded-full border flex items-center justify-center transition-colors hover:bg-slate-50"
@@ -368,7 +370,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
+                    const container = document.getElementById(carouselDomId);
                     if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
                   }}
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
@@ -388,7 +390,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
 
             {/* Scrollable area với Mouse Drag */}
             <div
-              id={carouselId}
+              id={carouselDomId}
               className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-5 py-4 px-2 cursor-grab active:cursor-grabbing select-none scrollbar-hide"
               style={{
                 scrollbarWidth: 'none',
@@ -430,9 +432,9 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                     className="rounded-xl border overflow-hidden transition-all h-full flex flex-col"
                     style={{ borderColor: `${brandColor}15` }}
                   >
-                    <div className="aspect-[16/10] overflow-hidden flex-shrink-0">
+                    <div className="relative aspect-[16/10] overflow-hidden flex-shrink-0">
                       {post.thumbnail ? (
-                        <img src={post.thumbnail} alt={post.title} draggable={false} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <Image src={post.thumbnail} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" draggable={false} sizes="(min-width: 1024px) 360px, (min-width: 768px) 320px, 280px" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
                           <FileText size={32} style={{ color: `${brandColor}40` }} />
@@ -460,7 +462,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
 
           {/* CSS để ẩn scrollbar */}
           <style>{`
-            #${carouselId}::-webkit-scrollbar {
+            #${carouselDomId}::-webkit-scrollbar {
               display: none;
             }
           `}</style>

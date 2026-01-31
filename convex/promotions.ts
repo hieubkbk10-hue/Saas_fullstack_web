@@ -1,15 +1,15 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 
 // HIGH-004 FIX: Helper function to update promotionStats counter
 async function updatePromotionStats(
-  ctx: { db: any },
+  ctx: MutationCtx,
   key: string,
   delta: number
 ) {
   const stats = await ctx.db
     .query("promotionStats")
-    .withIndex("by_key", (q: any) => q.eq("key", key))
+    .withIndex("by_key", (q) => q.eq("key", key))
     .unique();
   if (stats) {
     await ctx.db.patch(stats._id, { count: Math.max(0, stats.count + delta) });

@@ -21,7 +21,7 @@ export default function CTACreatePage() {
   const [style, setStyle] = useState<CTAStyle>('banner');
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { ...ctaConfig, style });
+    void handleSubmit(e, { ...ctaConfig, style });
   };
 
   return (

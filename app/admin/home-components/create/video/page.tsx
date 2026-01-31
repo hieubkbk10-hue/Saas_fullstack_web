@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { cn, Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../../../components/ui';
+import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { VideoPreview, type VideoStyle } from '../../previews';
 import { ImageFieldWithUpload } from '../../../components/ImageFieldWithUpload';
-import { Play, Video as VideoIcon } from 'lucide-react';
+import { Video as VideoIcon } from 'lucide-react';
 
 export default function VideoCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Video Giới thiệu', 'Video');
@@ -29,7 +29,7 @@ export default function VideoCreatePage() {
   const showCTAConfig = stylesWithCTA.includes(style);
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { 
+    void handleSubmit(e, { 
       videoUrl,
       thumbnailUrl,
       heading,

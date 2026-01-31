@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 
 const homeComponentDoc = v.object({
@@ -13,13 +13,13 @@ const homeComponentDoc = v.object({
 
 // CRIT-002 FIX: Helper function to update homeComponentStats counter
 async function updateHomeComponentStats(
-  ctx: { db: any },
+  ctx: MutationCtx,
   key: string,
   delta: number
 ) {
   const stats = await ctx.db
     .query("homeComponentStats")
-    .withIndex("by_key", (q: any) => q.eq("key", key))
+    .withIndex("by_key", (q) => q.eq("key", key))
     .unique();
   if (stats) {
     await ctx.db.patch(stats._id, { count: Math.max(0, stats.count + delta) });

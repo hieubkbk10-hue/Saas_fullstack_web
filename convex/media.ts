@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 
@@ -46,14 +46,14 @@ function getMediaTypeKey(mimeType: string): "image" | "video" | "document" | "ot
 
 // Update mediaStats counter (increment or decrement)
 async function updateMediaStats(
-  ctx: { db: any },
+  ctx: MutationCtx,
   typeKey: "total" | "image" | "video" | "document" | "other",
   countDelta: number,
   sizeDelta: number
 ) {
   const existing = await ctx.db
     .query("mediaStats")
-    .withIndex("by_key", (q: any) => q.eq("key", typeKey))
+    .withIndex("by_key", (q) => q.eq("key", typeKey))
     .first();
 
   if (existing) {
@@ -72,7 +72,7 @@ async function updateMediaStats(
 
 // Update mediaFolders counter
 async function updateMediaFolder(
-  ctx: { db: any },
+  ctx: MutationCtx,
   folderName: string | undefined,
   countDelta: number
 ) {
@@ -80,7 +80,7 @@ async function updateMediaFolder(
 
   const existing = await ctx.db
     .query("mediaFolders")
-    .withIndex("by_name", (q: any) => q.eq("name", folderName))
+    .withIndex("by_name", (q) => q.eq("name", folderName))
     .first();
 
   if (existing) {
@@ -387,7 +387,8 @@ export const bulkRemove = mutation({
     const validItems = mediaItems.filter((m): m is NonNullable<typeof m> => m !== null);
 
     // Aggregate counter updates
-    const statsUpdates: Record<string, { count: number; size: number }> = {
+    type MediaStatsKey = "total" | "image" | "video" | "document" | "other";
+    const statsUpdates: Record<MediaStatsKey, { count: number; size: number }> = {
       total: { count: 0, size: 0 },
       image: { count: 0, size: 0 },
       video: { count: 0, size: 0 },
@@ -417,9 +418,10 @@ export const bulkRemove = mutation({
     }
 
     // Batch update mediaStats
-    for (const [key, { count, size }] of Object.entries(statsUpdates)) {
+    for (const key of Object.keys(statsUpdates) as MediaStatsKey[]) {
+      const { count, size } = statsUpdates[key];
       if (count > 0) {
-        await updateMediaStats(ctx, key as any, -count, -size);
+        await updateMediaStats(ctx, key, -count, -size);
       }
     }
 

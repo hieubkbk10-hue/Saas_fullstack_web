@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { Bell, Mail, Clock, Users, Loader2, Database, Trash2, RefreshCw, Settings, CheckCircle, AlertTriangle, XCircle, Info, Send } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
@@ -13,6 +14,20 @@ import {
 import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'notifications';
+
+type NotificationRecord = {
+  _id: Id<'notifications'>;
+  title: string;
+  content?: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  targetType: 'all' | 'customers' | 'users' | 'specific';
+  status: 'Draft' | 'Scheduled' | 'Sent' | 'Cancelled';
+  sendEmail?: boolean;
+  readCount?: number;
+  scheduledAt?: number;
+  sentAt?: number;
+  _creationTime?: number;
+};
 
 const FEATURES_CONFIG = [
   { key: 'enableEmail', label: 'Gửi Email', icon: Mail, description: 'Gửi thông báo qua email', linkedField: 'sendEmail' },
@@ -171,7 +186,7 @@ export default function NotificationsModuleConfigPage() {
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
         }
       }
       if (localSettings.itemsPerPage !== serverSettings.itemsPerPage) {
@@ -333,7 +348,7 @@ function NotificationsDataTab({
   onClearData, 
   onResetData 
 }: { 
-  notificationsData: any[];
+  notificationsData: NotificationRecord[];
   onSeedData: () => Promise<void>;
   onClearData: () => Promise<void>;
   onResetData: () => Promise<void>;

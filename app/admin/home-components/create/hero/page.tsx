@@ -43,7 +43,7 @@ export default function HeroCreatePage() {
   }));
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { 
+    void handleSubmit(e, { 
       slides: heroSlides.map(s => ({ image: s.url || s.image, link: s.link })), 
       style: heroStyle,
       content: needsContentForm(heroStyle) ? heroContent : undefined,

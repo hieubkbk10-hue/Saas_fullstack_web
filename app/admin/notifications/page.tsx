@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -106,11 +106,24 @@ function NotificationsContent() {
     return sortedNotifications.slice(start, start + itemsPerPage);
   }, [sortedNotifications, currentPage, itemsPerPage]);
 
-  // Reset page khi filter/sort thay đổi
-  useEffect(() => { setCurrentPage(1); }, [searchTerm, filterStatus, filterType, sortConfig]);
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusChange = (value: string) => {
+    setFilterStatus(value);
+    setCurrentPage(1);
+  };
+
+  const handleTypeChange = (value: string) => {
+    setFilterType(value);
+    setCurrentPage(1);
+  };
 
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setCurrentPage(1);
   };
 
   const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedNotifications.length ? [] : paginatedNotifications.map(n => n._id));
@@ -208,12 +221,12 @@ function NotificationsContent() {
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
           <div className="relative max-w-xs flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm tiêu đề..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Input placeholder="Tìm kiếm tiêu đề..." className="pl-9" value={searchTerm} onChange={(e) => handleSearchChange(e.target.value)} />
           </div>
           <select 
             className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
             value={filterStatus} 
-            onChange={(e) => setFilterStatus(e.target.value)}
+            onChange={(e) => handleStatusChange(e.target.value)}
           >
             <option value="">Tất cả trạng thái</option>
             <option value="Draft">Bản nháp</option>
@@ -224,7 +237,7 @@ function NotificationsContent() {
           <select 
             className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
             value={filterType} 
-            onChange={(e) => setFilterType(e.target.value)}
+            onChange={(e) => handleTypeChange(e.target.value)}
           >
             <option value="">Tất cả loại</option>
             <option value="info">Thông tin</option>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, Suspense, useMemo } from 'react';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -155,7 +156,7 @@ function ProductListCreateContent() {
       else if (type === 'Blog') config.selectedPostIds = selectedPostIds;
     }
     
-    handleSubmit(e, config);
+    void handleSubmit(e, config);
   };
 
   const getSelectionModeLabel = () => {
@@ -287,7 +288,7 @@ function ProductListCreateContent() {
                         <div className="text-slate-400 cursor-move"><GripVertical size={16} /></div>
                         <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white text-xs rounded-full font-medium">{index + 1}</span>
                         {product.image ? (
-                          <img src={product.image} alt="" className="w-12 h-12 object-cover rounded" />
+                          <Image src={product.image} alt="" width={48} height={48} className="w-12 h-12 object-cover rounded" />
                         ) : (
                           <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center"><Package size={16} className="text-slate-400" /></div>
                         )}
@@ -320,7 +321,7 @@ function ProductListCreateContent() {
                           className={cn("flex items-center gap-3 p-3 cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors", isSelected ? "bg-blue-50 dark:bg-blue-500/10" : "hover:bg-slate-50 dark:hover:bg-slate-800")}
                         >
                           <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center transition-colors", isSelected ? "border-blue-500 bg-blue-500" : "border-slate-300 dark:border-slate-600")}>{isSelected && <Check size={12} className="text-white" />}</div>
-                          {product.image ? <img src={product.image} alt="" className="w-10 h-10 object-cover rounded" /> : <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center"><Package size={14} className="text-slate-400" /></div>}
+                          {product.image ? <Image src={product.image} alt="" width={40} height={40} className="w-10 h-10 object-cover rounded" /> : <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center"><Package size={14} className="text-slate-400" /></div>}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{product.name}</p>
                             <p className="text-xs text-slate-500">{product.price?.toLocaleString('vi-VN')}đ</p>
@@ -349,7 +350,7 @@ function ProductListCreateContent() {
                         <div className="text-slate-400 cursor-move"><GripVertical size={16} /></div>
                         <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white text-xs rounded-full font-medium">{index + 1}</span>
                         {service.thumbnail ? (
-                          <img src={service.thumbnail} alt="" className="w-12 h-12 object-cover rounded" />
+                          <Image src={service.thumbnail} alt="" width={48} height={48} className="w-12 h-12 object-cover rounded" />
                         ) : (
                           <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center"><Briefcase size={16} className="text-slate-400" /></div>
                         )}
@@ -382,7 +383,7 @@ function ProductListCreateContent() {
                           className={cn("flex items-center gap-3 p-3 cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors", isSelected ? "bg-blue-50 dark:bg-blue-500/10" : "hover:bg-slate-50 dark:hover:bg-slate-800")}
                         >
                           <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center transition-colors", isSelected ? "border-blue-500 bg-blue-500" : "border-slate-300 dark:border-slate-600")}>{isSelected && <Check size={12} className="text-white" />}</div>
-                          {service.thumbnail ? <img src={service.thumbnail} alt="" className="w-10 h-10 object-cover rounded" /> : <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center"><Briefcase size={14} className="text-slate-400" /></div>}
+                          {service.thumbnail ? <Image src={service.thumbnail} alt="" width={40} height={40} className="w-10 h-10 object-cover rounded" /> : <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center"><Briefcase size={14} className="text-slate-400" /></div>}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{service.title}</p>
                             <p className="text-xs text-slate-500">{service.views} lượt xem</p>
@@ -411,7 +412,7 @@ function ProductListCreateContent() {
                         <div className="text-slate-400 cursor-move"><GripVertical size={16} /></div>
                         <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white text-xs rounded-full font-medium">{index + 1}</span>
                         {post.thumbnail ? (
-                          <img src={post.thumbnail} alt="" className="w-12 h-12 object-cover rounded" />
+                          <Image src={post.thumbnail} alt="" width={48} height={48} className="w-12 h-12 object-cover rounded" />
                         ) : (
                           <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center"><FileText size={16} className="text-slate-400" /></div>
                         )}
@@ -444,7 +445,7 @@ function ProductListCreateContent() {
                           className={cn("flex items-center gap-3 p-3 cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors", isSelected ? "bg-blue-50 dark:bg-blue-500/10" : "hover:bg-slate-50 dark:hover:bg-slate-800")}
                         >
                           <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center transition-colors", isSelected ? "border-blue-500 bg-blue-500" : "border-slate-300 dark:border-slate-600")}>{isSelected && <Check size={12} className="text-white" />}</div>
-                          {post.thumbnail ? <img src={post.thumbnail} alt="" className="w-10 h-10 object-cover rounded" /> : <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center"><FileText size={14} className="text-slate-400" /></div>}
+                          {post.thumbnail ? <Image src={post.thumbnail} alt="" width={40} height={40} className="w-10 h-10 object-cover rounded" /> : <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center"><FileText size={14} className="text-slate-400" /></div>}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{post.title}</p>
                             <p className="text-xs text-slate-500">{post.views} lượt xem</p>

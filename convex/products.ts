@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { productStatus } from "./lib/validators";
@@ -324,13 +324,13 @@ export const incrementViews = mutation({
 
 // Helper: Update stats counters
 async function updateStats(
-  ctx: { db: any },
+  ctx: MutationCtx,
   statusChange: { old?: string; new?: string }
 ) {
   // Update total count
   const totalStats = await ctx.db
     .query("productStats")
-    .withIndex("by_key", (q: any) => q.eq("key", "total"))
+    .withIndex("by_key", (q) => q.eq("key", "total"))
     .unique();
 
   if (statusChange.new && !statusChange.old) {
@@ -352,9 +352,10 @@ async function updateStats(
 
   // Update status-specific counts
   if (statusChange.old) {
+    const oldStatus = statusChange.old;
     const oldStats = await ctx.db
       .query("productStats")
-      .withIndex("by_key", (q: any) => q.eq("key", statusChange.old))
+      .withIndex("by_key", (q) => q.eq("key", oldStatus))
       .unique();
     if (oldStats && oldStats.count > 0) {
       await ctx.db.patch(oldStats._id, { count: oldStats.count - 1 });
@@ -362,23 +363,24 @@ async function updateStats(
   }
 
   if (statusChange.new) {
+    const newStatus = statusChange.new;
     const newStats = await ctx.db
       .query("productStats")
-      .withIndex("by_key", (q: any) => q.eq("key", statusChange.new))
+      .withIndex("by_key", (q) => q.eq("key", newStatus))
       .unique();
     if (newStats) {
       await ctx.db.patch(newStats._id, { count: newStats.count + 1 });
     } else {
-      await ctx.db.insert("productStats", { key: statusChange.new, count: 1, lastOrder: 0 });
+      await ctx.db.insert("productStats", { key: newStatus, count: 1, lastOrder: 0 });
     }
   }
 }
 
 // Helper: Get next order value from stats (FIX #3)
-async function getNextOrder(ctx: { db: any }): Promise<number> {
+async function getNextOrder(ctx: MutationCtx): Promise<number> {
   const totalStats = await ctx.db
     .query("productStats")
-    .withIndex("by_key", (q: any) => q.eq("key", "total"))
+    .withIndex("by_key", (q) => q.eq("key", "total"))
     .unique();
   return totalStats?.lastOrder ?? 0;
 }

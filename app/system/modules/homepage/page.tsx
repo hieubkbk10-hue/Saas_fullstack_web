@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { Home, LayoutGrid, ImageIcon, FileText, Users, Phone, Loader2, Database, Trash2, RefreshCw, Settings, Eye, EyeOff, GripVertical } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
@@ -191,7 +192,7 @@ export default function HomepageModuleConfigPage() {
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
         }
       }
       // Save settings
@@ -234,7 +235,7 @@ export default function HomepageModuleConfigPage() {
     toast.success('Đã reset dữ liệu thành công!');
   };
 
-  const handleToggleComponent = async (id: any) => {
+  const handleToggleComponent = async (id: Id<'homeComponents'>) => {
     await toggleComponent({ id });
     toast.success('Đã cập nhật trạng thái section!');
   };

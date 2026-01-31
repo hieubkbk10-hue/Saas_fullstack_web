@@ -3,8 +3,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { UserCog, Shield, Image, Phone, Clock, Loader2, Database, Trash2, RefreshCw, Settings } from 'lucide-react';
+import Image from 'next/image';
+import { UserCog, Shield, Image as ImageIcon, Phone, Clock, Loader2, Database, Trash2, RefreshCw, Settings } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
 import { 
   ModuleHeader, ModuleStatus, ConventionNote, Code,
@@ -16,7 +18,7 @@ import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead
 const MODULE_KEY = 'users';
 
 const FEATURES_CONFIG = [
-  { key: 'enableAvatar', label: 'Ảnh đại diện', icon: Image, linkedField: 'avatar' },
+  { key: 'enableAvatar', label: 'Ảnh đại diện', icon: ImageIcon, linkedField: 'avatar' },
   { key: 'enablePhone', label: 'Số điện thoại', icon: Phone, linkedField: 'phone' },
   { key: 'enableLastLogin', label: 'Đăng nhập cuối', icon: Clock, linkedField: 'lastLogin' },
 ];
@@ -152,7 +154,7 @@ export default function UsersModuleConfigPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const promises: Promise<any>[] = [];
+      const promises: Promise<unknown>[] = [];
       
       // Collect feature updates
       for (const key of Object.keys(localFeatures)) {
@@ -165,7 +167,7 @@ export default function UsersModuleConfigPage() {
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          promises.push(updateField({ id: field.id as any, enabled: field.enabled }));
+          promises.push(updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled }));
         }
       }
       
@@ -399,7 +401,7 @@ export default function UsersModuleConfigPage() {
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {user.avatar ? (
-                          <img src={user.avatar} className="w-6 h-6 rounded-full" alt={user.name} />
+                          <Image src={user.avatar} width={24} height={24} className="w-6 h-6 rounded-full" alt={user.name} />
                         ) : (
                           <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs">
                             {user.name.charAt(0)}

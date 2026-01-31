@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -276,7 +277,7 @@ function ProductsContent() {
                 {visibleColumns.includes('image') && (
                   <TableCell>
                     {product.image ? (
-                      <img src={product.image} className="w-10 h-10 object-cover rounded bg-slate-100" alt="" />
+                      <Image src={product.image} width={40} height={40} className="w-10 h-10 object-cover rounded bg-slate-100" alt={product.name} />
                     ) : (
                       <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
                         <Package size={16} className="text-slate-400" />

@@ -43,24 +43,24 @@ export function AdminModulesProvider({ children }: { children: React.ReactNode }
 
   // Check if module is enabled AND all its dependencies are satisfied
   const isModuleEnabled = (key: string): boolean => {
-    const module = modules.find(m => m.key === key);
-    if (!module) return false;
-    if (!module.enabled) return false;
+    const currentModule = modules.find(m => m.key === key);
+    if (!currentModule) return false;
+    if (!currentModule.enabled) return false;
     
     // Check dependencies
-    if (module.dependencies && module.dependencies.length > 0) {
-      const depType = module.dependencyType || 'all';
+    if (currentModule.dependencies && currentModule.dependencies.length > 0) {
+      const depType = currentModule.dependencyType || 'all';
       
       if (depType === 'all') {
         // ALL dependencies must be enabled
-        const allDepsEnabled = module.dependencies.every(depKey => {
+        const allDepsEnabled = currentModule.dependencies.every(depKey => {
           const depModule = modules.find(m => m.key === depKey);
           return depModule?.enabled ?? false;
         });
         if (!allDepsEnabled) return false;
       } else {
         // ANY dependency must be enabled
-        const anyDepEnabled = module.dependencies.some(depKey => {
+        const anyDepEnabled = currentModule.dependencies.some(depKey => {
           const depModule = modules.find(m => m.key === depKey);
           return depModule?.enabled ?? false;
         });

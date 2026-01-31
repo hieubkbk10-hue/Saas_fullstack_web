@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { 
-  Upload, Trash2, Loader2, Image as ImageIcon, X, Check,
+import {
+  Upload, Trash2, Loader2, Image as ImageIcon,
   // Common category icons
   ShoppingBag, Shirt, Smartphone, Laptop, Watch, Home, Car, Utensils,
   Flower2, Baby, Dumbbell, Book, Music, Camera, Gamepad2, Plane,
@@ -16,7 +17,7 @@ import {
   Truck, Building2, Store, Briefcase, GraduationCap, Stethoscope
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Input, Label, cn } from './ui';
+import { Button, Input, cn } from './ui';
 
 // Available icons for categories
 const CATEGORY_ICONS = [
@@ -105,7 +106,7 @@ function slugifyFilename(filename: string): string {
 // Compress image to WebP
 async function compressToWebP(file: File, quality: number = 0.85): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
+    const img = new window.Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -129,6 +130,14 @@ async function compressToWebP(file: File, quality: number = 0.85): Promise<Blob>
 
 type ImageMode = 'default' | 'icon' | 'upload' | 'url';
 
+const resolveImageMode = (value: string): ImageMode => {
+  if (!value) return 'default';
+  if (value.startsWith('icon:')) return 'icon';
+  if (value.startsWith('http') || value.startsWith('/')) return 'url';
+  if (value.startsWith('data:') || value.includes('convex')) return 'upload';
+  return 'default';
+};
+
 interface CategoryImageSelectorProps {
   value: string;
   onChange: (value: string, mode: ImageMode) => void;
@@ -145,18 +154,11 @@ export function CategoryImageSelector({
   className,
 }: CategoryImageSelectorProps) {
   // Determine current mode from value
-  const getInitialMode = (): ImageMode => {
-    if (!value) return 'default';
-    if (value.startsWith('icon:')) return 'icon';
-    if (value.startsWith('http') || value.startsWith('/')) return 'url';
-    if (value.startsWith('data:') || value.includes('convex')) return 'upload';
-    return 'default';
-  };
-
-  const [mode, setMode] = useState<ImageMode>(getInitialMode);
-  const [selectedIcon, setSelectedIcon] = useState<string>(value.startsWith('icon:') ? value.replace('icon:', '') : '');
-  const [urlInput, setUrlInput] = useState<string>(getInitialMode() === 'url' ? value : '');
-  const [uploadedUrl, setUploadedUrl] = useState<string>(getInitialMode() === 'upload' ? value : '');
+  const initialMode = resolveImageMode(value);
+  const [mode, setMode] = useState<ImageMode>(initialMode);
+  const [selectedIcon, setSelectedIcon] = useState<string>(initialMode === 'icon' ? value.replace('icon:', '') : '');
+  const [urlInput, setUrlInput] = useState<string>(initialMode === 'url' ? value : '');
+  const [uploadedUrl, setUploadedUrl] = useState<string>(initialMode === 'upload' ? value : '');
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [showIconPicker, setShowIconPicker] = useState(false);
@@ -167,7 +169,7 @@ export function CategoryImageSelector({
 
   // Sync with value prop
   useEffect(() => {
-    const newMode = getInitialMode();
+    const newMode = resolveImageMode(value);
     setMode(newMode);
     if (newMode === 'icon') {
       setSelectedIcon(value.replace('icon:', ''));
@@ -231,7 +233,7 @@ export function CategoryImageSelector({
 
       const { storageId } = await response.json();
 
-      const img = new Image();
+      const img = new window.Image();
       const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
         img.onload = () => resolve({ width: img.width, height: img.height });
         img.src = URL.createObjectURL(compressedFile);
@@ -265,7 +267,7 @@ export function CategoryImageSelector({
     const file = e.dataTransfer.files[0];
     if (file) {
       setMode('upload');
-      handleFileSelect(file);
+      void handleFileSelect(file);
     }
   }, [handleFileSelect]);
 
@@ -338,7 +340,7 @@ export function CategoryImageSelector({
         accept="image/*"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleFileSelect(file);
+          if (file) void handleFileSelect(file);
         }}
         className="hidden"
       />
@@ -348,7 +350,7 @@ export function CategoryImageSelector({
         <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
           <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
             {categoryImage ? (
-              <img src={categoryImage} alt="" className="w-full h-full object-cover" />
+              <Image src={categoryImage} width={48} height={48} alt="" className="object-cover" />
             ) : (
               <ImageIcon size={20} className="text-slate-400" />
             )}
@@ -419,7 +421,7 @@ export function CategoryImageSelector({
         <div>
           {uploadedUrl ? (
             <div className="relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 aspect-square w-24">
-              <img src={uploadedUrl} alt="" className="w-full h-full object-cover" />
+              <Image src={uploadedUrl} alt="" fill sizes="96px" className="object-cover" />
               <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
                 <div className="flex gap-1">
                   <Button

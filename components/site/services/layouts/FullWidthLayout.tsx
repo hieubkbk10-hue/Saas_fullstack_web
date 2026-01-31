@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Briefcase, Eye, Clock, Star } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 
@@ -57,10 +58,12 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
               <div className="sm:w-48 md:w-56 flex-shrink-0">
                 <div className="aspect-video sm:aspect-[4/3] sm:h-full bg-slate-100 overflow-hidden relative">
                   {service.thumbnail ? (
-                    <img 
-                      src={service.thumbnail} 
+                    <Image
+                      src={service.thumbnail}
                       alt={service.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -125,10 +128,12 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
           <article className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100 h-full flex flex-col">
             <div className="aspect-[16/10] bg-slate-100 overflow-hidden relative">
               {service.thumbnail ? (
-                <img 
-                  src={service.thumbnail} 
+                <Image
+                  src={service.thumbnail}
                   alt={service.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">

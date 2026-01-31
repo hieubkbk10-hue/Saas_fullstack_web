@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, use, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
@@ -167,9 +168,9 @@ export default function MediaEditPage({ params }: { params: Promise<{ id: string
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* File preview */}
-                <div className="aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+                <div className="relative aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
                   {isImage && mediaData.url ? (
-                    <img src={mediaData.url} alt={alt || filename} className="w-full h-full object-contain" />
+                    <Image src={mediaData.url} alt={alt || filename} fill sizes="100%" className="object-contain" />
                   ) : isVideo && mediaData.url ? (
                     <video src={mediaData.url} controls className="w-full h-full object-contain" />
                   ) : (

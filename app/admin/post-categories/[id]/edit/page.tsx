@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, use, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
@@ -181,7 +182,7 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
             <TableBody>
               {relatedPosts.map(post => (
                 <TableRow key={post._id}>
-                  <TableCell>{post.thumbnail ? <img src={post.thumbnail} className="w-10 h-8 object-cover rounded" alt="" /> : <div className="w-10 h-8 bg-slate-200 rounded" />}</TableCell>
+                  <TableCell>{post.thumbnail ? <Image src={post.thumbnail} width={40} height={32} className="w-10 h-8 object-cover rounded" alt={post.title} /> : <div className="w-10 h-8 bg-slate-200 rounded" />}</TableCell>
                   <TableCell className="font-medium">{post.title}</TableCell>
                   <TableCell className="text-slate-500 text-xs">{new Date(post._creationTime).toLocaleDateString('vi-VN')}</TableCell>
                   <TableCell className="text-right">

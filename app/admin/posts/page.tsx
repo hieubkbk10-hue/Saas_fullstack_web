@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -183,7 +184,7 @@ function PostsContent() {
                 <TableCell><SelectCheckbox checked={selectedIds.includes(post._id)} onChange={() => toggleSelectItem(post._id)} /></TableCell>
                 <TableCell>
                   {post.thumbnail ? (
-                    <img src={post.thumbnail} className="w-12 h-8 object-cover rounded" alt="" />
+                    <Image src={post.thumbnail} width={48} height={32} className="w-12 h-8 object-cover rounded" alt={post.title} />
                   ) : (
                     <div className="w-12 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-slate-400">No img</div>
                   )}

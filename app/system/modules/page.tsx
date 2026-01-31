@@ -37,6 +37,7 @@ import {
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { useI18n } from '../i18n/context';
+import { TranslationKeys } from '../i18n/translations';
 
 // SYS-004: Confirmation Dialog component
 const CascadeConfirmDialog: React.FC<{
@@ -385,7 +386,7 @@ const ModuleCard: React.FC<{
   allModules: AdminModule[];
   isToggling?: boolean;
   isAnyToggling?: boolean; // SYS-008: disable all khi có 1 đang toggle
-  t: any;
+  t: TranslationKeys;
 }> = ({ module, onToggle, canToggle, allModules, isToggling, isAnyToggling, t }) => {
   const Icon = iconMap[module.icon] || Package;
   const categoryColor = categoryColors[module.category];
@@ -513,7 +514,7 @@ export default function ModuleManagementPage() {
   // Seed data if empty
   React.useEffect(() => {
     if (modulesData !== undefined && modulesData.length === 0) {
-      seedAll();
+      void seedAll();
     }
   }, [modulesData, seedAll]);
 

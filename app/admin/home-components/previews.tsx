@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { 
   Monitor, Tablet, Smartphone, Eye, ChevronLeft, ChevronRight, ChevronDown,
-  Image as ImageIcon, Star, Check, ExternalLink, Globe, Mail, HelpCircle,
+  Image as ImageIcon, Star, Check, Globe, Mail, HelpCircle,
   Phone, Package, FileText, Users, MapPin, Tag, ArrowUpRight, Briefcase, Plus, ArrowRight,
   X, ZoomIn, Maximize2, Building2, Clock, Zap, Shield, Target, Layers, Cpu, Rocket, Settings,
-  Send, Facebook, MessageCircle, Instagram, Twitter, Linkedin, Youtube
+  Facebook, MessageCircle, Instagram, Twitter, Linkedin, Youtube
 } from 'lucide-react';
 import { cn, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
 
@@ -16,6 +17,29 @@ const deviceWidths = {
   desktop: 'w-full max-w-7xl',
   tablet: 'w-[768px] max-w-full',
   mobile: 'w-[375px] max-w-full'
+};
+
+type PreviewImageProps = Omit<React.ComponentProps<typeof Image>, 'width' | 'height' | 'src'> & {
+  src?: React.ComponentProps<typeof Image>['src'];
+  width?: number | string;
+  height?: number | string;
+};
+
+const PreviewImage = ({ src, alt = '', width = 1200, height = 800, ...rest }: PreviewImageProps) => {
+  if (!src) return null;
+  const normalizedWidth = typeof width === 'string' ? Number.parseInt(width, 10) || 1200 : width;
+  const normalizedHeight = typeof height === 'string' ? Number.parseInt(height, 10) || 800 : height;
+
+  return (
+    <Image
+      src={src}
+      {...rest}
+      alt={alt}
+      width={normalizedWidth}
+      height={normalizedHeight}
+      unoptimized
+    />
+  );
 };
 
 const devices = [
@@ -163,7 +187,7 @@ export const HeroBannerPreview = ({
       {/* Dark overlay to soften blur */}
       <div className="absolute inset-0 bg-black/20" />
       {/* Main image - object-contain to show full image */}
-      <img 
+      <PreviewImage 
         src={slide.image} 
         alt={`Slide ${idx + 1}`}
         className="relative w-full h-full object-contain z-10"
@@ -239,7 +263,7 @@ export const HeroBannerPreview = ({
                   <button key={idx} type="button" onClick={() => setCurrentSlide(idx)}
                     className={cn("rounded overflow-hidden transition-all border-2", idx === currentSlide ? "scale-105" : "border-transparent opacity-70 hover:opacity-100", device === 'mobile' ? 'w-10 h-7' : 'w-14 h-9')}
                     style={idx === currentSlide ? { borderColor: brandColor } : {}}>
-                    {slide.image ? <img src={slide.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ backgroundColor: brandColor }}></div>}
+                    {slide.image ? <PreviewImage src={slide.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ backgroundColor: brandColor }}></div>}
                   </button>
                 ))}
               </div>
@@ -269,7 +293,7 @@ export const HeroBannerPreview = ({
                     <div className="w-full h-full relative">
                       <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px)' }} />
                       <div className="absolute inset-0 bg-black/20" />
-                      <img src={slide.image} alt="" className="relative w-full h-full object-contain z-10" />
+                      <PreviewImage src={slide.image} alt="" className="relative w-full h-full object-contain z-10" />
                     </div>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}${15 + idx * 5}` }}><ImageIcon size={20} className="text-white/50" /></div>
@@ -284,7 +308,7 @@ export const HeroBannerPreview = ({
                   <div className="w-full h-full relative">
                     <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[0].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(25px)' }} />
                     <div className="absolute inset-0 bg-black/20" />
-                    <img src={bentoSlides[0].image} alt="" className="relative w-full h-full object-contain z-10" />
+                    <PreviewImage src={bentoSlides[0].image} alt="" className="relative w-full h-full object-contain z-10" />
                   </div>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
@@ -297,7 +321,7 @@ export const HeroBannerPreview = ({
                   <div className="w-full h-full relative">
                     <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[1].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px)' }} />
                     <div className="absolute inset-0 bg-black/20" />
-                    <img src={bentoSlides[1].image} alt="" className="relative w-full h-full object-contain z-10" />
+                    <PreviewImage src={bentoSlides[1].image} alt="" className="relative w-full h-full object-contain z-10" />
                   </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}20` }}><ImageIcon size={20} className="text-white/50" /></div>
@@ -308,7 +332,7 @@ export const HeroBannerPreview = ({
                   <div className="w-full h-full relative">
                     <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[2].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px)' }} />
                     <div className="absolute inset-0 bg-black/20" />
-                    <img src={bentoSlides[2].image} alt="" className="relative w-full h-full object-contain z-10" />
+                    <PreviewImage src={bentoSlides[2].image} alt="" className="relative w-full h-full object-contain z-10" />
                   </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}25` }}><ImageIcon size={16} className="text-white/50" /></div>
@@ -319,7 +343,7 @@ export const HeroBannerPreview = ({
                   <div className="w-full h-full relative">
                     <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[3].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px)' }} />
                     <div className="absolute inset-0 bg-black/20" />
-                    <img src={bentoSlides[3].image} alt="" className="relative w-full h-full object-contain z-10" />
+                    <PreviewImage src={bentoSlides[3].image} alt="" className="relative w-full h-full object-contain z-10" />
                   </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}30` }}><ImageIcon size={16} className="text-white/50" /></div>
@@ -348,7 +372,7 @@ export const HeroBannerPreview = ({
                 <div key={slide.id} className={cn("absolute inset-0 transition-opacity duration-1000", idx === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none")}>
                   {slide.image ? (
                     <div className="w-full h-full relative">
-                      <img src={slide.image} alt="" className="w-full h-full object-cover" />
+                      <PreviewImage src={slide.image} alt="" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
                     </div>
                   ) : renderPlaceholder(idx)}
@@ -465,7 +489,7 @@ export const HeroBannerPreview = ({
                 {slides.map((slide, idx) => (
                   <div key={slide.id} className={cn("absolute inset-0 transition-all duration-700", idx === currentSlide ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none")}>
                     {slide.image ? (
-                      <img src={slide.image} alt="" className="w-full h-full object-cover" />
+                      <PreviewImage src={slide.image} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-slate-200 dark:bg-slate-700">
                         <ImageIcon size={40} className="text-slate-400" />
@@ -1354,7 +1378,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
           {visible.map((item) => (
             <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col h-full">
               {renderStars(item.rating)}
-              <p className="my-3 text-slate-600 dark:text-slate-300 line-clamp-3 text-sm flex-1 min-h-[3.5rem]">"{item.content || 'Nội dung đánh giá...'}"</p>
+              <p className="my-3 text-slate-600 dark:text-slate-300 line-clamp-3 text-sm flex-1 min-h-[3.5rem]">“{item.content || 'Nội dung đánh giá...'}”</p>
               <div className="flex items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-700 mt-auto">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ backgroundColor: brandColor }}>{(item.name || 'U')[0]}</div>
                 <div className="min-w-0">
@@ -1383,11 +1407,11 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
     const current = items[currentSlide] || items[0];
     return (
       <div className={cn("py-12 px-4 relative overflow-hidden", device === 'mobile' ? 'py-8' : '')}>
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 text-[120px] leading-none font-serif opacity-5 pointer-events-none select-none" style={{ color: brandColor }}>"</div>
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 text-[120px] leading-none font-serif opacity-5 pointer-events-none select-none" style={{ color: brandColor }}>“</div>
         <div className="max-w-6xl mx-auto relative">
           <div className={cn("bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 text-center relative", device === 'mobile' ? 'p-5' : '')} style={{ borderTop: `4px solid ${brandColor}` }}>
             <div className="flex justify-center mb-4">{renderStars(current?.rating || 5, 16)}</div>
-            <p className={cn("text-slate-700 dark:text-slate-200 leading-relaxed mb-6", device === 'mobile' ? 'text-base' : 'text-lg')}>"{current?.content || 'Nội dung đánh giá...'}"</p>
+            <p className={cn("text-slate-700 dark:text-slate-200 leading-relaxed mb-6", device === 'mobile' ? 'text-base' : 'text-lg')}>“{current?.content || 'Nội dung đánh giá...'}”</p>
             <div className="flex items-center justify-center gap-4">
               <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg flex-shrink-0" style={{ backgroundColor: brandColor }}>{(current?.name || 'U')[0]}</div>
               <div className="text-left">
@@ -1430,7 +1454,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
                 </div>
               </div>
               {renderStars(item.rating)}
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">"{item.content || 'Nội dung...'}"</p>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">“{item.content || 'Nội dung...'}”</p>
             </div>
           ))}
         </div>
@@ -1452,7 +1476,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
       <div className={cn("py-12 px-4", device === 'mobile' ? 'py-8' : '')} style={{ backgroundColor: `${brandColor}05` }}>
         <div className="max-w-4xl mx-auto text-center">
           {/* Large quote mark */}
-          <div className="text-[80px] md:text-[120px] leading-none font-serif mb-[-30px] md:mb-[-50px] select-none" style={{ color: brandColor }}>"</div>
+          <div className="text-[80px] md:text-[120px] leading-none font-serif mb-[-30px] md:mb-[-50px] select-none" style={{ color: brandColor }}>“</div>
           
           <blockquote className={cn("text-slate-800 dark:text-slate-200 leading-relaxed font-medium italic", device === 'mobile' ? 'text-lg' : 'text-xl md:text-2xl')}>
             {current?.content || 'Nội dung đánh giá...'}
@@ -1519,7 +1543,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
                   </div>
                 </div>
                 {renderStars(item.rating, 14)}
-                <p className="mt-3 text-sm text-slate-600 dark:text-slate-300 line-clamp-4 flex-1">"{item.content || 'Nội dung đánh giá...'}"</p>
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-300 line-clamp-4 flex-1">“{item.content || 'Nội dung đánh giá...'}”</p>
               </div>
             ))}
           </div>
@@ -1567,7 +1591,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
                   <span className="text-xs text-slate-500 truncate">{item.role || 'Chức vụ'}</span>
                   <div className="ml-auto">{renderStars(item.rating, 10)}</div>
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">"{item.content || 'Nội dung...'}"</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">“{item.content || 'Nội dung...'}”</p>
               </div>
             </div>
           ))}
@@ -2257,7 +2281,7 @@ const GalleryLightbox = ({
       )}
       
       <div className="w-full h-full p-4 flex flex-col items-center justify-center" onClick={e => e.stopPropagation()}>
-        <img 
+        <PreviewImage 
           src={photo.url} 
           alt="Lightbox" 
           className="max-h-[90vh] max-w-full object-contain shadow-sm animate-in zoom-in-95 duration-300" 
@@ -2346,7 +2370,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
           onClick={() => setSelectedPhoto(featured)}
         >
           {featured.url ? (
-            <img src={featured.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+            <PreviewImage src={featured.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
           ) : (
             <div className="w-full h-full flex items-center justify-center"><ImageIcon size={48} className="text-slate-300" /></div>
           )}
@@ -2362,7 +2386,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
               onClick={() => setSelectedPhoto(photo)}
             >
               {photo.url ? (
-                <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <PreviewImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center"><ImageIcon size={24} className="text-slate-300" /></div>
               )}
@@ -2394,7 +2418,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
             onClick={() => setSelectedPhoto(photo)}
           >
             {photo.url ? (
-              <img 
+              <PreviewImage 
                 src={photo.url} 
                 alt="" 
                 className="w-full h-full object-cover transition-opacity duration-300 hover:opacity-90"
@@ -2433,7 +2457,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
               onClick={() => setSelectedPhoto(photo)}
             >
               {photo.url ? (
-                <img 
+                <PreviewImage 
                   src={photo.url} 
                   alt="" 
                   className="w-full h-full object-cover grayscale-[15%] group-hover:grayscale-0 transition-all duration-700"
@@ -2484,7 +2508,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
                 onClick={() => setSelectedPhoto(photo)}
               >
                 {photo.url ? (
-                  <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <PreviewImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center"><ImageIcon size={40} className="text-slate-300" /></div>
                 )}
@@ -2508,7 +2532,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
               onClick={() => setSelectedPhoto(photo)}
             >
               {photo.url ? (
-                <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <PreviewImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center"><ImageIcon size={28} className="text-slate-300" /></div>
               )}
@@ -2549,7 +2573,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
                 onClick={() => setSelectedPhoto(photo)}
               >
                 {photo.url ? (
-                  <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <PreviewImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 ) : (
                   <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                     <ImageIcon size={32} className="text-slate-300" />
@@ -2583,7 +2607,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
                 onClick={() => setSelectedPhoto(photo)}
               >
                 {photo.url ? (
-                  <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <PreviewImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center"><ImageIcon size={40} className="text-slate-300" /></div>
                 )}
@@ -2613,7 +2637,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
                 onClick={() => setSelectedPhoto(photo)}
               >
                 {photo.url ? (
-                  <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <PreviewImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center"><ImageIcon size={28} className="text-slate-300" /></div>
                 )}
@@ -2665,7 +2689,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
             <div className={cn("mx-auto flex items-center justify-center gap-6", items.length === 1 ? 'max-w-xs' : 'max-w-md')}>
               {items.map((item) => (
                 <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer" className="p-4 rounded-lg border" style={{ borderColor: `${brandColor}15` }}>
-                  {item.url ? <img src={item.url} alt="" className="h-14 w-auto object-contain" /> : <ImageIcon size={44} className="text-slate-300" />}
+                  {item.url ? <PreviewImage src={item.url} alt="" className="h-14 w-auto object-contain" /> : <ImageIcon size={44} className="text-slate-300" />}
                 </a>
               ))}
             </div>
@@ -2688,7 +2712,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
             {visibleItems.map((item) => (
               <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer"
                 className="w-full flex items-center justify-center p-3 rounded-lg border" style={{ borderColor: `${brandColor}10` }}>
-                {item.url ? <img src={item.url} alt="" className="h-11 w-auto object-contain" /> : <ImageIcon size={36} className="text-slate-300" />}
+                {item.url ? <PreviewImage src={item.url} alt="" className="h-11 w-auto object-contain" /> : <ImageIcon size={36} className="text-slate-300" />}
               </a>
             ))}
             {remainingCount > 0 && (
@@ -2732,7 +2756,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
             <AutoScrollSlider speed={0.8} isPaused={isPaused}>
               {items.map((item) => (
                 <a key={`marquee-${item.id}`} href={item.link || '#'} target="_blank" rel="noopener noreferrer" className="shrink-0">
-                  {item.url ? <img src={item.url} alt="" className="h-12 w-auto object-contain select-none" /> : <div className="h-12 w-24 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center"><ImageIcon size={24} className="text-slate-400" /></div>}
+                  {item.url ? <PreviewImage src={item.url} alt="" className="h-12 w-auto object-contain select-none" /> : <div className="h-12 w-24 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center"><ImageIcon size={24} className="text-slate-400" /></div>}
                 </a>
               ))}
             </AutoScrollSlider>
@@ -2769,7 +2793,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
             <AutoScrollSlider speed={0.5} isPaused={isPaused}>
               {items.map((item) => (
                 <a key={`mono-${item.id}`} href={item.link || '#'} target="_blank" rel="noopener noreferrer" className="shrink-0">
-                  {item.url ? <img src={item.url} alt="" className="h-11 w-auto object-contain grayscale opacity-60 select-none" /> : <div className="h-11 w-24 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center opacity-50"><ImageIcon size={22} className="text-slate-400" /></div>}
+                  {item.url ? <PreviewImage src={item.url} alt="" className="h-11 w-auto object-contain grayscale opacity-60 select-none" /> : <div className="h-11 w-24 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center opacity-50"><ImageIcon size={22} className="text-slate-400" /></div>}
                 </a>
               ))}
             </AutoScrollSlider>
@@ -2811,7 +2835,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
               <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer"
                 className="px-3 py-2 rounded-lg border flex items-center gap-2"
                 style={{ backgroundColor: `${brandColor}05`, borderColor: `${brandColor}15` }}>
-                {item.url ? <img src={item.url} alt="" className="h-6 w-auto" /> : <ImageIcon size={20} className="text-slate-400" />}
+                {item.url ? <PreviewImage src={item.url} alt="" className="h-6 w-auto" /> : <ImageIcon size={20} className="text-slate-400" />}
                 <span className="text-xs font-semibold truncate max-w-[100px]" style={{ color: `${brandColor}cc` }}>
                   {(item as GalleryItem & { name?: string }).name || `Đối tác ${idx + 1}`}
                 </span>
@@ -2881,7 +2905,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
               <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center p-3 rounded-lg border aspect-[3/2]"
                 style={{ borderColor: `${brandColor}15`, backgroundColor: `${brandColor}03` }}>
-                {item.url ? <img src={item.url} alt="" className="h-11 w-auto object-contain" /> : <ImageIcon size={32} className="text-slate-300" />}
+                {item.url ? <PreviewImage src={item.url} alt="" className="h-11 w-auto object-contain" /> : <ImageIcon size={32} className="text-slate-300" />}
               </a>
             ))}
           </div>
@@ -2929,7 +2953,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
               {items.map((item) => (
                 <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer"
                   className="p-5 rounded-xl border" style={{ borderColor: `${brandColor}20` }}>
-                  {item.url ? <img src={item.url} alt="" className="h-16 w-auto object-contain" /> : <ImageIcon size={56} className="text-slate-300" />}
+                  {item.url ? <PreviewImage src={item.url} alt="" className="h-16 w-auto object-contain" /> : <ImageIcon size={56} className="text-slate-300" />}
                 </a>
               ))}
             </div>
@@ -2953,14 +2977,14 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
                 <span className="px-2 py-0.5 text-[10px] font-bold rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>NỔI BẬT</span>
               </div>
               <div className="w-full h-full flex items-center justify-center p-6">
-                {featured.url ? <img src={featured.url} alt="" className="max-h-28 w-auto object-contain" /> : <ImageIcon size={56} className="text-slate-300" />}
+                {featured.url ? <PreviewImage src={featured.url} alt="" className="max-h-28 w-auto object-contain" /> : <ImageIcon size={56} className="text-slate-300" />}
               </div>
             </a>
             <div className={cn("grid gap-2", device === 'mobile' ? 'grid-cols-2' : 'col-span-2 grid-cols-3')}>
               {others.slice(0, MAX_OTHERS).map((item) => (
                 <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer"
                   className="flex items-center justify-center p-3 rounded-lg border aspect-[3/2]" style={{ borderColor: `${brandColor}15` }}>
-                  {item.url ? <img src={item.url} alt="" className="h-9 w-auto object-contain" /> : <ImageIcon size={28} className="text-slate-300" />}
+                  {item.url ? <PreviewImage src={item.url} alt="" className="h-9 w-auto object-contain" /> : <ImageIcon size={28} className="text-slate-300" />}
                 </a>
               ))}
               {remainingCount > 0 && (
@@ -3436,11 +3460,6 @@ export interface ProductListPreviewItem {
 }
 
 // Helper to strip HTML tags from description
-const stripHtml = (html?: string) => {
-  if (!html) return '';
-  return html.replace(/<[^>]*>/g, '').trim();
-};
-
 export const ProductListPreview = ({ brandColor, itemCount, componentType, selectedStyle, onStyleChange, items, subTitle = 'Bộ sưu tập', sectionTitle }: { 
   brandColor: string; 
   itemCount: number; 
@@ -3528,7 +3547,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
               {/* Image Container */}
               <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800 mb-4 border border-transparent transition-all" style={{ '--hover-border': `${brandColor}20` } as React.CSSProperties}>
                 {item.image ? (
-                  <img 
+                  <PreviewImage 
                     src={item.image} 
                     alt={item.name}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -3622,7 +3641,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
               {/* Image */}
               <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-700 overflow-hidden">
                 {item.image ? (
-                  <img 
+                  <PreviewImage 
                     src={item.image} 
                     alt={item.name}
                     className="h-full w-full object-cover"
@@ -3710,7 +3729,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
                 <div key={item.id} className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 flex flex-col cursor-pointer hover:shadow-md transition-all">
                   <div className="relative aspect-square w-full rounded-lg bg-slate-100 dark:bg-slate-700 overflow-hidden mb-2">
                     {item.image ? (
-                      <img src={item.image} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" alt={item.name} />
+                      <PreviewImage src={item.image} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" alt={item.name} />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center"><Package size={24} className="text-slate-300" /></div>
                     )}
@@ -3735,7 +3754,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
             {/* Hero Item (Span 2x2) */}
             <div className="col-span-2 row-span-2 relative group rounded-2xl overflow-hidden cursor-pointer min-h-[400px] border border-transparent transition-colors" style={{ backgroundColor: `${brandColor}10`, '--hover-border': `${brandColor}50` } as React.CSSProperties}>
               {featured?.image ? (
-                <img 
+                <PreviewImage 
                   src={featured.image} 
                   alt={featured.name} 
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -3780,7 +3799,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
                   {/* Image Area */}
                   <div className="relative aspect-square w-full rounded-xl overflow-hidden mb-3" style={{ backgroundColor: `${brandColor}08` }}>
                     {item.image ? (
-                      <img 
+                      <PreviewImage 
                         src={item.image} 
                         className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-110" 
                         alt={item.name} 
@@ -3880,7 +3899,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
                 >
                   <div className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800 mb-3 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      <PreviewImage src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center"><Package size={40} className="text-slate-300" /></div>
                     )}
@@ -3943,7 +3962,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
             <div key={item.id} className="group cursor-pointer bg-white dark:bg-slate-800 rounded-lg border border-slate-100 dark:border-slate-700 p-2 hover:shadow-md hover:border-slate-200 dark:hover:border-slate-600 transition-all">
               <div className="relative aspect-square overflow-hidden rounded-md bg-slate-50 dark:bg-slate-700 mb-2">
                 {item.image ? (
-                  <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  <PreviewImage src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center"><Package size={24} className="text-slate-300" /></div>
                 )}
@@ -3997,7 +4016,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
               return (
                 <div key={item.id} className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2 flex flex-col cursor-pointer hover:shadow-md transition-all">
                   <div className="relative aspect-square w-full rounded-lg bg-slate-100 dark:bg-slate-700 overflow-hidden mb-2">
-                    {item.image ? <img src={item.image} className="h-full w-full object-cover" alt={item.name} /> : <div className="h-full w-full flex items-center justify-center"><Package size={24} className="text-slate-300" /></div>}
+                    {item.image ? <PreviewImage src={item.image} className="h-full w-full object-cover" alt={item.name} /> : <div className="h-full w-full flex items-center justify-center"><Package size={24} className="text-slate-300" /></div>}
                     {discount && <span className="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: brandColor }}>{discount}</span>}
                   </div>
                   <h4 className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">{item.name}</h4>
@@ -4011,7 +4030,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
             {/* Featured Large Item */}
             <div className="relative group rounded-2xl overflow-hidden cursor-pointer h-[400px] border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors" style={{ backgroundColor: `${brandColor}05` }}>
               {showcaseFeatured?.image ? (
-                <img src={showcaseFeatured.image} alt={showcaseFeatured.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <PreviewImage src={showcaseFeatured.image} alt={showcaseFeatured.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               ) : (
                 <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800"><Package size={64} className="text-slate-300" /></div>
               )}
@@ -4036,7 +4055,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
                 return (
                   <div key={item.id} className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex flex-col cursor-pointer hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600 transition-all">
                     <div className="relative aspect-square w-full rounded-lg bg-slate-50 dark:bg-slate-700 overflow-hidden mb-3">
-                      {item.image ? <img src={item.image} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" alt={item.name} /> : <div className="h-full w-full flex items-center justify-center"><Package size={32} className="text-slate-300" /></div>}
+                      {item.image ? <PreviewImage src={item.image} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" alt={item.name} /> : <div className="h-full w-full flex items-center justify-center"><Package size={32} className="text-slate-300" /></div>}
                       {discount && <span className="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: brandColor }}>{discount}</span>}
                     </div>
                     <h4 className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate group-hover:opacity-80 transition-colors">{item.name}</h4>
@@ -4149,9 +4168,10 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
   ];
   
   // Use real items if provided, otherwise fallback to mock (luxury services)
+  const targetCount = Math.max(itemCount, 6);
   const displayItems: ServiceListPreviewItem[] = items && items.length > 0 
     ? items 
-    : mockServices;
+    : mockServices.slice(0, targetCount);
 
   // Style 1: Grid - Clean cards với hover lift và arrow icon
   const renderGridStyle = () => (
@@ -4190,7 +4210,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
             {/* Image Container */}
             <div className="relative overflow-hidden bg-slate-100 dark:bg-slate-700 mb-3 rounded-lg aspect-[4/3] w-full">
               {item.image ? (
-                <img 
+                <PreviewImage 
                   src={item.image} 
                   alt={item.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
@@ -4242,7 +4262,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
         {/* Bento Grid */}
         {device === 'mobile' ? (
           <div className="grid grid-cols-2 gap-3">
-            {bentoItems.map((item, i) => (
+            {bentoItems.map((item) => (
               <div key={item.id} className="group cursor-pointer h-[160px] relative">
                 <div 
                   className="h-full border rounded-xl p-3 transition-all flex flex-col"
@@ -4257,7 +4277,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                   )}
                   <div className="flex-1 rounded-md overflow-hidden bg-slate-100 dark:bg-slate-700 min-h-[80px] mb-2">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                      <PreviewImage src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Briefcase size={20} className="text-slate-300" />
@@ -4302,7 +4322,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                     {/* Image */}
                     <div className="flex-1 min-h-[160px] w-full rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 mb-3">
                       {item.image ? (
-                        <img 
+                        <PreviewImage 
                           src={item.image} 
                           alt={item.name}
                           className="w-full h-full object-cover group-hover/bento:scale-105 transition-transform duration-700 ease-out"
@@ -4386,7 +4406,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
               device === 'mobile' ? 'w-20 h-20' : 'w-24 h-24'
             )}>
               {item.image ? (
-                <img 
+                <PreviewImage 
                   src={item.image} 
                   alt={item.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -4440,7 +4460,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
         className="flex gap-4 overflow-x-auto pb-4 px-3 md:px-6 snap-x snap-mandatory scroll-smooth"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
       >
-        {displayItems.map((item, idx) => (
+        {displayItems.map((item) => (
           <div 
             key={item.id} 
             className={cn(
@@ -4464,7 +4484,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
               {/* Image Container */}
               <div className="relative overflow-hidden bg-slate-100 dark:bg-slate-700 mb-3 rounded-lg aspect-[4/3] w-full">
                 {item.image ? (
-                  <img 
+                  <PreviewImage 
                     src={item.image} 
                     alt={item.name}
                     draggable={false}
@@ -4527,7 +4547,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
             {/* Image - More minimal, rounded corners */}
             <div className="img-wrapper relative overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-2xl aspect-[3/2] mb-4 transition-shadow duration-300">
               {item.image ? (
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
+                <PreviewImage src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <Briefcase size={40} className="text-slate-300 dark:text-slate-600" />
@@ -4579,7 +4599,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
             {featuredItem && (
               <div className="group cursor-pointer relative rounded-2xl overflow-hidden aspect-[4/3]" style={{ boxShadow: `0 4px 20px ${brandColor}15` }}>
                 {featuredItem.image ? (
-                  <img src={featuredItem.image} alt={featuredItem.name} className="w-full h-full object-cover" />
+                  <PreviewImage src={featuredItem.image} alt={featuredItem.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center"><Briefcase size={48} className="text-slate-300" /></div>
                 )}
@@ -4596,7 +4616,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
               {otherItems.map((item) => (
                 <div key={item.id} className="group cursor-pointer rounded-xl p-2 transition-all" style={{ backgroundColor: 'transparent' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${brandColor}05`; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}>
                   <div className="relative overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-xl aspect-square mb-2">
-                    {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Briefcase size={24} className="text-slate-300" /></div>}
+                    {item.image ? <PreviewImage src={item.image} alt={item.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Briefcase size={24} className="text-slate-300" /></div>}
                   </div>
                   <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 line-clamp-1">{item.name}</h4>
                   <span className="text-xs font-semibold" style={{ color: brandColor }}>{formatServicePrice(item.price)}</span>
@@ -4610,7 +4630,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
               <div className={cn("group cursor-pointer relative rounded-2xl overflow-hidden", device === 'desktop' ? 'row-span-2' : 'col-span-1')} style={{ boxShadow: `0 8px 30px ${brandColor}20` }}>
                 <div className="h-full min-h-[400px]">
                   {featuredItem.image ? (
-                    <img src={featuredItem.image} alt={featuredItem.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    <PreviewImage src={featuredItem.image} alt={featuredItem.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                   ) : (
                     <div className="w-full h-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center"><Briefcase size={64} className="text-slate-300" /></div>
                   )}
@@ -4638,7 +4658,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; }}
                 >
                   <div className="relative overflow-hidden bg-slate-100 dark:bg-slate-700 rounded-lg aspect-[4/3] mb-3">
-                    {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center"><Briefcase size={28} className="text-slate-300" /></div>}
+                    {item.image ? <PreviewImage src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center"><Briefcase size={28} className="text-slate-300" /></div>}
                     {item.tag && <div className="absolute top-2 left-2"><ServiceBadge tag={item.tag} brandColor={brandColor} /></div>}
                   </div>
                   <h4 className="font-medium text-sm text-slate-900 dark:text-slate-100 line-clamp-1 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">{item.name}</h4>
@@ -4783,7 +4803,7 @@ export const BlogPreview = ({
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
               >
                 <div className="relative aspect-[16/10] overflow-hidden">
-                  {post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={32} />}
+                  {post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={32} />}
                   <div className="absolute left-3 top-3">
                     <span className="px-2 py-1 text-xs font-medium rounded shadow-sm backdrop-blur-sm" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category || 'Tin tức'}</span>
                   </div>
@@ -4816,7 +4836,7 @@ export const BlogPreview = ({
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
               <div className="relative aspect-[16/10] overflow-hidden">
-                {post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={32} />}
+                {post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={32} />}
                 <div className="absolute left-3 top-3">
                   <span className="px-2 py-1 text-xs font-medium rounded shadow-sm backdrop-blur-sm" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category || 'Tin tức'}</span>
                 </div>
@@ -4860,7 +4880,7 @@ export const BlogPreview = ({
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; }}
             >
               <div className={cn("overflow-hidden flex-shrink-0", device === 'mobile' ? 'aspect-[16/9] w-full' : 'aspect-[4/3] w-[220px]')}>
-                {post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={24} />}
+                {post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={24} />}
               </div>
               <div className="flex flex-1 flex-col justify-center p-4 md:px-6">
                 <div className="mb-2"><span className="text-xs font-semibold" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span></div>
@@ -4898,7 +4918,7 @@ export const BlogPreview = ({
           <div className={cn(device === 'mobile' ? '' : 'col-span-8')}>
             <article className="group relative flex h-full min-h-[300px] md:min-h-[400px] flex-col justify-end overflow-hidden rounded-xl text-white cursor-pointer transition-all" style={{ boxShadow: `0 8px 30px ${brandColor}20` }}>
               <div className="absolute inset-0 z-0">
-                {featuredPost.thumbnail ? <img src={featuredPost.thumbnail} alt={featuredPost.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}80)` }} />}
+                {featuredPost.thumbnail ? <PreviewImage src={featuredPost.thumbnail} alt={featuredPost.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}80)` }} />}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent" />
               </div>
               <div className="relative z-10 p-5 md:p-8">
@@ -4923,7 +4943,7 @@ export const BlogPreview = ({
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}10`; e.currentTarget.style.backgroundColor = 'transparent'; }}
               >
                 <div className="relative h-14 w-14 md:h-16 md:w-16 shrink-0 overflow-hidden rounded-md border" style={{ borderColor: `${brandColor}15` }}>
-                  {post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <ImagePlaceholder size={16} />}
+                  {post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <ImagePlaceholder size={16} />}
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span>
@@ -4956,7 +4976,7 @@ export const BlogPreview = ({
         {device === 'mobile' ? (
           <div className="space-y-4">
             <article className="group relative rounded-xl overflow-hidden aspect-[4/3] cursor-pointer" style={{ boxShadow: `0 4px 20px ${brandColor}15` }}>
-              {featured.thumbnail ? <img src={featured.thumbnail} alt={featured.title} className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}30, ${brandColor}60)` }} />}
+              {featured.thumbnail ? <PreviewImage src={featured.thumbnail} alt={featured.title} className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}30, ${brandColor}60)` }} />}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-4">
                 <span className="px-2 py-1 text-[10px] font-bold rounded mb-2 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{featured.category || 'Tin tức'}</span>
@@ -4966,7 +4986,7 @@ export const BlogPreview = ({
             <div className="grid grid-cols-2 gap-3">
               {secondary.concat(others).slice(0, 4).map((post) => (
                 <article key={post.id} className="group rounded-xl border p-2 cursor-pointer transition-all" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; }}>
-                  <div className="aspect-[4/3] rounded-lg overflow-hidden mb-2">{post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" /> : <ImagePlaceholder size={20} />}</div>
+                  <div className="aspect-[4/3] rounded-lg overflow-hidden mb-2">{post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" /> : <ImagePlaceholder size={20} />}</div>
                   <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 line-clamp-2">{post.title || 'Tiêu đề'}</h4>
                   <time className="text-[10px] text-slate-500 mt-1 block">{post.date || 'Hôm nay'}</time>
                 </article>
@@ -4976,7 +4996,7 @@ export const BlogPreview = ({
         ) : (
           <div className={cn("grid gap-4", device === 'tablet' ? 'grid-cols-2 grid-rows-3' : 'grid-cols-4 grid-rows-2')}>
             <article className={cn("group relative rounded-2xl overflow-hidden cursor-pointer", device === 'desktop' ? 'col-span-2 row-span-2' : 'col-span-1 row-span-2')} style={{ boxShadow: `0 8px 30px ${brandColor}20` }}>
-              <div className="h-full min-h-[350px]">{featured.thumbnail ? <img src={featured.thumbnail} alt={featured.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}80)` }} />}</div>
+              <div className="h-full min-h-[350px]">{featured.thumbnail ? <PreviewImage src={featured.thumbnail} alt={featured.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}80)` }} />}</div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <span className="px-2.5 py-1 text-xs font-bold rounded mb-3 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{featured.category || 'Nổi bật'}</span>
@@ -4987,13 +5007,13 @@ export const BlogPreview = ({
             </article>
             {secondary.map((post) => (
               <article key={post.id} className="group rounded-xl border overflow-hidden cursor-pointer transition-all" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; }}>
-                <div className="aspect-[16/9] overflow-hidden">{post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={24} />}</div>
+                <div className="aspect-[16/9] overflow-hidden">{post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={24} />}</div>
                 <div className="p-3"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span><h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 mt-1">{post.title || 'Tiêu đề'}</h4></div>
               </article>
             ))}
             {others.slice(0, device === 'desktop' ? 2 : 1).map((post) => (
               <article key={post.id} className="group flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.backgroundColor = `${brandColor}05`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.backgroundColor = 'transparent'; }}>
-                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">{post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" /> : <ImagePlaceholder size={16} />}</div>
+                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">{post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" /> : <ImagePlaceholder size={16} />}</div>
                 <div className="flex-1 min-w-0"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span><h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 line-clamp-2">{post.title || 'Tiêu đề'}</h4></div>
               </article>
             ))}
@@ -5025,7 +5045,7 @@ export const BlogPreview = ({
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 8px 24px ${brandColor}15`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; }}
               >
-                <div className="aspect-[16/10] overflow-hidden">{post.thumbnail ? <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={32} />}</div>
+                <div className="aspect-[16/10] overflow-hidden">{post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={32} />}</div>
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-2"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span>{post.readTime && <span className="text-[10px] text-slate-400">• {post.readTime}</span>}</div>
                   <h3 className="font-bold text-slate-900 dark:text-slate-100 line-clamp-2 mb-2 group-hover:opacity-80 transition-colors">{post.title || 'Tiêu đề bài viết'}</h3>
@@ -5078,7 +5098,7 @@ export const BlogPreview = ({
   };
 
   // Image guidelines component
-  const ImageGuidelines = () => (
+  const renderImageGuidelines = () => (
     <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
       <div className="flex items-start gap-2">
         <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
@@ -5106,7 +5126,7 @@ export const BlogPreview = ({
           {previewStyle === 'minimal' && renderMinimalStyle()}
         </BrowserFrame>
       </PreviewWrapper>
-      <ImageGuidelines />
+      {renderImageGuidelines()}
     </>
   );
 };
@@ -5248,7 +5268,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
             <div className={cn("flex items-center gap-2", device === 'mobile' ? 'justify-center' : '')}>
               <div className="p-1.5 rounded-lg" style={{ backgroundColor: bgMedium, border: `1px solid ${borderColor}` }}>
                 {config.logo ? (
-                  <img src={config.logo} alt="Logo" className="h-5 w-5 object-contain brightness-110" />
+                  <PreviewImage src={config.logo} alt="Logo" className="h-5 w-5 object-contain brightness-110" />
                 ) : (
                   <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>
                 )}
@@ -5307,7 +5327,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         <div className="flex flex-col items-center gap-2">
           <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-lg shadow-black/20 mb-1" style={{ background: `linear-gradient(to top right, ${bgMedium}, ${borderColor})` }}>
             {config.logo ? (
-              <img src={config.logo} alt="Logo" className="h-6 w-6 object-contain drop-shadow-md" />
+              <PreviewImage src={config.logo} alt="Logo" className="h-6 w-6 object-contain drop-shadow-md" />
             ) : (
               <div className="h-6 w-6 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: brandColor }}>V</div>
             )}
@@ -5360,7 +5380,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         )} style={{ borderBottom: `1px solid ${borderColor}` }}>
           <div className={cn("flex items-center gap-2", device === 'mobile' ? 'justify-center' : '')}>
             {config.logo ? (
-              <img src={config.logo} alt="Logo" className="h-5 w-5 object-contain" />
+              <PreviewImage src={config.logo} alt="Logo" className="h-5 w-5 object-contain" />
             ) : (
               <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>
             )}
@@ -5423,7 +5443,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
           {/* Left: Logo & Copy */}
           <div className={cn("flex items-center gap-2", device === 'mobile' ? 'flex-col' : '')}>
             {config.logo ? (
-              <img src={config.logo} alt="Logo" className="h-4 w-4 opacity-80" />
+              <PreviewImage src={config.logo} alt="Logo" className="h-4 w-4 opacity-80" />
             ) : (
               <div className="h-4 w-4 rounded flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: brandColor }}>V</div>
             )}
@@ -5457,7 +5477,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
             style={{ backgroundColor: `${brandColor}20`, border: `2px solid ${brandColor}40` }}
           >
             {config.logo ? (
-              <img src={config.logo} alt="Logo" className="h-7 w-7 object-contain" />
+              <PreviewImage src={config.logo} alt="Logo" className="h-7 w-7 object-contain" />
             ) : (
               <div className="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>V</div>
             )}
@@ -5539,7 +5559,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
             style={{ backgroundColor: brandColor }}
           >
             {config.logo ? (
-              <img src={config.logo} alt="Logo" className="h-6 w-6 object-contain brightness-110" />
+              <PreviewImage src={config.logo} alt="Logo" className="h-6 w-6 object-contain brightness-110" />
             ) : (
               <span className="text-white font-bold text-sm">V</span>
             )}
@@ -6181,7 +6201,7 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
         {/* Image Side (Left on desktop) */}
         <div className={cn("relative rounded-2xl overflow-hidden shadow-2xl", device === 'mobile' ? 'order-2 aspect-[4/3]' : 'order-1 aspect-[4/3]')}>
           {config.image ? (
-            <img 
+            <PreviewImage 
               src={config.image} 
               alt="Brand Story" 
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" 
@@ -6303,7 +6323,7 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
           device === 'mobile' ? '' : 'md:col-span-3'
         )}>
           {config.image ? (
-            <img 
+            <PreviewImage 
               src={config.image} 
               alt="Office" 
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
@@ -6385,7 +6405,7 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
           device === 'mobile' ? 'h-64' : 'lg:w-[45%] h-64 lg:h-auto'
         )}>
           {config.image ? (
-            <img 
+            <PreviewImage 
               src={config.image} 
               alt="Brand" 
               className="absolute inset-0 w-full h-full object-cover" 
@@ -6448,7 +6468,7 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
           device === 'mobile' ? 'w-full h-[200px] order-1' : 'w-1/2'
         )}>
           {config.image ? (
-            <img src={config.image} alt="" className="w-full h-full object-cover" />
+            <PreviewImage src={config.image} alt="" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-slate-200 dark:bg-slate-700">
               <ImageIcon size={40} className="text-slate-400" />
@@ -6509,7 +6529,7 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
         {/* Image at bottom */}
         {config.image && (
           <div className="mt-10 rounded-2xl overflow-hidden aspect-[16/9] max-h-[300px]">
-            <img src={config.image} alt="" className="w-full h-full object-cover" />
+            <PreviewImage src={config.image} alt="" className="w-full h-full object-cover" />
           </div>
         )}
 
@@ -6549,7 +6569,7 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
           <div className={cn("relative rounded-2xl overflow-hidden group", device === 'mobile' ? 'aspect-[4/3]' : 'aspect-auto min-h-[320px]')}>
             {config.image ? (
               <>
-                <img src={config.image} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <PreviewImage src={config.image} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               </>
             ) : (
@@ -6605,7 +6625,7 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
   );
 
   // Image size guidelines component
-  const ImageGuidelines = () => (
+  const renderImageGuidelines = () => (
     <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
       <div className="flex items-start gap-2">
         <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
@@ -6633,7 +6653,7 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
           {previewStyle === 'showcase' && renderShowcaseStyle()}
         </BrowserFrame>
       </PreviewWrapper>
-      <ImageGuidelines />
+      {renderImageGuidelines()}
     </>
   );
 };
@@ -7035,7 +7055,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
                 >
                   <div className="aspect-[3/2] bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
                     {project.image ? (
-                      <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <PreviewImage src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <ImageIcon size={32} className="text-slate-300" />
                     )}
@@ -7094,7 +7114,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
               >
                 <div className="aspect-[3/2] bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
                   {projects[0].image ? (
-                    <img src={projects[0].image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <PreviewImage src={projects[0].image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
                     <ImageIcon size={48} className="text-slate-300" />
                   )}
@@ -7125,7 +7145,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
               >
                 <div className="w-20 h-20 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {project.image ? (
-                    <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <PreviewImage src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
                     <ImageIcon size={24} className="text-slate-300" />
                   )}
@@ -7177,7 +7197,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
                     device === 'mobile' ? 'aspect-video w-full' : 'w-40 h-24 flex-shrink-0'
                   )}>
                     {project.image ? (
-                      <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <PreviewImage src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <ImageIcon size={24} className="text-slate-300" />
                     )}
@@ -7236,7 +7256,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
                   >
                     <div className={cn(height, "bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden")}>
                       {project.image ? (
-                        <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <PreviewImage src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
                         <ImageIcon size={32} className="text-slate-300" />
                       )}
@@ -7313,7 +7333,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
                   >
                     <div className="aspect-[4/3] bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
                       {project.image ? (
-                        <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <PreviewImage src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                       ) : (
                         <ImageIcon size={32} className="text-slate-300" />
                       )}
@@ -7389,7 +7409,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
                   >
                     <div className="aspect-[4/3] bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
                       {project.image ? (
-                        <img src={project.image} alt="" className="w-full h-full object-cover" />
+                        <PreviewImage src={project.image} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <ImageIcon size={32} className="text-slate-300" />
                       )}
@@ -7736,7 +7756,7 @@ export const CareerPreview = ({ jobs, brandColor, selectedStyle, onStyleChange }
               </tr>
             </thead>
             <tbody>
-              {jobs.slice(0, 10).map((job, idx) => (
+              {jobs.slice(0, 10).map((job) => (
                 <tr key={job.id} className="border-b last:border-0 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/50" style={{ borderColor: `${brandColor}10` }}>
                   <td className="p-4">
                     <h4 className="font-medium text-slate-900 dark:text-slate-100 line-clamp-1">{job.title || 'Vị trí tuyển dụng'}</h4>
@@ -8525,7 +8545,7 @@ export const TrustBadgesPreview = ({
                   }}
                 >
                   {item.url ? (
-                    <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || 'Chứng nhận'} />
+                    <PreviewImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || 'Chứng nhận'} />
                   ) : (
                     <ImageIcon size={device === 'mobile' ? 32 : 40} className="text-slate-300" />
                   )}
@@ -8589,7 +8609,7 @@ export const TrustBadgesPreview = ({
                     <div className={cn("bg-slate-50 dark:bg-slate-700/30 flex items-center justify-center relative overflow-hidden", device === 'mobile' ? 'aspect-[4/3] p-6' : 'aspect-[5/4] p-10')}>
                       <div className="absolute inset-0 bg-blue-50/0 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/20 transition-colors duration-300" />
                       {item.url ? (
-                        <img src={item.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" alt={item.name || 'Chứng nhận'} />
+                        <PreviewImage src={item.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" alt={item.name || 'Chứng nhận'} />
                       ) : (
                         <ImageIcon size={48} className="text-slate-300" />
                       )}
@@ -8635,7 +8655,7 @@ export const TrustBadgesPreview = ({
               className={cn("w-auto flex items-center justify-center px-4 hover:scale-110 transition-all duration-300 cursor-pointer relative group", device === 'mobile' ? 'h-20' : 'h-24 md:h-28')}
             >
               {item.url ? (
-                <img src={item.url} className="h-full w-auto object-contain max-w-[200px] transition-transform" alt={item.name || 'Chứng nhận'} />
+                <PreviewImage src={item.url} className="h-full w-auto object-contain max-w-[200px] transition-transform" alt={item.name || 'Chứng nhận'} />
               ) : (
                 <div className="h-16 w-28 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
                   <ImageIcon size={28} className="text-slate-400" />
@@ -8688,7 +8708,7 @@ export const TrustBadgesPreview = ({
                     <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full shadow-inner" style={{ backgroundColor: `${brandColor}60` }}></div>
                     <div className="flex-1 flex items-center justify-center p-3 relative overflow-hidden" style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}10` }}>
                       {item.url ? (
-                        <img src={item.url} className="w-full h-full object-contain" alt={item.name || 'Chứng nhận'} />
+                        <PreviewImage src={item.url} className="w-full h-full object-contain" alt={item.name || 'Chứng nhận'} />
                       ) : (
                         <ImageIcon size={28} className="text-slate-300" />
                       )}
@@ -8762,7 +8782,7 @@ export const TrustBadgesPreview = ({
                         }}
                       >
                         {item.url ? (
-                          <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || 'Chứng nhận'} />
+                          <PreviewImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || 'Chứng nhận'} />
                         ) : (
                           <ImageIcon size={32} className="text-slate-300" />
                         )}
@@ -8814,7 +8834,7 @@ export const TrustBadgesPreview = ({
                 >
                   <div className={cn("flex items-center justify-center relative", device === 'mobile' ? 'aspect-[4/3] p-6' : 'aspect-[4/3] p-10')}>
                     {featuredItem.url ? (
-                      <img src={featuredItem.url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt={featuredItem.name || 'Chứng nhận nổi bật'} />
+                      <PreviewImage src={featuredItem.url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt={featuredItem.name || 'Chứng nhận nổi bật'} />
                     ) : (
                       <ImageIcon size={64} className="text-slate-300" />
                     )}
@@ -8852,7 +8872,7 @@ export const TrustBadgesPreview = ({
                     }}
                   >
                     {item.url ? (
-                      <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || 'Chứng nhận'} />
+                      <PreviewImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || 'Chứng nhận'} />
                     ) : (
                       <ImageIcon size={24} className="text-slate-300" />
                     )}
@@ -8876,7 +8896,7 @@ export const TrustBadgesPreview = ({
   };
 
   // Image Guidelines Component
-  const ImageGuidelines = () => (
+  const renderImageGuidelines = () => (
     <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
       <div className="flex items-start gap-2">
         <ImageIcon size={14} className="text-slate-400 mt-0.5 flex-shrink-0" />
@@ -8924,7 +8944,7 @@ export const TrustBadgesPreview = ({
           {previewStyle === 'featured' && renderFeaturedStyle()}
         </BrowserFrame>
       </PreviewWrapper>
-      <ImageGuidelines />
+      {renderImageGuidelines()}
     </>
   );
 };
@@ -8985,7 +9005,6 @@ export const SpeedDialPreview = ({
   const isRight = config.position !== 'bottom-left';
   const isMobile = device === 'mobile';
   const isTablet = device === 'tablet';
-  const iconSize = isMobile ? 16 : 18;
   const gap = isMobile ? 'gap-2' : 'gap-2.5';
 
   // Empty State
@@ -9282,7 +9301,7 @@ export const ProductCategoriesPreview = ({
       );
     }
     if (cat.displayImage) {
-      return <img src={cat.displayImage} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />;
+      return <PreviewImage src={cat.displayImage} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />;
     }
     return (
       <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800">
@@ -9492,7 +9511,7 @@ export const ProductCategoriesPreview = ({
                   {cat.displayIcon && iconData ? (
                     React.createElement(iconData.icon, { size: isMobile ? 14 : 16, style: { color: brandColor } })
                   ) : cat.displayImage ? (
-                    <img src={cat.displayImage} alt="" className={cn("rounded-full object-cover", isMobile ? 'w-5 h-5' : 'w-6 h-6')} />
+                    <PreviewImage src={cat.displayImage} alt="" className={cn("rounded-full object-cover", isMobile ? 'w-5 h-5' : 'w-6 h-6')} />
                   ) : (
                     <Package size={isMobile ? 14 : 16} style={{ color: brandColor }} />
                   )}
@@ -9881,7 +9900,7 @@ export const CategoryProductsPreview = ({
     <div className="group cursor-pointer flex flex-col h-full">
       <div className="aspect-square rounded-lg overflow-hidden mb-2" style={{ backgroundColor: `${brandColor}08` }}>
         {product.image ? (
-          <img 
+          <PreviewImage 
             src={product.image} 
             alt={product.name} 
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
@@ -9998,7 +10017,7 @@ export const CategoryProductsPreview = ({
                       >
                         <div className="aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2">
                           {product.image ? (
-                            <img 
+                            <PreviewImage 
                               src={product.image} 
                               alt={product.name} 
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
@@ -10051,7 +10070,7 @@ export const CategoryProductsPreview = ({
                   <div className="flex items-center gap-3">
                     {section.category.image && (
                       <div className="w-10 h-10 rounded-lg overflow-hidden bg-white">
-                        <img 
+                        <PreviewImage 
                           src={section.category.image} 
                           alt={section.category.name} 
                           className="w-full h-full object-cover" 
@@ -10152,7 +10171,7 @@ export const CategoryProductsPreview = ({
                     {featured && (
                       <div className="col-span-2 row-span-2 group cursor-pointer relative rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800">
                         {featured.image ? (
-                          <img 
+                          <PreviewImage 
                             src={featured.image} 
                             alt={featured.name} 
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
@@ -10191,7 +10210,7 @@ export const CategoryProductsPreview = ({
                     {others.map((product) => (
                       <div key={product._id} className="group cursor-pointer relative rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
                         {product.image ? (
-                          <img 
+                          <PreviewImage 
                             src={product.image} 
                             alt={product.name} 
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
@@ -10276,7 +10295,7 @@ export const CategoryProductsPreview = ({
                     {featured && (
                       <div className="group cursor-pointer relative rounded-2xl overflow-hidden aspect-[4/5]" style={{ backgroundColor: `${brandColor}08` }}>
                         {featured.image ? (
-                          <img 
+                          <PreviewImage 
                             src={featured.image} 
                             alt={featured.name} 
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
@@ -10320,7 +10339,7 @@ export const CategoryProductsPreview = ({
                             style={{ backgroundColor: `${brandColor}08` }}
                           >
                             {product.image ? (
-                              <img 
+                              <PreviewImage 
                                 src={product.image} 
                                 alt={product.name} 
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
@@ -10437,7 +10456,7 @@ export const CategoryProductsPreview = ({
                   "grid gap-5",
                   device === 'mobile' ? 'grid-cols-2' : 'grid-cols-4'
                 )}>
-                  {section.products.map((product, idx) => (
+                  {section.products.map((product) => (
                     <div 
                       key={product._id} 
                       className="group cursor-pointer"
@@ -10453,7 +10472,7 @@ export const CategoryProductsPreview = ({
                         />
                         
                         {product.image ? (
-                          <img 
+                          <PreviewImage 
                             src={product.image} 
                             alt={product.name} 
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
@@ -10562,7 +10581,6 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'grid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as TeamStyle);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const styles = [
     { id: 'grid', label: 'Grid' }, 
     { id: 'cards', label: 'Cards' }, 
@@ -10663,7 +10681,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
           <div key={member.id} className="group text-center">
             <div className="relative mb-4 mx-auto overflow-hidden rounded-2xl aspect-square max-w-[180px]">
               {member.avatar ? (
-                <img 
+                <PreviewImage 
                   src={member.avatar} 
                   alt={member.name} 
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
@@ -10714,7 +10732,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
           >
             <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden">
               {member.avatar ? (
-                <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                <PreviewImage src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
               ) : (
                 <div 
                   className="w-full h-full flex items-center justify-center text-xl font-bold text-white"
@@ -10753,7 +10771,6 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
 
   // Style 3: Carousel - Horizontal scroll với partial peek (Best Practice: 10-20% của card tiếp theo visible)
   const renderCarouselStyle = () => {
-    const itemsPerView = device === 'mobile' ? 1.15 : device === 'tablet' ? 2.2 : 3.15; // Partial peek
     const cardWidth = device === 'mobile' ? 280 : device === 'tablet' ? 260 : 280;
     const gap = device === 'mobile' ? 12 : 16;
     
@@ -10845,7 +10862,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                   {/* Avatar */}
                   <div className="aspect-[4/3] relative overflow-hidden bg-slate-100 dark:bg-slate-700">
                     {member.avatar ? (
-                      <img 
+                      <PreviewImage 
                         src={member.avatar} 
                         alt={member.name} 
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
@@ -10950,7 +10967,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                   style={{ width: cardSize, height: cardSize }}
                 >
                   {member.avatar ? (
-                    <img 
+                    <PreviewImage 
                       src={member.avatar} 
                       alt={member.name} 
                       className="w-full h-full object-cover"
@@ -10998,7 +11015,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
               {/* Large Avatar */}
               <div className="flex-shrink-0 w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden shadow-md">
                 {featured.avatar ? (
-                  <img src={featured.avatar} alt={featured.name} className="w-full h-full object-cover" />
+                  <PreviewImage src={featured.avatar} alt={featured.name} className="w-full h-full object-cover" />
                 ) : (
                   <div 
                     className="w-full h-full flex items-center justify-center text-3xl font-bold text-white"
@@ -11107,7 +11124,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                       {/* Avatar */}
                       <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden ring-2 ring-white shadow-sm">
                         {member.avatar ? (
-                          <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                          <PreviewImage src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
                         ) : (
                           <div 
                             className="w-full h-full flex items-center justify-center text-lg font-bold text-white"
@@ -11202,7 +11219,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                   <div className="absolute inset-0.5 rounded-full bg-white dark:bg-slate-800" />
                   <div className="absolute inset-1.5 rounded-full overflow-hidden">
                     {member.avatar ? (
-                      <img 
+                      <PreviewImage 
                         src={member.avatar} 
                         alt={member.name} 
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -11945,6 +11962,7 @@ export const ClientsPreview = ({
   onStyleChange?: (style: ClientsStyle) => void;
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
+  const carouselBaseId = React.useId();
   const previewStyle = selectedStyle || 'marquee';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ClientsStyle);
   const styles = [
@@ -12027,7 +12045,7 @@ export const ClientsPreview = ({
     return (
       <div key={`logo-${item.id}-${idx}`} className="shrink-0 flex items-center" role="listitem">
         {item.url ? (
-          <img src={item.url} alt={item.name || `Logo ${item.id}`} className={cn(sizeClasses[size], "w-auto object-contain select-none")} />
+          <PreviewImage src={item.url} alt={item.name || `Logo ${item.id}`} className={cn(sizeClasses[size], "w-auto object-contain select-none")} />
         ) : (
           <div className={cn(sizeClasses[size], "w-28 rounded-lg flex items-center justify-center")} style={{ backgroundColor: `${brandColor}15` }}>
             <ImageIcon size={22} style={{ color: brandColor }} className="opacity-40" />
@@ -12100,14 +12118,14 @@ export const ClientsPreview = ({
             {items.map((item, idx) => (
               <div key={`wave-${item.id}-${idx}`} className="shrink-0 clients-float" style={{ animationDelay: `${idx * 0.3}s` }} role="listitem">
                 <div className={cn("bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700", device === 'mobile' ? 'p-2.5' : 'p-3')}>
-                  {item.url ? <img src={item.url} alt={item.name || `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-10' : 'h-12')} /> : <div className="h-12 w-24 flex items-center justify-center"><ImageIcon size={20} className="text-slate-300" /></div>}
+                  {item.url ? <PreviewImage src={item.url} alt={item.name || `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-10' : 'h-12')} /> : <div className="h-12 w-24 flex items-center justify-center"><ImageIcon size={20} className="text-slate-300" /></div>}
                 </div>
               </div>
             ))}
             {items.map((item, idx) => (
               <div key={`wave2-${item.id}-${idx}`} className="shrink-0 clients-float" style={{ animationDelay: `${(idx + items.length) * 0.3}s` }} role="listitem">
                 <div className={cn("bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700", device === 'mobile' ? 'p-2.5' : 'p-3')}>
-                  {item.url ? <img src={item.url} alt={item.name || `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-10' : 'h-12')} /> : <div className="h-12 w-24 flex items-center justify-center"><ImageIcon size={20} className="text-slate-300" /></div>}
+                  {item.url ? <PreviewImage src={item.url} alt={item.name || `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-10' : 'h-12')} /> : <div className="h-12 w-24 flex items-center justify-center"><ImageIcon size={20} className="text-slate-300" /></div>}
                 </div>
               </div>
             ))}
@@ -12141,7 +12159,7 @@ export const ClientsPreview = ({
           <div className={cn(getGridClass(), "py-3")} role="list">
             {visibleItems.map((item) => (
               <div key={`grid-${item.id}`} className="p-3 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer flex flex-col items-center" role="listitem">
-                {item.url ? <img src={item.url} alt={item.name || `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-12' : 'h-14 md:h-16')} /> : <div className={cn("w-24 rounded-lg flex items-center justify-center", device === 'mobile' ? 'h-12' : 'h-14 md:h-16')} style={{ backgroundColor: `${brandColor}10` }}><ImageIcon size={18} className="text-slate-300" /></div>}
+                {item.url ? <PreviewImage src={item.url} alt={item.name || `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-12' : 'h-14 md:h-16')} /> : <div className={cn("w-24 rounded-lg flex items-center justify-center", device === 'mobile' ? 'h-12' : 'h-14 md:h-16')} style={{ backgroundColor: `${brandColor}10` }}><ImageIcon size={18} className="text-slate-300" /></div>}
                 {item.name && <span className="text-[10px] text-slate-400 text-center mt-1.5 truncate max-w-full">{item.name}</span>}
               </div>
             ))}
@@ -12160,7 +12178,7 @@ export const ClientsPreview = ({
 
   // Style 5: Carousel - compact, larger images
   const renderCarouselStyle = () => {
-    const carouselId = `clients-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const carouselId = `clients-carousel-${carouselBaseId}`;
     const cardWidth = device === 'mobile' ? 150 : 170;
     const gap = device === 'mobile' ? 10 : 12;
     return (
@@ -12193,7 +12211,7 @@ export const ClientsPreview = ({
               {items.map((item) => (
                 <div key={`carousel-${item.id}`} className="flex-shrink-0 snap-start" style={{ width: cardWidth }} role="listitem">
                   <div className="h-full p-3 rounded-lg border bg-slate-50 dark:bg-slate-800 flex flex-col items-center justify-center transition-all hover:shadow-md" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; }}>
-                    {item.url ? <img src={item.url} alt={item.name || `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-10' : 'h-12')} /> : <div className="h-12 w-full flex items-center justify-center"><ImageIcon size={22} className="text-slate-300" /></div>}
+                    {item.url ? <PreviewImage src={item.url} alt={item.name || `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-10' : 'h-12')} /> : <div className="h-12 w-full flex items-center justify-center"><ImageIcon size={22} className="text-slate-300" /></div>}
                     {item.name && <span className="text-[10px] text-slate-500 dark:text-slate-400 text-center mt-1.5 truncate w-full">{item.name}</span>}
                   </div>
                 </div>
@@ -12223,7 +12241,7 @@ export const ClientsPreview = ({
           <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-2' : featuredItems.length <= 2 ? 'flex justify-center gap-4' : 'grid-cols-2 md:grid-cols-4')} role="list">
             {featuredItems.map((item, idx) => (
               <div key={`featured-${item.id}`} className={cn("group rounded-xl border bg-white dark:bg-slate-800 flex flex-col items-center justify-center transition-all hover:shadow-lg", device === 'mobile' ? 'p-4' : 'p-5', featuredItems.length <= 2 && 'w-44')} style={{ borderColor: `${brandColor}20`, boxShadow: `0 2px 8px ${brandColor}08` }} role="listitem">
-                {item.url ? <img src={item.url} alt={item.name || `Logo ${idx + 1}`} className={cn("w-auto object-contain select-none transition-transform duration-300 group-hover:scale-105", device === 'mobile' ? 'h-12' : 'h-14 md:h-16')} /> : <div className="h-16 w-full flex items-center justify-center"><ImageIcon size={26} className="text-slate-300" /></div>}
+                {item.url ? <PreviewImage src={item.url} alt={item.name || `Logo ${idx + 1}`} className={cn("w-auto object-contain select-none transition-transform duration-300 group-hover:scale-105", device === 'mobile' ? 'h-12' : 'h-14 md:h-16')} /> : <div className="h-16 w-full flex items-center justify-center"><ImageIcon size={26} className="text-slate-300" /></div>}
                 {item.name && <span className={cn("font-medium text-slate-600 dark:text-slate-300 text-center mt-2 truncate w-full", device === 'mobile' ? 'text-[10px]' : 'text-xs')}>{item.name}</span>}
               </div>
             ))}
@@ -12234,7 +12252,7 @@ export const ClientsPreview = ({
               <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6" role="list">
                 {visibleOthers.map((item) => (
                   <div key={`other-${item.id}`} role="listitem">
-                    {item.url ? <img src={item.url} alt={item.name || `Logo`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-8' : 'h-9 md:h-10')} /> : <div className="h-10 w-16 flex items-center justify-center"><ImageIcon size={16} className="text-slate-300" /></div>}
+                    {item.url ? <PreviewImage src={item.url} alt={item.name || `Logo`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-8' : 'h-9 md:h-10')} /> : <div className="h-10 w-16 flex items-center justify-center"><ImageIcon size={16} className="text-slate-300" /></div>}
                   </div>
                 ))}
                 {remainingCount > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>+{remainingCount}</span>}
@@ -12377,7 +12395,7 @@ export const VideoPreview = ({
   );
 
   // Video embed component
-  const VideoEmbed = ({ aspectRatio = '16/9' }: { aspectRatio?: string }) => {
+  const VideoEmbed = () => {
     if (!isPlaying) return null;
     
     if (videoInfo.type === 'youtube' && videoInfo.id) {
@@ -12467,7 +12485,7 @@ export const VideoPreview = ({
         ) : (
           <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl bg-slate-900">
             {!isPlaying && displayThumbnail && (
-              <img 
+              <PreviewImage 
                 src={displayThumbnail} 
                 alt="Video thumbnail" 
                 className="absolute inset-0 w-full h-full object-cover"
@@ -12504,7 +12522,7 @@ export const VideoPreview = ({
             ) : (
               <div className="relative aspect-video rounded-xl overflow-hidden shadow-xl bg-slate-900">
                 {!isPlaying && displayThumbnail && (
-                  <img 
+                  <PreviewImage 
                     src={displayThumbnail} 
                     alt="Video thumbnail" 
                     className="absolute inset-0 w-full h-full object-cover"
@@ -12579,7 +12597,7 @@ export const VideoPreview = ({
         )}>
           {/* Video/Thumbnail */}
           {!isPlaying && displayThumbnail && (
-            <img 
+            <PreviewImage 
               src={displayThumbnail} 
               alt="Video thumbnail" 
               className="absolute inset-0 w-full h-full object-cover"
@@ -12667,7 +12685,7 @@ export const VideoPreview = ({
             <div className="absolute -top-3 -left-3 -right-3 h-3 rounded-t-xl" style={{ backgroundColor: `${brandColor}40` }} />
             <div className="absolute -bottom-3 -left-3 -right-3 h-3 rounded-b-xl" style={{ backgroundColor: `${brandColor}40` }} />
             <div className="relative aspect-[21/9] rounded-lg overflow-hidden bg-black">
-              {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              {!isPlaying && displayThumbnail && <PreviewImage src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><VideoIcon size={64} className="text-slate-600" /></div>}
               {!isPlaying && <PlayButton />}
               <VideoEmbed />
@@ -12686,7 +12704,7 @@ export const VideoPreview = ({
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           {!videoUrl ? <div className="p-8"><EmptyState /></div> : (
             <div className="relative aspect-video">
-              {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              {!isPlaying && displayThumbnail && <PreviewImage src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><VideoIcon size={48} className="text-slate-300" /></div>}
               {!isPlaying && <PlayButton />}
               <VideoEmbed />
@@ -12717,7 +12735,7 @@ export const VideoPreview = ({
           {!isPlaying && displayThumbnail && (
             <>
               <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${displayThumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(8px)' }} />
-              <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+              <PreviewImage src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
             </>
           )}
           {!isPlaying && !displayThumbnail && <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${brandColor}dd 0%, ${brandColor} 100%)` }} />}

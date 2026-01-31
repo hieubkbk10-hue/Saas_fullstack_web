@@ -51,7 +51,7 @@ export default function ServicesCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { items: servicesItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })), style });
+    void handleSubmit(e, { items: servicesItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })), style });
   };
 
   // Get icon component
@@ -136,7 +136,7 @@ export default function ServicesCreatePage() {
           {servicesItems.length === 0 && (
             <div className="text-center py-8 text-slate-500">
               <Briefcase size={32} className="mx-auto mb-2 opacity-50" />
-              <p>Chưa có dịch vụ nào. Nhấn "Thêm" để bắt đầu.</p>
+              <p>Chưa có dịch vụ nào. Nhấn “Thêm” để bắt đầu.</p>
             </div>
           )}
         </CardContent>

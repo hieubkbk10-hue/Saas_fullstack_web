@@ -2,6 +2,7 @@
 
 import React, { use, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
@@ -47,7 +48,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
 
   useEffect(() => {
     if (service?._id) {
-      incrementViews({ id: service._id });
+      void incrementViews({ id: service._id });
     }
   }, [service?._id, incrementViews]);
 
@@ -209,11 +210,13 @@ function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: S
 
             {/* Featured Image */}
             {service.thumbnail && (
-              <div className="mb-8 rounded-2xl overflow-hidden bg-slate-100">
-                <img 
-                  src={service.thumbnail} 
+              <div className="mb-8 rounded-2xl overflow-hidden bg-slate-100 relative aspect-[16/9]">
+                <Image
+                  src={service.thumbnail}
                   alt={service.title}
-                  className="w-full aspect-[16/9] object-cover"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 800px"
+                  className="object-cover"
                 />
               </div>
             )}
@@ -305,9 +308,9 @@ function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: S
                         href={`/services/${s.slug}`}
                         className="flex gap-4 group"
                       >
-                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shrink-0">
+                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shrink-0 relative">
                           {s.thumbnail ? (
-                            <img src={s.thumbnail} alt={s.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+                            <Image src={s.thumbnail} alt={s.title} fill sizes="64px" className="object-cover group-hover:scale-110 transition-transform duration-300" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
                               <Briefcase size={20} style={{ color: brandColor }} />
@@ -424,11 +427,13 @@ function ModernStyle({ service, brandColor, relatedServices, enabledFields }: St
       {/* Featured Image - Edge to edge on mobile */}
       {service.thumbnail && (
         <div className="max-w-5xl mx-auto px-4 -mt-8 relative z-10">
-          <div className="rounded-2xl overflow-hidden shadow-2xl">
-            <img 
-              src={service.thumbnail} 
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[16/9]">
+            <Image
+              src={service.thumbnail}
               alt={service.title}
-              className="w-full aspect-[16/9] object-cover"
+              fill
+              sizes="(max-width: 1024px) 100vw, 800px"
+              className="object-cover"
             />
           </div>
         </div>
@@ -482,12 +487,14 @@ function ModernStyle({ service, brandColor, relatedServices, enabledFields }: St
                   href={`/services/${s.slug}`}
                   className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
                 >
-                  <div className="aspect-[16/10] overflow-hidden bg-slate-100">
+                  <div className="aspect-[16/10] overflow-hidden bg-slate-100 relative">
                     {s.thumbnail ? (
-                      <img 
-                        src={s.thumbnail} 
+                      <Image
+                        src={s.thumbnail}
                         alt={s.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
@@ -600,11 +607,13 @@ function MinimalStyle({ service, brandColor, relatedServices, enabledFields }: S
         {/* Featured Image */}
         {service.thumbnail && (
           <figure className="mb-12">
-            <div className="rounded-xl overflow-hidden">
-              <img 
-                src={service.thumbnail} 
+            <div className="relative rounded-xl overflow-hidden aspect-[2/1]">
+              <Image
+                src={service.thumbnail}
                 alt={service.title}
-                className="w-full aspect-[2/1] object-cover"
+                fill
+                sizes="(max-width: 1024px) 100vw, 800px"
+                className="object-cover"
               />
             </div>
           </figure>

@@ -28,8 +28,10 @@ const AdminAuthContext = createContext<AdminAuthContextType | null>(null);
 const ADMIN_TOKEN_KEY = 'admin_auth_token';
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(ADMIN_TOKEN_KEY);
+  });
 
   const loginMutation = useMutation(api.auth.verifyAdminLogin);
   const logoutMutation = useMutation(api.auth.logoutAdmin);
@@ -40,19 +42,13 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     token ? { token } : "skip"
   );
 
-  useEffect(() => {
-    // Load token from localStorage on mount
-    const savedToken = localStorage.getItem(ADMIN_TOKEN_KEY);
-    if (savedToken) {
-      setToken(savedToken);
-    }
-    setIsLoading(false);
-  }, []);
+  const activeToken = sessionResult?.valid === false ? null : token;
 
   // Check if session is valid
   // isSessionVerified: true khi không có token HOẶC sessionResult đã có data (dù valid hay không)
-  const isSessionVerified = !token || sessionResult !== undefined;
-  const isAuthenticated = !!token && sessionResult?.valid === true;
+  const isSessionVerified = !activeToken || sessionResult !== undefined;
+  const isAuthenticated = !!activeToken && sessionResult?.valid === true;
+  const isLoading = !!activeToken && sessionResult === undefined;
   const user = sessionResult?.user ? {
     id: sessionResult.user.id,
     name: sessionResult.user.name,
@@ -66,7 +62,6 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (token && sessionResult && !sessionResult.valid) {
       localStorage.removeItem(ADMIN_TOKEN_KEY);
-      setToken(null);
     }
   }, [token, sessionResult]);
 
@@ -78,7 +73,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         setToken(result.token);
       }
       return { success: result.success, message: result.message };
-    } catch (error) {
+    } catch {
       return { success: false, message: 'Có lỗi xảy ra khi đăng nhập' };
     }
   }, [loginMutation]);
@@ -91,7 +86,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null);
   }, [token, logoutMutation]);
 
-  const hasPermission = useCallback((moduleKey: string, action: string) => {
+  const hasPermission = (moduleKey: string, action: string) => {
     if (!user) return false;
     if (user.isSuperAdmin) return true;
     
@@ -108,7 +103,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     return false;
-  }, [user]);
+  };
 
   return (
     <AdminAuthContext.Provider value={{ isAuthenticated, isLoading, isSessionVerified, user, login, logout, hasPermission }}>

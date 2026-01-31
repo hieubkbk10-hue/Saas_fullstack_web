@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
+import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui';
@@ -50,16 +51,11 @@ function DashboardContent() {
     const setting = settingsData?.find(s => s.settingKey === 'defaultPeriod');
     return (setting?.value as TimeRange) || '30d';
   }, [settingsData]);
-  
-  const [timeRange, setTimeRange] = useState<TimeRange>('30d');
+
+  const [timeRange, setTimeRange] = useState<TimeRange>(() => (
+    TIME_TABS.some(t => t.key === defaultPeriod) ? defaultPeriod : '30d'
+  ));
   const [trafficChartGroupBy, setTrafficChartGroupBy] = useState<ChartGroupBy>('day');
-  
-  // Sync timeRange with server settings on load
-  useEffect(() => {
-    if (defaultPeriod && TIME_TABS.some(t => t.key === defaultPeriod)) {
-      setTimeRange(defaultPeriod);
-    }
-  }, [defaultPeriod]);
   
   // Real data queries from Convex
   const summaryStats = useQuery(api.analytics.getSummaryStats, { period: timeRange });
@@ -316,7 +312,7 @@ function DashboardContent() {
                     <div key={product.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-medium text-blue-600 w-6">#{i + 1}</span>
-                        {product.image && <img src={product.image} alt={product.name} className="w-10 h-10 rounded object-cover" />}
+                        {product.image && <Image src={product.image} alt={product.name} width={40} height={40} className="w-10 h-10 rounded object-cover" />}
                         <span className="text-sm text-slate-700 dark:text-slate-300">{product.name}</span>
                       </div>
                       <div className="text-right">

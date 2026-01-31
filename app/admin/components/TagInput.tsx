@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, KeyboardEvent } from 'react';
+import React, { useState, useCallback, useMemo, KeyboardEvent } from 'react';
 import { X } from 'lucide-react';
 import { cn } from './ui';
 
@@ -15,9 +15,11 @@ export function TagInput({ value, onChange, placeholder = 'Nhập và Enter...',
   const [inputValue, setInputValue] = useState('');
 
   // Parse comma-separated string to array
-  const tags = value
-    ? value.split(',').map(t => t.trim()).filter(Boolean)
-    : [];
+  const tags = useMemo(() => (
+    value
+      ? value.split(',').map(t => t.trim()).filter(Boolean)
+      : []
+  ), [value]);
 
   const addTag = useCallback((tag: string) => {
     const trimmed = tag.trim();

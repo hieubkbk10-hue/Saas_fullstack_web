@@ -16,6 +16,13 @@ import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead
 
 const MODULE_KEY = 'menus';
 
+type MenuRecord = {
+  _id: Id<'menus'>;
+  name: string;
+  location: string;
+  _creationTime?: number;
+};
+
 const FEATURES_CONFIG = [
   { key: 'enableNested', label: 'Menu lồng nhau', icon: FolderTree, description: 'Cho phép tạo menu con nhiều cấp', linkedField: 'parentId' },
   { key: 'enableNewTab', label: 'Mở tab mới', icon: ExternalLink, description: 'Cho phép mở link trong tab mới', linkedField: 'openInNewTab' },
@@ -350,7 +357,7 @@ function MenusDataTab({
   onClearData, 
   onResetData 
 }: { 
-  menusData: any[];
+  menusData: MenuRecord[];
   onSeedData: () => Promise<void>;
   onClearData: () => Promise<void>;
   onResetData: () => Promise<void>;

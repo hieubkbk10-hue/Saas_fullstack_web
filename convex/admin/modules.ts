@@ -1,4 +1,4 @@
-import { query, mutation, internalMutation } from "../_generated/server";
+import { query, mutation } from "../_generated/server";
 import { v } from "convex/values";
 import { moduleCategory, fieldType, dependencyType } from "../lib/validators";
 
@@ -106,8 +106,8 @@ export const updateModule = mutation({
   returns: v.null(),
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
-    const module = await ctx.db.get(id);
-    if (!module) throw new Error("Module not found");
+    const moduleRecord = await ctx.db.get(id);
+    if (!moduleRecord) throw new Error("Module not found");
     await ctx.db.patch(id, updates);
     return null;
   },
@@ -138,28 +138,28 @@ export const toggleModule = mutation({
   args: { key: v.string(), enabled: v.boolean(), updatedBy: v.optional(v.id("users")) },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const module = await ctx.db
+    const moduleRecord = await ctx.db
       .query("adminModules")
       .withIndex("by_key", (q) => q.eq("key", args.key))
       .unique();
-    if (!module) throw new Error("Module not found");
-    if (module.isCore && !args.enabled) {
+    if (!moduleRecord) throw new Error("Module not found");
+    if (moduleRecord.isCore && !args.enabled) {
       throw new Error("Cannot disable core module");
     }
-    if (args.enabled && module.dependencies?.length) {
-      for (const depKey of module.dependencies) {
+    if (args.enabled && moduleRecord.dependencies?.length) {
+      for (const depKey of moduleRecord.dependencies) {
         const dep = await ctx.db
           .query("adminModules")
           .withIndex("by_key", (q) => q.eq("key", depKey))
           .unique();
         if (!dep?.enabled) {
-          if (module.dependencyType === "all") {
+          if (moduleRecord.dependencyType === "all") {
             throw new Error(`Dependency module "${depKey}" must be enabled first`);
           }
         }
       }
     }
-    await ctx.db.patch(module._id, { enabled: args.enabled, updatedBy: args.updatedBy });
+    await ctx.db.patch(moduleRecord._id, { enabled: args.enabled, updatedBy: args.updatedBy });
     return null;
   },
 });
@@ -177,24 +177,24 @@ export const toggleModuleWithCascade = mutation({
     disabledModules: v.array(v.string()),
   }),
   handler: async (ctx, args) => {
-    const module = await ctx.db
+    const moduleRecord = await ctx.db
       .query("adminModules")
       .withIndex("by_key", (q) => q.eq("key", args.key))
       .unique();
-    if (!module) throw new Error("Module not found");
-    if (module.isCore && !args.enabled) {
+    if (!moduleRecord) throw new Error("Module not found");
+    if (moduleRecord.isCore && !args.enabled) {
       throw new Error("Cannot disable core module");
     }
     
     // Khi enable, check dependencies
-    if (args.enabled && module.dependencies?.length) {
-      for (const depKey of module.dependencies) {
+    if (args.enabled && moduleRecord.dependencies?.length) {
+      for (const depKey of moduleRecord.dependencies) {
         const dep = await ctx.db
           .query("adminModules")
           .withIndex("by_key", (q) => q.eq("key", depKey))
           .unique();
         if (!dep?.enabled) {
-          if (module.dependencyType === "all") {
+          if (moduleRecord.dependencyType === "all") {
             throw new Error(`Dependency module "${depKey}" must be enabled first`);
           }
         }
@@ -218,7 +218,7 @@ export const toggleModuleWithCascade = mutation({
     }
     
     // Toggle module chính
-    await ctx.db.patch(module._id, { enabled: args.enabled, updatedBy: args.updatedBy });
+    await ctx.db.patch(moduleRecord._id, { enabled: args.enabled, updatedBy: args.updatedBy });
     
     return { success: true, disabledModules };
   },
@@ -228,26 +228,26 @@ export const removeModule = mutation({
   args: { id: v.id("adminModules") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const module = await ctx.db.get(args.id);
-    if (!module) throw new Error("Module not found");
-    if (module.isCore) throw new Error("Cannot delete core module");
+    const moduleRecord = await ctx.db.get(args.id);
+    if (!moduleRecord) throw new Error("Module not found");
+    if (moduleRecord.isCore) throw new Error("Cannot delete core module");
     const fields = await ctx.db
       .query("moduleFields")
-      .withIndex("by_module", (q) => q.eq("moduleKey", module.key))
+      .withIndex("by_module", (q) => q.eq("moduleKey", moduleRecord.key))
       .collect();
     for (const field of fields) {
       await ctx.db.delete(field._id);
     }
     const features = await ctx.db
       .query("moduleFeatures")
-      .withIndex("by_module", (q) => q.eq("moduleKey", module.key))
+      .withIndex("by_module", (q) => q.eq("moduleKey", moduleRecord.key))
       .collect();
     for (const feature of features) {
       await ctx.db.delete(feature._id);
     }
     const settings = await ctx.db
       .query("moduleSettings")
-      .withIndex("by_module", (q) => q.eq("moduleKey", module.key))
+      .withIndex("by_module", (q) => q.eq("moduleKey", moduleRecord.key))
       .collect();
     for (const setting of settings) {
       await ctx.db.delete(setting._id);

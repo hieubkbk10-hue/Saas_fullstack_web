@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
@@ -34,7 +35,7 @@ function generateFilename(originalName: string): string {
 // Convert image to WebP using Canvas
 async function convertToWebP(file: File, quality: number = WEBP_QUALITY): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
+    const img = new window.Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -140,7 +141,7 @@ export function SettingsImageUploader({
       const { storageId } = await response.json();
 
       // Get image dimensions
-      const img = new Image();
+      const img = new window.Image();
       const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
         img.onload = () => resolve({ width: img.width, height: img.height });
         img.src = URL.createObjectURL(webpFile);
@@ -173,7 +174,7 @@ export function SettingsImageUploader({
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file) handleFileUpload(file);
+    if (file) void handleFileUpload(file);
   }, [handleFileUpload]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -188,7 +189,7 @@ export function SettingsImageUploader({
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) handleFileUpload(file);
+    if (file) void handleFileUpload(file);
   }, [handleFileUpload]);
 
   const handleUrlSubmit = useCallback(() => {
@@ -287,10 +288,12 @@ export function SettingsImageUploader({
           {preview ? (
             <div className="flex items-start gap-4">
               <div className={cn('relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700', previewSizes[previewSize])}>
-                <img
+                <Image
                   src={preview}
                   alt=""
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 240px"
+                  className="object-cover"
                   onError={(e) => {
                     e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23f1f5f9" width="100" height="100"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="12">Error</text></svg>';
                   }}
@@ -384,10 +387,12 @@ export function SettingsImageUploader({
           {preview && (
             <div className="flex items-start gap-4">
               <div className={cn('relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700', previewSizes[previewSize])}>
-                <img
+                <Image
                   src={preview}
                   alt=""
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 240px"
+                  className="object-cover"
                   onError={(e) => {
                     e.currentTarget.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23f1f5f9" width="100" height="100"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%2394a3b8" font-size="12">Error</text></svg>';
                   }}

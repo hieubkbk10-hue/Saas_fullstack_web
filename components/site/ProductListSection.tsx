@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
@@ -18,13 +19,48 @@ interface ProductListSectionProps {
   title: string;
 }
 
+type SectionHeaderProps = {
+  brandColor: string;
+  subTitle: string;
+  sectionTitle: string;
+  showViewAll: boolean;
+};
+
+const SectionHeader = ({ brandColor, subTitle, sectionTitle, showViewAll }: SectionHeaderProps) => (
+  <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between md:mb-10">
+    <div className="flex items-end justify-between w-full md:w-auto">
+      <div className="space-y-1 md:space-y-2">
+        <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
+          <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
+          {subTitle}
+        </div>
+        <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-slate-900">
+          {sectionTitle}
+        </h2>
+      </div>
+      {showViewAll && (
+        <Link href="/products" className="md:hidden p-0 h-auto font-semibold mb-1 gap-1 flex items-center" style={{ color: brandColor }}>
+          Xem tất cả <ArrowRight size={16} />
+        </Link>
+      )}
+    </div>
+    {showViewAll && (
+      <Link href="/products" className="hidden md:flex gap-2 text-slate-500 hover:text-slate-900 pl-6 border-l border-slate-200 transition-colors items-center">
+        Xem tất cả <ArrowRight size={16} />
+      </Link>
+    )}
+  </div>
+);
+
 export function ProductListSection({ config, brandColor, title }: ProductListSectionProps) {
   const style = (config.style as ProductListStyle) || 'commerce';
   const itemCount = (config.itemCount as number) || 8;
   const selectionMode = (config.selectionMode as 'auto' | 'manual') || 'auto';
-  const selectedProductIds = (config.selectedProductIds as string[]) || [];
+  const selectedProductIds = React.useMemo(() => (config.selectedProductIds as string[]) || [], [config.selectedProductIds]);
   const subTitle = (config.subTitle as string) || 'Bộ sưu tập';
   const sectionTitle = (config.sectionTitle as string) || title;
+  const carouselId = React.useId();
+  const carouselElementId = `product-carousel-${carouselId.replace(/:/g, '')}`;
   
   // Query products based on selection mode
   const productsData = useQuery(
@@ -32,15 +68,6 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
     selectionMode === 'auto' ? { limit: Math.min(itemCount, 20) } : { limit: 100 }
   );
   
-  // Query categories for mapping
-  const categories = useQuery(api.productCategories.listAll, { limit: 50 });
-  
-  // Build category map for O(1) lookup
-  const categoryMap = React.useMemo(() => {
-    if (!categories) return new Map<string, string>();
-    return new Map(categories.map(c => [c._id, c.name]));
-  }, [categories]);
-
   // Get products to display based on selection mode
   const products = React.useMemo(() => {
     if (!productsData) return [];
@@ -92,41 +119,13 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
     return `-${Math.round(((price - salePrice) / price) * 100)}%`;
   };
 
-  // Common Header Component - Giữ nhất quán cho tất cả styles
-  const SectionHeader = () => (
-    <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between md:mb-10">
-      <div className="flex items-end justify-between w-full md:w-auto">
-        <div className="space-y-1 md:space-y-2">
-          <div className="flex items-center gap-2 font-bold text-xs md:text-sm uppercase tracking-widest" style={{ color: brandColor }}>
-            <span className="w-6 h-[2px] md:w-8" style={{ backgroundColor: brandColor }}></span>
-            {subTitle}
-          </div>
-          <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-slate-900">
-            {sectionTitle}
-          </h2>
-        </div>
-        {/* Mobile View All */}
-        {showViewAll && (
-          <Link href="/products" className="md:hidden p-0 h-auto font-semibold mb-1 gap-1 flex items-center" style={{ color: brandColor }}>
-            Xem tất cả <ArrowRight size={16} />
-          </Link>
-        )}
-      </div>
-      {/* Desktop View All */}
-      {showViewAll && (
-        <Link href="/products" className="hidden md:flex gap-2 text-slate-500 hover:text-slate-900 pl-6 border-l border-slate-200 transition-colors items-center">
-          Xem tất cả <ArrowRight size={16} />
-        </Link>
-      )}
-    </div>
-  );
 
   // Style 1: Luxury Minimal - Clean grid với hover effects và view details button
   if (style === 'minimal') {
     return (
       <section className="py-10 md:py-16 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
-          <SectionHeader />
+          <SectionHeader brandColor={brandColor} subTitle={subTitle} sectionTitle={sectionTitle} showViewAll={showViewAll} />
           
           {/* Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-6 md:gap-x-6 md:gap-y-10">
@@ -137,10 +136,12 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                   {/* Image Container */}
                   <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 mb-4 border border-transparent hover:border-slate-200 transition-all">
                     {product.image ? (
-                      <img 
-                        src={product.image} 
+                      <Image
+                        src={product.image}
                         alt={product.name}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center">
@@ -193,7 +194,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
     return (
       <section className="py-10 md:py-16 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
-          <SectionHeader />
+          <SectionHeader brandColor={brandColor} subTitle={subTitle} sectionTitle={sectionTitle} showViewAll={showViewAll} />
           
           {/* Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -208,10 +209,12 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                   {/* Image */}
                   <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
                     {product.image ? (
-                      <img 
-                        src={product.image} 
+                      <Image
+                        src={product.image}
                         alt={product.name}
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover"
                       />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center">
@@ -259,7 +262,6 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
 
   // Style 4: Carousel - Horizontal scrollable với arrows
   if (style === 'carousel') {
-    const carouselId = `product-carousel-${Math.random().toString(36).substr(2, 9)}`;
     const cardWidth = 260;
     const gap = 20;
     const displayedProducts = products.slice(0, 8);
@@ -288,7 +290,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselId);
+                      const container = document.getElementById(carouselElementId);
                       if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
                     }}
                     className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
@@ -298,7 +300,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselId);
+                      const container = document.getElementById(carouselElementId);
                       if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
                     }}
                     className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
@@ -314,7 +316,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
+                    const container = document.getElementById(carouselElementId);
                     if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
                   }}
                   className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
@@ -324,7 +326,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
+                    const container = document.getElementById(carouselElementId);
                     if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
                   }}
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
@@ -344,7 +346,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
 
             {/* Scrollable area với Mouse Drag */}
             <div
-              id={carouselId}
+              id={carouselElementId}
               className="flex overflow-x-auto snap-x snap-mandatory gap-3 md:gap-5 py-4 px-2 cursor-grab active:cursor-grabbing select-none scrollbar-hide"
               style={{
                 scrollbarWidth: 'none',
@@ -386,7 +388,14 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                   >
                     <div className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 mb-3 border border-transparent hover:border-slate-200 transition-all">
                       {product.image ? (
-                        <img src={product.image} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" draggable={false} />
+                        <Image
+                          src={product.image}
+                          alt={product.name}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 260px"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          draggable={false}
+                        />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center"><Package size={40} className="text-slate-300" /></div>
                       )}
@@ -411,7 +420,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
 
           {/* CSS để ẩn scrollbar */}
           <style>{`
-            #${carouselId}::-webkit-scrollbar {
+            #${carouselElementId}::-webkit-scrollbar {
               display: none;
             }
           `}</style>
@@ -425,7 +434,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
     return (
       <section className="py-10 md:py-16 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
-          <SectionHeader />
+          <SectionHeader brandColor={brandColor} subTitle={subTitle} sectionTitle={sectionTitle} showViewAll={showViewAll} />
           
           {/* Compact Grid - More items, smaller cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -435,7 +444,13 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                 <Link key={product._id} href={`/products/${product.slug}`} className="group cursor-pointer bg-white rounded-lg border border-slate-100 p-2 hover:shadow-md hover:border-slate-200 transition-all">
                   <div className="relative aspect-square overflow-hidden rounded-md bg-slate-50 mb-2">
                     {product.image ? (
-                      <img src={product.image} alt={product.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 160px"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center"><Package size={24} className="text-slate-300" /></div>
                     )}
@@ -463,7 +478,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
     return (
       <section className="py-10 md:py-16 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
-          <SectionHeader />
+          <SectionHeader brandColor={brandColor} subTitle={subTitle} sectionTitle={sectionTitle} showViewAll={showViewAll} />
           
           {/* Showcase Layout - Mobile */}
           <div className="grid md:hidden grid-cols-2 gap-3">
@@ -472,7 +487,11 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
               return (
                 <Link key={product._id} href={`/products/${product.slug}`} className="group bg-white border border-slate-200 rounded-xl p-2 flex flex-col cursor-pointer hover:shadow-md transition-all">
                   <div className="relative aspect-square w-full rounded-lg bg-slate-100 overflow-hidden mb-2">
-                    {product.image ? <img src={product.image} className="h-full w-full object-cover" alt={product.name} /> : <div className="h-full w-full flex items-center justify-center"><Package size={24} className="text-slate-300" /></div>}
+                    {product.image ? (
+                      <Image src={product.image} alt={product.name} fill sizes="(max-width: 768px) 50vw, 160px" className="object-cover" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center"><Package size={24} className="text-slate-300" /></div>
+                    )}
                     {discount && <span className="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: brandColor }}>{discount}</span>}
                   </div>
                   <h4 className="font-medium text-sm text-slate-900 truncate">{product.name}</h4>
@@ -491,7 +510,13 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
               style={{ backgroundColor: `${brandColor}05` }}
             >
               {showcaseFeatured?.image ? (
-                <img src={showcaseFeatured.image} alt={showcaseFeatured.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <Image
+                  src={showcaseFeatured.image}
+                  alt={showcaseFeatured.name}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 66vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                />
               ) : (
                 <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-slate-100"><Package size={64} className="text-slate-300" /></div>
               )}
@@ -516,7 +541,11 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                 return (
                   <Link key={product._id} href={`/products/${product.slug}`} className="group bg-white border border-slate-200 rounded-xl p-3 flex flex-col cursor-pointer hover:shadow-md hover:border-slate-300 transition-all">
                     <div className="relative aspect-square w-full rounded-lg bg-slate-50 overflow-hidden mb-3">
-                      {product.image ? <img src={product.image} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" alt={product.name} /> : <div className="h-full w-full flex items-center justify-center"><Package size={32} className="text-slate-300" /></div>}
+                      {product.image ? (
+                        <Image src={product.image} alt={product.name} fill sizes="(max-width: 1024px) 50vw, 200px" className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center"><Package size={32} className="text-slate-300" /></div>
+                      )}
                       {discount && <span className="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: brandColor }}>{discount}</span>}
                     </div>
                     <h4 className="font-medium text-sm text-slate-900 truncate group-hover:opacity-80 transition-colors">{product.name}</h4>
@@ -544,7 +573,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
   return (
     <section className="py-10 md:py-16 px-4 md:px-6">
       <div className="max-w-7xl mx-auto">
-        <SectionHeader />
+        <SectionHeader brandColor={brandColor} subTitle={subTitle} sectionTitle={sectionTitle} showViewAll={showViewAll} />
         
         {/* Bento Grid - Desktop */}
         <div className="hidden md:grid grid-cols-4 grid-rows-2 gap-4 h-auto">
@@ -555,10 +584,12 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
             style={{ backgroundColor: `${brandColor}10` }}
           >
             {featured?.image ? (
-              <img 
-                src={featured.image} 
-                alt={featured.name} 
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              <Image
+                src={featured.image}
+                alt={featured.name}
+                fill
+                sizes="(max-width: 1024px) 100vw, 66vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
               />
             ) : (
               <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-slate-100">
@@ -600,10 +631,12 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                 {/* Image Area */}
                 <div className="relative aspect-square w-full rounded-xl overflow-hidden mb-3" style={{ backgroundColor: `${brandColor}08` }}>
                   {product.image ? (
-                    <img 
-                      src={product.image} 
-                      className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-110" 
-                      alt={product.name} 
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      sizes="(max-width: 1024px) 50vw, 200px"
+                      className="object-contain p-2 transition-transform duration-300 group-hover:scale-110"
                     />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center">
@@ -655,7 +688,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
               <Link key={product._id} href={`/products/${product.slug}`} className="group bg-white border border-slate-200 rounded-xl p-2 flex flex-col cursor-pointer hover:shadow-md transition-all">
                 <div className="relative aspect-square w-full rounded-lg bg-slate-100 overflow-hidden mb-2">
                   {product.image ? (
-                    <img src={product.image} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" alt={product.name} />
+                    <Image src={product.image} alt={product.name} fill sizes="(max-width: 768px) 50vw, 160px" className="object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center"><Package size={24} className="text-slate-300" /></div>
                   )}

@@ -348,10 +348,17 @@ export default function OverviewPage() {
                 <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(value) => `${value} MB`} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '6px', color: '#f8fafc' }}
-                  formatter={(value, name) => [
-                    `${typeof value === 'number' ? value.toLocaleString() : value} MB`, 
-                    name === 'dbBandwidth' ? t.overview.dbBandwidth : t.overview.fileBandwidth
-                  ]}
+                  formatter={(value, name) => {
+                    const formattedValue = typeof value === 'number'
+                      ? value.toLocaleString()
+                      : Array.isArray(value)
+                        ? value.join(', ')
+                        : String(value);
+                    return [
+                      `${formattedValue} MB`,
+                      name === 'dbBandwidth' ? t.overview.dbBandwidth : t.overview.fileBandwidth
+                    ];
+                  }}
                 />
                 <Area type="monotone" dataKey="fileBandwidth" stroke="#f43f5e" strokeWidth={2} fillOpacity={1} fill="url(#colorFileBandwidth)" />
                 <Area type="monotone" dataKey="dbBandwidth" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorDbBandwidth)" />

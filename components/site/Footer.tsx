@@ -2,10 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor, useSiteSettings, useContactSettings } from './hooks';
-import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Youtube, Linkedin } from 'lucide-react';
+import { Mail, Phone, MapPin, Facebook, Instagram, Youtube } from 'lucide-react';
 
 export function Footer() {
   const brandColor = useBrandColor();
@@ -14,14 +15,12 @@ export function Footer() {
   const menuData = useQuery(api.menus.getFullMenu, { location: 'footer' });
 
   // Group menu items by depth 0 (columns)
-  const footerColumns = React.useMemo(() => {
-    if (!menuData?.items) return [];
-    
+  const footerColumns = menuData?.items ? (() => {
     const items = [...menuData.items].sort((a, b) => a.order - b.order);
     const columns: { title: string; links: { label: string; url: string }[] }[] = [];
-    
+
     let currentColumn: { title: string; links: { label: string; url: string }[] } | null = null;
-    
+
     items.forEach(item => {
       if (item.depth === 0) {
         if (currentColumn) columns.push(currentColumn);
@@ -30,11 +29,11 @@ export function Footer() {
         currentColumn.links.push({ label: item.label, url: item.url });
       }
     });
-    
+
     if (currentColumn) columns.push(currentColumn);
-    
+
     return columns;
-  }, [menuData?.items]);
+  })() : [];
 
   const currentYear = new Date().getFullYear();
 
@@ -46,7 +45,7 @@ export function Footer() {
           <div className="lg:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
               {logo ? (
-                <img src={logo} alt={siteName} className="h-8 w-auto" />
+                <Image src={logo} alt={siteName} width={140} height={32} className="h-8 w-auto" />
               ) : (
                 <div 
                   className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold"

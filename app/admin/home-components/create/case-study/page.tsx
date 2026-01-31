@@ -55,7 +55,7 @@ export default function CaseStudyCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { 
+    void handleSubmit(e, { 
       projects: projects.map(p => ({ title: p.title, category: p.category, image: p.image, description: p.description, link: p.link })),
       style: caseStudyStyle
     });

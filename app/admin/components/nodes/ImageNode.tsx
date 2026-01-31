@@ -30,6 +30,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { useLexicalNodeSelection } from '@lexical/react/useLexicalNodeSelection';
 import { mergeRegister } from '@lexical/utils';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import type { JSX } from 'react';
 
 export type InsertImagePayload = {
@@ -276,10 +277,13 @@ function ImageComponent({
       className={`image-wrapper ${isFocused ? 'focused' : ''}`}
       style={{ display: 'inline-block', position: 'relative' }}
     >
-      <img
+      <Image
         ref={imageRef}
         src={src}
         alt={altText}
+        width={width || 600}
+        height={height || 400}
+        unoptimized
         style={{
           width: width ? `${width}px` : 'auto',
           height: height ? `${height}px` : 'auto',

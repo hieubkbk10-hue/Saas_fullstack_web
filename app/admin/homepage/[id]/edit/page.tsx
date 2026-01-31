@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -34,7 +34,6 @@ export default function EditHomepageSectionPage() {
 }
 
 function EditContent() {
-  const router = useRouter();
   const params = useParams();
   const id = params.id as Id<"homeComponents">;
 

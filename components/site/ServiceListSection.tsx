@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -52,7 +53,9 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
   const style = (config.style as ServiceListStyle) || 'grid';
   const itemCount = (config.itemCount as number) || 8;
   const selectionMode = (config.selectionMode as 'auto' | 'manual') || 'auto';
-  const selectedServiceIds = (config.selectedServiceIds as string[]) || [];
+  const selectedServiceIds = React.useMemo(() => (config.selectedServiceIds as string[]) || [], [config.selectedServiceIds]);
+  const carouselId = React.useId();
+  const carouselElementId = `service-carousel-${carouselId.replace(/:/g, '')}`;
   
   // Query services based on selection mode
   const servicesData = useQuery(
@@ -60,15 +63,6 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
     selectionMode === 'auto' ? { limit: Math.min(itemCount, 20) } : { limit: 100 }
   );
   
-  // Query categories for mapping
-  const categories = useQuery(api.serviceCategories.listActive, { limit: 50 });
-  
-  // Build category map for O(1) lookup
-  const categoryMap = React.useMemo(() => {
-    if (!categories) return new Map<string, string>();
-    return new Map(categories.map(c => [c._id, c.name]));
-  }, [categories]);
-
   // Get services to display based on selection mode
   const services = React.useMemo(() => {
     if (!servicesData) return [];
@@ -149,11 +143,12 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   {/* Image Container */}
                   <div className="relative overflow-hidden bg-slate-100 mb-3 rounded-lg aspect-[4/3] w-full">
                     {service.thumbnail ? (
-                      <img 
-                        src={service.thumbnail} 
+                      <Image
+                        src={service.thumbnail}
                         alt={service.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                        loading="lazy"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 25vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -235,13 +230,14 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                     )}
                     
                     {/* Image */}
-                    <div className="flex-1 min-h-[100px] md:min-h-[160px] w-full rounded-lg overflow-hidden bg-slate-100 mb-3">
+                    <div className="relative flex-1 min-h-[100px] md:min-h-[160px] w-full rounded-lg overflow-hidden bg-slate-100 mb-3">
                       {service.thumbnail ? (
-                        <img 
-                          src={service.thumbnail} 
+                        <Image
+                          src={service.thumbnail}
                           alt={service.title}
-                          className="w-full h-full object-cover group-hover/bento:scale-105 transition-transform duration-700 ease-out"
-                          loading="lazy"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover group-hover/bento:scale-105 transition-transform duration-700 ease-out"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
@@ -323,13 +319,14 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.borderColor = `${brandColor}10`; }}
                 >
                   {/* Image */}
-                  <div className="flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-md overflow-hidden bg-slate-100">
+                  <div className="flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-md overflow-hidden bg-slate-100 relative">
                     {service.thumbnail ? (
-                      <img 
-                        src={service.thumbnail} 
+                      <Image
+                        src={service.thumbnail}
                         alt={service.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
+                        fill
+                        sizes="96px"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -366,7 +363,6 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
 
   // Style 4: Carousel - Horizontal scroll với snap và navigation
   if (style === 'carousel') {
-    const carouselId = `service-carousel-${Math.random().toString(36).substr(2, 9)}`;
     const cardWidth = 280;
     const gap = 16;
     const displayedServices = services.slice(0, 8);
@@ -387,7 +383,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselId);
+                      const container = document.getElementById(carouselElementId);
                       if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
                     }}
                     className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
@@ -397,7 +393,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselId);
+                    const container = document.getElementById(carouselElementId);
                       if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
                     }}
                     className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
@@ -419,7 +415,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselId);
+                      const container = document.getElementById(carouselElementId);
                       if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
                     }}
                     className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
@@ -429,7 +425,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselId);
+                    const container = document.getElementById(carouselElementId);
                       if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
                     }}
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
@@ -450,7 +446,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
 
             {/* Scrollable area với Mouse Drag */}
             <div
-              id={carouselId}
+                    id={carouselElementId}
               className="flex overflow-x-auto snap-x snap-mandatory gap-4 py-4 px-2 cursor-grab active:cursor-grabbing select-none scrollbar-hide"
               style={{
                 scrollbarWidth: 'none',
@@ -497,7 +493,14 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                     {idx < 2 && <div className="absolute z-20 top-5 left-5"><ServiceBadge isHot={idx === 0} isNew={idx === 1} brandColor={brandColor} /></div>}
                     <div className="relative overflow-hidden bg-slate-100 mb-3 rounded-lg aspect-[4/3] w-full">
                       {service.thumbnail ? (
-                        <img src={service.thumbnail} alt={service.title} draggable={false} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                        <Image
+                          src={service.thumbnail}
+                          alt={service.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 280px"
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          draggable={false}
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center"><Briefcase size={32} className="text-slate-300" /></div>
                       )}
@@ -519,7 +522,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
 
           {/* CSS để ẩn scrollbar */}
           <style>{`
-            #${carouselId}::-webkit-scrollbar {
+            #${carouselElementId}::-webkit-scrollbar {
               display: none;
             }
           `}</style>
@@ -554,7 +557,13 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   {/* Image - More minimal, rounded corners */}
                   <div className="img-wrapper relative overflow-hidden bg-slate-100 rounded-2xl aspect-[3/2] mb-5 transition-shadow duration-300">
                     {service.thumbnail ? (
-                      <img src={service.thumbnail} alt={service.title} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" loading="lazy" />
+                      <Image
+                        src={service.thumbnail}
+                        alt={service.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center"><Briefcase size={40} className="text-slate-300" /></div>
                     )}
@@ -604,7 +613,13 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
             <Link href={`/services/${featuredService.slug}`} className="lg:row-span-2 group">
               <article className="cursor-pointer relative rounded-2xl overflow-hidden h-full min-h-[300px] lg:min-h-[500px]" style={{ boxShadow: `0 8px 30px ${brandColor}20` }}>
                 {featuredService.thumbnail ? (
-                  <img src={featuredService.thumbnail} alt={featuredService.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
+                  <Image
+                    src={featuredService.thumbnail}
+                    alt={featuredService.title}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 66vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
                 ) : (
                   <div className="absolute inset-0 w-full h-full bg-slate-100 flex items-center justify-center"><Briefcase size={64} className="text-slate-300" /></div>
                 )}
@@ -635,7 +650,13 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                 >
                   <div className="relative overflow-hidden bg-slate-100 rounded-lg aspect-[4/3] mb-3">
                     {service.thumbnail ? (
-                      <img src={service.thumbnail} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      <Image
+                        src={service.thumbnail}
+                        alt={service.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center"><Briefcase size={28} className="text-slate-300" /></div>
                     )}

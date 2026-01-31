@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from './hooks';
@@ -8,11 +10,43 @@ import { BlogSection } from './BlogSection';
 import { ProductListSection } from './ProductListSection';
 import { ServiceListSection } from './ServiceListSection';
 import { 
-  LayoutTemplate, Package, FileText, HelpCircle, MousePointerClick, 
+  LayoutTemplate, Package, HelpCircle, 
   Users, Star, Phone, Briefcase, Image as ImageIcon, Check, ZoomIn, Maximize2, X,
   Building2, Clock, MapPin, Mail, Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, ArrowRight, ArrowUpRight,
-  ChevronLeft, ChevronRight, ChevronDown, Send, Facebook, MessageCircle, Instagram, Twitter, Linkedin, Youtube, Plus
+  ChevronLeft, ChevronRight, ChevronDown, Facebook, MessageCircle, Instagram, Twitter, Linkedin, Youtube, Plus
 } from 'lucide-react';
+
+type SiteImageProps = Omit<React.ComponentProps<typeof Image>, 'width' | 'height' | 'src'> & {
+  src?: React.ComponentProps<typeof Image>['src'];
+  width?: number | string;
+  height?: number | string;
+  sizes?: string;
+};
+
+const SiteImage = ({ src, alt = '', width = 1200, height = 800, sizes = '100vw', ...rest }: SiteImageProps) => {
+  if (!src) return null;
+  const normalizedWidth = typeof width === 'string' ? Number.parseInt(width, 10) || 1200 : width;
+  const normalizedHeight = typeof height === 'string' ? Number.parseInt(height, 10) || 800 : height;
+
+  return (
+    <Image
+      src={src}
+      {...rest}
+      alt={alt}
+      width={normalizedWidth}
+      height={normalizedHeight}
+      sizes={sizes}
+      unoptimized
+    />
+  );
+};
+
+const useSafeId = (prefix: string) => {
+  const id = React.useId();
+  return `${prefix}-${id.replace(/:/g, '')}`;
+};
+
+const DEFAULT_COUNTDOWN_END_DATE = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
 const getSocialIcon = (platform: string) => {
   const icons: Record<string, React.ReactNode> = {
@@ -145,11 +179,11 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
   }
 
   // Helper: Render slide với blurred background
-  const renderSlideWithBlur = (slide: { image: string; link: string }, idx: number) => (
+  const renderSlideWithBlur = (slide: { image: string; link: string }) => (
     <a href={slide.link || '#'} className="block w-full h-full relative">
       <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(30px)' }} />
       <div className="absolute inset-0 bg-black/20" />
-      <img src={slide.image} alt="" className="relative w-full h-full object-contain z-10" />
+      <SiteImage src={slide.image} alt="" className="relative w-full h-full object-contain z-10" />
     </a>
   );
 
@@ -160,7 +194,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
         <div className="relative w-full aspect-[16/9] md:aspect-[21/9] max-h-[400px] md:max-h-[550px]">
           {slides.map((slide, idx) => (
             <div key={idx} className={`absolute inset-0 transition-opacity duration-700 ${idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-              {slide.image ? renderSlideWithBlur(slide, idx) : <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900" />}
+              {slide.image ? renderSlideWithBlur(slide) : <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900" />}
             </div>
           ))}
           {slides.length > 1 && (
@@ -190,14 +224,14 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
         <div className="relative w-full aspect-[16/9] md:aspect-[21/9] max-h-[450px] md:max-h-[600px]">
           {slides.map((slide, idx) => (
             <div key={idx} className={`absolute inset-0 transition-opacity duration-700 ${idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-              {slide.image ? renderSlideWithBlur(slide, idx) : <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900" />}
+              {slide.image ? renderSlideWithBlur(slide) : <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900" />}
             </div>
           ))}
           {slides.length > 1 && (
             <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-center gap-2 bg-gradient-to-t from-black/60 to-transparent z-20">
               {slides.map((slide, idx) => (
                 <button key={idx} onClick={() => setCurrentSlide(idx)} className={`rounded overflow-hidden transition-all border-2 w-16 h-10 md:w-20 md:h-12 ${idx === currentSlide ? 'border-white scale-105' : 'border-transparent opacity-70 hover:opacity-100'}`}>
-                  {slide.image ? <img src={slide.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ backgroundColor: brandColor }} />}
+                  {slide.image ? <SiteImage src={slide.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ backgroundColor: brandColor }} />}
                 </button>
               ))}
             </div>
@@ -221,7 +255,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
                   <div className="w-full h-full relative">
                     <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px)' }} />
                     <div className="absolute inset-0 bg-black/20" />
-                    <img src={slide.image} alt="" className="relative w-full h-full object-contain z-10" />
+                    <SiteImage src={slide.image} alt="" className="relative w-full h-full object-contain z-10" />
                   </div>
                 ) : (
                   <div className="w-full h-full bg-slate-800" />
@@ -236,7 +270,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
                 <div className="w-full h-full relative">
                   <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[0].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(25px)' }} />
                   <div className="absolute inset-0 bg-black/20" />
-                  <img src={bentoSlides[0].image} alt="" className="relative w-full h-full object-contain z-10" />
+                  <SiteImage src={bentoSlides[0].image} alt="" className="relative w-full h-full object-contain z-10" />
                 </div>
               ) : <div className="w-full h-full bg-slate-800" />}
             </a>
@@ -245,7 +279,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
                 <div className="w-full h-full relative">
                   <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[1].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px)' }} />
                   <div className="absolute inset-0 bg-black/20" />
-                  <img src={bentoSlides[1].image} alt="" className="relative w-full h-full object-contain z-10" />
+                  <SiteImage src={bentoSlides[1].image} alt="" className="relative w-full h-full object-contain z-10" />
                 </div>
               ) : <div className="w-full h-full bg-slate-800" />}
             </a>
@@ -254,7 +288,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
                 <div className="w-full h-full relative">
                   <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[2].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px)' }} />
                   <div className="absolute inset-0 bg-black/20" />
-                  <img src={bentoSlides[2].image} alt="" className="relative w-full h-full object-contain z-10" />
+                  <SiteImage src={bentoSlides[2].image} alt="" className="relative w-full h-full object-contain z-10" />
                 </div>
               ) : <div className="w-full h-full bg-slate-800" />}
             </a>
@@ -263,7 +297,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
                 <div className="w-full h-full relative">
                   <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[3].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px)' }} />
                   <div className="absolute inset-0 bg-black/20" />
-                  <img src={bentoSlides[3].image} alt="" className="relative w-full h-full object-contain z-10" />
+                  <SiteImage src={bentoSlides[3].image} alt="" className="relative w-full h-full object-contain z-10" />
                 </div>
               ) : <div className="w-full h-full bg-slate-800" />}
             </a>
@@ -282,7 +316,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
             <div key={idx} className={`absolute inset-0 transition-opacity duration-1000 ${idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
               {slide.image ? (
                 <div className="w-full h-full relative">
-                  <img src={slide.image} alt="" className="w-full h-full object-cover" />
+                  <SiteImage src={slide.image} alt="" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
                 </div>
               ) : <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900" />}
@@ -373,7 +407,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
             {slides.map((slide, idx) => (
               <div key={idx} className={`absolute inset-0 transition-all duration-700 ${idx === currentSlide ? 'opacity-100 scale-100' : 'opacity-0 scale-105 pointer-events-none'}`}>
                 {slide.image ? (
-                  <img src={slide.image} alt="" className="w-full h-full object-cover" />
+                  <SiteImage src={slide.image} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-slate-200">
                     <LayoutTemplate size={48} className="text-slate-400" />
@@ -465,7 +499,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
 // ============ STATS SECTION ============
 // Professional Stats UI/UX - 6 Variants
 type StatsStyle = 'horizontal' | 'cards' | 'icons' | 'gradient' | 'minimal' | 'counter';
-function StatsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
+function StatsSection({ config, brandColor, title: _title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ value: string; label: string }>) || [];
   const style = (config.style as StatsStyle) || 'horizontal';
 
@@ -779,7 +813,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
             {/* Image Side (Left on desktop) */}
             <div className="order-2 lg:order-1 relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
               {image ? (
-                <img 
+                <SiteImage 
                   src={image} 
                   alt="Brand Story" 
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" 
@@ -886,7 +920,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
               {/* Cell 4: Wide Image */}
               <div className="md:col-span-3 h-48 md:h-64 lg:h-80 rounded-2xl overflow-hidden relative group">
                 {image ? (
-                  <img 
+                  <SiteImage 
                     src={image} 
                     alt="Office" 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
@@ -960,7 +994,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
               {/* Right: Image */}
               <div className="relative bg-slate-100 h-64 lg:h-auto lg:w-[45%]">
                 {image ? (
-                  <img 
+                  <SiteImage 
                     src={image} 
                     alt="Brand" 
                     className="absolute inset-0 w-full h-full object-cover" 
@@ -1018,7 +1052,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
           {/* Image Side */}
           <div className="w-full md:w-1/2 h-[250px] md:h-auto relative overflow-hidden order-1 md:order-2">
             {image ? (
-              <img src={image} alt="" className="w-full h-full object-cover" />
+              <SiteImage src={image} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-slate-200">
                 <ImageIcon size={48} className="text-slate-400" />
@@ -1075,7 +1109,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
           {/* Image at bottom */}
           {image && (
             <div className="mt-12 rounded-2xl overflow-hidden aspect-[16/9] max-h-[350px]">
-              <img src={image} alt="" className="w-full h-full object-cover" />
+              <SiteImage src={image} alt="" className="w-full h-full object-cover" />
             </div>
           )}
 
@@ -1116,7 +1150,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
           <div className="relative rounded-2xl overflow-hidden aspect-[4/3] lg:aspect-auto lg:min-h-[400px] group">
             {image ? (
               <>
-                <img src={image} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <SiteImage src={image} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               </>
             ) : (
@@ -1192,6 +1226,7 @@ const ServiceIconRenderer = ({ name, size = 24, style }: { name?: string; size?:
 function ServicesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
   const style = (config.style as ServicesStyle) || 'elegantGrid';
+  const carouselId = useSafeId('services-carousel');
 
   // Empty state
   if (items.length === 0) {
@@ -1383,7 +1418,6 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
 
   // Style 5: Carousel - Horizontal scroll với navigation và drag
   if (style === 'carousel') {
-    const carouselId = `services-carousel-${Math.random().toString(36).substr(2, 9)}`;
     const cardWidth = 300;
     const gap = 20;
     // Responsive: Desktop ~3-4 items, chỉ hiện arrows khi có nhiều items
@@ -1546,6 +1580,7 @@ type BenefitsStyle = 'cards' | 'list' | 'bento' | 'row' | 'carousel' | 'timeline
 function BenefitsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
   const style = (config.style as BenefitsStyle) || 'cards';
+  const carouselId = useSafeId('benefits-carousel');
   const subHeading = (config.subHeading as string) || 'Vì sao chọn chúng tôi?';
   const heading = (config.heading as string) || title;
   const buttonText = (config.buttonText as string) || '';
@@ -1567,7 +1602,7 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
   }
 
   // Reusable Header
-  const BenefitsHeader = () => (
+  const renderBenefitsHeader = () => (
     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b-2" style={{ borderColor: `${brandColor}20` }}>
       <div className="space-y-2">
         <div className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
@@ -1583,7 +1618,7 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto space-y-8">
-          <BenefitsHeader />
+          {renderBenefitsHeader()}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {items.map((item, idx) => (
               <div key={idx} className="rounded-xl p-5 md:p-6 shadow-sm flex flex-col items-start border" style={{ backgroundColor: `${brandColor}08`, borderColor: `${brandColor}20` }}>
@@ -1605,7 +1640,7 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-5xl mx-auto space-y-6">
-          <BenefitsHeader />
+          {renderBenefitsHeader()}
           <div className="flex flex-col gap-3">
             {items.map((item, idx) => (
               <div key={idx} className="relative bg-white border border-slate-200/60 rounded-lg p-4 md:p-5 pl-5 md:pl-6 overflow-hidden shadow-sm">
@@ -1641,7 +1676,7 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto space-y-8">
-          <BenefitsHeader />
+          {renderBenefitsHeader()}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
             {items.slice(0, 4).map((item, idx) => {
               const isWide = idx === 0 || idx === 3;
@@ -1671,7 +1706,7 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
     return (
       <section className="py-12 md:py-16 px-4">
         <div className="max-w-6xl mx-auto space-y-8">
-          <BenefitsHeader />
+          {renderBenefitsHeader()}
           <div className="bg-white border-y-2 rounded-lg overflow-hidden" style={{ borderColor: `${brandColor}15` }}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: `${brandColor}15` }}>
               {items.slice(0, 4).map((item, idx) => (
@@ -1692,7 +1727,6 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
 
   // Style 5: Carousel - Horizontal scroll với navigation arrows và drag scroll
   if (style === 'carousel') {
-    const carouselId = `benefits-carousel-${Math.random().toString(36).substr(2, 9)}`;
     const cardWidth = 320;
     const gap = 16;
     // Responsive: Desktop ~3 items (320px each), chỉ hiện arrows khi có > 3 items
@@ -1704,7 +1738,7 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
           {/* Header với navigation arrows */}
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="flex-1">
-              <BenefitsHeader />
+              {renderBenefitsHeader()}
             </div>
             {/* Desktop arrows - chỉ hiện khi có > 3 items */}
             {showArrowsDesktop && (
@@ -1808,7 +1842,7 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
   return (
     <section className="py-12 md:py-16 px-4">
       <div className="max-w-3xl mx-auto space-y-8">
-        <BenefitsHeader />
+        {renderBenefitsHeader()}
         <div className="relative">
           <div className="absolute left-4 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-0.5" style={{ backgroundColor: `${brandColor}20` }} />
           <div className="space-y-6 md:space-y-8">
@@ -2418,6 +2452,7 @@ type TestimonialsStyle = 'cards' | 'slider' | 'masonry' | 'quote' | 'carousel' |
 function TestimonialsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ name: string; role: string; content: string; rating: number }>) || [];
   const style = (config.style as TestimonialsStyle) || 'cards';
+  const carouselId = useSafeId('testimonials-carousel');
   const [currentSlide, setCurrentSlide] = React.useState(0);
 
   // Auto slide for slider/quote styles
@@ -2459,7 +2494,7 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
             {items.map((item, idx) => (
               <div key={idx} className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full">
                 {renderStars(item.rating)}
-                <p className="text-slate-600 my-4 line-clamp-4 flex-1 min-h-[5rem]">"{item.content}"</p>
+                <p className="text-slate-600 my-4 line-clamp-4 flex-1 min-h-[5rem]">“{item.content}”</p>
                 <div className="flex items-center gap-3 pt-4 border-t border-slate-100 mt-auto">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0" style={{ backgroundColor: brandColor }}>
                     {(item.name || 'U').charAt(0)}
@@ -2484,14 +2519,14 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
 
     return (
       <section className="py-16 md:py-20 px-4 bg-slate-50 relative overflow-hidden">
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 text-[120px] md:text-[180px] leading-none font-serif opacity-5 pointer-events-none select-none" style={{ color: brandColor }}>"</div>
+        <div className="absolute top-8 left-1/2 -translate-x-1/2 text-[120px] md:text-[180px] leading-none font-serif opacity-5 pointer-events-none select-none" style={{ color: brandColor }}>“</div>
         
         <div className="max-w-4xl mx-auto relative">
           <h2 className="text-3xl font-bold text-center mb-12 text-slate-900">{title}</h2>
           
           <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center relative" style={{ borderTop: `4px solid ${brandColor}` }}>
             <div className="flex justify-center mb-6">{renderStars(current.rating, 18)}</div>
-            <p className="text-lg md:text-xl text-slate-700 leading-relaxed mb-8">"{current.content}"</p>
+            <p className="text-lg md:text-xl text-slate-700 leading-relaxed mb-8">“{current.content}”</p>
             <div className="flex items-center justify-center gap-4">
               <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg flex-shrink-0" style={{ backgroundColor: brandColor }}>
                 {(current.name || 'U').charAt(0)}
@@ -2553,7 +2588,7 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
                   </div>
                 </div>
                 {renderStars(item.rating)}
-                <p className="mt-4 text-slate-600">"{item.content}"</p>
+                <p className="mt-4 text-slate-600">“{item.content}”</p>
               </div>
             ))}
           </div>
@@ -2572,7 +2607,7 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-8 text-slate-900">{title}</h2>
           
-          <div className="text-[80px] md:text-[120px] leading-none font-serif mb-[-30px] md:mb-[-50px] select-none" style={{ color: brandColor }}>"</div>
+          <div className="text-[80px] md:text-[120px] leading-none font-serif mb-[-30px] md:mb-[-50px] select-none" style={{ color: brandColor }}>“</div>
           
           <blockquote className="text-xl md:text-2xl lg:text-3xl text-slate-800 leading-relaxed font-medium italic">
             {current.content}
@@ -2610,7 +2645,6 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
 
   // Style 5: Carousel - Horizontal scroll cards với navigation và drag
   if (style === 'carousel') {
-    const carouselId = `testimonials-carousel-${Math.random().toString(36).substr(2, 9)}`;
     const cardWidth = 360;
     const gap = 24;
     // Responsive: Desktop ~3 items (360px each), chỉ hiện arrows khi có > 3 items
@@ -2691,7 +2725,7 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
                     </div>
                   </div>
                   {renderStars(item.rating)}
-                  <p className="mt-4 text-slate-600 line-clamp-4 flex-1">"{item.content}"</p>
+                  <p className="mt-4 text-slate-600 line-clamp-4 flex-1">“{item.content}”</p>
                 </div>
               ))}
               <div className="flex-shrink-0 w-4" />
@@ -2726,7 +2760,7 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
                   <span className="text-sm text-slate-500 truncate">{item.role}</span>
                   <div className="ml-auto">{renderStars(item.rating, 12)}</div>
                 </div>
-                <p className="text-slate-600 line-clamp-2">"{item.content}"</p>
+                <p className="text-slate-600 line-clamp-2">“{item.content}”</p>
               </div>
             </div>
           ))}
@@ -2755,6 +2789,10 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
     responseTimeText?: string;
   };
   const style = contactStyle || 'modern';
+  const heading = formTitle || title || 'Liên hệ với chúng tôi';
+  const description = formDescription || 'Chúng tôi luôn sẵn sàng hỗ trợ bạn';
+  const submitLabel = submitButtonText || 'Gửi yêu cầu';
+  const responseText = responseTimeText || 'Phản hồi trong 24h';
   const activeSocials = socialLinks?.filter(s => s.url) || [];
 
   const renderMapOrPlaceholder = (className: string = "w-full h-full") => {
@@ -2963,8 +3001,8 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
           <div className="bg-white border border-slate-200/40 rounded-xl overflow-hidden shadow-sm">
             <div className="p-8 lg:p-12">
               <div className="text-center mb-10">
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Liên hệ với chúng tôi</h2>
-                <p className="text-slate-500 mt-2">Chúng tôi luôn sẵn sàng hỗ trợ bạn</p>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{heading}</h2>
+                <p className="text-slate-500 mt-2">{description}</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 <a href={`tel:${phone}`} className="flex flex-col items-center p-6 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all text-center group">
@@ -3009,8 +3047,10 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
           <div className="bg-white border border-slate-200/40 rounded-xl overflow-hidden shadow-sm">
             <div className="text-center p-8 lg:p-12" style={{ backgroundColor: `${brandColor}05` }}>
               <div className="inline-flex items-center justify-center w-18 h-18 rounded-full mb-6" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Phone size={32} /></div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 mb-2">Hãy kết nối với chúng tôi</h2>
-              <p className="text-slate-500 max-w-lg mx-auto">Đội ngũ của chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn</p>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 mb-2">{heading}</h2>
+              <p className="text-slate-500 max-w-lg mx-auto">{description}</p>
+              <p className="text-xs text-slate-400 mt-2">{responseText}</p>
+              <a href={`mailto:${email || 'contact@example.com'}`} className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-semibold text-white" style={{ backgroundColor: brandColor }}>{submitLabel}</a>
             </div>
             <div className="p-8 lg:p-10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -3052,9 +3092,9 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>
               <Building2 size={24} />
             </div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">Văn phòng của chúng tôi</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">{heading}</h2>
             <p className="text-slate-500 mt-2 max-w-lg mx-auto">
-              Thông tin liên hệ và vị trí bản đồ chính xác.
+              {description}
             </p>
           </div>
 
@@ -3186,7 +3226,7 @@ const GalleryLightbox = ({ photo, onClose }: { photo: { url: string } | null; on
         <X size={32} />
       </button>
       <div className="w-full h-full p-4 flex flex-col items-center justify-center" onClick={e => e.stopPropagation()}>
-        <img 
+        <SiteImage 
           src={photo.url} 
           alt="Lightbox" 
           className="max-h-[90vh] max-w-full object-contain shadow-2xl bg-white p-2 md:p-4 rounded-lg animate-in zoom-in-95 duration-300" 
@@ -3291,7 +3331,7 @@ const CertificateModal = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative w-auto h-auto flex flex-col items-center">
-          <img 
+          <SiteImage 
             src={item.url} 
             alt={item.name || ''} 
             className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl bg-white p-2 md:p-4 animate-in zoom-in-95 duration-300" 
@@ -3310,8 +3350,8 @@ const CertificateModal = ({
 function TrustBadgesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as TrustBadgeItem[]) || [];
   const style = (config.style as TrustBadgesStyle) || 'cards';
+  const carouselId = useSafeId('trustbadges-carousel');
   const [selectedCert, setSelectedCert] = React.useState<TrustBadgeItem | null>(null);
-  const [carouselIndex, setCarouselIndex] = React.useState(0);
 
   // Style 1: Square Grid - Full color, clickable to lightbox
   if (style === 'grid') {
@@ -3338,7 +3378,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                 }}
               >
                 {item.url ? (
-                  <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} />
+                  <SiteImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} />
                 ) : (
                   <ImageIcon size={40} className="text-slate-300" />
                 )}
@@ -3388,7 +3428,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                 <div className="aspect-[5/4] bg-slate-50/50 flex items-center justify-center p-6 md:p-8 relative overflow-hidden">
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-colors duration-300" style={{ backgroundColor: `${brandColor}08` }} />
                   {item.url ? (
-                    <img src={item.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" alt={item.name || ''} />
+                    <SiteImage src={item.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" alt={item.name || ''} />
                   ) : (
                     <ImageIcon size={48} className="text-slate-300" />
                   )}
@@ -3428,7 +3468,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
               className="h-24 md:h-32 w-auto flex items-center justify-center px-4 hover:scale-110 transition-all duration-300 cursor-zoom-in relative group"
             >
               {item.url ? (
-                <img src={item.url} className="h-full w-auto object-contain max-w-[200px]" alt={item.name || ''} />
+                <SiteImage src={item.url} className="h-full w-auto object-contain max-w-[200px]" alt={item.name || ''} />
               ) : (
                 <div className="h-16 w-28 bg-slate-200 rounded flex items-center justify-center">
                   <ImageIcon size={28} className="text-slate-400" />
@@ -3475,7 +3515,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                 <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full shadow-inner" style={{ backgroundColor: `${brandColor}60` }}></div>
                 <div className="flex-1 flex items-center justify-center p-3 relative overflow-hidden" style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}10` }}>
                   {item.url ? (
-                    <img src={item.url} className="w-full h-full object-contain" alt={item.name || ''} />
+                    <SiteImage src={item.url} className="w-full h-full object-contain" alt={item.name || ''} />
                   ) : (
                     <ImageIcon size={28} className="text-slate-300" />
                   )}
@@ -3496,7 +3536,6 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
 
   // Style 5: Carousel - Horizontal scroll với navigation và drag
   if (style === 'carousel') {
-    const carouselId = `trustbadges-carousel-${Math.random().toString(36).substr(2, 9)}`;
     const cardWidth = 180;
     const gap = 16;
     // Responsive: Desktop ~6 items (180px each), chỉ hiện arrows khi có > 5 items
@@ -3583,7 +3622,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                     }}
                   >
                     {item.url ? (
-                      <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} draggable={false} />
+                      <SiteImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} draggable={false} />
                     ) : (
                       <ImageIcon size={32} className="text-slate-300" />
                     )}
@@ -3630,7 +3669,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
             >
               <div className="aspect-[4/3] flex items-center justify-center p-6 md:p-8 relative">
                 {featuredItem.url ? (
-                  <img src={featuredItem.url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt={featuredItem.name || ''} />
+                  <SiteImage src={featuredItem.url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt={featuredItem.name || ''} />
                 ) : (
                   <ImageIcon size={64} className="text-slate-300" />
                 )}
@@ -3669,7 +3708,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                 }}
               >
                 {item.url ? (
-                  <img src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} />
+                  <SiteImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} />
                 ) : (
                   <ImageIcon size={24} className="text-slate-300" />
                 )}
@@ -3686,6 +3725,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
 function GallerySection({ config, brandColor, title, type }: { config: Record<string, unknown>; brandColor: string; title: string; type: string }) {
   const items = (config.items as Array<{ url: string; link?: string }>) || [];
   const style = (config.style as GalleryStyle) || (type === 'Gallery' ? 'spotlight' : 'grid');
+  const partnersCarouselId = useSafeId('partners-carousel');
   const [selectedPhoto, setSelectedPhoto] = React.useState<{ url: string; link?: string } | null>(null);
 
   // ============ GALLERY STYLES (Spotlight, Explore, Stories) - Only for type === 'Gallery' ============
@@ -3717,7 +3757,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
               onClick={() => setSelectedPhoto(featured)}
             >
               {featured.url ? (
-                <img src={featured.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <SiteImage src={featured.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center"><ImageIcon size={48} className="text-slate-300" /></div>
               )}
@@ -3730,7 +3770,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                   onClick={() => setSelectedPhoto(photo)}
                 >
                   {photo.url ? (
-                    <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    <SiteImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center"><ImageIcon size={24} className="text-slate-300" /></div>
                   )}
@@ -3770,7 +3810,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                 onClick={() => setSelectedPhoto(photo)}
               >
                 {photo.url ? (
-                  <img 
+                  <SiteImage 
                     src={photo.url} 
                     alt="" 
                     className="w-full h-full object-cover transition-opacity duration-300 hover:opacity-90"
@@ -3817,7 +3857,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                   onClick={() => setSelectedPhoto(photo)}
                 >
                   {photo.url ? (
-                    <img 
+                    <SiteImage 
                       src={photo.url} 
                       alt="" 
                       className="w-full h-full object-cover grayscale-[15%] group-hover:grayscale-0 transition-all duration-700"
@@ -3869,7 +3909,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                 onClick={() => setSelectedPhoto(photo)}
               >
                 {photo.url ? (
-                  <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <SiteImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center"><ImageIcon size={28} className="text-slate-300" /></div>
                 )}
@@ -3915,7 +3955,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                 onClick={() => setSelectedPhoto(photo)}
               >
                 {photo.url ? (
-                  <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <SiteImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 ) : (
                   <div className="w-full h-full bg-slate-100 flex items-center justify-center">
                     <ImageIcon size={32} className="text-slate-300" />
@@ -3964,7 +4004,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                   onClick={() => setSelectedPhoto(photo)}
                 >
                   {photo.url ? (
-                    <img src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <SiteImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center"><ImageIcon size={28} className="text-slate-300" /></div>
                   )}
@@ -4000,7 +4040,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                 className="w-full flex items-center justify-center p-4 rounded-xl hover:bg-slate-100/50 transition-colors duration-300 cursor-pointer group"
               >
                 {item.url ? (
-                  <img 
+                  <SiteImage 
                     src={item.url} 
                     alt="" 
                     className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-110" 
@@ -4036,7 +4076,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
               {items.map((item, idx) => (
                 <a key={idx} href={item.link || '#'} className="shrink-0">
                   {item.url ? (
-                    <img 
+                    <SiteImage 
                       src={item.url} 
                       alt="" 
                       className="h-11 w-auto object-contain hover:scale-110 transition-transform duration-300 select-none" 
@@ -4071,7 +4111,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
               {items.map((item, idx) => (
                 <a key={idx} href={item.link || '#'} className="shrink-0 group">
                   {item.url ? (
-                    <img 
+                    <SiteImage 
                       src={item.url} 
                       alt="" 
                       className="h-10 w-auto object-contain grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 select-none" 
@@ -4092,7 +4132,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
 
   // Style: Carousel - Horizontal scrollable với navigation và drag scroll
   if (style === 'carousel') {
-    const carouselId = `partners-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const carouselId = partnersCarouselId;
     const cardWidth = 180;
     const gap = 24;
     // Responsive: Desktop ~6 items (180px each), chỉ hiện arrows khi có > 5 items
@@ -4183,7 +4223,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                   draggable={false}
                 >
                   {item.url ? (
-                    <img
+                    <SiteImage
                       src={item.url}
                       alt=""
                       draggable={false}
@@ -4244,7 +4284,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                   </span>
                 </div>
                 {featured.url ? (
-                  <img 
+                  <SiteImage 
                     src={featured.url} 
                     alt=""
                     className="max-h-24 w-auto object-contain group-hover:scale-110 transition-transform duration-500" 
@@ -4264,7 +4304,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                   style={{ borderColor: `${brandColor}15` }}
                 >
                   {item.url ? (
-                    <img 
+                    <SiteImage 
                       src={item.url} 
                       alt=""
                       className="h-8 w-auto object-contain grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" 
@@ -4303,7 +4343,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
               }}
             >
               {item.url ? (
-                <img src={item.url} alt="" className="h-5 w-auto grayscale group-hover:grayscale-0 transition-all" />
+                <SiteImage src={item.url} alt="" className="h-5 w-auto grayscale group-hover:grayscale-0 transition-all" />
               ) : (
                 <ImageIcon size={20} className="text-slate-400" />
               )}
@@ -5060,7 +5100,7 @@ type CaseStudyStyle = 'grid' | 'featured' | 'list' | 'masonry' | 'carousel' | 't
 function CaseStudySection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const projects = (config.projects as Array<{ title: string; category: string; image: string; description: string; link: string }>) || [];
   const style = (config.style as CaseStudyStyle) || 'grid';
-  const [carouselIndex, setCarouselIndex] = React.useState(0);
+  const caseStudyCarouselId = useSafeId('casestudy-carousel');
 
   // Empty State
   if (projects.length === 0) {
@@ -5098,7 +5138,7 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
               >
                 <div className="aspect-[3/2] bg-slate-100 overflow-hidden">
                   {project.image ? (
-                    <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <SiteImage src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <ImageIcon size={32} className="text-slate-300" />
@@ -5138,7 +5178,7 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
               <a href={featured.link || '#'} className="group block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-slate-100 md:row-span-2">
                 <div className="aspect-video bg-slate-100 overflow-hidden">
                   {featured.image ? (
-                    <img src={featured.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <SiteImage src={featured.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <ImageIcon size={48} className="text-slate-300" />
@@ -5158,7 +5198,7 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
               <a key={idx} href={project.link || '#'} className="group block bg-white rounded-xl p-5 border border-slate-100 flex items-center gap-4 hover:shadow-md transition-shadow">
                 <div className="w-24 h-24 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {project.image ? (
-                    <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <SiteImage src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
                     <ImageIcon size={24} className="text-slate-300" />
                   )}
@@ -5200,7 +5240,7 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
               >
                 <div className="aspect-video md:aspect-auto md:w-48 md:h-28 bg-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {project.image ? (
-                    <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    <SiteImage src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   ) : (
                     <ImageIcon size={24} className="text-slate-300" />
                   )}
@@ -5249,7 +5289,7 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
                 >
                   <div className={`${height} bg-slate-100 overflow-hidden`}>
                     {project.image ? (
-                      <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <SiteImage src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <ImageIcon size={32} className="text-slate-300" />
@@ -5274,7 +5314,6 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
 
   // Style 5: Carousel - Horizontal scroll carousel
   if (style === 'carousel') {
-    const caseStudyCarouselId = `casestudy-carousel-${Math.random().toString(36).substr(2, 9)}`;
     const cardWidth = 320;
     const gap = 24;
     // Responsive: Desktop ~3 items (320px each), chỉ hiện arrows khi có > 3 items
@@ -5345,7 +5384,7 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
                 >
                   <div className="aspect-[4/3] bg-slate-100 overflow-hidden">
                     {project.image ? (
-                      <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" draggable={false} />
+                      <SiteImage src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" draggable={false} />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <ImageIcon size={32} className="text-slate-300" />
@@ -5413,7 +5452,7 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
                 >
                   <div className="aspect-[4/3] bg-slate-100 overflow-hidden">
                     {project.image ? (
-                      <img src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <SiteImage src={project.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <ImageIcon size={32} className="text-slate-300" />
@@ -5578,6 +5617,7 @@ type ProductCategoriesStyle = 'grid' | 'carousel' | 'cards' | 'minimal' | 'showc
 function ProductCategoriesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const categoriesConfig = (config.categories as Array<{ categoryId: string; customImage?: string; imageMode?: string }>) || [];
   const style = (config.style as ProductCategoriesStyle) || 'grid';
+  const productCatCarouselId = useSafeId('productcat-carousel');
   const showProductCount = (config.showProductCount as boolean) ?? true;
   const columnsDesktop = (config.columnsDesktop as number) || 4;
   const columnsMobile = (config.columnsMobile as number) || 2;
@@ -5657,7 +5697,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
       );
     }
     if (cat.displayImage) {
-      return <img src={cat.displayImage} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />;
+      return <SiteImage src={cat.displayImage} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />;
     }
     return (
       <div className="w-full h-full flex items-center justify-center bg-slate-100">
@@ -5706,7 +5746,6 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
 
   // Style 2: Carousel - Horizontal scroll with navigation
   if (style === 'carousel') {
-    const productCatCarouselId = `productcat-carousel-${Math.random().toString(36).substr(2, 9)}`;
     const cardWidth = 160;
     const gap = 16;
     // Responsive: Desktop ~7 items (160px each), chỉ hiện arrows khi có > 6 items
@@ -5744,14 +5783,14 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
                   </button>
                 </div>
               )}
-              <a
+              <Link
                 href="/products"
                 className="text-sm font-medium flex items-center gap-1 hover:underline whitespace-nowrap"
                 style={{ color: brandColor }}
               >
                 Xem tất cả
                 <ArrowRight size={16} />
-              </a>
+              </Link>
             </div>
           </div>
           <div className="relative px-4 md:px-6">
@@ -5860,9 +5899,9 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
         <div className="max-w-5xl mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg md:text-xl font-bold">{title}</h2>
-            <a href="/products" className="text-sm font-medium hover:underline" style={{ color: brandColor }}>
+            <Link href="/products" className="text-sm font-medium hover:underline" style={{ color: brandColor }}>
               Tất cả →
-            </a>
+            </Link>
           </div>
           <div className="flex flex-wrap gap-2 md:gap-3">
             {resolvedCategories.map((cat) => {
@@ -5885,7 +5924,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
                   {cat.displayIcon && iconData ? (
                     React.createElement(iconData.icon, { size: 16, style: { color: brandColor } })
                   ) : cat.displayImage ? (
-                    <img src={cat.displayImage} alt="" className="w-5 h-5 md:w-6 md:h-6 rounded-full object-cover" />
+                    <SiteImage src={cat.displayImage} alt="" className="w-5 h-5 md:w-6 md:h-6 rounded-full object-cover" />
                   ) : (
                     <Package size={16} style={{ color: brandColor }} />
                   )}
@@ -5969,14 +6008,14 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
               
               {/* +N more */}
               {others.length > 5 && (
-                <a 
+                <Link 
                   href="/products"
                   className="flex flex-col items-center justify-center aspect-[4/3] rounded-xl cursor-pointer"
                   style={{ backgroundColor: `${brandColor}08`, border: `2px dashed ${brandColor}30` }}
                 >
                   <span className="font-bold text-lg" style={{ color: brandColor }}>+{others.length - 5}</span>
                   <span className="text-xs text-slate-500 mt-1">danh mục khác</span>
-                </a>
+                </Link>
               )}
             </div>
           </div>
@@ -6032,12 +6071,14 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
 // Sản phẩm theo danh mục - Mỗi section là 1 danh mục với các sản phẩm thuộc danh mục đó
 type CategoryProductsStyle = 'grid' | 'carousel' | 'cards' | 'bento' | 'magazine' | 'showcase';
 
-function CategoryProductsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
+function CategoryProductsSection({ config, brandColor, title: _title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const sections = (config.sections as Array<{ categoryId: string; itemCount: number }>) || [];
   const style = (config.style as CategoryProductsStyle) || 'grid';
+  const catProductCarouselBaseId = useSafeId('catproduct-carousel');
   const showViewAll = (config.showViewAll as boolean) ?? true;
   const columnsDesktop = (config.columnsDesktop as number) || 4;
   const columnsMobile = (config.columnsMobile as number) || 2;
+  const sectionTitle = _title || 'Sản phẩm';
 
   // Query categories and products
   const categoriesData = useQuery(api.productCategories.listActive);
@@ -6085,10 +6126,10 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
 
   // Product Card Component with Equal Height (line-clamp + min-height)
   const ProductCard = ({ product }: { product: { _id: string; name: string; image?: string; price?: number; salePrice?: number; slug?: string } }) => (
-    <a href={`/san-pham/${product.slug || product._id}`} className="group cursor-pointer flex flex-col h-full">
+    <a href={`/san-pham/${product.slug || product._id}`} aria-label={`${sectionTitle}: ${product.name}`} className="group cursor-pointer flex flex-col h-full">
       <div className="aspect-square rounded-lg overflow-hidden mb-2" style={{ backgroundColor: `${brandColor}08` }}>
         {product.image ? (
-          <img 
+          <SiteImage 
             src={product.image} 
             alt={product.name} 
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
@@ -6184,7 +6225,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
     return (
       <div className="py-8 md:py-12 space-y-10 md:space-y-16">
         {resolvedSections.map((section, idx) => {
-          const catProductCarouselId = `catproduct-carousel-${idx}-${Math.random().toString(36).substr(2, 9)}`;
+          const catProductCarouselId = `${catProductCarouselBaseId}-${idx}`;
           // Responsive: Desktop ~5-6 items (192px each), chỉ hiện arrows khi có > 5 items
           const showArrows = section.products.length > 5;
           return (
@@ -6267,7 +6308,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                         >
                           <div className="aspect-square rounded-lg overflow-hidden bg-slate-100 mb-2">
                             {product.image ? (
-                              <img
+                              <SiteImage
                                 src={product.image}
                                 alt={product.name}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -6324,7 +6365,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                   <div className="flex items-center gap-3">
                     {section.category.image && (
                       <div className="w-10 h-10 rounded-lg overflow-hidden bg-white">
-                        <img 
+                        <SiteImage 
                           src={section.category.image} 
                           alt={section.category.name} 
                           className="w-full h-full object-cover" 
@@ -6421,7 +6462,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                           className="col-span-2 row-span-2 group cursor-pointer relative rounded-2xl overflow-hidden bg-slate-100"
                         >
                           {featured.image ? (
-                            <img 
+                            <SiteImage 
                               src={featured.image} 
                               alt={featured.name} 
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
@@ -6462,7 +6503,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                           className="group cursor-pointer relative rounded-xl overflow-hidden bg-slate-100"
                         >
                           {product.image ? (
-                            <img 
+                            <SiteImage 
                               src={product.image} 
                               alt={product.name} 
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
@@ -6547,7 +6588,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                           style={{ backgroundColor: `${brandColor}08` }}
                         >
                           {featured.image ? (
-                            <img 
+                            <SiteImage 
                               src={featured.image} 
                               alt={featured.name} 
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
@@ -6595,7 +6636,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                               style={{ backgroundColor: `${brandColor}08` }}
                             >
                               {product.image ? (
-                                <img 
+                                <SiteImage 
                                   src={product.image} 
                                   alt={product.name} 
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
@@ -6708,7 +6749,7 @@ function CategoryProductsSection({ config, brandColor, title }: { config: Record
                       />
                       
                       {product.image ? (
-                        <img 
+                        <SiteImage 
                           src={product.image} 
                           alt={product.name} 
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
@@ -6808,16 +6849,7 @@ const SocialIcon = ({ type, url, brandColor }: { type: 'facebook' | 'linkedin' |
 function TeamSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const members = (config.members as TeamMember[]) || [];
   const style = (config.style as TeamStyle) || 'grid';
-  const [currentSlide, setCurrentSlide] = React.useState(0);
-
-  // Auto slide for carousel style
-  React.useEffect(() => {
-    if (style !== 'carousel' || members.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % members.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [members.length, style]);
+  const carouselId = useSafeId('team-carousel');
 
   if (members.length === 0) {
     return (
@@ -6842,7 +6874,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
               <div key={idx} className="group text-center">
                 <div className="relative mb-4 mx-auto overflow-hidden rounded-2xl aspect-square max-w-[200px]">
                   {member.avatar ? (
-                    <img 
+                    <SiteImage 
                       src={member.avatar} 
                       alt={member.name} 
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
@@ -6887,7 +6919,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
               >
                 <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden">
                   {member.avatar ? (
-                    <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                    <SiteImage src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
                   ) : (
                     <div 
                       className="w-full h-full flex items-center justify-center text-2xl font-bold text-white"
@@ -6918,7 +6950,6 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
 
   // Style 3: Carousel - Horizontal scroll với cards (Best Practice: partial peek, snap-scroll, contained)
   if (style === 'carousel') {
-    const carouselId = `team-carousel-${Math.random().toString(36).substr(2, 9)}`;
     const cardWidth = 300;
     const gap = 20;
     
@@ -7011,7 +7042,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
                   {/* Avatar */}
                   <div className="aspect-[4/3] relative overflow-hidden bg-slate-100">
                     {member.avatar ? (
-                      <img 
+                      <SiteImage 
                         src={member.avatar} 
                         alt={member.name} 
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
@@ -7100,7 +7131,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
                   style={{ width: cardSize, height: cardSize }}
                 >
                   {member.avatar ? (
-                    <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                    <SiteImage src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
                   ) : (
                     <div 
                       className="w-full h-full flex items-center justify-center text-4xl font-bold text-white"
@@ -7137,7 +7168,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
             >
               <div className="flex-shrink-0 w-28 h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden shadow-md">
                 {featured.avatar ? (
-                  <img src={featured.avatar} alt={featured.name} className="w-full h-full object-cover" />
+                  <SiteImage src={featured.avatar} alt={featured.name} className="w-full h-full object-cover" />
                 ) : (
                   <div 
                     className="w-full h-full flex items-center justify-center text-4xl font-bold text-white"
@@ -7227,7 +7258,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
                             className="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden ring-4 ring-white shadow-md"
                           >
                             {member.avatar ? (
-                              <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                              <SiteImage src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
                             ) : (
                               <div 
                                 className="w-full h-full flex items-center justify-center text-2xl font-bold text-white"
@@ -7335,7 +7366,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
                   <div className="absolute inset-1 rounded-full bg-white" />
                   <div className="absolute inset-2 rounded-full overflow-hidden">
                     {member.avatar ? (
-                      <img 
+                      <SiteImage 
                         src={member.avatar} 
                         alt={member.name} 
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -7437,6 +7468,7 @@ const featureIcons: Record<string, React.ElementType> = { Zap, Shield, Target, L
 function FeaturesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
   const style = (config.style as FeaturesStyle) || 'iconGrid';
+  const featuresCarouselId = useSafeId('features-carousel');
   const getIcon = (iconName?: string) => featureIcons[iconName || 'Zap'] || Zap;
 
   // Style 1: Icon Grid
@@ -7584,7 +7616,6 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
 
   // Style 5: Carousel - Horizontal scroll with navigation
   if (style === 'carousel') {
-    const featuresCarouselId = `features-carousel-${Math.random().toString(36).substr(2, 9)}`;
     const cardWidth = 320;
     const gap = 20;
 
@@ -7978,6 +8009,7 @@ type ClientsStyle = 'marquee' | 'dualRow' | 'wave' | 'grid' | 'carousel' | 'feat
 function ClientsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   const items = (config.items as Array<{ url: string; link: string; name?: string }>) || [];
   const style = (config.style as ClientsStyle) || 'marquee';
+  const clientsCarouselId = useSafeId('clients-carousel');
 
   if (items.length === 0) return null;
 
@@ -7999,7 +8031,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
   // Logo item renderer - tăng 20% size, bỏ grayscale
   const renderLogoItem = (item: { url: string; link: string; name?: string }, idx: number) => {
     const logo = item.url ? (
-      <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none" />
+      <SiteImage src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none" />
     ) : (
       <div className="h-14 md:h-16 w-28 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
         <ImageIcon size={22} style={{ color: brandColor }} className="opacity-40" />
@@ -8080,7 +8112,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
                 <div key={`wave-${idx}`} className="shrink-0 clients-float" style={{ animationDelay: `${idx * 0.3}s` }} role="listitem">
                   {item.url ? (
                     <div className="p-3 bg-white rounded-lg shadow-sm border border-slate-100">
-                      <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" />
+                      <SiteImage src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" />
                     </div>
                   ) : (
                     <div className="h-[4.5rem] w-28 rounded-lg flex items-center justify-center bg-white shadow-sm border border-slate-100">
@@ -8093,7 +8125,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
                 <div key={`wave2-${idx}`} className="shrink-0 clients-float" style={{ animationDelay: `${(idx + items.length) * 0.3}s` }} role="listitem">
                   {item.url ? (
                     <div className="p-3 bg-white rounded-lg shadow-sm border border-slate-100">
-                      <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" />
+                      <SiteImage src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" />
                     </div>
                   ) : (
                     <div className="h-[4.5rem] w-28 rounded-lg flex items-center justify-center bg-white shadow-sm border border-slate-100">
@@ -8128,7 +8160,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
             {visibleItems.map((item, idx) => (
               <div key={`grid-${idx}`} className="p-3 rounded-lg border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center" role="listitem">
                 {item.url ? (
-                  <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none" />
+                  <SiteImage src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none" />
                 ) : (
                   <div className="h-14 md:h-16 w-24 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
                     <ImageIcon size={18} className="text-slate-300" />
@@ -8154,7 +8186,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
 
   // Style 5: Carousel - compact, larger images
   if (style === 'carousel') {
-    const carouselId = `clients-carousel-${Math.random().toString(36).substr(2, 9)}`;
+    const carouselId = clientsCarouselId;
     return (
       <section className="w-full py-8 bg-white border-b border-slate-200/40" aria-label={title}>
         <style>{`#${carouselId}::-webkit-scrollbar { display: none; }`}</style>
@@ -8185,7 +8217,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
               {items.map((item, idx) => (
                 <div key={`carousel-${idx}`} className="flex-shrink-0 snap-start w-[170px]" role="listitem">
                   <div className="h-full p-3 rounded-lg border bg-slate-50 flex flex-col items-center justify-center transition-all hover:shadow-md" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; }}>
-                    {item.url ? <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" /> : <div className="h-12 w-full flex items-center justify-center"><ImageIcon size={22} className="text-slate-300" /></div>}
+                    {item.url ? <SiteImage src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" /> : <div className="h-12 w-full flex items-center justify-center"><ImageIcon size={22} className="text-slate-300" /></div>}
                     {item.name && <span className="text-[10px] text-slate-500 text-center mt-1.5 truncate w-full">{item.name}</span>}
                   </div>
                 </div>
@@ -8215,7 +8247,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3" role="list">
           {featuredItems.map((item, idx) => (
             <div key={`featured-${idx}`} className="group rounded-xl border bg-white flex flex-col items-center justify-center p-5 transition-all hover:shadow-lg" style={{ borderColor: `${brandColor}20`, boxShadow: `0 2px 8px ${brandColor}08` }} role="listitem">
-              {item.url ? <img src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none transition-transform duration-300 group-hover:scale-105" /> : <div className="h-16 w-full flex items-center justify-center"><ImageIcon size={26} className="text-slate-300" /></div>}
+              {item.url ? <SiteImage src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none transition-transform duration-300 group-hover:scale-105" /> : <div className="h-16 w-full flex items-center justify-center"><ImageIcon size={26} className="text-slate-300" /></div>}
               {item.name && <span className="font-medium text-slate-600 text-center mt-2 truncate w-full text-xs">{item.name}</span>}
             </div>
           ))}
@@ -8226,7 +8258,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
             <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6" role="list">
               {visibleOthers.map((item, idx) => (
                 <div key={`other-${idx}`} role="listitem">
-                  {item.url ? <img src={item.url} alt={item.name || `Khách hàng`} className="h-9 md:h-10 w-auto object-contain select-none pointer-events-none" /> : <div className="h-10 w-16 flex items-center justify-center"><ImageIcon size={16} className="text-slate-300" /></div>}
+                  {item.url ? <SiteImage src={item.url} alt={item.name || `Khách hàng`} className="h-9 md:h-10 w-auto object-contain select-none pointer-events-none" /> : <div className="h-10 w-16 flex items-center justify-center"><ImageIcon size={16} className="text-slate-300" /></div>}
                 </div>
               ))}
               {remainingCount > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>+{remainingCount}</span>}
@@ -8279,7 +8311,7 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
   const videoInfo = getVideoInfo(videoUrl);
   const displayThumbnail = thumbnailUrl || (videoInfo.type === 'youtube' && videoInfo.id ? getYouTubeThumbnail(videoInfo.id) : '');
 
-  const VideoEmbed = () => {
+  const renderVideoEmbed = () => {
     if (!isPlaying) return null;
     const loopParams = loop ? '&loop=1' : '';
     const muteParams = muted ? '&mute=1' : '';
@@ -8295,7 +8327,7 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
     return <video src={videoUrl} className="absolute inset-0 w-full h-full object-cover" controls autoPlay={autoplay} loop={loop} muted={muted} />;
   };
 
-  const PlayButton = ({ size = 'lg' }: { size?: 'sm' | 'lg' }) => (
+  const renderPlayButton = (size: 'sm' | 'lg' = 'lg') => (
     <button onClick={() => setIsPlaying(true)} className="absolute inset-0 flex items-center justify-center group transition-all bg-black/30 hover:bg-black/40">
       <div className={`rounded-full flex items-center justify-center transition-transform group-hover:scale-110 shadow-xl ${size === 'lg' ? 'w-16 h-16 md:w-20 md:h-20' : 'w-12 h-12'}`} style={{ backgroundColor: brandColor }}>
         <Play className={`text-white ml-1 ${size === 'lg' ? 'w-7 h-7 md:w-8 md:h-8' : 'w-5 h-5'}`} fill="white" />
@@ -8328,10 +8360,10 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
             </div>
           )}
           <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl bg-slate-900">
-            {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+            {!isPlaying && displayThumbnail && <SiteImage src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
             {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}20` }}><VideoIcon size={64} className="text-slate-400" /></div>}
-            {!isPlaying && <PlayButton />}
-            <VideoEmbed />
+            {!isPlaying && renderPlayButton()}
+            {renderVideoEmbed()}
           </div>
         </div>
       </section>
@@ -8346,10 +8378,10 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
             <div className="order-1">
               <div className="relative aspect-video rounded-xl overflow-hidden shadow-xl bg-slate-900">
-                {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                {!isPlaying && displayThumbnail && <SiteImage src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                 {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}20` }}><VideoIcon size={48} className="text-slate-400" /></div>}
-                {!isPlaying && <PlayButton size="sm" />}
-                <VideoEmbed />
+                {!isPlaying && renderPlayButton('sm')}
+                {renderVideoEmbed()}
               </div>
             </div>
             <div className="order-2">
@@ -8369,7 +8401,7 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
     return (
       <section className="relative">
         <div className="relative overflow-hidden aspect-video md:aspect-[21/9] md:min-h-[400px]">
-          {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+          {!isPlaying && displayThumbnail && <SiteImage src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
           {!isPlaying && !displayThumbnail && <div className="absolute inset-0" style={{ backgroundColor: `${brandColor}30` }} />}
           {!isPlaying && <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />}
           {!isPlaying && (
@@ -8383,7 +8415,7 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
               </div>
             </div>
           )}
-          <VideoEmbed />
+          {renderVideoEmbed()}
         </div>
       </section>
     );
@@ -8405,10 +8437,10 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
             <div className="absolute -top-3 -left-3 -right-3 h-3 rounded-t-xl" style={{ backgroundColor: `${brandColor}40` }} />
             <div className="absolute -bottom-3 -left-3 -right-3 h-3 rounded-b-xl" style={{ backgroundColor: `${brandColor}40` }} />
             <div className="relative aspect-[21/9] rounded-lg overflow-hidden bg-black">
-              {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              {!isPlaying && displayThumbnail && <SiteImage src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><VideoIcon size={64} className="text-slate-600" /></div>}
-              {!isPlaying && <PlayButton />}
-              <VideoEmbed />
+              {!isPlaying && renderPlayButton()}
+              {renderVideoEmbed()}
             </div>
           </div>
           {buttonText && !isPlaying && <div className="text-center mt-8"><a href={buttonLink} className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90" style={{ backgroundColor: brandColor, boxShadow: `0 4px 14px ${brandColor}40` }}>{buttonText}</a></div>}
@@ -8424,10 +8456,10 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
             <div className="relative aspect-video">
-              {!isPlaying && displayThumbnail && <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+              {!isPlaying && displayThumbnail && <SiteImage src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               {!isPlaying && !displayThumbnail && <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><VideoIcon size={48} className="text-slate-300" /></div>}
-              {!isPlaying && <PlayButton />}
-              <VideoEmbed />
+              {!isPlaying && renderPlayButton()}
+              {renderVideoEmbed()}
             </div>
             {(heading || description) && (
               <div className="p-6 md:p-8 border-t border-slate-100">
@@ -8454,7 +8486,7 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
         {!isPlaying && displayThumbnail && (
           <>
             <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${displayThumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(8px)' }} />
-            <img src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+            <SiteImage src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
           </>
         )}
         {!isPlaying && !displayThumbnail && <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${brandColor}dd 0%, ${brandColor} 100%)` }} />}
@@ -8480,7 +8512,7 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
             </button>
           </div>
         )}
-        <VideoEmbed />
+        {renderVideoEmbed()}
       </div>
     </section>
   );
@@ -8527,7 +8559,7 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
   const heading = (config.heading as string) || title;
   const subHeading = (config.subHeading as string) || '';
   const description = (config.description as string) || '';
-  const endDate = (config.endDate as string) || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const endDate = (config.endDate as string) || DEFAULT_COUNTDOWN_END_DATE;
   const buttonText = (config.buttonText as string) || '';
   const buttonLink = (config.buttonLink as string) || '#';
   const backgroundImage = (config.backgroundImage as string) || '';
@@ -8586,7 +8618,7 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
   };
 
   // Timer Display
-  const TimerDisplay = ({ variant = 'default' }: { variant?: 'default' | 'light' | 'outlined' }) => (
+  const renderTimerDisplay = (variant: 'default' | 'light' | 'outlined' = 'default') => (
     <div className="flex items-center gap-2 md:gap-3">
       {showDays && (
         <>
@@ -8633,7 +8665,7 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
           {subHeading && <p className="text-white/80 text-sm md:text-base uppercase tracking-wider mb-2">{subHeading}</p>}
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4">{heading}</h2>
           {description && <p className="text-white/90 mb-6 max-w-2xl mx-auto">{description}</p>}
-          <div className="flex justify-center mb-6"><TimerDisplay variant="light" /></div>
+          <div className="flex justify-center mb-6">{renderTimerDisplay('light')}</div>
           {buttonText && (
             <a href={buttonLink} className="inline-flex items-center gap-2 px-8 py-3 bg-white rounded-lg font-semibold transition-transform hover:scale-105" style={{ color: brandColor }}>
               {buttonText}
@@ -8669,7 +8701,7 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
               )}
               <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-3">{heading}</h2>
               {description && <p className="text-white/80 mb-6 text-sm md:text-base">{description}</p>}
-              <div className="flex justify-center mb-6"><TimerDisplay variant="light" /></div>
+              <div className="flex justify-center mb-6">{renderTimerDisplay('light')}</div>
               {buttonText && (
                 <a href={buttonLink} className="inline-flex items-center gap-2 px-6 py-2.5 bg-white rounded-full font-semibold text-sm transition-all hover:shadow-lg hover:scale-105" style={{ color: brandColor }}>
                   {buttonText}
@@ -8704,7 +8736,7 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
               </div>
               <div className="flex flex-col items-center">
                 <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">Kết thúc sau</p>
-                <TimerDisplay variant="outlined" />
+                {renderTimerDisplay('outlined')}
                 {buttonText && (
                   <a href={buttonLink} className="md:hidden inline-flex items-center gap-2 px-5 py-2 rounded-lg font-medium text-sm text-white mt-4 transition-colors hover:opacity-90" style={{ backgroundColor: brandColor }}>
                     {buttonText}
@@ -8719,7 +8751,7 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
   }
 
   // Expired State Component
-  const ExpiredState = ({ variant = 'default' }: { variant?: 'default' | 'light' }) => (
+  const renderExpiredState = (variant: 'default' | 'light' = 'default') => (
     <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold ${variant === 'light' ? 'bg-white/20 text-white' : 'bg-red-100 text-red-600'}`}>
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -8758,7 +8790,7 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
               {description && <p className="text-slate-500 text-sm mb-5">{description}</p>}
               <div className="mb-5">
                 <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Còn lại</p>
-                {timeLeft.isExpired ? <ExpiredState /> : <TimerDisplay variant="default" />}
+                {timeLeft.isExpired ? renderExpiredState() : renderTimerDisplay('default')}
               </div>
               {buttonText && !timeLeft.isExpired && (
                 <a href={buttonLink} className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90 w-full md:w-auto" style={{ backgroundColor: brandColor }}>
@@ -8882,7 +8914,7 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
           {description && <p className="text-slate-500 text-sm mb-4 line-clamp-2">{description}</p>}
           <div className="mb-4">
             <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Còn lại</p>
-            {timeLeft.isExpired ? <ExpiredState /> : <TimerDisplay variant="default" />}
+            {timeLeft.isExpired ? renderExpiredState() : renderTimerDisplay('default')}
           </div>
           {buttonText && !timeLeft.isExpired && (
             <a href={buttonLink} className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90" style={{ backgroundColor: brandColor }}>
@@ -8971,7 +9003,7 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
             <div className="md:col-span-5 space-y-3 text-center md:text-left">
               <div className="flex items-center gap-2 justify-center md:justify-start">
                 <div className="p-1.5 rounded-lg" style={{ backgroundColor: bgMedium, border: `1px solid ${borderColor}` }}>
-                  {logo ? <img src={logo} alt="Logo" className="h-5 w-5 object-contain brightness-110" /> : <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>}
+                  {logo ? <SiteImage src={logo} alt="Logo" className="h-5 w-5 object-contain brightness-110" /> : <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>}
                 </div>
                 <span className="text-base font-bold tracking-tight text-white">VietAdmin</span>
               </div>
@@ -9014,7 +9046,7 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
         <div className="max-w-5xl mx-auto px-3 md:px-4 flex flex-col items-center text-center space-y-3 md:space-y-4">
           <div className="flex flex-col items-center gap-2">
             <div className="h-10 w-10 rounded-xl flex items-center justify-center shadow-lg shadow-black/20 mb-1" style={{ background: `linear-gradient(to top right, ${bgMedium}, ${borderColor})` }}>
-              {logo ? <img src={logo} alt="Logo" className="h-6 w-6 object-contain drop-shadow-md" /> : <div className="h-6 w-6 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: brandColor }}>V</div>}
+              {logo ? <SiteImage src={logo} alt="Logo" className="h-6 w-6 object-contain drop-shadow-md" /> : <div className="h-6 w-6 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: brandColor }}>V</div>}
             </div>
             <h2 className="text-base font-bold text-white tracking-tight">VietAdmin</h2>
             <p className="text-xs leading-relaxed text-white/80 max-w-xs md:max-w-md">{description}</p>
@@ -9047,7 +9079,7 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
         <div className="max-w-7xl mx-auto px-3 md:px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-3 pb-4" style={{ borderBottom: `1px solid ${borderColor}` }}>
             <div className="flex items-center gap-2">
-              {logo ? <img src={logo} alt="Logo" className="h-5 w-5 object-contain" /> : <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>}
+              {logo ? <SiteImage src={logo} alt="Logo" className="h-5 w-5 object-contain" /> : <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>V</div>}
               <span className="text-sm font-bold text-white">VietAdmin</span>
             </div>
             {showSocialLinks && (
@@ -9091,7 +9123,7 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
         <div className="max-w-7xl mx-auto px-3 md:px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="flex flex-col md:flex-row items-center gap-2">
-              {logo ? <img src={logo} alt="Logo" className="h-4 w-4 opacity-80" /> : <div className="h-4 w-4 rounded flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: brandColor }}>V</div>}
+              {logo ? <SiteImage src={logo} alt="Logo" className="h-4 w-4 opacity-80" /> : <div className="h-4 w-4 rounded flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: brandColor }}>V</div>}
               <span className="text-[10px] font-medium text-white/60">{copyright}</span>
             </div>
             {showSocialLinks && (
@@ -9116,7 +9148,7 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
         <div className="max-w-6xl mx-auto px-3 md:px-4 text-center">
           <div className="flex flex-col items-center gap-3 mb-6">
             <div className="h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ backgroundColor: `${brandColor}20`, border: `2px solid ${brandColor}40` }}>
-              {logo ? <img src={logo} alt="Logo" className="h-7 w-7 object-contain" /> : <div className="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>V</div>}
+              {logo ? <SiteImage src={logo} alt="Logo" className="h-7 w-7 object-contain" /> : <div className="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>V</div>}
             </div>
             <h2 className="text-lg font-bold text-white tracking-tight">VietAdmin</h2>
             <p className="text-xs leading-relaxed text-white/70 max-w-xs md:max-w-md">{description}</p>
@@ -9155,7 +9187,7 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-5 text-center md:text-left">
           <div className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: brandColor }}>
-            {logo ? <img src={logo} alt="Logo" className="h-6 w-6 object-contain brightness-110" /> : <span className="text-white font-bold text-sm">V</span>}
+            {logo ? <SiteImage src={logo} alt="Logo" className="h-6 w-6 object-contain brightness-110" /> : <span className="text-white font-bold text-sm">V</span>}
           </div>
           <div className="md:flex-1">
             <h3 className="text-sm font-bold text-white mb-1">VietAdmin</h3>
@@ -9193,7 +9225,7 @@ function PlaceholderSection({ type, title }: { type: string; title: string }) {
       <div className="max-w-4xl mx-auto text-center">
         <LayoutTemplate size={48} className="mx-auto mb-4 text-slate-400" />
         <h3 className="text-xl font-semibold text-slate-600 mb-2">{title}</h3>
-        <p className="text-slate-500">Component type "{type}" chưa được implement</p>
+        <p className="text-slate-500">Component type “{type}” chưa được implement</p>
       </div>
     </section>
   );

@@ -43,7 +43,7 @@ export default function FeaturesCreatePage() {
   });
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { items: featuresItems.map(f => ({ icon: f.icon, title: f.title, description: f.description })), style });
+    void handleSubmit(e, { items: featuresItems.map(f => ({ icon: f.icon, title: f.title, description: f.description })), style });
   };
 
   return (

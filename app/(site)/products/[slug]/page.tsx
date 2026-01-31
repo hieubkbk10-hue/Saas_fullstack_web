@@ -2,6 +2,7 @@
 
 import React, { use, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
@@ -162,7 +163,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields }: S
           <div className="mb-8 lg:mb-0">
             <div className="aspect-square rounded-2xl overflow-hidden bg-slate-100 mb-4 relative">
               {images.length > 0 ? (
-                <img src={images[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
+                <Image src={images[selectedImage]} alt={product.name} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center"><Package size={64} className="text-slate-300" /></div>
               )}
@@ -174,7 +175,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields }: S
               <div className="flex gap-3">
                 {images.map((img, index) => (
                   <button key={index} onClick={() => setSelectedImage(index)} className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${selectedImage === index ? 'border-orange-500' : 'border-slate-200 hover:border-slate-300'}`}>
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <Image src={img} alt="" width={80} height={80} className="object-cover" />
                   </button>
                 ))}
               </div>
@@ -348,8 +349,8 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: St
       {/* Product Image */}
       {images.length > 0 && (
         <div className="max-w-4xl mx-auto px-4 -mt-8 relative z-10">
-          <div className="rounded-2xl overflow-hidden shadow-2xl">
-            <img src={images[0]} alt={product.name} className="w-full aspect-[16/10] object-cover" />
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[16/10]">
+            <Image src={images[0]} alt={product.name} fill sizes="(max-width: 1024px) 100vw, 800px" className="object-cover" />
           </div>
         </div>
       )}
@@ -427,8 +428,8 @@ function MinimalStyle({ product, brandColor, relatedProducts, enabledFields }: S
         {/* Image */}
         {images.length > 0 && (
           <figure className="mb-12">
-            <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 max-w-md mx-auto">
-              <img src={images[0]} alt={product.name} className="w-full h-full object-cover" />
+            <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 max-w-md mx-auto">
+              <Image src={images[0]} alt={product.name} fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover" />
             </div>
           </figure>
         )}
@@ -502,7 +503,7 @@ function RelatedProductsSection({ products, categorySlug, brandColor, showPrice,
           <Link key={p._id} href={`/products/${p.slug}`} className="group bg-white rounded-xl overflow-hidden border border-slate-100 hover:shadow-lg hover:border-slate-200 transition-all duration-300">
             <div className="aspect-square overflow-hidden bg-slate-100 relative">
               {p.image ? (
-                <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <Image src={p.image} alt={p.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover group-hover:scale-110 transition-transform duration-500" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center"><Package size={32} className="text-slate-300" /></div>
               )}

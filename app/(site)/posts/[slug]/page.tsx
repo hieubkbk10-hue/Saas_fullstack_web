@@ -2,6 +2,7 @@
 
 import React, { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
@@ -51,7 +52,7 @@ export default function PostDetailPage({ params }: PageProps) {
   // Increment views on mount
   useEffect(() => {
     if (post?._id) {
-      incrementViews({ id: post._id });
+      void incrementViews({ id: post._id });
     }
   }, [post?._id, incrementViews]);
 
@@ -211,13 +212,15 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
               </div>
             </header>
 
-            <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted/60 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
+            <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted/60 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
               {post.thumbnail ? (
-                <img
+                <Image
                   src={post.thumbnail}
                   alt={post.title}
-                  className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
-                  loading="eager"
+                  fill
+                  priority
+                  sizes="100vw"
+                  className="object-cover transition-transform duration-700 hover:scale-105"
                 />
               ) : (
                 <div className="h-full w-full flex items-center justify-center text-muted-foreground">
@@ -266,11 +269,12 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
                     <Link key={p._id} href={`/posts/${p.slug}`} className="group flex gap-3 items-start">
                       <div className="relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-md bg-muted/60">
                         {p.thumbnail ? (
-                          <img
+                          <Image
                             src={p.thumbnail}
                             alt={p.title}
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            loading="lazy"
+                            fill
+                            sizes="80px"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-muted-foreground">
@@ -378,11 +382,12 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
 
         {post.thumbnail && (
           <section className="relative overflow-hidden rounded-2xl shadow-sm border bg-muted aspect-[16/9] md:aspect-[21/9] max-w-6xl mx-auto ring-1 ring-border/50">
-            <img
+            <Image
               src={post.thumbnail}
               alt={post.title}
-              className="w-full h-full object-cover transition-transform duration-1000 hover:scale-105"
-              loading="lazy"
+              fill
+              sizes="(max-width: 1024px) 100vw, 1024px"
+              className="object-cover transition-transform duration-1000 hover:scale-105"
             />
           </section>
         )}
@@ -448,11 +453,12 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
                   <Link key={p._id} href={`/posts/${p.slug}`} className="group overflow-hidden border-none shadow-none bg-transparent hover:bg-muted/30 transition-all duration-300 p-0 cursor-pointer rounded-xl">
                     <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted mb-4 relative ring-1 ring-border/50">
                       {p.thumbnail ? (
-                        <img
+                        <Image
                           src={p.thumbnail}
                           alt={p.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                          loading="lazy"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center text-muted-foreground">
@@ -549,11 +555,12 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
 
         {post.thumbnail && (
           <figure className="relative w-full max-w-6xl mx-auto aspect-[21/9] mb-12 overflow-hidden rounded-2xl shadow-sm border bg-muted group">
-            <img
+            <Image
               src={post.thumbnail}
               alt={post.title}
-              className="object-cover w-full h-full transition-transform duration-700 hover:scale-105"
-              loading="lazy"
+              fill
+              sizes="(max-width: 1024px) 100vw, 1024px"
+              className="object-cover transition-transform duration-700 hover:scale-105"
             />
           </figure>
         )}
@@ -590,10 +597,12 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
                 >
                   <div className="aspect-[4/3] rounded-xl overflow-hidden mb-4 bg-muted relative">
                     {p.thumbnail ? (
-                      <img
+                      <Image
                         src={p.thumbnail}
                         alt={p.title}
-                        className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center text-muted-foreground">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { translations, Locale, TranslationKeys } from './translations';
 
 interface I18nContextType {
@@ -12,14 +12,11 @@ interface I18nContextType {
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('vi');
-
-  useEffect(() => {
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    if (typeof window === 'undefined') return 'vi';
     const saved = localStorage.getItem('system-locale');
-    if (saved === 'vi' || saved === 'en') {
-      setLocaleState(saved);
-    }
-  }, []);
+    return saved === 'vi' || saved === 'en' ? saved : 'vi';
+  });
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);

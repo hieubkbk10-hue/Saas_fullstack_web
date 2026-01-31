@@ -62,7 +62,7 @@ export default function ContactCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { ...contactConfig, style });
+    void handleSubmit(e, { ...contactConfig, style });
   };
 
   const showFormConfig = style === 'minimal' || style === 'centered';

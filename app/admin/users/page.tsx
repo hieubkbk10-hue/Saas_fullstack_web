@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -232,7 +233,7 @@ function UsersContent() {
                   <div className="flex items-center gap-3">
                     {(enabledFeatures.enableAvatar ?? true) && (
                       user.avatar ? (
-                        <img src={user.avatar} className="w-9 h-9 rounded-full object-cover" alt="" />
+                        <Image src={user.avatar} width={36} height={36} className="w-9 h-9 rounded-full object-cover" alt={user.name} />
                       ) : (
                         <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm font-medium text-slate-500">
                           {user.name.charAt(0).toUpperCase()}

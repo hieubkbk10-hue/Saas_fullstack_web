@@ -1,20 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, FileText, ShoppingCart, Image as ImageIcon, 
   Users, Globe, Settings, ChevronRight, X, LogOut,
-  ChevronsLeft, ChevronsRight, Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Loader2, ShoppingBag, Bell, Ticket, Briefcase
+  ChevronsLeft, ChevronsRight, Loader2, Bell, Ticket, Briefcase
 } from 'lucide-react';
-import { cn, Button } from './ui';
+import { cn } from './ui';
 import { useAdminModules } from '../context/AdminModulesContext';
-
-const iconMap: Record<string, React.ElementType> = {
-  LayoutDashboard, FileText, ShoppingCart, ImageIcon, Users, Globe, Settings,
-  Package, MessageSquare, UserCog, Shield, Menu, LayoutGrid, Image: ImageIcon, ShoppingBag, Bell, Ticket, Briefcase
-};
 
 interface SidebarItemProps {
   icon: React.ElementType;
@@ -138,17 +134,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
 
   const isActive = (route: string) => pathname.startsWith(route);
 
-  useEffect(() => {
-    if (isActive('/admin/posts') || isActive('/admin/post-categories') || isActive('/admin/comments')) {
-      setExpandedMenu('Quản lý bài viết');
-    } else if (isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers') || isActive('/admin/reviews') || isActive('/admin/orders') || isActive('/admin/wishlist')) {
-      setExpandedMenu('E-Commerce');
-    } else if (isActive('/admin/users') || isActive('/admin/roles')) {
-      setExpandedMenu('Người dùng');
-    } else if (isActive('/admin/menus') || isActive('/admin/home-components')) {
-      setExpandedMenu('Website');
+  const activeMenu = useMemo(() => {
+    if (pathname.startsWith('/admin/posts') || pathname.startsWith('/admin/post-categories') || pathname.startsWith('/admin/comments')) {
+      return 'Quản lý bài viết';
     }
+    if (pathname.startsWith('/admin/products') || pathname.startsWith('/admin/categories') || pathname.startsWith('/admin/customers') || pathname.startsWith('/admin/reviews') || pathname.startsWith('/admin/orders') || pathname.startsWith('/admin/wishlist')) {
+      return 'E-Commerce';
+    }
+    if (pathname.startsWith('/admin/users') || pathname.startsWith('/admin/roles')) {
+      return 'Người dùng';
+    }
+    if (pathname.startsWith('/admin/menus') || pathname.startsWith('/admin/home-components')) {
+      return 'Website';
+    }
+    return null;
   }, [pathname]);
+
+  const currentExpandedMenu = expandedMenu ?? activeMenu;
 
   const handleMenuToggle = (label: string) => {
     if (isSidebarCollapsed) {
@@ -239,7 +241,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   href="/admin/posts" 
                   active={isActive('/admin/posts') || isActive('/admin/post-categories') || isActive('/admin/comments')}
                   isCollapsed={isSidebarCollapsed}
-                  isExpanded={expandedMenu === 'Quản lý bài viết'}
+                  isExpanded={currentExpandedMenu === 'Quản lý bài viết'}
                   onToggle={() => handleMenuToggle('Quản lý bài viết')}
                   pathname={pathname}
                   isModuleEnabled={isModuleEnabled}
@@ -262,7 +264,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   href="/admin/services" 
                   active={isActive('/admin/services') || isActive('/admin/service-categories')}
                   isCollapsed={isSidebarCollapsed}
-                  isExpanded={expandedMenu === 'Dịch vụ'}
+                  isExpanded={currentExpandedMenu === 'Dịch vụ'}
                   onToggle={() => handleMenuToggle('Dịch vụ')}
                   pathname={pathname}
                   isModuleEnabled={isModuleEnabled}
@@ -284,7 +286,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   href="/admin/products"
                   active={isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers') || isActive('/admin/reviews') || isActive('/admin/orders') || isActive('/admin/wishlist')}
                   isCollapsed={isSidebarCollapsed}
-                  isExpanded={expandedMenu === 'E-Commerce'}
+                  isExpanded={currentExpandedMenu === 'E-Commerce'}
                   onToggle={() => handleMenuToggle('E-Commerce')}
                   pathname={pathname}
                   isModuleEnabled={isModuleEnabled}
@@ -364,7 +366,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                     href="/admin/users"
                     active={isActive('/admin/users') || isActive('/admin/roles')}
                     isCollapsed={isSidebarCollapsed}
-                    isExpanded={expandedMenu === 'Người dùng'}
+                    isExpanded={currentExpandedMenu === 'Người dùng'}
                     onToggle={() => handleMenuToggle('Người dùng')}
                     pathname={pathname}
                     isModuleEnabled={isModuleEnabled}
@@ -382,7 +384,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                     href="/admin/menus"
                     active={isActive('/admin/menus') || isActive('/admin/home-components')}
                     isCollapsed={isSidebarCollapsed}
-                    isExpanded={expandedMenu === 'Website'}
+                    isExpanded={currentExpandedMenu === 'Website'}
                     onToggle={() => handleMenuToggle('Website')}
                     pathname={pathname}
                     isModuleEnabled={isModuleEnabled}
@@ -422,7 +424,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
 
           <div className={cn("flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer", isSidebarCollapsed ? "justify-center" : "")}>
             <div className="relative">
-              <img src="https://picsum.photos/100/100?random=999" alt="User" className="w-9 h-9 rounded-full ring-2 ring-white dark:ring-slate-700" />
+              <Image src="https://picsum.photos/100/100?random=999" alt="User" width={36} height={36} className="w-9 h-9 rounded-full ring-2 ring-white dark:ring-slate-700" />
               <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-slate-800"></div>
             </div>
             

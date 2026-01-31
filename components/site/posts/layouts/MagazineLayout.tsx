@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FileText, Eye, Bookmark, Search, ChevronDown } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 import { SortOption } from '../PostsFilter';
@@ -72,9 +73,15 @@ export function MagazineLayout({
           {/* Main Featured - Large Card */}
           <Link href={`/posts/${mainFeatured.slug}`} className="lg:col-span-2 group">
             <article className="relative h-full min-h-[280px] lg:min-h-[360px] rounded-xl overflow-hidden bg-slate-900">
-              {mainFeatured.thumbnail ? (
-                <img src={mainFeatured.thumbnail} alt={mainFeatured.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-              ) : (
+                {mainFeatured.thumbnail ? (
+                  <Image
+                    src={mainFeatured.thumbnail}
+                    alt={mainFeatured.title}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 66vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
                 <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900" />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
@@ -103,9 +110,15 @@ export function MagazineLayout({
             {secondaryFeatured.map((post) => (
               <Link key={post._id} href={`/posts/${post.slug}`} className="group flex-1">
                 <article className="relative h-full min-h-[140px] lg:min-h-0 rounded-lg overflow-hidden bg-slate-900">
-                  {post.thumbnail ? (
-                    <img src={post.thumbnail} alt={post.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  ) : (
+                    {post.thumbnail ? (
+                      <Image
+                        src={post.thumbnail}
+                        alt={post.title}
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-600 to-slate-800" />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -197,9 +210,15 @@ export function MagazineLayout({
             {posts.map((post) => (
               <Link key={post._id} href={`/posts/${post.slug}`} className="group">
                 <article className="h-full flex flex-col bg-white rounded-lg overflow-hidden border border-slate-200 hover:shadow-md transition-shadow duration-200">
-                  <div className="aspect-video overflow-hidden bg-slate-100">
+                  <div className="relative aspect-video overflow-hidden bg-slate-100">
                     {post.thumbnail ? (
-                      <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <Image
+                        src={post.thumbnail}
+                        alt={post.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center"><FileText size={28} className="text-slate-300" /></div>
                     )}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { Plus, Trash2, Upload, ChevronDown, ChevronUp, GripVertical, Loader2, Users } from 'lucide-react';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -66,7 +67,7 @@ function AvatarUpload({ value, onChange }: { value: string; onChange: (url: stri
 
   const compressToWebP = async (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
-      const img = new Image();
+      const img = new window.Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -95,7 +96,7 @@ function AvatarUpload({ value, onChange }: { value: string; onChange: (url: stri
       const res = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': 'image/webp' }, body: webpFile });
       if (!res.ok) throw new Error('Upload failed');
       const { storageId } = await res.json();
-      const img = new Image();
+      const img = new window.Image();
       const dims = await new Promise<{width: number; height: number}>((r) => { img.onload = () => r({width: img.width, height: img.height}); img.src = URL.createObjectURL(webpFile); });
       const result = await saveImage({ storageId: storageId as Id<"_storage">, filename: slugName, mimeType: 'image/webp', size: webpFile.size, width: dims.width, height: dims.height, folder: 'team-avatars' });
       onChange(result.url || '');
@@ -106,10 +107,10 @@ function AvatarUpload({ value, onChange }: { value: string; onChange: (url: stri
 
   return (
     <div className="relative">
-      <input ref={inputRef} type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} className="hidden" />
+      <input ref={inputRef} type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && void handleFile(e.target.files[0])} className="hidden" />
       <div
         onClick={() => !isUploading && inputRef.current?.click()}
-        onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }}
+        onDrop={(e) => { e.preventDefault(); setIsDragOver(false); if (e.dataTransfer.files[0]) void handleFile(e.dataTransfer.files[0]); }}
         onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
         onDragLeave={() => setIsDragOver(false)}
         className={cn(
@@ -123,7 +124,7 @@ function AvatarUpload({ value, onChange }: { value: string; onChange: (url: stri
             <Loader2 size={20} className="animate-spin text-blue-500" />
           </div>
         ) : value ? (
-          <img src={value} alt="" className="w-full h-full object-cover" />
+          <Image src={value} alt="" width={96} height={96} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800">
             <Upload size={16} className="text-slate-400" />
@@ -196,7 +197,7 @@ export default function TeamCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { 
+    void handleSubmit(e, { 
       members: members.map(m => ({ name: m.name, role: m.role, avatar: m.avatar, bio: m.bio, facebook: m.facebook, linkedin: m.linkedin, twitter: m.twitter, email: m.email })), 
       style 
     });

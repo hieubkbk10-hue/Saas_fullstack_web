@@ -22,40 +22,53 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
   </div>
 );
 
-interface SettingInputProps {
+type BaseSettingInputProps = {
   label: string;
-  value: number | string;
-  onChange: (value: any) => void;
-  type?: 'number' | 'text';
   focusColor?: string;
   min?: number;
   max?: number;
-}
+};
 
-export const SettingInput: React.FC<SettingInputProps> = ({
-  label,
-  value,
-  onChange,
-  type = 'number',
-  focusColor = 'focus:border-cyan-500',
-  min = 1,
-  max = 100
-}) => {
+type NumberSettingInputProps = BaseSettingInputProps & {
+  type?: 'number';
+  value: number;
+  onChange: (value: number) => void;
+};
+
+type TextSettingInputProps = BaseSettingInputProps & {
+  type: 'text';
+  value: string;
+  onChange: (value: string) => void;
+};
+
+type SettingInputProps = NumberSettingInputProps | TextSettingInputProps;
+
+export const SettingInput: React.FC<SettingInputProps> = (props) => {
+  const {
+    label,
+    value,
+    focusColor = 'focus:border-cyan-500',
+    min = 1,
+    max = 100,
+  } = props;
+  const type = props.type ?? 'number';
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (type === 'number') {
-      const val = e.target.value;
-      if (val === '') {
-        onChange(min);
-        return;
-      }
-      const num = parseInt(val);
-      if (isNaN(num)) {
-        onChange(min);
-      } else {
-        onChange(Math.max(min, Math.min(max, num)));
-      }
+    if (props.type === 'text') {
+      props.onChange(e.target.value);
+      return;
+    }
+
+    const val = e.target.value;
+    if (val === '') {
+      props.onChange(min);
+      return;
+    }
+    const num = parseInt(val);
+    if (isNaN(num)) {
+      props.onChange(min);
     } else {
-      onChange(e.target.value);
+      props.onChange(Math.max(min, Math.min(max, num)));
     }
   };
 

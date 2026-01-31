@@ -79,7 +79,7 @@ export default function CategoryProductsCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, {
+    void handleSubmit(e, {
       sections: sections.map(s => ({ 
         categoryId: s.categoryId, 
         itemCount: s.itemCount,
@@ -142,7 +142,7 @@ export default function CategoryProductsCreatePage() {
               onChange={(e) => setShowViewAll(e.target.checked)}
               className="w-4 h-4 rounded border-slate-300"
             />
-            <Label htmlFor="showViewAll" className="cursor-pointer">Hiển thị nút "Xem danh mục"</Label>
+            <Label htmlFor="showViewAll" className="cursor-pointer">Hiển thị nút “Xem danh mục”</Label>
           </div>
         </CardContent>
       </Card>

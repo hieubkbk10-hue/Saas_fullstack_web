@@ -50,7 +50,7 @@ export default function AboutCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, aboutConfig);
+    void handleSubmit(e, aboutConfig);
   };
 
   return (

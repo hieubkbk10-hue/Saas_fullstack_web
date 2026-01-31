@@ -1,4 +1,5 @@
 import { mutation } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 
 export const seedModules = mutation({
@@ -2000,7 +2001,7 @@ export const seedMenusModule = mutation({
         { name: "Sidebar Menu", location: "sidebar" },
       ];
       
-      const menuIds: Record<string, any> = {};
+      const menuIds: Record<string, Id<"menus">> = {};
       for (const menu of menusData) {
         const id = await ctx.db.insert("menus", menu);
         menuIds[menu.location] = id;

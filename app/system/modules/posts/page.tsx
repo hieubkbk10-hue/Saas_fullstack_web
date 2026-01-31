@@ -5,7 +5,7 @@ import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { FileText, FolderTree, Tag, Star, Clock, Loader2, Database, Trash2, RefreshCw, MessageSquare, Settings, Palette, Eye, Monitor, Tablet, Smartphone, ArrowLeft, Save } from 'lucide-react';
+import { FileText, FolderTree, Tag, Star, Clock, Loader2, Database, Trash2, RefreshCw, MessageSquare, Settings, Palette, Eye, Monitor, Tablet, Smartphone, ArrowLeft } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
 import { 
   ModuleHeader, ModuleStatus, ConventionNote, Code,

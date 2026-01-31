@@ -51,7 +51,7 @@ export default function FaqCreatePage() {
   });
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { 
+    void handleSubmit(e, { 
       items: faqItems.map(f => ({ question: f.question, answer: f.answer })), 
       style,
       ...faqConfig

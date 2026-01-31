@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
+import Image from 'next/image';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
@@ -39,7 +40,7 @@ function WishlistContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCustomer, setFilterCustomer] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
-  const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
+  const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Id<"wishlist">[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -69,21 +70,10 @@ function WishlistContent() {
     cols.push({ key: 'actions', label: 'Hành động', required: true });
     return cols;
   }, [enabledFields]);
-
-  useEffect(() => {
-    if (columns.length > 0 && visibleColumns.length === 0) {
-      setVisibleColumns(columns.map(c => c.key));
-    }
-  }, [columns, visibleColumns.length]);
-
-  useEffect(() => {
-    if (fieldsData !== undefined) {
-      setVisibleColumns(prev => {
-        const validKeys = columns.map(c => c.key);
-        return prev.filter(key => validKeys.includes(key));
-      });
-    }
-  }, [fieldsData, columns]);
+  const visibleColumns = useMemo(
+    () => columns.map(c => c.key).filter(key => !hiddenColumns.includes(key)),
+    [columns, hiddenColumns]
+  );
 
   const customerMap = useMemo(() => {
     const map: Record<string, { name: string; email: string }> = {};
@@ -110,12 +100,23 @@ function WishlistContent() {
     })) || [];
   }, [wishlistData, customerMap, productMap]);
 
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleCustomerChange = (value: string) => {
+    setFilterCustomer(value);
+    setCurrentPage(1);
+  };
+
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setCurrentPage(1);
   };
 
   const toggleColumn = (key: string) => {
-    setVisibleColumns(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+    setHiddenColumns(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
   };
 
   const filteredData = useMemo(() => {
@@ -141,10 +142,6 @@ function WishlistContent() {
     return sortedData.slice(start, start + itemsPerPage);
   }, [sortedData, currentPage, itemsPerPage]);
 
-  // Reset page khi filter/sort thay đổi
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterCustomer, sortConfig]);
 
   const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(item => item._id));
   const toggleSelectItem = (id: Id<"wishlist">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -285,9 +282,9 @@ function WishlistContent() {
           <div className="flex flex-wrap gap-3 flex-1">
             <div className="relative max-w-xs">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input placeholder="Tìm khách hàng, sản phẩm..." className="pl-9 w-48" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <Input placeholder="Tìm khách hàng, sản phẩm..." className="pl-9 w-48" value={searchTerm} onChange={(e) => handleSearchChange(e.target.value)} />
             </div>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterCustomer} onChange={(e) => setFilterCustomer(e.target.value)}>
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterCustomer} onChange={(e) => handleCustomerChange(e.target.value)}>
               <option value="">Tất cả khách hàng</option>
               {customersData?.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
             </select>
@@ -322,7 +319,7 @@ function WishlistContent() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {item.productImage ? (
-                        <img src={item.productImage} className="w-10 h-10 object-cover rounded bg-slate-100" alt="" />
+                        <Image src={item.productImage} width={40} height={40} className="w-10 h-10 object-cover rounded bg-slate-100" alt={item.productName} />
                       ) : (
                         <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
                           <Package size={16} className="text-slate-400" />

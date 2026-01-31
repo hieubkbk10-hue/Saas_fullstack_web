@@ -8,7 +8,6 @@ import {
   Search, 
   Sun,
   Moon, 
-  User, 
   ChevronRight,
   Terminal,
   Globe,
@@ -16,7 +15,8 @@ import {
   Languages,
   Database,
   LogOut,
-  Shield
+  Shield,
+  type LucideIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -27,7 +27,7 @@ import { SystemAuthProvider, useSystemAuth } from './auth/context';
 import { SystemAuthGuard } from './auth/SystemAuthGuard';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
-const SidebarItem = ({ href, icon: Icon, label, collapsed }: { href: string, icon: any, label: string, collapsed: boolean }) => {
+const SidebarItem = ({ href, icon: Icon, label, collapsed }: { href: string, icon: LucideIcon, label: string, collapsed: boolean }) => {
   const pathname = usePathname();
   const isActive = pathname === href || (href !== '/system' && pathname.startsWith(href));
   
@@ -139,22 +139,20 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
-  const [mounted, setMounted] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
   const pathname = usePathname();
 
-  // SYS-013 FIX: Sync theme - chỉ chạy 1 lần khi mount
   useEffect(() => {
-    const saved = localStorage.getItem('theme');
-    const isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    setDarkMode(isDark);
-    if (isDark) {
+    if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-    setMounted(true);
-  }, []);
+  }, [darkMode]);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;

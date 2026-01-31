@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { Settings as SettingsIcon, Globe, Mail, MapPin, Share2, Loader2, Database, Trash2, RefreshCw, SettingsIcon as SettingsTab, Save } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
@@ -189,7 +190,7 @@ export default function SettingsModuleConfigPage() {
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
         }
       }
       // Save module settings

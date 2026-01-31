@@ -23,7 +23,6 @@ export default function PricingCreatePage() {
   const brandColor = useBrandColor();
   
   const [pricingStyle, setPricingStyle] = useState<PricingStyle>('cards');
-  const [showBillingToggle, setShowBillingToggle] = useState(true);
   const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([
     { id: 1, name: 'Cơ bản', price: '0', yearlyPrice: '0', period: '/tháng', features: ['Tính năng A', 'Tính năng B'], isPopular: false, buttonText: 'Bắt đầu', buttonLink: '/register' },
     { id: 2, name: 'Chuyên nghiệp', price: '299.000', yearlyPrice: '2.990.000', period: '/tháng', features: ['Tất cả Cơ bản', 'Tính năng C', 'Hỗ trợ email'], isPopular: true, buttonText: 'Mua ngay', buttonLink: '/checkout' },
@@ -87,7 +86,7 @@ export default function PricingCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { 
+    void handleSubmit(e, { 
       plans: pricingPlans.map(p => ({ 
         name: p.name, 
         price: p.price, 

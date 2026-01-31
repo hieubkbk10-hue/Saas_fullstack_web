@@ -86,7 +86,7 @@ export default function ProductCategoriesCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, {
+    void handleSubmit(e, {
       categories: selectedCategories.map(c => ({ 
         categoryId: c.categoryId, 
         customImage: c.customImage,

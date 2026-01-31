@@ -86,7 +86,7 @@ export default function FooterCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { ...footerConfig, style });
+    void handleSubmit(e, { ...footerConfig, style });
   };
 
   // Column drag handlers
@@ -307,7 +307,7 @@ export default function FooterCreatePage() {
                 <LayoutGrid size={24} style={{ color: brandColor }} />
               </div>
               <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-1">Chưa có cột menu</h3>
-              <p className="text-sm text-slate-500 mb-3">Nhấn "Thêm cột" để tạo menu footer</p>
+              <p className="text-sm text-slate-500 mb-3">Nhấn “Thêm cột” để tạo menu footer</p>
               <Button type="button" variant="outline" size="sm" onClick={addColumn}>
                 <Plus size={14} className="mr-1" /> Thêm cột đầu tiên
               </Button>

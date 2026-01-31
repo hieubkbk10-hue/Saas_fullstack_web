@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -177,7 +178,7 @@ function PostCategoriesContent() {
                 {visibleColumns.includes('thumbnail') && (
                   <TableCell>
                     {cat.thumbnail ? (
-                      <img src={cat.thumbnail} alt="" className="w-10 h-8 object-cover rounded" />
+                      <Image src={cat.thumbnail} alt={cat.name} width={40} height={32} className="w-10 h-8 object-cover rounded" />
                     ) : (
                       <div className="w-10 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-slate-400">-</div>
                     )}

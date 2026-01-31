@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { Upload, Trash2, Loader2, X } from 'lucide-react';
+import { Upload, Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, cn } from './ui';
 
@@ -30,7 +31,7 @@ function slugifyFilename(filename: string): string {
 // Compress image using canvas
 async function compressImage(file: File, quality: number = 0.85): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
+    const img = new window.Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -133,7 +134,7 @@ export function ImageUploader({
       const { storageId } = await response.json();
       
       // Get image dimensions
-      const img = new Image();
+      const img = new window.Image();
       const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
         img.onload = () => resolve({ width: img.width, height: img.height });
         img.src = URL.createObjectURL(compressedFile);
@@ -166,12 +167,12 @@ export function ImageUploader({
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file) handleFileSelect(file);
+    if (file) void handleFileSelect(file);
   }, [handleFileSelect]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) handleFileSelect(file);
+    if (file) void handleFileSelect(file);
   }, [handleFileSelect]);
 
   const handleRemove = useCallback(async () => {
@@ -208,11 +209,7 @@ export function ImageUploader({
       
       {preview ? (
         <div className={cn('relative rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700', aspectClasses[aspectRatio])}>
-          <img 
-            src={preview} 
-            alt="" 
-            className="w-full h-full object-cover"
-          />
+          <Image src={preview} alt="" fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover" />
           <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
             <Button
               type="button"

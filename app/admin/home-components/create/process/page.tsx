@@ -49,7 +49,7 @@ export default function ProcessCreatePage() {
   });
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { 
+    void handleSubmit(e, { 
       steps: steps.map(s => ({ icon: s.icon, title: s.title, description: s.description })), 
       style 
     });

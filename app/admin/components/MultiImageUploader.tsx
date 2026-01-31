@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, DragEvent } from 'react';
+import Image from 'next/image';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
@@ -32,7 +33,7 @@ function generateFilename(originalName: string): string {
 
 async function convertToWebP(file: File, quality: number = WEBP_QUALITY): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
+    const img = new window.Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -155,7 +156,7 @@ export function MultiImageUploader<T extends ImageItem>({
 
       const { storageId } = await response.json();
 
-      const img = new Image();
+      const img = new window.Image();
       const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
         img.onload = () => resolve({ width: img.width, height: img.height });
         img.src = URL.createObjectURL(webpFile);
@@ -285,10 +286,10 @@ export function MultiImageUploader<T extends ImageItem>({
     
     if (itemId !== undefined) {
       // Drop on specific item
-      if (files[0]) handleFileUpload(itemId, files[0]);
+      if (files[0]) void handleFileUpload(itemId, files[0]);
     } else {
       // Drop on container - add new items
-      handleMultipleFiles(files);
+      void handleMultipleFiles(files);
     }
   }, [handleFileUpload, handleMultipleFiles]);
 
@@ -325,7 +326,7 @@ export function MultiImageUploader<T extends ImageItem>({
     
     const files = e.dataTransfer.files;
     if (files.length > 0 && files[0]) {
-      handleFileUpload(itemId, files[0]);
+      void handleFileUpload(itemId, files[0]);
     }
   }, [handleFileUpload]);
 
@@ -508,7 +509,13 @@ export function MultiImageUploader<T extends ImageItem>({
                     onDrop={(e) => handleItemFileDrop(e, item.id)}
                   >
                     {imageUrl ? (
-                      <img src={imageUrl} alt="" className={cn("w-full h-full object-cover transition-opacity", isFileDragOver && "opacity-50")} />
+                      <Image
+                        src={imageUrl}
+                        alt=""
+                        fill
+                        sizes="(max-width: 768px) 100vw, 320px"
+                        className={cn("object-cover transition-opacity", isFileDragOver && "opacity-50")}
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-700">
                         <ImageIcon size={32} className="text-slate-400" />
@@ -537,7 +544,7 @@ export function MultiImageUploader<T extends ImageItem>({
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 bg-white/90 dark:bg-slate-800/90 text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={(e) => { e.stopPropagation(); handleRemove(item.id); }}
+                        onClick={(e) => { e.stopPropagation(); void handleRemove(item.id); }}
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -546,7 +553,7 @@ export function MultiImageUploader<T extends ImageItem>({
                       ref={(el) => { if (el) inputRefs.current.set(item.id, el); }}
                       type="file"
                       accept="image/*"
-                      onChange={(e) => e.target.files?.[0] && handleFileUpload(item.id, e.target.files[0])}
+                      onChange={(e) => e.target.files?.[0] && void handleFileUpload(item.id, e.target.files[0])}
                       className="hidden"
                     />
                   </div>
@@ -639,7 +646,13 @@ export function MultiImageUploader<T extends ImageItem>({
                     onDrop={(e) => handleItemFileDrop(e, item.id)}
                   >
                     {imageUrl ? (
-                      <img src={imageUrl} alt="" className={cn("w-full h-full object-cover transition-opacity", isFileDragOver && "opacity-50")} />
+                      <Image
+                        src={imageUrl}
+                        alt=""
+                        fill
+                        sizes="(max-width: 768px) 100vw, 320px"
+                        className={cn("object-cover transition-opacity", isFileDragOver && "opacity-50")}
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-700">
                         <ImageIcon size={24} className="text-slate-400" />
@@ -661,7 +674,7 @@ export function MultiImageUploader<T extends ImageItem>({
                       ref={(el) => { if (el) inputRefs.current.set(item.id, el); }}
                       type="file"
                       accept="image/*"
-                      onChange={(e) => e.target.files?.[0] && handleFileUpload(item.id, e.target.files[0])}
+                      onChange={(e) => e.target.files?.[0] && void handleFileUpload(item.id, e.target.files[0])}
                       className="hidden"
                     />
                   </div>

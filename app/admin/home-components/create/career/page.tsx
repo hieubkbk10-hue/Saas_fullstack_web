@@ -17,7 +17,7 @@ export default function CareerCreatePage() {
   ]);
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { jobs: jobPositions.map(j => ({ title: j.title, department: j.department, location: j.location, type: j.type, salary: j.salary, description: j.description })), style: careerStyle });
+    void handleSubmit(e, { jobs: jobPositions.map(j => ({ title: j.title, department: j.department, location: j.location, type: j.type, salary: j.salary, description: j.description })), style: careerStyle });
   };
 
   return (

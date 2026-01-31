@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Briefcase, Eye, TrendingUp, Star, Clock } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 
@@ -68,9 +69,15 @@ export function MagazineLayout({
           {/* Main Featured - Large Card */}
           <Link href={`/services/${mainFeatured.slug}`} className="lg:col-span-2 group">
             <article className="relative h-full min-h-[280px] lg:min-h-[360px] rounded-xl overflow-hidden bg-slate-900">
-              {mainFeatured.thumbnail ? (
-                <img src={mainFeatured.thumbnail} alt={mainFeatured.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-              ) : (
+                {mainFeatured.thumbnail ? (
+                  <Image
+                    src={mainFeatured.thumbnail}
+                    alt={mainFeatured.title}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 66vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
                 <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900" />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
@@ -109,9 +116,15 @@ export function MagazineLayout({
             {secondaryFeatured.map((service) => (
               <Link key={service._id} href={`/services/${service.slug}`} className="group flex-1">
                 <article className="relative h-full min-h-[140px] lg:min-h-0 rounded-lg overflow-hidden bg-slate-900">
-                  {service.thumbnail ? (
-                    <img src={service.thumbnail} alt={service.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  ) : (
+                    {service.thumbnail ? (
+                      <Image
+                        src={service.thumbnail}
+                        alt={service.title}
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-600 to-slate-800" />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -202,9 +215,15 @@ export function MagazineLayout({
               <Link key={service._id} href={`/services/${service.slug}`} className="group">
                 <article className="h-full flex flex-col">
                   <div className="aspect-[16/10] rounded-lg overflow-hidden bg-slate-100 mb-3 relative">
-                    {service.thumbnail ? (
-                      <img src={service.thumbnail} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    ) : (
+                      {service.thumbnail ? (
+                        <Image
+                          src={service.thumbnail}
+                          alt={service.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
                       <div className="w-full h-full flex items-center justify-center"><Briefcase size={32} className="text-slate-300" /></div>
                     )}
                     {service.featured && (

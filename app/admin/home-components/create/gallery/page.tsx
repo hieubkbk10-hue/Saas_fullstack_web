@@ -43,7 +43,7 @@ function GalleryCreateContent() {
 
   const onSubmit = (e: React.FormEvent) => {
     const finalStyle = type === 'TrustBadges' ? trustBadgesStyle : style;
-    handleSubmit(e, { items: galleryItems.map(g => ({ url: g.url, link: g.link, name: g.name })), style: finalStyle });
+    void handleSubmit(e, { items: galleryItems.map(g => ({ url: g.url, link: g.link, name: g.name })), style: finalStyle });
   };
 
   return (

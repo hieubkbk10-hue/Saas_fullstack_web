@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FileText, Eye } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 
@@ -40,12 +41,14 @@ export function FullWidthLayout({ posts, brandColor, categoryMap, enabledFields 
       {posts.map((post) => (
         <Link key={post._id} href={`/posts/${post.slug}`} className="group">
           <article className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100 h-full flex flex-col">
-            <div className="aspect-video bg-slate-100 overflow-hidden">
+            <div className="relative aspect-video bg-slate-100 overflow-hidden">
               {post.thumbnail ? (
-                <img 
-                  src={post.thumbnail} 
+                <Image
+                  src={post.thumbnail}
                   alt={post.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover group-hover:scale-110 transition-transform duration-500"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">

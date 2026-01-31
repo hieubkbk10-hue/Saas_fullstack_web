@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, use } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
@@ -157,7 +158,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
             <CardContent className="p-6 flex flex-col items-center text-center">
               <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 mb-4 overflow-hidden">
                 {showAvatar && customerData.avatar ? (
-                  <img src={customerData.avatar} className="w-full h-full object-cover" alt="" />
+                  <Image src={customerData.avatar} width={96} height={96} className="w-full h-full object-cover" alt="" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-purple-100 dark:bg-purple-900/30">
                     <UserIcon className="w-12 h-12 text-purple-400" />

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FileText, Eye, Search, Folder, ChevronDown } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 import { SortOption } from '../PostsFilter';
@@ -152,13 +153,15 @@ export function SidebarLayout({
                   <div className="flex flex-col sm:flex-row">
                     <div className="sm:w-40 md:w-48 flex-shrink-0">
                       <div className="aspect-video sm:aspect-[4/3] sm:h-full bg-slate-100 overflow-hidden relative">
-                        {post.thumbnail ? (
-                          <img 
-                            src={post.thumbnail} 
-                            alt={post.title} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                          />
-                        ) : (
+                      {post.thumbnail ? (
+                        <Image
+                          src={post.thumbnail}
+                          alt={post.title}
+                          fill
+                          sizes="96px"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <FileText size={28} className="text-slate-300" />
                           </div>
@@ -198,7 +201,7 @@ export function SidebarLayout({
   );
 }
 
-export function SidebarLayoutSkeleton({ brandColor }: { brandColor: string }) {
+export function SidebarLayoutSkeleton() {
   return (
     <div className="flex flex-col lg:flex-row gap-5 animate-pulse">
       {/* Sidebar Skeleton */}

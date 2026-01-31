@@ -30,7 +30,7 @@ export async function GET() {
         'Cache-Control': 'public, max-age=300',
       },
     });
-  } catch (error) {
+  } catch {
     // Fallback SVG
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#3b82f6"/><text x="16" y="22" font-size="18" font-weight="bold" fill="white" text-anchor="middle">V</text></svg>`;
     return new NextResponse(svg, {

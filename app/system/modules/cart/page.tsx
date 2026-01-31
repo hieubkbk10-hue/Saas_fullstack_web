@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { ShoppingCart, Clock, Users, StickyNote, Loader2, Database, Trash2, RefreshCw, Settings, Package, AlertTriangle, CheckCircle } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
@@ -216,14 +217,14 @@ export default function CartModuleConfigPage() {
       for (const field of localCartFields) {
         const serverEnabled = serverCartFieldsMap.get(field.id);
         if (serverEnabled !== undefined && field.enabled !== serverEnabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
         }
       }
       // Save item fields - FIX: Use Map lookup instead of Array.find()
       for (const field of localItemFields) {
         const serverEnabled = serverItemFieldsMap.get(field.id);
         if (serverEnabled !== undefined && field.enabled !== serverEnabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
         }
       }
       // Save settings

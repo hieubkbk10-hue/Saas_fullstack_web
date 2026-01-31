@@ -81,7 +81,7 @@ export default function SpeedDialCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, {
+    void handleSubmit(e, {
       actions: actions.map(a => ({ icon: a.icon, label: a.label, url: a.url, bgColor: a.bgColor })),
       style,
       position,

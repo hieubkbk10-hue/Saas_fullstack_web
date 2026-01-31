@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, use, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
@@ -9,7 +10,7 @@ import { Id } from '@/convex/_generated/dataModel';
 import { 
   Grid, LayoutTemplate, AlertCircle, Package, Briefcase, FileText, 
   Users, MousePointerClick, HelpCircle, User as UserIcon, Check, 
-  Star, Award, Tag, Image as ImageIcon, Phone, Plus, Trash2, Loader2, Download, Upload, ChevronDown, ChevronUp,
+  Star, Award, Tag, Image as ImageIcon, Phone, Plus, Trash2, Loader2, Download, ChevronDown, ChevronUp,
   Search, GripVertical, X, Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -22,7 +23,7 @@ import {
   FaqPreview, FaqStyle,
   CTAPreview, CTAStyle,
   ServicesPreview, ServicesStyle,
-  BenefitsPreview, BenefitsStyle, BenefitsConfig,
+  BenefitsPreview, BenefitsStyle,
   GalleryPreview, GalleryStyle,
   TrustBadgesPreview, TrustBadgesStyle,
   ContactPreview, ContactStyle,
@@ -1095,7 +1096,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               <CardContent className="space-y-4">
                 {footerConfig.columns.length === 0 ? (
                   <div className="text-center py-6 text-slate-500 text-sm">
-                    Chưa có cột menu nào. Nhấn "Thêm cột" để bắt đầu.
+                    Chưa có cột menu nào. Nhấn “Thêm cột” để bắt đầu.
                   </div>
                 ) : (
                   footerConfig.columns.map((column) => (
@@ -1224,7 +1225,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               <CardContent className="space-y-3">
                 {footerConfig.socialLinks.length === 0 ? (
                   <div className="text-center py-6 text-slate-500 text-sm">
-                    Chưa có mạng xã hội nào. Nhấn "Thêm MXH" để bắt đầu.
+                    Chưa có mạng xã hội nào. Nhấn “Thêm MXH” để bắt đầu.
                   </div>
                 ) : (
                   footerConfig.socialLinks.map((social) => (
@@ -1360,7 +1361,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                 {servicesItems.length === 0 && (
                   <div className="text-center py-8 text-slate-500">
                     <Briefcase size={32} className="mx-auto mb-2 opacity-50" />
-                    <p>Chưa có dịch vụ nào. Nhấn "Thêm" để bắt đầu.</p>
+                    <p>Chưa có dịch vụ nào. Nhấn “Thêm” để bắt đầu.</p>
                   </div>
                 )}
               </CardContent>
@@ -1979,7 +1980,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                                 {index + 1}
                               </span>
                               {product.image ? (
-                                <img src={product.image} alt="" className="w-12 h-12 object-cover rounded" />
+                                <Image src={product.image} alt="" width={48} height={48} className="w-12 h-12 object-cover rounded" />
                               ) : (
                                 <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
                                   <Package size={16} className="text-slate-400" />
@@ -2050,7 +2051,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                                   {isSelected && <Check size={12} className="text-white" />}
                                 </div>
                                 {product.image ? (
-                                  <img src={product.image} alt="" className="w-10 h-10 object-cover rounded" />
+                                  <Image src={product.image} alt="" width={40} height={40} className="w-10 h-10 object-cover rounded" />
                                 ) : (
                                   <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center">
                                     <Package size={14} className="text-slate-400" />
@@ -2166,7 +2167,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                                 {index + 1}
                               </span>
                               {service.thumbnail ? (
-                                <img src={service.thumbnail} alt="" className="w-12 h-12 object-cover rounded" />
+                                <Image src={service.thumbnail} alt="" width={48} height={48} className="w-12 h-12 object-cover rounded" />
                               ) : (
                                 <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
                                   <Briefcase size={16} className="text-slate-400" />
@@ -2237,7 +2238,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                                   {isSelected && <Check size={12} className="text-white" />}
                                 </div>
                                 {service.thumbnail ? (
-                                  <img src={service.thumbnail} alt="" className="w-10 h-10 object-cover rounded" />
+                                  <Image src={service.thumbnail} alt="" width={40} height={40} className="w-10 h-10 object-cover rounded" />
                                 ) : (
                                   <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center">
                                     <Briefcase size={14} className="text-slate-400" />
@@ -2351,7 +2352,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                                 {index + 1}
                               </span>
                               {post.thumbnail ? (
-                                <img src={post.thumbnail} alt="" className="w-12 h-12 object-cover rounded" />
+                                <Image src={post.thumbnail} alt="" width={48} height={48} className="w-12 h-12 object-cover rounded" />
                               ) : (
                                 <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
                                   <FileText size={16} className="text-slate-400" />
@@ -2422,7 +2423,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                                   {isSelected && <Check size={12} className="text-white" />}
                                 </div>
                                 {post.thumbnail ? (
-                                  <img src={post.thumbnail} alt="" className="w-10 h-10 object-cover rounded" />
+                                  <Image src={post.thumbnail} alt="" width={40} height={40} className="w-10 h-10 object-cover rounded" />
                                 ) : (
                                   <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center">
                                     <FileText size={14} className="text-slate-400" />
@@ -2470,7 +2471,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
               <CardContent className="space-y-4">
                 {caseStudyProjects.length === 0 ? (
                   <div className="text-center py-8 text-slate-500 text-sm">
-                    Chưa có dự án nào. Nhấn "Thêm dự án" để bắt đầu.
+                    Chưa có dự án nào. Nhấn “Thêm dự án” để bắt đầu.
                   </div>
                 ) : (
                   caseStudyProjects.map((project, idx) => (
@@ -2965,7 +2966,7 @@ export default function HomeComponentEditPage({ params }: { params: Promise<{ id
                     onChange={(e) => setCategoryProductsShowViewAll(e.target.checked)}
                     className="w-4 h-4 rounded border-slate-300"
                   />
-                  <Label htmlFor="categoryProductsShowViewAll" className="cursor-pointer">Hiển thị nút "Xem danh mục"</Label>
+                  <Label htmlFor="categoryProductsShowViewAll" className="cursor-pointer">Hiển thị nút “Xem danh mục”</Label>
                 </div>
               </CardContent>
             </Card>

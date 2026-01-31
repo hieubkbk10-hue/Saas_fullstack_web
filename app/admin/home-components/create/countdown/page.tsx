@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
+import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ImageFieldWithUpload } from '../../../components/ImageFieldWithUpload';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
 import { CountdownPreview, CountdownStyle } from '../../previews';
+
+const DEFAULT_END_DATE = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
 
 export default function CountdownCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Khuyến mãi đặc biệt', 'Countdown');
@@ -15,7 +17,7 @@ export default function CountdownCreatePage() {
     heading: 'Flash Sale - Giảm giá sốc!',
     subHeading: 'Ưu đãi có hạn',
     description: 'Nhanh tay đặt hàng trước khi hết thời gian khuyến mãi',
-    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // 7 days from now
+    endDate: DEFAULT_END_DATE,
     buttonText: 'Mua ngay',
     buttonLink: '/products',
     backgroundImage: '',
@@ -27,7 +29,7 @@ export default function CountdownCreatePage() {
   });
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { 
+    void handleSubmit(e, { 
       ...countdownConfig,
       style: countdownStyle 
     });

@@ -131,12 +131,12 @@ export function MenuPreview({ items }: MenuPreviewProps) {
       setConfig(prev => ({
         ...prev,
         ...savedConfig,
-        topbar: { ...prev.topbar, ...(savedConfig.topbar || {}) },
-        search: { ...prev.search, ...(savedConfig.search || {}) },
-        cta: { ...prev.cta, ...(savedConfig.cta || {}) },
-        cart: { ...prev.cart, ...(savedConfig.cart || {}) },
-        wishlist: { ...prev.wishlist, ...(savedConfig.wishlist || {}) },
-        login: { ...prev.login, ...(savedConfig.login || {}) },
+        topbar: { ...prev.topbar, ...savedConfig.topbar },
+        search: { ...prev.search, ...savedConfig.search },
+        cta: { ...prev.cta, ...savedConfig.cta },
+        cart: { ...prev.cart, ...savedConfig.cart },
+        wishlist: { ...prev.wishlist, ...savedConfig.wishlist },
+        login: { ...prev.login, ...savedConfig.login },
       }));
     }
   }, [headerStyleSetting, headerConfigSetting]);

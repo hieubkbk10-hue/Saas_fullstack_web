@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useEffect, Suspense } from 'react';
+import React, { useState, useCallback, useMemo, Suspense } from 'react';
 import { useQuery } from 'convex/react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { LayoutGrid, List, Loader2 } from 'lucide-react';
+import { LayoutGrid, List } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 import {
   ServicesFilter,
@@ -96,26 +96,24 @@ function ServicesContent() {
   // Queries
   const categories = useQuery(api.serviceCategories.listActive, { limit: 20 });
   
-  // SVC-009: Sync category from URL query param
-  useEffect(() => {
+  const categoryFromUrl = useMemo(() => {
     const catSlug = searchParams.get('category');
-    if (catSlug && categories) {
-      const matchedCategory = categories.find(c => c.slug === catSlug);
-      if (matchedCategory) {
-        setSelectedCategory(matchedCategory._id);
-      }
-    }
+    if (!catSlug || !categories) return null;
+    const matchedCategory = categories.find((c) => c.slug === catSlug);
+    return matchedCategory?._id ?? null;
   }, [searchParams, categories]);
+
+  const activeCategory = selectedCategory ?? categoryFromUrl;
 
   const services = useQuery(api.services.searchPublished, {
     search: searchQuery || undefined,
-    categoryId: selectedCategory ?? undefined,
+    categoryId: activeCategory ?? undefined,
     sortBy,
     limit: 24,
   });
 
   const totalCount = useQuery(api.services.countPublished, {
-    categoryId: selectedCategory ?? undefined,
+    categoryId: activeCategory ?? undefined,
   });
 
   const featuredServices = useQuery(api.services.listFeatured, { limit: 5 });

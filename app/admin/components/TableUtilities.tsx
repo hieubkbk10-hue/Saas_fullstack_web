@@ -68,9 +68,10 @@ export function useSortableData<T>(items: T[], config: { key: string | null; dir
   return React.useMemo(() => {
     const sortableItems = [...items];
     if (config.key) {
-      sortableItems.sort((a: any, b: any) => {
-        const aVal = a[config.key!];
-        const bVal = b[config.key!];
+      sortableItems.sort((a, b) => {
+        const aVal = a[config.key as keyof T] as string | number | undefined | null;
+        const bVal = b[config.key as keyof T] as string | number | undefined | null;
+        if (aVal == null || bVal == null) return 0;
         if (aVal < bVal) return config.direction === 'asc' ? -1 : 1;
         if (aVal > bVal) return config.direction === 'asc' ? 1 : -1;
         return 0;

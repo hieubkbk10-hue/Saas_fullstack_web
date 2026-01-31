@@ -1,4 +1,5 @@
 import { query, mutation } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
 
 // Simple hash function for password (in production, use bcrypt via action)
@@ -141,9 +142,6 @@ export const verifyAdminLogin = mutation({
     if (!verifyPassword(args.password, adminUser.passwordHash)) {
       return { success: false, message: "Email hoặc mật khẩu không đúng" };
     }
-    
-    // Get role info
-    const role = await ctx.db.get(adminUser.roleId);
     
     // Generate session token
     const token = `adm_${Date.now()}_${Math.random().toString(36).substring(2)}`;
@@ -362,7 +360,7 @@ export const updateSuperAdminCredentials = mutation({
       return { success: false, message: "SuperAdmin chưa được tạo" };
     }
     
-    const updates: Record<string, any> = {};
+    const updates: Partial<Doc<"adminUsers">> = {};
     
     if (args.email && args.email !== superAdmin.email) {
       // Check email unique
@@ -435,12 +433,12 @@ export const checkPermission = query({
     }
     
     // Check if module is enabled
-    const module = await ctx.db
+    const moduleRecord = await ctx.db
       .query("adminModules")
       .withIndex("by_key", (q) => q.eq("key", args.moduleKey))
       .unique();
     
-    if (!module || !module.enabled) {
+    if (!moduleRecord || !moduleRecord.enabled) {
       return { allowed: false, reason: "Module chưa được bật" };
     }
     

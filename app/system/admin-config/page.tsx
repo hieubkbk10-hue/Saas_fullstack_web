@@ -49,7 +49,7 @@ export default function AdminConfigPage() {
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
+    } catch {
       toast.error('Có lỗi xảy ra');
     } finally {
       setIsSubmitting(false);
@@ -83,7 +83,7 @@ export default function AdminConfigPage() {
       } else {
         toast.error(result.message);
       }
-    } catch (error) {
+    } catch {
       toast.error('Có lỗi xảy ra');
     } finally {
       setIsSubmitting(false);

@@ -19,7 +19,7 @@ export default function StatsCreatePage() {
   const [style, setStyle] = useState<StatsStyle>('horizontal');
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { items: statsItems.map(s => ({ value: s.value, label: s.label })), style });
+    void handleSubmit(e, { items: statsItems.map(s => ({ value: s.value, label: s.label })), style });
   };
 
   return (

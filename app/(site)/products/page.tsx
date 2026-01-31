@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useEffect, Suspense } from 'react';
+import React, { useState, useCallback, useMemo, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { api } from '@/convex/_generated/api';
@@ -86,25 +87,24 @@ function ProductsContent() {
 
   const categories = useQuery(api.productCategories.listActive);
 
-  useEffect(() => {
+  const categoryFromUrl = useMemo(() => {
     const catSlug = searchParams.get('category');
-    if (catSlug && categories) {
-      const matchedCategory = categories.find(c => c.slug === catSlug);
-      if (matchedCategory) {
-        setSelectedCategory(matchedCategory._id);
-      }
-    }
+    if (!catSlug || !categories) return null;
+    const matchedCategory = categories.find((c) => c.slug === catSlug);
+    return matchedCategory?._id ?? null;
   }, [searchParams, categories]);
+
+  const activeCategory = selectedCategory ?? categoryFromUrl;
 
   const products = useQuery(api.products.searchPublished, {
     search: searchQuery || undefined,
-    categoryId: selectedCategory ?? undefined,
+    categoryId: activeCategory ?? undefined,
     sortBy,
     limit: 24,
   });
 
   const totalCount = useQuery(api.products.countPublished, {
-    categoryId: selectedCategory ?? undefined,
+    categoryId: activeCategory ?? undefined,
   });
 
   const categoryMap = useMemo(() => {
@@ -337,7 +337,7 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
         <Link key={product._id} href={`/products/${product.slug}`} className="group bg-white rounded-xl overflow-hidden border border-slate-100 hover:shadow-lg hover:border-slate-200 transition-all duration-300">
           <div className="aspect-square overflow-hidden bg-slate-100 relative">
             {product.image ? (
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <Image src={product.image} alt={product.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover group-hover:scale-110 transition-transform duration-500" />
             ) : (
               <div className="w-full h-full flex items-center justify-center"><Package size={48} className="text-slate-300" /></div>
             )}
@@ -370,7 +370,7 @@ function ProductList({ products, categoryMap, brandColor, showPrice, showSalePri
         <Link key={product._id} href={`/products/${product.slug}`} className="group flex gap-4 bg-white rounded-xl overflow-hidden border border-slate-100 hover:shadow-lg hover:border-slate-200 transition-all duration-300 p-4">
           <div className="w-32 h-32 md:w-40 md:h-40 shrink-0 overflow-hidden bg-slate-100 rounded-lg relative">
             {product.image ? (
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                <Image src={product.image} alt={product.name} fill sizes="160px" className="object-cover group-hover:scale-110 transition-transform duration-500" />
             ) : (
               <div className="w-full h-full flex items-center justify-center"><Package size={32} className="text-slate-300" /></div>
             )}
@@ -439,7 +439,7 @@ interface LayoutProps {
   totalCount: number | undefined;
 }
 
-function CatalogLayout({ products, categories, categoryMap, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, showStock, formatPrice, totalCount }: LayoutProps) {
+function CatalogLayout({ products, categories, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, formatPrice, totalCount }: LayoutProps) {
   return (
     <div className="py-8 md:py-12 px-4">
       <div className="max-w-7xl mx-auto">
@@ -502,7 +502,7 @@ function CatalogLayout({ products, categories, categoryMap, selectedCategory, on
                   <Link key={product._id} href={`/products/${product.slug}`} className="group bg-white rounded-xl overflow-hidden border border-slate-100 hover:shadow-lg hover:border-slate-200 transition-all duration-300">
                     <div className="aspect-square overflow-hidden bg-slate-100 relative">
                       {product.image ? (
-                        <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <Image src={product.image} alt={product.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover group-hover:scale-110 transition-transform duration-500" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center"><Package size={32} className="text-slate-300" /></div>
                       )}

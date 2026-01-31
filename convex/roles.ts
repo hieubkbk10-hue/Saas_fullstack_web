@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 
@@ -66,13 +66,13 @@ export const getSystemRoles = query({
 
 // Helper function to update roleStats counter
 async function updateRoleStats(
-  ctx: { db: any },
+  ctx: MutationCtx,
   key: string,
   delta: number
 ) {
   const stats = await ctx.db
     .query("roleStats")
-    .withIndex("by_key", (q: any) => q.eq("key", key))
+    .withIndex("by_key", (q) => q.eq("key", key))
     .unique();
   if (stats) {
     await ctx.db.patch(stats._id, { count: Math.max(0, stats.count + delta) });

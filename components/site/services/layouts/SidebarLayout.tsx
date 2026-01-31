@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Briefcase, Eye, Search, Clock, Folder, Star } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 
@@ -135,10 +136,10 @@ export function SidebarLayout({
               <div className="space-y-3">
                 {recentServices.slice(0, 4).map((service) => (
                   <Link key={service._id} href={`/services/${service.slug}`} className="flex gap-2 group">
-                    <div className="w-14 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                      {service.thumbnail ? (
-                        <img src={service.thumbnail} alt={service.title} className="w-full h-full object-cover" />
-                      ) : (
+                    <div className="w-14 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0 relative">
+                        {service.thumbnail ? (
+                          <Image src={service.thumbnail} alt={service.title} fill sizes="64px" className="object-cover" />
+                        ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Briefcase size={14} className="text-slate-300" />
                         </div>
@@ -198,9 +199,9 @@ export function SidebarLayout({
                   <div className="flex flex-col sm:flex-row">
                     <div className="sm:w-44 md:w-52 flex-shrink-0">
                       <div className="aspect-video sm:aspect-[4/3] sm:h-full bg-slate-100 overflow-hidden relative">
-                        {service.thumbnail ? (
-                          <img src={service.thumbnail} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
+                          {service.thumbnail ? (
+                            <Image src={service.thumbnail} alt={service.title} fill sizes="96px" className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                          ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <Briefcase size={32} className="text-slate-300" />
                           </div>

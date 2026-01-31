@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
@@ -577,7 +578,7 @@ function AnalyticsDataTab({
               <div key={product.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-pink-600 w-6">#{i + 1}</span>
-                  {product.image && <img src={product.image} alt={product.name} className="w-10 h-10 rounded object-cover" />}
+                  {product.image && <Image src={product.image} alt={product.name} width={40} height={40} className="w-10 h-10 rounded object-cover" />}
                   <span className="text-sm text-slate-700 dark:text-slate-300">{product.name}</span>
                 </div>
                 <div className="text-right">

@@ -1,6 +1,5 @@
-import { query, mutation, internalMutation } from "../_generated/server";
+import { query, mutation } from "../_generated/server";
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
 
 const presetDoc = v.object({
   _id: v.id("systemPresets"),
@@ -115,11 +114,11 @@ export const applyPreset = mutation({
       .unique();
     if (!preset) throw new Error("Preset not found");
     const allModules = await ctx.db.query("adminModules").collect();
-    for (const module of allModules) {
-      if (module.isCore) continue;
-      const shouldEnable = preset.enabledModules.includes(module.key);
-      if (module.enabled !== shouldEnable) {
-        await ctx.db.patch(module._id, {
+    for (const moduleRecord of allModules) {
+      if (moduleRecord.isCore) continue;
+      const shouldEnable = preset.enabledModules.includes(moduleRecord.key);
+      if (moduleRecord.enabled !== shouldEnable) {
+        await ctx.db.patch(moduleRecord._id, {
           enabled: shouldEnable,
           updatedBy: args.updatedBy,
         });

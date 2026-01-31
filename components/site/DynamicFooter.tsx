@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor, useSiteSettings, useSocialLinks } from './hooks';
@@ -149,7 +150,7 @@ export function DynamicFooter() {
               <Link href="/" className="flex items-center gap-2">
                 <div className="p-1.5 rounded-lg" style={{ backgroundColor: bgMedium, border: `1px solid ${borderColor}` }}>
                   {logo ? (
-                    <img src={logo} alt={siteName} className="h-6 w-6 object-contain brightness-110" />
+                    <Image src={logo} alt={siteName || 'VietAdmin'} width={24} height={24} className="h-6 w-6 object-contain brightness-110" />
                   ) : (
                     <div className="h-6 w-6 rounded flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: brandColor }}>
                       {(siteName || 'V').charAt(0)}
@@ -219,7 +220,7 @@ export function DynamicFooter() {
           <div className="flex flex-col items-center gap-2">
             <div className="h-12 w-12 rounded-xl flex items-center justify-center shadow-lg shadow-black/20 mb-1" style={{ background: `linear-gradient(to top right, ${bgMedium}, ${borderColor})` }}>
               {logo ? (
-                <img src={logo} alt={siteName} className="h-7 w-7 object-contain drop-shadow-md" />
+                <Image src={logo} alt={siteName || 'VietAdmin'} width={28} height={28} className="h-7 w-7 object-contain drop-shadow-md" />
               ) : (
                 <div className="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold text-base" style={{ backgroundColor: brandColor }}>
                   {(siteName || 'V').charAt(0)}
@@ -285,7 +286,7 @@ export function DynamicFooter() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 pb-6" style={{ borderBottom: `1px solid ${borderColor}` }}>
             <Link href="/" className="flex items-center gap-2">
               {logo ? (
-                <img src={logo} alt={siteName} className="h-6 w-6 object-contain" />
+                <Image src={logo} alt={siteName || 'VietAdmin'} width={24} height={24} className="h-6 w-6 object-contain" />
               ) : (
                 <div className="h-6 w-6 rounded flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: brandColor }}>
                   {(siteName || 'V').charAt(0)}
@@ -355,7 +356,7 @@ export function DynamicFooter() {
             {/* Left: Logo & Copy */}
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3">
               {logo ? (
-                <img src={logo} alt={siteName} className="h-5 w-5 opacity-80" />
+                <Image src={logo} alt={siteName || 'VietAdmin'} width={20} height={20} className="h-5 w-5 opacity-80" />
               ) : (
                 <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>
                   {(siteName || 'V').charAt(0)}
@@ -402,7 +403,7 @@ export function DynamicFooter() {
               style={{ backgroundColor: `${brandColor}20`, border: `2px solid ${brandColor}40` }}
             >
               {logo ? (
-                <img src={logo} alt={siteName} className="h-7 w-7 object-contain" />
+                <Image src={logo} alt={siteName || 'VietAdmin'} width={28} height={28} className="h-7 w-7 object-contain" />
               ) : (
                 <div className="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>
                   {(siteName || 'V').charAt(0)}
@@ -478,7 +479,7 @@ export function DynamicFooter() {
             style={{ backgroundColor: brandColor }}
           >
             {logo ? (
-              <img src={logo} alt={siteName} className="h-6 w-6 object-contain brightness-110" />
+              <Image src={logo} alt={siteName || 'VietAdmin'} width={24} height={24} className="h-6 w-6 object-contain brightness-110" />
             ) : (
               <span className="text-white font-bold text-sm">{(siteName || 'V').charAt(0)}</span>
             )}

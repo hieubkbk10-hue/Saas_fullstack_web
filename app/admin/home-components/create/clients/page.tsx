@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import Image from 'next/image';
 import { Plus, Upload, Loader2, Link as LinkIcon, ImageIcon } from 'lucide-react';
 import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input } from '../../../components/ui';
 import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
@@ -89,7 +90,7 @@ export default function ClientsCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { 
+    void handleSubmit(e, { 
       items: clientItems.map(c => ({ url: c.url, link: c.link, name: c.name })), 
       style 
     });
@@ -197,7 +198,7 @@ export default function ClientsCreatePage() {
                         className="hidden"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (file) handleImageUpload(item.id, file);
+                          if (file) void handleImageUpload(item.id, file);
                         }}
                       />
                       <div className={cn(
@@ -207,7 +208,7 @@ export default function ClientsCreatePage() {
                         {uploadingId === item.id ? (
                           <Loader2 size={20} className="animate-spin text-slate-400" />
                         ) : item.url ? (
-                          <img src={item.url} alt="" className="w-full h-full object-contain bg-white dark:bg-slate-900" />
+                          <Image src={item.url} alt="" width={300} height={200} className="w-full h-full object-contain bg-white dark:bg-slate-900" />
                         ) : (
                           <div className="text-center p-1">
                             <Upload size={16} className="mx-auto text-slate-400 mb-0.5" />
@@ -229,7 +230,7 @@ export default function ClientsCreatePage() {
                       </div>
                       {item.url && (
                         <div className="aspect-[3/2] rounded-md overflow-hidden border bg-white dark:bg-slate-900 flex items-center justify-center">
-                          <img src={item.url} alt="" className="w-full h-full object-contain" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
+                          <Image src={item.url} alt="" width={300} height={200} className="w-full h-full object-contain" onError={(e) => (e.target as HTMLImageElement).style.display = 'none'} />
                         </div>
                       )}
                     </div>

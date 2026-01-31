@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -28,8 +29,8 @@ async function compressImage(file: File, quality: number = COMPRESSION_QUALITY):
     return file;
   }
 
-  return new Promise((resolve, reject) => {
-    const img = new Image();
+  return new Promise((resolve) => {
+    const img = new window.Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -238,7 +239,7 @@ function MediaContent() {
         let height: number | undefined;
         
         if (file.type.startsWith('image/')) {
-          const img = new Image();
+          const img = new window.Image();
           const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
             img.onload = () => resolve({ width: img.width, height: img.height });
             img.onerror = () => resolve({ width: 0, height: 0 });
@@ -315,7 +316,7 @@ function MediaContent() {
   // Drop zone
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    handleFileSelect(e.dataTransfer.files);
+    void handleFileSelect(e.dataTransfer.files);
   }, [handleFileSelect]);
 
   if (isLoading) {
@@ -342,7 +343,7 @@ function MediaContent() {
             type="file"
             multiple
             accept="image/*,video/*,application/pdf"
-            onChange={(e) => handleFileSelect(e.target.files)}
+            onChange={(e) => void handleFileSelect(e.target.files)}
             className="hidden"
           />
           <Button 
@@ -471,11 +472,11 @@ function MediaContent() {
                   >
                     {/* Thumbnail */}
                     <div 
-                      className="aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center"
+                      className="relative aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center"
                       onClick={() => toggleSelectItem(media._id)}
                     >
                       {isImage && media.url ? (
-                        <img src={media.url} alt={media.filename} className="w-full h-full object-cover" />
+                        <Image src={media.url} alt={media.filename} fill sizes="100%" className="object-cover" />
                       ) : (
                         <FileIcon size={40} className="text-slate-400" />
                       )}
@@ -564,7 +565,7 @@ function MediaContent() {
                     {/* Thumbnail */}
                     <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
                       {isImage && media.url ? (
-                        <img src={media.url} alt="" className="w-full h-full object-cover" />
+                        <Image src={media.url} alt={media.filename} width={48} height={48} className="w-full h-full object-cover" />
                       ) : (
                         <FileIcon size={24} className="text-slate-400" />
                       )}
@@ -637,9 +638,11 @@ function MediaContent() {
           >
             <X size={24} className="text-white" />
           </button>
-          <img 
+          <Image 
             src={previewMedia.url || ''} 
             alt={previewMedia.filename} 
+            width={previewMedia.width ?? 1200}
+            height={previewMedia.height ?? 900}
             className="max-w-[90vw] max-h-[90vh] object-contain"
             onClick={(e) => e.stopPropagation()}
           />

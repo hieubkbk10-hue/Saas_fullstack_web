@@ -32,7 +32,7 @@ export function ModuleGuard({
     );
   }
 
-  const module = modules.find(m => m.key === moduleKey);
+  const currentModule = modules.find(m => m.key === moduleKey);
   const isEnabled = isModuleEnabled(moduleKey);
 
   // Check required modules (dependencies)
@@ -62,7 +62,7 @@ export function ModuleGuard({
           Module đã bị tắt
         </h2>
         <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md">
-          Module <span className="font-semibold text-slate-700 dark:text-slate-300">{module?.name || moduleKey}</span> hiện đang bị tắt. 
+          Module <span className="font-semibold text-slate-700 dark:text-slate-300">{currentModule?.name || moduleKey}</span> hiện đang bị tắt. 
           Vui lòng liên hệ System Admin để bật module này tại trang <span className="text-cyan-600">/system/modules</span>.
         </p>
         <Button onClick={() => router.push(fallbackUrl)} className="gap-2">
@@ -88,7 +88,7 @@ export function ModuleGuard({
           Module phụ thuộc đã bị tắt
         </h2>
         <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md">
-          Module <span className="font-semibold text-slate-700 dark:text-slate-300">{module?.name || moduleKey}</span> yêu cầu 
+          Module <span className="font-semibold text-slate-700 dark:text-slate-300">{currentModule?.name || moduleKey}</span> yêu cầu 
           {requiredModulesType === 'any' ? ' ít nhất một trong các' : ''} module: <span className="font-semibold text-amber-600">{requiredModuleNames.join(', ')}</span> phải được bật.
         </p>
         <Button onClick={() => router.push(fallbackUrl)} className="gap-2">

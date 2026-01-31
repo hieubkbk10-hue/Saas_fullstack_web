@@ -2,6 +2,7 @@
 
 import React, { useState, use, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -199,7 +200,7 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
                 <TableRow key={prod._id}>
                   <TableCell>
                     {prod.image ? (
-                      <img src={prod.image} className="w-10 h-10 object-cover rounded bg-slate-100" alt="" />
+                      <Image src={prod.image} width={40} height={40} className="object-cover rounded bg-slate-100" alt="" />
                     ) : (
                       <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded" />
                     )}

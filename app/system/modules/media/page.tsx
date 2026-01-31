@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Image, FolderTree, Type, Ruler, Loader2, Database, Trash2, RefreshCw, Settings, FileVideo, FileText, HardDrive } from 'lucide-react';
+import { Image as ImageIcon, FolderTree, Type, Ruler, Loader2, Database, Trash2, RefreshCw, Settings, FileVideo, FileText, HardDrive } from 'lucide-react';
 import { FieldConfig } from '@/types/moduleConfig';
 import { 
   ModuleHeader, ModuleStatus, ConventionNote, Code,
@@ -168,7 +169,7 @@ export default function MediaModuleConfigPage() {
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as any, enabled: field.enabled });
+          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
         }
       }
       // Save settings
@@ -248,7 +249,7 @@ export default function MediaModuleConfigPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <ModuleHeader
-        icon={Image}
+        icon={ImageIcon}
         title="Module Thư viện Media"
         description="Quản lý hình ảnh, video, tài liệu"
         iconBgClass="bg-cyan-500/10"
@@ -314,7 +315,7 @@ export default function MediaModuleConfigPage() {
             <div className="lg:col-span-2">
               <FieldsCard
                 title="Trường media"
-                icon={Image}
+                icon={ImageIcon}
                 iconColorClass="text-cyan-500"
                 fields={localFields}
                 onToggle={handleToggleField}
@@ -361,7 +362,7 @@ export default function MediaModuleConfigPage() {
             <Card className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-cyan-500/10 rounded-lg">
-                  <Image className="w-5 h-5 text-cyan-600" />
+                  <ImageIcon className="w-5 h-5 text-cyan-600" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{statsData?.imageCount ?? 0}</p>
@@ -422,7 +423,7 @@ export default function MediaModuleConfigPage() {
           {/* Media Table */}
           <Card>
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
-              <Image className="w-5 h-5 text-cyan-500" />
+              <ImageIcon className="w-5 h-5 text-cyan-500" />
               <h3 className="font-semibold text-slate-900 dark:text-slate-100">Media ({mediaData?.length ?? 0})</h3>
             </div>
             <Table>

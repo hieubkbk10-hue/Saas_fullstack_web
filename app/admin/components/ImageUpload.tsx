@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import Image from 'next/image';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
@@ -32,7 +33,7 @@ async function compressImage(file: File, quality: number = COMPRESSION_QUALITY):
   }
 
   return new Promise((resolve) => {
-    const img = new Image();
+    const img = new window.Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -125,13 +126,13 @@ export function ImageUpload({ value, onChange, folder = 'products', className }:
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) handleUpload(file);
+    if (file) void handleUpload(file);
   };
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (file) handleUpload(file);
+    if (file) void handleUpload(file);
   }, [handleUpload]);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -144,11 +145,13 @@ export function ImageUpload({ value, onChange, folder = 'products', className }:
 
   if (value) {
     return (
-      <div className={cn("relative", className)}>
-        <img 
-          src={value} 
-          alt="Uploaded" 
-          className="w-full h-40 object-cover rounded-lg border border-slate-200 dark:border-slate-700" 
+      <div className={cn("relative h-40 w-full", className)}>
+        <Image
+          src={value}
+          alt="Uploaded"
+          fill
+          sizes="(max-width: 768px) 100vw, 400px"
+          className="object-cover rounded-lg border border-slate-200 dark:border-slate-700"
         />
         <Button
           type="button"

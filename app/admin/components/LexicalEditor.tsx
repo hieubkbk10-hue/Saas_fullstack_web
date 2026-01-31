@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
@@ -60,7 +60,7 @@ function slugifyFilename(filename: string): string {
 
 async function compressImage(file: File, quality: number = 0.85): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
+    const img = new window.Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -448,10 +448,10 @@ const PasteImagePlugin: React.FC<PasteImagePluginProps> = ({ onImageUpload }) =>
 
 const InitialContentPlugin: React.FC<{ initialContent?: string }> = ({ initialContent }) => {
   const [editor] = useLexicalComposerContext();
-  const [isInitialized, setIsInitialized] = useState(false);
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
-    if (initialContent && !isInitialized) {
+    if (initialContent && !isInitializedRef.current) {
       editor.update(() => {
         const parser = new DOMParser();
         const dom = parser.parseFromString(initialContent, 'text/html');
@@ -480,9 +480,9 @@ const InitialContentPlugin: React.FC<{ initialContent?: string }> = ({ initialCo
           root.append(...validNodes);
         }
       });
-      setIsInitialized(true);
+      isInitializedRef.current = true;
     }
-  }, [editor, initialContent, isInitialized]);
+  }, [editor, initialContent]);
 
   return null;
 };

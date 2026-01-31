@@ -47,7 +47,7 @@ export default function TestimonialsCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { items: testimonials.map(t => ({ name: t.name, role: t.role, content: t.content, avatar: t.avatar, rating: t.rating })), style });
+    void handleSubmit(e, { items: testimonials.map(t => ({ name: t.name, role: t.role, content: t.content, avatar: t.avatar, rating: t.rating })), style });
   };
 
   return (

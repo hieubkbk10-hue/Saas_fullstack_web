@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -51,7 +51,7 @@ function CartContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: '_creationTime', direction: 'desc' });
-  const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
+  const [customVisibleColumns, setCustomVisibleColumns] = useState<string[] | null>(null);
   const [selectedIds, setSelectedIds] = useState<Id<"carts">[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -88,11 +88,9 @@ function CartContent() {
     return cols;
   }, [enabledFeatures]);
 
-  useEffect(() => {
-    if (columns.length > 0 && visibleColumns.length === 0) {
-      setVisibleColumns(columns.map(c => c.key));
-    }
-  }, [columns, visibleColumns.length]);
+  const visibleColumns = useMemo(() => {
+    return customVisibleColumns ?? columns.map(c => c.key);
+  }, [customVisibleColumns, columns]);
 
   const customerMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -114,7 +112,10 @@ function CartContent() {
   };
 
   const toggleColumn = (key: string) => {
-    setVisibleColumns(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+    setCustomVisibleColumns(prev => {
+      const base = prev ?? columns.map(c => c.key);
+      return base.includes(key) ? base.filter(k => k !== key) : [...base, key];
+    });
   };
 
   const filteredData = useMemo(() => {
@@ -139,10 +140,15 @@ function CartContent() {
     return sortedData.slice(start, start + cartsPerPage);
   }, [sortedData, currentPage, cartsPerPage]);
 
-  // Reset page when filter changes
-  useEffect(() => {
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
     setCurrentPage(1);
-  }, [searchTerm, filterStatus]);
+  };
+
+  const handleFilterChange = (value: string) => {
+    setFilterStatus(value);
+    setCurrentPage(1);
+  };
 
   const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(c => c._id));
   const toggleSelectItem = (id: Id<"carts">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -304,9 +310,9 @@ function CartContent() {
           <div className="flex flex-wrap gap-3 flex-1">
             <div className="relative max-w-xs">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input placeholder="Tìm khách hàng, session..." className="pl-9 w-48" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <Input placeholder="Tìm khách hàng, session..." className="pl-9 w-48" value={searchTerm} onChange={(e) => handleSearchChange(e.target.value)} />
             </div>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => handleFilterChange(e.target.value)}>
               <option value="">Tất cả trạng thái</option>
               <option value="Active">Hoạt động</option>
               <option value="Abandoned">Bỏ dở</option>

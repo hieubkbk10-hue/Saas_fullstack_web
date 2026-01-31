@@ -65,7 +65,7 @@ export default function BenefitsCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    handleSubmit(e, { 
+    void handleSubmit(e, { 
       items: benefitsItems.map(b => ({ icon: b.icon, title: b.title, description: b.description })), 
       style,
       subHeading: config.subHeading,
@@ -195,7 +195,7 @@ export default function BenefitsCreatePage() {
           ))}
           {benefitsItems.length === 0 && (
             <div className="text-center py-8 text-slate-500">
-              <p>Chưa có lợi ích nào. Nhấn "Thêm" để bắt đầu.</p>
+              <p>Chưa có lợi ích nào. Nhấn “Thêm” để bắt đầu.</p>
             </div>
           )}
         </CardContent>

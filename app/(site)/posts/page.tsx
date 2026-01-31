@@ -99,24 +99,22 @@ function PostsContent() {
   // Queries
   const categories = useQuery(api.postCategories.listActive, { limit: 20 });
   
-  // Sync category from URL query param
-  useEffect(() => {
+  const categoryFromUrl = useMemo(() => {
     const catSlug = searchParams.get('catpost');
-    if (catSlug && categories) {
-      const matchedCategory = categories.find(c => c.slug === catSlug);
-      if (matchedCategory) {
-        setSelectedCategory(matchedCategory._id);
-      }
-    }
+    if (!catSlug || !categories) return null;
+    const matchedCategory = categories.find((c) => c.slug === catSlug);
+    return matchedCategory?._id ?? null;
   }, [searchParams, categories]);
+
+  const activeCategory = selectedCategory ?? categoryFromUrl;
   const posts = useQuery(api.posts.searchPublished, {
     search: debouncedSearchQuery || undefined,
-    categoryId: selectedCategory ?? undefined,
+    categoryId: activeCategory ?? undefined,
     sortBy,
     limit: 24,
   });
   const totalCount = useQuery(api.posts.countPublished, {
-    categoryId: selectedCategory ?? undefined,
+    categoryId: activeCategory ?? undefined,
   });
   const featuredPosts = useQuery(api.posts.listFeatured, { limit: 5 });
 

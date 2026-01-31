@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -39,7 +39,6 @@ const PAYMENT_METHODS: Record<PaymentMethod, string> = {
 };
 
 export default function EditOrderPage() {
-  const router = useRouter();
   const params = useParams();
   const orderId = params.id as Id<"orders">;
 
