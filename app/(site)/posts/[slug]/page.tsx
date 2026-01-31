@@ -325,80 +325,86 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
   return (
     <div className={`min-h-screen bg-background pb-12 selection:bg-accent/30 ${notoSans.className}`}>
       <main className="container mx-auto max-w-7xl px-4 py-6 md:py-10 space-y-8 md:space-y-12">
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Link href="/" className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
-              <Home className="h-4 w-4" />
-              <span className="sr-only">Trang chủ</span>
-            </Link>
-            <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-            <Link href="/posts" className="hover:text-foreground transition-colors">
-              Bài viết
-            </Link>
-            <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-            <span className="font-medium text-foreground truncate max-w-[180px] sm:max-w-md">
+        <div className="flex flex-col gap-4">
+          <nav className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+            <ol className="flex items-center gap-2">
+              <li>
+                <Link href="/" className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                  <Home className="h-4 w-4" />
+                  <span className="sr-only">Trang chủ</span>
+                </Link>
+              </li>
+              <li><ChevronRight className="h-4 w-4 text-muted-foreground/50" /></li>
+              <li>
+                <Link href="/posts" className="hover:text-foreground transition-colors">
+                  Bài viết
+                </Link>
+              </li>
+              <li><ChevronRight className="h-4 w-4 text-muted-foreground/50" /></li>
+              <li className="font-medium text-foreground truncate max-w-[200px] md:max-w-[360px]">
+                {post.title}
+              </li>
+            </ol>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="inline-flex h-11 items-center gap-2 rounded-md border border-input bg-background px-4 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label="Copy link"
+            >
+              {isCopied ? <Check className="h-4 w-4" /> : <LinkIcon className="h-4 w-4" />}
+              {isCopied ? 'Đã copy' : 'Copy link'}
+            </button>
+          </nav>
+
+          <section className="max-w-7xl mx-auto w-full space-y-4">
+            <div className="flex items-center justify-center md:justify-start">
+              <span
+                className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
+                style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderColor: `${brandColor}25` }}
+              >
+                {post.categoryName}
+              </span>
+            </div>
+
+            <h1 className="text-[clamp(1.75rem,4vw,3rem)] font-semibold tracking-tight text-foreground leading-[1.2] text-balance">
               {post.title}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="inline-flex items-center gap-2 rounded-full border border-input bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
-            aria-label="Copy link"
-          >
-            {isCopied ? <Check className="h-3.5 w-3.5" /> : <LinkIcon className="h-3.5 w-3.5" />}
-            {isCopied ? 'Đã copy' : 'Copy link'}
-          </button>
+            </h1>
+
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <time className="font-medium">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
+              </div>
+              <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span className="font-medium">{readingTime} phút đọc</span>
+              </div>
+              <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                <span className="font-medium">{post.views.toLocaleString()} lượt xem</span>
+              </div>
+            </div>
+          </section>
         </div>
 
-        <section className="max-w-7xl mx-auto text-center space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="flex items-center justify-center">
-            <span
-              className="inline-flex items-center rounded-full border px-3 py-1 text-xs uppercase tracking-widest"
-              style={{ backgroundColor: `${brandColor}15`, color: brandColor, borderColor: `${brandColor}30` }}
-            >
-              {post.categoryName}
-            </span>
-          </div>
-
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.15]">
-            {post.title}
-          </h1>
-
-          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-5 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <time className="font-medium">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
-            </div>
-            <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              <span className="font-medium">{readingTime} phút đọc</span>
-            </div>
-            <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
-            <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              <span className="font-medium">{post.views.toLocaleString()} lượt xem</span>
-            </div>
-          </div>
-        </section>
-
         {post.thumbnail && (
-          <section className="relative overflow-hidden rounded-2xl bg-muted aspect-[16/9] md:aspect-[21/9] max-w-6xl mx-auto">
+          <section className="relative overflow-hidden rounded-2xl bg-muted aspect-[16/9] md:aspect-[21/9] max-w-7xl mx-auto">
             <Image
               src={post.thumbnail}
               alt={post.title}
               fill
               sizes="(max-width: 1024px) 100vw, 1024px"
-              className="object-cover transition-transform duration-1000 hover:scale-105"
+              className="object-cover transition-transform duration-300 hover:scale-105"
             />
           </section>
         )}
 
-        <article className="max-w-7xl mx-auto space-y-5">
+        <article className="max-w-7xl mx-auto space-y-6">
           {showExcerpt && post.excerpt && (
             <p
-              className="text-xl md:text-2xl leading-relaxed text-foreground/90 font-medium font-sans border-l-4 pl-5 py-1"
+              className="text-[clamp(1.125rem,2vw,1.5rem)] leading-relaxed text-foreground/90 font-medium border-l-4 pl-4"
               style={{ borderColor: brandColor }}
             >
               {post.excerpt}
@@ -409,7 +415,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
             <div dangerouslySetInnerHTML={{ __html: post.content }} />
           </div>
 
-          <div className="pt-5 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="pt-6 border-t flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
               <span
                 className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-normal"
@@ -422,7 +428,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
             <button
               type="button"
               onClick={handleCopyLink}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-muted h-9 px-4 shrink-0"
+              className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-muted px-4 shrink-0"
             >
               <LinkIcon className="h-4 w-4" />
               {isCopied ? 'Đã copy' : 'Copy link bài viết'}
@@ -444,33 +450,36 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
         {relatedPosts.length > 0 && (
           <section className="pt-8 border-t">
             <div className="max-w-7xl mx-auto">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-xl md:text-2xl font-bold tracking-tight">Bài viết cùng chủ đề</h2>
-                <Link href="/posts" className="text-muted-foreground hover:text-foreground">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl md:text-2xl font-semibold tracking-tight">Bài viết cùng chủ đề</h2>
+                <Link href="/posts" className="text-sm text-muted-foreground hover:text-foreground">
                   Xem thêm
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {relatedPosts.map((p) => (
-                  <Link key={p._id} href={`/posts/${p.slug}`} className="group overflow-hidden border-none shadow-none bg-transparent hover:bg-muted/30 transition-all duration-300 p-0 cursor-pointer rounded-xl">
-                    <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted mb-3 relative">
+                  <Link
+                    key={p._id}
+                    href={`/posts/${p.slug}`}
+                    className="group rounded-lg border border-border bg-background p-4 shadow-sm hover:bg-muted/40 transition-colors duration-200"
+                  >
+                    <div className="aspect-[4/3] rounded-md overflow-hidden bg-muted mb-3 relative">
                       {p.thumbnail ? (
                         <Image
                           src={p.thumbnail}
                           alt={p.title}
                           fill
                           sizes="(max-width: 768px) 100vw, 33vw"
-                          className="object-cover transition-transform duration-700 group-hover:scale-110"
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center text-muted-foreground">
                           <FileText className="h-5 w-5" />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                    <h3 className="font-semibold text-base md:text-lg text-foreground group-hover:opacity-80 transition-colors leading-snug line-clamp-2">
+                    <h3 className="text-base font-semibold text-foreground leading-snug line-clamp-2">
                       {p.title}
                     </h3>
                     <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
