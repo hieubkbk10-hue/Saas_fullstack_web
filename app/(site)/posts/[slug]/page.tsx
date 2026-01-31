@@ -7,7 +7,7 @@ import { Noto_Sans } from 'next/font/google';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { FileText, Calendar, Eye, ArrowLeft, Share2, Clock, ChevronRight, Home, Check, Link as LinkIcon, ArrowRight } from 'lucide-react';
+import { FileText, Calendar, Eye, ArrowLeft, Share2, Clock, ChevronRight, Home, Check, Link as LinkIcon } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 
 const notoSans = Noto_Sans({
@@ -486,137 +486,137 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background selection:bg-accent/30 text-foreground pb-20">
+    <div className="min-h-screen bg-background selection:bg-accent/30 text-foreground pb-16">
       <nav className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b">
-        <div className="container max-w-7xl mx-auto h-16 flex items-center justify-between px-4">
+        <div className="container max-w-7xl mx-auto h-14 flex items-center justify-between px-4">
           <Link
             href="/posts"
-            className="group -ml-2 text-muted-foreground hover:text-foreground inline-flex items-center h-9 px-3"
+            className="group -ml-2 text-muted-foreground hover:text-foreground inline-flex items-center h-10 px-3"
             aria-label="Quay lại"
           >
-            <ArrowLeft className="w-5 h-5 mr-2 transition-transform group-hover:-translate-x-1" />
-            <span className="font-medium">Bài viết</span>
+            <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
+            <span className="text-sm font-medium">Danh sách</span>
           </Link>
 
           <button
             type="button"
             onClick={handleShare}
             aria-label="Chia sẻ"
-            className="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-accent"
+            className="inline-flex items-center justify-center h-11 w-11 rounded-md border border-input hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
-            {isCopied ? <Check className="w-5 h-5 text-muted-foreground" /> : <Share2 className="w-5 h-5 text-muted-foreground" />}
+            {isCopied ? <Check className="w-4 h-4 text-muted-foreground" /> : <Share2 className="w-4 h-4 text-muted-foreground" />}
           </button>
         </div>
       </nav>
 
-      <main className="container max-w-7xl mx-auto px-4 py-8 md:py-12 animate-fade-in">
-        <header className="text-center mb-10 space-y-6 max-w-3xl mx-auto">
-          <span
-            className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.2em] font-medium"
-            style={{ backgroundColor: `${brandColor}15`, color: brandColor, borderColor: `${brandColor}30` }}
-          >
-            {post.categoryName}
-          </span>
+      <main className="container max-w-7xl mx-auto px-4 py-6 md:py-10">
+        <div className="grid gap-8 md:gap-12 md:grid-cols-[minmax(0,1fr)_280px]">
+          <article className="min-w-0 space-y-6">
+            <header className="space-y-3">
+              <span
+                className="inline-flex items-center text-xs font-medium uppercase tracking-wider"
+                style={{ color: brandColor }}
+              >
+                {post.categoryName}
+              </span>
+              <div className="h-[2px] w-10" style={{ backgroundColor: brandColor }} />
+              <h1 className="text-[clamp(1.75rem,4vw,3rem)] font-semibold leading-[1.2] tracking-tight text-foreground text-balance">
+                {post.title}
+              </h1>
+              {post.excerpt && (
+                <p className="text-[clamp(1rem,2vw,1.25rem)] text-muted-foreground leading-relaxed">
+                  {post.excerpt}
+                </p>
+              )}
+            </header>
 
-          <h1 className="text-[clamp(2rem,4.5vw,3rem)] font-extrabold leading-[1.1] tracking-tight text-foreground text-balance">
-            {post.title}
-          </h1>
+            {post.thumbnail && (
+              <div className="relative w-full aspect-[16/9] overflow-hidden rounded-xl bg-muted shadow-sm border">
+                <Image
+                  src={post.thumbnail}
+                  alt={post.title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 1024px"
+                  className="object-cover transition-transform duration-300 hover:scale-105"
+                />
+              </div>
+            )}
 
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground font-medium">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-muted-foreground/70" />
-              <time>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
+            <div className="prose prose-slate prose-lg max-w-none text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-img:rounded-lg">
+              <div dangerouslySetInnerHTML={{ __html: post.content }} />
             </div>
-            <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-muted-foreground/70" />
-              <span>{readingTime} phút đọc</span>
-            </div>
-            <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-            <div className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-muted-foreground/70" />
-              <span>{post.views.toLocaleString()} lượt xem</span>
-            </div>
-          </div>
-        </header>
+          </article>
 
-        {post.thumbnail && (
-          <figure className="relative w-full max-w-6xl mx-auto aspect-[21/9] mb-12 overflow-hidden rounded-2xl shadow-sm border bg-muted group">
-            <Image
-              src={post.thumbnail}
-              alt={post.title}
-              fill
-              sizes="(max-width: 1024px) 100vw, 1024px"
-              className="object-cover transition-transform duration-700 hover:scale-105"
-            />
-          </figure>
-        )}
+          <aside className="space-y-4 md:sticky md:top-24 h-fit">
+            <div className="rounded-lg border bg-background p-4 shadow-sm">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Thông tin</div>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <time>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  <span>{readingTime} phút đọc</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4" />
+                  <span>{post.views.toLocaleString()} lượt xem</span>
+                </div>
+              </div>
+            </div>
 
-        <article className="prose prose-slate prose-lg md:prose-xl max-w-3xl mx-auto text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-img:rounded-xl">
-          {post.excerpt && (
-            <p
-              className="lead text-xl md:text-2xl text-foreground/90 font-medium leading-relaxed mb-10 border-l-4 pl-6"
-              style={{ borderColor: brandColor }}
+            <Link
+              href="/posts"
+              className="inline-flex h-11 items-center justify-center rounded-md border border-input bg-background text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              {post.excerpt}
-            </p>
-          )}
-          <div dangerouslySetInnerHTML={{ __html: post.content }} />
-        </article>
-
-        <div className="h-24" />
+              Quay lại danh sách
+            </Link>
+          </aside>
+        </div>
 
         {relatedPosts.length > 0 && (
-          <section className="border-t pt-16">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground">Bài viết liên quan</h2>
-              <Link href="/posts" className="hidden sm:flex items-center gap-1 text-muted-foreground hover:opacity-80">
-                Xem tất cả <ArrowRight className="w-4 h-4" />
+          <section className="mt-10 md:mt-12">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg md:text-xl font-semibold text-foreground">Bài viết liên quan</h2>
+              <Link href="/posts" className="text-sm font-medium" style={{ color: brandColor }}>
+                Xem thêm
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="divide-y rounded-lg border bg-background">
               {relatedPosts.map((p) => (
                 <Link
                   key={p._id}
                   href={`/posts/${p.slug}`}
-                  className="group border-none shadow-none bg-transparent hover:bg-muted/50 transition-colors p-0 overflow-hidden cursor-pointer rounded-xl"
+                  className="group flex items-center gap-4 p-4 hover:bg-muted/40 transition-colors"
                 >
-                  <div className="aspect-[4/3] rounded-xl overflow-hidden mb-4 bg-muted relative">
+                  <div className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                     {p.thumbnail ? (
                       <Image
                         src={p.thumbnail}
                         alt={p.title}
                         fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        sizes="96px"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-                        <FileText className="w-5 h-5" />
+                        <FileText className="w-4 h-4" />
                       </div>
                     )}
                   </div>
-                  <div className="p-2">
-                    <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('vi-VN') : ''}
-                    </div>
-                    <h3 className="text-lg font-bold text-foreground leading-snug group-hover:opacity-80 transition-colors mb-2">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
                       {p.title}
                     </h3>
+                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="w-3 h-3" />
+                      <span>{p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
+                    </div>
                   </div>
                 </Link>
               ))}
-            </div>
-
-            <div className="mt-10 text-center sm:hidden">
-              <Link
-                href="/posts"
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full"
-              >
-                Xem tất cả bài viết
-              </Link>
             </div>
           </section>
         )}
