@@ -1853,6 +1853,8 @@ export const seedSettingsModule = mutation({
         { group: "contact", key: "contact_phone", value: "0901234567" },
         { group: "contact", key: "contact_address", value: "123 Nguyễn Huệ, Quận 1, TP.HCM" },
         { group: "contact", key: "contact_hotline", value: "1900 1234" },
+        { group: "contact", key: "contact_zalo", value: "0901234567" },
+        { group: "contact", key: "contact_messenger", value: "" },
         
         // SEO settings
         { group: "seo", key: "seo_title", value: "VietAdmin - Hệ thống quản trị website" },
@@ -1913,6 +1915,8 @@ export const seedSettingsModule = mutation({
         { enabled: true, fieldKey: "contact_phone", group: "contact", isSystem: false, linkedFeature: "enableContact", moduleKey: "settings", name: "Số điện thoại", order: 7, required: false, type: "phone" as const },
         { enabled: true, fieldKey: "contact_address", group: "contact", isSystem: false, linkedFeature: "enableContact", moduleKey: "settings", name: "Địa chỉ", order: 8, required: false, type: "textarea" as const },
         { enabled: true, fieldKey: "contact_hotline", group: "contact", isSystem: false, linkedFeature: "enableContact", moduleKey: "settings", name: "Hotline", order: 9, required: false, type: "text" as const },
+        { enabled: true, fieldKey: "contact_zalo", group: "contact", isSystem: false, linkedFeature: "enableContact", moduleKey: "settings", name: "Zalo", order: 10, required: false, type: "text" as const },
+        { enabled: true, fieldKey: "contact_messenger", group: "contact", isSystem: false, linkedFeature: "enableContact", moduleKey: "settings", name: "Facebook Messenger", order: 11, required: false, type: "text" as const },
         // SEO fields
         { enabled: true, fieldKey: "seo_title", group: "seo", isSystem: false, linkedFeature: "enableSEO", moduleKey: "settings", name: "Meta Title", order: 10, required: false, type: "text" as const },
         { enabled: true, fieldKey: "seo_description", group: "seo", isSystem: false, linkedFeature: "enableSEO", moduleKey: "settings", name: "Meta Description", order: 11, required: false, type: "textarea" as const },

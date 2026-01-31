@@ -6,7 +6,8 @@ import Image from 'next/image';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { ArrowLeft, ArrowRight, Briefcase, Calendar, CheckCircle2, ChevronRight, Clock, Copy, Eye, MessageCircle, Phone, Star } from 'lucide-react';
+import { QuickContactButtons, QuickContactCompact } from '@/components/site/QuickContact';
+import { ArrowLeft, ArrowRight, Briefcase, Calendar, CheckCircle2, ChevronRight, Clock, Copy, Eye, Star } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
 type ServiceDetailStyle = 'classic' | 'modern' | 'minimal';
@@ -246,21 +247,12 @@ function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: S
                   </div>
                 )}
               </div>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <button
-                  className="w-full min-h-11 px-6 rounded-xl text-white font-semibold transition-all hover:shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
-                  style={{ backgroundColor: brandColor }}
-                >
-                  <Phone size={18} />
-                  Liên hệ tư vấn
-                </button>
-                <button
-                  className="w-full min-h-11 px-6 rounded-xl font-medium border transition-colors hover:bg-slate-50 flex items-center justify-center gap-2"
-                  style={{ borderColor: `${brandColor}80`, color: brandColor }}
-                >
-                  <MessageCircle size={18} />
-                  Chat ngay
-                </button>
+              <div className="mt-5">
+                <QuickContactButtons 
+                  serviceName={service.title}
+                  brandColor={brandColor}
+                  variant="horizontal"
+                />
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -408,19 +400,11 @@ function ModernStyle({ service, brandColor, relatedServices, enabledFields }: St
                   </p>
                 </div>
               )}
-              <div className="flex flex-wrap gap-3">
-                <button 
-                  className="px-8 py-4 rounded-full text-white font-semibold text-lg transition-all hover:shadow-xl hover:scale-105 flex items-center gap-2"
-                  style={{ backgroundColor: brandColor }}
-                >
-                  Bắt đầu ngay
-                  <ArrowRight size={20} />
-                </button>
-                <button className="px-8 py-4 rounded-full font-semibold text-lg border-2 bg-white/50 backdrop-blur-sm transition-all hover:bg-white flex items-center gap-2" style={{ borderColor: brandColor, color: brandColor }}>
-                  <Phone size={20} />
-                  Tư vấn miễn phí
-                </button>
-              </div>
+              <QuickContactButtons 
+                serviceName={service.title}
+                brandColor={brandColor}
+                variant="horizontal"
+              />
             </div>
 
             {/* Stats Row */}
@@ -467,16 +451,12 @@ function ModernStyle({ service, brandColor, relatedServices, enabledFields }: St
           <p className="text-slate-600 mb-6 max-w-md mx-auto">
             Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết cho dự án của bạn.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button 
-              className="px-8 py-4 rounded-full text-white font-semibold transition-all hover:shadow-lg hover:scale-105"
-              style={{ backgroundColor: brandColor }}
-            >
-              Nhận báo giá miễn phí
-            </button>
-            <button className="px-8 py-4 rounded-full font-semibold border-2 transition-colors hover:bg-white" style={{ borderColor: brandColor, color: brandColor }}>
-              Xem portfolio
-            </button>
+          <div className="flex justify-center">
+            <QuickContactButtons 
+              serviceName={service.title}
+              brandColor={brandColor}
+              variant="horizontal"
+            />
           </div>
         </div>
       </section>
@@ -653,12 +633,11 @@ function MinimalStyle({ service, brandColor, relatedServices, enabledFields }: S
           
           <p className="text-slate-500 mb-6">Quan tâm đến dịch vụ này?</p>
           
-          <button 
-            className="px-8 py-4 rounded-full text-white font-semibold transition-all hover:shadow-lg hover:scale-105"
-            style={{ backgroundColor: brandColor }}
-          >
-            Liên hệ tư vấn
-          </button>
+          <QuickContactCompact 
+            serviceName={service.title}
+            brandColor={brandColor}
+            className="max-w-xs mx-auto"
+          />
         </div>
 
         {/* Related Services */}
