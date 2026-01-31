@@ -994,22 +994,22 @@ function DetailPreview({ style, brandColor, device }: { style: ProductsDetailSty
   if (style === 'modern') {
     return (
       <div className="bg-white">
-        <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')} style={{ backgroundColor: `${brandColor}08` }}>
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: brandColor }}>Điện thoại</span>
-          <h1 className={cn("font-bold text-slate-900 leading-tight mt-1", device === 'mobile' ? 'text-lg' : 'text-xl')}>
+        <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')} style={{ backgroundColor: `${brandColor}06` }}>
+          <span className="inline-flex items-center rounded-full bg-white/80 px-3 py-1 text-xs font-semibold" style={{ color: brandColor }}>Điện thoại</span>
+          <h1 className={cn("font-bold text-slate-900 leading-tight mt-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>
             iPhone 15 Pro Max 256GB
           </h1>
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-2xl font-bold" style={{ color: brandColor }}>{formatPrice(27_990_000)}</span>
-            <span className="text-sm text-slate-400 line-through">{formatPrice(29_990_000)}</span>
-            <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-medium rounded">-7%</span>
+            <span className="text-xl font-bold" style={{ color: brandColor }}>{formatPrice(27_990_000)}</span>
+            <span className="text-xs text-slate-400 line-through">{formatPrice(29_990_000)}</span>
+            <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-semibold rounded-full">-7%</span>
           </div>
           <button className="mt-4 px-6 py-2.5 rounded-full text-white text-sm font-medium flex items-center gap-2" style={{ backgroundColor: brandColor }}>
             <ShoppingCart size={16} /> Mua ngay
           </button>
         </div>
         <div className="p-4">
-          <div className="aspect-[16/9] bg-slate-100 rounded-lg flex items-center justify-center">
+          <div className="aspect-[4/3] bg-slate-100 rounded-xl flex items-center justify-center">
             <Package size={32} className="text-slate-300" />
           </div>
         </div>
@@ -1025,18 +1025,18 @@ function DetailPreview({ style, brandColor, device }: { style: ProductsDetailSty
   return (
     <div className={cn("p-6", device === 'mobile' ? 'p-4' : '')}>
       <div className="text-center mb-4">
-        <span className="text-xs font-medium uppercase tracking-wider" style={{ color: brandColor }}>Điện thoại</span>
+        <span className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">Điện thoại</span>
         <h1 className="font-bold text-lg mt-2">iPhone 15 Pro Max 256GB</h1>
         <div className="flex items-center justify-center gap-2 mt-2">
           <span className="text-xl font-bold" style={{ color: brandColor }}>{formatPrice(27_990_000)}</span>
           <span className="text-sm text-slate-400 line-through">{formatPrice(29_990_000)}</span>
         </div>
       </div>
-      <div className="aspect-square bg-slate-100 rounded-lg mb-4 flex items-center justify-center max-w-xs mx-auto">
+      <div className="aspect-[4/3] bg-slate-100 rounded-xl mb-4 flex items-center justify-center max-w-sm mx-auto">
         <Package size={48} className="text-slate-300" />
       </div>
       <div className="text-center">
-        <button className="px-8 py-3 rounded-full text-white font-medium" style={{ backgroundColor: brandColor }}>
+        <button className="min-h-11 px-8 rounded-full text-white font-semibold" style={{ backgroundColor: brandColor }}>
           Thêm vào giỏ hàng
         </button>
       </div>

@@ -291,24 +291,24 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: St
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative overflow-hidden" style={{ backgroundColor: `${brandColor}08` }}>
-        <div className="absolute inset-0 opacity-30" style={{ backgroundImage: `radial-gradient(circle at 20% 50%, ${brandColor}20 0%, transparent 50%), radial-gradient(circle at 80% 50%, ${brandColor}15 0%, transparent 50%)` }} />
+      <section className="relative overflow-hidden" style={{ backgroundColor: `${brandColor}06` }}>
+        <div className="absolute inset-0 opacity-25" style={{ backgroundImage: `radial-gradient(circle at 20% 45%, ${brandColor}18 0%, transparent 55%), radial-gradient(circle at 80% 55%, ${brandColor}12 0%, transparent 60%)` }} />
         
         <div className="relative max-w-6xl mx-auto px-4 py-12 md:py-20">
-          <div className="max-w-2xl">
-            <Link href={`/products?category=${product.categorySlug}`} className="inline-block px-4 py-1.5 bg-white/80 backdrop-blur-sm text-sm font-medium rounded-full shadow-sm mb-6" style={{ color: brandColor }}>
+          <div className="max-w-3xl space-y-6">
+            <Link href={`/products?category=${product.categorySlug}`} className="inline-flex items-center px-4 py-1.5 bg-white/80 backdrop-blur-sm text-sm font-medium rounded-full shadow-sm" style={{ color: brandColor }}>
               {product.categoryName}
             </Link>
 
-            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight mb-6">{product.name}</h1>
+            <h1 className="text-3xl md:text-5xl font-bold text-slate-900 leading-tight">{product.name}</h1>
 
             {showPrice && (
-              <div className="flex flex-wrap items-center gap-4 mb-8">
-                <span className="text-4xl font-bold" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-3xl md:text-4xl font-bold" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>
                 {showSalePrice && product.salePrice && (
                   <>
-                    <span className="text-xl text-slate-400 line-through">{formatPrice(product.price)}</span>
-                    <span className="px-3 py-1 bg-red-500 text-white text-sm font-bold rounded-full">-{discountPercent}%</span>
+                    <span className="text-lg text-slate-400 line-through">{formatPrice(product.price)}</span>
+                    <span className="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full">-{discountPercent}%</span>
                   </>
                 )}
               </div>
@@ -325,20 +325,26 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: St
                 </button>
               </div>
 
-              <button className={`px-8 py-4 rounded-full text-white font-semibold text-lg flex items-center gap-2 transition-all ${inStock ? 'hover:shadow-xl hover:scale-105' : 'opacity-50 cursor-not-allowed'}`} style={{ backgroundColor: brandColor }} disabled={!inStock}>
-                <ShoppingCart size={20} />
+              <button className={`min-h-11 px-8 rounded-full text-white font-semibold text-base flex items-center gap-2 transition-all ${inStock ? 'hover:shadow-xl hover:scale-105' : 'opacity-50 cursor-not-allowed'}`} style={{ backgroundColor: brandColor }} disabled={!inStock}>
+                <ShoppingCart size={18} />
                 {inStock ? 'Mua ngay' : 'Hết hàng'}
               </button>
             </div>
 
             {showStock && (
-              <div className="flex items-center gap-2 mt-6">
+              <div className="flex flex-wrap items-center gap-2">
                 {product.stock > 10 ? (
-                  <><Check size={18} className="text-green-500" /><span className="text-green-600">Còn hàng</span></>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-600">
+                    <Check size={14} className="text-emerald-500" /> Còn hàng
+                  </span>
                 ) : (product.stock > 0 ? (
-                  <><span className="w-2 h-2 bg-orange-500 rounded-full" /><span className="text-orange-600">Chỉ còn {product.stock} sản phẩm</span></>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-sm text-orange-600">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full" /> Chỉ còn {product.stock} sản phẩm
+                  </span>
                 ) : (
-                  <><span className="w-2 h-2 bg-red-500 rounded-full" /><span className="text-red-600">Hết hàng</span></>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-sm text-red-600">
+                    <span className="w-2 h-2 bg-red-500 rounded-full" /> Hết hàng
+                  </span>
                 ))}
               </div>
             )}
@@ -348,8 +354,8 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: St
 
       {/* Product Image */}
       {images.length > 0 && (
-        <div className="max-w-4xl mx-auto px-4 -mt-8 relative z-10">
-          <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[16/10]">
+        <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-10">
+          <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[4/3]">
             <Image src={images[0]} alt={product.name} fill sizes="(max-width: 1024px) 100vw, 800px" className="object-cover" />
           </div>
         </div>
@@ -357,19 +363,19 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: St
 
       {/* Content */}
       {showDescription && product.description && (
-        <section className="max-w-3xl mx-auto px-4 py-16">
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Mô tả sản phẩm</h2>
+        <section className="max-w-3xl mx-auto px-4 py-14">
+          <h2 className="text-2xl font-bold text-slate-900 mb-5">Mô tả sản phẩm</h2>
           <div className="prose prose-lg prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: product.description }} />
         </section>
       )}
 
       {/* CTA Section */}
-      <div className="max-w-3xl mx-auto px-4 pb-16">
-        <div className="p-8 rounded-3xl text-center" style={{ backgroundColor: `${brandColor}08` }}>
-          <h3 className="text-2xl font-bold text-slate-900 mb-3">Sẵn sàng sở hữu?</h3>
-          <p className="text-slate-600 mb-6">Đặt hàng ngay để nhận ưu đãi đặc biệt.</p>
-          <button className="px-8 py-4 rounded-full text-white font-semibold transition-all hover:shadow-lg hover:scale-105 flex items-center gap-2 mx-auto" style={{ backgroundColor: brandColor }}>
-            Thêm vào giỏ hàng <ArrowRight size={18} />
+      <div className="max-w-3xl mx-auto px-4 pb-14">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
+          <h3 className="text-xl md:text-2xl font-bold text-slate-900">Sẵn sàng sở hữu?</h3>
+          <p className="text-slate-600 mt-2 mb-5">Đặt hàng ngay để nhận ưu đãi đặc biệt.</p>
+          <button className="min-h-11 px-8 rounded-full text-white font-semibold transition-all hover:shadow-lg hover:scale-105 flex items-center gap-2 mx-auto" style={{ backgroundColor: brandColor }}>
+            Thêm vào giỏ hàng <ArrowRight size={16} />
           </button>
         </div>
       </div>
@@ -379,7 +385,7 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: St
         <RelatedProductsSection products={relatedProducts} categorySlug={product.categorySlug} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} />
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8 border-t border-slate-100">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         <Link href="/products" className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80" style={{ color: brandColor }}>
           <ArrowLeft size={16} /> Quay lại danh sách sản phẩm
         </Link>
@@ -404,16 +410,16 @@ function MinimalStyle({ product, brandColor, relatedProducts, enabledFields }: S
 
   return (
     <div className="min-h-screen bg-white">
-      <article className="max-w-2xl mx-auto px-4 py-12 md:py-20">
+      <article className="max-w-5xl mx-auto px-4 py-12 md:py-20">
         {/* Back */}
-        <Link href="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-600 text-sm mb-12 transition-colors">
+        <Link href="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-600 text-sm mb-10 transition-colors">
           <ArrowLeft size={16} /> Tất cả sản phẩm
         </Link>
 
         {/* Header */}
-        <header className="text-center mb-12">
-          <span className="text-sm font-medium uppercase tracking-wider" style={{ color: brandColor }}>{product.categoryName}</span>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mt-4 mb-6">{product.name}</h1>
+        <header className="text-center mb-12 space-y-4">
+          <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">{product.categoryName}</span>
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-900">{product.name}</h1>
           
           {showPrice && (
             <div className="flex items-center justify-center gap-3">
@@ -428,8 +434,8 @@ function MinimalStyle({ product, brandColor, relatedProducts, enabledFields }: S
         {/* Image */}
         {images.length > 0 && (
           <figure className="mb-12">
-            <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 max-w-md mx-auto">
-              <Image src={images[0]} alt={product.name} fill sizes="(max-width: 768px) 100vw, 400px" className="object-cover" />
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 max-w-2xl mx-auto shadow-sm">
+              <Image src={images[0]} alt={product.name} fill sizes="(max-width: 768px) 100vw, 600px" className="object-cover" />
             </div>
           </figure>
         )}
@@ -446,7 +452,7 @@ function MinimalStyle({ product, brandColor, relatedProducts, enabledFields }: S
             </button>
           </div>
 
-          <button className={`px-12 py-4 rounded-full text-white font-semibold transition-all ${inStock ? 'hover:shadow-lg hover:scale-105' : 'opacity-50 cursor-not-allowed'}`} style={{ backgroundColor: brandColor }} disabled={!inStock}>
+          <button className={`min-h-11 px-12 rounded-full text-white font-semibold transition-all ${inStock ? 'hover:shadow-lg hover:scale-105' : 'opacity-50 cursor-not-allowed'}`} style={{ backgroundColor: brandColor }} disabled={!inStock}>
             {inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
           </button>
 
@@ -457,16 +463,16 @@ function MinimalStyle({ product, brandColor, relatedProducts, enabledFields }: S
 
         {/* Description */}
         {showDescription && product.description && (
-          <div className="prose prose-slate max-w-none text-center" dangerouslySetInnerHTML={{ __html: product.description }} />
+          <div className="prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: product.description }} />
         )}
 
         {/* Related */}
         {relatedProducts.length > 0 && (
-          <div className="mt-20 pt-12 border-t border-slate-100">
-            <h3 className="text-xs font-medium uppercase tracking-wider text-slate-400 mb-8 text-center">Có thể bạn quan tâm</h3>
-            <div className="space-y-1">
+          <div className="mt-16">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-6 text-center">Có thể bạn quan tâm</h3>
+            <div className="space-y-2">
               {relatedProducts.map((p, index) => (
-                <Link key={p._id} href={`/products/${p.slug}`} className="group flex items-center justify-between py-4 border-b border-slate-100 hover:border-slate-300 transition-colors">
+                <Link key={p._id} href={`/products/${p.slug}`} className="group flex items-center justify-between gap-4 rounded-xl border border-slate-100 px-4 py-3 hover:border-slate-200 hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-4">
                     <span className="text-sm text-slate-300 font-mono">{String(index + 1).padStart(2, '0')}</span>
                     <h4 className="font-medium text-slate-900 group-hover:opacity-70 transition-opacity">{p.name}</h4>
