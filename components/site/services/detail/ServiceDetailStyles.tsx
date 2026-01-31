@@ -65,6 +65,23 @@ function FallbackServiceThumb({ title, brandColor }: { title: string; brandColor
   );
 }
 
+function RelatedServiceThumb({ title, thumbnail, brandColor, size }: { title: string; thumbnail?: string; brandColor: string; size: 'small' | 'large' }) {
+  const [hasError, setHasError] = useState(false);
+  if (!thumbnail || hasError) {
+    return <FallbackServiceThumb title={title} brandColor={brandColor} />;
+  }
+  return (
+    <Image
+      src={thumbnail}
+      alt={title}
+      fill
+      sizes={size === 'small' ? '64px' : '(max-width: 768px) 100vw, 33vw'}
+      className={size === 'small' ? "object-cover group-hover:scale-110 transition-transform duration-300" : "object-cover group-hover:scale-110 transition-transform duration-500"}
+      onError={() =>{  setHasError(true); }}
+    />
+  );
+}
+
 // STYLE 1: CLASSIC - Professional service page with sticky CTA sidebar
 export function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: StyleProps) {
   const showPrice = enabledFields.has('price');
@@ -223,11 +240,7 @@ export function ClassicStyle({ service, brandColor, relatedServices, enabledFiel
                         className="flex gap-4 group"
                       >
                         <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shrink-0 relative">
-                          {s.thumbnail ? (
-                            <Image src={s.thumbnail} alt={s.title} fill sizes="64px" className="object-cover group-hover:scale-110 transition-transform duration-300" />
-                          ) : (
-                            <FallbackServiceThumb title={s.title} brandColor={brandColor} />
-                          )}
+                          <RelatedServiceThumb title={s.title} thumbnail={s.thumbnail} brandColor={brandColor} size="small" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-slate-900 text-sm line-clamp-2 group-hover:opacity-70 transition-opacity">
@@ -375,17 +388,7 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
                   className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
                 >
                   <div className="aspect-[16/10] overflow-hidden bg-slate-100 relative">
-                    {s.thumbnail ? (
-                      <Image
-                        src={s.thumbnail}
-                        alt={s.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                    ) : (
-                      <FallbackServiceThumb title={s.title} brandColor={brandColor} />
-                    )}
+                    <RelatedServiceThumb title={s.title} thumbnail={s.thumbnail} brandColor={brandColor} size="large" />
                   </div>
                   <div className="p-5">
                     <h3 className="font-semibold text-slate-900 mb-2 group-hover:opacity-70 transition-opacity">
