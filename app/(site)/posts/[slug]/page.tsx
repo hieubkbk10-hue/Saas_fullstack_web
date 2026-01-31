@@ -413,16 +413,6 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
             <div dangerouslySetInnerHTML={{ __html: post.content }} />
           </div>
 
-          <div className="flex flex-col items-center justify-center py-8 gap-4">
-            <Link
-              href="/posts"
-              className="group font-semibold px-8 h-12 rounded-full shadow-lg transition-all hover:-translate-y-0.5 inline-flex items-center justify-center"
-              style={{ backgroundColor: brandColor, color: '#fff' }}
-            >
-              Tất cả bài viết
-              <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-          </div>
         </article>
 
         {relatedPosts.length > 0 && (
@@ -430,7 +420,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl md:text-2xl font-semibold tracking-tight">Bài viết cùng chủ đề</h2>
-                <Link href="/posts" className="text-sm text-muted-foreground hover:text-foreground">
+                <Link href="/posts" className="text-sm font-medium" style={{ color: brandColor }}>
                   Xem thêm
                 </Link>
               </div>
