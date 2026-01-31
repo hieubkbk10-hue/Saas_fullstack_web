@@ -177,8 +177,8 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
           </ol>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          <article className="lg:col-span-8 space-y-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <article className="lg:col-span-8 space-y-8">
             <header className="space-y-4">
               <div className="flex items-center gap-2">
                 <span
@@ -211,7 +211,7 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
               </div>
             </header>
 
-            <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted shadow-sm">
+            <div className="aspect-video w-full overflow-hidden rounded-xl bg-muted/60 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
               {post.thumbnail ? (
                 <img
                   src={post.thumbnail}
@@ -255,21 +255,21 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
             </div>
           </article>
 
-          <aside className="lg:col-span-4 space-y-8">
+          <aside className="lg:col-span-4 space-y-6">
             {relatedPosts.length > 0 && (
-              <div className="h-fit sticky top-24 rounded-lg border border-border/60 bg-background">
+              <div className="h-fit sticky top-24 rounded-lg bg-muted/30">
                 <div className="flex flex-col space-y-1.5 p-6 px-0 sm:px-6">
-                  <h3 className="text-lg font-semibold">Bài viết liên quan</h3>
+                  <h3 className="text-base font-semibold">Bài viết liên quan</h3>
                 </div>
-                <div className="p-6 pt-0 px-0 sm:px-6 gap-4 flex flex-col">
+                <div className="p-6 pt-0 px-0 sm:px-6 gap-3 flex flex-col">
                   {relatedPosts.map((p) => (
-                    <Link key={p._id} href={`/posts/${p.slug}`} className="group flex gap-4 items-start">
-                      <div className="relative h-20 w-24 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+                    <Link key={p._id} href={`/posts/${p.slug}`} className="group flex gap-3 items-start">
+                      <div className="relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-md bg-muted/60">
                         {p.thumbnail ? (
                           <img
                             src={p.thumbnail}
                             alt={p.title}
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                             loading="lazy"
                           />
                         ) : (
