@@ -7,6 +7,7 @@ import { Noto_Sans } from 'next/font/google';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
+import { Button, Card, CardContent } from '@/app/admin/components/ui';
 import { FileText, Calendar, Eye, ArrowLeft, Share2, Clock, ChevronRight, Home, Check, Link as LinkIcon } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 
@@ -486,30 +487,32 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background selection:bg-accent/30 text-foreground pb-16">
-      <nav className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-md border-b">
-        <div className="container max-w-7xl mx-auto h-14 flex items-center justify-between px-4">
+    <div className="min-h-screen bg-background text-foreground">
+      <nav className="sticky top-0 z-50 w-full border-b bg-background/85 backdrop-blur-md">
+        <div className="container max-w-6xl mx-auto h-14 flex items-center justify-between px-4 md:px-6">
           <Link
             href="/posts"
-            className="group -ml-2 text-muted-foreground hover:text-foreground inline-flex items-center h-10 px-3"
+            className="group -ml-2 inline-flex h-11 items-center gap-2 px-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label="Quay lại"
           >
-            <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
-            <span className="text-sm font-medium">Danh sách</span>
+            <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
+            Danh sách
           </Link>
 
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon"
             onClick={handleShare}
             aria-label="Chia sẻ"
-            className="inline-flex items-center justify-center h-11 w-11 rounded-md border border-input hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="h-11 w-11"
           >
-            {isCopied ? <Check className="w-4 h-4 text-muted-foreground" /> : <Share2 className="w-4 h-4 text-muted-foreground" />}
-          </button>
+            {isCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+          </Button>
         </div>
       </nav>
 
-      <main className="px-4">
+      <main className="pb-16">
         <section className="relative w-full overflow-hidden bg-muted">
           <div className="relative h-[clamp(220px,45vh,520px)] w-full">
             {post.thumbnail ? (
@@ -524,34 +527,36 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
               <div className="h-full w-full" style={{ backgroundColor: `${brandColor}10` }} />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-            <div className="container max-w-7xl mx-auto h-full px-4 flex items-end pb-6">
-              <div className="max-w-3xl rounded-lg bg-background/90 p-4 shadow-sm backdrop-blur-sm border">
-                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: brandColor }}>
-                  {post.categoryName}
-                </span>
-                <h1 className="mt-2 text-[clamp(1.5rem,4vw,2.75rem)] font-semibold leading-[1.2] text-foreground">
-                  {post.title}
-                </h1>
-                <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <time>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
+            <div className="container max-w-6xl mx-auto h-full px-4 md:px-6 flex items-end pb-6 md:pb-8">
+              <Card className="w-full max-w-3xl border-border/70 bg-background/90 shadow-sm backdrop-blur-sm">
+                <CardContent className="space-y-3 p-4 md:p-6">
+                  <span className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: brandColor }}>
+                    {post.categoryName}
+                  </span>
+                  <h1 className="text-[clamp(1.6rem,4vw,2.9rem)] font-semibold leading-[1.2] text-foreground">
+                    {post.title}
+                  </h1>
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      <time>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{readingTime} phút đọc</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Eye className="h-4 w-4" />
+                      <span>{post.views.toLocaleString()} lượt xem</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>{readingTime} phút đọc</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>{post.views.toLocaleString()} lượt xem</span>
-                  </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
 
-        <section className="container max-w-3xl mx-auto py-8 md:py-12 space-y-6">
+        <section className="container max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12 space-y-6">
           {post.excerpt && (
             <p className="text-[clamp(1rem,2vw,1.25rem)] text-muted-foreground leading-relaxed">
               {post.excerpt}
@@ -563,30 +568,38 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
         </section>
 
         {relatedPosts.length > 0 && (
-          <section className="container max-w-3xl mx-auto pb-12">
+          <section className="container max-w-3xl mx-auto px-4 md:px-6 pb-12">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg md:text-xl font-semibold text-foreground">Bài viết liên quan</h2>
-              <Link href="/posts" className="text-sm font-medium" style={{ color: brandColor }}>
+              <Link
+                href="/posts"
+                className="text-sm font-semibold transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                style={{ color: brandColor }}
+              >
                 Xem thêm
               </Link>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {relatedPosts.map((p) => (
                 <Link
                   key={p._id}
                   href={`/posts/${p.slug}`}
-                  className="group flex items-center justify-between gap-4 rounded-md border border-input bg-background px-4 py-3 hover:bg-muted/40 transition-colors"
+                  className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
-                      {p.title}
-                    </h3>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                      <Calendar className="w-3 h-3" />
-                      <span>{p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  <Card className="transition-colors hover:bg-muted/40">
+                    <CardContent className="flex items-center justify-between gap-4 px-4 py-4">
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
+                          {p.title}
+                        </h3>
+                        <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>{p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </CardContent>
+                  </Card>
                 </Link>
               ))}
             </div>
