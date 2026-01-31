@@ -994,28 +994,27 @@ function DetailPreview({ style, brandColor, device }: { style: ProductsDetailSty
   if (style === 'modern') {
     return (
       <div className="bg-white">
-        <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')} style={{ backgroundColor: `${brandColor}06` }}>
-          <span className="inline-flex items-center rounded-full bg-white/80 px-3 py-1 text-xs font-semibold" style={{ color: brandColor }}>Điện thoại</span>
-          <h1 className={cn("font-bold text-slate-900 leading-tight mt-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>
-            iPhone 15 Pro Max 256GB
-          </h1>
-          <div className="flex items-center gap-3 mt-2">
-            <span className="text-xl font-bold" style={{ color: brandColor }}>{formatPrice(27_990_000)}</span>
-            <span className="text-xs text-slate-400 line-through">{formatPrice(29_990_000)}</span>
-            <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-semibold rounded-full">-7%</span>
+        <div className="px-4 pt-3 text-[10px] text-slate-400">Trang chủ / Sản phẩm / Chi tiết</div>
+        <div className={cn("p-4 space-y-4", device === 'mobile' ? 'p-3' : '')}>
+          <div className="grid gap-4">
+            <div className="aspect-square bg-slate-100 rounded-xl flex items-center justify-center">
+              <Package size={32} className="text-slate-300" />
+            </div>
+            <div className="space-y-3">
+              <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">Điện thoại</span>
+              <h1 className={cn("font-semibold text-slate-900", device === 'mobile' ? 'text-base' : 'text-lg')}>
+                iPhone 15 Pro Max 256GB
+              </h1>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-semibold" style={{ color: brandColor }}>{formatPrice(27_990_000)}</span>
+                <span className="text-xs text-slate-400 line-through">{formatPrice(29_990_000)}</span>
+                <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-semibold rounded-full">-7%</span>
+              </div>
+              <button className="w-full h-10 rounded-lg text-white text-xs font-semibold" style={{ backgroundColor: brandColor }}>
+                Thêm vào giỏ hàng
+              </button>
+            </div>
           </div>
-          <button className="mt-4 px-6 py-2.5 rounded-full text-white text-sm font-medium flex items-center gap-2" style={{ backgroundColor: brandColor }}>
-            <ShoppingCart size={16} /> Mua ngay
-          </button>
-        </div>
-        <div className="p-4">
-          <div className="aspect-[4/3] bg-slate-100 rounded-xl flex items-center justify-center">
-            <Package size={32} className="text-slate-300" />
-          </div>
-        </div>
-        <div className={cn("px-4 pb-4 space-y-2", device === 'mobile' ? 'px-3 pb-3' : '')}>
-          <div className="h-3 bg-slate-100 rounded w-full"></div>
-          <div className="h-3 bg-slate-100 rounded w-5/6"></div>
         </div>
       </div>
     );

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { ArrowLeft, ArrowRight, Check, ChevronRight, Heart, Minus, Package, Plus, RotateCcw, Share2, Shield, ShoppingCart, Star, Truck } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, Heart, Minus, Package, Plus, RotateCcw, Share2, Shield, ShoppingBag, ShoppingCart, Star, Truck } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
 type ProductDetailStyle = 'classic' | 'modern' | 'minimal';
@@ -278,6 +278,8 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields }: S
 // ====================================================================================
 function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: StyleProps) {
   const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
   const showPrice = enabledFields.has('price') || enabledFields.size === 0;
   const showSalePrice = enabledFields.has('salePrice');
@@ -290,106 +292,203 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: St
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden" style={{ backgroundColor: `${brandColor}06` }}>
-        <div className="absolute inset-0 opacity-25" style={{ backgroundImage: `radial-gradient(circle at 20% 45%, ${brandColor}18 0%, transparent 55%), radial-gradient(circle at 80% 55%, ${brandColor}12 0%, transparent 60%)` }} />
-        
-        <div className="relative max-w-6xl mx-auto px-4 py-12 md:py-20">
-          <div className="max-w-3xl space-y-6">
-            <Link href={`/products?category=${product.categorySlug}`} className="inline-flex items-center px-4 py-1.5 bg-white/80 backdrop-blur-sm text-sm font-medium rounded-full shadow-sm" style={{ color: brandColor }}>
-              {product.categoryName}
-            </Link>
+      <header className="border-b border-slate-100">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <nav className="flex items-center justify-between gap-4">
+            <div className="text-sm text-slate-400 truncate">
+              <Link href="/" className="hover:text-slate-600 transition-colors">Trang chủ</Link>
+              {' / '}
+              <Link href="/products" className="hover:text-slate-600 transition-colors">Sản phẩm</Link>
+              {' / '}
+              <span className="text-slate-600">{product.name}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsWishlisted(prev => !prev)}
+              className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700"
+            >
+              <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
+              Yêu thích
+            </button>
+          </nav>
+        </div>
+      </header>
 
-            <h1 className="text-3xl md:text-5xl font-bold text-slate-900 leading-tight">{product.name}</h1>
-
-            {showPrice && (
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-3xl md:text-4xl font-bold" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>
-                {showSalePrice && product.salePrice && (
-                  <>
-                    <span className="text-lg text-slate-400 line-through">{formatPrice(product.price)}</span>
-                    <span className="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full">-{discountPercent}%</span>
-                  </>
+      <main className="max-w-6xl mx-auto px-4 py-8 lg:py-12">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+          <div className="space-y-4">
+            <div className="overflow-hidden border border-slate-100 rounded-2xl bg-slate-50">
+              <div className="aspect-square flex items-center justify-center p-6">
+                {images[selectedImageIndex] ? (
+                  <Image
+                    src={images[selectedImageIndex]}
+                    alt={product.name}
+                    width={560}
+                    height={560}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                ) : (
+                  <div className="text-center">
+                    <div className="bg-slate-200 rounded-lg w-64 h-64 mx-auto mb-4" />
+                    <p className="text-sm text-slate-400">Chưa có hình ảnh sản phẩm</p>
+                  </div>
                 )}
               </div>
-            )}
-
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center border border-slate-200 rounded-full bg-white">
-                <button onClick={() =>{  setQuantity(q => Math.max(1, q - 1)); }} className="p-3 hover:bg-slate-50 transition-colors rounded-l-full">
-                  <Minus size={18} />
-                </button>
-                <span className="w-12 text-center font-medium">{quantity}</span>
-                <button onClick={() =>{  setQuantity(q => q + 1); }} className="p-3 hover:bg-slate-50 transition-colors rounded-r-full">
-                  <Plus size={18} />
-                </button>
-              </div>
-
-              <button className={`min-h-11 px-8 rounded-full text-white font-semibold text-base flex items-center gap-2 transition-all ${inStock ? 'hover:shadow-xl hover:scale-105' : 'opacity-50 cursor-not-allowed'}`} style={{ backgroundColor: brandColor }} disabled={!inStock}>
-                <ShoppingCart size={18} />
-                {inStock ? 'Mua ngay' : 'Hết hàng'}
-              </button>
             </div>
 
-            {showStock && (
-              <div className="flex flex-wrap items-center gap-2">
-                {product.stock > 10 ? (
-                  <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-600">
-                    <Check size={14} className="text-emerald-500" /> Còn hàng
-                  </span>
-                ) : (product.stock > 0 ? (
-                  <span className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-sm text-orange-600">
-                    <span className="w-2 h-2 bg-orange-500 rounded-full" /> Chỉ còn {product.stock} sản phẩm
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-sm text-red-600">
-                    <span className="w-2 h-2 bg-red-500 rounded-full" /> Hết hàng
-                  </span>
+            {images.length > 0 && (
+              <div className="grid grid-cols-3 gap-3">
+                {images.map((image, index) => (
+                  <button
+                    key={`${image}-${index}`}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`relative aspect-square overflow-hidden rounded-xl border-2 transition-all ${
+                      selectedImageIndex === index ? 'border-slate-900' : 'border-transparent hover:border-slate-300'
+                    }`}
+                  >
+                    <Image src={image} alt={`${product.name} ${index + 1}`} fill className="object-cover" />
+                  </button>
                 ))}
               </div>
             )}
           </div>
-        </div>
-      </section>
 
-      {/* Product Image */}
-      {images.length > 0 && (
-        <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-10">
-          <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[4/3]">
-            <Image src={images[0]} alt={product.name} fill sizes="(max-width: 1024px) 100vw, 800px" className="object-cover" />
+          <div className="space-y-6 lg:space-y-8">
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                {product.categoryName}
+              </span>
+            </div>
+
+            <h1 className="text-3xl lg:text-4xl font-light tracking-tight text-slate-900">
+              {product.name}
+            </h1>
+
+            {showPrice && (
+              <div className="space-y-2">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-3xl lg:text-4xl font-light" style={{ color: brandColor }}>
+                    {formatPrice(product.salePrice ?? product.price)}
+                  </span>
+                  {showSalePrice && product.salePrice && (
+                    <span className="text-lg text-slate-400 line-through">
+                      {formatPrice(product.price)}
+                    </span>
+                  )}
+                </div>
+                {showSalePrice && product.salePrice && (
+                  <span className="inline-flex items-center rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">
+                    Giảm {discountPercent}%
+                  </span>
+                )}
+              </div>
+            )}
+
+            <div className="h-px w-full bg-slate-100" />
+
+            {showDescription && product.description && (
+              <div
+                className="text-slate-600 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+            )}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Số lượng</label>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() =>{  setQuantity(q => Math.max(1, q - 1)); }}
+                  disabled={quantity <= 1}
+                  className="h-10 w-10 border border-slate-200 rounded-full flex items-center justify-center hover:bg-slate-50 disabled:opacity-50"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <div className="w-16 text-center">
+                  <span className="text-lg font-medium">{quantity}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>{  setQuantity(q => Math.min(10, q + 1)); }}
+                  disabled={quantity >= 10}
+                  className="h-10 w-10 border border-slate-200 rounded-full flex items-center justify-center hover:bg-slate-50 disabled:opacity-50"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                className={`w-full h-12 text-base font-semibold text-white transition-all ${inStock ? 'hover:shadow-lg hover:scale-[1.01]' : 'opacity-50 cursor-not-allowed'}`}
+                style={{ backgroundColor: brandColor }}
+                disabled={!inStock}
+              >
+                <ShoppingBag className="w-5 h-5 mr-2 inline-block" />
+                {inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsWishlisted(prev => !prev)}
+                className="w-full h-12 text-base border border-slate-200 text-slate-700 hover:bg-slate-50"
+              >
+                <Heart className={`w-5 h-5 mr-2 inline-block ${isWishlisted ? 'fill-current' : ''}`} />
+                {isWishlisted ? 'Đã yêu thích' : 'Thêm vào yêu thích'}
+              </button>
+            </div>
+
+            {showStock && (
+              <div className="grid grid-cols-3 gap-4 pt-2">
+                <div className="text-center space-y-2">
+                  <div className="mx-auto w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                    <Truck className="w-4 h-4 text-slate-500" />
+                  </div>
+                  <p className="text-xs text-slate-500">Miễn phí vận chuyển</p>
+                </div>
+                <div className="text-center space-y-2">
+                  <div className="mx-auto w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                    <Shield className="w-4 h-4 text-slate-500" />
+                  </div>
+                  <p className="text-xs text-slate-500">Bảo hành 12 tháng</p>
+                </div>
+                <div className="text-center space-y-2">
+                  <div className="mx-auto w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
+                    <ShoppingBag className="w-4 h-4 text-slate-500" />
+                  </div>
+                  <p className="text-xs text-slate-500">Đổi trả 30 ngày</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      {/* Content */}
-      {showDescription && product.description && (
-        <section className="max-w-3xl mx-auto px-4 py-14">
-          <h2 className="text-2xl font-bold text-slate-900 mb-5">Mô tả sản phẩm</h2>
-          <div className="prose prose-lg prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: product.description }} />
-        </section>
-      )}
-
-      {/* CTA Section */}
-      <div className="max-w-3xl mx-auto px-4 pb-14">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
-          <h3 className="text-xl md:text-2xl font-bold text-slate-900">Sẵn sàng sở hữu?</h3>
-          <p className="text-slate-600 mt-2 mb-5">Đặt hàng ngay để nhận ưu đãi đặc biệt.</p>
-          <button className="min-h-11 px-8 rounded-full text-white font-semibold transition-all hover:shadow-lg hover:scale-105 flex items-center gap-2 mx-auto" style={{ backgroundColor: brandColor }}>
-            Thêm vào giỏ hàng <ArrowRight size={16} />
-          </button>
+        <div className="mt-12 lg:mt-16">
+          <div className="grid w-full grid-cols-2 gap-2">
+            <div className="text-center py-3 border border-slate-200 text-sm font-medium">Mô tả</div>
+            <div className="text-center py-3 border border-slate-200 text-sm font-medium">Thông tin</div>
+          </div>
+          <div className="mt-6 border border-slate-100 rounded-2xl p-6">
+            {showDescription && product.description ? (
+              <div
+                className="prose prose-sm max-w-none text-slate-600"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+            ) : (
+              <p className="text-slate-500">Chưa có mô tả chi tiết.</p>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Related */}
-      <div className="max-w-6xl mx-auto px-4 pb-16">
-        <RelatedProductsSection products={relatedProducts} categorySlug={product.categorySlug} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} />
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <Link href="/products" className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80" style={{ color: brandColor }}>
-          <ArrowLeft size={16} /> Quay lại danh sách sản phẩm
-        </Link>
-      </div>
+        <div className="mt-12">
+          <RelatedProductsSection
+            products={relatedProducts}
+            categorySlug={product.categorySlug}
+            brandColor={brandColor}
+            showPrice={showPrice}
+            showSalePrice={showSalePrice}
+          />
+        </div>
+      </main>
     </div>
   );
 }
