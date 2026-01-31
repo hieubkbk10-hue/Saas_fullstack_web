@@ -2753,6 +2753,16 @@ export const seedServicesModule = mutation({
       await ctx.db.insert("moduleSettings", { moduleKey: "services", settingKey: "servicesPerPage", value: 10 });
       await ctx.db.insert("moduleSettings", { moduleKey: "services", settingKey: "defaultStatus", value: "draft" });
     }
+    
+    // 6. Seed appearance settings (site-wide, not module-specific)
+    const listStyleSetting = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "services_list_style")).first();
+    if (!listStyleSetting) {
+      await ctx.db.insert("settings", { group: "services", key: "services_list_style", value: "fullwidth" });
+    }
+    const detailStyleSetting = await ctx.db.query("settings").withIndex("by_key", q => q.eq("key", "services_detail_style")).first();
+    if (!detailStyleSetting) {
+      await ctx.db.insert("settings", { group: "services", key: "services_detail_style", value: "classic" });
+    }
 
     return null;
   },
