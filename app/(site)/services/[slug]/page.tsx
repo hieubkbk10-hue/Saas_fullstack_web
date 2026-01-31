@@ -145,12 +145,12 @@ function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: S
       {/* Breadcrumb - Simple navigation */}
       <div className="border-b border-slate-100">
         <div className="max-w-6xl mx-auto px-4 py-3">
-          <nav className="flex items-center gap-2 text-sm text-slate-500">
+          <nav className="flex items-center gap-2 text-xs md:text-sm text-slate-400">
             <Link href="/" className="hover:text-slate-900 transition-colors">Trang chủ</Link>
             <ChevronRight size={14} />
             <Link href="/services" className="hover:text-slate-900 transition-colors">Dịch vụ</Link>
             <ChevronRight size={14} />
-            <span className="text-slate-900 font-medium truncate max-w-[200px]">{service.title}</span>
+            <span className="text-slate-700 font-medium truncate max-w-[200px]">{service.title}</span>
           </nav>
         </div>
       </div>
@@ -182,7 +182,7 @@ function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: S
               </h1>
               
               {service.excerpt && (
-                <p className="text-lg text-slate-600 leading-relaxed">
+                <p className="text-lg text-slate-600 leading-relaxed max-w-[60ch]">
                   {service.excerpt}
                 </p>
               )}
@@ -231,7 +231,7 @@ function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: S
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-slate-500">Chia sẻ:</span>
-                  <button className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
+                  <button aria-label="Chia sẻ" className="w-11 h-11 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
                     <Share2 size={18} className="text-slate-600" />
                   </button>
                 </div>
@@ -265,14 +265,15 @@ function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: S
                 )}
                 
                 <div className="p-6 space-y-3">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Liên hệ nhanh</p>
                   <button 
-                    className="w-full py-3.5 px-6 rounded-xl text-white font-semibold transition-all hover:shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
+                    className="w-full min-h-11 px-6 rounded-xl text-white font-semibold transition-all hover:shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
                     style={{ backgroundColor: brandColor }}
                   >
                     <Phone size={18} />
                     Liên hệ tư vấn
                   </button>
-                  <button className="w-full py-3.5 px-6 rounded-xl font-semibold border-2 transition-colors hover:bg-slate-50 flex items-center justify-center gap-2" style={{ borderColor: brandColor, color: brandColor }}>
+                  <button className="w-full min-h-11 px-6 rounded-xl font-medium border transition-colors hover:bg-slate-50 flex items-center justify-center gap-2" style={{ borderColor: `${brandColor}80`, color: brandColor }}>
                     <MessageCircle size={18} />
                     Chat ngay
                   </button>
