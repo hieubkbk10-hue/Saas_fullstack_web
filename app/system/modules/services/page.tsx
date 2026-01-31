@@ -68,6 +68,11 @@ export default function ServicesModuleConfigPage() {
     {},
     { initialNumItems: 10 }
   );
+  const { results: publishedServices } = usePaginatedQuery(
+    api.services.listPublished,
+    {},
+    { initialNumItems: 6 }
+  );
   const categoriesData = useQuery(api.serviceCategories.listAll, { limit: 50 });
 
   const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
@@ -364,6 +369,13 @@ export default function ServicesModuleConfigPage() {
     }
   };
 
+  const categoryMap: Record<string, string> = {};
+  categoriesData?.forEach(cat => { categoryMap[cat._id] = cat.name; });
+
+  const previewServices = useMemo(() => publishedServices ?? [], [publishedServices]);
+  const previewService = previewServices[0];
+  const previewCategoryName = previewService ? (categoryMap[previewService.categoryId] ?? 'Dịch vụ') : 'Dịch vụ';
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -371,9 +383,6 @@ export default function ServicesModuleConfigPage() {
       </div>
     );
   }
-
-  const categoryMap: Record<string, string> = {};
-  categoriesData?.forEach(cat => { categoryMap[cat._id] = cat.name; });
 
   const formatPrice = (price?: number) => {
     if (!price) {return '-';}
@@ -792,8 +801,8 @@ export default function ServicesModuleConfigPage() {
               <div className={cn("mx-auto transition-all duration-300", deviceWidths[previewDevice])}>
                 <BrowserFrame>
                   {activePreview === 'list' 
-                    ? <ListPreview style={listStyle} brandColor={brandColor} device={previewDevice} enabledFields={enabledFields} />
-                    : <DetailPreview style={detailStyle} brandColor={brandColor} device={previewDevice} enabledFields={enabledFields} />
+                    ? <ListPreview style={listStyle} brandColor={brandColor} device={previewDevice} enabledFields={enabledFields} services={previewServices} categories={categoriesData ?? []} />
+                    : <DetailPreview style={detailStyle} brandColor={brandColor} device={previewDevice} enabledFields={enabledFields} service={previewService} categoryName={previewCategoryName} />
                   }
                 </BrowserFrame>
               </div>
@@ -831,16 +840,33 @@ function BrowserFrame({ children }: { children: React.ReactNode }) {
   );
 }
 
+const formatPreviewPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
+
+type PreviewService = { _id: Id<"services">; categoryId: Id<"serviceCategories">; title: string; price?: number; duration?: string; featured?: boolean; thumbnail?: string };
+type PreviewCategory = { _id: Id<"serviceCategories">; name: string };
+
 // List Preview Component
-function ListPreview({ style, brandColor, device, enabledFields }: { style: ServicesListStyle; brandColor: string; device: PreviewDevice; enabledFields: Set<string> }) {
+function ListPreview({ style, brandColor, device, enabledFields, services, categories }: { style: ServicesListStyle; brandColor: string; device: PreviewDevice; enabledFields: Set<string>; services: PreviewService[]; categories: PreviewCategory[] }) {
   const mockServices = [
     { category: 'Tư vấn', duration: '2-3 tuần', id: 1, price: 5_000_000, title: 'Dịch vụ tư vấn chuyên nghiệp' },
     { category: 'Thiết kế', duration: '4-6 tuần', id: 2, price: 15_000_000, title: 'Thiết kế website doanh nghiệp' },
     { category: 'Marketing', duration: '1 tháng', id: 3, price: 8_000_000, title: 'Marketing online tổng hợp' },
     { category: 'Phát triển', duration: '8-12 tuần', id: 4, price: 25_000_000, title: 'Phát triển ứng dụng mobile' },
   ];
-  const categories = ['Tất cả', 'Tư vấn', 'Thiết kế', 'Marketing', 'Phát triển'];
-  const formatPrice = (p: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(p);
+  const categoryMap: Record<string, string> = {};
+  categories.forEach(cat => { categoryMap[cat._id] = cat.name; });
+  const resolvedServices = services.length > 0
+    ? services.map(service => ({
+      category: categoryMap[service.categoryId] ?? 'Dịch vụ',
+      duration: service.duration,
+      id: service._id,
+      price: service.price,
+      title: service.title,
+    }))
+    : mockServices;
+  const categoryLabels = categories.length > 0
+    ? ['Tất cả', ...categories.map(cat => cat.name)]
+    : ['Tất cả', 'Tư vấn', 'Thiết kế', 'Marketing', 'Phát triển'];
   
   // Sync with actual pages logic
   const showPrice = enabledFields.has('price');
@@ -856,7 +882,7 @@ function ListPreview({ style, brandColor, device, enabledFields }: { style: Serv
               <input type="text" placeholder="Tìm kiếm dịch vụ..." className="w-full px-3 py-1.5 border rounded-lg text-xs bg-slate-50" />
             </div>
             <div className="flex gap-1 flex-wrap">
-              {categories.slice(0, device === 'mobile' ? 3 : 4).map((cat, i) => (
+              {categoryLabels.slice(0, device === 'mobile' ? 3 : 4).map((cat, i) => (
                 <span key={cat} className={cn("px-2 py-1 rounded-full text-xs cursor-pointer", i === 0 ? "text-white" : "bg-slate-100")} style={i === 0 ? { backgroundColor: brandColor } : undefined}>
                   {cat}
                 </span>
@@ -864,10 +890,10 @@ function ListPreview({ style, brandColor, device, enabledFields }: { style: Serv
             </div>
           </div>
         </div>
-        <div className="text-xs text-slate-500 mb-3">4 dịch vụ</div>
+        <div className="text-xs text-slate-500 mb-3">{resolvedServices.length} dịch vụ</div>
         <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
-          {mockServices.slice(0, device === 'mobile' ? 2 : 4).map((service) => (
-            <div key={service.id} className="bg-white border rounded-lg overflow-hidden">
+          {resolvedServices.slice(0, device === 'mobile' ? 2 : 4).map((service) => (
+            <div key={String(service.id)} className="bg-white border rounded-lg overflow-hidden">
               <div className="aspect-video bg-slate-100 flex items-center justify-center">
                 <Briefcase size={24} className="text-slate-300" />
               </div>
@@ -875,9 +901,9 @@ function ListPreview({ style, brandColor, device, enabledFields }: { style: Serv
                 <span className="text-xs font-medium" style={{ color: brandColor }}>{service.category}</span>
                 <h3 className="font-medium text-sm mt-1 line-clamp-2">{service.title}</h3>
                 <div className="flex items-center justify-between mt-2">
-                  {showDuration && <span className="text-xs text-slate-400">{service.duration}</span>}
+                  {showDuration && service.duration && <span className="text-xs text-slate-400">{service.duration}</span>}
                   {!showDuration && <span></span>}
-                  {showPrice && <span className="font-bold text-sm" style={{ color: brandColor }}>{formatPrice(service.price)}</span>}
+                  {showPrice && typeof service.price === 'number' && <span className="font-bold text-sm" style={{ color: brandColor }}>{formatPreviewPrice(service.price)}</span>}
                 </div>
               </div>
             </div>
@@ -898,7 +924,7 @@ function ListPreview({ style, brandColor, device, enabledFields }: { style: Serv
           <div className="bg-slate-50 rounded-lg p-3">
             <h4 className="font-medium text-xs mb-2">Danh mục</h4>
             <div className="space-y-1">
-              {categories.map((cat, i) => (
+              {categoryLabels.map((cat, i) => (
                 <div key={cat} className={cn("px-2 py-1 rounded text-xs cursor-pointer", i === 0 ? "" : "text-slate-600")} style={i === 0 ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}>
                   {cat}
                 </div>
@@ -907,15 +933,15 @@ function ListPreview({ style, brandColor, device, enabledFields }: { style: Serv
           </div>
         </div>
         <div className={cn("flex-1 space-y-3", device === 'mobile' ? 'order-1' : '')}>
-          {mockServices.slice(0, 3).map((service) => (
-            <div key={service.id} className="bg-white border rounded-lg overflow-hidden flex">
+          {resolvedServices.slice(0, 3).map((service) => (
+            <div key={String(service.id)} className="bg-white border rounded-lg overflow-hidden flex">
               <div className="w-24 h-16 bg-slate-100 flex items-center justify-center flex-shrink-0">
                 <Briefcase size={16} className="text-slate-300" />
               </div>
               <div className="p-2 flex-1">
                 <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{service.category}</span>
                 <h3 className="font-medium text-xs mt-1 line-clamp-1">{service.title}</h3>
-                {showPrice && <span className="text-xs font-bold" style={{ color: brandColor }}>{formatPrice(service.price)}</span>}
+                {showPrice && typeof service.price === 'number' && <span className="text-xs font-bold" style={{ color: brandColor }}>{formatPreviewPrice(service.price)}</span>}
               </div>
             </div>
           ))}
@@ -937,12 +963,12 @@ function ListPreview({ style, brandColor, device, enabledFields }: { style: Serv
             <div className="flex items-center gap-2 mb-2">
               <span className="px-2 py-0.5 rounded text-xs font-medium text-white" style={{ backgroundColor: brandColor }}>Nổi bật</span>
             </div>
-            <h3 className="font-bold text-sm text-white">{mockServices[0].title}</h3>
-            {showPrice && <span className="text-white font-bold text-sm">{formatPrice(mockServices[0].price)}</span>}
+            <h3 className="font-bold text-sm text-white">{resolvedServices[0]?.title ?? 'Dịch vụ nổi bật'}</h3>
+            {showPrice && typeof resolvedServices[0]?.price === 'number' && <span className="text-white font-bold text-sm">{formatPreviewPrice(resolvedServices[0].price)}</span>}
           </div>
         </div>
-        {device !== 'mobile' && mockServices.slice(1, 3).map((service) => (
-          <div key={service.id} className="relative rounded-lg overflow-hidden bg-slate-800">
+        {device !== 'mobile' && resolvedServices.slice(1, 3).map((service) => (
+          <div key={String(service.id)} className="relative rounded-lg overflow-hidden bg-slate-800">
             <div className="aspect-[16/10] bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center">
               <Briefcase size={16} className="text-slate-500" />
             </div>
@@ -955,15 +981,15 @@ function ListPreview({ style, brandColor, device, enabledFields }: { style: Serv
         ))}
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1 border-b border-slate-200">
-        {categories.map((cat, i) => (
+        {categoryLabels.map((cat, i) => (
           <span key={cat} className={cn("px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap", i === 0 ? "text-white" : "text-slate-600 hover:bg-slate-100")} style={i === 0 ? { backgroundColor: brandColor } : undefined}>
             {cat}
           </span>
         ))}
       </div>
       <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-2')}>
-        {mockServices.slice(0, device === 'mobile' ? 2 : 2).map((service) => (
-          <div key={service.id} className="flex gap-3">
+        {resolvedServices.slice(0, device === 'mobile' ? 2 : 2).map((service) => (
+          <div key={String(service.id)} className="flex gap-3">
             <div className="w-16 h-12 rounded bg-slate-100 flex items-center justify-center flex-shrink-0">
               <Briefcase size={14} className="text-slate-300" />
             </div>
@@ -979,11 +1005,12 @@ function ListPreview({ style, brandColor, device, enabledFields }: { style: Serv
 }
 
 // Detail Preview Component
-function DetailPreview({ style, brandColor, device, enabledFields }: { style: ServicesDetailStyle; brandColor: string; device: PreviewDevice; enabledFields: Set<string> }) {
-  // Sync with actual pages logic
+function DetailPreview({ style, brandColor, device, enabledFields, service, categoryName }: { style: ServicesDetailStyle; brandColor: string; device: PreviewDevice; enabledFields: Set<string>; service?: PreviewService; categoryName: string }) {
   const showPrice = enabledFields.has('price');
   const showDuration = enabledFields.has('duration');
   const showFeatured = enabledFields.has('featured');
+  const detailService = service ?? { title: 'Dịch vụ tư vấn chuyên nghiệp', price: 5_000_000, duration: '2-3 tuần', featured: true, _id: 'preview' as Id<"services">, categoryId: 'preview' as Id<"serviceCategories"> };
+  const detailCategory = service ? categoryName : 'Tư vấn';
   
   if (style === 'classic') {
     return (
@@ -997,8 +1024,8 @@ function DetailPreview({ style, brandColor, device, enabledFields }: { style: Se
                 Nổi bật
               </span>
             )}
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Tư vấn</span>
-            <h1 className="font-bold text-lg mt-2 mb-3">Dịch vụ tư vấn chuyên nghiệp</h1>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{detailCategory}</span>
+            <h1 className="font-bold text-lg mt-2 mb-3">{detailService.title}</h1>
             <div className="aspect-video bg-slate-100 rounded-lg mb-3 flex items-center justify-center">
               <Briefcase size={32} className="text-slate-300" />
             </div>
@@ -1013,10 +1040,10 @@ function DetailPreview({ style, brandColor, device, enabledFields }: { style: Se
                 {showPrice && (
                   <>
                     <p className="text-xs text-slate-500 mb-1">Giá dịch vụ</p>
-                    <p className="text-xl font-bold" style={{ color: brandColor }}>5.000.000 ₫</p>
+                    <p className="text-xl font-bold" style={{ color: brandColor }}>{typeof detailService.price === 'number' ? formatPreviewPrice(detailService.price) : 'Liên hệ'}</p>
                   </>
                 )}
-                {showDuration && <p className="text-xs text-slate-500 mt-2">Thời gian: 2-3 tuần</p>}
+                {showDuration && detailService.duration && <p className="text-xs text-slate-500 mt-2">Thời gian: {detailService.duration}</p>}
                 <button className="w-full mt-3 py-2 text-white text-xs font-medium rounded-lg" style={{ backgroundColor: brandColor }}>Liên hệ tư vấn</button>
               </div>
             </div>
@@ -1036,11 +1063,11 @@ function DetailPreview({ style, brandColor, device, enabledFields }: { style: Se
               Nổi bật
             </span>
           )}
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: brandColor }}>Tư vấn</span>
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: brandColor }}>{detailCategory}</span>
           <h1 className={cn("font-bold text-slate-900 leading-tight mt-1", device === 'mobile' ? 'text-base' : 'text-lg')}>
-            Dịch vụ tư vấn chuyên nghiệp
+            {detailService.title}
           </h1>
-          {showPrice && <p className="text-xl font-bold mt-2" style={{ color: brandColor }}>5.000.000 ₫</p>}
+          {showPrice && typeof detailService.price === 'number' && <p className="text-xl font-bold mt-2" style={{ color: brandColor }}>{formatPreviewPrice(detailService.price)}</p>}
         </div>
         <div className="p-4">
           <div className="aspect-[16/9] bg-slate-100 rounded-lg flex items-center justify-center">
@@ -1069,9 +1096,9 @@ function DetailPreview({ style, brandColor, device, enabledFields }: { style: Se
             <Star size={16} className="inline fill-amber-400 text-amber-400" />
           </div>
         )}
-        <span className="text-xs font-medium uppercase tracking-wider" style={{ color: brandColor }}>Tư vấn</span>
-        <h1 className="font-bold text-lg mt-2">Dịch vụ tư vấn chuyên nghiệp</h1>
-        {showPrice && <p className="text-xl font-bold mt-2" style={{ color: brandColor }}>5.000.000 ₫</p>}
+        <span className="text-xs font-medium uppercase tracking-wider" style={{ color: brandColor }}>{detailCategory}</span>
+        <h1 className="font-bold text-lg mt-2">{detailService.title}</h1>
+        {showPrice && typeof detailService.price === 'number' && <p className="text-xl font-bold mt-2" style={{ color: brandColor }}>{formatPreviewPrice(detailService.price)}</p>}
       </div>
       <div className="aspect-[2/1] bg-slate-100 rounded-lg mb-4 flex items-center justify-center">
         <Briefcase size={32} className="text-slate-300" />
