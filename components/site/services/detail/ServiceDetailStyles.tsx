@@ -311,7 +311,7 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-6 pt-6 border-t border-slate-200/50">
+            <div className="flex flex-wrap items-center gap-6">
               <div className="flex items-center gap-2">
                 <Eye size={20} className="text-slate-400" />
                 <span className="text-slate-600"><strong className="text-slate-900">{service.views.toLocaleString()}</strong> lượt xem</span>
@@ -401,7 +401,7 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
         </section>
       )}
 
-      <div className="max-w-6xl mx-auto px-4 py-8 border-t border-slate-100">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         <Link 
           href="/services"
           className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80"
@@ -423,7 +423,7 @@ export function MinimalStyle({ service, brandColor, relatedServices, enabledFiel
 
   return (
     <div className="min-h-screen bg-white">
-      <article className="max-w-2xl mx-auto px-4 py-12 md:py-18">
+      <article className="max-w-7xl mx-auto px-4 py-12 md:py-18">
         <Link 
           href="/services"
           className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-600 text-sm mb-10 transition-colors"
@@ -457,7 +457,7 @@ export function MinimalStyle({ service, brandColor, relatedServices, enabledFiel
             </p>
           )}
 
-          <div className="flex flex-wrap items-center gap-4 pt-6 border-t border-slate-100">
+          <div className="flex flex-wrap items-center gap-4">
             {showPrice && (
               <div className="min-w-[160px]">
                 <p className="text-xs uppercase tracking-wide text-slate-500">Chi phí dự kiến</p>
@@ -509,12 +509,6 @@ export function MinimalStyle({ service, brandColor, relatedServices, enabledFiel
         </div>
 
         <div className="mt-14 rounded-2xl border border-slate-200 bg-white p-6 text-center">
-          <div className="inline-flex items-center gap-3 mb-6">
-            <div className="w-16 h-px bg-slate-200" />
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: brandColor }} />
-            <div className="w-16 h-px bg-slate-200" />
-          </div>
-          
           <p className="text-slate-600 mb-5">Quan tâm đến dịch vụ này?</p>
           
           <div className="max-w-xs mx-auto">
@@ -526,7 +520,7 @@ export function MinimalStyle({ service, brandColor, relatedServices, enabledFiel
         </div>
 
         {relatedServices.length > 0 && (
-          <div className="mt-16 pt-10 border-t border-slate-100">
+          <div className="mt-16">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-6 text-center">
               Có thể bạn quan tâm
             </h3>
