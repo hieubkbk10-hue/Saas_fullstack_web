@@ -316,10 +316,7 @@ function DashboardContent() {
                     <div key={product.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-medium text-blue-600 w-6">#{i + 1}</span>
-                        {product.image && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={product.image} alt={product.name} className="w-10 h-10 rounded object-cover" />
-                        )}
+                        {product.image && <img src={product.image} alt={product.name} className="w-10 h-10 rounded object-cover" />}
                         <span className="text-sm text-slate-700 dark:text-slate-300">{product.name}</span>
                       </div>
                       <div className="text-right">

@@ -176,7 +176,6 @@ export function CategoryImageSelector({
     } else if (newMode === 'upload') {
       setUploadedUrl(value);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   const handleModeChange = (newMode: ImageMode) => {
