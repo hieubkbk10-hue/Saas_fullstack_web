@@ -3,11 +3,17 @@
 import React, { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Noto_Sans } from 'next/font/google';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { FileText, Calendar, Eye, ArrowLeft, Share2, Clock, ChevronRight, Home, Check, Link as LinkIcon, ArrowRight } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
+
+const notoSans = Noto_Sans({
+  subsets: ['vietnamese', 'latin'],
+  display: 'swap',
+});
 
 type PostDetailStyle = 'classic' | 'modern' | 'minimal';
 
@@ -317,7 +323,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
   };
   
   return (
-    <div className="min-h-screen bg-background pb-12 font-sans selection:bg-accent/30">
+    <div className={`min-h-screen bg-background pb-12 selection:bg-accent/30 ${notoSans.className}`}>
       <main className="container mx-auto max-w-7xl px-4 py-6 md:py-10 space-y-8 md:space-y-12">
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
@@ -345,7 +351,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
           </button>
         </div>
 
-        <section className="max-w-4xl mx-auto text-center space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <section className="max-w-7xl mx-auto text-center space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="flex items-center justify-center">
             <span
               className="inline-flex items-center rounded-full border px-3 py-1 text-xs uppercase tracking-widest"
@@ -389,7 +395,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
           </section>
         )}
 
-        <article className="max-w-4xl mx-auto space-y-5">
+        <article className="max-w-7xl mx-auto space-y-5">
           {showExcerpt && post.excerpt && (
             <p
               className="text-xl md:text-2xl leading-relaxed text-foreground/90 font-medium font-sans border-l-4 pl-5 py-1"
@@ -437,7 +443,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
 
         {relatedPosts.length > 0 && (
           <section className="pt-8 border-t">
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-7xl mx-auto">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-xl md:text-2xl font-bold tracking-tight">Bài viết cùng chủ đề</h2>
                 <Link href="/posts" className="text-muted-foreground hover:text-foreground">
