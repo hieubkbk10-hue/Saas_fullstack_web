@@ -318,37 +318,34 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
   
   return (
     <div className="min-h-screen bg-background pb-12 font-sans selection:bg-accent/30">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/posts"
-              className="group gap-2 text-muted-foreground hover:text-foreground -ml-2 rounded-full px-4 inline-flex items-center h-9"
-            >
-              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-              <span className="hidden sm:inline-block font-medium">Quay lại</span>
+      <main className="container mx-auto max-w-7xl px-4 py-6 md:py-10 space-y-8 md:space-y-12">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <Link href="/" className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+              <Home className="h-4 w-4" />
+              <span className="sr-only">Trang chủ</span>
             </Link>
-            <div className="h-4 w-[1px] bg-border hidden sm:block" />
-            <nav className="flex items-center text-sm text-muted-foreground">
-              <span className="hover:text-foreground cursor-pointer transition-colors">Bài viết</span>
-              <ChevronRight className="h-4 w-4 mx-2 text-muted-foreground/50" />
-              <span className="font-medium text-foreground truncate max-w-[150px] sm:max-w-md">{post.title}</span>
-            </nav>
+            <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+            <Link href="/posts" className="hover:text-foreground transition-colors">
+              Bài viết
+            </Link>
+            <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+            <span className="font-medium text-foreground truncate max-w-[180px] sm:max-w-md">
+              {post.title}
+            </span>
           </div>
-
           <button
             type="button"
             onClick={handleCopyLink}
-            className="inline-flex items-center justify-center rounded-full h-9 w-9 text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center gap-2 rounded-full border border-input bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
             aria-label="Copy link"
           >
-            {isCopied ? <Check className="h-5 w-5" /> : <LinkIcon className="h-5 w-5" />}
+            {isCopied ? <Check className="h-3.5 w-3.5" /> : <LinkIcon className="h-3.5 w-3.5" />}
+            {isCopied ? 'Đã copy' : 'Copy link'}
           </button>
         </div>
-      </header>
 
-      <main className="container mx-auto max-w-7xl px-4 py-8 md:py-12 space-y-10 md:space-y-14">
-        <section className="max-w-3xl mx-auto text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <section className="max-w-4xl mx-auto text-center space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="flex items-center justify-center">
             <span
               className="inline-flex items-center rounded-full border px-3 py-1 text-xs uppercase tracking-widest"
@@ -362,7 +359,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
             {post.title}
           </h1>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-5 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <time className="font-medium">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
@@ -381,7 +378,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
         </section>
 
         {post.thumbnail && (
-          <section className="relative overflow-hidden rounded-2xl shadow-sm border bg-muted aspect-[16/9] md:aspect-[21/9] max-w-6xl mx-auto ring-1 ring-border/50">
+          <section className="relative overflow-hidden rounded-2xl bg-muted aspect-[16/9] md:aspect-[21/9] max-w-6xl mx-auto">
             <Image
               src={post.thumbnail}
               alt={post.title}
@@ -392,10 +389,10 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
           </section>
         )}
 
-        <article className="max-w-3xl mx-auto space-y-6">
+        <article className="max-w-4xl mx-auto space-y-5">
           {showExcerpt && post.excerpt && (
             <p
-              className="text-xl md:text-2xl leading-relaxed text-foreground/90 font-medium font-sans border-l-4 pl-6 py-1"
+              className="text-xl md:text-2xl leading-relaxed text-foreground/90 font-medium font-sans border-l-4 pl-5 py-1"
               style={{ borderColor: brandColor }}
             >
               {post.excerpt}
@@ -406,7 +403,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
             <div dangerouslySetInnerHTML={{ __html: post.content }} />
           </div>
 
-          <div className="pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="pt-5 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
               <span
                 className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-normal"
@@ -422,7 +419,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-muted h-9 px-4 shrink-0"
             >
               <LinkIcon className="h-4 w-4" />
-              {isCopied ? 'Đã copy' : 'Copy link bài viết này'}
+              {isCopied ? 'Đã copy' : 'Copy link bài viết'}
             </button>
           </div>
 
@@ -439,19 +436,19 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
         </article>
 
         {relatedPosts.length > 0 && (
-          <section className="pt-10 border-t">
+          <section className="pt-8 border-t">
             <div className="max-w-5xl mx-auto">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold tracking-tight">Bài viết cùng chủ đề</h2>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-xl md:text-2xl font-bold tracking-tight">Bài viết cùng chủ đề</h2>
                 <Link href="/posts" className="text-muted-foreground hover:text-foreground">
                   Xem thêm
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
                 {relatedPosts.map((p) => (
                   <Link key={p._id} href={`/posts/${p.slug}`} className="group overflow-hidden border-none shadow-none bg-transparent hover:bg-muted/30 transition-all duration-300 p-0 cursor-pointer rounded-xl">
-                    <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted mb-4 relative ring-1 ring-border/50">
+                    <div className="aspect-[4/3] rounded-xl overflow-hidden bg-muted mb-3 relative">
                       {p.thumbnail ? (
                         <Image
                           src={p.thumbnail}
@@ -467,10 +464,10 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
                       )}
                       <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                    <h3 className="font-semibold text-lg text-foreground group-hover:opacity-80 transition-colors leading-snug line-clamp-2">
+                    <h3 className="font-semibold text-base md:text-lg text-foreground group-hover:opacity-80 transition-colors leading-snug line-clamp-2">
                       {p.title}
                     </h3>
-                    <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3" />
                       <span>{p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
                     </div>
