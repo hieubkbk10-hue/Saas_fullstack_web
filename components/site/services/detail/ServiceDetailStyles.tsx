@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { QuickContactButtons, QuickContactCompact } from '@/components/site/QuickContact';
-import { ArrowLeft, ArrowRight, Briefcase, Calendar, ChevronRight, Clock, Copy, Eye, Star } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, ChevronRight, Clock, Copy, Eye, Image as ImageIcon, Star } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
 export interface ServiceDetailData {
@@ -48,8 +48,7 @@ function formatDate(timestamp?: number): string {
   return new Date(timestamp).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-function FallbackServiceThumb({ title, brandColor }: { title: string; brandColor: string }) {
-  const initial = title.trim().charAt(0).toUpperCase();
+function FallbackServiceThumb({ brandColor }: { brandColor: string }) {
   return (
     <div
       className="w-full h-full flex items-center justify-center text-white"
@@ -57,10 +56,7 @@ function FallbackServiceThumb({ title, brandColor }: { title: string; brandColor
         background: `linear-gradient(135deg, ${brandColor}30, ${brandColor}80)`
       }}
     >
-      <div className="flex flex-col items-center gap-1">
-        <Briefcase size={24} className="text-white/80" />
-        <span className="text-sm font-semibold">{initial}</span>
-      </div>
+      <ImageIcon size={24} className="text-white/85" />
     </div>
   );
 }
@@ -68,7 +64,7 @@ function FallbackServiceThumb({ title, brandColor }: { title: string; brandColor
 function RelatedServiceThumb({ title, thumbnail, brandColor, size }: { title: string; thumbnail?: string; brandColor: string; size: 'small' | 'large' }) {
   const [hasError, setHasError] = useState(false);
   if (!thumbnail || hasError) {
-    return <FallbackServiceThumb title={title} brandColor={brandColor} />;
+    return <FallbackServiceThumb brandColor={brandColor} />;
   }
   return (
     <Image
@@ -176,23 +172,22 @@ export function ClassicStyle({ service, brandColor, relatedServices, enabledFiel
               </div>
             )}
 
-            <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Liên hệ nhanh</p>
-                  <p className="text-sm text-slate-600 mt-1">Tư vấn miễn phí và báo giá trong 24h.</p>
+            <div className="mb-6 rounded-xl border border-slate-200 bg-white px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-slate-700">Liên hệ nhanh</p>
+                  <p className="text-xs text-slate-500">Tư vấn miễn phí, báo giá trong 24h.</p>
                 </div>
                 {showPrice && (
-                  <div className="text-xl font-bold" style={{ color: brandColor }}>
+                  <div className="text-base font-semibold" style={{ color: brandColor }}>
                     {formatPrice(service.price)}
                   </div>
                 )}
               </div>
-              <div className="mt-5">
+              <div className="mt-3">
                 <QuickContactButtons 
                   serviceName={service.title}
                   brandColor={brandColor}
-                  variant="horizontal"
                 />
               </div>
             </div>
@@ -312,7 +307,6 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
               <QuickContactButtons 
                 serviceName={service.title}
                 brandColor={brandColor}
-                variant="horizontal"
               />
             </div>
 
@@ -360,7 +354,6 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
             <QuickContactButtons 
               serviceName={service.title}
               brandColor={brandColor}
-              variant="horizontal"
             />
           </div>
         </div>

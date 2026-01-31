@@ -115,14 +115,12 @@ function QuickContactModal({ brandColor, isOpen, onClose, phone, zalo, messenger
 interface QuickContactButtonsProps {
   serviceName?: string;
   brandColor: string;
-  variant?: 'horizontal' | 'vertical';
   className?: string;
 }
 
 export function QuickContactButtons({ 
   serviceName, 
   brandColor,
-  variant = 'horizontal',
   className = ''
 }: QuickContactButtonsProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -138,39 +136,22 @@ export function QuickContactButtons({
   const zalo = contactSettings.contact_zalo as string || '';
   const messenger = contactSettings.contact_messenger as string || '';
 
-  const hasPhone = Boolean(phone);
-  const hasChat = Boolean(zalo || messenger);
+  const hasContact = Boolean(phone || zalo || messenger);
 
-  if (!hasPhone && !hasChat) {
+  if (!hasContact) {
     return null;
   }
 
-  const containerClass = variant === 'vertical' 
-    ? 'flex flex-col gap-3 w-full' 
-    : 'flex flex-wrap gap-3';
-
   return (
-    <div className={`${containerClass} ${className}`}>
-      {hasPhone && (
-        <button
-          onClick={() =>{  setIsOpen(true); }}
-          className="flex-1 min-h-11 px-6 rounded-xl text-white font-semibold transition-all hover:shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
-          style={{ backgroundColor: brandColor }}
-        >
-          <Phone size={18} />
-          Liên hệ tư vấn
-        </button>
-      )}
-      {hasChat && (
-        <button
-          onClick={() =>{  setIsOpen(true); }}
-          className="flex-1 min-h-11 px-6 rounded-xl font-medium border transition-colors hover:bg-slate-50 flex items-center justify-center gap-2"
-          style={{ borderColor: `${brandColor}80`, color: brandColor }}
-        >
-          <MessageCircle size={18} />
-          Chat ngay
-        </button>
-      )}
+    <div className={`w-full ${className}`}>
+      <button
+        onClick={() =>{  setIsOpen(true); }}
+        className="w-full min-h-11 px-6 rounded-xl text-white font-semibold transition-all hover:shadow-lg hover:scale-[1.01] flex items-center justify-center gap-2"
+        style={{ backgroundColor: brandColor }}
+      >
+        <Phone size={18} />
+        Liên hệ tư vấn
+      </button>
       <QuickContactModal
         brandColor={brandColor}
         isOpen={isOpen}
