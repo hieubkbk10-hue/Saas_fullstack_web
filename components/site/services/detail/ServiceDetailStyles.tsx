@@ -172,26 +172,6 @@ export function ClassicStyle({ service, brandColor, relatedServices, enabledFiel
               </div>
             )}
 
-            <div className="mb-6 rounded-xl border border-slate-200 bg-white px-4 py-3">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-slate-700">Liên hệ nhanh</p>
-                  <p className="text-xs text-slate-500">Tư vấn miễn phí, báo giá trong 24h.</p>
-                </div>
-                {showPrice && (
-                  <div className="text-base font-semibold" style={{ color: brandColor }}>
-                    {formatPrice(service.price)}
-                  </div>
-                )}
-              </div>
-              <div className="mt-3">
-                <QuickContactButtons 
-                  serviceName={service.title}
-                  brandColor={brandColor}
-                />
-              </div>
-            </div>
-
             <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-strong:text-slate-900">
               <div dangerouslySetInnerHTML={{ __html: service.content }} />
             </article>
@@ -252,6 +232,25 @@ export function ClassicStyle({ service, brandColor, relatedServices, enabledFiel
                   </div>
                 </div>
               )}
+              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-slate-700">Liên hệ nhanh</p>
+                    <p className="text-xs text-slate-500">Tư vấn miễn phí, báo giá trong 24h.</p>
+                  </div>
+                  {showPrice && (
+                    <div className="text-base font-semibold" style={{ color: brandColor }}>
+                      {formatPrice(service.price)}
+                    </div>
+                  )}
+                </div>
+                <div className="mt-3">
+                  <QuickContactButtons 
+                    serviceName={service.title}
+                    brandColor={brandColor}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
