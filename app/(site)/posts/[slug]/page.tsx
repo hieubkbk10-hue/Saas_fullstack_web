@@ -178,7 +178,7 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          <article className="lg:col-span-8 space-y-8">
+          <article className="lg:col-span-8 space-y-10">
             <header className="space-y-4">
               <div className="flex items-center gap-2">
                 <span
@@ -187,26 +187,26 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
                 >
                   {post.categoryName}
                 </span>
-                <span className="text-sm text-muted-foreground">•</span>
-                <span className="text-sm text-muted-foreground">Tin tức nổi bật</span>
               </div>
 
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.15]">
                 {post.title}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground pt-2">
+              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground pt-2">
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-4 w-4" />
                   <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Eye className="h-4 w-4" />
-                  <span>{post.views.toLocaleString()} lượt xem</span>
-                </div>
+                <span className="text-muted-foreground/40">•</span>
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-4 w-4" />
                   <span>{readingTime} phút đọc</span>
+                </div>
+                <span className="text-muted-foreground/40">•</span>
+                <div className="flex items-center gap-1.5">
+                  <Eye className="h-4 w-4" />
+                  <span>{post.views.toLocaleString()} lượt xem</span>
                 </div>
               </div>
             </header>
@@ -226,7 +226,7 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
               )}
             </div>
 
-            <div className="prose prose-zinc prose-lg max-w-none dark:prose-invert">
+            <div className="prose prose-zinc prose-lg max-w-none lg:max-w-[640px] dark:prose-invert">
               <div dangerouslySetInnerHTML={{ __html: post.content }} />
             </div>
 
@@ -257,7 +257,7 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
 
           <aside className="lg:col-span-4 space-y-8">
             {relatedPosts.length > 0 && (
-              <div className="h-fit sticky top-24 rounded-lg border bg-card text-card-foreground shadow-sm">
+              <div className="h-fit sticky top-24 rounded-lg border border-border/60 bg-background">
                 <div className="flex flex-col space-y-1.5 p-6 px-0 sm:px-6">
                   <h3 className="text-lg font-semibold">Bài viết liên quan</h3>
                 </div>
@@ -343,8 +343,8 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
         </div>
       </header>
 
-      <main className="container mx-auto max-w-7xl px-4 py-8 md:py-12 space-y-8 md:space-y-12">
-        <section className="max-w-4xl mx-auto text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <main className="container mx-auto max-w-7xl px-4 py-8 md:py-12 space-y-10 md:space-y-14">
+        <section className="max-w-3xl mx-auto text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="flex items-center justify-center">
             <span
               className="inline-flex items-center rounded-full border px-3 py-1 text-xs uppercase tracking-widest"
@@ -387,7 +387,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
           </section>
         )}
 
-        <article className="max-w-4xl mx-auto space-y-6">
+        <article className="max-w-3xl mx-auto space-y-6">
           {showExcerpt && post.excerpt && (
             <p
               className="text-xl md:text-2xl leading-relaxed text-foreground/90 font-medium font-sans border-l-4 pl-6 py-1"
@@ -403,7 +403,6 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
 
           <div className="pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-              <span className="text-sm font-semibold mr-2 text-foreground">Chủ đề:</span>
               <span
                 className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-normal"
                 style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderColor: `${brandColor}30` }}
@@ -431,7 +430,6 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
               Tất cả bài viết
               <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
-            <p className="text-sm text-muted-foreground">Khám phá thêm nhiều nội dung hấp dẫn khác</p>
           </div>
         </article>
 
@@ -519,9 +517,9 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
       </nav>
 
       <main className="container max-w-7xl mx-auto px-4 py-8 md:py-12 animate-fade-in">
-        <header className="text-center mb-10 space-y-6 max-w-4xl mx-auto">
+        <header className="text-center mb-10 space-y-6 max-w-3xl mx-auto">
           <span
-            className="inline-flex items-center rounded-full border px-3 py-1 text-xs uppercase tracking-widest font-bold"
+            className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.2em] font-medium"
             style={{ backgroundColor: `${brandColor}15`, color: brandColor, borderColor: `${brandColor}30` }}
           >
             {post.categoryName}
@@ -560,10 +558,10 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
           </figure>
         )}
 
-        <article className="prose prose-slate prose-lg md:prose-xl max-w-4xl mx-auto text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-img:rounded-xl">
+        <article className="prose prose-slate prose-lg md:prose-xl max-w-3xl mx-auto text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-img:rounded-xl">
           {post.excerpt && (
             <p
-              className="lead text-xl md:text-2xl text-foreground/90 font-medium leading-relaxed mb-10 border-l-4 pl-6 bg-muted/50 py-2 rounded-r-lg"
+              className="lead text-xl md:text-2xl text-foreground/90 font-medium leading-relaxed mb-10 border-l-4 pl-6"
               style={{ borderColor: brandColor }}
             >
               {post.excerpt}
@@ -602,11 +600,6 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
                         <FileText className="w-5 h-5" />
                       </div>
                     )}
-                    <span
-                      className="absolute top-4 left-4 bg-white/90 text-foreground shadow-sm border-none rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                    >
-                      {post.categoryName}
-                    </span>
                   </div>
                   <div className="p-2">
                     <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-2">
@@ -616,11 +609,6 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
                     <h3 className="text-lg font-bold text-foreground leading-snug group-hover:opacity-80 transition-colors mb-2">
                       {p.title}
                     </h3>
-                    {p.excerpt && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {p.excerpt}
-                      </p>
-                    )}
                   </div>
                 </Link>
               ))}
