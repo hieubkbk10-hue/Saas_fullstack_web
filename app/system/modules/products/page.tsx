@@ -1023,22 +1023,20 @@ function DetailPreview({ style, brandColor, device }: { style: ProductsDetailSty
 
   // Minimal
   return (
-    <div className={cn("p-6", device === 'mobile' ? 'p-4' : '')}>
-      <div className="text-center mb-4">
-        <span className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600">Điện thoại</span>
-        <h1 className="font-bold text-lg mt-2">iPhone 15 Pro Max 256GB</h1>
-        <div className="flex items-center justify-center gap-2 mt-2">
-          <span className="text-xl font-bold" style={{ color: brandColor }}>{formatPrice(27_990_000)}</span>
-          <span className="text-sm text-slate-400 line-through">{formatPrice(29_990_000)}</span>
+    <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')}>
+      <div className="text-[10px] text-slate-400 mb-3">Trang chủ › Sản phẩm › Chi tiết</div>
+      <div className={cn("grid gap-4", device === 'mobile' ? '' : 'grid-cols-[1fr_0.8fr]')}>
+        <div className="aspect-[4/5] bg-slate-100 rounded-sm flex items-center justify-center">
+          <Package size={32} className="text-slate-300" />
         </div>
-      </div>
-      <div className="aspect-[4/3] bg-slate-100 rounded-xl mb-4 flex items-center justify-center max-w-sm mx-auto">
-        <Package size={48} className="text-slate-300" />
-      </div>
-      <div className="text-center">
-        <button className="min-h-11 px-8 rounded-full text-white font-semibold" style={{ backgroundColor: brandColor }}>
-          Thêm vào giỏ hàng
-        </button>
+        <div className="flex flex-col justify-center">
+          <span className="text-xs uppercase tracking-wider text-slate-400">Điện thoại</span>
+          <h1 className="font-semibold text-sm mt-2 text-slate-900">iPhone 15 Pro Max 256GB</h1>
+          <div className="text-base font-semibold mt-2" style={{ color: brandColor }}>{formatPrice(27_990_000)}</div>
+          <button className="mt-4 h-10 bg-black text-white text-xs uppercase tracking-wider font-medium">
+            Thêm vào giỏ
+          </button>
+        </div>
       </div>
     </div>
   );

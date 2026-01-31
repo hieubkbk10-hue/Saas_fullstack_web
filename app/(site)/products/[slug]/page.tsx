@@ -397,95 +397,156 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: St
 // ====================================================================================
 // STYLE 3: MINIMAL - Clean, focused design
 // ====================================================================================
-function MinimalStyle({ product, brandColor, relatedProducts, enabledFields }: StyleProps) {
-  const [quantity, setQuantity] = useState(1);
+function MinimalStyle({ product, relatedProducts, enabledFields }: StyleProps) {
+  const [selectedImage, setSelectedImage] = useState(0);
 
   const showPrice = enabledFields.has('price') || enabledFields.size === 0;
-  const showSalePrice = enabledFields.has('salePrice');
   const showStock = enabledFields.has('stock');
   const showDescription = enabledFields.has('description');
+  const showSku = enabledFields.has('sku');
 
   const images = product.images?.length ? product.images : (product.image ? [product.image] : []);
   const inStock = !showStock || product.stock > 0;
 
   return (
     <div className="min-h-screen bg-white">
-      <article className="max-w-5xl mx-auto px-4 py-12 md:py-20">
-        {/* Back */}
-        <Link href="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-600 text-sm mb-10 transition-colors">
-          <ArrowLeft size={16} /> Tất cả sản phẩm
-        </Link>
+      <main className="max-w-7xl mx-auto px-0 md:px-6 py-10">
+        <div className="px-6 md:px-0 mb-6">
+          <nav className="flex items-center gap-2 text-xs text-slate-400">
+            <Link href="/" className="hover:text-slate-600 transition-colors">Trang chủ</Link>
+            <ChevronRight size={12} />
+            <Link href="/products" className="hover:text-slate-600 transition-colors">Sản phẩm</Link>
+            <ChevronRight size={12} />
+            <span className="text-slate-600 truncate max-w-[160px]">{product.name}</span>
+          </nav>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-12 min-h-[calc(100vh-4rem)]">
+          <div className="lg:col-span-7 h-[60vh] lg:h-auto lg:py-0">
+            <div className="lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)]">
+              <div className="flex flex-col-reverse md:flex-row gap-4 h-full">
+                <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-y-auto no-scrollbar md:w-24 shrink-0 px-6 md:px-0">
+                  {images.length > 0 ? (
+                    images.map((img, index) => (
+                      <button
+                        key={img}
+                        onClick={() =>{  setSelectedImage(index); }}
+                        className={`relative aspect-square w-20 md:w-full overflow-hidden rounded-sm transition-all duration-300 ${
+                          selectedImage === index ? 'ring-1 ring-black opacity-100' : 'opacity-70 hover:opacity-100'
+                        }`}
+                      >
+                        <Image src={img} alt={product.name} fill sizes="(max-width: 768px) 80px, 96px" className="object-cover" />
+                      </button>
+                    ))
+                  ) : (
+                    <div className="w-20 h-20 bg-slate-100 rounded-sm flex items-center justify-center">
+                      <Package size={20} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
 
-        {/* Header */}
-        <header className="text-center mb-12 space-y-4">
-          <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">{product.categoryName}</span>
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900">{product.name}</h1>
-          
-          {showPrice && (
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-3xl font-bold" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>
-              {showSalePrice && product.salePrice && (
-                <span className="text-xl text-slate-400 line-through">{formatPrice(product.price)}</span>
-              )}
+                <div className="flex-1 relative bg-slate-100 aspect-[4/5] md:aspect-auto rounded-sm overflow-hidden group">
+                  {images.length > 0 ? (
+                    <Image
+                      src={images[selectedImage]}
+                      alt={product.name}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 60vw"
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package size={64} className="text-slate-300" />
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          )}
-        </header>
-
-        {/* Image */}
-        {images.length > 0 && (
-          <figure className="mb-12">
-            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 max-w-2xl mx-auto shadow-sm">
-              <Image src={images[0]} alt={product.name} fill sizes="(max-width: 768px) 100vw, 600px" className="object-cover" />
-            </div>
-          </figure>
-        )}
-
-        {/* Actions */}
-        <div className="flex flex-col items-center gap-4 mb-12">
-          <div className="flex items-center border border-slate-200 rounded-full">
-            <button onClick={() =>{  setQuantity(q => Math.max(1, q - 1)); }} className="p-3 hover:bg-slate-50 transition-colors rounded-l-full">
-              <Minus size={18} />
-            </button>
-            <span className="w-12 text-center font-medium">{quantity}</span>
-            <button onClick={() =>{  setQuantity(q => q + 1); }} className="p-3 hover:bg-slate-50 transition-colors rounded-r-full">
-              <Plus size={18} />
-            </button>
           </div>
 
-          <button className={`min-h-11 px-12 rounded-full text-white font-semibold transition-all ${inStock ? 'hover:shadow-lg hover:scale-105' : 'opacity-50 cursor-not-allowed'}`} style={{ backgroundColor: brandColor }} disabled={!inStock}>
-            {inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
-          </button>
+          <div className="lg:col-span-5 px-6 py-6 lg:py-0 bg-white flex flex-col justify-center">
+            <div className="mb-6">
+              <h1 className="text-3xl md:text-5xl font-light text-slate-900 tracking-tight mb-4">
+                {product.name}
+              </h1>
+              {showPrice && (
+                <p className="text-2xl text-slate-600 font-light">
+                  {formatPrice(product.salePrice ?? product.price)}
+                </p>
+              )}
+            </div>
 
-          {showStock && product.stock <= 10 && product.stock > 0 && (
-            <p className="text-sm text-orange-600">Chỉ còn {product.stock} sản phẩm</p>
-          )}
+            <div className="flex gap-4 mb-8 border-t border-slate-100 pt-6">
+              <button
+                className={`flex-1 bg-black text-white h-14 uppercase tracking-wider text-sm font-medium transition-colors ${inStock ? 'hover:bg-slate-900' : 'opacity-50 cursor-not-allowed'}`}
+                disabled={!inStock}
+              >
+                {inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
+              </button>
+              <button className="w-14 h-14 border border-slate-200 flex items-center justify-center hover:border-black transition-colors text-slate-400 hover:text-black">
+                <Heart size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-5 pt-0 flex-1">
+              {showDescription && product.description && (
+                <div
+                  className="text-slate-600 leading-relaxed font-light text-justify"
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
+              )}
+
+              <div className="space-y-3 text-sm text-slate-500 font-light">
+                {showSku && product.sku && (
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <span>SKU</span>
+                    <span className="font-mono text-slate-700">{product.sku}</span>
+                  </div>
+                )}
+                {showStock && (
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <span>Tình trạng</span>
+                    <span className={inStock ? 'text-emerald-600' : 'text-red-500'}>
+                      {inStock ? 'Còn hàng' : 'Hết hàng'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Description */}
-        {showDescription && product.description && (
-          <div className="prose prose-slate max-w-none" dangerouslySetInnerHTML={{ __html: product.description }} />
-        )}
-
-        {/* Related */}
         {relatedProducts.length > 0 && (
-          <div className="mt-16">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-6 text-center">Có thể bạn quan tâm</h3>
-            <div className="space-y-2">
-              {relatedProducts.map((p, index) => (
-                <Link key={p._id} href={`/products/${p.slug}`} className="group flex items-center justify-between gap-4 rounded-xl border border-slate-100 px-4 py-3 hover:border-slate-200 hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm text-slate-300 font-mono">{String(index + 1).padStart(2, '0')}</span>
-                    <h4 className="font-medium text-slate-900 group-hover:opacity-70 transition-opacity">{p.name}</h4>
+          <section className="px-6 py-16 border-t border-slate-100 mt-10">
+            <h2 className="text-2xl font-light mb-8 text-center">Có thể bạn sẽ thích</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {relatedProducts.map((p) => (
+                <Link key={p._id} href={`/products/${p.slug}`} className="group cursor-pointer">
+                  <div className="aspect-[3/4] bg-slate-100 mb-4 overflow-hidden relative">
+                    {p.image ? (
+                      <Image
+                        src={p.image}
+                        alt={p.name}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package size={32} className="text-slate-300" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
+                  <h3 className="text-sm font-medium text-slate-900">{p.name}</h3>
                   {showPrice && (
-                    <span className="text-sm font-semibold" style={{ color: brandColor }}>{formatPrice(p.salePrice ?? p.price)}</span>
+                    <p className="text-sm text-slate-500 mt-1">{formatPrice(p.salePrice ?? p.price)}</p>
                   )}
                 </Link>
               ))}
             </div>
-          </div>
+          </section>
         )}
-      </article>
+      </main>
     </div>
   );
 }
