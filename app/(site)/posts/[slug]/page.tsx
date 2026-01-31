@@ -413,8 +413,6 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
             <div dangerouslySetInnerHTML={{ __html: post.content }} />
           </div>
 
-          <div className="pt-4 border-t" />
-
           <div className="flex flex-col items-center justify-center py-8 gap-4">
             <Link
               href="/posts"
@@ -428,7 +426,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
         </article>
 
         {relatedPosts.length > 0 && (
-          <section className="pt-6 border-t pb-2">
+          <section className="pt-6 pb-2">
             <div className="max-w-7xl mx-auto">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl md:text-2xl font-semibold tracking-tight">Bài viết cùng chủ đề</h2>
