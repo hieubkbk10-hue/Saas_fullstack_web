@@ -488,30 +488,6 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="sticky top-0 z-50 w-full border-b bg-background/85 backdrop-blur-md">
-        <div className="container max-w-6xl mx-auto h-14 flex items-center justify-between px-4 md:px-6">
-          <Link
-            href="/posts"
-            className="group -ml-2 inline-flex h-11 items-center gap-2 px-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            aria-label="Quay lại"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
-            Danh sách
-          </Link>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={handleShare}
-            aria-label="Chia sẻ"
-            className="h-11 w-11"
-          >
-            {isCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-          </Button>
-        </div>
-      </nav>
-
       <main className="pb-16">
         <section className="relative w-full overflow-hidden bg-muted">
           <div className="relative h-[clamp(220px,45vh,520px)] w-full">
@@ -527,6 +503,31 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
               <div className="h-full w-full" style={{ backgroundColor: `${brandColor}10` }} />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+            <div className="absolute inset-x-0 top-0 z-10">
+              <div className="container max-w-6xl mx-auto px-4 md:px-6">
+                <div className="flex items-center justify-between pt-4">
+                  <Link
+                    href="/posts"
+                    className="group inline-flex h-11 items-center gap-2 rounded-md border border-white/30 bg-white/15 px-3 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/20"
+                    aria-label="Quay lại"
+                  >
+                    <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
+                    Danh sách
+                  </Link>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleShare}
+                    aria-label="Chia sẻ"
+                    className="h-11 w-11 border-white/30 bg-white/15 text-white hover:bg-white/20"
+                  >
+                    {isCopied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            </div>
             <div className="container max-w-6xl mx-auto h-full px-4 md:px-6 flex items-end pb-6 md:pb-8">
               <Card className="w-full max-w-3xl border-border/70 bg-background/90 shadow-sm backdrop-blur-sm">
                 <CardContent className="space-y-3 p-4 md:p-6">
@@ -588,7 +589,22 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
                 >
                   <Card className="transition-colors hover:bg-muted/40">
                     <CardContent className="flex items-center justify-between gap-4 px-4 py-4">
-                      <div className="min-w-0">
+                      <div className="flex min-w-0 items-center gap-4">
+                        <div className="relative h-14 w-20 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+                          {p.thumbnail ? (
+                            <Image
+                              src={p.thumbnail}
+                              alt={p.title}
+                              fill
+                              sizes="80px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                              <FileText className="h-4 w-4" />
+                            </div>
+                          )}
+                        </div>
                         <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
                           {p.title}
                         </h3>
