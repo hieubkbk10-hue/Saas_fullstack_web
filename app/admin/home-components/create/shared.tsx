@@ -7,41 +7,41 @@ import { toast } from 'sonner';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { 
-  Grid, LayoutTemplate, AlertCircle, Package, Briefcase, FileText, 
-  Users, MousePointerClick, HelpCircle, User as UserIcon, Check, 
-  Star, Award, Tag, Image as ImageIcon, Phone, Zap, FolderTree, ShoppingBag, UserCircle
+  AlertCircle, Award, Briefcase, Check, FileText, FolderTree, 
+  Grid, HelpCircle, Image as ImageIcon, LayoutTemplate, MousePointerClick, 
+  Package, Phone, ShoppingBag, Star, Tag, UserCircle, User as UserIcon, Users, Zap
 } from 'lucide-react';
-import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../components/ui';
 
 export const COMPONENT_TYPES = [
-  { value: 'Hero', label: 'Hero Banner', icon: LayoutTemplate, description: 'Banner chính đầu trang', route: 'hero' },
-  { value: 'Stats', label: 'Thống kê', icon: AlertCircle, description: 'Số liệu nổi bật', route: 'stats' },
-  { value: 'ProductList', label: 'Danh sách Sản phẩm', icon: Package, description: 'Sản phẩm theo danh mục', route: 'product-list?type=ProductList' },
-  { value: 'ServiceList', label: 'Danh sách Dịch vụ', icon: Briefcase, description: 'Các dịch vụ cung cấp', route: 'product-list?type=ServiceList' },
-  { value: 'Blog', label: 'Tin tức / Blog', icon: FileText, description: 'Bài viết mới nhất', route: 'product-list?type=Blog' },
-  { value: 'Partners', label: 'Đối tác / Logos', icon: Users, description: 'Logo đối tác, khách hàng', route: 'gallery?type=Partners' },
-  { value: 'CTA', label: 'Kêu gọi hành động (CTA)', icon: MousePointerClick, description: 'Nút đăng ký, mua ngay', route: 'cta' },
-  { value: 'FAQ', label: 'Câu hỏi thường gặp', icon: HelpCircle, description: 'Hỏi đáp', route: 'faq' },
-  { value: 'About', label: 'Về chúng tôi', icon: UserIcon, description: 'Giới thiệu ngắn gọn', route: 'about' },
-  { value: 'Footer', label: 'Footer', icon: LayoutTemplate, description: 'Chân trang', route: 'footer' },
-  { value: 'Services', label: 'Dịch vụ chi tiết', icon: Briefcase, description: 'Mô tả dịch vụ', route: 'services' },
-  { value: 'Benefits', label: 'Lợi ích', icon: Check, description: 'Tại sao chọn chúng tôi', route: 'benefits' },
-  { value: 'Testimonials', label: 'Đánh giá / Review', icon: Star, description: 'Ý kiến khách hàng', route: 'testimonials' },
-  { value: 'TrustBadges', label: 'Chứng nhận', icon: Award, description: 'Giải thưởng, chứng chỉ', route: 'gallery?type=TrustBadges' },
-  { value: 'Pricing', label: 'Bảng giá', icon: Tag, description: 'Các gói dịch vụ', route: 'pricing' },
-  { value: 'Gallery', label: 'Thư viện ảnh', icon: ImageIcon, description: 'Hình ảnh hoạt động', route: 'gallery?type=Gallery' },
-  { value: 'CaseStudy', label: 'Dự án thực tế', icon: FileText, description: 'Case study tiêu biểu', route: 'case-study' },
-  { value: 'Career', label: 'Tuyển dụng', icon: Users, description: 'Vị trí đang tuyển', route: 'career' },
-  { value: 'Contact', label: 'Liên hệ', icon: Phone, description: 'Form liên hệ, bản đồ', route: 'contact' },
-  { value: 'SpeedDial', label: 'Speed Dial', icon: Zap, description: 'Nút liên hệ nhanh (FAB)', route: 'speed-dial' },
-  { value: 'ProductCategories', label: 'Danh mục sản phẩm', icon: FolderTree, description: 'Hiển thị danh mục SP', route: 'product-categories' },
-  { value: 'CategoryProducts', label: 'Sản phẩm theo danh mục', icon: ShoppingBag, description: 'SP trong từng danh mục', route: 'category-products' },
-  { value: 'Team', label: 'Đội ngũ', icon: UserCircle, description: 'Giới thiệu đội ngũ với ảnh, chức vụ, social links', route: 'team' },
-  { value: 'Features', label: 'Tính năng', icon: Zap, description: 'Tính năng nổi bật với icon grid', route: 'features' },
-  { value: 'Process', label: 'Quy trình', icon: LayoutTemplate, description: 'Các bước quy trình/timeline cho dịch vụ', route: 'process' },
-  { value: 'Clients', label: 'Khách hàng (Marquee)', icon: Users, description: 'Logo khách hàng chạy auto-scroll', route: 'clients' },
-  { value: 'Video', label: 'Video / Media', icon: LayoutTemplate, description: 'Video giới thiệu hoặc demo sản phẩm', route: 'video' },
-  { value: 'Countdown', label: 'Khuyến mãi / Countdown', icon: AlertCircle, description: 'Banner khuyến mãi với đếm ngược thời gian', route: 'countdown' },
+  { description: 'Banner chính đầu trang', icon: LayoutTemplate, label: 'Hero Banner', route: 'hero', value: 'Hero' },
+  { description: 'Số liệu nổi bật', icon: AlertCircle, label: 'Thống kê', route: 'stats', value: 'Stats' },
+  { description: 'Sản phẩm theo danh mục', icon: Package, label: 'Danh sách Sản phẩm', route: 'product-list?type=ProductList', value: 'ProductList' },
+  { description: 'Các dịch vụ cung cấp', icon: Briefcase, label: 'Danh sách Dịch vụ', route: 'product-list?type=ServiceList', value: 'ServiceList' },
+  { description: 'Bài viết mới nhất', icon: FileText, label: 'Tin tức / Blog', route: 'product-list?type=Blog', value: 'Blog' },
+  { description: 'Logo đối tác, khách hàng', icon: Users, label: 'Đối tác / Logos', route: 'gallery?type=Partners', value: 'Partners' },
+  { description: 'Nút đăng ký, mua ngay', icon: MousePointerClick, label: 'Kêu gọi hành động (CTA)', route: 'cta', value: 'CTA' },
+  { description: 'Hỏi đáp', icon: HelpCircle, label: 'Câu hỏi thường gặp', route: 'faq', value: 'FAQ' },
+  { description: 'Giới thiệu ngắn gọn', icon: UserIcon, label: 'Về chúng tôi', route: 'about', value: 'About' },
+  { description: 'Chân trang', icon: LayoutTemplate, label: 'Footer', route: 'footer', value: 'Footer' },
+  { description: 'Mô tả dịch vụ', icon: Briefcase, label: 'Dịch vụ chi tiết', route: 'services', value: 'Services' },
+  { description: 'Tại sao chọn chúng tôi', icon: Check, label: 'Lợi ích', route: 'benefits', value: 'Benefits' },
+  { description: 'Ý kiến khách hàng', icon: Star, label: 'Đánh giá / Review', route: 'testimonials', value: 'Testimonials' },
+  { description: 'Giải thưởng, chứng chỉ', icon: Award, label: 'Chứng nhận', route: 'gallery?type=TrustBadges', value: 'TrustBadges' },
+  { description: 'Các gói dịch vụ', icon: Tag, label: 'Bảng giá', route: 'pricing', value: 'Pricing' },
+  { description: 'Hình ảnh hoạt động', icon: ImageIcon, label: 'Thư viện ảnh', route: 'gallery?type=Gallery', value: 'Gallery' },
+  { description: 'Case study tiêu biểu', icon: FileText, label: 'Dự án thực tế', route: 'case-study', value: 'CaseStudy' },
+  { description: 'Vị trí đang tuyển', icon: Users, label: 'Tuyển dụng', route: 'career', value: 'Career' },
+  { description: 'Form liên hệ, bản đồ', icon: Phone, label: 'Liên hệ', route: 'contact', value: 'Contact' },
+  { description: 'Nút liên hệ nhanh (FAB)', icon: Zap, label: 'Speed Dial', route: 'speed-dial', value: 'SpeedDial' },
+  { description: 'Hiển thị danh mục SP', icon: FolderTree, label: 'Danh mục sản phẩm', route: 'product-categories', value: 'ProductCategories' },
+  { description: 'SP trong từng danh mục', icon: ShoppingBag, label: 'Sản phẩm theo danh mục', route: 'category-products', value: 'CategoryProducts' },
+  { description: 'Giới thiệu đội ngũ với ảnh, chức vụ, social links', icon: UserCircle, label: 'Đội ngũ', route: 'team', value: 'Team' },
+  { description: 'Tính năng nổi bật với icon grid', icon: Zap, label: 'Tính năng', route: 'features', value: 'Features' },
+  { description: 'Các bước quy trình/timeline cho dịch vụ', icon: LayoutTemplate, label: 'Quy trình', route: 'process', value: 'Process' },
+  { description: 'Logo khách hàng chạy auto-scroll', icon: Users, label: 'Khách hàng (Marquee)', route: 'clients', value: 'Clients' },
+  { description: 'Video giới thiệu hoặc demo sản phẩm', icon: LayoutTemplate, label: 'Video / Media', route: 'video', value: 'Video' },
+  { description: 'Banner khuyến mãi với đếm ngược thời gian', icon: AlertCircle, label: 'Khuyến mãi / Countdown', route: 'countdown', value: 'Countdown' },
 ];
 
 export const DEFAULT_BRAND_COLOR = '#3b82f6';
@@ -50,9 +50,9 @@ export const DEFAULT_BRAND_COLOR = '#3b82f6';
 // Key trong settings table là 'site_brand_color' (theo moduleFields của settings module)
 export function useBrandColor() {
   const setting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
-  // setting === undefined: đang loading
-  // setting === null: không có trong DB
-  // setting.value: có data
+  // Setting === undefined: đang loading
+  // Setting === null: không có trong DB
+  // Setting.value: có data
   if (setting === undefined || setting === null) {
     return DEFAULT_BRAND_COLOR;
   }
@@ -87,13 +87,13 @@ export function ComponentFormWrapper({
 }) {
   const router = useRouter();
   const typeInfo = getComponentType(type);
-  const TypeIcon = typeInfo?.icon || Grid;
+  const TypeIcon = typeInfo?.icon ?? Grid;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-20">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-          Thêm {typeInfo?.label || 'Component'}
+          Thêm {typeInfo?.label ?? 'Component'}
         </h1>
         <Link href="/admin/home-components/create" className="text-sm text-blue-600 hover:underline">
           ← Quay lại chọn loại
@@ -113,7 +113,7 @@ export function ComponentFormWrapper({
               <Label>Tiêu đề hiển thị <span className="text-red-500">*</span></Label>
               <Input 
                 value={title} 
-                onChange={(e) => setTitle(e.target.value)} 
+                onChange={(e) =>{  setTitle(e.target.value); }} 
                 required 
                 placeholder="Nhập tiêu đề component..." 
               />
@@ -125,7 +125,7 @@ export function ComponentFormWrapper({
                   "cursor-pointer inline-flex items-center justify-center rounded-full w-8 h-4 transition-colors",
                   active ? "bg-green-500" : "bg-slate-300"
                 )} 
-                onClick={() => setActive(!active)}
+                onClick={() =>{  setActive(!active); }}
               >
                 <div className={cn(
                   "w-3 h-3 bg-white rounded-full transition-transform",
@@ -140,7 +140,7 @@ export function ComponentFormWrapper({
         {children}
 
         <div className="flex justify-end gap-3 mt-6">
-          <Button type="button" variant="ghost" onClick={() => router.push('/admin/home-components')} disabled={isSubmitting}>
+          <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/home-components'); }} disabled={isSubmitting}>
             Hủy bỏ
           </Button>
           <Button type="submit" variant="accent" disabled={isSubmitting}>
@@ -161,15 +161,15 @@ export function useComponentForm(defaultTitle: string, componentType: string) {
 
   const handleSubmit = async (e: React.FormEvent, config: Record<string, unknown> = {}) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting) {return;}
     
     setIsSubmitting(true);
     try {
       await createMutation({
-        type: componentType,
-        title,
         active,
         config,
+        title,
+        type: componentType,
       });
       toast.success('Đã thêm component mới');
       router.push('/admin/home-components');
@@ -181,5 +181,5 @@ export function useComponentForm(defaultTitle: string, componentType: string) {
     }
   };
 
-  return { title, setTitle, active, setActive, handleSubmit, isSubmitting, router };
+  return { active, handleSubmit, isSubmitting, router, setActive, setTitle, title };
 }

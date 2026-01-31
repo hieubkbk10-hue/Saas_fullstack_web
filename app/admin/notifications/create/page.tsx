@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -53,13 +53,13 @@ export default function NotificationCreatePage() {
     setIsSubmitting(true);
     try {
       await createNotification({
-        title,
         content,
-        type,
-        targetType: enabledFields.has('targetType') ? targetType : 'all',
-        sendEmail: enabledFields.has('sendEmail') ? sendEmail : undefined,
         scheduledAt: enabledFields.has('scheduledAt') && scheduledAt ? new Date(scheduledAt).getTime() : undefined,
+        sendEmail: enabledFields.has('sendEmail') ? sendEmail : undefined,
         status: scheduledAt ? 'Scheduled' : 'Draft',
+        targetType: enabledFields.has('targetType') ? targetType : 'all',
+        title,
+        type,
       });
       toast.success('Đã tạo thông báo');
       router.push('/admin/notifications');
@@ -94,7 +94,7 @@ export default function NotificationCreatePage() {
                 required 
                 placeholder="Nhập tiêu đề thông báo..." 
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) =>{  setTitle(e.target.value); }}
               />
             </div>
 
@@ -105,7 +105,7 @@ export default function NotificationCreatePage() {
                 className="w-full min-h-[120px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 placeholder="Nhập nội dung thông báo..."
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e) =>{  setContent(e.target.value); }}
               />
             </div>
 
@@ -115,7 +115,7 @@ export default function NotificationCreatePage() {
                 <select 
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   value={type}
-                  onChange={(e) => setType(e.target.value as typeof type)}
+                  onChange={(e) =>{  setType(e.target.value as typeof type); }}
                 >
                   <option value="info">Thông tin</option>
                   <option value="success">Thành công</option>
@@ -130,7 +130,7 @@ export default function NotificationCreatePage() {
                   <select 
                     className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                     value={targetType}
-                    onChange={(e) => setTargetType(e.target.value as typeof targetType)}
+                    onChange={(e) =>{  setTargetType(e.target.value as typeof targetType); }}
                   >
                     <option value="all">Tất cả</option>
                     <option value="customers">Khách hàng</option>
@@ -147,7 +147,7 @@ export default function NotificationCreatePage() {
                 <Input 
                   type="datetime-local"
                   value={scheduledAt}
-                  onChange={(e) => setScheduledAt(e.target.value)}
+                  onChange={(e) =>{  setScheduledAt(e.target.value); }}
                 />
               </div>
             )}
@@ -158,7 +158,7 @@ export default function NotificationCreatePage() {
                   type="checkbox" 
                   id="sendEmail"
                   checked={sendEmail}
-                  onChange={(e) => setSendEmail(e.target.checked)}
+                  onChange={(e) =>{  setSendEmail(e.target.checked); }}
                   className="w-4 h-4 rounded border-slate-300"
                 />
                 <Label htmlFor="sendEmail" className="cursor-pointer">Gửi email kèm theo</Label>
@@ -167,7 +167,7 @@ export default function NotificationCreatePage() {
           </CardContent>
           
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
-            <Button type="button" variant="ghost" onClick={() => router.push('/admin/notifications')}>Hủy bỏ</Button>
+            <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/notifications'); }}>Hủy bỏ</Button>
             <Button type="submit" className="bg-pink-600 hover:bg-pink-500" disabled={isSubmitting}>
               {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
               {scheduledAt ? 'Lên lịch gửi' : 'Lưu nháp'}

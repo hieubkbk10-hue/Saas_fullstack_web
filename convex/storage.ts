@@ -3,18 +3,18 @@ import { v } from "convex/values";
 
 export const generateUploadUrl = mutation({
   args: {},
-  returns: v.string(),
   handler: async (ctx) => {
-    return await ctx.storage.generateUploadUrl();
+    return  ctx.storage.generateUploadUrl();
   },
+  returns: v.string(),
 });
 
 export const getUrl = query({
   args: { storageId: v.id("_storage") },
-  returns: v.union(v.string(), v.null()),
   handler: async (ctx, args) => {
-    return await ctx.storage.getUrl(args.storageId);
+    return  ctx.storage.getUrl(args.storageId);
   },
+  returns: v.union(v.string(), v.null()),
 });
 
 export const saveImage = mutation({
@@ -28,10 +28,6 @@ export const saveImage = mutation({
     alt: v.optional(v.string()),
     folder: v.optional(v.string()),
   },
-  returns: v.object({
-    id: v.id("images"),
-    url: v.union(v.string(), v.null()),
-  }),
   handler: async (ctx, args) => {
     const id = await ctx.db.insert("images", {
       storageId: args.storageId,
@@ -46,11 +42,14 @@ export const saveImage = mutation({
     const url = await ctx.storage.getUrl(args.storageId);
     return { id, url };
   },
+  returns: v.object({
+    id: v.id("images"),
+    url: v.union(v.string(), v.null()),
+  }),
 });
 
 export const deleteImage = mutation({
   args: { storageId: v.id("_storage") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     // Delete from storage
     await ctx.storage.delete(args.storageId);
@@ -66,19 +65,12 @@ export const deleteImage = mutation({
     
     return null;
   },
+  returns: v.null(),
 });
 
 // QA-HIGH-006 FIX: Add limit to prevent fetching ALL images
 export const listByFolder = query({
   args: { folder: v.optional(v.string()), limit: v.optional(v.number()) },
-  returns: v.array(v.object({
-    _id: v.id("images"),
-    storageId: v.id("_storage"),
-    filename: v.string(),
-    mimeType: v.string(),
-    size: v.number(),
-    url: v.union(v.string(), v.null()),
-  })),
   handler: async (ctx, args) => {
     const maxLimit = args.limit ?? 100; // Default max 100
     const images = args.folder
@@ -98,12 +90,19 @@ export const listByFolder = query({
     
     return result;
   },
+  returns: v.array(v.object({
+    _id: v.id("images"),
+    storageId: v.id("_storage"),
+    filename: v.string(),
+    mimeType: v.string(),
+    size: v.number(),
+    url: v.union(v.string(), v.null()),
+  })),
 });
 
 // QA-HIGH-006 FIX: Cleanup orphaned images with batch processing and limits
 export const cleanupOrphanedImages = mutation({
   args: { folder: v.string(), batchSize: v.optional(v.number()) },
-  returns: v.object({ deleted: v.number(), hasMore: v.boolean() }),
   handler: async (ctx, args) => {
     const maxBatch = args.batchSize ?? 50; // Process in batches to avoid timeout
     const images = await ctx.db
@@ -174,12 +173,12 @@ export const cleanupOrphanedImages = mutation({
     
     return { deleted: toDelete.length, hasMore: remaining !== null };
   },
+  returns: v.object({ deleted: v.number(), hasMore: v.boolean() }),
 });
 
 // Cleanup settings images - compare with used URLs from settings
 export const cleanupSettingsImages = mutation({
   args: { usedUrls: v.array(v.string()) },
-  returns: v.object({ deleted: v.number() }),
   handler: async (ctx, args) => {
     const images = await ctx.db
       .query("images")
@@ -210,12 +209,12 @@ export const cleanupSettingsImages = mutation({
 
     return { deleted: toDelete.length };
   },
+  returns: v.object({ deleted: v.number() }),
 });
 
 // Cleanup home-components images - compare with used URLs from homeComponents table
 export const cleanupHomeComponentImages = mutation({
   args: { batchSize: v.optional(v.number()) },
-  returns: v.object({ deleted: v.number(), hasMore: v.boolean() }),
   handler: async (ctx, args) => {
     const maxBatch = args.batchSize ?? 50;
     
@@ -290,4 +289,5 @@ export const cleanupHomeComponentImages = mutation({
 
     return { deleted: toDelete.length, hasMore: remaining !== null };
   },
+  returns: v.object({ deleted: v.number(), hasMore: v.boolean() }),
 });

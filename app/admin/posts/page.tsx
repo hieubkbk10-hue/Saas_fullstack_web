@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ChevronLeft, ChevronRight, Edit, ExternalLink, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
-import { SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
+import { BulkActionBar, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 export default function PostsListPage() {
@@ -28,7 +28,7 @@ function PostsContent() {
   const seedPostsModule = useMutation(api.seed.seedPostsModule);
   const clearPostsData = useMutation(api.seed.clearPostsData);
   
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [selectedIds, setSelectedIds] = useState<Id<"posts">[]>([]);
@@ -49,13 +49,11 @@ function PostsContent() {
     return map;
   }, [categoriesData]);
 
-  const posts = useMemo(() => {
-    return postsData?.map(post => ({
+  const posts = useMemo(() => postsData?.map(post => ({
       ...post,
       id: post._id,
       category: categoryMap[post.categoryId] || 'Không có',
-    })) || [];
-  }, [postsData, categoryMap]);
+    })) ?? [], [postsData, categoryMap]);
 
   const filteredPosts = useMemo(() => {
     let data = [...posts];
@@ -78,7 +76,7 @@ function PostsContent() {
   }, [sortedPosts, currentPage, postsPerPage]);
 
   const handleSort = (key: string) => {
-    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
     setCurrentPage(1);
   };
 
@@ -87,8 +85,8 @@ function PostsContent() {
     setCurrentPage(1);
   };
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedPosts.length ? [] : paginatedPosts.map(p => p._id));
-  const toggleSelectItem = (id: Id<"posts">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedPosts.length ? [] : paginatedPosts.map(p => p._id)); };
+  const toggleSelectItem = (id: Id<"posts">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
 
   const handleDelete = async (id: Id<"posts">) => {
     if (confirm('Xóa bài viết này?')) {
@@ -151,15 +149,15 @@ function PostsContent() {
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
           <div className="relative max-w-xs flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm bài viết..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Input placeholder="Tìm kiếm bài viết..." className="pl-9" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); }} />
           </div>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => handleFilterChange(e.target.value)}>
+          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  handleFilterChange(e.target.value); }}>
             <option value="">Tất cả trạng thái</option>
             <option value="Published">Đã xuất bản</option>
             <option value="Draft">Bản nháp</option>
@@ -181,7 +179,7 @@ function PostsContent() {
           <TableBody>
             {paginatedPosts.map(post => (
               <TableRow key={post._id} className={selectedIds.includes(post._id) ? 'bg-blue-500/5' : ''}>
-                <TableCell><SelectCheckbox checked={selectedIds.includes(post._id)} onChange={() => toggleSelectItem(post._id)} /></TableCell>
+                <TableCell><SelectCheckbox checked={selectedIds.includes(post._id)} onChange={() =>{  toggleSelectItem(post._id); }} /></TableCell>
                 <TableCell>
                   {post.thumbnail ? (
                     <Image src={post.thumbnail} width={48} height={32} className="w-12 h-8 object-cover rounded" alt={post.title} />
@@ -193,15 +191,15 @@ function PostsContent() {
                 <TableCell>{post.category}</TableCell>
                 <TableCell className="text-slate-500">{post.views.toLocaleString()}</TableCell>
                 <TableCell>
-                  <Badge variant={post.status === 'Published' ? 'success' : post.status === 'Draft' ? 'secondary' : 'warning'}>
-                    {post.status === 'Published' ? 'Đã xuất bản' : post.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ'}
+                  <Badge variant={post.status === 'Published' ? 'success' : (post.status === 'Draft' ? 'secondary' : 'warning')}>
+                    {post.status === 'Published' ? 'Đã xuất bản' : (post.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ')}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem bài viết" onClick={() => openFrontend(post.slug)}><ExternalLink size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem bài viết" onClick={() =>{  openFrontend(post.slug); }}><ExternalLink size={16}/></Button>
                     <Link href={`/admin/posts/${post._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(post._id)}><Trash2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(post._id)}><Trash2 size={16}/></Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -226,7 +224,7 @@ function PostsContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
+                  onClick={() =>{  setCurrentPage(p => p - 1); }}
                 >
                   <ChevronLeft size={16} />
                 </Button>
@@ -237,7 +235,7 @@ function PostsContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
+                  onClick={() =>{  setCurrentPage(p => p + 1); }}
                 >
                   <ChevronRight size={16} />
                 </Button>

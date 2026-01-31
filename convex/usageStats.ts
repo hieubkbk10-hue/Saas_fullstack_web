@@ -1,17 +1,17 @@
-import { query, mutation, internalMutation } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 // Average document sizes (in KB) - estimates based on typical data
 const AVG_DOC_SIZES: Record<string, number> = {
   activityLogs: 0.5,
-  pageViews: 0.3,
-  products: 2,
-  posts: 5,
-  orders: 3,
-  customers: 1,
   comments: 0.5,
-  notifications: 1,
+  customers: 1,
   default: 1,
+  notifications: 1,
+  orders: 3,
+  pageViews: 0.3,
+  posts: 5,
+  products: 2,
 };
 
 // Average file sizes (in KB)
@@ -32,10 +32,9 @@ function getDateNDaysAgo(n: number): string {
 // Track a database read operation
 export const trackDbRead = internalMutation({
   args: {
-    table: v.optional(v.string()),
     count: v.optional(v.number()),
+    table: v.optional(v.string()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const date = getTodayDate();
     const count = args.count ?? 1;
@@ -58,23 +57,23 @@ export const trackDbRead = internalMutation({
         date,
         dbReads: count,
         dbWrites: 0,
-        fileReads: 0,
-        fileWrites: 0,
         estimatedDbBandwidth: bandwidthKB,
         estimatedFileBandwidth: 0,
+        fileReads: 0,
+        fileWrites: 0,
       });
     }
     return null;
   },
+  returns: v.null(),
 });
 
 // Track a database write operation
 export const trackDbWrite = internalMutation({
   args: {
-    table: v.optional(v.string()),
     count: v.optional(v.number()),
+    table: v.optional(v.string()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const date = getTodayDate();
     const count = args.count ?? 1;
@@ -97,23 +96,23 @@ export const trackDbWrite = internalMutation({
         date,
         dbReads: 0,
         dbWrites: count,
-        fileReads: 0,
-        fileWrites: 0,
         estimatedDbBandwidth: bandwidthKB,
         estimatedFileBandwidth: 0,
+        fileReads: 0,
+        fileWrites: 0,
       });
     }
     return null;
   },
+  returns: v.null(),
 });
 
 // Track a file read operation
 export const trackFileRead = internalMutation({
   args: {
-    sizeKB: v.optional(v.number()),
     count: v.optional(v.number()),
+    sizeKB: v.optional(v.number()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const date = getTodayDate();
     const count = args.count ?? 1;
@@ -127,31 +126,31 @@ export const trackFileRead = internalMutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, {
-        fileReads: existing.fileReads + count,
         estimatedFileBandwidth: existing.estimatedFileBandwidth + bandwidthKB,
+        fileReads: existing.fileReads + count,
       });
     } else {
       await ctx.db.insert("usageStats", {
         date,
         dbReads: 0,
         dbWrites: 0,
-        fileReads: count,
-        fileWrites: 0,
         estimatedDbBandwidth: 0,
         estimatedFileBandwidth: bandwidthKB,
+        fileReads: count,
+        fileWrites: 0,
       });
     }
     return null;
   },
+  returns: v.null(),
 });
 
 // Track a file write/upload operation
 export const trackFileWrite = internalMutation({
   args: {
-    sizeKB: v.optional(v.number()),
     count: v.optional(v.number()),
+    sizeKB: v.optional(v.number()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const date = getTodayDate();
     const count = args.count ?? 1;
@@ -165,38 +164,38 @@ export const trackFileWrite = internalMutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, {
-        fileWrites: existing.fileWrites + count,
         estimatedFileBandwidth: existing.estimatedFileBandwidth + bandwidthKB,
+        fileWrites: existing.fileWrites + count,
       });
     } else {
       await ctx.db.insert("usageStats", {
         date,
         dbReads: 0,
         dbWrites: 0,
-        fileReads: 0,
-        fileWrites: count,
         estimatedDbBandwidth: 0,
         estimatedFileBandwidth: bandwidthKB,
+        fileReads: 0,
+        fileWrites: count,
       });
     }
     return null;
   },
+  returns: v.null(),
 });
 
 // Public mutation for tracking (can be called from client)
 export const track = mutation({
   args: {
+    count: v.optional(v.number()),
+    sizeKB: v.optional(v.number()),
+    table: v.optional(v.string()),
     type: v.union(
       v.literal("dbRead"),
       v.literal("dbWrite"),
       v.literal("fileRead"),
       v.literal("fileWrite")
     ),
-    table: v.optional(v.string()),
-    count: v.optional(v.number()),
-    sizeKB: v.optional(v.number()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const date = getTodayDate();
     const count = args.count ?? 1;
@@ -236,14 +235,15 @@ export const track = mutation({
         date,
         dbReads: args.type === "dbRead" ? count : 0,
         dbWrites: args.type === "dbWrite" ? count : 0,
-        fileReads: args.type === "fileRead" ? count : 0,
-        fileWrites: args.type === "fileWrite" ? count : 0,
         estimatedDbBandwidth: args.type.startsWith("db") ? bandwidthKB : 0,
         estimatedFileBandwidth: args.type.startsWith("file") ? bandwidthKB : 0,
+        fileReads: args.type === "fileRead" ? count : 0,
+        fileWrites: args.type === "fileWrite" ? count : 0,
       });
     }
     return null;
   },
+  returns: v.null(),
 });
 
 // Average sizes for bandwidth estimation (in KB)
@@ -262,18 +262,6 @@ export const getBandwidthData = query({
       v.literal("1y")
     ),
   },
-  returns: v.object({
-    data: v.array(
-      v.object({
-        time: v.string(),
-        dbBandwidth: v.number(),
-        fileBandwidth: v.number(),
-      })
-    ),
-    totalDbBandwidth: v.number(),
-    totalFileBandwidth: v.number(),
-    hasData: v.boolean(),
-  }),
   handler: async (ctx, args) => {
     const now = Date.now();
 
@@ -282,30 +270,30 @@ export const getBandwidthData = query({
       string,
       { days: number; points: number; format: (d: Date) => string }
     > = {
-      today: {
-        days: 1,
-        points: 12, // hourly for today
-        format: (d) => `${d.getHours()}:00`,
-      },
-      "7d": {
-        days: 7,
-        points: 7,
-        format: (d) => `${d.getDate()}/${d.getMonth() + 1}`,
-      },
       "1m": {
         days: 30,
+        format: (d) => `${d.getDate()}/${d.getMonth() + 1}`,
         points: 10,
-        format: (d) => `${d.getDate()}/${d.getMonth() + 1}`,
-      },
-      "3m": {
-        days: 90,
-        points: 12,
-        format: (d) => `${d.getDate()}/${d.getMonth() + 1}`,
       },
       "1y": {
         days: 365,
-        points: 12,
         format: (d) => `T${d.getMonth() + 1}`,
+        points: 12,
+      },
+      "3m": {
+        days: 90,
+        format: (d) => `${d.getDate()}/${d.getMonth() + 1}`,
+        points: 12,
+      },
+      "7d": {
+        days: 7,
+        format: (d) => `${d.getDate()}/${d.getMonth() + 1}`,
+        points: 7,
+      },
+      today: {
+        days: 1,
+        points: 12, // Hourly for today
+        format: (d) => `${d.getHours()}:00`,
       },
     };
 
@@ -316,7 +304,7 @@ export const getBandwidthData = query({
     const pageViews = await ctx.db
       .query("pageViews")
       .order("desc")
-      .take(10000);
+      .take(10_000);
     const pageViewsInRange = pageViews.filter((pv) => pv._creationTime >= startTime);
 
     // Fetch activityLogs in range
@@ -370,28 +358,28 @@ export const getBandwidthData = query({
 
     return {
       data: result,
+      hasData,
       totalDbBandwidth,
       totalFileBandwidth,
-      hasData,
     };
   },
+  returns: v.object({
+    data: v.array(
+      v.object({
+        dbBandwidth: v.number(),
+        fileBandwidth: v.number(),
+        time: v.string(),
+      })
+    ),
+    hasData: v.boolean(),
+    totalDbBandwidth: v.number(),
+    totalFileBandwidth: v.number(),
+  }),
 });
 
 // Get today's stats summary
 export const getTodayStats = query({
   args: {},
-  returns: v.union(
-    v.object({
-      date: v.string(),
-      dbReads: v.number(),
-      dbWrites: v.number(),
-      fileReads: v.number(),
-      fileWrites: v.number(),
-      estimatedDbBandwidth: v.number(),
-      estimatedFileBandwidth: v.number(),
-    }),
-    v.null()
-  ),
   handler: async (ctx) => {
     const date = getTodayDate();
     const stat = await ctx.db
@@ -399,24 +387,35 @@ export const getTodayStats = query({
       .withIndex("by_date", (q) => q.eq("date", date))
       .first();
 
-    if (!stat) return null;
+    if (!stat) {return null;}
 
     return {
       date: stat.date,
       dbReads: stat.dbReads,
       dbWrites: stat.dbWrites,
-      fileReads: stat.fileReads,
-      fileWrites: stat.fileWrites,
       estimatedDbBandwidth: stat.estimatedDbBandwidth,
       estimatedFileBandwidth: stat.estimatedFileBandwidth,
+      fileReads: stat.fileReads,
+      fileWrites: stat.fileWrites,
     };
   },
+  returns: v.union(
+    v.object({
+      date: v.string(),
+      dbReads: v.number(),
+      dbWrites: v.number(),
+      estimatedDbBandwidth: v.number(),
+      estimatedFileBandwidth: v.number(),
+      fileReads: v.number(),
+      fileWrites: v.number(),
+    }),
+    v.null()
+  ),
 });
 
 // Cleanup old stats (keep last 400 days)
 export const cleanup = internalMutation({
   args: {},
-  returns: v.number(),
   handler: async (ctx) => {
     const cutoffDate = getDateNDaysAgo(400);
     const oldStats = await ctx.db
@@ -433,4 +432,5 @@ export const cleanup = internalMutation({
     }
     return deleted;
   },
+  returns: v.number(),
 });

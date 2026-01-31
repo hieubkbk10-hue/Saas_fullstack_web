@@ -1,5 +1,5 @@
 import React from 'react';
-import { clsx, type ClassValue } from 'clsx';
+import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
@@ -12,37 +12,34 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'default', size = 'default', ...props }, ref) => {
-    return (
+  ({ className, variant = 'default', size = 'default', ...props }, ref) => (
       <button
         ref={ref}
         className={cn(
           "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
           {
-            "bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200": variant === 'default',
+            "bg-blue-600 text-white hover:bg-blue-700": variant === 'accent',
             "bg-red-500 text-white hover:bg-red-600": variant === 'destructive',
-            "border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50": variant === 'outline',
             "bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-50 dark:hover:bg-slate-700": variant === 'secondary',
+            "bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200": variant === 'default',
+            "border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50": variant === 'outline',
+            "h-10 px-4 py-2": size === 'default',
+            "h-10 w-10": size === 'icon',
+            "h-11 rounded-md px-8": size === 'lg',
+            "h-9 rounded-md px-3": size === 'sm',
             "hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50": variant === 'ghost',
             "text-slate-900 underline-offset-4 hover:underline dark:text-slate-50": variant === 'link',
-            "bg-blue-600 text-white hover:bg-blue-700": variant === 'accent',
-            "h-10 px-4 py-2": size === 'default',
-            "h-9 rounded-md px-3": size === 'sm',
-            "h-11 rounded-md px-8": size === 'lg',
-            "h-10 w-10": size === 'icon',
           },
           className
         )}
         {...props}
       />
-    );
-  }
+    )
 );
 Button.displayName = "Button";
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
-  ({ className, type, ...props }, ref) => {
-    return (
+  ({ className, type, ...props }, ref) => (
       <input
         type={type}
         className={cn(
@@ -52,8 +49,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
         ref={ref}
         {...props}
       />
-    );
-  }
+    )
 );
 Input.displayName = "Input";
 
@@ -68,25 +64,23 @@ export const Label = React.forwardRef<HTMLLabelElement, React.LabelHTMLAttribute
 );
 Label.displayName = "Label";
 
-export const Badge = ({ children, variant = "default", className }: { children?: React.ReactNode, variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' | 'info', className?: string }) => {
-  return (
+export const Badge = ({ children, variant = "default", className }: { children?: React.ReactNode, variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' | 'info', className?: string }) => (
     <div className={cn(
       "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
       {
-        "border-transparent bg-slate-900 text-white dark:bg-slate-50 dark:text-slate-900": variant === 'default',
-        "border-transparent bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50": variant === 'secondary',
-        "border-transparent bg-red-500 text-white": variant === 'destructive',
-        "text-slate-700 dark:text-slate-300": variant === 'outline',
-        "border-transparent bg-green-500 text-white hover:bg-green-600": variant === 'success',
         "border-transparent bg-amber-500 text-white hover:bg-amber-600": variant === 'warning',
         "border-transparent bg-blue-500 text-white hover:bg-blue-600": variant === 'info',
+        "border-transparent bg-green-500 text-white hover:bg-green-600": variant === 'success',
+        "border-transparent bg-red-500 text-white": variant === 'destructive',
+        "border-transparent bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-slate-50": variant === 'secondary',
+        "border-transparent bg-slate-900 text-white dark:bg-slate-50 dark:text-slate-900": variant === 'default',
+        "text-slate-700 dark:text-slate-300": variant === 'outline',
       },
       className
     )}>
       {children}
     </div>
   )
-}
 
 export const Card = ({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn("rounded-lg border border-slate-200 bg-white text-slate-950 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50", className)} {...props}>{children}</div>

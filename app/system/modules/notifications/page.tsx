@@ -1,21 +1,21 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Bell, Mail, Clock, Users, Loader2, Database, Trash2, RefreshCw, Settings, CheckCircle, AlertTriangle, XCircle, Info, Send } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { AlertTriangle, Bell, CheckCircle, Clock, Database, Info, Loader2, Mail, RefreshCw, Send, Settings, Trash2, Users, XCircle } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput, FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus, SettingInput, SettingsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'notifications';
 
-type NotificationRecord = {
+interface NotificationRecord {
   _id: Id<'notifications'>;
   title: string;
   content?: string;
@@ -27,30 +27,30 @@ type NotificationRecord = {
   scheduledAt?: number;
   sentAt?: number;
   _creationTime?: number;
-};
+}
 
 const FEATURES_CONFIG = [
-  { key: 'enableEmail', label: 'Gửi Email', icon: Mail, description: 'Gửi thông báo qua email', linkedField: 'sendEmail' },
-  { key: 'enableScheduling', label: 'Hẹn giờ gửi', icon: Clock, description: 'Lên lịch gửi thông báo', linkedField: 'scheduledAt' },
-  { key: 'enableTargeting', label: 'Nhắm đối tượng', icon: Users, description: 'Gửi thông báo cho nhóm cụ thể', linkedField: 'targetType' },
+  { description: 'Gửi thông báo qua email', icon: Mail, key: 'enableEmail', label: 'Gửi Email', linkedField: 'sendEmail' },
+  { description: 'Lên lịch gửi thông báo', icon: Clock, key: 'enableScheduling', label: 'Hẹn giờ gửi', linkedField: 'scheduledAt' },
+  { description: 'Gửi thông báo cho nhóm cụ thể', icon: Users, key: 'enableTargeting', label: 'Nhắm đối tượng', linkedField: 'targetType' },
 ];
 
 const TYPE_CONFIG = {
-  info: { icon: Info, color: 'text-blue-500', bg: 'bg-blue-500/10', label: 'Thông tin' },
-  success: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10', label: 'Thành công' },
-  warning: { icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-500/10', label: 'Cảnh báo' },
-  error: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10', label: 'Lỗi' },
+  error: { bg: 'bg-red-500/10', color: 'text-red-500', icon: XCircle, label: 'Lỗi' },
+  info: { bg: 'bg-blue-500/10', color: 'text-blue-500', icon: Info, label: 'Thông tin' },
+  success: { bg: 'bg-green-500/10', color: 'text-green-500', icon: CheckCircle, label: 'Thành công' },
+  warning: { bg: 'bg-amber-500/10', color: 'text-amber-500', icon: AlertTriangle, label: 'Cảnh báo' },
 };
 
 const STATUS_CONFIG = {
-  Draft: { variant: 'secondary' as const, label: 'Bản nháp' },
-  Scheduled: { variant: 'warning' as const, label: 'Đã hẹn' },
-  Sent: { variant: 'success' as const, label: 'Đã gửi' },
-  Cancelled: { variant: 'destructive' as const, label: 'Đã hủy' },
+  Cancelled: { label: 'Đã hủy', variant: 'destructive' as const },
+  Draft: { label: 'Bản nháp', variant: 'secondary' as const },
+  Scheduled: { label: 'Đã hẹn', variant: 'warning' as const },
+  Sent: { label: 'Đã gửi', variant: 'success' as const },
 };
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { itemsPerPage: number; defaultType: string };
+interface SettingsState { itemsPerPage: number; defaultType: string }
 type TabType = 'config' | 'data';
 
 export default function NotificationsModuleConfigPage() {
@@ -75,7 +75,7 @@ export default function NotificationsModuleConfigPage() {
   // Local state
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ itemsPerPage: 20, defaultType: 'info' });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ defaultType: 'info', itemsPerPage: 20 });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -94,14 +94,14 @@ export default function NotificationsModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -111,7 +111,7 @@ export default function NotificationsModuleConfigPage() {
     if (settingsData) {
       const itemsPerPage = settingsData.find(s => s.settingKey === 'itemsPerPage')?.value as number ?? 20;
       const defaultType = settingsData.find(s => s.settingKey === 'defaultType')?.value as string ?? 'info';
-      setLocalSettings({ itemsPerPage, defaultType });
+      setLocalSettings({ defaultType, itemsPerPage });
     }
   }, [settingsData]);
 
@@ -122,14 +122,12 @@ export default function NotificationsModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
   const serverSettings = useMemo(() => {
     const itemsPerPage = settingsData?.find(s => s.settingKey === 'itemsPerPage')?.value as number ?? 20;
     const defaultType = settingsData?.find(s => s.settingKey === 'defaultType')?.value as string ?? 'info';
-    return { itemsPerPage, defaultType };
+    return { defaultType, itemsPerPage };
   }, [settingsData]);
 
   // Check for changes
@@ -154,7 +152,7 @@ export default function NotificationsModuleConfigPage() {
 
   const handleToggleField = (id: string) => {
     const field = localFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalFields(prev => {
@@ -180,13 +178,13 @@ export default function NotificationsModuleConfigPage() {
     try {
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          await toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY });
         }
       }
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
+          await updateField({ enabled: field.enabled, id: field.id as Id<'moduleFields'> });
         }
       }
       if (localSettings.itemsPerPage !== serverSettings.itemsPerPage) {
@@ -217,7 +215,7 @@ export default function NotificationsModuleConfigPage() {
   };
 
   const handleClearData = async () => {
-    if (!confirm('Xóa toàn bộ dữ liệu thông báo?')) return;
+    if (!confirm('Xóa toàn bộ dữ liệu thông báo?')) {return;}
     try {
       toast.loading('Đang xóa dữ liệu...');
       await clearNotificationsData();
@@ -230,7 +228,7 @@ export default function NotificationsModuleConfigPage() {
   };
 
   const handleResetData = async () => {
-    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
+    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) {return;}
     try {
       toast.loading('Đang reset dữ liệu...');
       await clearNotificationsData();
@@ -268,7 +266,7 @@ export default function NotificationsModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-pink-500 text-pink-600 dark:text-pink-400'
@@ -278,7 +276,7 @@ export default function NotificationsModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-pink-500 text-pink-600 dark:text-pink-400'
@@ -299,7 +297,7 @@ export default function NotificationsModuleConfigPage() {
                 <SettingInput 
                   label="Số thông báo / trang" 
                   value={localSettings.itemsPerPage} 
-                  onChange={(v) => setLocalSettings({...localSettings, itemsPerPage: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, itemsPerPage: v}); }}
                   focusColor="focus:border-pink-500"
                 />
               </SettingsCard>
@@ -332,7 +330,7 @@ export default function NotificationsModuleConfigPage() {
 
       {activeTab === 'data' && (
         <NotificationsDataTab 
-          notificationsData={notificationsData || []}
+          notificationsData={notificationsData ?? []}
           onSeedData={handleSeedData}
           onClearData={handleClearData}
           onResetData={handleResetData}
@@ -357,12 +355,12 @@ function NotificationsDataTab({
     const sent = notificationsData.filter(n => n.status === 'Sent');
     const scheduled = notificationsData.filter(n => n.status === 'Scheduled');
     const drafts = notificationsData.filter(n => n.status === 'Draft');
-    const totalReads = notificationsData.reduce((sum, n) => sum + (n.readCount || 0), 0);
-    return { total: notificationsData.length, sent: sent.length, scheduled: scheduled.length, drafts: drafts.length, totalReads };
+    const totalReads = notificationsData.reduce((sum, n) => sum + (n.readCount ?? 0), 0);
+    return { drafts: drafts.length, scheduled: scheduled.length, sent: sent.length, total: notificationsData.length, totalReads };
   }, [notificationsData]);
 
   const formatDate = (timestamp?: number) => {
-    if (!timestamp) return '-';
+    if (!timestamp) {return '-';}
     return new Date(timestamp).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
   };
 
@@ -467,8 +465,8 @@ function NotificationsDataTab({
           </TableHeader>
           <TableBody>
             {notificationsData.slice(0, 10).map(notif => {
-              const typeConfig = TYPE_CONFIG[notif.type as keyof typeof TYPE_CONFIG];
-              const statusConfig = STATUS_CONFIG[notif.status as keyof typeof STATUS_CONFIG];
+              const typeConfig = TYPE_CONFIG[notif.type];
+              const statusConfig = STATUS_CONFIG[notif.status];
               const TypeIcon = typeConfig?.icon || Bell;
               return (
                 <TableRow key={notif._id}>
@@ -488,9 +486,9 @@ function NotificationsDataTab({
                   <TableCell>
                     <Badge variant={statusConfig?.variant}>{statusConfig?.label}</Badge>
                   </TableCell>
-                  <TableCell className="text-right text-slate-500">{notif.readCount?.toLocaleString() || 0}</TableCell>
+                  <TableCell className="text-right text-slate-500">{notif.readCount?.toLocaleString() ?? 0}</TableCell>
                   <TableCell className="text-slate-500 text-sm">
-                    {notif.status === 'Sent' ? formatDate(notif.sentAt) : notif.status === 'Scheduled' ? formatDate(notif.scheduledAt) : '-'}
+                    {notif.status === 'Sent' ? formatDate(notif.sentAt) : (notif.status === 'Scheduled' ? formatDate(notif.scheduledAt) : '-')}
                   </TableCell>
                 </TableRow>
               );

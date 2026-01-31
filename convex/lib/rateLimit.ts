@@ -1,18 +1,18 @@
-import { MutationCtx, QueryCtx } from "../_generated/server";
+import type { MutationCtx, QueryCtx } from "../_generated/server";
 
 // Rate limit configs - thoải mái nhưng vẫn bảo vệ
 export const RATE_LIMITS = {
   // Dangerous mutations - stricter
-  dangerous: { tokens: 10, refillRate: 1, refillInterval: 60000 }, // 10 per minute, refill 1/min
+  dangerous: { refillInterval: 60_000, refillRate: 1, tokens: 10 }, // 10 per minute, refill 1/min
   
   // Normal mutations - relaxed
-  mutation: { tokens: 100, refillRate: 10, refillInterval: 60000 }, // 100 per minute, refill 10/min
+  mutation: { refillInterval: 60_000, refillRate: 10, tokens: 100 }, // 100 per minute, refill 10/min
   
   // Queries - very relaxed
-  query: { tokens: 500, refillRate: 50, refillInterval: 60000 }, // 500 per minute
+  query: { refillInterval: 60_000, refillRate: 50, tokens: 500 }, // 500 per minute
   
   // Auth attempts - moderate
-  auth: { tokens: 5, refillRate: 1, refillInterval: 60000 }, // 5 per minute
+  auth: { refillInterval: 60_000, refillRate: 1, tokens: 5 }, // 5 per minute
 } as const;
 
 type RateLimitType = keyof typeof RATE_LIMITS;
@@ -91,8 +91,8 @@ export async function consumeRateLimit(
     // Create new bucket
     await ctx.db.insert("rateLimitBuckets", {
       key,
-      tokens: config.tokens - 1,
       lastRefill: now,
+      tokens: config.tokens - 1,
     });
     return { allowed: true, remaining: config.tokens - 1, resetIn: config.refillInterval };
   }
@@ -113,8 +113,8 @@ export async function consumeRateLimit(
   // Consume token
   currentTokens -= 1;
   await ctx.db.patch(bucket._id, {
-    tokens: currentTokens,
     lastRefill: refillCount > 0 ? now : bucket.lastRefill,
+    tokens: currentTokens,
   });
   
   return { 

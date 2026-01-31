@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { CareerPreview, CareerStyle } from '../../previews';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
+import type { CareerStyle } from '../../previews';
+import { CareerPreview } from '../../previews';
 
 export default function CareerCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Tuyển dụng', 'Career');
@@ -12,12 +13,12 @@ export default function CareerCreatePage() {
   
   const [careerStyle, setCareerStyle] = useState<CareerStyle>('cards');
   const [jobPositions, setJobPositions] = useState([
-    { id: 1, title: 'Frontend Developer', department: 'Engineering', location: 'Hà Nội', type: 'Full-time', salary: '15-25 triệu', description: '' },
-    { id: 2, title: 'UI/UX Designer', department: 'Design', location: 'Remote', type: 'Full-time', salary: '12-20 triệu', description: '' }
+    { department: 'Engineering', description: '', id: 1, location: 'Hà Nội', salary: '15-25 triệu', title: 'Frontend Developer', type: 'Full-time' },
+    { department: 'Design', description: '', id: 2, location: 'Remote', salary: '12-20 triệu', title: 'UI/UX Designer', type: 'Full-time' }
   ]);
 
   const onSubmit = (e: React.FormEvent) => {
-    void handleSubmit(e, { jobs: jobPositions.map(j => ({ title: j.title, department: j.department, location: j.location, type: j.type, salary: j.salary, description: j.description })), style: careerStyle });
+    void handleSubmit(e, { jobs: jobPositions.map(j => ({ department: j.department, description: j.description, location: j.location, salary: j.salary, title: j.title, type: j.type })), style: careerStyle });
   };
 
   return (
@@ -37,7 +38,7 @@ export default function CareerCreatePage() {
             type="button" 
             variant="outline" 
             size="sm" 
-            onClick={() => setJobPositions([...jobPositions, { id: Date.now(), title: '', department: '', location: '', type: 'Full-time', salary: '', description: '' }])} 
+            onClick={() =>{  setJobPositions([...jobPositions, { department: '', description: '', id: Date.now(), location: '', salary: '', title: '', type: 'Full-time' }]); }} 
             className="gap-2"
           >
             <Plus size={14} /> Thêm vị trí
@@ -62,24 +63,24 @@ export default function CareerCreatePage() {
                 <Input 
                   placeholder="Vị trí tuyển dụng" 
                   value={job.title} 
-                  onChange={(e) => setJobPositions(jobPositions.map(j => j.id === job.id ? {...j, title: e.target.value} : j))} 
+                  onChange={(e) =>{  setJobPositions(jobPositions.map(j => j.id === job.id ? {...j, title: e.target.value} : j)); }} 
                 />
                 <Input 
                   placeholder="Phòng ban" 
                   value={job.department} 
-                  onChange={(e) => setJobPositions(jobPositions.map(j => j.id === job.id ? {...j, department: e.target.value} : j))} 
+                  onChange={(e) =>{  setJobPositions(jobPositions.map(j => j.id === job.id ? {...j, department: e.target.value} : j)); }} 
                 />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <Input 
                   placeholder="Địa điểm" 
                   value={job.location} 
-                  onChange={(e) => setJobPositions(jobPositions.map(j => j.id === job.id ? {...j, location: e.target.value} : j))} 
+                  onChange={(e) =>{  setJobPositions(jobPositions.map(j => j.id === job.id ? {...j, location: e.target.value} : j)); }} 
                 />
                 <select 
                   className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
                   value={job.type} 
-                  onChange={(e) => setJobPositions(jobPositions.map(j => j.id === job.id ? {...j, type: e.target.value} : j))}
+                  onChange={(e) =>{  setJobPositions(jobPositions.map(j => j.id === job.id ? {...j, type: e.target.value} : j)); }}
                 >
                   <option>Full-time</option>
                   <option>Part-time</option>
@@ -89,7 +90,7 @@ export default function CareerCreatePage() {
                 <Input 
                   placeholder="Mức lương" 
                   value={job.salary} 
-                  onChange={(e) => setJobPositions(jobPositions.map(j => j.id === job.id ? {...j, salary: e.target.value} : j))} 
+                  onChange={(e) =>{  setJobPositions(jobPositions.map(j => j.id === job.id ? {...j, salary: e.target.value} : j)); }} 
                 />
               </div>
             </div>

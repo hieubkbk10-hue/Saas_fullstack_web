@@ -1,57 +1,57 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Briefcase, FolderTree, DollarSign, Clock, Star, Loader2, Database, Trash2, RefreshCw, Settings, Palette, Eye, Monitor, Tablet, Smartphone } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { Briefcase, Clock, Database, DollarSign, Eye, FolderTree, Loader2, Monitor, Palette, RefreshCw, Settings, Smartphone, Star, Tablet, Trash2 } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput, SettingSelect,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus, SettingInput,
+  SettingSelect, SettingsCard
 } from '@/components/modules/shared';
-import { Card, CardContent, CardHeader, CardTitle, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, cn } from '@/app/admin/components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'services';
 const CATEGORY_MODULE_KEY = 'serviceCategories';
 
 const FEATURES_CONFIG = [
-  { key: 'enablePrice', label: 'Hiển thị giá', icon: DollarSign, linkedField: 'price' },
-  { key: 'enableDuration', label: 'Thời gian', icon: Clock, linkedField: 'duration' },
-  { key: 'enableFeatured', label: 'Nổi bật', icon: Star, linkedField: 'featured' },
+  { icon: DollarSign, key: 'enablePrice', label: 'Hiển thị giá', linkedField: 'price' },
+  { icon: Clock, key: 'enableDuration', label: 'Thời gian', linkedField: 'duration' },
+  { icon: Star, key: 'enableFeatured', label: 'Nổi bật', linkedField: 'featured' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { servicesPerPage: number; defaultStatus: string };
+interface SettingsState { servicesPerPage: number; defaultStatus: string }
 type TabType = 'config' | 'data' | 'appearance';
 type ServicesListStyle = 'fullwidth' | 'sidebar' | 'magazine';
 type ServicesDetailStyle = 'classic' | 'modern' | 'minimal';
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
 
 const LIST_STYLES: { id: ServicesListStyle; label: string; description: string }[] = [
-  { id: 'fullwidth', label: 'Full Width', description: 'Horizontal filter bar + grid/list toggle, tối ưu mobile' },
-  { id: 'sidebar', label: 'Sidebar', description: 'Classic với sidebar filters, categories, recent services' },
-  { id: 'magazine', label: 'Magazine', description: 'Hero slider + category tabs, phong cách editorial' },
+  { description: 'Horizontal filter bar + grid/list toggle, tối ưu mobile', id: 'fullwidth', label: 'Full Width' },
+  { description: 'Classic với sidebar filters, categories, recent services', id: 'sidebar', label: 'Sidebar' },
+  { description: 'Hero slider + category tabs, phong cách editorial', id: 'magazine', label: 'Magazine' },
 ];
 
 const DETAIL_STYLES: { id: ServicesDetailStyle; label: string; description: string }[] = [
-  { id: 'classic', label: 'Classic', description: 'Truyền thống với sidebar thông tin & liên quan' },
-  { id: 'modern', label: 'Modern', description: 'Hero lớn, full-width, hiện đại' },
-  { id: 'minimal', label: 'Minimal', description: 'Tối giản, tập trung vào nội dung' },
+  { description: 'Truyền thống với sidebar thông tin & liên quan', id: 'classic', label: 'Classic' },
+  { description: 'Hero lớn, full-width, hiện đại', id: 'modern', label: 'Modern' },
+  { description: 'Tối giản, tập trung vào nội dung', id: 'minimal', label: 'Minimal' },
 ];
 
 const deviceWidths = {
   desktop: 'w-full',
-  tablet: 'w-[768px] max-w-full',
-  mobile: 'w-[375px] max-w-full'
+  mobile: 'w-[375px] max-w-full',
+  tablet: 'w-[768px] max-w-full'
 };
 
 const devices = [
-  { id: 'desktop' as const, icon: Monitor, label: 'Desktop' },
-  { id: 'tablet' as const, icon: Tablet, label: 'Tablet' },
-  { id: 'mobile' as const, icon: Smartphone, label: 'Mobile' }
+  { icon: Monitor, id: 'desktop' as const, label: 'Desktop' },
+  { icon: Tablet, id: 'tablet' as const, label: 'Tablet' },
+  { icon: Smartphone, id: 'mobile' as const, label: 'Mobile' }
 ];
 
 export default function ServicesModuleConfigPage() {
@@ -84,7 +84,7 @@ export default function ServicesModuleConfigPage() {
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localServiceFields, setLocalServiceFields] = useState<FieldConfig[]>([]);
   const [localCategoryFields, setLocalCategoryFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ servicesPerPage: 10, defaultStatus: 'draft' });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ defaultStatus: 'draft', servicesPerPage: 10 });
   const [isSaving, setIsSaving] = useState(false);
 
   // Appearance tab states
@@ -110,14 +110,14 @@ export default function ServicesModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalServiceFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -125,13 +125,13 @@ export default function ServicesModuleConfigPage() {
   useEffect(() => {
     if (categoryFieldsData) {
       setLocalCategoryFields(categoryFieldsData.map(f => ({
+        enabled: f.enabled,
         id: f._id,
+        isSystem: f.isSystem,
         key: f.fieldKey,
         name: f.name,
-        type: f.type,
         required: f.required,
-        enabled: f.enabled,
-        isSystem: f.isSystem,
+        type: f.type,
       })));
     }
   }, [categoryFieldsData]);
@@ -140,7 +140,7 @@ export default function ServicesModuleConfigPage() {
     if (settingsData) {
       const servicesPerPage = settingsData.find(s => s.settingKey === 'servicesPerPage')?.value as number ?? 10;
       const defaultStatus = settingsData.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'draft';
-      setLocalSettings({ servicesPerPage, defaultStatus });
+      setLocalSettings({ defaultStatus, servicesPerPage });
     }
   }, [settingsData]);
 
@@ -160,18 +160,14 @@ export default function ServicesModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverServiceFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverServiceFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
-  const serverCategoryFields = useMemo(() => {
-    return categoryFieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [categoryFieldsData]);
+  const serverCategoryFields = useMemo(() => categoryFieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [categoryFieldsData]);
 
   const serverSettings = useMemo(() => {
     const servicesPerPage = settingsData?.find(s => s.settingKey === 'servicesPerPage')?.value as number ?? 10;
     const defaultStatus = settingsData?.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'draft';
-    return { servicesPerPage, defaultStatus };
+    return { defaultStatus, servicesPerPage };
   }, [settingsData]);
 
   const hasChanges = useMemo(() => {
@@ -199,7 +195,7 @@ export default function ServicesModuleConfigPage() {
 
   const handleToggleServiceField = (id: string) => {
     const field = localServiceFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalServiceFields(prev => {
@@ -231,21 +227,21 @@ export default function ServicesModuleConfigPage() {
       
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
+          promises.push(toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY }));
         }
       }
       
       for (const field of localServiceFields) {
         const server = serverServiceFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
+          promises.push(updateField({ enabled: field.enabled, id: field.id as Id<"moduleFields"> }));
         }
       }
       
       for (const field of localCategoryFields) {
         const server = serverCategoryFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
+          promises.push(updateField({ enabled: field.enabled, id: field.id as Id<"moduleFields"> }));
         }
       }
       
@@ -273,7 +269,7 @@ export default function ServicesModuleConfigPage() {
   };
 
   const handleClearAll = async () => {
-    if (!confirm('Xóa toàn bộ dữ liệu dịch vụ và danh mục?')) return;
+    if (!confirm('Xóa toàn bộ dữ liệu dịch vụ và danh mục?')) {return;}
     toast.loading('Đang xóa dữ liệu...');
     await clearServicesData();
     toast.dismiss();
@@ -281,7 +277,7 @@ export default function ServicesModuleConfigPage() {
   };
 
   const handleResetAll = async () => {
-    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
+    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) {return;}
     toast.loading('Đang reset dữ liệu...');
     await clearServicesData();
     await seedServicesModule();
@@ -305,8 +301,8 @@ export default function ServicesModuleConfigPage() {
     try {
       await setMultipleSettings({
         settings: [
-          { key: 'services_list_style', value: listStyle, group: 'services' },
-          { key: 'services_detail_style', value: detailStyle, group: 'services' },
+          { group: 'services', key: 'services_list_style', value: listStyle },
+          { group: 'services', key: 'services_detail_style', value: detailStyle },
         ]
       });
       setAppearanceHasChanges(false);
@@ -331,8 +327,8 @@ export default function ServicesModuleConfigPage() {
   categoriesData?.forEach(cat => { categoryMap[cat._id] = cat.name; });
 
   const formatPrice = (price?: number) => {
-    if (!price) return '-';
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+    if (!price) {return '-';}
+    return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
   };
 
   return (
@@ -344,15 +340,15 @@ export default function ServicesModuleConfigPage() {
         iconBgClass="bg-teal-500/10"
         iconTextClass="text-teal-600 dark:text-teal-400"
         buttonClass="bg-teal-600 hover:bg-teal-500"
-        onSave={activeTab === 'config' ? handleSave : activeTab === 'appearance' ? handleSaveAppearance : undefined}
-        hasChanges={activeTab === 'config' ? hasChanges : activeTab === 'appearance' ? appearanceHasChanges : false}
+        onSave={activeTab === 'config' ? handleSave : (activeTab === 'appearance' ? handleSaveAppearance : undefined)}
+        hasChanges={activeTab === 'config' ? hasChanges : (activeTab === 'appearance' ? appearanceHasChanges : false)}
         isSaving={isSaving}
       />
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={cn(
             "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
             activeTab === 'config'
@@ -363,7 +359,7 @@ export default function ServicesModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={cn(
             "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
             activeTab === 'data'
@@ -374,7 +370,7 @@ export default function ServicesModuleConfigPage() {
           <Database size={16} /> Dữ liệu
         </button>
         <button
-          onClick={() => setActiveTab('appearance')}
+          onClick={() =>{  setActiveTab('appearance'); }}
           className={cn(
             "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
             activeTab === 'appearance'
@@ -396,14 +392,14 @@ export default function ServicesModuleConfigPage() {
                 <SettingInput 
                   label="Số dịch vụ / trang" 
                   value={localSettings.servicesPerPage} 
-                  onChange={(v) => setLocalSettings({...localSettings, servicesPerPage: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, servicesPerPage: v}); }}
                   focusColor="focus:border-teal-500"
                 />
                 <SettingSelect
                   label="Trạng thái mặc định"
                   value={localSettings.defaultStatus}
-                  onChange={(v) => setLocalSettings({...localSettings, defaultStatus: v})}
-                  options={[{ value: 'draft', label: 'Bản nháp' }, { value: 'published', label: 'Xuất bản' }]}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, defaultStatus: v}); }}
+                  options={[{ label: 'Bản nháp', value: 'draft' }, { label: 'Xuất bản', value: 'published' }]}
                   focusColor="focus:border-teal-500"
                 />
               </SettingsCard>
@@ -510,8 +506,8 @@ export default function ServicesModuleConfigPage() {
                     <TableCell><Badge variant="secondary">{categoryMap[service.categoryId] || 'N/A'}</Badge></TableCell>
                     <TableCell>{formatPrice(service.price)}</TableCell>
                     <TableCell>
-                      <Badge variant={service.status === 'Published' ? 'default' : service.status === 'Draft' ? 'secondary' : 'outline'}>
-                        {service.status === 'Published' ? 'Xuất bản' : service.status === 'Draft' ? 'Nháp' : 'Lưu trữ'}
+                      <Badge variant={service.status === 'Published' ? 'default' : (service.status === 'Draft' ? 'secondary' : 'outline')}>
+                        {service.status === 'Published' ? 'Xuất bản' : (service.status === 'Draft' ? 'Nháp' : 'Lưu trữ')}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -527,7 +523,7 @@ export default function ServicesModuleConfigPage() {
             </Table>
             {servicesStatus === 'CanLoadMore' && (
               <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-center">
-                <Button variant="ghost" size="sm" onClick={() => loadMoreServices(10)}>
+                <Button variant="ghost" size="sm" onClick={() =>{  loadMoreServices(10); }}>
                   Tải thêm dịch vụ
                 </Button>
               </div>
@@ -651,7 +647,7 @@ export default function ServicesModuleConfigPage() {
                   {/* Page toggle */}
                   <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
                     <button
-                      onClick={() => setActivePreview('list')}
+                      onClick={() =>{  setActivePreview('list'); }}
                       className={cn(
                         "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
                         activePreview === 'list' ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-500"
@@ -660,7 +656,7 @@ export default function ServicesModuleConfigPage() {
                       Danh sách
                     </button>
                     <button
-                      onClick={() => setActivePreview('detail')}
+                      onClick={() =>{  setActivePreview('detail'); }}
                       className={cn(
                         "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
                         activePreview === 'detail' ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-500"
@@ -674,7 +670,7 @@ export default function ServicesModuleConfigPage() {
                     {devices.map((d) => (
                       <button
                         key={d.id}
-                        onClick={() => setPreviewDevice(d.id)}
+                        onClick={() =>{  setPreviewDevice(d.id); }}
                         title={d.label}
                         className={cn(
                           "p-1.5 rounded-md transition-all",
@@ -700,7 +696,7 @@ export default function ServicesModuleConfigPage() {
               <div className="mt-3 text-xs text-slate-500 text-center">
                 {activePreview === 'list' ? 'Trang /services' : 'Trang /services/[slug]'}
                 {' • '}Style: <strong>{activePreview === 'list' ? LIST_STYLES.find(s => s.id === listStyle)?.label : DETAIL_STYLES.find(s => s.id === detailStyle)?.label}</strong>
-                {' • '}{previewDevice === 'desktop' ? '1920px' : previewDevice === 'tablet' ? '768px' : '375px'}
+                {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
               </div>
             </CardContent>
           </Card>
@@ -734,13 +730,13 @@ function BrowserFrame({ children }: { children: React.ReactNode }) {
 // List Preview Component
 function ListPreview({ style, brandColor, device }: { style: ServicesListStyle; brandColor: string; device: PreviewDevice }) {
   const mockServices = [
-    { id: 1, title: 'Dịch vụ tư vấn chuyên nghiệp', category: 'Tư vấn', price: 5000000, duration: '2-3 tuần' },
-    { id: 2, title: 'Thiết kế website doanh nghiệp', category: 'Thiết kế', price: 15000000, duration: '4-6 tuần' },
-    { id: 3, title: 'Marketing online tổng hợp', category: 'Marketing', price: 8000000, duration: '1 tháng' },
-    { id: 4, title: 'Phát triển ứng dụng mobile', category: 'Phát triển', price: 25000000, duration: '8-12 tuần' },
+    { category: 'Tư vấn', duration: '2-3 tuần', id: 1, price: 5_000_000, title: 'Dịch vụ tư vấn chuyên nghiệp' },
+    { category: 'Thiết kế', duration: '4-6 tuần', id: 2, price: 15_000_000, title: 'Thiết kế website doanh nghiệp' },
+    { category: 'Marketing', duration: '1 tháng', id: 3, price: 8_000_000, title: 'Marketing online tổng hợp' },
+    { category: 'Phát triển', duration: '8-12 tuần', id: 4, price: 25_000_000, title: 'Phát triển ứng dụng mobile' },
   ];
   const categories = ['Tất cả', 'Tư vấn', 'Thiết kế', 'Marketing', 'Phát triển'];
-  const formatPrice = (p: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
+  const formatPrice = (p: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(p);
 
   if (style === 'fullwidth') {
     return (

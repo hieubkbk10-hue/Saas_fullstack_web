@@ -1,44 +1,44 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Doc, Id } from '@/convex/_generated/dataModel';
+import type { Doc, Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { ShoppingBag, Truck, MapPin, CreditCard, Loader2, Database, Trash2, RefreshCw, Settings, Users } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { CreditCard, Database, Loader2, MapPin, RefreshCw, Settings, ShoppingBag, Trash2, Truck, Users } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput, SettingSelect,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus, SettingInput,
+  SettingSelect, SettingsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'orders';
 
 const FEATURES_CONFIG = [
-  { key: 'enablePayment', label: 'Thanh toán', icon: CreditCard, description: 'Phương thức & trạng thái thanh toán', linkedField: 'paymentMethod' },
-  { key: 'enableShipping', label: 'Vận chuyển', icon: Truck, description: 'Phí ship, địa chỉ giao hàng', linkedField: 'shippingAddress' },
-  { key: 'enableTracking', label: 'Theo dõi vận đơn', icon: MapPin, description: 'Mã vận đơn, tracking', linkedField: 'trackingNumber' },
+  { description: 'Phương thức & trạng thái thanh toán', icon: CreditCard, key: 'enablePayment', label: 'Thanh toán', linkedField: 'paymentMethod' },
+  { description: 'Phí ship, địa chỉ giao hàng', icon: Truck, key: 'enableShipping', label: 'Vận chuyển', linkedField: 'shippingAddress' },
+  { description: 'Mã vận đơn, tracking', icon: MapPin, key: 'enableTracking', label: 'Theo dõi vận đơn', linkedField: 'trackingNumber' },
 ];
 
 const STATUS_LABELS: Record<string, string> = {
+  Cancelled: 'Đã hủy',
+  Delivered: 'Hoàn thành',
   Pending: 'Chờ xử lý',
   Processing: 'Đang xử lý',
   Shipped: 'Đang giao',
-  Delivered: 'Hoàn thành',
-  Cancelled: 'Đã hủy',
 };
 
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
-  Pending: 'Chờ TT',
-  Paid: 'Đã TT',
   Failed: 'Thất bại',
+  Paid: 'Đã TT',
+  Pending: 'Chờ TT',
   Refunded: 'Hoàn tiền',
 };
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { ordersPerPage: number; defaultStatus: string };
+interface SettingsState { ordersPerPage: number; defaultStatus: string }
 type TabType = 'config' | 'data';
 
 export default function OrdersModuleConfigPage() {
@@ -72,7 +72,7 @@ export default function OrdersModuleConfigPage() {
   // Local state
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ ordersPerPage: 20, defaultStatus: 'Pending' });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ defaultStatus: 'Pending', ordersPerPage: 20 });
   const [isSaving, setIsSaving] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
@@ -94,14 +94,14 @@ export default function OrdersModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -111,7 +111,7 @@ export default function OrdersModuleConfigPage() {
     if (settingsData) {
       const ordersPerPage = settingsData.find(s => s.settingKey === 'ordersPerPage')?.value as number ?? 20;
       const defaultStatus = settingsData.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'Pending';
-      setLocalSettings({ ordersPerPage, defaultStatus });
+      setLocalSettings({ defaultStatus, ordersPerPage });
     }
   }, [settingsData]);
 
@@ -122,14 +122,12 @@ export default function OrdersModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
   const serverSettings = useMemo(() => {
     const ordersPerPage = settingsData?.find(s => s.settingKey === 'ordersPerPage')?.value as number ?? 20;
     const defaultStatus = settingsData?.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'Pending';
-    return { ordersPerPage, defaultStatus };
+    return { defaultStatus, ordersPerPage };
   }, [settingsData]);
 
   // Check for changes
@@ -154,7 +152,7 @@ export default function OrdersModuleConfigPage() {
 
   const handleToggleField = (id: string) => {
     const field = localFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalFields(prev => {
@@ -183,13 +181,13 @@ export default function OrdersModuleConfigPage() {
       
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
+          promises.push(toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY }));
         }
       }
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
+          promises.push(updateField({ enabled: field.enabled, id: field.id as Id<"moduleFields"> }));
         }
       }
       if (localSettings.ordersPerPage !== serverSettings.ordersPerPage) {
@@ -222,7 +220,7 @@ export default function OrdersModuleConfigPage() {
   };
 
   const handleClearData = async () => {
-    if (!confirm('Xóa toàn bộ dữ liệu đơn hàng?')) return;
+    if (!confirm('Xóa toàn bộ dữ liệu đơn hàng?')) {return;}
     setIsClearing(true);
     try {
       await clearOrdersData();
@@ -235,7 +233,7 @@ export default function OrdersModuleConfigPage() {
   };
 
   const handleResetData = async () => {
-    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
+    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) {return;}
     setIsResetting(true);
     try {
       await clearOrdersData();
@@ -255,7 +253,7 @@ export default function OrdersModuleConfigPage() {
     return map;
   }, [customersForTable]);
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
   const formatDate = (timestamp: number) => new Date(timestamp).toLocaleDateString('vi-VN');
 
   if (isLoading) {
@@ -283,7 +281,7 @@ export default function OrdersModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
@@ -293,7 +291,7 @@ export default function OrdersModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
@@ -314,16 +312,16 @@ export default function OrdersModuleConfigPage() {
                 <SettingInput 
                   label="Số đơn / trang" 
                   value={localSettings.ordersPerPage} 
-                  onChange={(v) => setLocalSettings({...localSettings, ordersPerPage: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, ordersPerPage: v}); }}
                   focusColor="focus:border-emerald-500"
                 />
                 <SettingSelect
                   label="Trạng thái mặc định"
                   value={localSettings.defaultStatus}
-                  onChange={(v) => setLocalSettings({...localSettings, defaultStatus: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, defaultStatus: v}); }}
                   options={[
-                    { value: 'Pending', label: 'Chờ xử lý' },
-                    { value: 'Processing', label: 'Đang xử lý' },
+                    { label: 'Chờ xử lý', value: 'Pending' },
+                    { label: 'Đang xử lý', value: 'Processing' },
                   ]}
                   focusColor="focus:border-emerald-500"
                 />
@@ -479,10 +477,10 @@ export default function OrdersModuleConfigPage() {
                 {ordersData?.map((order: Doc<"orders">) => (
                   <TableRow key={order._id}>
                     <TableCell className="font-mono text-sm text-emerald-600 font-medium">{order.orderNumber}</TableCell>
-                    <TableCell>{customerMap.get(order.customerId) || 'N/A'}</TableCell>
+                    <TableCell>{customerMap.get(order.customerId) ?? 'N/A'}</TableCell>
                     <TableCell className="text-right font-medium">{formatPrice(order.totalAmount)}</TableCell>
                     <TableCell>
-                      <Badge variant={order.status === 'Delivered' ? 'success' : order.status === 'Cancelled' ? 'destructive' : 'secondary'}>
+                      <Badge variant={order.status === 'Delivered' ? 'success' : (order.status === 'Cancelled' ? 'destructive' : 'secondary')}>
                         {STATUS_LABELS[order.status]}
                       </Badge>
                     </TableCell>

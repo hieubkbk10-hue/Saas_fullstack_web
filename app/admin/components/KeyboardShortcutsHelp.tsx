@@ -10,10 +10,10 @@ interface ShortcutInfo {
 }
 
 const commonShortcuts: ShortcutInfo[] = [
-  { keys: 'Ctrl + S', description: 'Lưu thay đổi' },
-  { keys: 'Esc', description: 'Hủy / Đóng' },
-  { keys: 'Ctrl + F', description: 'Tìm kiếm' },
-  { keys: 'Ctrl + N', description: 'Tạo mới' },
+  { description: 'Lưu thay đổi', keys: 'Ctrl + S' },
+  { description: 'Hủy / Đóng', keys: 'Esc' },
+  { description: 'Tìm kiếm', keys: 'Ctrl + F' },
+  { description: 'Tạo mới', keys: 'Ctrl + N' },
 ];
 
 /**
@@ -27,7 +27,7 @@ export function KeyboardShortcutsHelp({ shortcuts = commonShortcuts }: { shortcu
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setIsOpen(true)}
+        onClick={() =>{  setIsOpen(true); }}
         title="Phím tắt (Ctrl+/)"
         className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
       >
@@ -35,17 +35,17 @@ export function KeyboardShortcutsHelp({ shortcuts = commonShortcuts }: { shortcu
       </Button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setIsOpen(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() =>{  setIsOpen(false); }}>
           <div
             className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) =>{  e.stopPropagation(); }}
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Keyboard size={20} />
                 Phím tắt
               </h3>
-              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+              <Button variant="ghost" size="icon" onClick={() =>{  setIsOpen(false); }}>
                 <X size={18} />
               </Button>
             </div>

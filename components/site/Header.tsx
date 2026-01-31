@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { useBrandColor, useSiteSettings } from './hooks';
-import { ChevronDown, ChevronRight, Phone, Mail, ShoppingCart, Heart, Search, User } from 'lucide-react';
+import { ChevronDown, ChevronRight, Heart, Mail, Phone, Search, ShoppingCart, User } from 'lucide-react';
 
-type MenuItem = {
+interface MenuItem {
   _id: Id<"menuItems">;
   label: string;
   url: string;
@@ -18,7 +18,7 @@ type MenuItem = {
   active: boolean;
   icon?: string;
   openInNewTab?: boolean;
-};
+}
 
 interface MenuItemWithChildren extends MenuItem {
   children: MenuItemWithChildren[];
@@ -56,21 +56,21 @@ interface HeaderConfig {
 
 const DEFAULT_CONFIG: HeaderConfig = {
   brandName: 'YourBrand',
+  cart: { show: true, url: '/cart' },
   cta: { show: true, text: 'Liên hệ', url: '/contact' },
+  login: { show: true, text: 'Đăng nhập', url: '/login' },
+  search: { placeholder: 'Tìm kiếm...', searchPosts: true, searchProducts: true, show: true },
   topbar: {
-    show: true,
-    hotline: '1900 1234',
     email: 'contact@example.com',
-    showTrackOrder: true,
-    trackOrderUrl: '/orders/tracking',
+    hotline: '1900 1234',
+    show: true,
     showStoreSystem: true,
+    showTrackOrder: true,
     storeSystemUrl: '/stores',
+    trackOrderUrl: '/orders/tracking',
     useSettingsData: false,
   },
-  search: { show: true, placeholder: 'Tìm kiếm...', searchProducts: true, searchPosts: true },
-  cart: { show: true, url: '/cart' },
   wishlist: { show: true, url: '/wishlist' },
-  login: { show: true, url: '/login', text: 'Đăng nhập' },
 };
 
 function cn(...classes: (string | boolean | undefined)[]) {
@@ -95,18 +95,18 @@ export function Header() {
   
   // Merge topbar data with settings if useSettingsData is enabled
   const topbarConfig = useMemo(() => {
-    const base = config.topbar || {};
+    const base = config.topbar ?? {};
     if (base.useSettingsData) {
       return {
         ...base,
-        hotline: settingsPhone || base.hotline,
-        email: settingsEmail || base.email,
+        hotline: settingsPhone ?? base.hotline,
+        email: settingsEmail ?? base.email,
       };
     }
     return base;
   }, [config.topbar, settingsPhone, settingsEmail]);
   
-  const displayName = config.brandName || siteName || 'YourBrand';
+  const displayName = (config.brandName ?? siteName) ?? 'YourBrand';
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -129,7 +129,7 @@ export function Header() {
 
   const menuItems = menuData?.items;
   const menuTree = useMemo((): MenuItemWithChildren[] => {
-    if (!menuItems) return [];
+    if (!menuItems) {return [];}
     
     const items = [...menuItems].sort((a, b) => a.order - b.order);
     const rootItems = items.filter(item => item.depth === 0);
@@ -211,7 +211,7 @@ export function Header() {
               <div
                 key={item._id}
                 className="relative"
-                onMouseEnter={() => handleMenuEnter(item._id)}
+                onMouseEnter={() =>{  handleMenuEnter(item._id); }}
                 onMouseLeave={handleMenuLeave}
               >
                 <Link
@@ -273,11 +273,11 @@ export function Header() {
           <div className="flex items-center gap-2">
             {config.cta?.show && (
               <Link
-                href={config.cta.url || '/contact'}
+                href={config.cta.url ?? '/contact'}
                 className="hidden lg:inline-flex px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
                 style={{ backgroundColor: brandColor }}
               >
-                {config.cta.text || 'Liên hệ'}
+                {config.cta.text ?? 'Liên hệ'}
               </Link>
             )}
             {renderMobileMenuButton(false)}
@@ -305,7 +305,7 @@ export function Header() {
                         key={child._id} 
                         href={child.url}
                         target={child.openInNewTab ? '_blank' : undefined}
-                        onClick={() => setMobileMenuOpen(false)}
+                        onClick={() =>{  setMobileMenuOpen(false); }}
                         className="block px-8 py-2.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-l-2 border-slate-200 dark:border-slate-600 ml-6"
                       >
                         {child.label}
@@ -318,12 +318,12 @@ export function Header() {
             {config.cta?.show && (
               <div className="p-4">
                 <Link 
-                  href={config.cta.url || '/contact'} 
-                  onClick={() => setMobileMenuOpen(false)}
+                  href={config.cta.url ?? '/contact'} 
+                  onClick={() =>{  setMobileMenuOpen(false); }}
                   className="block w-full py-2.5 text-sm font-medium text-white rounded-lg text-center" 
                   style={{ backgroundColor: brandColor }}
                 >
-                  {config.cta.text || 'Liên hệ'}
+                  {config.cta.text ?? 'Liên hệ'}
                 </Link>
               </div>
             )}
@@ -358,20 +358,20 @@ export function Header() {
               <div className="flex items-center gap-3">
                 {topbarConfig.showTrackOrder && (
                   <>
-                    <Link href={topbarConfig.trackOrderUrl || '/orders/tracking'} className="hover:underline hidden sm:inline">Theo dõi đơn hàng</Link>
+                    <Link href={topbarConfig.trackOrderUrl ?? '/orders/tracking'} className="hover:underline hidden sm:inline">Theo dõi đơn hàng</Link>
                     {topbarConfig.showStoreSystem && <span className="hidden sm:inline">|</span>}
                   </>
                 )}
                 {topbarConfig.showStoreSystem && (
                   <>
-                    <Link href={topbarConfig.storeSystemUrl || '/stores'} className="hover:underline hidden sm:inline">Hệ thống cửa hàng</Link>
+                    <Link href={topbarConfig.storeSystemUrl ?? '/stores'} className="hover:underline hidden sm:inline">Hệ thống cửa hàng</Link>
                     {config.login?.show && <span className="hidden sm:inline">|</span>}
                   </>
                 )}
                 {config.login?.show && (
-                  <Link href={config.login.url || '/login'} className="hover:underline flex items-center gap-1">
+                  <Link href={config.login.url ?? '/login'} className="hover:underline flex items-center gap-1">
                     <User size={12} />
-                    {config.login.text || 'Đăng nhập'}
+                    {config.login.text ?? 'Đăng nhập'}
                   </Link>
                 )}
               </div>
@@ -403,7 +403,7 @@ export function Header() {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder={config.search.placeholder || 'Tìm kiếm...'}
+                    placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
                     className="w-full pl-4 pr-10 py-2 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none text-slate-700 dark:text-slate-300"
                   />
                   <button 
@@ -426,7 +426,7 @@ export function Header() {
                   </button>
                 )}
                 {config.cart?.show && (
-                  <Link href={config.cart.url || '/cart'} className="p-2 text-slate-600 dark:text-slate-400 relative">
+                  <Link href={config.cart.url ?? '/cart'} className="p-2 text-slate-600 dark:text-slate-400 relative">
                     <ShoppingCart size={20} />
                     <span 
                       className="absolute -top-1 -right-1 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" 
@@ -442,13 +442,13 @@ export function Header() {
               {/* Desktop: Wishlist + Cart */}
               <div className="hidden lg:flex items-center gap-2">
                 {config.wishlist?.show && (
-                  <Link href={config.wishlist.url || '/wishlist'} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5">
+                  <Link href={config.wishlist.url ?? '/wishlist'} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5">
                     <Heart size={20} />
                     <span>Yêu thích</span>
                   </Link>
                 )}
                 {config.cart?.show && (
-                  <Link href={config.cart.url || '/cart'} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5 relative">
+                  <Link href={config.cart.url ?? '/cart'} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5 relative">
                     <ShoppingCart size={20} />
                     <span>Giỏ hàng</span>
                     <span 
@@ -471,7 +471,7 @@ export function Header() {
               <div
                 key={item._id}
                 className="relative"
-                onMouseEnter={() => handleMenuEnter(item._id)}
+                onMouseEnter={() =>{  handleMenuEnter(item._id); }}
                 onMouseLeave={handleMenuLeave}
               >
                 <Link
@@ -531,7 +531,7 @@ export function Header() {
                         key={child._id} 
                         href={child.url}
                         target={child.openInNewTab ? '_blank' : undefined}
-                        onClick={() => setMobileMenuOpen(false)}
+                        onClick={() =>{  setMobileMenuOpen(false); }}
                         className="block px-6 py-2 text-sm text-slate-600 dark:text-slate-400"
                       >
                         {child.label}
@@ -574,7 +574,7 @@ export function Header() {
               <div
                 key={item._id}
                 className="relative"
-                onMouseEnter={() => handleMenuEnter(item._id)}
+                onMouseEnter={() =>{  handleMenuEnter(item._id); }}
                 onMouseLeave={handleMenuLeave}
               >
                 <Link
@@ -617,11 +617,11 @@ export function Header() {
           <div className="flex items-center gap-2">
             {config.cta?.show && (
               <Link
-                href={config.cta.url || '/contact'}
+                href={config.cta.url ?? '/contact'}
                 className="hidden lg:inline-flex px-5 py-2 text-sm font-medium text-white rounded-full transition-all hover:scale-105 shadow-lg"
                 style={{ backgroundColor: brandColor }}
               >
-                {config.cta.text || 'Liên hệ'}
+                {config.cta.text ?? 'Liên hệ'}
               </Link>
             )}
             {renderMobileMenuButton(true)}
@@ -650,7 +650,7 @@ export function Header() {
                       key={child._id} 
                       href={child.url}
                       target={child.openInNewTab ? '_blank' : undefined}
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={() =>{  setMobileMenuOpen(false); }}
                       className="block px-8 py-3 text-sm text-white/70 hover:text-white border-l-2 border-white/20 ml-6"
                     >
                       {child.label}
@@ -663,12 +663,12 @@ export function Header() {
           {config.cta?.show && (
             <div className="p-4">
               <Link 
-                href={config.cta.url || '/contact'} 
-                onClick={() => setMobileMenuOpen(false)}
+                href={config.cta.url ?? '/contact'} 
+                onClick={() =>{  setMobileMenuOpen(false); }}
                 className="block w-full py-3 text-sm font-medium text-white rounded-full text-center" 
                 style={{ backgroundColor: brandColor }}
               >
-                {config.cta.text || 'Liên hệ'}
+                {config.cta.text ?? 'Liên hệ'}
               </Link>
             </div>
           )}

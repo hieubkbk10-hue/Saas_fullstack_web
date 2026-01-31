@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useRef, useCallback, DragEvent } from 'react';
+import type { DragEvent } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Upload, Trash2, Loader2, Link, Image as ImageIcon, Plus, GripVertical } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { GripVertical, Image as ImageIcon, Link, Loader2, Plus, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Input, cn } from './ui';
 
@@ -15,11 +16,11 @@ function slugify(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[đĐ]/g, 'd')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+    .replaceAll(/[\u0300-\u036F]/g, '')
+    .replaceAll(/[đĐ]/g, 'd')
+    .replaceAll(/[^a-z0-9\s-]/g, '')
+    .replaceAll(/\s+/g, '-')
+    .replaceAll(/-+/g, '-')
     .trim() || 'image';
 }
 
@@ -27,7 +28,7 @@ function generateFilename(originalName: string): string {
   const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
   const slugified = slugify(nameWithoutExt);
   const timestamp = Date.now();
-  const random = Math.random().toString(36).substring(2, 6);
+  const random = Math.random().toString(36).slice(2, 6);
   return `${slugified}-${timestamp}-${random}.webp`;
 }
 
@@ -45,12 +46,18 @@ async function convertToWebP(file: File, quality: number = WEBP_QUALITY): Promis
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
       canvas.toBlob(
-        (blob) => blob ? resolve(blob) : resolve(file),
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            resolve(file);
+          }
+        },
         'image/webp',
         quality
       );
     };
-    img.onerror = () => reject(new Error('Failed to load image'));
+    img.onerror = () =>{  reject(new Error('Failed to load image')); };
     img.src = URL.createObjectURL(file);
   });
 }
@@ -80,7 +87,7 @@ interface MultiImageUploaderProps<T extends ImageItem> {
   showReorder?: boolean;
   addButtonText?: string;
   emptyText?: string;
-  layout?: 'horizontal' | 'vertical'; // vertical: image on top, fields below (better for cards)
+  layout?: 'horizontal' | 'vertical'; // Vertical: image on top, fields below (better for cards)
 }
 
 export function MultiImageUploader<T extends ImageItem>({
@@ -113,10 +120,10 @@ export function MultiImageUploader<T extends ImageItem>({
   const deleteImage = useMutation(api.storage.deleteImage);
 
   const aspectClasses = {
+    auto: 'min-h-[100px]',
+    banner: 'aspect-[3/1]',
     square: 'aspect-square',
     video: 'aspect-video',
-    banner: 'aspect-[3/1]',
-    auto: 'min-h-[100px]',
   };
 
   const columnClasses = {
@@ -147,34 +154,34 @@ export function MultiImageUploader<T extends ImageItem>({
       const uploadUrl = await generateUploadUrl();
 
       const response = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': webpFile.type },
         body: webpFile,
+        headers: { 'Content-Type': webpFile.type },
+        method: 'POST',
       });
 
-      if (!response.ok) throw new Error('Upload failed');
+      if (!response.ok) {throw new Error('Upload failed');}
 
       const { storageId } = await response.json();
 
       const img = new window.Image();
       const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
-        img.onload = () => resolve({ width: img.width, height: img.height });
+        img.onload = () =>{  resolve({ height: img.height, width: img.width }); };
         img.src = URL.createObjectURL(webpFile);
       });
 
       const result = await saveImage({
-        storageId: storageId as Id<"_storage">,
         filename,
+        folder,
+        height: dimensions.height,
         mimeType: 'image/webp',
         size: webpFile.size,
+        storageId: storageId as Id<"_storage">,
         width: dimensions.width,
-        height: dimensions.height,
-        folder,
       });
 
       onChange(items.map(item => 
         item.id === itemId 
-          ? { ...item, [imageKey]: result.url || '', storageId } as T
+          ? { ...item, [imageKey]: result.url ?? '', storageId } as T
           : item
       ));
 
@@ -192,7 +199,7 @@ export function MultiImageUploader<T extends ImageItem>({
   }, [generateUploadUrl, saveImage, folder, imageKey, items, onChange]);
 
   const handleMultipleFiles = useCallback(async (files: FileList) => {
-    const filesToUpload = Array.from(files);
+    const filesToUpload = [...files];
     
     // If there's exactly 1 item with no image, upload first file to it
     const firstEmptyItem = items.find(item => !item[imageKey]);
@@ -208,7 +215,7 @@ export function MultiImageUploader<T extends ImageItem>({
         
         if (filesToAdd.length > 0) {
           const newItems: T[] = filesToAdd.map((_, index) => ({
-            id: `new-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 4)}`,
+            id: `new-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 4)}`,
             [imageKey]: '',
           } as unknown as T));
 
@@ -216,7 +223,7 @@ export function MultiImageUploader<T extends ImageItem>({
           onChange(updatedItems);
 
           // Upload all in parallel using Promise.all
-          const uploadPromises = filesToAdd.map((file, i) => handleFileUpload(newItems[i].id, file));
+          const uploadPromises = filesToAdd.map( async (file, i) => handleFileUpload(newItems[i].id, file));
           await Promise.all([firstUploadPromise, ...uploadPromises]);
           return;
         }
@@ -239,7 +246,7 @@ export function MultiImageUploader<T extends ImageItem>({
     }
 
     const newItems: T[] = filesToAdd.map((_, index) => ({
-      id: `new-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 4)}`,
+      id: `new-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 4)}`,
       [imageKey]: '',
     } as unknown as T));
 
@@ -247,7 +254,7 @@ export function MultiImageUploader<T extends ImageItem>({
     onChange(updatedItems);
 
     // Upload all files in parallel using Promise.all
-    await Promise.all(filesToAdd.map((file, i) => handleFileUpload(newItems[i].id, file)));
+    await Promise.all(filesToAdd.map( async (file, i) => handleFileUpload(newItems[i].id, file)));
   }, [items, maxItems, imageKey, onChange, handleFileUpload]);
 
   const handleDragEnter = useCallback((e: DragEvent) => {
@@ -281,12 +288,12 @@ export function MultiImageUploader<T extends ImageItem>({
     setDragOverItemId(null);
     setFileDragOverItemId(null);
     
-    const files = e.dataTransfer.files;
-    if (!files.length) return;
+    const {files} = e.dataTransfer;
+    if (files.length === 0) {return;}
     
     if (itemId !== undefined) {
       // Drop on specific item
-      if (files[0]) void handleFileUpload(itemId, files[0]);
+      if (files[0]) {void handleFileUpload(itemId, files[0]);}
     } else {
       // Drop on container - add new items
       void handleMultipleFiles(files);
@@ -324,7 +331,7 @@ export function MultiImageUploader<T extends ImageItem>({
     setFileDragOverItemId(null);
     setIsDragging(false);
     
-    const files = e.dataTransfer.files;
+    const {files} = e.dataTransfer;
     if (files.length > 0 && files[0]) {
       void handleFileUpload(itemId, files[0]);
     }
@@ -392,7 +399,7 @@ export function MultiImageUploader<T extends ImageItem>({
     const dragIndex = items.findIndex(item => item.id === draggedItemId);
     const dropIndex = items.findIndex(item => item.id === targetId);
 
-    if (dragIndex === -1 || dropIndex === -1) return;
+    if (dragIndex === -1 || dropIndex === -1) {return;}
 
     const newItems = [...items];
     const [draggedItem] = newItems.splice(dragIndex, 1);
@@ -428,7 +435,7 @@ export function MultiImageUploader<T extends ImageItem>({
     });
   }, []);
 
-  const inputId = `multi-image-input-${Math.random().toString(36).substr(2, 9)}`;
+  const inputId = `multi-image-input-${Math.random().toString(36).slice(2, 9)}`;
 
   return (
     <div 
@@ -436,8 +443,8 @@ export function MultiImageUploader<T extends ImageItem>({
       className={cn('space-y-4', className)}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
-      onDragOver={(e) => handleDragOver(e)}
-      onDrop={(e) => handleDrop(e)}
+      onDragOver={(e) =>{  handleDragOver(e); }}
+      onDrop={(e) =>{  handleDrop(e); }}
     >
       {/* Drop zone for adding new images */}
       <div
@@ -447,7 +454,10 @@ export function MultiImageUploader<T extends ImageItem>({
             ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-[1.02]" 
             : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
         )}
-        onClick={() => document.getElementById(inputId)?.click()}
+        onClick={() => {
+          const input = document.getElementById(inputId) as HTMLInputElement | null;
+          input?.click();
+        }}
       >
         <input
           type="file"
@@ -481,10 +491,10 @@ export function MultiImageUploader<T extends ImageItem>({
                 <div
                   key={item.id}
                   draggable={showReorder}
-                  onDragStart={(e) => handleItemDragStart(e, item.id)}
+                  onDragStart={(e) =>{  handleItemDragStart(e, item.id); }}
                   onDragEnd={handleItemDragEnd}
-                  onDragOver={(e) => handleItemDragOver(e, item.id)}
-                  onDrop={(e) => handleItemDrop(e, item.id)}
+                  onDragOver={(e) =>{  handleItemDragOver(e, item.id); }}
+                  onDrop={(e) =>{  handleItemDrop(e, item.id); }}
                   className={cn(
                     "bg-slate-50 dark:bg-slate-800 rounded-lg overflow-hidden transition-all duration-200",
                     isDragOverItem && "ring-2 ring-blue-500 ring-offset-2 scale-[1.02]",
@@ -503,10 +513,10 @@ export function MultiImageUploader<T extends ImageItem>({
                       !isUrlMode && 'cursor-pointer hover:border-blue-400'
                     )}
                     onClick={() => !isUploading && !isUrlMode && inputRefs.current.get(item.id)?.click()}
-                    onDragEnter={(e) => handleItemFileDragEnter(e, item.id)}
+                    onDragEnter={(e) =>{  handleItemFileDragEnter(e, item.id); }}
                     onDragLeave={handleItemFileDragLeave}
-                    onDragOver={(e) => handleItemFileDragOver(e, item.id)}
-                    onDrop={(e) => handleItemFileDrop(e, item.id)}
+                    onDragOver={(e) =>{  handleItemFileDragOver(e, item.id); }}
+                    onDrop={(e) =>{  handleItemFileDrop(e, item.id); }}
                   >
                     {imageUrl ? (
                       <Image
@@ -550,7 +560,7 @@ export function MultiImageUploader<T extends ImageItem>({
                       </Button>
                     </div>
                     <input
-                      ref={(el) => { if (el) inputRefs.current.set(item.id, el); }}
+                      ref={(el) => { if (el) {inputRefs.current.set(item.id, el);} }}
                       type="file"
                       accept="image/*"
                       onChange={(e) => e.target.files?.[0] && void handleFileUpload(item.id, e.target.files[0])}
@@ -586,7 +596,7 @@ export function MultiImageUploader<T extends ImageItem>({
                     {isUrlMode && (
                       <Input
                         value={imageUrl}
-                        onChange={(e) => handleUrlChange(item.id, e.target.value)}
+                        onChange={(e) =>{  handleUrlChange(item.id, e.target.value); }}
                         placeholder="https://example.com/image.jpg"
                         className="h-8 text-sm"
                       />
@@ -595,7 +605,7 @@ export function MultiImageUploader<T extends ImageItem>({
                       <Input
                         key={String(field.key)}
                         value={String(item[field.key] || '')}
-                        onChange={(e) => handleExtraFieldChange(item.id, field.key, e.target.value)}
+                        onChange={(e) =>{  handleExtraFieldChange(item.id, field.key, e.target.value); }}
                         placeholder={field.placeholder}
                         className="h-9 text-sm"
                       />
@@ -610,10 +620,10 @@ export function MultiImageUploader<T extends ImageItem>({
               <div
                 key={item.id}
                 draggable={showReorder}
-                onDragStart={(e) => handleItemDragStart(e, item.id)}
+                onDragStart={(e) =>{  handleItemDragStart(e, item.id); }}
                 onDragEnd={handleItemDragEnd}
-                onDragOver={(e) => handleItemDragOver(e, item.id)}
-                onDrop={(e) => handleItemDrop(e, item.id)}
+                onDragOver={(e) =>{  handleItemDragOver(e, item.id); }}
+                onDrop={(e) =>{  handleItemDrop(e, item.id); }}
                 className={cn(
                   "bg-slate-50 dark:bg-slate-800 rounded-lg p-3 space-y-3 transition-all duration-200",
                   isDragOverItem && "ring-2 ring-blue-500 ring-offset-2 scale-[1.02]",
@@ -640,10 +650,10 @@ export function MultiImageUploader<T extends ImageItem>({
                       !isUrlMode && 'cursor-pointer hover:border-blue-400'
                     )}
                     onClick={() => !isUploading && !isUrlMode && inputRefs.current.get(item.id)?.click()}
-                    onDragEnter={(e) => handleItemFileDragEnter(e, item.id)}
+                    onDragEnter={(e) =>{  handleItemFileDragEnter(e, item.id); }}
                     onDragLeave={handleItemFileDragLeave}
-                    onDragOver={(e) => handleItemFileDragOver(e, item.id)}
-                    onDrop={(e) => handleItemFileDrop(e, item.id)}
+                    onDragOver={(e) =>{  handleItemFileDragOver(e, item.id); }}
+                    onDrop={(e) =>{  handleItemFileDrop(e, item.id); }}
                   >
                     {imageUrl ? (
                       <Image
@@ -671,7 +681,7 @@ export function MultiImageUploader<T extends ImageItem>({
                       </div>
                     )}
                     <input
-                      ref={(el) => { if (el) inputRefs.current.set(item.id, el); }}
+                      ref={(el) => { if (el) {inputRefs.current.set(item.id, el);} }}
                       type="file"
                       accept="image/*"
                       onChange={(e) => e.target.files?.[0] && void handleFileUpload(item.id, e.target.files[0])}
@@ -707,7 +717,7 @@ export function MultiImageUploader<T extends ImageItem>({
                     {isUrlMode && (
                       <Input
                         value={imageUrl}
-                        onChange={(e) => handleUrlChange(item.id, e.target.value)}
+                        onChange={(e) =>{  handleUrlChange(item.id, e.target.value); }}
                         placeholder="https://example.com/image.jpg"
                         className="h-8 text-sm"
                       />
@@ -718,7 +728,7 @@ export function MultiImageUploader<T extends ImageItem>({
                       <Input
                         key={String(field.key)}
                         value={String(item[field.key] || '')}
-                        onChange={(e) => handleExtraFieldChange(item.id, field.key, e.target.value)}
+                        onChange={(e) =>{  handleExtraFieldChange(item.id, field.key, e.target.value); }}
                         placeholder={field.placeholder}
                         className="h-8 text-sm"
                       />
@@ -730,7 +740,7 @@ export function MultiImageUploader<T extends ImageItem>({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-red-500 hover:text-red-600 flex-shrink-0"
-                    onClick={() => handleRemove(item.id)}
+                    onClick={ async () => handleRemove(item.id)}
                   >
                     <Trash2 size={14} />
                   </Button>

@@ -1,16 +1,16 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
-type SystemAuthContextType = {
+interface SystemAuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
-  isSessionVerified: boolean; // true khi đã verify session xong (dù valid hay invalid)
+  isSessionVerified: boolean; // True khi đã verify session xong (dù valid hay invalid)
   login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
-};
+}
 
 const SystemAuthContext = createContext<SystemAuthContextType | null>(null);
 
@@ -18,7 +18,7 @@ const SYSTEM_TOKEN_KEY = 'system_auth_token';
 
 export function SystemAuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {return null;}
     return localStorage.getItem(SYSTEM_TOKEN_KEY);
   });
 
@@ -31,12 +31,12 @@ export function SystemAuthProvider({ children }: { children: React.ReactNode }) 
     token ? { token } : "skip"
   );
 
-  const isLoading = !!token && sessionResult === undefined;
+  const isLoading = Boolean(token) && sessionResult === undefined;
 
   // Check if session is valid
-  // isSessionVerified: true khi không có token HOẶC sessionResult đã có data (dù valid hay không)
+  // IsSessionVerified: true khi không có token HOẶC sessionResult đã có data (dù valid hay không)
   const isSessionVerified = !token || sessionResult !== undefined;
-  const isAuthenticated = !!token && sessionResult?.valid === true;
+  const isAuthenticated = Boolean(token) && sessionResult?.valid === true;
 
   // Clear invalid token
   useEffect(() => {
@@ -52,9 +52,9 @@ export function SystemAuthProvider({ children }: { children: React.ReactNode }) 
         localStorage.setItem(SYSTEM_TOKEN_KEY, result.token);
         setToken(result.token);
       }
-      return { success: result.success, message: result.message };
+      return { message: result.message, success: result.success };
     } catch {
-      return { success: false, message: 'Có lỗi xảy ra khi đăng nhập' };
+      return { message: 'Có lỗi xảy ra khi đăng nhập', success: false };
     }
   }, [loginMutation]);
 

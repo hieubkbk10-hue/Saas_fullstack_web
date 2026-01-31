@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Loader2, FolderTree } from 'lucide-react';
+import { FolderTree, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, Input, Label } from '../../components/ui';
 
@@ -31,24 +31,24 @@ export default function ServiceCategoryCreatePage() {
     const val = e.target.value;
     setName(val);
     const generatedSlug = val.toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[đĐ]/g, "d")
-      .replace(/[^a-z0-9\s]/g, '')
-      .replace(/\s+/g, '-');
+      .normalize("NFD").replaceAll(/[\u0300-\u036F]/g, "")
+      .replaceAll(/[đĐ]/g, "d")
+      .replaceAll(/[^a-z0-9\s]/g, '')
+      .replaceAll(/\s+/g, '-');
     setSlug(generatedSlug);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !slug.trim()) return;
+    if (!name.trim() || !slug.trim()) {return;}
 
     setIsSubmitting(true);
     try {
       await createCategory({
+        active: true,
+        description: description.trim() || undefined,
         name: name.trim(),
         slug: slug.trim(),
-        description: description.trim() || undefined,
-        active: true,
       });
       toast.success("Đã tạo danh mục mới");
       router.push('/admin/service-categories');
@@ -82,18 +82,18 @@ export default function ServiceCategoryCreatePage() {
             </div>
             <div className="space-y-2">
               <Label>Slug</Label>
-              <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="tu-dong-tao-tu-ten" className="font-mono text-sm" />
+              <Input value={slug} onChange={(e) =>{  setSlug(e.target.value); }} placeholder="tu-dong-tao-tu-ten" className="font-mono text-sm" />
             </div>
             {enabledFields.has('description') && (
               <div className="space-y-2">
                 <Label>Mô tả</Label>
-                <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Mô tả ngắn về danh mục..." />
+                <Input value={description} onChange={(e) =>{  setDescription(e.target.value); }} placeholder="Mô tả ngắn về danh mục..." />
               </div>
             )}
           </CardContent>
           
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
-            <Button type="button" variant="ghost" onClick={() => router.push('/admin/service-categories')}>Hủy bỏ</Button>
+            <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/service-categories'); }}>Hủy bỏ</Button>
             <Button type="submit" disabled={isSubmitting} className="bg-teal-600 hover:bg-teal-500">
               {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
               Tạo danh mục

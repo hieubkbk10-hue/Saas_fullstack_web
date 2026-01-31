@@ -5,8 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Briefcase, Loader2, ArrowRight, ArrowUpRight, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ArrowRight, ArrowUpRight, Briefcase, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react';
 
 // Luxury Services Gallery UI/UX - 6 Variants (added minimal & showcase)
 type ServiceListStyle = 'grid' | 'bento' | 'list' | 'carousel' | 'minimal' | 'showcase';
@@ -19,24 +19,24 @@ interface ServiceListSectionProps {
 
 // Helper to strip HTML tags from description
 const stripHtml = (html?: string) => {
-  if (!html) return '';
-  return html.replace(/<[^>]*>/g, '').trim();
+  if (!html) {return '';}
+  return html.replaceAll(/<[^>]*>/g, '').trim();
 };
 
 // Format price helper (monochromatic style)
 const formatServicePrice = (price?: number) => {
-  if (!price || price === 0) return 'Liên hệ';
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(price);
+  if (!price || price === 0) {return 'Liên hệ';}
+  return new Intl.NumberFormat('vi-VN', { currency: 'VND', maximumFractionDigits: 0, style: 'currency' }).format(price);
 };
 
 // Badge component for service status (uses brandColor for hot)
 const ServiceBadge = ({ isNew, isHot, brandColor }: { isNew?: boolean; isHot?: boolean; brandColor?: string }) => {
-  if (!isNew && !isHot) return null;
+  if (!isNew && !isHot) {return null;}
   if (isHot) {
     return (
       <span 
         className="inline-flex items-center rounded-sm px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-white"
-        style={{ backgroundColor: brandColor || '#1e293b' }}
+        style={{ backgroundColor: brandColor ?? '#1e293b' }}
       >
         Hot
       </span>
@@ -55,7 +55,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
   const selectionMode = (config.selectionMode as 'auto' | 'manual') || 'auto';
   const selectedServiceIds = React.useMemo(() => (config.selectedServiceIds as string[]) || [], [config.selectedServiceIds]);
   const carouselId = React.useId();
-  const carouselElementId = `service-carousel-${carouselId.replace(/:/g, '')}`;
+  const carouselElementId = `service-carousel-${carouselId.replaceAll(':', '')}`;
   
   // Query services based on selection mode
   const servicesData = useQuery(
@@ -65,7 +65,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
   
   // Get services to display based on selection mode
   const services = React.useMemo(() => {
-    if (!servicesData) return [];
+    if (!servicesData) {return [];}
     
     if (selectionMode === 'manual' && selectedServiceIds.length > 0) {
       const serviceMap = new Map(servicesData.map(s => [s._id, s]));
@@ -383,8 +383,8 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselElementId);
-                      if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                      const container = document.querySelector(`#${carouselElementId}`);
+                      if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                     }}
                     className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
                   >
@@ -393,8 +393,8 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   <button
                     type="button"
                     onClick={() => {
-                    const container = document.getElementById(carouselElementId);
-                      if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselElementId}`);
+                      if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                     }}
                     className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
                   >
@@ -415,8 +415,8 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselElementId);
-                      if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                      const container = document.querySelector(`#${carouselElementId}`);
+                      if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                     }}
                     className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
                   >
@@ -425,8 +425,8 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                   <button
                     type="button"
                     onClick={() => {
-                    const container = document.getElementById(carouselElementId);
-                      if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselElementId}`);
+                      if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                     }}
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
                     style={{ backgroundColor: brandColor }}
@@ -449,9 +449,9 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
                     id={carouselElementId}
               className="flex overflow-x-auto snap-x snap-mandatory gap-4 py-4 px-2 cursor-grab active:cursor-grabbing select-none scrollbar-hide"
               style={{
-                scrollbarWidth: 'none',
+                WebkitOverflowScrolling: 'touch',
                 msOverflowStyle: 'none',
-                WebkitOverflowScrolling: 'touch'
+                scrollbarWidth: 'none'
               }}
               onMouseDown={(e) => {
                 const el = e.currentTarget;
@@ -470,7 +470,7 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
               }}
               onMouseMove={(e) => {
                 const el = e.currentTarget;
-                if (el.dataset.isDown !== 'true') return;
+                if (el.dataset.isDown !== 'true') {return;}
                 e.preventDefault();
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -551,8 +551,8 @@ export function ServiceListSection({ config, brandColor, title }: ServiceListSec
               <Link key={service._id} href={`/services/${service.slug}`} className="group">
                 <article 
                   className="cursor-pointer"
-                  onMouseEnter={(e) => { const img = e.currentTarget.querySelector('.img-wrapper'); if (img) (img as HTMLElement).style.boxShadow = `0 8px 24px ${brandColor}15`; }}
-                  onMouseLeave={(e) => { const img = e.currentTarget.querySelector('.img-wrapper'); if (img) (img as HTMLElement).style.boxShadow = 'none'; }}
+                  onMouseEnter={(e) => { const img = e.currentTarget.querySelector('.img-wrapper'); if (img) {(img as HTMLElement).style.boxShadow = `0 8px 24px ${brandColor}15`;} }}
+                  onMouseLeave={(e) => { const img = e.currentTarget.querySelector('.img-wrapper'); if (img) {(img as HTMLElement).style.boxShadow = 'none';} }}
                 >
                   {/* Image - More minimal, rounded corners */}
                   <div className="img-wrapper relative overflow-hidden bg-slate-100 rounded-2xl aspect-[3/2] mb-5 transition-shadow duration-300">

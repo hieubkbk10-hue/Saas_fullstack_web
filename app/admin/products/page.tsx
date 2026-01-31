@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
+import { useMutation, usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, RefreshCw, Package, ChevronRight } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ChevronRight, Edit, ExternalLink, Loader2, Package, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
-import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
+import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'products';
@@ -38,7 +38,7 @@ function ProductsContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Id<"products">[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -73,10 +73,10 @@ function ProductsContent() {
       { key: 'name', label: 'Tên sản phẩm', required: true },
     ];
     
-    if (enabledFields.has('sku')) cols.push({ key: 'sku', label: 'SKU' });
+    if (enabledFields.has('sku')) {cols.push({ key: 'sku', label: 'SKU' });}
     cols.push({ key: 'category', label: 'Danh mục' });
     cols.push({ key: 'price', label: 'Giá bán' });
-    if (enabledFields.has('stock')) cols.push({ key: 'stock', label: 'Tồn kho' });
+    if (enabledFields.has('stock')) {cols.push({ key: 'stock', label: 'Tồn kho' });}
     cols.push({ key: 'status', label: 'Trạng thái' });
     cols.push({ key: 'actions', label: 'Hành động', required: true });
     
@@ -94,8 +94,8 @@ function ProductsContent() {
   useEffect(() => {
     if (fieldsData !== undefined) {
       setVisibleColumns(prev => {
-        const validKeys = columns.map(c => c.key);
-        return prev.filter(key => validKeys.includes(key));
+        const validKeys = new Set(columns.map(c => c.key));
+        return prev.filter(key => validKeys.has(key));
       });
     }
   }, [fieldsData, columns]);
@@ -107,16 +107,14 @@ function ProductsContent() {
     return map;
   }, [categoriesData]);
 
-  const products = useMemo(() => {
-    return productsData?.map(p => ({
+  const products = useMemo(() => productsData?.map(p => ({
       ...p,
       id: p._id,
       category: categoryMap[p.categoryId] || 'Không có',
-    })) || [];
-  }, [productsData, categoryMap]);
+    })) || [], [productsData, categoryMap]);
 
   const handleSort = (key: string) => {
-    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
   };
 
   const toggleColumn = (key: string) => {
@@ -144,8 +142,8 @@ function ProductsContent() {
 
   const sortedData = useSortableData(filteredData, sortConfig);
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(p => p._id));
-  const toggleSelectItem = (id: Id<"products">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(p => p._id)); };
+  const toggleSelectItem = (id: Id<"products">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
 
   const openFrontend = (slug: string) => {
     window.open(`/products/${slug}`, '_blank');
@@ -192,7 +190,7 @@ function ProductsContent() {
     }
   };
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 
   if (isLoading) {
     return (
@@ -227,7 +225,7 @@ function ProductsContent() {
       <BulkActionBar 
         selectedCount={selectedIds.length} 
         onDelete={handleBulkDelete} 
-        onClearSelection={() => setSelectedIds([])} 
+        onClearSelection={() =>{  setSelectedIds([]); }} 
         isLoading={isDeleting}
       />
 
@@ -240,14 +238,14 @@ function ProductsContent() {
                 placeholder={enabledFields.has('sku') ? "Tìm tên, SKU..." : "Tìm tên sản phẩm..."} 
                 className="pl-9 w-48" 
                 value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)} 
+                onChange={(e) =>{  setSearchTerm(e.target.value); }} 
               />
             </div>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterCategory} onChange={(e) =>{  setFilterCategory(e.target.value); }}>
               <option value="">Tất cả danh mục</option>
               {categoriesData?.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
             </select>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  setFilterStatus(e.target.value); }}>
               <option value="">Tất cả trạng thái</option>
               <option value="Active">Đang bán</option>
               <option value="Draft">Bản nháp</option>
@@ -273,7 +271,7 @@ function ProductsContent() {
           <TableBody>
             {sortedData.map(product => (
               <TableRow key={product._id} className={selectedIds.includes(product._id) ? 'bg-orange-500/5' : ''}>
-                {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(product._id)} onChange={() => toggleSelectItem(product._id)} /></TableCell>}
+                {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(product._id)} onChange={() =>{  toggleSelectItem(product._id); }} /></TableCell>}
                 {visibleColumns.includes('image') && (
                   <TableCell>
                     {product.image ? (
@@ -305,17 +303,17 @@ function ProductsContent() {
                 {visibleColumns.includes('stock') && enabledFields.has('stock') && <TableCell className={product.stock < 10 ? 'text-red-500 font-medium' : ''}>{product.stock}</TableCell>}
                 {visibleColumns.includes('status') && (
                   <TableCell>
-                    <Badge variant={product.status === 'Active' ? 'success' : product.status === 'Draft' ? 'secondary' : 'warning'}>
-                      {product.status === 'Active' ? 'Đang bán' : product.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ'}
+                    <Badge variant={product.status === 'Active' ? 'success' : (product.status === 'Draft' ? 'secondary' : 'warning')}>
+                      {product.status === 'Active' ? 'Đang bán' : (product.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ')}
                     </Badge>
                   </TableCell>
                 )}
                 {visibleColumns.includes('actions') && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem trên web" onClick={() => openFrontend(product.slug)}><ExternalLink size={16}/></Button>
+                      <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem trên web" onClick={() =>{  openFrontend(product.slug); }}><ExternalLink size={16}/></Button>
                       <Link href={`/admin/products/${product._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(product._id)}><Trash2 size={16}/></Button>
+                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(product._id)}><Trash2 size={16}/></Button>
                     </div>
                   </TableCell>
                 )}
@@ -340,7 +338,7 @@ function ProductsContent() {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => loadMore(productsPerPage)}
+                onClick={() =>{  loadMore(productsPerPage); }}
                 className="gap-2"
               >
                 <ChevronRight size={16} /> Tải thêm

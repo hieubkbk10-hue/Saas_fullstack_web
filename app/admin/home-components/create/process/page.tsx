@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, GripVertical, Layers } from 'lucide-react';
+import { GripVertical, Layers, Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
 import { ProcessPreview, type ProcessStyle } from '../../previews';
 
 interface ProcessStep {
@@ -18,10 +18,10 @@ export default function ProcessCreatePage() {
   const brandColor = useBrandColor();
   
   const [steps, setSteps] = useState<ProcessStep[]>([
-    { id: 1, icon: '1', title: 'Tiếp nhận yêu cầu', description: 'Lắng nghe và tìm hiểu nhu cầu của khách hàng một cách chi tiết.' },
-    { id: 2, icon: '2', title: 'Phân tích & Tư vấn', description: 'Đưa ra giải pháp phù hợp nhất với ngân sách và mục tiêu.' },
-    { id: 3, icon: '3', title: 'Triển khai', description: 'Thực hiện dự án theo đúng tiến độ và chất lượng cam kết.' },
-    { id: 4, icon: '4', title: 'Bàn giao & Hỗ trợ', description: 'Bàn giao sản phẩm và hỗ trợ sau bán hàng tận tâm.' }
+    { description: 'Lắng nghe và tìm hiểu nhu cầu của khách hàng một cách chi tiết.', icon: '1', id: 1, title: 'Tiếp nhận yêu cầu' },
+    { description: 'Đưa ra giải pháp phù hợp nhất với ngân sách và mục tiêu.', icon: '2', id: 2, title: 'Phân tích & Tư vấn' },
+    { description: 'Thực hiện dự án theo đúng tiến độ và chất lượng cam kết.', icon: '3', id: 3, title: 'Triển khai' },
+    { description: 'Bàn giao sản phẩm và hỗ trợ sau bán hàng tận tâm.', icon: '4', id: 4, title: 'Bàn giao & Hỗ trợ' }
   ]);
   const [style, setStyle] = useState<ProcessStyle>('horizontal');
 
@@ -31,12 +31,12 @@ export default function ProcessCreatePage() {
 
   const dragProps = (id: number) => ({
     draggable: true,
-    onDragStart: () => setDraggedId(id),
     onDragEnd: () => { setDraggedId(null); setDragOverId(null); },
-    onDragOver: (e: React.DragEvent) => { e.preventDefault(); if (draggedId !== id) setDragOverId(id); },
+    onDragOver: (e: React.DragEvent) => { e.preventDefault(); if (draggedId !== id) {setDragOverId(id);} },
+    onDragStart: () =>{  setDraggedId(id); },
     onDrop: (e: React.DragEvent) => {
       e.preventDefault();
-      if (!draggedId || draggedId === id) return;
+      if (!draggedId || draggedId === id) {return;}
       const newSteps = [...steps];
       const draggedIdx = steps.findIndex(s => s.id === draggedId);
       const targetIdx = steps.findIndex(s => s.id === id);
@@ -50,7 +50,7 @@ export default function ProcessCreatePage() {
 
   const onSubmit = (e: React.FormEvent) => {
     void handleSubmit(e, { 
-      steps: steps.map(s => ({ icon: s.icon, title: s.title, description: s.description })), 
+      steps: steps.map(s => ({ description: s.description, icon: s.icon, title: s.title })), 
       style 
     });
   };
@@ -72,7 +72,7 @@ export default function ProcessCreatePage() {
             type="button" 
             variant="outline" 
             size="sm" 
-            onClick={() => setSteps([...steps, { id: Date.now(), icon: String(steps.length + 1), title: '', description: '' }])} 
+            onClick={() =>{  setSteps([...steps, { description: '', icon: String(steps.length + 1), id: Date.now(), title: '' }]); }} 
             className="gap-2"
           >
             <Plus size={14} /> Thêm bước
@@ -118,20 +118,20 @@ export default function ProcessCreatePage() {
                   <Input 
                     placeholder="Icon/Số (VD: 1, 01, ✓)" 
                     value={step.icon} 
-                    onChange={(e) => setSteps(steps.map(s => s.id === step.id ? {...s, icon: e.target.value} : s))}
+                    onChange={(e) =>{  setSteps(steps.map(s => s.id === step.id ? {...s, icon: e.target.value} : s)); }}
                     className="md:col-span-1"
                   />
                   <Input 
                     placeholder="Tiêu đề bước" 
                     value={step.title} 
-                    onChange={(e) => setSteps(steps.map(s => s.id === step.id ? {...s, title: e.target.value} : s))} 
+                    onChange={(e) =>{  setSteps(steps.map(s => s.id === step.id ? {...s, title: e.target.value} : s)); }} 
                     className="md:col-span-3"
                   />
                 </div>
                 <Input 
                   placeholder="Mô tả chi tiết bước này..." 
                   value={step.description} 
-                  onChange={(e) => setSteps(steps.map(s => s.id === step.id ? {...s, description: e.target.value} : s))} 
+                  onChange={(e) =>{  setSteps(steps.map(s => s.id === step.id ? {...s, description: e.target.value} : s)); }} 
                 />
               </div>
             ))

@@ -7,16 +7,16 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
         hostname: '*.convex.cloud',
+        protocol: 'https',
       },
       {
-        protocol: 'https',
         hostname: 'images.unsplash.com',
+        protocol: 'https',
       },
       {
-        protocol: 'https',
         hostname: 'picsum.photos',
+        protocol: 'https',
       },
     ],
   },

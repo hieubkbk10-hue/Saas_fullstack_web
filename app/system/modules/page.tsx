@@ -1,43 +1,43 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { 
-  Search, 
-  Settings, 
-  Shield, 
-  Users, 
-  Package, 
-  FileText, 
-  ShoppingCart,
-  ShoppingBag,
-  Heart, 
-  MessageSquare, 
-  Image, 
-  LayoutGrid, 
-  Menu, 
+  AlertTriangle, 
+  BarChart3, 
   Bell, 
-  Megaphone,
-  BarChart3,
-  Lock,
-  Check,
-  X,
-  UserCog,
-  Layers,
-  ChevronDown,
-  FileCode,
+  Briefcase, 
+  Check, 
+  ChevronDown, 
   Download,
   ExternalLink,
+  FileCode, 
+  FileText, 
+  Heart, 
+  Image, 
+  Layers, 
+  LayoutGrid, 
   Loader2,
-  AlertTriangle,
-  Briefcase
+  Lock,
+  Megaphone,
+  Menu,
+  MessageSquare,
+  Package,
+  Search,
+  Settings,
+  Shield,
+  ShoppingBag,
+  ShoppingCart,
+  UserCog,
+  Users,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { useI18n } from '../i18n/context';
-import { TranslationKeys } from '../i18n/translations';
+import type { TranslationKeys } from '../i18n/translations';
 
 // SYS-004: Confirmation Dialog component
 const CascadeConfirmDialog: React.FC<{
@@ -49,7 +49,7 @@ const CascadeConfirmDialog: React.FC<{
   onCancel: () => void;
   isLoading?: boolean;
 }> = ({ isOpen, moduleName, dependentModules, onConfirm, onCancel, isLoading }) => {
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -116,48 +116,48 @@ const CascadeConfirmDialog: React.FC<{
 };
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  FileText, Image, MessageSquare, Package, ShoppingCart, ShoppingBag, Heart, 
-  Users, UserCog, Shield, Settings, Menu, LayoutGrid, Bell, Megaphone, BarChart3,
-  Briefcase
+  BarChart3, Bell, Briefcase, FileText, Heart, Image, LayoutGrid, 
+  Megaphone, Menu, MessageSquare, Package, Settings, Shield, ShoppingBag, ShoppingCart, UserCog,
+  Users
 };
 
 const categoryColors: Record<string, string> = {
-  content: 'text-blue-400',
   commerce: 'text-emerald-400',
-  user: 'text-purple-400',
-  system: 'text-orange-400',
+  content: 'text-blue-400',
   marketing: 'text-pink-400',
+  system: 'text-orange-400',
+  user: 'text-purple-400',
 };
 
 const categoryLabelsEn: Record<string, string> = {
-  content: 'Content',
   commerce: 'Commerce',
-  user: 'User',
-  system: 'System',
+  content: 'Content',
   marketing: 'Marketing',
+  system: 'System',
+  user: 'User',
 };
 
 const moduleConfigRoutes: Record<string, string> = {
-  posts: '/system/modules/posts',
-  comments: '/system/modules/comments',
-  media: '/system/modules/media',
-  services: '/system/modules/services',
-  products: '/system/modules/products',
-  cart: '/system/modules/cart',
-  wishlist: '/system/modules/wishlist',
-  orders: '/system/modules/orders',
-  customers: '/system/modules/customers',
-  users: '/system/modules/users',
-  roles: '/system/modules/roles',
-  settings: '/system/modules/settings',
-  menus: '/system/modules/menus',
-  homepage: '/system/modules/homepage',
-  notifications: '/system/modules/notifications',
-  promotions: '/system/modules/promotions',
   analytics: '/system/modules/analytics',
+  cart: '/system/modules/cart',
+  comments: '/system/modules/comments',
+  customers: '/system/modules/customers',
+  homepage: '/system/modules/homepage',
+  media: '/system/modules/media',
+  menus: '/system/modules/menus',
+  notifications: '/system/modules/notifications',
+  orders: '/system/modules/orders',
+  posts: '/system/modules/posts',
+  products: '/system/modules/products',
+  promotions: '/system/modules/promotions',
+  roles: '/system/modules/roles',
+  services: '/system/modules/services',
+  settings: '/system/modules/settings',
+  users: '/system/modules/users',
+  wishlist: '/system/modules/wishlist',
 };
 
-type AdminModule = {
+interface AdminModule {
   _id: Id<"adminModules">;
   key: string;
   name: string;
@@ -169,16 +169,16 @@ type AdminModule = {
   dependencies?: string[];
   dependencyType?: "all" | "any";
   order: number;
-};
+}
 
-type SystemPreset = {
+interface SystemPreset {
   _id: Id<"systemPresets">;
   key: string;
   name: string;
   description: string;
   enabledModules: string[];
   isDefault?: boolean;
-};
+}
 
 const generateConfigMarkdown = (modules: AdminModule[], preset?: SystemPreset): string => {
   const enabledModules = modules.filter(m => m.enabled);
@@ -188,7 +188,7 @@ const generateConfigMarkdown = (modules: AdminModule[], preset?: SystemPreset): 
   return `# Admin Module Configuration
 
 > Generated: ${now}
-> Preset: ${preset?.name || 'Custom'}
+> Preset: ${preset?.name ?? 'Custom'}
 
 ## Summary
 
@@ -213,7 +213,7 @@ ${disabledModules.length > 0
 
 \`\`\`json
 {
-  "preset": "${preset?.key || 'custom'}",
+  "preset": "${preset?.key ?? 'custom'}",
   "modules": {
 ${modules.map(m => `    "${m.key}": ${m.enabled}`).join(',\n')}
   }
@@ -234,18 +234,18 @@ const PresetDropdown: React.FC<{
   return (
     <div className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() =>{  setIsOpen(!isOpen); }}
         disabled={loading}
         className="flex items-center gap-2 px-3 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
       >
         {loading && <Loader2 size={14} className="animate-spin" />}
-        <span>{selected?.name || 'Custom'}</span>
+        <span>{selected?.name ?? 'Custom'}</span>
         <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div className="fixed inset-0 z-10" onClick={() =>{  setIsOpen(false); }} />
           <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-20 overflow-hidden">
             <div className="p-2 border-b border-slate-100 dark:border-slate-800">
               <p className="text-[10px] text-slate-500 uppercase font-semibold px-2">Chọn preset</p>
@@ -307,7 +307,7 @@ const ConfigActions: React.FC<{
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `admin-config-${preset?.key || 'custom'}-${Date.now()}.md`;
+    a.download = `admin-config-${preset?.key ?? 'custom'}-${Date.now()}.md`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -322,7 +322,7 @@ const ConfigActions: React.FC<{
     <>
       <div className="flex items-center gap-2">
         <button
-          onClick={() => setShowMarkdown(true)}
+          onClick={() =>{  setShowMarkdown(true); }}
           className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
           title="Xem cấu hình dạng Markdown"
         >
@@ -360,7 +360,7 @@ const ConfigActions: React.FC<{
                   <Download size={14} /> Tải về
                 </button>
                 <button
-                  onClick={() => setShowMarkdown(false)}
+                  onClick={() =>{  setShowMarkdown(false); }}
                   className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
                   <X size={20} className="text-slate-500" />
@@ -393,7 +393,7 @@ const ModuleCard: React.FC<{
   const categoryLabel = t.modules.categories[module.category];
   const configRoute = moduleConfigRoutes[module.key];
   // SYS-008: Disable toggle khi có bất kỳ module nào đang toggle
-  const isDisabled = module.isCore || !canToggle || isToggling || isAnyToggling;
+  const isDisabled = module.isCore || !canToggle || (isToggling ?? isAnyToggling);
   const hasDependents = allModules.some(m => m.dependencies?.includes(module.key) && m.enabled);
   
   return (
@@ -440,9 +440,9 @@ const ModuleCard: React.FC<{
             className={`relative w-11 h-6 rounded-full transition-colors ${
               isDisabled 
                 ? 'bg-slate-200 dark:bg-slate-700 cursor-not-allowed' 
-                : module.enabled 
+                : (module.enabled 
                   ? 'bg-cyan-500 cursor-pointer' 
-                  : 'bg-slate-300 dark:bg-slate-700 cursor-pointer'
+                  : 'bg-slate-300 dark:bg-slate-700 cursor-pointer')
             }`}
           >
             {isToggling ? (
@@ -466,7 +466,7 @@ const ModuleCard: React.FC<{
         {module.dependencies && module.dependencies.length > 0 ? (
           <div className="flex items-center gap-1 text-[10px] text-slate-500">
             <Layers size={10} />
-            <span>{t.modules.dependsOn}: {module.dependencies.map(d => allModules.find(m => m.key === d)?.name || d).join(', ')}</span>
+            <span>{t.modules.dependsOn}: {module.dependencies.map(d => allModules.find(m => m.key === d)?.name ?? d).join(', ')}</span>
           </div>
         ) : (
           <div></div>
@@ -506,10 +506,10 @@ export default function ModuleManagementPage() {
     moduleKey: string;
     moduleName: string;
     dependentModules: { key: string; name: string }[];
-  }>({ isOpen: false, moduleKey: '', moduleName: '', dependentModules: [] });
+  }>({ dependentModules: [], isOpen: false, moduleKey: '', moduleName: '' });
 
-  const modules = modulesData || [];
-  const presets = presetsData || [];
+  const modules = modulesData ?? [];
+  const presets = presetsData ?? [];
 
   // Seed data if empty
   React.useEffect(() => {
@@ -520,7 +520,7 @@ export default function ModuleManagementPage() {
 
   const handlePresetSelect = async (presetKey: string) => {
     setSelectedPreset(presetKey);
-    if (presetKey === 'custom') return;
+    if (presetKey === 'custom') {return;}
     
     setApplyingPreset(true);
     try {
@@ -531,11 +531,9 @@ export default function ModuleManagementPage() {
   };
   
   // SYS-004: Tìm các modules phụ thuộc vào module này (enabled)
-  const getDependentModules = (moduleKey: string) => {
-    return modules.filter(m => 
+  const getDependentModules = (moduleKey: string) => modules.filter(m => 
       m.enabled && m.dependencies?.includes(moduleKey)
     ).map(m => ({ key: m.key, name: m.name }));
-  };
 
   const handleToggleModule = async (key: string, enabled: boolean) => {
     setSelectedPreset('custom');
@@ -546,10 +544,10 @@ export default function ModuleManagementPage() {
       if (dependents.length > 0) {
         const targetModule = modules.find(m => m.key === key);
         setCascadeDialog({
+          dependentModules: dependents,
           isOpen: true,
           moduleKey: key,
-          moduleName: targetModule?.name || key,
-          dependentModules: dependents,
+          moduleName: targetModule?.name ?? key,
         });
         return;
       }
@@ -557,7 +555,7 @@ export default function ModuleManagementPage() {
     
     setTogglingKey(key);
     try {
-      await toggleModule({ key, enabled });
+      await toggleModule({ enabled, key });
     } finally {
       setTogglingKey(null);
     }
@@ -569,9 +567,9 @@ export default function ModuleManagementPage() {
     setTogglingKey(moduleKey);
     try {
       const result = await toggleModuleWithCascade({
-        key: moduleKey,
-        enabled: false,
         cascadeKeys: dependentModules.map(d => d.key),
+        enabled: false,
+        key: moduleKey,
       });
       
       if (result.disabledModules.length > 0) {
@@ -581,27 +579,27 @@ export default function ModuleManagementPage() {
       toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
     } finally {
       setTogglingKey(null);
-      setCascadeDialog({ isOpen: false, moduleKey: '', moduleName: '', dependentModules: [] });
+      setCascadeDialog({ dependentModules: [], isOpen: false, moduleKey: '', moduleName: '' });
     }
   };
 
   const handleCascadeCancel = () => {
-    setCascadeDialog({ isOpen: false, moduleKey: '', moduleName: '', dependentModules: [] });
+    setCascadeDialog({ dependentModules: [], isOpen: false, moduleKey: '', moduleName: '' });
   };
   
   const canToggleModule = (module: AdminModule): boolean => {
-    if (module.isCore) return false;
-    if (!module.dependencies || module.dependencies.length === 0) return true;
+    if (module.isCore) {return false;}
+    if (!module.dependencies || module.dependencies.length === 0) {return true;}
     
     if (module.dependencyType === 'any') {
       return module.dependencies.some(depKey => 
         modules.find(m => m.key === depKey)?.enabled
       );
-    } else {
+    }
       return module.dependencies.every(depKey => 
         modules.find(m => m.key === depKey)?.enabled
       );
-    }
+    
   };
   
   const filteredModules = modules.filter(m => {
@@ -611,11 +609,11 @@ export default function ModuleManagementPage() {
     return matchCategory && matchSearch;
   });
   
-  const groupedModules = filteredModules.reduce((acc, module) => {
-    if (!acc[module.category]) acc[module.category] = [];
+  const groupedModules = filteredModules.reduce< Record<string, AdminModule[]>>((acc, module) => {
+    if (!acc[module.category]) {acc[module.category] = [];}
     acc[module.category].push(module);
     return acc;
-  }, {} as Record<string, AdminModule[]>);
+  }, {});
   
   const enabledCount = modules.filter(m => m.enabled).length;
   const disabledCount = modules.filter(m => !m.enabled).length;
@@ -667,7 +665,7 @@ export default function ModuleManagementPage() {
           <input 
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) =>{  setSearchQuery(e.target.value); }}
             placeholder={t.modules.searchModule}
             className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-2 pl-9 pr-4 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:border-cyan-500/50 outline-none"
           />
@@ -677,7 +675,7 @@ export default function ModuleManagementPage() {
           {['all', ...Object.keys(categoryColors)].map((cat) => (
             <button 
               key={cat}
-              onClick={() => setFilterCategory(cat)}
+              onClick={() =>{  setFilterCategory(cat); }}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
                 filterCategory === cat 
                   ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-600 dark:text-cyan-400' 
@@ -695,10 +693,10 @@ export default function ModuleManagementPage() {
           <div key={category}>
             <h3 className={`text-sm font-semibold mb-3 flex items-center gap-2 ${categoryColors[category]}`}>
               {t.modules.categories[category as keyof typeof t.modules.categories]}
-              <span className="text-xs font-normal text-slate-500">({(mods as AdminModule[]).length})</span>
+              <span className="text-xs font-normal text-slate-500">({(mods).length})</span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(mods as AdminModule[]).map(module => (
+              {(mods).map(module => (
                 <ModuleCard 
                   key={module._id} 
                   module={module} 
@@ -706,7 +704,7 @@ export default function ModuleManagementPage() {
                   canToggle={canToggleModule(module)}
                   allModules={modules}
                   isToggling={togglingKey === module.key}
-                  isAnyToggling={!!togglingKey} // SYS-008: Pass to disable all
+                  isAnyToggling={Boolean(togglingKey)} // SYS-008: Pass to disable all
                   t={t}
                 />
               ))}
@@ -730,7 +728,7 @@ export default function ModuleManagementPage() {
         dependentModules={cascadeDialog.dependentModules}
         onConfirm={handleCascadeConfirm}
         onCancel={handleCascadeCancel}
-        isLoading={!!togglingKey}
+        isLoading={Boolean(togglingKey)}
       />
     </div>
   );

@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../components/ui';
 import { LexicalEditor } from '../../components/LexicalEditor';
 import { ImageUploader } from '../../components/ImageUploader';
 import { useFormShortcuts } from '../../components/useKeyboardShortcuts';
@@ -57,8 +57,8 @@ export default function PostCreatePage() {
   }, [router]);
 
   useFormShortcuts({
-    onSave: handleSaveShortcut,
     onCancel: handleCancelShortcut,
+    onSave: handleSaveShortcut,
   });
 
   // Check which fields are enabled
@@ -72,28 +72,28 @@ export default function PostCreatePage() {
     const val = e.target.value;
     setTitle(val);
     const generatedSlug = val.toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[đĐ]/g, "d")
-      .replace(/[^a-z0-9\s]/g, '')
-      .replace(/\s+/g, '-');
+      .normalize("NFD").replaceAll(/[\u0300-\u036F]/g, "")
+      .replaceAll(/[đĐ]/g, "d")
+      .replaceAll(/[^a-z0-9\s]/g, '')
+      .replaceAll(/\s+/g, '-');
     setSlug(generatedSlug);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !categoryId || !usersData?.length) return;
+    if (!title.trim() || !categoryId || !usersData?.length) {return;}
 
     setIsSubmitting(true);
     try {
       await createPost({
-        title: title.trim(),
-        slug: slug.trim() || title.toLowerCase().replace(/\s+/g, '-'),
+        authorId: usersData[0]._id,
+        categoryId: categoryId as Id<"postCategories">,
         content,
         excerpt: excerpt.trim() || undefined,
-        thumbnail,
-        categoryId: categoryId as Id<"postCategories">,
-        authorId: usersData[0]._id,
+        slug: slug.trim() || title.toLowerCase().replaceAll(/\s+/g, '-'),
         status,
+        thumbnail,
+        title: title.trim(),
       });
       toast.success("Tạo bài viết mới thành công");
       router.push('/admin/posts');
@@ -108,8 +108,8 @@ export default function PostCreatePage() {
     <>
     <QuickCreateCategoryModal 
       isOpen={showCategoryModal} 
-      onClose={() => setShowCategoryModal(false)} 
-      onCreated={(id) => setCategoryId(id)}
+      onClose={() =>{  setShowCategoryModal(false); }} 
+      onCreated={(id) =>{  setCategoryId(id); }}
     />
     <form onSubmit={handleSubmit} className="space-y-6 pb-20">
       <div className="flex justify-between items-center">
@@ -123,24 +123,24 @@ export default function PostCreatePage() {
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardContent className="p-6 space-y-4">
-              {/* title - always shown (system field) */}
+              {/* Title - always shown (system field) */}
               <div className="space-y-2">
                 <Label>Tiêu đề <span className="text-red-500">*</span></Label>
                 <Input value={title} onChange={handleTitleChange} required placeholder="Nhập tiêu đề bài viết..." />
               </div>
-              {/* slug - always shown (system field) */}
+              {/* Slug - always shown (system field) */}
               <div className="space-y-2">
                 <Label>Slug</Label>
-                <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="tu-dong-tao-tu-tieu-de" className="font-mono text-sm" />
+                <Input value={slug} onChange={(e) =>{  setSlug(e.target.value); }} placeholder="tu-dong-tao-tu-tieu-de" className="font-mono text-sm" />
               </div>
-              {/* excerpt - conditional */}
+              {/* Excerpt - conditional */}
               {enabledFields.has('excerpt') && (
                 <div className="space-y-2">
                   <Label>Mô tả ngắn</Label>
-                  <Input value={excerpt} onChange={(e) => setExcerpt(e.target.value)} placeholder="Tóm tắt nội dung bài viết..." />
+                  <Input value={excerpt} onChange={(e) =>{  setExcerpt(e.target.value); }} placeholder="Tóm tắt nội dung bài viết..." />
                 </div>
               )}
-              {/* content - always shown (system field) */}
+              {/* Content - always shown (system field) */}
               <div className="space-y-2">
                 <Label>Nội dung</Label>
                 <LexicalEditor onChange={setContent} />
@@ -157,7 +157,7 @@ export default function PostCreatePage() {
                 <Label>Trạng thái</Label>
                 <select 
                   value={status} 
-                  onChange={(e) => setStatus(e.target.value as 'Draft' | 'Published')}
+                  onChange={(e) =>{  setStatus(e.target.value as 'Draft' | 'Published'); }}
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
                   <option value="Draft">Bản nháp</option>
@@ -169,7 +169,7 @@ export default function PostCreatePage() {
                 <div className="flex gap-2">
                   <select 
                     value={categoryId} 
-                    onChange={(e) => setCategoryId(e.target.value)}
+                    onChange={(e) =>{  setCategoryId(e.target.value); }}
                     required
                     className="flex-1 h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   >
@@ -182,7 +182,7 @@ export default function PostCreatePage() {
                     type="button" 
                     variant="outline" 
                     size="icon"
-                    onClick={() => setShowCategoryModal(true)}
+                    onClick={() =>{  setShowCategoryModal(true); }}
                     title="Tạo danh mục mới"
                   >
                     <Plus size={16} />
@@ -197,7 +197,7 @@ export default function PostCreatePage() {
             <CardContent>
               <ImageUploader
                 value={thumbnail}
-                onChange={(url) => setThumbnail(url)}
+                onChange={(url) =>{  setThumbnail(url); }}
                 folder="posts"
                 aspectRatio="video"
               />
@@ -207,7 +207,7 @@ export default function PostCreatePage() {
       </div>
 
       <div className="fixed bottom-0 left-0 lg:left-[280px] right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center z-10">
-        <Button type="button" variant="ghost" onClick={() => router.push('/admin/posts')} title="Hủy (Esc)">Hủy bỏ</Button>
+        <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/posts'); }} title="Hủy (Esc)">Hủy bỏ</Button>
         <div className="flex gap-2">
           <span className="text-xs text-slate-400 self-center hidden sm:block">Ctrl+S để lưu</span>
           <Button type="button" variant="secondary" onClick={() => { setStatus('Draft'); }}>Lưu nháp</Button>

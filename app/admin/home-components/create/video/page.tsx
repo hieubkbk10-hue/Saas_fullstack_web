@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
 import { VideoPreview, type VideoStyle } from '../../previews';
 import { ImageFieldWithUpload } from '../../../components/ImageFieldWithUpload';
 import { Video as VideoIcon } from 'lucide-react';
@@ -30,26 +30,26 @@ export default function VideoCreatePage() {
 
   const onSubmit = (e: React.FormEvent) => {
     void handleSubmit(e, { 
-      videoUrl,
-      thumbnailUrl,
-      heading,
-      description,
-      badge,
-      buttonText,
-      buttonLink,
-      style,
       autoplay,
+      badge,
+      buttonLink,
+      buttonText,
+      description,
+      heading,
       loop,
       muted,
+      style,
+      thumbnailUrl,
+      videoUrl,
     });
   };
 
   // Helper: Extract video type from URL
   const getVideoType = (url: string): 'youtube' | 'vimeo' | 'drive' | 'direct' | null => {
-    if (!url) return null;
-    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
-    if (url.includes('vimeo.com')) return 'vimeo';
-    if (url.includes('drive.google.com')) return 'drive';
+    if (!url) {return null;}
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {return 'youtube';}
+    if (url.includes('vimeo.com')) {return 'vimeo';}
+    if (url.includes('drive.google.com')) {return 'drive';}
     return 'direct';
   };
 
@@ -79,7 +79,7 @@ export default function VideoCreatePage() {
             <Input 
               type="url"
               value={videoUrl} 
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVideoUrl(e.target.value)} 
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>{  setVideoUrl(e.target.value); }} 
               placeholder="YouTube, YouTube Shorts, Google Drive hoặc link trực tiếp"
               required
             />
@@ -116,7 +116,7 @@ export default function VideoCreatePage() {
             <Label>Tiêu đề</Label>
             <Input 
               value={heading} 
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setHeading(e.target.value)} 
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>{  setHeading(e.target.value); }} 
               placeholder="Tiêu đề video section"
             />
           </div>
@@ -124,7 +124,7 @@ export default function VideoCreatePage() {
             <Label>Mô tả ngắn</Label>
             <textarea 
               value={description} 
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)} 
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>{  setDescription(e.target.value); }} 
               placeholder="Mô tả cho video section..."
               className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
             />
@@ -144,7 +144,7 @@ export default function VideoCreatePage() {
               <Label>Badge / Label</Label>
               <Input 
                 value={badge} 
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBadge(e.target.value)} 
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>{  setBadge(e.target.value); }} 
                 placeholder="VD: Video mới, Giới thiệu, Featured..."
               />
             </div>
@@ -153,7 +153,7 @@ export default function VideoCreatePage() {
                 <Label>Nút CTA - Text</Label>
                 <Input 
                   value={buttonText} 
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setButtonText(e.target.value)} 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>{  setButtonText(e.target.value); }} 
                   placeholder="VD: Tìm hiểu thêm, Xem ngay..."
                 />
               </div>
@@ -161,7 +161,7 @@ export default function VideoCreatePage() {
                 <Label>Nút CTA - Link</Label>
                 <Input 
                   value={buttonLink} 
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setButtonLink(e.target.value)} 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>{  setButtonLink(e.target.value); }} 
                   placeholder="/lien-he hoặc https://..."
                 />
               </div>
@@ -182,7 +182,7 @@ export default function VideoCreatePage() {
               <input 
                 type="checkbox" 
                 checked={autoplay} 
-                onChange={(e) => setAutoplay(e.target.checked)}
+                onChange={(e) =>{  setAutoplay(e.target.checked); }}
                 className="w-4 h-4 rounded"
               />
               <span className="text-sm">Tự động phát</span>
@@ -191,7 +191,7 @@ export default function VideoCreatePage() {
               <input 
                 type="checkbox" 
                 checked={loop} 
-                onChange={(e) => setLoop(e.target.checked)}
+                onChange={(e) =>{  setLoop(e.target.checked); }}
                 className="w-4 h-4 rounded"
               />
               <span className="text-sm">Lặp video</span>
@@ -200,7 +200,7 @@ export default function VideoCreatePage() {
               <input 
                 type="checkbox" 
                 checked={muted} 
-                onChange={(e) => setMuted(e.target.checked)}
+                onChange={(e) =>{  setMuted(e.target.checked); }}
                 className="w-4 h-4 rounded"
               />
               <span className="text-sm">Tắt tiếng</span>
@@ -215,16 +215,16 @@ export default function VideoCreatePage() {
       {/* Preview */}
       <VideoPreview 
         config={{
-          videoUrl,
-          thumbnailUrl,
-          heading,
-          description,
-          badge,
-          buttonText,
-          buttonLink,
           autoplay,
+          badge,
+          buttonLink,
+          buttonText,
+          description,
+          heading,
           loop,
           muted,
+          thumbnailUrl,
+          videoUrl,
         }}
         brandColor={brandColor}
         selectedStyle={style}

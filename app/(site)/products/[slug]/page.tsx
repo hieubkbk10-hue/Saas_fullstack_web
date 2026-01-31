@@ -6,8 +6,8 @@ import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { ArrowLeft, Package, ChevronRight, ShoppingCart, Heart, Share2, Truck, Shield, RotateCcw, Star, Minus, Plus, Check, ArrowRight } from 'lucide-react';
-import { Id } from '@/convex/_generated/dataModel';
+import { ArrowLeft, ArrowRight, Check, ChevronRight, Heart, Minus, Package, Plus, RotateCcw, Share2, Shield, ShoppingCart, Star, Truck } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
 
 type ProductDetailStyle = 'classic' | 'modern' | 'minimal';
 
@@ -19,7 +19,7 @@ function useProductDetailStyle(): ProductDetailStyle {
 function useEnabledProductFields(): Set<string> {
   const fields = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'products' });
   return useMemo(() => {
-    if (!fields) return new Set<string>();
+    if (!fields) {return new Set<string>();}
     return new Set(fields.map(f => f.fieldKey));
   }, [fields]);
 }
@@ -71,8 +71,8 @@ export default function ProductDetailPage({ params }: PageProps) {
     );
   }
 
-  const filteredRelated = relatedProducts?.filter(p => p._id !== product._id).slice(0, 4) || [];
-  const productData = { ...product, categoryName: category?.name || 'Sản phẩm', categorySlug: category?.slug };
+  const filteredRelated = relatedProducts?.filter(p => p._id !== product._id).slice(0, 4) ?? [];
+  const productData = { ...product, categoryName: category?.name ?? 'Sản phẩm', categorySlug: category?.slug };
 
   return (
     <>
@@ -116,7 +116,7 @@ interface StyleProps {
 }
 
 function formatPrice(price: number): string {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 }
 
 // ====================================================================================
@@ -174,7 +174,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields }: S
             {images.length > 1 && (
               <div className="flex gap-3">
                 {images.map((img, index) => (
-                  <button key={index} onClick={() => setSelectedImage(index)} className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${selectedImage === index ? 'border-orange-500' : 'border-slate-200 hover:border-slate-300'}`}>
+                  <button key={index} onClick={() =>{  setSelectedImage(index); }} className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${selectedImage === index ? 'border-orange-500' : 'border-slate-200 hover:border-slate-300'}`}>
                     <Image src={img} alt="" width={80} height={80} className="object-cover" />
                   </button>
                 ))}
@@ -214,21 +214,21 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields }: S
               <div className="flex items-center gap-2 mb-6">
                 {product.stock > 10 ? (
                   <><Check size={18} className="text-green-500" /><span className="text-green-600 font-medium">Còn hàng</span></>
-                ) : product.stock > 0 ? (
+                ) : (product.stock > 0 ? (
                   <><span className="w-2 h-2 bg-orange-500 rounded-full" /><span className="text-orange-600 font-medium">Chỉ còn {product.stock} sản phẩm</span></>
                 ) : (
                   <><span className="w-2 h-2 bg-red-500 rounded-full" /><span className="text-red-600 font-medium">Hết hàng</span></>
-                )}
+                ))}
               </div>
             )}
 
             <div className="flex flex-wrap items-center gap-4 mb-8">
               <div className="flex items-center border border-slate-200 rounded-lg">
-                <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="p-3 hover:bg-slate-50 transition-colors" disabled={quantity <= 1}>
+                <button onClick={() =>{  setQuantity(q => Math.max(1, q - 1)); }} className="p-3 hover:bg-slate-50 transition-colors" disabled={quantity <= 1}>
                   <Minus size={18} className={quantity <= 1 ? 'text-slate-300' : 'text-slate-600'} />
                 </button>
                 <span className="w-12 text-center font-medium">{quantity}</span>
-                <button onClick={() => setQuantity(q => Math.min(showStock ? product.stock : 99, q + 1))} className="p-3 hover:bg-slate-50 transition-colors" disabled={showStock && quantity >= product.stock}>
+                <button onClick={() =>{  setQuantity(q => Math.min(showStock ? product.stock : 99, q + 1)); }} className="p-3 hover:bg-slate-50 transition-colors" disabled={showStock && quantity >= product.stock}>
                   <Plus size={18} className={showStock && quantity >= product.stock ? 'text-slate-300' : 'text-slate-600'} />
                 </button>
               </div>
@@ -316,11 +316,11 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: St
 
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center border border-slate-200 rounded-full bg-white">
-                <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="p-3 hover:bg-slate-50 transition-colors rounded-l-full">
+                <button onClick={() =>{  setQuantity(q => Math.max(1, q - 1)); }} className="p-3 hover:bg-slate-50 transition-colors rounded-l-full">
                   <Minus size={18} />
                 </button>
                 <span className="w-12 text-center font-medium">{quantity}</span>
-                <button onClick={() => setQuantity(q => q + 1)} className="p-3 hover:bg-slate-50 transition-colors rounded-r-full">
+                <button onClick={() =>{  setQuantity(q => q + 1); }} className="p-3 hover:bg-slate-50 transition-colors rounded-r-full">
                   <Plus size={18} />
                 </button>
               </div>
@@ -335,11 +335,11 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: St
               <div className="flex items-center gap-2 mt-6">
                 {product.stock > 10 ? (
                   <><Check size={18} className="text-green-500" /><span className="text-green-600">Còn hàng</span></>
-                ) : product.stock > 0 ? (
+                ) : (product.stock > 0 ? (
                   <><span className="w-2 h-2 bg-orange-500 rounded-full" /><span className="text-orange-600">Chỉ còn {product.stock} sản phẩm</span></>
                 ) : (
                   <><span className="w-2 h-2 bg-red-500 rounded-full" /><span className="text-red-600">Hết hàng</span></>
-                )}
+                ))}
               </div>
             )}
           </div>
@@ -437,11 +437,11 @@ function MinimalStyle({ product, brandColor, relatedProducts, enabledFields }: S
         {/* Actions */}
         <div className="flex flex-col items-center gap-4 mb-12">
           <div className="flex items-center border border-slate-200 rounded-full">
-            <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="p-3 hover:bg-slate-50 transition-colors rounded-l-full">
+            <button onClick={() =>{  setQuantity(q => Math.max(1, q - 1)); }} className="p-3 hover:bg-slate-50 transition-colors rounded-l-full">
               <Minus size={18} />
             </button>
             <span className="w-12 text-center font-medium">{quantity}</span>
-            <button onClick={() => setQuantity(q => q + 1)} className="p-3 hover:bg-slate-50 transition-colors rounded-r-full">
+            <button onClick={() =>{  setQuantity(q => q + 1); }} className="p-3 hover:bg-slate-50 transition-colors rounded-r-full">
               <Plus size={18} />
             </button>
           </div>
@@ -486,7 +486,7 @@ function MinimalStyle({ product, brandColor, relatedProducts, enabledFields }: S
 
 // Shared Related Products Section
 function RelatedProductsSection({ products, categorySlug, brandColor, showPrice, showSalePrice }: { products: RelatedProduct[]; categorySlug?: string; brandColor: string; showPrice: boolean; showSalePrice: boolean }) {
-  if (products.length === 0) return null;
+  if (products.length === 0) {return null;}
 
   return (
     <section className="mt-16 pt-12 border-t border-slate-100">

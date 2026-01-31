@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, Input, Label } from '../../components/ui';
@@ -54,11 +54,11 @@ export default function UserCreatePage() {
     setIsSubmitting(true);
     try {
       await createUser({
-        name,
-        email,
-        phone: enabledFields.has('phone') && phone ? phone : undefined,
         avatar: enabledFields.has('avatar') && avatar ? avatar : undefined,
-        roleId: roleId as Id<"roles">,
+        email,
+        name,
+        phone: enabledFields.has('phone') && phone ? phone : undefined,
+        roleId: roleId,
         status,
       });
       toast.success('Đã tạo người dùng mới');
@@ -95,7 +95,7 @@ export default function UserCreatePage() {
                   required 
                   placeholder="Nhập họ tên..." 
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) =>{  setName(e.target.value); }}
                 />
               </div>
               <div className="space-y-2">
@@ -105,7 +105,7 @@ export default function UserCreatePage() {
                   required 
                   placeholder="Nhập email..." 
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) =>{  setEmail(e.target.value); }}
                 />
               </div>
             </div>
@@ -116,7 +116,7 @@ export default function UserCreatePage() {
                 <Input 
                   placeholder="Nhập số điện thoại..." 
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) =>{  setPhone(e.target.value); }}
                 />
               </div>
             )}
@@ -126,7 +126,7 @@ export default function UserCreatePage() {
                 <Label>Ảnh đại diện</Label>
                 <ImageUploader
                   value={avatar}
-                  onChange={(url) => setAvatar(url)}
+                  onChange={(url) =>{  setAvatar(url); }}
                   folder="users"
                   aspectRatio="square"
                 />
@@ -139,7 +139,7 @@ export default function UserCreatePage() {
                 <select 
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   value={roleId}
-                  onChange={(e) => setRoleId(e.target.value as Id<"roles">)}
+                  onChange={(e) =>{  setRoleId(e.target.value as Id<"roles">); }}
                   required
                 >
                   <option value="">Chọn vai trò...</option>
@@ -153,7 +153,7 @@ export default function UserCreatePage() {
                 <select 
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as 'Active' | 'Inactive')}
+                  onChange={(e) =>{  setStatus(e.target.value as 'Active' | 'Inactive'); }}
                 >
                   <option value="Active">Hoạt động</option>
                   <option value="Inactive">Không hoạt động</option>
@@ -163,7 +163,7 @@ export default function UserCreatePage() {
           </CardContent>
           
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
-            <Button type="button" variant="ghost" onClick={() => router.push('/admin/users')}>Hủy bỏ</Button>
+            <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/users'); }}>Hủy bỏ</Button>
             <Button type="submit" variant="accent" disabled={isSubmitting}>
               {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
               Tạo User

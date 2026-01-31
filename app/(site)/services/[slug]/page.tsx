@@ -1,13 +1,13 @@
 'use client';
 
-import React, { use, useEffect, useMemo } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { ArrowLeft, Clock, Eye, Calendar, Briefcase, ChevronRight, Star, Share2, CheckCircle2, Phone, MessageCircle, ArrowRight } from 'lucide-react';
-import { Id } from '@/convex/_generated/dataModel';
+import { ArrowLeft, ArrowRight, Briefcase, Calendar, CheckCircle2, ChevronRight, Clock, Copy, Eye, MessageCircle, Phone, Star } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
 
 type ServiceDetailStyle = 'classic' | 'modern' | 'minimal';
 
@@ -19,7 +19,7 @@ function useServiceDetailStyle(): ServiceDetailStyle {
 function useEnabledServiceFields(): Set<string> {
   const fields = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'services' });
   return useMemo(() => {
-    if (!fields) return new Set<string>();
+    if (!fields) {return new Set<string>();}
     return new Set(fields.map(f => f.fieldKey));
   }, [fields]);
 }
@@ -78,8 +78,8 @@ export default function ServiceDetailPage({ params }: PageProps) {
     );
   }
 
-  const filteredRelated = relatedServices?.filter(s => s._id !== service._id).slice(0, 3) || [];
-  const serviceData = { ...service, categoryName: category?.name || 'Dịch vụ' };
+  const filteredRelated = relatedServices?.filter(s => s._id !== service._id).slice(0, 3) ?? [];
+  const serviceData = { ...service, categoryName: category?.name ?? 'Dịch vụ' };
 
   return (
     <>
@@ -122,12 +122,12 @@ interface StyleProps {
 }
 
 function formatPrice(price?: number): string {
-  if (!price) return 'Liên hệ';
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  if (!price) {return 'Liên hệ';}
+  return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 }
 
 function formatDate(timestamp?: number): string {
-  if (!timestamp) return '';
+  if (!timestamp) {return '';}
   return new Date(timestamp).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
@@ -139,6 +139,18 @@ function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: S
   const showPrice = enabledFields.has('price');
   const showDuration = enabledFields.has('duration');
   const showFeatured = enabledFields.has('featured');
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (typeof window === 'undefined' || !navigator.clipboard) {return;}
+    const url = window.location.href;
+    navigator.clipboard.writeText(url)
+      .then(() => {
+        setCopied(true);
+        window.setTimeout(() => { setCopied(false); }, 1500);
+      })
+      .catch(() => { setCopied(false); });
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -156,9 +168,9 @@ function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: S
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="lg:grid lg:grid-cols-3 lg:gap-12">
-          {/* Main Content - 2/3 width */}
-          <div className="lg:col-span-2">
+        <div className="lg:grid lg:grid-cols-4 lg:gap-12">
+          {/* Main Content - 3/4 width */}
+          <div className="lg:col-span-3">
             {/* Hero Section */}
             <header className="mb-8">
               <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -221,6 +233,51 @@ function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: S
               </div>
             )}
 
+            {/* Quick Contact */}
+            <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Liên hệ nhanh</p>
+                  <p className="text-sm text-slate-600 mt-1">Tư vấn miễn phí và báo giá trong 24h.</p>
+                </div>
+                {showPrice && (
+                  <div className="text-xl font-bold" style={{ color: brandColor }}>
+                    {formatPrice(service.price)}
+                  </div>
+                )}
+              </div>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <button
+                  className="w-full min-h-11 px-6 rounded-xl text-white font-semibold transition-all hover:shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  <Phone size={18} />
+                  Liên hệ tư vấn
+                </button>
+                <button
+                  className="w-full min-h-11 px-6 rounded-xl font-medium border transition-colors hover:bg-slate-50 flex items-center justify-center gap-2"
+                  style={{ borderColor: `${brandColor}80`, color: brandColor }}
+                >
+                  <MessageCircle size={18} />
+                  Chat ngay
+                </button>
+              </div>
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <CheckCircle2 size={18} className="text-green-500 shrink-0" />
+                  <span>Tư vấn miễn phí</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <CheckCircle2 size={18} className="text-green-500 shrink-0" />
+                  <span>Hỗ trợ 24/7</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <CheckCircle2 size={18} className="text-green-500 shrink-0" />
+                  <span>Cam kết chất lượng</span>
+                </div>
+              </div>
+            </div>
+
             {/* Content */}
             <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-strong:text-slate-900">
               <div dangerouslySetInnerHTML={{ __html: service.content }} />
@@ -231,8 +288,14 @@ function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: S
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-slate-500">Chia sẻ:</span>
-                  <button aria-label="Chia sẻ" className="w-11 h-11 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
-                    <Share2 size={18} className="text-slate-600" />
+                  <button
+                    type="button"
+                    aria-label="Copy dịch vụ"
+                    onClick={handleCopy}
+                    className="inline-flex items-center gap-2 min-h-11 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-sm font-medium text-slate-700 transition-colors"
+                  >
+                    <Copy size={16} />
+                    {copied ? 'Đã copy' : 'Copy dịch vụ'}
                   </button>
                 </div>
                 <Link 
@@ -247,57 +310,9 @@ function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: S
             </div>
           </div>
 
-          {/* Sidebar - 1/3 width */}
+          {/* Sidebar - 1/4 width */}
           <div className="mt-8 lg:mt-0">
             <div className="lg:sticky lg:top-8 space-y-6">
-              {/* Price & CTA Card */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                {showPrice && (
-                  <div className="p-6 text-center border-b border-slate-100">
-                    <p className="text-sm text-slate-500 mb-1">Giá dịch vụ</p>
-                    <p className="text-3xl font-bold" style={{ color: brandColor }}>
-                      {formatPrice(service.price)}
-                    </p>
-                    {showDuration && service.duration && (
-                      <p className="text-sm text-slate-500 mt-1">Thời gian: {service.duration}</p>
-                    )}
-                  </div>
-                )}
-                
-                <div className="p-6 space-y-3">
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Liên hệ nhanh</p>
-                  <button 
-                    className="w-full min-h-11 px-6 rounded-xl text-white font-semibold transition-all hover:shadow-lg hover:scale-[1.02] flex items-center justify-center gap-2"
-                    style={{ backgroundColor: brandColor }}
-                  >
-                    <Phone size={18} />
-                    Liên hệ tư vấn
-                  </button>
-                  <button className="w-full min-h-11 px-6 rounded-xl font-medium border transition-colors hover:bg-slate-50 flex items-center justify-center gap-2" style={{ borderColor: `${brandColor}80`, color: brandColor }}>
-                    <MessageCircle size={18} />
-                    Chat ngay
-                  </button>
-                </div>
-
-                {/* Trust signals */}
-                <div className="px-6 pb-6">
-                  <div className="pt-4 border-t border-slate-100 space-y-3">
-                    <div className="flex items-center gap-3 text-sm text-slate-600">
-                      <CheckCircle2 size={18} className="text-green-500 shrink-0" />
-                      <span>Tư vấn miễn phí</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-slate-600">
-                      <CheckCircle2 size={18} className="text-green-500 shrink-0" />
-                      <span>Hỗ trợ 24/7</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-slate-600">
-                      <CheckCircle2 size={18} className="text-green-500 shrink-0" />
-                      <span>Cam kết chất lượng</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Related Services */}
               {relatedServices.length > 0 && (
                 <div className="bg-slate-50 rounded-2xl p-6">

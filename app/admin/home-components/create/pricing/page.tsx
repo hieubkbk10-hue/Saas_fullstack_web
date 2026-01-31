@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, GripVertical, Package } from 'lucide-react';
+import { GripVertical, Package, Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { PricingPreview, PricingStyle, PricingConfig } from '../../previews';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
+import type { PricingConfig, PricingStyle } from '../../previews';
+import { PricingPreview } from '../../previews';
 
-type PricingPlan = {
+interface PricingPlan {
   id: number;
   name: string;
   price: string;
@@ -16,7 +17,7 @@ type PricingPlan = {
   isPopular: boolean;
   buttonText: string;
   buttonLink: string;
-};
+}
 
 export default function PricingCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Bảng giá', 'Pricing');
@@ -24,16 +25,16 @@ export default function PricingCreatePage() {
   
   const [pricingStyle, setPricingStyle] = useState<PricingStyle>('cards');
   const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([
-    { id: 1, name: 'Cơ bản', price: '0', yearlyPrice: '0', period: '/tháng', features: ['Tính năng A', 'Tính năng B'], isPopular: false, buttonText: 'Bắt đầu', buttonLink: '/register' },
-    { id: 2, name: 'Chuyên nghiệp', price: '299.000', yearlyPrice: '2.990.000', period: '/tháng', features: ['Tất cả Cơ bản', 'Tính năng C', 'Hỗ trợ email'], isPopular: true, buttonText: 'Mua ngay', buttonLink: '/checkout' },
-    { id: 3, name: 'Doanh nghiệp', price: 'Liên hệ', yearlyPrice: 'Liên hệ', period: '', features: ['Tất cả Pro', 'Hỗ trợ 24/7', 'API Access'], isPopular: false, buttonText: 'Liên hệ', buttonLink: '/contact' }
+    { buttonLink: '/register', buttonText: 'Bắt đầu', features: ['Tính năng A', 'Tính năng B'], id: 1, isPopular: false, name: 'Cơ bản', period: '/tháng', price: '0', yearlyPrice: '0' },
+    { buttonLink: '/checkout', buttonText: 'Mua ngay', features: ['Tất cả Cơ bản', 'Tính năng C', 'Hỗ trợ email'], id: 2, isPopular: true, name: 'Chuyên nghiệp', period: '/tháng', price: '299.000', yearlyPrice: '2.990.000' },
+    { buttonLink: '/contact', buttonText: 'Liên hệ', features: ['Tất cả Pro', 'Hỗ trợ 24/7', 'API Access'], id: 3, isPopular: false, name: 'Doanh nghiệp', period: '', price: 'Liên hệ', yearlyPrice: 'Liên hệ' }
   ]);
 
   // Config cho các style đặc biệt (Dependent Fields)
   const [pricingConfig, setPricingConfig] = useState<PricingConfig>({
-    subtitle: 'Chọn gói phù hợp với nhu cầu của bạn',
-    showBillingToggle: true,
     monthlyLabel: 'Hàng tháng',
+    showBillingToggle: true,
+    subtitle: 'Chọn gói phù hợp với nhu cầu của bạn',
     yearlyLabel: 'Hàng năm',
     yearlySavingText: 'Tiết kiệm 17%'
   });
@@ -44,12 +45,12 @@ export default function PricingCreatePage() {
 
   const dragProps = (id: number) => ({
     draggable: true,
-    onDragStart: () => setDraggedId(id),
     onDragEnd: () => { setDraggedId(null); setDragOverId(null); },
-    onDragOver: (e: React.DragEvent) => { e.preventDefault(); if (draggedId !== id) setDragOverId(id); },
+    onDragOver: (e: React.DragEvent) => { e.preventDefault(); if (draggedId !== id) {setDragOverId(id);} },
+    onDragStart: () =>{  setDraggedId(id); },
     onDrop: (e: React.DragEvent) => {
       e.preventDefault();
-      if (!draggedId || draggedId === id) return;
+      if (!draggedId || draggedId === id) {return;}
       const newPlans = [...pricingPlans];
       const draggedIndex = newPlans.findIndex(p => p.id === draggedId);
       const dropIndex = newPlans.findIndex(p => p.id === id);
@@ -63,15 +64,15 @@ export default function PricingCreatePage() {
 
   const addPlan = () => {
     setPricingPlans([...pricingPlans, { 
-      id: Date.now(), 
-      name: '', 
-      price: '', 
-      yearlyPrice: '',
-      period: '/tháng', 
-      features: [], 
-      isPopular: false, 
+      buttonLink: '', 
       buttonText: 'Chọn gói', 
-      buttonLink: '' 
+      features: [], 
+      id: Date.now(),
+      isPopular: false, 
+      name: '', 
+      period: '/tháng', 
+      price: '', 
+      yearlyPrice: '' 
     }]);
   };
 
@@ -88,14 +89,14 @@ export default function PricingCreatePage() {
   const onSubmit = (e: React.FormEvent) => {
     void handleSubmit(e, { 
       plans: pricingPlans.map(p => ({ 
-        name: p.name, 
-        price: p.price, 
-        yearlyPrice: p.yearlyPrice,
-        period: p.period, 
-        features: p.features, 
-        isPopular: p.isPopular, 
+        buttonLink: p.buttonLink, 
         buttonText: p.buttonText, 
-        buttonLink: p.buttonLink 
+        features: p.features,
+        isPopular: p.isPopular, 
+        name: p.name, 
+        period: p.period, 
+        price: p.price, 
+        yearlyPrice: p.yearlyPrice 
       })),
       style: pricingStyle,
       ...pricingConfig
@@ -122,8 +123,8 @@ export default function PricingCreatePage() {
             <Label>Mô tả ngắn (subtitle)</Label>
             <Input 
               placeholder="Chọn gói phù hợp với nhu cầu của bạn"
-              value={pricingConfig.subtitle || ''} 
-              onChange={(e) => setPricingConfig({ ...pricingConfig, subtitle: e.target.value })} 
+              value={pricingConfig.subtitle ?? ''} 
+              onChange={(e) =>{  setPricingConfig({ ...pricingConfig, subtitle: e.target.value }); }} 
             />
           </div>
           
@@ -133,7 +134,7 @@ export default function PricingCreatePage() {
               <input 
                 type="checkbox" 
                 checked={pricingConfig.showBillingToggle} 
-                onChange={(e) => setPricingConfig({ ...pricingConfig, showBillingToggle: e.target.checked })} 
+                onChange={(e) =>{  setPricingConfig({ ...pricingConfig, showBillingToggle: e.target.checked }); }} 
                 className="w-4 h-4 rounded" 
               />
               <span>Hiển thị toggle Tháng/Năm</span>
@@ -147,24 +148,24 @@ export default function PricingCreatePage() {
                 <Label className="text-xs">Label tháng</Label>
                 <Input 
                   placeholder="Hàng tháng"
-                  value={pricingConfig.monthlyLabel || ''} 
-                  onChange={(e) => setPricingConfig({ ...pricingConfig, monthlyLabel: e.target.value })} 
+                  value={pricingConfig.monthlyLabel ?? ''} 
+                  onChange={(e) =>{  setPricingConfig({ ...pricingConfig, monthlyLabel: e.target.value }); }} 
                 />
               </div>
               <div>
                 <Label className="text-xs">Label năm</Label>
                 <Input 
                   placeholder="Hàng năm"
-                  value={pricingConfig.yearlyLabel || ''} 
-                  onChange={(e) => setPricingConfig({ ...pricingConfig, yearlyLabel: e.target.value })} 
+                  value={pricingConfig.yearlyLabel ?? ''} 
+                  onChange={(e) =>{  setPricingConfig({ ...pricingConfig, yearlyLabel: e.target.value }); }} 
                 />
               </div>
               <div>
                 <Label className="text-xs">Badge tiết kiệm</Label>
                 <Input 
                   placeholder="Tiết kiệm 17%"
-                  value={pricingConfig.yearlySavingText || ''} 
-                  onChange={(e) => setPricingConfig({ ...pricingConfig, yearlySavingText: e.target.value })} 
+                  value={pricingConfig.yearlySavingText ?? ''} 
+                  onChange={(e) =>{  setPricingConfig({ ...pricingConfig, yearlySavingText: e.target.value }); }} 
                 />
               </div>
             </div>
@@ -219,7 +220,7 @@ export default function PricingCreatePage() {
                       <input 
                         type="checkbox" 
                         checked={plan.isPopular} 
-                        onChange={(e) => updatePlan(plan.id, { isPopular: e.target.checked })} 
+                        onChange={(e) =>{  updatePlan(plan.id, { isPopular: e.target.checked }); }} 
                         className="w-4 h-4 rounded" 
                       />
                       Nổi bật
@@ -229,7 +230,7 @@ export default function PricingCreatePage() {
                       variant="ghost" 
                       size="icon" 
                       className="text-red-500 h-8 w-8" 
-                      onClick={() => removePlan(plan.id)}
+                      onClick={() =>{  removePlan(plan.id); }}
                       disabled={pricingPlans.length <= 1}
                     >
                       <Trash2 size={14} />
@@ -241,12 +242,12 @@ export default function PricingCreatePage() {
                   <Input 
                     placeholder="Tên gói" 
                     value={plan.name} 
-                    onChange={(e) => updatePlan(plan.id, { name: e.target.value })} 
+                    onChange={(e) =>{  updatePlan(plan.id, { name: e.target.value }); }} 
                   />
                   <Input 
                     placeholder="Giá tháng (VD: 299.000)" 
                     value={plan.price} 
-                    onChange={(e) => updatePlan(plan.id, { price: e.target.value })} 
+                    onChange={(e) =>{  updatePlan(plan.id, { price: e.target.value }); }} 
                   />
                 </div>
 
@@ -255,26 +256,26 @@ export default function PricingCreatePage() {
                   <Input 
                     placeholder="Giá năm (VD: 2.990.000)" 
                     value={plan.yearlyPrice} 
-                    onChange={(e) => updatePlan(plan.id, { yearlyPrice: e.target.value })} 
+                    onChange={(e) =>{  updatePlan(plan.id, { yearlyPrice: e.target.value }); }} 
                   />
                 )}
                 
                 <Input 
                   placeholder="Tính năng (phân cách bởi dấu phẩy)" 
                   value={plan.features.join(', ')} 
-                  onChange={(e) => updatePlan(plan.id, { features: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} 
+                  onChange={(e) =>{  updatePlan(plan.id, { features: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }); }} 
                 />
                 
                 <div className="grid grid-cols-2 gap-3">
                   <Input 
                     placeholder="Text nút bấm" 
                     value={plan.buttonText} 
-                    onChange={(e) => updatePlan(plan.id, { buttonText: e.target.value })} 
+                    onChange={(e) =>{  updatePlan(plan.id, { buttonText: e.target.value }); }} 
                   />
                   <Input 
                     placeholder="Liên kết" 
                     value={plan.buttonLink} 
-                    onChange={(e) => updatePlan(plan.id, { buttonLink: e.target.value })} 
+                    onChange={(e) =>{  updatePlan(plan.id, { buttonLink: e.target.value }); }} 
                   />
                 </div>
               </div>

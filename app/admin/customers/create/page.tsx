@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -13,7 +13,7 @@ const MODULE_KEY = 'customers';
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 // CUST-005 FIX: Add phone validation for Vietnamese phone numbers
-const isValidPhone = (phone: string) => /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone.replace(/\s|-/g, ''));
+const isValidPhone = (phone: string) => /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone.replaceAll(/\s|-/g, ''));
 
 interface FormData {
   name: string;
@@ -34,12 +34,12 @@ export default function CustomerCreatePage() {
   
   // Form state
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    email: '',
-    phone: '',
-    city: '',
     address: '',
+    city: '',
+    email: '',
+    name: '',
     notes: '',
+    phone: '',
     status: 'Active',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,12 +87,12 @@ export default function CustomerCreatePage() {
     setIsSubmitting(true);
     try {
       await createCustomer({
-        name: formData.name.trim(),
-        email: formData.email.toLowerCase().trim(),
-        phone: formData.phone.trim(),
-        city: formData.city.trim() || undefined,
         address: formData.address.trim() || undefined,
+        city: formData.city.trim() || undefined,
+        email: formData.email.toLowerCase().trim(),
+        name: formData.name.trim(),
         notes: formData.notes.trim() || undefined,
+        phone: formData.phone.trim(),
         status: formData.status,
       });
       toast.success('Đã tạo khách hàng mới');
@@ -122,7 +122,7 @@ export default function CustomerCreatePage() {
                   required
                   placeholder="Nhập họ tên..."
                   value={formData.name}
-                  onChange={(e) => handleChange('name', e.target.value)}
+                  onChange={(e) =>{  handleChange('name', e.target.value); }}
                 />
               </div>
               <div className="space-y-2">
@@ -132,7 +132,7 @@ export default function CustomerCreatePage() {
                   required
                   placeholder="Nhập email..."
                   value={formData.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
+                  onChange={(e) =>{  handleChange('email', e.target.value); }}
                 />
               </div>
               <div className="space-y-2">
@@ -141,7 +141,7 @@ export default function CustomerCreatePage() {
                   required
                   placeholder="Nhập số điện thoại..."
                   value={formData.phone}
-                  onChange={(e) => handleChange('phone', e.target.value)}
+                  onChange={(e) =>{  handleChange('phone', e.target.value); }}
                 />
               </div>
               <div className="space-y-2">
@@ -149,7 +149,7 @@ export default function CustomerCreatePage() {
                 <select
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   value={formData.status}
-                  onChange={(e) => handleChange('status', e.target.value)}
+                  onChange={(e) =>{  handleChange('status', e.target.value); }}
                 >
                   <option value="Active">Hoạt động</option>
                   <option value="Inactive">Đã khóa</option>
@@ -164,7 +164,7 @@ export default function CustomerCreatePage() {
                   <Input
                     placeholder="Nhập thành phố..."
                     value={formData.city}
-                    onChange={(e) => handleChange('city', e.target.value)}
+                    onChange={(e) =>{  handleChange('city', e.target.value); }}
                   />
                 </div>
                 <div className="space-y-2">
@@ -172,7 +172,7 @@ export default function CustomerCreatePage() {
                   <Input
                     placeholder="Nhập địa chỉ đầy đủ..."
                     value={formData.address}
-                    onChange={(e) => handleChange('address', e.target.value)}
+                    onChange={(e) =>{  handleChange('address', e.target.value); }}
                   />
                 </div>
               </>
@@ -185,14 +185,14 @@ export default function CustomerCreatePage() {
                   className="w-full min-h-[100px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Ghi chú về khách hàng..."
                   value={formData.notes}
-                  onChange={(e) => handleChange('notes', e.target.value)}
+                  onChange={(e) =>{  handleChange('notes', e.target.value); }}
                 />
               </div>
             )}
           </CardContent>
 
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
-            <Button type="button" variant="ghost" onClick={() => router.push('/admin/customers')}>
+            <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/customers'); }}>
               Hủy bỏ
             </Button>
             <Button type="submit" variant="accent" disabled={isSubmitting}>

@@ -6,18 +6,18 @@ import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
 function getSessionId(): string {
-  if (typeof window === 'undefined') return '';
+  if (typeof window === 'undefined') {return '';}
   
   let sessionId = sessionStorage.getItem('pv_session_id');
   if (!sessionId) {
-    sessionId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    sessionId = `${Date.now()}-${Math.random().toString(36).slice(2, 15)}`;
     sessionStorage.setItem('pv_session_id', sessionId);
   }
   return sessionId;
 }
 
 function getDeviceType(): 'mobile' | 'desktop' | 'tablet' {
-  if (typeof window === 'undefined') return 'desktop';
+  if (typeof window === 'undefined') {return 'desktop';}
   
   const ua = navigator.userAgent;
   if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
@@ -30,27 +30,27 @@ function getDeviceType(): 'mobile' | 'desktop' | 'tablet' {
 }
 
 function getOS(): string {
-  if (typeof window === 'undefined') return 'unknown';
+  if (typeof window === 'undefined') {return 'unknown';}
   
   const ua = navigator.userAgent;
-  if (ua.includes('Win')) return 'Windows';
-  if (ua.includes('Mac')) return 'macOS';
-  if (ua.includes('Linux')) return 'Linux';
-  if (ua.includes('Android')) return 'Android';
-  if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+  if (ua.includes('Win')) {return 'Windows';}
+  if (ua.includes('Mac')) {return 'macOS';}
+  if (ua.includes('Linux')) {return 'Linux';}
+  if (ua.includes('Android')) {return 'Android';}
+  if (ua.includes('iPhone') || ua.includes('iPad')) {return 'iOS';}
   return 'unknown';
 }
 
 function getBrowser(): string {
-  if (typeof window === 'undefined') return 'unknown';
+  if (typeof window === 'undefined') {return 'unknown';}
   
   const ua = navigator.userAgent;
-  if (ua.includes('Firefox')) return 'Firefox';
-  if (ua.includes('SamsungBrowser')) return 'Samsung Browser';
-  if (ua.includes('Opera') || ua.includes('OPR')) return 'Opera';
-  if (ua.includes('Edge')) return 'Edge';
-  if (ua.includes('Chrome')) return 'Chrome';
-  if (ua.includes('Safari')) return 'Safari';
+  if (ua.includes('Firefox')) {return 'Firefox';}
+  if (ua.includes('SamsungBrowser')) {return 'Samsung Browser';}
+  if (ua.includes('Opera') || ua.includes('OPR')) {return 'Opera';}
+  if (ua.includes('Edge')) {return 'Edge';}
+  if (ua.includes('Chrome')) {return 'Chrome';}
+  if (ua.includes('Safari')) {return 'Safari';}
   return 'unknown';
 }
 
@@ -71,18 +71,18 @@ export function PageViewTracker() {
     }
 
     const sessionId = getSessionId();
-    if (!sessionId) return;
+    if (!sessionId) {return;}
 
     trackedPaths.current.add(pathname);
 
     trackPageView({
-      path: pathname,
-      sessionId,
-      referrer: document.referrer || undefined,
-      userAgent: navigator.userAgent,
+      browser: getBrowser(),
       device: getDeviceType(),
       os: getOS(),
-      browser: getBrowser(),
+      path: pathname,
+      referrer: document.referrer || undefined,
+      sessionId,
+      userAgent: navigator.userAgent,
     }).catch(console.error);
 
     // Clear tracked path after some time to allow re-tracking on navigation back
@@ -90,7 +90,7 @@ export function PageViewTracker() {
       trackedPaths.current.delete(pathname);
     }, 5000);
 
-    return () => clearTimeout(timeout);
+    return () =>{  clearTimeout(timeout); };
   }, [pathname, trackPageView]);
 
   return null;

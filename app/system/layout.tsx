@@ -1,28 +1,28 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
-  LayoutDashboard, 
+  BarChart3, 
   Blocks, 
-  Menu, 
-  Search, 
-  Sun,
-  Moon, 
-  ChevronRight,
-  Terminal,
+  ChevronRight, 
+  Database, 
   Globe,
-  BarChart3,
-  Languages,
-  Database,
+  Languages, 
+  LayoutDashboard,
   LogOut,
+  type LucideIcon,
+  Menu,
+  Moon,
+  Search,
   Shield,
-  type LucideIcon
+  Sun,
+  Terminal
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Toaster } from 'sonner';
 import { I18nProvider, useI18n } from './i18n/context';
-import { Locale } from './i18n/translations';
+import type { Locale } from './i18n/translations';
 import { SystemAuthProvider, useSystemAuth } from './auth/context';
 import { SystemAuthGuard } from './auth/SystemAuthGuard';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -60,7 +60,7 @@ const UserMenu = () => {
   return (
     <div className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() =>{  setIsOpen(!isOpen); }}
         className="flex items-center gap-2 pl-2"
       >
         <div className="w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
@@ -70,7 +70,7 @@ const UserMenu = () => {
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div className="fixed inset-0 z-10" onClick={() =>{  setIsOpen(false); }} />
           <div className="absolute top-full right-0 mt-1 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-20 overflow-hidden">
             <div className="p-3 border-b border-slate-100 dark:border-slate-800">
               <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Developer</p>
@@ -95,16 +95,16 @@ const LanguageSwitcher = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const languages: { code: Locale; label: string; flag: string }[] = [
-    { code: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
-    { code: 'en', label: 'English', flag: '🇺🇸' },
+    { code: 'vi', flag: '🇻🇳', label: 'Tiếng Việt' },
+    { code: 'en', flag: '🇺🇸', label: 'English' },
   ];
 
-  const currentLang = languages.find(l => l.code === locale) || languages[0];
+  const currentLang = languages.find(l => l.code === locale) ?? languages[0];
 
   return (
     <div className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() =>{  setIsOpen(!isOpen); }}
         className="flex items-center gap-1.5 p-2 text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
         title={locale === 'vi' ? 'Chuyển ngôn ngữ' : 'Change language'}
       >
@@ -114,7 +114,7 @@ const LanguageSwitcher = () => {
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div className="fixed inset-0 z-10" onClick={() =>{  setIsOpen(false); }} />
           <div className="absolute top-full right-0 mt-1 w-40 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-20 overflow-hidden">
             {languages.map((lang) => (
               <button
@@ -140,37 +140,29 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window === 'undefined') return true;
+    if (typeof window === 'undefined') {return true;}
     const saved = localStorage.getItem('theme');
     return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
   });
   const pathname = usePathname();
 
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', darkMode);
   }, [darkMode]);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
     localStorage.setItem('theme', newMode ? 'dark' : 'light');
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', newMode);
   };
 
   const getPageName = () => {
-    if (pathname === '/system') return t.pages.dashboard;
-    if (pathname.includes('modules')) return t.pages.moduleManagement;
-    if (pathname.includes('data')) return 'Data Manager';
-    if (pathname.includes('integrations')) return t.pages.analyticsIntegrations;
-    if (pathname.includes('seo')) return t.pages.seoConfiguration;
+    if (pathname === '/system') {return t.pages.dashboard;}
+    if (pathname.includes('modules')) {return t.pages.moduleManagement;}
+    if (pathname.includes('data')) {return 'Data Manager';}
+    if (pathname.includes('integrations')) {return t.pages.analyticsIntegrations;}
+    if (pathname.includes('seo')) {return t.pages.seoConfiguration;}
     return 'System';
   };
 
@@ -210,7 +202,7 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
         {/* Sidebar Footer */}
         <div className="p-3 border-t border-slate-200 dark:border-slate-800">
           <button 
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() =>{  setCollapsed(!collapsed); }}
             className="w-full flex justify-center items-center p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition-colors hidden md:flex"
           >
             {collapsed ? <ChevronRight size={16} /> : <span className="text-xs">{t.sidebar.collapse}</span>}
@@ -226,7 +218,7 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-4">
             <button 
               className="md:hidden text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={() =>{  setMobileMenuOpen(!mobileMenuOpen); }}
             >
               <Menu size={24} />
             </button>
@@ -295,7 +287,7 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
       {mobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black/30 dark:bg-black/50 z-40 md:hidden backdrop-blur-sm"
-          onClick={() => setMobileMenuOpen(false)}
+          onClick={() =>{  setMobileMenuOpen(false); }}
         />
       )}
     </div>

@@ -1,24 +1,24 @@
 'use client';
 
-import React, { useState, Suspense, useMemo } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Package, Briefcase, FileText, Search, GripVertical, X, Check } from 'lucide-react';
-import { cn, Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { ProductListPreview, ServiceListPreview, BlogPreview, type BlogStyle, type ProductListStyle, type ServiceListStyle, type ServiceListPreviewItem } from '../../previews';
+import type { Id } from '@/convex/_generated/dataModel';
+import { Briefcase, Check, FileText, GripVertical, Package, Search, X } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
+import { BlogPreview, type BlogStyle, ProductListPreview, type ProductListStyle, ServiceListPreview, type ServiceListPreviewItem, type ServiceListStyle } from '../../previews';
 
 function ProductListCreateContent() {
   const searchParams = useSearchParams();
   const type = (searchParams.get('type') as 'ProductList' | 'ServiceList' | 'Blog') || 'ProductList';
   
   const titles: Record<string, string> = {
+    Blog: 'Tin tức / Blog',
     ProductList: 'Danh sách Sản phẩm',
-    ServiceList: 'Danh sách Dịch vụ',
-    Blog: 'Tin tức / Blog'
+    ServiceList: 'Danh sách Dịch vụ'
   };
   
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm(titles[type], type);
@@ -59,7 +59,7 @@ function ProductListCreateContent() {
 
   // Filter and get selected items
   const filteredProducts = useMemo(() => {
-    if (!productsData) return [];
+    if (!productsData) {return [];}
     return productsData
       .filter(product => product.status === 'Active')
       .filter(product => 
@@ -69,7 +69,7 @@ function ProductListCreateContent() {
   }, [productsData, productSearchTerm]);
 
   const selectedProducts = useMemo(() => {
-    if (!productsData || selectedProductIds.length === 0) return [];
+    if (!productsData || selectedProductIds.length === 0) {return [];}
     const productMap = new Map(productsData.map(p => [p._id, p]));
     return selectedProductIds
       .map(id => productMap.get(id as Id<"products">))
@@ -77,7 +77,7 @@ function ProductListCreateContent() {
   }, [productsData, selectedProductIds]);
 
   const filteredServices = useMemo(() => {
-    if (!servicesData) return [];
+    if (!servicesData) {return [];}
     return servicesData
       .filter(service => service.status === 'Published')
       .filter(service => 
@@ -87,7 +87,7 @@ function ProductListCreateContent() {
   }, [servicesData, serviceSearchTerm]);
 
   const selectedServices = useMemo(() => {
-    if (!servicesData || selectedServiceIds.length === 0) return [];
+    if (!servicesData || selectedServiceIds.length === 0) {return [];}
     const serviceMap = new Map(servicesData.map(s => [s._id, s]));
     return selectedServiceIds
       .map(id => serviceMap.get(id as Id<"services">))
@@ -95,35 +95,33 @@ function ProductListCreateContent() {
   }, [servicesData, selectedServiceIds]);
 
   // Convert selectedServices to preview format (manual mode)
-  const servicePreviewItems: ServiceListPreviewItem[] = useMemo(() => {
-    return selectedServices.map((s, idx) => ({
-      id: s._id,
-      name: s.title,
-      image: s.thumbnail,
-      price: s.price?.toString(),
+  const servicePreviewItems: ServiceListPreviewItem[] = useMemo(() => selectedServices.map((s, idx) => ({
       description: s.excerpt,
-      tag: idx === 0 ? 'hot' as const : idx === 1 ? 'new' as const : undefined
-    }));
-  }, [selectedServices]);
+      id: s._id,
+      image: s.thumbnail,
+      name: s.title,
+      price: s.price?.toString(),
+      tag: idx === 0 ? 'hot' as const : (idx === 1 ? 'new' as const : undefined)
+    })), [selectedServices]);
 
   // Convert servicesData to preview format (auto mode)
   const autoServicePreviewItems: ServiceListPreviewItem[] = useMemo(() => {
-    if (!servicesData) return [];
+    if (!servicesData) {return [];}
     return servicesData
       .filter(s => s.status === 'Published')
       .slice(0, itemCount)
       .map((s, idx) => ({
-        id: s._id,
-        name: s.title,
-        image: s.thumbnail,
-        price: s.price?.toString(),
         description: s.excerpt,
-        tag: idx === 0 ? 'hot' as const : idx === 1 ? 'new' as const : undefined
+        id: s._id,
+        image: s.thumbnail,
+        name: s.title,
+        price: s.price?.toString(),
+        tag: idx === 0 ? 'hot' as const : (idx === 1 ? 'new' as const : undefined)
       }));
   }, [servicesData, itemCount]);
 
   const filteredPosts = useMemo(() => {
-    if (!postsData) return [];
+    if (!postsData) {return [];}
     return postsData
       .filter(post => post.status === 'Published')
       .filter(post => 
@@ -133,7 +131,7 @@ function ProductListCreateContent() {
   }, [postsData, postSearchTerm]);
 
   const selectedPosts = useMemo(() => {
-    if (!postsData || selectedPostIds.length === 0) return [];
+    if (!postsData || selectedPostIds.length === 0) {return [];}
     const postMap = new Map(postsData.map(p => [p._id, p]));
     return selectedPostIds
       .map(id => postMap.get(id as Id<"posts">))
@@ -141,8 +139,8 @@ function ProductListCreateContent() {
   }, [postsData, selectedPostIds]);
 
   const onSubmit = (e: React.FormEvent) => {
-    const style = type === 'Blog' ? blogStyle : type === 'ServiceList' ? serviceStyle : productStyle;
-    const config: Record<string, unknown> = { itemCount, sortBy, style, selectionMode };
+    const style = type === 'Blog' ? blogStyle : (type === 'ServiceList' ? serviceStyle : productStyle);
+    const config: Record<string, unknown> = { itemCount, selectionMode, sortBy, style };
     
     // Chỉ thêm subTitle/sectionTitle cho ProductList
     if (type === 'ProductList') {
@@ -151,17 +149,17 @@ function ProductListCreateContent() {
     }
     
     if (selectionMode === 'manual') {
-      if (type === 'ProductList') config.selectedProductIds = selectedProductIds;
-      else if (type === 'ServiceList') config.selectedServiceIds = selectedServiceIds;
-      else if (type === 'Blog') config.selectedPostIds = selectedPostIds;
+      if (type === 'ProductList') {config.selectedProductIds = selectedProductIds;}
+      else if (type === 'ServiceList') {config.selectedServiceIds = selectedServiceIds;}
+      else if (type === 'Blog') {config.selectedPostIds = selectedPostIds;}
     }
     
     void handleSubmit(e, config);
   };
 
   const getSelectionModeLabel = () => {
-    if (type === 'ProductList') return 'sản phẩm';
-    if (type === 'ServiceList') return 'dịch vụ';
+    if (type === 'ProductList') {return 'sản phẩm';}
+    if (type === 'ServiceList') {return 'dịch vụ';}
     return 'bài viết';
   };
 
@@ -187,7 +185,7 @@ function ProductListCreateContent() {
                 <Label>Tiêu đề phụ (badge)</Label>
                 <Input 
                   value={subTitle} 
-                  onChange={(e) => setSubTitle(e.target.value)} 
+                  onChange={(e) =>{  setSubTitle(e.target.value); }} 
                   placeholder="VD: Bộ sưu tập, Sản phẩm hot..."
                 />
               </div>
@@ -195,7 +193,7 @@ function ProductListCreateContent() {
                 <Label>Tiêu đề chính</Label>
                 <Input 
                   value={sectionTitle} 
-                  onChange={(e) => setSectionTitle(e.target.value)} 
+                  onChange={(e) =>{  setSectionTitle(e.target.value); }} 
                   placeholder="VD: Sản phẩm nổi bật, Bán chạy nhất..."
                 />
               </div>
@@ -215,7 +213,7 @@ function ProductListCreateContent() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setSelectionMode('auto')}
+                onClick={() =>{  setSelectionMode('auto'); }}
                 className={cn(
                   "flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-all",
                   selectionMode === 'auto'
@@ -227,7 +225,7 @@ function ProductListCreateContent() {
               </button>
               <button
                 type="button"
-                onClick={() => setSelectionMode('manual')}
+                onClick={() =>{  setSelectionMode('manual'); }}
                 className={cn(
                   "flex-1 py-2.5 px-4 rounded-lg border text-sm font-medium transition-all",
                   selectionMode === 'manual'
@@ -253,7 +251,7 @@ function ProductListCreateContent() {
                 <Input 
                   type="number" 
                   value={itemCount} 
-                  onChange={(e) => setItemCount(parseInt(e.target.value) || 8)} 
+                  onChange={(e) =>{  setItemCount(Number.parseInt(e.target.value) || 8); }} 
                 />
               </div>
               <div className="space-y-2">
@@ -261,7 +259,7 @@ function ProductListCreateContent() {
                 <select 
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={(e) =>{  setSortBy(e.target.value); }}
                 >
                   <option value="newest">Mới nhất</option>
                   {type === 'ProductList' && <option value="bestseller">Bán chạy nhất</option>}
@@ -296,7 +294,7 @@ function ProductListCreateContent() {
                           <p className="font-medium text-sm truncate">{product.name}</p>
                           <p className="text-xs text-slate-500">{product.price?.toLocaleString('vi-VN')}đ</p>
                         </div>
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500" onClick={() => setSelectedProductIds(ids => ids.filter(id => id !== product._id))}><X size={16} /></Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500" onClick={() =>{  setSelectedProductIds(ids => ids.filter(id => id !== product._id)); }}><X size={16} /></Button>
                       </div>
                     ))}
                   </div>
@@ -306,7 +304,7 @@ function ProductListCreateContent() {
                 <Label>Thêm sản phẩm</Label>
                 <div className="relative">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <Input placeholder="Tìm kiếm sản phẩm..." className="pl-9" value={productSearchTerm} onChange={(e) => setProductSearchTerm(e.target.value)} />
+                  <Input placeholder="Tìm kiếm sản phẩm..." className="pl-9" value={productSearchTerm} onChange={(e) =>{  setProductSearchTerm(e.target.value); }} />
                 </div>
                 <div className="border border-slate-200 dark:border-slate-700 rounded-lg max-h-[250px] overflow-y-auto">
                   {filteredProducts.length === 0 ? (
@@ -317,7 +315,13 @@ function ProductListCreateContent() {
                       return (
                         <div 
                           key={product._id}
-                          onClick={() => isSelected ? setSelectedProductIds(ids => ids.filter(id => id !== product._id)) : setSelectedProductIds(ids => [...ids, product._id])}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedProductIds(ids => ids.filter(id => id !== product._id));
+                            } else {
+                              setSelectedProductIds(ids => [...ids, product._id]);
+                            }
+                          }}
                           className={cn("flex items-center gap-3 p-3 cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors", isSelected ? "bg-blue-50 dark:bg-blue-500/10" : "hover:bg-slate-50 dark:hover:bg-slate-800")}
                         >
                           <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center transition-colors", isSelected ? "border-blue-500 bg-blue-500" : "border-slate-300 dark:border-slate-600")}>{isSelected && <Check size={12} className="text-white" />}</div>
@@ -358,7 +362,7 @@ function ProductListCreateContent() {
                           <p className="font-medium text-sm truncate">{service.title}</p>
                           <p className="text-xs text-slate-500">{service.views} lượt xem</p>
                         </div>
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500" onClick={() => setSelectedServiceIds(ids => ids.filter(id => id !== service._id))}><X size={16} /></Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500" onClick={() =>{  setSelectedServiceIds(ids => ids.filter(id => id !== service._id)); }}><X size={16} /></Button>
                       </div>
                     ))}
                   </div>
@@ -368,7 +372,7 @@ function ProductListCreateContent() {
                 <Label>Thêm dịch vụ</Label>
                 <div className="relative">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <Input placeholder="Tìm kiếm dịch vụ..." className="pl-9" value={serviceSearchTerm} onChange={(e) => setServiceSearchTerm(e.target.value)} />
+                  <Input placeholder="Tìm kiếm dịch vụ..." className="pl-9" value={serviceSearchTerm} onChange={(e) =>{  setServiceSearchTerm(e.target.value); }} />
                 </div>
                 <div className="border border-slate-200 dark:border-slate-700 rounded-lg max-h-[250px] overflow-y-auto">
                   {filteredServices.length === 0 ? (
@@ -379,7 +383,13 @@ function ProductListCreateContent() {
                       return (
                         <div 
                           key={service._id}
-                          onClick={() => isSelected ? setSelectedServiceIds(ids => ids.filter(id => id !== service._id)) : setSelectedServiceIds(ids => [...ids, service._id])}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedServiceIds(ids => ids.filter(id => id !== service._id));
+                            } else {
+                              setSelectedServiceIds(ids => [...ids, service._id]);
+                            }
+                          }}
                           className={cn("flex items-center gap-3 p-3 cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors", isSelected ? "bg-blue-50 dark:bg-blue-500/10" : "hover:bg-slate-50 dark:hover:bg-slate-800")}
                         >
                           <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center transition-colors", isSelected ? "border-blue-500 bg-blue-500" : "border-slate-300 dark:border-slate-600")}>{isSelected && <Check size={12} className="text-white" />}</div>
@@ -420,7 +430,7 @@ function ProductListCreateContent() {
                           <p className="font-medium text-sm truncate">{post.title}</p>
                           <p className="text-xs text-slate-500">{post.views} lượt xem</p>
                         </div>
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500" onClick={() => setSelectedPostIds(ids => ids.filter(id => id !== post._id))}><X size={16} /></Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500" onClick={() =>{  setSelectedPostIds(ids => ids.filter(id => id !== post._id)); }}><X size={16} /></Button>
                       </div>
                     ))}
                   </div>
@@ -430,7 +440,7 @@ function ProductListCreateContent() {
                 <Label>Thêm bài viết</Label>
                 <div className="relative">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <Input placeholder="Tìm kiếm bài viết..." className="pl-9" value={postSearchTerm} onChange={(e) => setPostSearchTerm(e.target.value)} />
+                  <Input placeholder="Tìm kiếm bài viết..." className="pl-9" value={postSearchTerm} onChange={(e) =>{  setPostSearchTerm(e.target.value); }} />
                 </div>
                 <div className="border border-slate-200 dark:border-slate-700 rounded-lg max-h-[250px] overflow-y-auto">
                   {filteredPosts.length === 0 ? (
@@ -441,7 +451,13 @@ function ProductListCreateContent() {
                       return (
                         <div 
                           key={post._id}
-                          onClick={() => isSelected ? setSelectedPostIds(ids => ids.filter(id => id !== post._id)) : setSelectedPostIds(ids => [...ids, post._id])}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedPostIds(ids => ids.filter(id => id !== post._id));
+                            } else {
+                              setSelectedPostIds(ids => [...ids, post._id]);
+                            }
+                          }}
                           className={cn("flex items-center gap-3 p-3 cursor-pointer border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors", isSelected ? "bg-blue-50 dark:bg-blue-500/10" : "hover:bg-slate-50 dark:hover:bg-slate-800")}
                         >
                           <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center transition-colors", isSelected ? "border-blue-500 bg-blue-500" : "border-slate-300 dark:border-slate-600")}>{isSelected && <Check size={12} className="text-white" />}</div>
@@ -463,7 +479,7 @@ function ProductListCreateContent() {
 
       {type === 'Blog' ? (
         <BlogPreview brandColor={brandColor} postCount={selectionMode === 'manual' ? selectedPostIds.length : itemCount} selectedStyle={blogStyle} onStyleChange={setBlogStyle} />
-      ) : type === 'ServiceList' ? (
+      ) : (type === 'ServiceList' ? (
         <ServiceListPreview 
           brandColor={brandColor} 
           itemCount={selectionMode === 'manual' ? selectedServiceIds.length : itemCount} 
@@ -471,15 +487,15 @@ function ProductListCreateContent() {
           onStyleChange={setServiceStyle} 
           items={selectionMode === 'manual' && servicePreviewItems.length > 0 
             ? servicePreviewItems 
-            : autoServicePreviewItems.length > 0 
+            : (autoServicePreviewItems.length > 0 
               ? autoServicePreviewItems 
-              : undefined
+              : undefined)
           }
           title={title}
         />
       ) : (
         <ProductListPreview brandColor={brandColor} itemCount={selectionMode === 'manual' ? selectedProductIds.length : itemCount} componentType="ProductList" selectedStyle={productStyle} onStyleChange={setProductStyle} subTitle={subTitle} sectionTitle={sectionTitle} />
-      )}
+      ))}
     </ComponentFormWrapper>
   );
 }

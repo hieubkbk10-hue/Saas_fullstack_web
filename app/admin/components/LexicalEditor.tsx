@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -13,46 +13,47 @@ import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { HeadingNode, QuoteNode, $createHeadingNode, $createQuoteNode } from '@lexical/rich-text';
-import { ListNode, ListItemNode, INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from '@lexical/list';
+import { $createHeadingNode, $createQuoteNode, HeadingNode, QuoteNode } from '@lexical/rich-text';
+import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND, ListItemNode, ListNode } from '@lexical/list';
 import { AutoLinkNode, LinkNode } from '@lexical/link';
+import type {
+  LexicalNode} from 'lexical';
 import { 
+  $createParagraphNode, 
+  $getRoot, 
   $getSelection, 
-  $isRangeSelection, 
-  FORMAT_TEXT_COMMAND, 
-  FORMAT_ELEMENT_COMMAND, 
-  $createParagraphNode,
-  SELECTION_CHANGE_COMMAND,
-  COMMAND_PRIORITY_CRITICAL,
-  $getRoot,
-  LexicalNode,
+  $isDecoratorNode, 
   $isElementNode,
-  $isDecoratorNode,
+  $isRangeSelection,
   $isTextNode,
+  COMMAND_PRIORITY_CRITICAL,
+  FORMAT_ELEMENT_COMMAND,
+  FORMAT_TEXT_COMMAND,
+  SELECTION_CHANGE_COMMAND,
 } from 'lexical';
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
-import { $setBlocksType, $patchStyleText, $getSelectionStyleValueForProperty } from '@lexical/selection';
+import { $getSelectionStyleValueForProperty, $patchStyleText, $setBlocksType } from '@lexical/selection';
 import { 
-  Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify, 
-  Type, Heading1, Heading2, Quote, List as ListIcon, ListOrdered, Image as ImageIcon, 
-  Palette, ChevronDown, Loader2 
+  AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, ChevronDown, Heading1, 
+  Heading2, Image as ImageIcon, Italic, List as ListIcon, ListOrdered, Loader2, Palette, 
+  Quote, Type, Underline 
 } from 'lucide-react';
 import { cn } from './ui';
 import { toast } from 'sonner';
-import ImagesPlugin, { ImageNode, INSERT_IMAGE_COMMAND } from './nodes/ImageNode';
+import ImagesPlugin, { INSERT_IMAGE_COMMAND, ImageNode } from './nodes/ImageNode';
 
 // Image compression utility
 function slugifyFilename(filename: string): string {
-  const ext = filename.split('.').pop() || '';
+  const ext = filename.split('.').pop() ?? '';
   const name = filename.replace(/\.[^/.]+$/, '');
   const slugified = name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[đĐ]/g, "d")
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+    .replaceAll(/[\u0300-\u036F]/g, "")
+    .replaceAll(/[đĐ]/g, "d")
+    .replaceAll(/[^a-z0-9\s-]/g, '')
+    .replaceAll(/\s+/g, '-')
+    .replaceAll(/-+/g, '-')
     .trim();
   const timestamp = Date.now();
   return `${slugified}-${timestamp}.${ext}`;
@@ -73,8 +74,8 @@ async function compressImage(file: File, quality: number = 0.85): Promise<Blob> 
       ctx.drawImage(img, 0, 0);
       canvas.toBlob(
         (blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error('Failed to compress image'));
+          if (blob) {resolve(blob);}
+          else {reject(new Error('Failed to compress image'));}
         },
         file.type === 'image/png' ? 'image/png' : 'image/jpeg',
         quality
@@ -88,22 +89,22 @@ async function compressImage(file: File, quality: number = 0.85): Promise<Blob> 
 
 
 const theme = {
-  paragraph: 'editor-paragraph',
   heading: {
     h1: 'editor-heading-h1',
     h2: 'editor-heading-h2',
   },
   list: {
-    ul: 'editor-list-ul',
-    ol: 'editor-list-ol',
     listitem: 'editor-listitem',
+    ol: 'editor-list-ol',
+    ul: 'editor-list-ul',
   },
+  paragraph: 'editor-paragraph',
   quote: 'editor-quote',
   text: {
     bold: 'editor-text-bold',
     italic: 'editor-text-italic',
-    underline: 'editor-text-underline',
     strikethrough: 'editor-text-strikethrough',
+    underline: 'editor-text-underline',
   },
 };
 
@@ -139,14 +140,14 @@ const ToolbarPlugin: React.FC<ToolbarPluginProps> = ({ onImageUpload }) => {
   const [editor] = useLexicalComposerContext();
   const [isUploading, setIsUploading] = useState(false);
   const [activeState, setActiveState] = useState({
-    bold: false,
-    italic: false,
-    underline: false,
-    blockType: 'paragraph',
     align: 'left',
+    blockType: 'paragraph',
+    bold: false,
+    fontColor: '#000000',
     fontFamily: 'Inter',
     fontSize: '15px',
-    fontColor: '#000000',
+    italic: false,
+    underline: false,
   });
 
   const updateToolbar = useCallback(() => {
@@ -156,36 +157,32 @@ const ToolbarPlugin: React.FC<ToolbarPluginProps> = ({ onImageUpload }) => {
       const element = anchorNode.getKey() === 'root' ? anchorNode : anchorNode.getTopLevelElementOrThrow();
 
       setActiveState({
-        bold: selection.hasFormat('bold'),
-        italic: selection.hasFormat('italic'),
-        underline: selection.hasFormat('underline'),
-        blockType: element.getType(),
         align: String(element.getFormat()) || 'left',
+        blockType: element.getType(),
+        bold: selection.hasFormat('bold'),
+        fontColor: $getSelectionStyleValueForProperty(selection, 'color', '#000000'),
         fontFamily: $getSelectionStyleValueForProperty(selection, 'font-family', 'Inter'),
         fontSize: $getSelectionStyleValueForProperty(selection, 'font-size', '15px'),
-        fontColor: $getSelectionStyleValueForProperty(selection, 'color', '#000000'),
+        italic: selection.hasFormat('italic'),
+        underline: selection.hasFormat('underline'),
       });
     }
   }, []);
 
-  useEffect(() => {
-    return editor.registerCommand(
+  useEffect(() => editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
       () => {
         updateToolbar();
         return false;
       },
       COMMAND_PRIORITY_CRITICAL,
-    );
-  }, [editor, updateToolbar]);
+    ), [editor, updateToolbar]);
 
-  useEffect(() => {
-    return editor.registerUpdateListener(({ editorState }) => {
+  useEffect(() => editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
         updateToolbar();
       });
-    });
-  }, [editor, updateToolbar]);
+    }), [editor, updateToolbar]);
 
   const applyStyleText = (styles: Record<string, string>) => {
     editor.update(() => {
@@ -212,27 +209,27 @@ const ToolbarPlugin: React.FC<ToolbarPluginProps> = ({ onImageUpload }) => {
     if (type === 'h1') {
       editor.update(() => {
         const selection = $getSelection();
-        if ($isRangeSelection(selection)) $setBlocksType(selection, () => $createHeadingNode('h1'));
+        if ($isRangeSelection(selection)) {$setBlocksType(selection, () => $createHeadingNode('h1'));}
       });
     } else if (type === 'h2') {
       editor.update(() => {
         const selection = $getSelection();
-        if ($isRangeSelection(selection)) $setBlocksType(selection, () => $createHeadingNode('h2'));
+        if ($isRangeSelection(selection)) {$setBlocksType(selection, () => $createHeadingNode('h2'));}
       });
     } else if (type === 'quote') {
       editor.update(() => {
         const selection = $getSelection();
-        if ($isRangeSelection(selection)) $setBlocksType(selection, () => $createQuoteNode());
+        if ($isRangeSelection(selection)) {$setBlocksType(selection, () => $createQuoteNode());}
       });
     } else if (type === 'paragraph') {
       editor.update(() => {
         const selection = $getSelection();
-        if ($isRangeSelection(selection)) $setBlocksType(selection, () => $createParagraphNode());
+        if ($isRangeSelection(selection)) {$setBlocksType(selection, () => $createParagraphNode());}
       });
     } else if (type === 'ul') {
-       editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
+      editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
     } else if (type === 'ol') {
-       editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+      editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
     }
   };
 
@@ -249,7 +246,7 @@ const ToolbarPlugin: React.FC<ToolbarPluginProps> = ({ onImageUpload }) => {
           const url = await onImageUpload(file);
           if (url) {
             // Use command pattern for image insertion
-            editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src: url, altText: '' });
+            editor.dispatchCommand(INSERT_IMAGE_COMMAND, { altText: '', src: url });
             toast.success('Đã chèn ảnh vào nội dung');
           }
         } catch (error) {
@@ -357,16 +354,16 @@ const ToolbarPlugin: React.FC<ToolbarPluginProps> = ({ onImageUpload }) => {
       <Divider />
 
       <div className="flex items-center gap-0.5">
-        <ToolbarBtn onClick={() => formatBlock('paragraph')} active={activeState.blockType === 'paragraph'} title="Văn bản thường">
+        <ToolbarBtn onClick={() =>{  formatBlock('paragraph'); }} active={activeState.blockType === 'paragraph'} title="Văn bản thường">
           <Type size={16} />
         </ToolbarBtn>
-        <ToolbarBtn onClick={() => formatBlock('h1')} active={activeState.blockType === 'h1'} title="Tiêu đề 1">
+        <ToolbarBtn onClick={() =>{  formatBlock('h1'); }} active={activeState.blockType === 'h1'} title="Tiêu đề 1">
           <Heading1 size={16} />
         </ToolbarBtn>
-        <ToolbarBtn onClick={() => formatBlock('h2')} active={activeState.blockType === 'h2'} title="Tiêu đề 2">
+        <ToolbarBtn onClick={() =>{  formatBlock('h2'); }} active={activeState.blockType === 'h2'} title="Tiêu đề 2">
           <Heading2 size={16} />
         </ToolbarBtn>
-        <ToolbarBtn onClick={() => formatBlock('quote')} active={activeState.blockType === 'quote'} title="Trích dẫn">
+        <ToolbarBtn onClick={() =>{  formatBlock('quote'); }} active={activeState.blockType === 'quote'} title="Trích dẫn">
           <Quote size={16} />
         </ToolbarBtn>
       </div>
@@ -374,10 +371,10 @@ const ToolbarPlugin: React.FC<ToolbarPluginProps> = ({ onImageUpload }) => {
       <Divider />
 
       <div className="flex items-center gap-0.5">
-        <ToolbarBtn onClick={() => formatBlock('ul')} active={activeState.blockType === 'ul'} title="Danh sách chấm">
+        <ToolbarBtn onClick={() =>{  formatBlock('ul'); }} active={activeState.blockType === 'ul'} title="Danh sách chấm">
           <ListIcon size={16} />
         </ToolbarBtn>
-        <ToolbarBtn onClick={() => formatBlock('ol')} active={activeState.blockType === 'ol'} title="Danh sách số">
+        <ToolbarBtn onClick={() =>{  formatBlock('ol'); }} active={activeState.blockType === 'ol'} title="Danh sách số">
           <ListOrdered size={16} />
         </ToolbarBtn>
       </div>
@@ -410,9 +407,9 @@ const PasteImagePlugin: React.FC<PasteImagePluginProps> = ({ onImageUpload }) =>
   useEffect(() => {
     const handlePaste = async (event: ClipboardEvent) => {
       const items = event.clipboardData?.items;
-      if (!items) return;
+      if (!items) {return;}
 
-      for (const item of Array.from(items)) {
+      for (const item of items) {
         if (item.type.startsWith('image/')) {
           event.preventDefault();
           const file = item.getAsFile();
@@ -421,7 +418,7 @@ const PasteImagePlugin: React.FC<PasteImagePluginProps> = ({ onImageUpload }) =>
               const url = await onImageUpload(file);
               if (url) {
                 // Use command pattern for image insertion
-                editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src: url, altText: '' });
+                editor.dispatchCommand(INSERT_IMAGE_COMMAND, { altText: '', src: url });
                 toast.success('Đã paste và upload ảnh');
               }
             } catch (error) {
@@ -493,8 +490,6 @@ export const LexicalEditor: React.FC<LexicalEditorProps> = ({ onChange, initialC
   
   const initialConfig = {
     namespace: 'MyEditor',
-    theme,
-    onError: (error: Error) => console.error(error),
     nodes: [
       HeadingNode, 
       QuoteNode, 
@@ -504,6 +499,8 @@ export const LexicalEditor: React.FC<LexicalEditorProps> = ({ onChange, initialC
       LinkNode,
       ImageNode
     ],
+    onError: (error: Error) =>{  console.error(error); },
+    theme,
   };
 
   const handleImageUpload = useCallback(async (file: File): Promise<string | null> => {
@@ -528,9 +525,9 @@ export const LexicalEditor: React.FC<LexicalEditorProps> = ({ onChange, initialC
       
       // Upload to Convex storage
       const response = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': compressedFile.type },
         body: compressedFile,
+        headers: { 'Content-Type': compressedFile.type },
+        method: 'POST',
       });
       
       if (!response.ok) {
@@ -541,11 +538,11 @@ export const LexicalEditor: React.FC<LexicalEditorProps> = ({ onChange, initialC
       
       // Save to database
       const result = await saveImage({
-        storageId: storageId as Id<"_storage">,
         filename: slugifiedName,
+        folder,
         mimeType: compressedFile.type,
         size: compressedFile.size,
-        folder,
+        storageId: storageId as Id<"_storage">,
       });
       
       return result.url;
@@ -574,7 +571,7 @@ export const LexicalEditor: React.FC<LexicalEditorProps> = ({ onChange, initialC
           <OnChangePlugin onChange={(editorState, editor) => {
              editorState.read(() => {
                 const html = $generateHtmlFromNodes(editor, null);
-                if (onChange) onChange(html);
+                if (onChange) {onChange(html);}
              });
           }}/>
         </div>

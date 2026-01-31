@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { 
-  LayoutDashboard, FileText, ShoppingCart, Image as ImageIcon, 
-  Users, Globe, Settings, ChevronRight, X, LogOut,
-  ChevronsLeft, ChevronsRight, Loader2, Bell, Ticket, Briefcase
+  Bell, Briefcase, ChevronRight, ChevronsLeft, 
+  ChevronsRight, FileText, Globe, Image as ImageIcon, LayoutDashboard, Loader2,
+  LogOut, Settings, ShoppingCart, Ticket, Users, X
 } from 'lucide-react';
 import { cn } from './ui';
 import { useAdminModules } from '../context/AdminModulesContext';
@@ -38,7 +38,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   isModuleEnabled
 }) => {
   const filteredSubItems = useMemo(() => {
-    if (!subItems) return [];
+    if (!subItems) {return [];}
     return subItems.filter(sub => !sub.moduleKey || isModuleEnabled(sub.moduleKey));
   }, [subItems, isModuleEnabled]);
 
@@ -183,7 +183,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
       {mobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
-          onClick={() => setMobileMenuOpen(false)}
+          onClick={() =>{  setMobileMenuOpen(false); }}
         />
       )}
 
@@ -201,7 +201,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
               VietAdmin
             </span>
           </div>
-          <button className="lg:hidden" onClick={() => setMobileMenuOpen(false)}>
+          <button className="lg:hidden" onClick={() =>{  setMobileMenuOpen(false); }}>
             <X size={20} className="text-slate-500" />
           </button>
         </div>
@@ -242,13 +242,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   active={isActive('/admin/posts') || isActive('/admin/post-categories') || isActive('/admin/comments')}
                   isCollapsed={isSidebarCollapsed}
                   isExpanded={currentExpandedMenu === 'Quản lý bài viết'}
-                  onToggle={() => handleMenuToggle('Quản lý bài viết')}
+                  onToggle={() =>{  handleMenuToggle('Quản lý bài viết'); }}
                   pathname={pathname}
                   isModuleEnabled={isModuleEnabled}
                   subItems={[
-                    { label: 'Tất cả bài viết', href: '/admin/posts', moduleKey: 'posts' },
-                    { label: 'Danh mục bài viết', href: '/admin/post-categories', moduleKey: 'posts' },
-                    ...(showPostComments ? [{ label: 'Bình luận', href: '/admin/comments' }] : []),
+                    { href: '/admin/posts', label: 'Tất cả bài viết', moduleKey: 'posts' },
+                    { href: '/admin/post-categories', label: 'Danh mục bài viết', moduleKey: 'posts' },
+                    ...(showPostComments ? [{ href: '/admin/comments', label: 'Bình luận' }] : []),
                   ]}
                 />
               </div>
@@ -265,12 +265,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   active={isActive('/admin/services') || isActive('/admin/service-categories')}
                   isCollapsed={isSidebarCollapsed}
                   isExpanded={currentExpandedMenu === 'Dịch vụ'}
-                  onToggle={() => handleMenuToggle('Dịch vụ')}
+                  onToggle={() =>{  handleMenuToggle('Dịch vụ'); }}
                   pathname={pathname}
                   isModuleEnabled={isModuleEnabled}
                   subItems={[
-                    { label: 'Tất cả dịch vụ', href: '/admin/services', moduleKey: 'services' },
-                    { label: 'Danh mục dịch vụ', href: '/admin/service-categories', moduleKey: 'services' },
+                    { href: '/admin/services', label: 'Tất cả dịch vụ', moduleKey: 'services' },
+                    { href: '/admin/service-categories', label: 'Danh mục dịch vụ', moduleKey: 'services' },
                   ]}
                 />
               </div>
@@ -287,17 +287,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   active={isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers') || isActive('/admin/reviews') || isActive('/admin/orders') || isActive('/admin/wishlist')}
                   isCollapsed={isSidebarCollapsed}
                   isExpanded={currentExpandedMenu === 'E-Commerce'}
-                  onToggle={() => handleMenuToggle('E-Commerce')}
+                  onToggle={() =>{  handleMenuToggle('E-Commerce'); }}
                   pathname={pathname}
                   isModuleEnabled={isModuleEnabled}
                   subItems={[
-                    { label: 'Sản phẩm', href: '/admin/products', moduleKey: 'products' },
-                    { label: 'Danh mục sản phẩm', href: '/admin/categories', moduleKey: 'products' },
-                    { label: 'Đơn hàng', href: '/admin/orders', moduleKey: 'orders' },
-                    { label: 'Giỏ hàng', href: '/admin/cart', moduleKey: 'cart' },
-                    { label: 'Wishlist', href: '/admin/wishlist', moduleKey: 'wishlist' },
-                    ...(showProductReviews ? [{ label: 'Đánh giá sản phẩm', href: '/admin/reviews' }] : []),
-                    { label: 'Khách hàng', href: '/admin/customers', moduleKey: 'customers' },
+                    { href: '/admin/products', label: 'Sản phẩm', moduleKey: 'products' },
+                    { href: '/admin/categories', label: 'Danh mục sản phẩm', moduleKey: 'products' },
+                    { href: '/admin/orders', label: 'Đơn hàng', moduleKey: 'orders' },
+                    { href: '/admin/cart', label: 'Giỏ hàng', moduleKey: 'cart' },
+                    { href: '/admin/wishlist', label: 'Wishlist', moduleKey: 'wishlist' },
+                    ...(showProductReviews ? [{ href: '/admin/reviews', label: 'Đánh giá sản phẩm' }] : []),
+                    { href: '/admin/customers', label: 'Khách hàng', moduleKey: 'customers' },
                   ]}
                 />
               </div>
@@ -367,12 +367,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                     active={isActive('/admin/users') || isActive('/admin/roles')}
                     isCollapsed={isSidebarCollapsed}
                     isExpanded={currentExpandedMenu === 'Người dùng'}
-                    onToggle={() => handleMenuToggle('Người dùng')}
+                    onToggle={() =>{  handleMenuToggle('Người dùng'); }}
                     pathname={pathname}
                     isModuleEnabled={isModuleEnabled}
                     subItems={[
-                      { label: 'Danh sách User', href: '/admin/users', moduleKey: 'users' },
-                      { label: 'Phân quyền', href: '/admin/roles', moduleKey: 'roles' },
+                      { href: '/admin/users', label: 'Danh sách User', moduleKey: 'users' },
+                      { href: '/admin/roles', label: 'Phân quyền', moduleKey: 'roles' },
                     ]}
                   />
                 )}
@@ -385,12 +385,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                     active={isActive('/admin/menus') || isActive('/admin/home-components')}
                     isCollapsed={isSidebarCollapsed}
                     isExpanded={currentExpandedMenu === 'Website'}
-                    onToggle={() => handleMenuToggle('Website')}
+                    onToggle={() =>{  handleMenuToggle('Website'); }}
                     pathname={pathname}
                     isModuleEnabled={isModuleEnabled}
                     subItems={[
-                      { label: 'Menu', href: '/admin/menus', moduleKey: 'menus' },
-                      { label: 'Giao diện trang chủ', href: '/admin/home-components', moduleKey: 'homepage' },
+                      { href: '/admin/menus', label: 'Menu', moduleKey: 'menus' },
+                      { href: '/admin/home-components', label: 'Giao diện trang chủ', moduleKey: 'homepage' },
                     ]}
                   />
                 )}
@@ -415,7 +415,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
 
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
           <button 
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            onClick={() =>{  setIsSidebarCollapsed(!isSidebarCollapsed); }}
             className="hidden lg:flex items-center justify-center w-full h-9 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-blue-600 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             title={isSidebarCollapsed ? "Mở rộng" : "Thu gọn"}
           >

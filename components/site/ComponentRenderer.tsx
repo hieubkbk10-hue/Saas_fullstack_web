@@ -10,10 +10,10 @@ import { BlogSection } from './BlogSection';
 import { ProductListSection } from './ProductListSection';
 import { ServiceListSection } from './ServiceListSection';
 import { 
-  LayoutTemplate, Package, HelpCircle, 
-  Users, Star, Phone, Briefcase, Image as ImageIcon, Check, ZoomIn, Maximize2, X,
-  Building2, Clock, MapPin, Mail, Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, ArrowRight, ArrowUpRight,
-  ChevronLeft, ChevronRight, ChevronDown, Facebook, MessageCircle, Instagram, Twitter, Linkedin, Youtube, Plus
+  ArrowRight, ArrowUpRight, Briefcase, 
+  Building2, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Cpu, Facebook, Globe,
+  HelpCircle, Image as ImageIcon, Instagram, Layers, LayoutTemplate, Linkedin, Mail, MapPin, Maximize2, MessageCircle, Package, Phone, Plus, Rocket,
+  Settings, Shield, Star, Target, Twitter, Users, X, Youtube, Zap, ZoomIn
 } from 'lucide-react';
 
 type SiteImageProps = Omit<React.ComponentProps<typeof Image>, 'width' | 'height' | 'src'> & {
@@ -24,7 +24,7 @@ type SiteImageProps = Omit<React.ComponentProps<typeof Image>, 'width' | 'height
 };
 
 const SiteImage = ({ src, alt = '', width = 1200, height = 800, sizes = '100vw', ...rest }: SiteImageProps) => {
-  if (!src) return null;
+  if (!src) {return null;}
   const normalizedWidth = typeof width === 'string' ? Number.parseInt(width, 10) || 1200 : width;
   const normalizedHeight = typeof height === 'string' ? Number.parseInt(height, 10) || 800 : height;
 
@@ -43,7 +43,7 @@ const SiteImage = ({ src, alt = '', width = 1200, height = 800, sizes = '100vw',
 
 const useSafeId = (prefix: string) => {
   const id = React.useId();
-  return `${prefix}-${id.replace(/:/g, '')}`;
+  return `${prefix}-${id.replaceAll(':', '')}`;
 };
 
 const DEFAULT_COUNTDOWN_END_DATE = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -51,13 +51,13 @@ const DEFAULT_COUNTDOWN_END_DATE = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000
 const getSocialIcon = (platform: string) => {
   const icons: Record<string, React.ReactNode> = {
     facebook: <Facebook size={18} />,
-    zalo: <MessageCircle size={18} />,
     instagram: <Instagram size={18} />,
-    twitter: <Twitter size={18} />,
     linkedin: <Linkedin size={18} />,
+    twitter: <Twitter size={18} />,
     youtube: <Youtube size={18} />,
+    zalo: <MessageCircle size={18} />,
   };
-  return icons[platform] || <Globe size={18} />;
+  return icons[platform] ?? <Globe size={18} />;
 };
 
 interface HomeComponent {
@@ -79,63 +79,91 @@ export function ComponentRenderer({ component }: ComponentRendererProps) {
 
   // Render component dựa vào type
   switch (type) {
-    case 'Hero':
+    case 'Hero': {
       return <HeroSection config={config} brandColor={brandColor} />;
-    case 'Stats':
+    }
+    case 'Stats': {
       return <StatsSection config={config} brandColor={brandColor} title={title} />;
-    case 'About':
+    }
+    case 'About': {
       return <AboutSection config={config} brandColor={brandColor} title={title} />;
-    case 'Services':
+    }
+    case 'Services': {
       return <ServicesSection config={config} brandColor={brandColor} title={title} />;
-    case 'Benefits':
+    }
+    case 'Benefits': {
       return <BenefitsSection config={config} brandColor={brandColor} title={title} />;
-    case 'FAQ':
+    }
+    case 'FAQ': {
       return <FAQSection config={config} brandColor={brandColor} title={title} />;
-    case 'CTA':
+    }
+    case 'CTA': {
       return <CTASection config={config} brandColor={brandColor} />;
-    case 'Testimonials':
+    }
+    case 'Testimonials': {
       return <TestimonialsSection config={config} brandColor={brandColor} title={title} />;
-    case 'Contact':
+    }
+    case 'Contact': {
       return <ContactSection config={config} brandColor={brandColor} title={title} />;
+    }
     case 'Gallery':
-    case 'Partners':
+    case 'Partners': {
       return <GallerySection config={config} brandColor={brandColor} title={title} type={type} />;
-    case 'TrustBadges':
+    }
+    case 'TrustBadges': {
       return <TrustBadgesSection config={config} brandColor={brandColor} title={title} />;
-    case 'Pricing':
+    }
+    case 'Pricing': {
       return <PricingSection config={config} brandColor={brandColor} title={title} />;
-    case 'ProductList':
+    }
+    case 'ProductList': {
       return <ProductListSection config={config} brandColor={brandColor} title={title} />;
-    case 'ServiceList':
+    }
+    case 'ServiceList': {
       return <ServiceListSection config={config} brandColor={brandColor} title={title} />;
-    case 'Blog':
+    }
+    case 'Blog': {
       return <BlogSection config={config} brandColor={brandColor} title={title} />;
-    case 'Career':
+    }
+    case 'Career': {
       return <CareerSection config={config} brandColor={brandColor} title={title} />;
-    case 'CaseStudy':
+    }
+    case 'CaseStudy': {
       return <CaseStudySection config={config} brandColor={brandColor} title={title} />;
-    case 'SpeedDial':
+    }
+    case 'SpeedDial': {
       return <SpeedDialSection config={config} brandColor={brandColor} />;
-    case 'ProductCategories':
+    }
+    case 'ProductCategories': {
       return <ProductCategoriesSection config={config} brandColor={brandColor} title={title} />;
-    case 'CategoryProducts':
+    }
+    case 'CategoryProducts': {
       return <CategoryProductsSection config={config} brandColor={brandColor} title={title} />;
-    case 'Team':
+    }
+    case 'Team': {
       return <TeamSection config={config} brandColor={brandColor} title={title} />;
-    case 'Features':
+    }
+    case 'Features': {
       return <FeaturesSection config={config} brandColor={brandColor} title={title} />;
-    case 'Process':
+    }
+    case 'Process': {
       return <ProcessSection config={config} brandColor={brandColor} title={title} />;
-    case 'Clients':
+    }
+    case 'Clients': {
       return <ClientsSection config={config} brandColor={brandColor} title={title} />;
-    case 'Video':
+    }
+    case 'Video': {
       return <VideoSection config={config} brandColor={brandColor} title={title} />;
-    case 'Countdown':
+    }
+    case 'Countdown': {
       return <CountdownSection config={config} brandColor={brandColor} title={title} />;
-    case 'Footer':
+    }
+    case 'Footer': {
       return <FooterSection config={config} brandColor={brandColor} />;
-    default:
+    }
+    default: {
       return <PlaceholderSection type={type} title={title} />;
+    }
   }
 }
 
@@ -154,17 +182,17 @@ interface HeroContent {
 }
 
 function HeroSection({ config, brandColor }: { config: Record<string, unknown>; brandColor: string }) {
-  const slides = (config.slides as Array<{ image: string; link: string }>) || [];
+  const slides = (config.slides as { image: string; link: string }[]) || [];
   const style = (config.style as HeroStyle) || 'slider';
   const content = (config.content as HeroContent) || {};
   const [currentSlide, setCurrentSlide] = React.useState(0);
 
   React.useEffect(() => {
-    if (slides.length <= 1 || style === 'bento') return;
+    if (slides.length <= 1 || style === 'bento') {return;}
     const timer = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % slides.length);
     }, 5000);
-    return () => clearInterval(timer);
+    return () =>{  clearInterval(timer); };
   }, [slides.length, style]);
 
   if (slides.length === 0) {
@@ -181,7 +209,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
   // Helper: Render slide với blurred background
   const renderSlideWithBlur = (slide: { image: string; link: string }) => (
     <a href={slide.link || '#'} className="block w-full h-full relative">
-      <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(30px)' }} />
+      <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${slide.image})`, backgroundPosition: 'center', backgroundSize: 'cover', filter: 'blur(30px)' }} />
       <div className="absolute inset-0 bg-black/20" />
       <SiteImage src={slide.image} alt="" className="relative w-full h-full object-contain z-10" />
     </a>
@@ -199,15 +227,15 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
           ))}
           {slides.length > 1 && (
             <>
-              <button onClick={() => setCurrentSlide(prev => prev === 0 ? slides.length - 1 : prev - 1)} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all z-20" style={{ opacity: 0.7 }}>
+              <button onClick={() =>{  setCurrentSlide(prev => prev === 0 ? slides.length - 1 : prev - 1); }} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all z-20" style={{ opacity: 0.7 }}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
               </button>
-              <button onClick={() => setCurrentSlide(prev => (prev + 1) % slides.length)} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all z-20" style={{ opacity: 0.7 }}>
+              <button onClick={() =>{  setCurrentSlide(prev => (prev + 1) % slides.length); }} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 hover:bg-white shadow-lg flex items-center justify-center transition-all z-20" style={{ opacity: 0.7 }}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </button>
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
                 {slides.map((_, idx) => (
-                  <button key={idx} onClick={() => setCurrentSlide(idx)} className={`w-3 h-3 rounded-full transition-all ${idx === currentSlide ? 'w-8' : 'bg-white/50'}`} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
+                  <button key={idx} onClick={() =>{  setCurrentSlide(idx); }} className={`w-3 h-3 rounded-full transition-all ${idx === currentSlide ? 'w-8' : 'bg-white/50'}`} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
                 ))}
               </div>
             </>
@@ -230,7 +258,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
           {slides.length > 1 && (
             <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-center gap-2 bg-gradient-to-t from-black/60 to-transparent z-20">
               {slides.map((slide, idx) => (
-                <button key={idx} onClick={() => setCurrentSlide(idx)} className={`rounded overflow-hidden transition-all border-2 w-16 h-10 md:w-20 md:h-12 ${idx === currentSlide ? 'border-white scale-105' : 'border-transparent opacity-70 hover:opacity-100'}`}>
+                <button key={idx} onClick={() =>{  setCurrentSlide(idx); }} className={`rounded overflow-hidden transition-all border-2 w-16 h-10 md:w-20 md:h-12 ${idx === currentSlide ? 'border-white scale-105' : 'border-transparent opacity-70 hover:opacity-100'}`}>
                   {slide.image ? <SiteImage src={slide.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ backgroundColor: brandColor }} />}
                 </button>
               ))}
@@ -253,7 +281,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
               <a key={idx} href={slide.link || '#'} className="relative rounded-xl overflow-hidden">
                 {slide.image ? (
                   <div className="w-full h-full relative">
-                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px)' }} />
+                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${slide.image})`, backgroundPosition: 'center', backgroundSize: 'cover', filter: 'blur(20px)' }} />
                     <div className="absolute inset-0 bg-black/20" />
                     <SiteImage src={slide.image} alt="" className="relative w-full h-full object-contain z-10" />
                   </div>
@@ -268,7 +296,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
             <a href={bentoSlides[0]?.link || '#'} className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden">
               {bentoSlides[0]?.image ? (
                 <div className="w-full h-full relative">
-                  <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[0].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(25px)' }} />
+                  <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[0].image})`, backgroundPosition: 'center', backgroundSize: 'cover', filter: 'blur(25px)' }} />
                   <div className="absolute inset-0 bg-black/20" />
                   <SiteImage src={bentoSlides[0].image} alt="" className="relative w-full h-full object-contain z-10" />
                 </div>
@@ -277,7 +305,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
             <a href={bentoSlides[1]?.link || '#'} className="col-span-2 relative rounded-2xl overflow-hidden">
               {bentoSlides[1]?.image ? (
                 <div className="w-full h-full relative">
-                  <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[1].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px)' }} />
+                  <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[1].image})`, backgroundPosition: 'center', backgroundSize: 'cover', filter: 'blur(20px)' }} />
                   <div className="absolute inset-0 bg-black/20" />
                   <SiteImage src={bentoSlides[1].image} alt="" className="relative w-full h-full object-contain z-10" />
                 </div>
@@ -286,7 +314,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
             <a href={bentoSlides[2]?.link || '#'} className="relative rounded-2xl overflow-hidden">
               {bentoSlides[2]?.image ? (
                 <div className="w-full h-full relative">
-                  <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[2].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px)' }} />
+                  <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[2].image})`, backgroundPosition: 'center', backgroundSize: 'cover', filter: 'blur(15px)' }} />
                   <div className="absolute inset-0 bg-black/20" />
                   <SiteImage src={bentoSlides[2].image} alt="" className="relative w-full h-full object-contain z-10" />
                 </div>
@@ -295,7 +323,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
             <a href={bentoSlides[3]?.link || '#'} className="relative rounded-2xl overflow-hidden">
               {bentoSlides[3]?.image ? (
                 <div className="w-full h-full relative">
-                  <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[3].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px)' }} />
+                  <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[3].image})`, backgroundPosition: 'center', backgroundSize: 'cover', filter: 'blur(15px)' }} />
                   <div className="absolute inset-0 bg-black/20" />
                   <SiteImage src={bentoSlides[3].image} alt="" className="relative w-full h-full object-contain z-10" />
                 </div>
@@ -332,7 +360,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
                 </div>
               )}
               <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
-                {content.heading || 'Tiêu đề chính'}
+                {content.heading ?? 'Tiêu đề chính'}
               </h1>
               {content.description && (
                 <p className="text-white/80 text-sm md:text-lg">
@@ -357,7 +385,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
           {slides.length > 1 && (
             <div className="absolute bottom-6 right-6 flex gap-2 z-20">
               {slides.map((_, idx) => (
-                <button key={idx} onClick={() => setCurrentSlide(idx)} className={`w-3 h-3 rounded-full transition-all ${idx === currentSlide ? 'w-8' : 'bg-white/50'}`} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
+                <button key={idx} onClick={() =>{  setCurrentSlide(idx); }} className={`w-3 h-3 rounded-full transition-all ${idx === currentSlide ? 'w-8' : 'bg-white/50'}`} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
               ))}
             </div>
           )}
@@ -375,10 +403,10 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
           <div className="w-full md:w-1/2 flex flex-col justify-center bg-slate-50 p-6 md:p-10 lg:p-16 order-2 md:order-1">
             <div className="max-w-md space-y-4">
               <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                {content.badge || `Banner ${currentSlide + 1}/${slides.length}`}
+                {content.badge ?? `Banner ${currentSlide + 1}/${slides.length}`}
               </span>
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
-                {content.heading || 'Tiêu đề nổi bật'}
+                {content.heading ?? 'Tiêu đề nổi bật'}
               </h2>
               {content.description && (
                 <p className="text-slate-600 text-base md:text-lg">
@@ -397,7 +425,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
             {slides.length > 1 && (
               <div className="flex gap-2 mt-8">
                 {slides.map((_, idx) => (
-                  <button key={idx} onClick={() => setCurrentSlide(idx)} className={`h-1.5 rounded-full transition-all ${idx === currentSlide ? 'w-10' : 'w-6 bg-slate-300'}`} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
+                  <button key={idx} onClick={() =>{  setCurrentSlide(idx); }} className={`h-1.5 rounded-full transition-all ${idx === currentSlide ? 'w-10' : 'w-6 bg-slate-300'}`} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
                 ))}
               </div>
             )}
@@ -418,10 +446,10 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
             {/* Navigation arrows */}
             {slides.length > 1 && (
               <>
-                <button onClick={() => setCurrentSlide(prev => prev === 0 ? slides.length - 1 : prev - 1)} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center z-10">
+                <button onClick={() =>{  setCurrentSlide(prev => prev === 0 ? slides.length - 1 : prev - 1); }} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center z-10">
                   <svg className="w-5 h-5" style={{ color: brandColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 </button>
-                <button onClick={() => setCurrentSlide(prev => (prev + 1) % slides.length)} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center z-10">
+                <button onClick={() =>{  setCurrentSlide(prev => (prev + 1) % slides.length); }} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center z-10">
                   <svg className="w-5 h-5" style={{ color: brandColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>
               </>
@@ -441,7 +469,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
             <div key={idx} className={`absolute inset-0 transition-opacity duration-700 ${idx === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
               {slide.image ? (
                 <div className="w-full h-full relative">
-                  <div className="absolute inset-0 scale-110 transform-gpu" style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                  <div className="absolute inset-0 scale-110 transform-gpu" style={{ backgroundImage: `url(${slide.image})`, backgroundPosition: 'center', backgroundSize: 'cover' }} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
                 </div>
               ) : <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900" />}
@@ -457,7 +485,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
                 </div>
               )}
               <h3 className="text-lg md:text-xl font-bold text-slate-900">
-                {content.heading || 'Tiêu đề nổi bật'}
+                {content.heading ?? 'Tiêu đề nổi bật'}
               </h3>
               {content.description && (
                 <p className="text-slate-600 text-sm mt-1">
@@ -479,11 +507,11 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
           {/* Top navigation bar */}
           {slides.length > 1 && (
             <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
-              <button onClick={() => setCurrentSlide(prev => prev === 0 ? slides.length - 1 : prev - 1)} className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
+              <button onClick={() =>{  setCurrentSlide(prev => prev === 0 ? slides.length - 1 : prev - 1); }} className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
               </button>
               <span className="text-white/80 text-xs font-medium px-2">{currentSlide + 1} / {slides.length}</span>
-              <button onClick={() => setCurrentSlide(prev => (prev + 1) % slides.length)} className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
+              <button onClick={() =>{  setCurrentSlide(prev => (prev + 1) % slides.length); }} className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </button>
             </div>
@@ -501,7 +529,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
 type StatsStyle = 'horizontal' | 'cards' | 'icons' | 'gradient' | 'minimal' | 'counter';
 function StatsSection({ config, brandColor, title: _title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
   void _title;
-  const items = (config.items as Array<{ value: string; label: string }>) || [];
+  const items = (config.items as { value: string; label: string }[]) || [];
   const style = (config.style as StatsStyle) || 'horizontal';
 
   // Style 1: Thanh ngang - Full width bar với dividers
@@ -740,7 +768,7 @@ const AboutBadge = ({ text, variant = 'default', brandColor }: { text: string; v
   return (
     <div 
       className={baseStyles}
-      style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderColor: `${brandColor}20` }}
+      style={{ backgroundColor: `${brandColor}10`, borderColor: `${brandColor}20`, color: brandColor }}
     >
       {text}
     </div>
@@ -799,11 +827,11 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
     imageCaption?: string;
     buttonText?: string;
     buttonLink?: string;
-    stats?: Array<{ value: string; label: string }>;
+    stats?: { value: string; label: string }[];
     style?: AboutStyle;
   };
 
-  const aboutStyle = style || 'bento';
+  const aboutStyle = style ?? 'bento';
 
   // Style 1: Classic - Open Layout, Image Left, Typography Focused
   if (aboutStyle === 'classic') {
@@ -833,7 +861,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
                   <AboutBadge text={subHeading} variant="outline" brandColor={brandColor} />
                 )}
                 <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 tracking-tight leading-[1.1]">
-                  {heading || title}
+                  {heading ?? title}
                 </h2>
                 <p className="text-base md:text-lg lg:text-xl text-slate-600 leading-relaxed">
                   {description}
@@ -852,7 +880,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
               {buttonText && (
                 <div>
                   <a 
-                    href={buttonLink || '#'}
+                    href={buttonLink ?? '#'}
                     className="inline-flex items-center gap-2 p-0 h-auto text-lg font-semibold hover:opacity-80 transition-opacity group"
                     style={{ color: brandColor }}
                   >
@@ -883,11 +911,11 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
                   <div className="flex items-center gap-2 mb-2">
                     <div className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
                     <span className="text-sm font-semibold uppercase tracking-wide" style={{ color: brandColor }}>
-                      {subHeading || 'Câu chuyện thương hiệu'}
+                      {subHeading ?? 'Câu chuyện thương hiệu'}
                     </span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900">
-                    {heading || title}
+                    {heading ?? title}
                   </h2>
                   <p className="text-slate-600">
                     {description}
@@ -896,7 +924,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
                 {buttonText && (
                   <div className="pt-2 md:pt-4">
                     <a 
-                      href={buttonLink || '#'}
+                      href={buttonLink ?? '#'}
                       className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border-2 font-medium transition-colors hover:text-white"
                       style={{ borderColor: brandColor, color: brandColor }}
                       onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = brandColor; (e.currentTarget as HTMLElement).style.color = 'white'; }}
@@ -931,10 +959,10 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
                     <ImageIcon size={48} className="text-slate-300" />
                   </div>
                 )}
-                {(imageCaption || image) && (
+                {(imageCaption ?? image) && (
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6 md:p-8">
                     <p className="text-white font-medium text-base md:text-lg">
-                      {imageCaption || 'Kiến tạo không gian làm việc hiện đại & bền vững.'}
+                      {imageCaption ?? 'Kiến tạo không gian làm việc hiện đại & bền vững.'}
                     </p>
                   </div>
                 )}
@@ -962,7 +990,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
                   
                   <div className="space-y-3 md:space-y-4">
                     <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight text-slate-900">
-                      {heading || title}
+                      {heading ?? title}
                     </h2>
                     <p className="text-base md:text-lg text-slate-600 leading-relaxed">
                       {description}
@@ -981,7 +1009,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
                   {buttonText && (
                     <div>
                       <a 
-                        href={buttonLink || '#'}
+                        href={buttonLink ?? '#'}
                         className="inline-flex h-12 px-6 rounded-md font-medium transition-colors items-center justify-center hover:opacity-90"
                         style={{ backgroundColor: brandColor, color: 'white' }}
                       >
@@ -1025,10 +1053,10 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
                 <AboutBadge text={subHeading || ''} variant="outline" brandColor={brandColor} />
               )}
               <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-900 leading-tight">
-                {heading || title}
+                {heading ?? title}
               </h2>
               <p className="text-slate-600 leading-relaxed">
-                {description || ''}
+                {description ?? ''}
               </p>
               {/* Stats inline */}
               {(stats ?? []).length > 0 && (
@@ -1043,7 +1071,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
               )}
               {buttonText && (
                 <div className="pt-2">
-                  <a href={buttonLink || '#'} className="inline-block px-6 py-2.5 font-medium rounded-lg text-white" style={{ backgroundColor: brandColor }}>
+                  <a href={buttonLink ?? '#'} className="inline-block px-6 py-2.5 font-medium rounded-lg text-white" style={{ backgroundColor: brandColor }}>
                     {buttonText}
                   </a>
                 </div>
@@ -1078,10 +1106,10 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
               </div>
             )}
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
-              {heading || title}
+              {heading ?? title}
             </h2>
             <p className="text-slate-600 mt-2 max-w-2xl mx-auto">
-              {description || ''}
+              {description ?? ''}
             </p>
           </div>
 
@@ -1116,7 +1144,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
 
           {buttonText && (
             <div className="text-center mt-10">
-              <a href={buttonLink || '#'} className="inline-block px-6 py-2.5 rounded-lg font-medium text-white" style={{ backgroundColor: brandColor }}>
+              <a href={buttonLink ?? '#'} className="inline-block px-6 py-2.5 rounded-lg font-medium text-white" style={{ backgroundColor: brandColor }}>
                 {buttonText}
               </a>
             </div>
@@ -1138,10 +1166,10 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
             </span>
           )}
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-3">
-            {heading || title}
+            {heading ?? title}
           </h2>
           <p className="text-slate-600 max-w-2xl mx-auto">
-            {description || ''}
+            {description ?? ''}
           </p>
         </div>
 
@@ -1162,7 +1190,7 @@ function AboutSection({ config, brandColor, title }: { config: Record<string, un
             {buttonText && (
               <div className="absolute bottom-4 left-4 right-4">
                 <a 
-                  href={buttonLink || '#'} 
+                  href={buttonLink ?? '#'} 
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-white backdrop-blur-sm transition-all hover:scale-105"
                   style={{ backgroundColor: brandColor }}
                 >
@@ -1218,14 +1246,14 @@ type ServicesStyle = 'elegantGrid' | 'modernList' | 'bigNumber' | 'cards' | 'car
 // Dynamic Icon for Services
 const ServiceIconRenderer = ({ name, size = 24, style }: { name?: string; size?: number; style?: React.CSSProperties }) => {
   const icons: Record<string, React.ComponentType<{ size?: number; style?: React.CSSProperties }>> = {
-    Briefcase, Shield, Package, Star, Users, Phone, Target, Zap, Globe, Rocket, Settings, Layers, Cpu, Clock, MapPin, Mail, Building2, Check
+    Briefcase, Building2, Check, Clock, Cpu, Globe, Layers, Mail, MapPin, Package, Phone, Rocket, Settings, Shield, Star, Target, Users, Zap
   };
-  const IconComponent = icons[name || 'Star'] || Star;
+  const IconComponent = icons[name ?? 'Star'] || Star;
   return <IconComponent size={size} style={style} />;
 };
 
 function ServicesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
+  const items = (config.items as { icon?: string; title: string; description: string }[]) || [];
   const style = (config.style as ServicesStyle) || 'elegantGrid';
   const carouselId = useSafeId('services-carousel');
 
@@ -1435,8 +1463,8 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                   }}
                   className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
                 >
@@ -1445,8 +1473,8 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                   }}
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
                   style={{ backgroundColor: brandColor }}
@@ -1465,7 +1493,7 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
             <div
               id={carouselId}
               className="flex overflow-x-auto snap-x snap-mandatory gap-5 py-4 px-2 cursor-grab active:cursor-grabbing select-none"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
               onMouseDown={(e) => {
                 const el = e.currentTarget;
                 el.dataset.isDown = 'true';
@@ -1477,7 +1505,7 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
               onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
               onMouseMove={(e) => {
                 const el = e.currentTarget;
-                if (el.dataset.isDown !== 'true') return;
+                if (el.dataset.isDown !== 'true') {return;}
                 e.preventDefault();
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -1579,7 +1607,7 @@ function ServicesSection({ config, brandColor, title }: { config: Record<string,
 // 6 Professional Styles: Solid Cards, Accent List, Bold Bento, Icon Row, Carousel, Timeline
 type BenefitsStyle = 'cards' | 'list' | 'bento' | 'row' | 'carousel' | 'timeline';
 function BenefitsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
+  const items = (config.items as { icon?: string; title: string; description: string }[]) || [];
   const style = (config.style as BenefitsStyle) || 'cards';
   const carouselId = useSafeId('benefits-carousel');
   const subHeading = (config.subHeading as string) || 'Vì sao chọn chúng tôi?';
@@ -1712,7 +1740,7 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: `${brandColor}15` }}>
               {items.slice(0, 4).map((item, idx) => (
                 <div key={idx} className="p-5 md:p-6 lg:p-8 flex flex-col items-center text-center">
-                  <div className="mb-3 md:mb-4 p-3 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor, boxShadow: `0 0 0 4px ${brandColor}08` }}>
+                  <div className="mb-3 md:mb-4 p-3 rounded-full" style={{ backgroundColor: `${brandColor}15`, boxShadow: `0 0 0 4px ${brandColor}08`, color: brandColor }}>
                     <Check size={22} strokeWidth={3} />
                   </div>
                   <h3 className="font-bold text-slate-900 mb-1.5 md:mb-2 text-sm md:text-base line-clamp-2 min-h-[2.5rem]">{item.title}</h3>
@@ -1747,8 +1775,8 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                   }}
                   className="w-10 h-10 rounded-full border flex items-center justify-center hover:bg-slate-50 transition-colors"
                   style={{ borderColor: `${brandColor}20` }}
@@ -1758,8 +1786,8 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                   }}
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
                   style={{ backgroundColor: brandColor }}
@@ -1781,9 +1809,9 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
               id={carouselId}
               className="flex overflow-x-auto snap-x snap-mandatory gap-4 py-4 px-2 cursor-grab active:cursor-grabbing select-none scrollbar-hide"
               style={{
-                scrollbarWidth: 'none',
+                WebkitOverflowScrolling: 'touch',
                 msOverflowStyle: 'none',
-                WebkitOverflowScrolling: 'touch'
+                scrollbarWidth: 'none'
               }}
               onMouseDown={(e) => {
                 const el = e.currentTarget;
@@ -1802,7 +1830,7 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
               }}
               onMouseMove={(e) => {
                 const el = e.currentTarget;
-                if (el.dataset.isDown !== 'true') return;
+                if (el.dataset.isDown !== 'true') {return;}
                 e.preventDefault();
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -1879,7 +1907,7 @@ function BenefitsSection({ config, brandColor, title }: { config: Record<string,
 // Best Practices: ARIA, keyboard nav, brandColor hover, responsive, SEO schema, touch targets
 type FaqStyle = 'accordion' | 'cards' | 'two-column' | 'minimal' | 'timeline' | 'tabbed';
 function FAQSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const items = (config.items as Array<{ question: string; answer: string }>) || [];
+  const items = (config.items as { question: string; answer: string }[]) || [];
   const style = (config.style as FaqStyle) || 'accordion';
   const description = (config.description as string) || '';
   const buttonText = (config.buttonText as string) || '';
@@ -1908,11 +1936,11 @@ function FAQSection({ config, brandColor, title }: { config: Record<string, unkn
     "@type": "FAQPage",
     "mainEntity": items.map(item => ({
       "@type": "Question",
-      "name": item.question,
       "acceptedAnswer": {
         "@type": "Answer",
         "text": item.answer
-      }
+      },
+      "name": item.question
     }))
   };
 
@@ -1941,7 +1969,7 @@ function FAQSection({ config, brandColor, title }: { config: Record<string, unkn
                     id={buttonId}
                     aria-expanded={isOpen}
                     aria-controls={panelId}
-                    onClick={() => setOpenIndex(isOpen ? null : idx)}
+                    onClick={() =>{  setOpenIndex(isOpen ? null : idx); }}
                     onKeyDown={(e) => {
                       if (e.key === 'ArrowDown') { e.preventDefault(); setOpenIndex(Math.min((openIndex ?? -1) + 1, items.length - 1)); }
                       if (e.key === 'ArrowUp') { e.preventDefault(); setOpenIndex(Math.max((openIndex ?? 1) - 1, 0)); }
@@ -2125,7 +2153,7 @@ function FAQSection({ config, brandColor, title }: { config: Record<string, unkn
               role="tab"
               aria-selected={activeTab === idx}
               aria-controls={`tabpanel-${idx}`}
-              onClick={() => setActiveTab(idx)}
+              onClick={() =>{  setActiveTab(idx); }}
               className={`px-4 py-2 min-h-[44px] rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                 activeTab === idx ? 'text-white' : 'text-slate-600 hover:bg-slate-100'
               }`}
@@ -2179,7 +2207,7 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
     badge?: string;
     style?: CTAStyle;
   };
-  const style = ctaStyle || 'banner';
+  const style = ctaStyle ?? 'banner';
 
   // Style 1: Banner (default) - Full width solid background
   if (style === 'banner') {
@@ -2192,22 +2220,22 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
                 {badge}
               </span>
             )}
-            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 line-clamp-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 line-clamp-2">{title ?? 'Sẵn sàng bắt đầu?'}</h2>
             <p className="opacity-90 line-clamp-2 text-sm md:text-base">{description}</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0 w-full sm:w-auto">
             {buttonText && (
               <a 
-                href={buttonLink || '#'} 
+                href={buttonLink ?? '#'} 
                 className="px-6 py-3 min-h-[44px] bg-white rounded-lg font-medium hover:bg-slate-100 transition-all hover:scale-105 text-center whitespace-nowrap" 
-                style={{ color: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
+                style={{ boxShadow: `0 4px 12px ${brandColor}40`, color: brandColor }}
               >
                 {buttonText}
               </a>
             )}
             {secondaryButtonText && (
               <a 
-                href={secondaryButtonLink || '#'} 
+                href={secondaryButtonLink ?? '#'} 
                 className="px-6 py-3 min-h-[44px] border-2 border-white/50 text-white rounded-lg font-medium hover:bg-white/10 transition-all text-center whitespace-nowrap"
               >
                 {secondaryButtonText}
@@ -2232,12 +2260,12 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
               {badge}
             </span>
           )}
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 line-clamp-2" style={{ color: brandColor }}>{title || 'Sẵn sàng bắt đầu?'}</h2>
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 line-clamp-2" style={{ color: brandColor }}>{title ?? 'Sẵn sàng bắt đầu?'}</h2>
           <p className="text-slate-600 text-base md:text-lg mb-8 line-clamp-3">{description}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {buttonText && (
               <a 
-                href={buttonLink || '#'} 
+                href={buttonLink ?? '#'} 
                 className="px-8 py-3 min-h-[44px] rounded-lg font-medium text-white transition-all hover:scale-105 whitespace-nowrap" 
                 style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
               >
@@ -2246,7 +2274,7 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
             )}
             {secondaryButtonText && (
               <a 
-                href={secondaryButtonLink || '#'} 
+                href={secondaryButtonLink ?? '#'} 
                 className="px-8 py-3 min-h-[44px] border-2 rounded-lg font-medium transition-all hover:bg-opacity-10 whitespace-nowrap" 
                 style={{ borderColor: brandColor, color: brandColor }}
               >
@@ -2286,14 +2314,14 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
                   {badge}
                 </span>
               )}
-              <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white line-clamp-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
+              <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white line-clamp-2">{title ?? 'Sẵn sàng bắt đầu?'}</h2>
               <p className="text-slate-600 dark:text-slate-400 mt-1.5 text-sm md:text-base line-clamp-2">{description}</p>
               
               {/* Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 mt-4">
                 {buttonText && (
                   <a 
-                    href={buttonLink || '#'} 
+                    href={buttonLink ?? '#'} 
                     className="px-5 py-2.5 min-h-[44px] rounded-lg font-medium text-white transition-all hover:scale-105 text-center whitespace-nowrap" 
                     style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
                   >
@@ -2302,7 +2330,7 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
                 )}
                 {secondaryButtonText && (
                   <a 
-                    href={secondaryButtonLink || '#'} 
+                    href={secondaryButtonLink ?? '#'} 
                     className="px-5 py-2.5 min-h-[44px] border rounded-lg font-medium transition-all hover:bg-slate-50 dark:hover:bg-slate-700 text-center whitespace-nowrap"
                     style={{ borderColor: `${brandColor}30`, color: brandColor }}
                   >
@@ -2336,13 +2364,13 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
                   {badge}
                 </span>
               )}
-              <h2 className="text-lg md:text-2xl font-bold text-slate-900 dark:text-white line-clamp-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
+              <h2 className="text-lg md:text-2xl font-bold text-slate-900 dark:text-white line-clamp-2">{title ?? 'Sẵn sàng bắt đầu?'}</h2>
               <p className="text-slate-600 dark:text-slate-400 mt-2 text-sm md:text-base line-clamp-2">{description}</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0 w-full md:w-auto">
               {buttonText && (
                 <a 
-                  href={buttonLink || '#'} 
+                  href={buttonLink ?? '#'} 
                   className="px-6 py-3 min-h-[44px] rounded-xl font-medium text-white transition-all hover:scale-105 text-center whitespace-nowrap" 
                   style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
                 >
@@ -2351,7 +2379,7 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
               )}
               {secondaryButtonText && (
                 <a 
-                  href={secondaryButtonLink || '#'} 
+                  href={secondaryButtonLink ?? '#'} 
                   className="px-6 py-3 min-h-[44px] rounded-xl font-medium transition-all hover:bg-slate-100 dark:hover:bg-slate-700 text-center whitespace-nowrap"
                   style={{ color: brandColor }}
                 >
@@ -2383,21 +2411,21 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
               {badge}
             </span>
           )}
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white line-clamp-2">{title || 'Sẵn sàng bắt đầu?'}</h2>
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white line-clamp-2">{title ?? 'Sẵn sàng bắt đầu?'}</h2>
           <p className="text-white/90 mt-4 text-sm md:text-lg max-w-xl mx-auto line-clamp-3">{description}</p>
           <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
             {buttonText && (
               <a 
-                href={buttonLink || '#'} 
+                href={buttonLink ?? '#'} 
                 className="px-8 py-3 md:py-4 min-h-[44px] bg-white rounded-full font-semibold transition-all hover:scale-105 hover:shadow-xl text-center whitespace-nowrap" 
-                style={{ color: brandColor, boxShadow: `0 8px 24px rgba(0,0,0,0.2)` }}
+                style={{ boxShadow: `0 8px 24px rgba(0,0,0,0.2)`, color: brandColor }}
               >
                 {buttonText}
               </a>
             )}
             {secondaryButtonText && (
               <a 
-                href={secondaryButtonLink || '#'} 
+                href={secondaryButtonLink ?? '#'} 
                 className="px-8 py-3 md:py-4 min-h-[44px] border-2 border-white text-white rounded-full font-semibold hover:bg-white/10 transition-all text-center whitespace-nowrap"
               >
                 {secondaryButtonText}
@@ -2417,14 +2445,14 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
           {/* Accent line */}
           <div className="hidden md:block w-1 h-16 rounded-full flex-shrink-0" style={{ backgroundColor: brandColor }} />
           <div>
-            <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white line-clamp-1">{title || 'Sẵn sàng bắt đầu?'}</h2>
+            <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white line-clamp-1">{title ?? 'Sẵn sàng bắt đầu?'}</h2>
             <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm md:text-base line-clamp-1">{description}</p>
           </div>
         </div>
         <div className="flex gap-3 flex-shrink-0 w-full md:w-auto">
           {buttonText && (
             <a 
-              href={buttonLink || '#'} 
+              href={buttonLink ?? '#'} 
               className="flex-1 md:flex-none px-6 py-3 min-h-[44px] rounded-lg font-medium text-white transition-all hover:scale-105 text-center whitespace-nowrap" 
               style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}30` }}
             >
@@ -2433,7 +2461,7 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
           )}
           {secondaryButtonText && (
             <a 
-              href={secondaryButtonLink || '#'} 
+              href={secondaryButtonLink ?? '#'} 
               className="flex-1 md:flex-none px-6 py-3 min-h-[44px] border rounded-lg font-medium transition-all hover:bg-slate-50 dark:hover:bg-slate-800 text-center whitespace-nowrap"
               style={{ borderColor: `${brandColor}30`, color: brandColor }}
             >
@@ -2451,18 +2479,18 @@ function CTASection({ config, brandColor }: { config: Record<string, unknown>; b
 // Best Practices: Authenticity, Credibility indicators, Diverse formats, Mobile responsive
 type TestimonialsStyle = 'cards' | 'slider' | 'masonry' | 'quote' | 'carousel' | 'minimal';
 function TestimonialsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const items = (config.items as Array<{ name: string; role: string; content: string; rating: number }>) || [];
+  const items = (config.items as { name: string; role: string; content: string; rating: number }[]) || [];
   const style = (config.style as TestimonialsStyle) || 'cards';
   const carouselId = useSafeId('testimonials-carousel');
   const [currentSlide, setCurrentSlide] = React.useState(0);
 
   // Auto slide for slider/quote styles
   React.useEffect(() => {
-    if ((style !== 'slider' && style !== 'quote') || items.length <= 1) return;
+    if ((style !== 'slider' && style !== 'quote') || items.length <= 1) {return;}
     const timer = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % items.length);
     }, 5000);
-    return () => clearInterval(timer);
+    return () =>{  clearInterval(timer); };
   }, [items.length, style]);
 
   const renderStars = (rating: number, size: number = 16) => (
@@ -2516,7 +2544,7 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
   // Style 2: Slider - Single testimonial with navigation
   if (style === 'slider') {
     const current = items[currentSlide] || items[0];
-    if (!current) return null;
+    if (!current) {return null;}
 
     return (
       <section className="py-16 md:py-20 px-4 bg-slate-50 relative overflow-hidden">
@@ -2542,7 +2570,7 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
           {items.length > 1 && (
             <div className="flex items-center justify-center gap-4 mt-8">
               <button 
-                onClick={() => setCurrentSlide(prev => prev === 0 ? items.length - 1 : prev - 1)} 
+                onClick={() =>{  setCurrentSlide(prev => prev === 0 ? items.length - 1 : prev - 1); }} 
                 className="w-10 h-10 min-h-[44px] rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 hover:scale-105 transition-all"
               >
                 <ChevronLeft size={20} />
@@ -2551,14 +2579,14 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
                 {items.map((_, idx) => (
                   <button 
                     key={idx} 
-                    onClick={() => setCurrentSlide(idx)} 
+                    onClick={() =>{  setCurrentSlide(idx); }} 
                     className={`h-2.5 rounded-full transition-all ${idx === currentSlide ? 'w-8' : 'w-2.5 bg-slate-300 hover:bg-slate-400'}`}
                     style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
                   />
                 ))}
               </div>
               <button 
-                onClick={() => setCurrentSlide(prev => (prev + 1) % items.length)} 
+                onClick={() =>{  setCurrentSlide(prev => (prev + 1) % items.length); }} 
                 className="w-10 h-10 min-h-[44px] rounded-full bg-white shadow-md flex items-center justify-center hover:bg-slate-50 hover:scale-105 transition-all"
               >
                 <ChevronRight size={20} />
@@ -2601,7 +2629,7 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
   // Style 4: Quote - Big quote focused, elegant typography
   if (style === 'quote') {
     const current = items[currentSlide] || items[0];
-    if (!current) return null;
+    if (!current) {return null;}
 
     return (
       <section className="py-16 md:py-20 px-4" style={{ backgroundColor: `${brandColor}05` }}>
@@ -2632,7 +2660,7 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
               {items.map((_, idx) => (
                 <button 
                   key={idx} 
-                  onClick={() => setCurrentSlide(idx)} 
+                  onClick={() =>{  setCurrentSlide(idx); }} 
                   className={`w-3 h-3 rounded-full transition-all ${idx === currentSlide ? '' : 'bg-slate-300 hover:bg-slate-400'}`}
                   style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
                 />
@@ -2661,8 +2689,8 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                   }}
                   className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-white transition-colors"
                 >
@@ -2671,8 +2699,8 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                   }}
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
                   style={{ backgroundColor: brandColor }}
@@ -2690,7 +2718,7 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
             <div
               id={carouselId}
               className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
               onMouseDown={(e) => {
                 const el = e.currentTarget;
                 el.dataset.isDown = 'true';
@@ -2702,7 +2730,7 @@ function TestimonialsSection({ config, brandColor, title }: { config: Record<str
               onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
               onMouseMove={(e) => {
                 const el = e.currentTarget;
-                if (el.dataset.isDown !== 'true') return;
+                if (el.dataset.isDown !== 'true') {return;}
                 e.preventDefault();
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -2783,18 +2811,18 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
     showMap?: boolean;
     mapEmbed?: string;
     style?: ContactStyle;
-    socialLinks?: Array<{ id: number; platform: string; url: string }>;
+    socialLinks?: { id: number; platform: string; url: string }[];
     formTitle?: string;
     formDescription?: string;
     submitButtonText?: string;
     responseTimeText?: string;
   };
-  const style = contactStyle || 'modern';
-  const heading = formTitle || title || 'Liên hệ với chúng tôi';
-  const description = formDescription || 'Chúng tôi luôn sẵn sàng hỗ trợ bạn';
-  const submitLabel = submitButtonText || 'Gửi yêu cầu';
-  const responseText = responseTimeText || 'Phản hồi trong 24h';
-  const activeSocials = socialLinks?.filter(s => s.url) || [];
+  const style = contactStyle ?? 'modern';
+  const heading = (formTitle ?? title) || 'Liên hệ với chúng tôi';
+  const description = formDescription ?? 'Chúng tôi luôn sẵn sàng hỗ trợ bạn';
+  const submitLabel = submitButtonText ?? 'Gửi yêu cầu';
+  const responseText = responseTimeText ?? 'Phản hồi trong 24h';
+  const activeSocials = socialLinks?.filter(s => s.url) ?? [];
 
   const renderMapOrPlaceholder = (className: string = "w-full h-full") => {
     if (mapEmbed) {
@@ -2832,7 +2860,7 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                       </div>
                       <div>
                         <h4 className="font-semibold text-slate-900 mb-1">Địa chỉ văn phòng</h4>
-                        <p className="text-slate-500 text-sm leading-relaxed">{address || '123 Nguyễn Huệ, Q1, TP.HCM'}</p>
+                        <p className="text-slate-500 text-sm leading-relaxed">{address ?? '123 Nguyễn Huệ, Q1, TP.HCM'}</p>
                       </div>
                     </div>
 
@@ -2842,8 +2870,8 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                       </div>
                       <div>
                         <h4 className="font-semibold text-slate-900 mb-1">Email & Điện thoại</h4>
-                        <p className="text-slate-500 text-sm">{email || 'contact@example.com'}</p>
-                        <p className="text-slate-500 text-sm mt-1">{phone || '1900 1234'}</p>
+                        <p className="text-slate-500 text-sm">{email ?? 'contact@example.com'}</p>
+                        <p className="text-slate-500 text-sm mt-1">{phone ?? '1900 1234'}</p>
                       </div>
                     </div>
 
@@ -2853,7 +2881,7 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                       </div>
                       <div>
                         <h4 className="font-semibold text-slate-900 mb-1">Giờ làm việc</h4>
-                        <p className="text-slate-500 text-sm">{workingHours || 'Thứ 2 - Thứ 6: 8:00 - 17:00'}</p>
+                        <p className="text-slate-500 text-sm">{workingHours ?? 'Thứ 2 - Thứ 6: 8:00 - 17:00'}</p>
                       </div>
                     </div>
                   </div>
@@ -2900,7 +2928,7 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                     <MapPin size={18} className="mt-0.5 shrink-0" style={{ color: brandColor }} />
                     <div>
                       <p className="text-[10px] text-slate-500 font-medium uppercase mb-0.5">Địa chỉ</p>
-                      <p className="text-sm font-medium text-slate-900 leading-relaxed">{address || '123 Nguyễn Huệ, Q1, TP.HCM'}</p>
+                      <p className="text-sm font-medium text-slate-900 leading-relaxed">{address ?? '123 Nguyễn Huệ, Q1, TP.HCM'}</p>
                     </div>
                   </div>
 
@@ -2908,7 +2936,7 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                     <Phone size={18} className="mt-0.5 shrink-0" style={{ color: brandColor }} />
                     <div>
                       <p className="text-[10px] text-slate-500 font-medium uppercase mb-0.5">Hotline</p>
-                      <p className="text-sm font-medium text-slate-900">{phone || '1900 1234'}</p>
+                      <p className="text-sm font-medium text-slate-900">{phone ?? '1900 1234'}</p>
                     </div>
                   </div>
 
@@ -2916,7 +2944,7 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                     <Mail size={18} className="mt-0.5 shrink-0" style={{ color: brandColor }} />
                     <div>
                       <p className="text-[10px] text-slate-500 font-medium uppercase mb-0.5">Email</p>
-                      <p className="text-sm font-medium text-slate-900">{email || 'contact@example.com'}</p>
+                      <p className="text-sm font-medium text-slate-900">{email ?? 'contact@example.com'}</p>
                     </div>
                   </div>
 
@@ -2924,7 +2952,7 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                     <Clock size={18} className="mt-0.5 shrink-0" style={{ color: brandColor }} />
                     <div>
                       <p className="text-[10px] text-slate-500 font-medium uppercase mb-0.5">Giờ làm việc</p>
-                      <p className="text-sm font-medium text-slate-900">{workingHours || 'T2-T6: 8:00-17:00'}</p>
+                      <p className="text-sm font-medium text-slate-900">{workingHours ?? 'T2-T6: 8:00-17:00'}</p>
                     </div>
                   </div>
                 </div>
@@ -2949,7 +2977,7 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                   <Phone size={20} />
                 </div>
                 <h3 className="font-medium text-sm text-slate-500 mb-1">Điện thoại</h3>
-                <p className="font-semibold text-slate-900">{phone || '1900 1234'}</p>
+                <p className="font-semibold text-slate-900">{phone ?? '1900 1234'}</p>
               </div>
 
               {/* Card 2: Email */}
@@ -2958,7 +2986,7 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                   <Mail size={20} />
                 </div>
                 <h3 className="font-medium text-sm text-slate-500 mb-1">Email</h3>
-                <p className="font-semibold text-slate-900 text-sm">{email || 'contact@example.com'}</p>
+                <p className="font-semibold text-slate-900 text-sm">{email ?? 'contact@example.com'}</p>
               </div>
 
               {/* Card 3: Working Hours */}
@@ -2967,7 +2995,7 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                   <Clock size={20} />
                 </div>
                 <h3 className="font-medium text-sm text-slate-500 mb-1">Giờ làm việc</h3>
-                <p className="font-semibold text-slate-900 text-sm">{workingHours || 'T2-T6: 8:00-17:00'}</p>
+                <p className="font-semibold text-slate-900 text-sm">{workingHours ?? 'T2-T6: 8:00-17:00'}</p>
               </div>
             </div>
 
@@ -2978,7 +3006,7 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                   <MapPin size={24} className="shrink-0 mt-1" style={{ color: brandColor }} />
                   <div>
                     <h3 className="font-bold text-lg mb-2 text-slate-900">Trụ sở chính</h3>
-                    <p className="text-slate-500 text-sm leading-relaxed">{address || '123 Nguyễn Huệ, Q1, TP.HCM'}</p>
+                    <p className="text-slate-500 text-sm leading-relaxed">{address ?? '123 Nguyễn Huệ, Q1, TP.HCM'}</p>
                   </div>
                 </div>
               </div>
@@ -3009,22 +3037,22 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                 <a href={`tel:${phone}`} className="flex flex-col items-center p-6 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all text-center group">
                   <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Phone size={22} /></div>
                   <span className="text-xs text-slate-500 mb-1">Điện thoại</span>
-                  <span className="text-sm font-semibold text-slate-900">{phone || '1900 1234'}</span>
+                  <span className="text-sm font-semibold text-slate-900">{phone ?? '1900 1234'}</span>
                 </a>
                 <a href={`mailto:${email}`} className="flex flex-col items-center p-6 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all text-center group">
                   <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Mail size={22} /></div>
                   <span className="text-xs text-slate-500 mb-1">Email</span>
-                  <span className="text-sm font-semibold text-slate-900 truncate max-w-full">{email || 'contact@example.com'}</span>
+                  <span className="text-sm font-semibold text-slate-900 truncate max-w-full">{email ?? 'contact@example.com'}</span>
                 </a>
                 <div className="flex flex-col items-center p-6 rounded-xl border border-slate-200 text-center">
                   <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><MapPin size={22} /></div>
                   <span className="text-xs text-slate-500 mb-1">Địa chỉ</span>
-                  <span className="text-sm font-semibold text-slate-900 line-clamp-2">{address || '123 Nguyễn Huệ, Q1, TP.HCM'}</span>
+                  <span className="text-sm font-semibold text-slate-900 line-clamp-2">{address ?? '123 Nguyễn Huệ, Q1, TP.HCM'}</span>
                 </div>
                 <div className="flex flex-col items-center p-6 rounded-xl border border-slate-200 text-center">
                   <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}><Clock size={22} /></div>
                   <span className="text-xs text-slate-500 mb-1">Giờ làm việc</span>
-                  <span className="text-sm font-semibold text-slate-900">{workingHours || 'T2-T6: 8:00-17:00'}</span>
+                  <span className="text-sm font-semibold text-slate-900">{workingHours ?? 'T2-T6: 8:00-17:00'}</span>
                 </div>
               </div>
               {(activeSocials.length > 0 || showMap !== false) && (
@@ -3051,27 +3079,27 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 mb-2">{heading}</h2>
               <p className="text-slate-500 max-w-lg mx-auto">{description}</p>
               <p className="text-xs text-slate-400 mt-2">{responseText}</p>
-              <a href={`mailto:${email || 'contact@example.com'}`} className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-semibold text-white" style={{ backgroundColor: brandColor }}>{submitLabel}</a>
+              <a href={`mailto:${email ?? 'contact@example.com'}`} className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-full text-sm font-semibold text-white" style={{ backgroundColor: brandColor }}>{submitLabel}</a>
             </div>
             <div className="p-8 lg:p-10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <a href={`tel:${phone}`} className="flex items-center gap-4 p-5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Phone size={20} /></div>
-                  <div><p className="text-xs text-slate-500 mb-0.5">Hotline</p><p className="text-base font-bold text-slate-900">{phone || '1900 1234'}</p></div>
+                  <div><p className="text-xs text-slate-500 mb-0.5">Hotline</p><p className="text-base font-bold text-slate-900">{phone ?? '1900 1234'}</p></div>
                 </a>
                 <a href={`mailto:${email}`} className="flex items-center gap-4 p-5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Mail size={20} /></div>
-                  <div><p className="text-xs text-slate-500 mb-0.5">Email</p><p className="text-base font-bold text-slate-900 truncate">{email || 'contact@example.com'}</p></div>
+                  <div><p className="text-xs text-slate-500 mb-0.5">Email</p><p className="text-base font-bold text-slate-900 truncate">{email ?? 'contact@example.com'}</p></div>
                 </a>
                 <div className="flex items-center gap-4 p-5 rounded-xl bg-slate-50">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><Clock size={20} /></div>
-                  <div><p className="text-xs text-slate-500 mb-0.5">Giờ làm việc</p><p className="text-base font-bold text-slate-900">{workingHours || 'T2-T6: 8:00-17:00'}</p></div>
+                  <div><p className="text-xs text-slate-500 mb-0.5">Giờ làm việc</p><p className="text-base font-bold text-slate-900">{workingHours ?? 'T2-T6: 8:00-17:00'}</p></div>
                 </div>
               </div>
               <div className="mt-6 p-6 rounded-xl bg-slate-50 flex flex-col md:flex-row items-start gap-6">
                 <div className="flex items-start gap-4 flex-1">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}><MapPin size={20} /></div>
-                  <div><p className="text-xs text-slate-500 mb-0.5">Địa chỉ văn phòng</p><p className="text-sm font-medium text-slate-900">{address || '123 Nguyễn Huệ, Q1, TP.HCM'}</p></div>
+                  <div><p className="text-xs text-slate-500 mb-0.5">Địa chỉ văn phòng</p><p className="text-sm font-medium text-slate-900">{address ?? '123 Nguyễn Huệ, Q1, TP.HCM'}</p></div>
                 </div>
                 {showMap !== false && (<div className="w-full md:w-72 h-32 rounded-lg overflow-hidden shrink-0">{renderMapOrPlaceholder()}</div>)}
               </div>
@@ -3106,7 +3134,7 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                 <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Địa chỉ</p>
                 <div className="flex items-start gap-3">
                   <MapPin size={18} className="text-slate-600 shrink-0 mt-0.5" />
-                  <span className="text-sm font-medium text-slate-900">{address || '123 Nguyễn Huệ, Q1, TP.HCM'}</span>
+                  <span className="text-sm font-medium text-slate-900">{address ?? '123 Nguyễn Huệ, Q1, TP.HCM'}</span>
                 </div>
               </div>
 
@@ -3115,11 +3143,11 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <Phone size={18} className="text-slate-600 shrink-0" />
-                    <span className="text-sm font-medium text-slate-900">{phone || '1900 1234'}</span>
+                    <span className="text-sm font-medium text-slate-900">{phone ?? '1900 1234'}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Mail size={18} className="text-slate-600 shrink-0" />
-                    <span className="text-sm font-medium text-slate-900">{email || 'contact@example.com'}</span>
+                    <span className="text-sm font-medium text-slate-900">{email ?? 'contact@example.com'}</span>
                   </div>
                 </div>
               </div>
@@ -3128,7 +3156,7 @@ function ContactSection({ config, brandColor, title }: { config: Record<string, 
                 <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Thời gian</p>
                 <div className="flex items-center gap-3">
                   <Clock size={18} className="text-slate-600 shrink-0" />
-                  <span className="text-sm font-medium text-slate-900">{workingHours || 'T2-T6: 8:00-17:00'}</span>
+                  <span className="text-sm font-medium text-slate-900">{workingHours ?? 'T2-T6: 8:00-17:00'}</span>
                 </div>
               </div>
             </div>
@@ -3158,7 +3186,7 @@ const AutoScrollSlider = ({ children, speed = 0.5 }: { children: React.ReactNode
 
   React.useEffect(() => {
     const scroller = scrollRef.current;
-    if (!scroller) return;
+    if (!scroller) {return;}
 
     let animationId: number;
     let position = scroller.scrollLeft;
@@ -3177,18 +3205,18 @@ const AutoScrollSlider = ({ children, speed = 0.5 }: { children: React.ReactNode
     };
 
     animationId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(animationId);
+    return () =>{  cancelAnimationFrame(animationId); };
   }, [isPaused, speed]);
 
   return (
     <div 
       ref={scrollRef}
       className="flex overflow-x-auto cursor-grab active:cursor-grabbing touch-pan-x"
-      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      onTouchStart={() => setIsPaused(true)}
-      onTouchEnd={() => setIsPaused(false)}
+      style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+      onMouseEnter={() =>{  setIsPaused(true); }}
+      onMouseLeave={() =>{  setIsPaused(false); }}
+      onTouchStart={() =>{  setIsPaused(true); }}
+      onTouchEnd={() =>{  setIsPaused(false); }}
     >
       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
       <div className="flex shrink-0 gap-16 items-center px-4">{children}</div>
@@ -3212,7 +3240,7 @@ const GalleryLightbox = ({ photo, onClose }: { photo: { url: string } | null; on
     };
   }, [photo, onClose]);
 
-  if (!photo || !photo.url) return null;
+  if (!photo || !photo.url) {return null;}
 
   return (
     <div 
@@ -3226,7 +3254,7 @@ const GalleryLightbox = ({ photo, onClose }: { photo: { url: string } | null; on
       >
         <X size={32} />
       </button>
-      <div className="w-full h-full p-4 flex flex-col items-center justify-center" onClick={e => e.stopPropagation()}>
+      <div className="w-full h-full p-4 flex flex-col items-center justify-center" onClick={e =>{  e.stopPropagation(); }}>
         <SiteImage 
           src={photo.url} 
           alt="Lightbox" 
@@ -3241,7 +3269,7 @@ const GalleryLightbox = ({ photo, onClose }: { photo: { url: string } | null; on
 // 6 Styles: grid, cards, marquee, wall, carousel, featured
 
 type TrustBadgesStyle = 'grid' | 'cards' | 'marquee' | 'wall' | 'carousel' | 'featured';
-type TrustBadgeItem = { url: string; link?: string; name?: string };
+interface TrustBadgeItem { url: string; link?: string; name?: string }
 
 // Auto Scroll component for TrustBadges Marquee
 const TrustBadgesAutoScroll = ({ children, speed = 0.6 }: { children: React.ReactNode; speed?: number }) => {
@@ -3250,7 +3278,7 @@ const TrustBadgesAutoScroll = ({ children, speed = 0.6 }: { children: React.Reac
 
   React.useEffect(() => {
     const scroller = scrollRef.current;
-    if (!scroller) return;
+    if (!scroller) {return;}
 
     let animationId: number;
     let position = scroller.scrollLeft;
@@ -3269,7 +3297,7 @@ const TrustBadgesAutoScroll = ({ children, speed = 0.6 }: { children: React.Reac
     };
 
     animationId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(animationId);
+    return () =>{  cancelAnimationFrame(animationId); };
   }, [isPaused, speed]);
 
   return (
@@ -3277,11 +3305,11 @@ const TrustBadgesAutoScroll = ({ children, speed = 0.6 }: { children: React.Reac
       ref={scrollRef}
       className="flex overflow-hidden select-none w-full cursor-grab active:cursor-grabbing"
       style={{ 
-        maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
-        WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
+        WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+        maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
       }}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() =>{  setIsPaused(true); }}
+      onMouseLeave={() =>{  setIsPaused(false); }}
     >
       <div className="flex shrink-0 gap-16 md:gap-20 items-center px-4">{children}</div>
       <div className="flex shrink-0 gap-16 md:gap-20 items-center px-4">{children}</div>
@@ -3301,7 +3329,7 @@ const CertificateModal = ({
 }) => {
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {onClose();}
     };
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown);
@@ -3313,7 +3341,7 @@ const CertificateModal = ({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen || !item || !item.url) return null;
+  if (!isOpen || !item || !item.url) {return null;}
 
   return (
     <div 
@@ -3329,12 +3357,12 @@ const CertificateModal = ({
       </button>
       <div 
         className="relative max-w-5xl w-full max-h-[90vh] p-4 flex flex-col items-center justify-center"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) =>{  e.stopPropagation(); }}
       >
         <div className="relative w-auto h-auto flex flex-col items-center">
           <SiteImage 
             src={item.url} 
-            alt={item.name || ''} 
+            alt={item.name ?? ''} 
             className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl bg-white p-2 md:p-4 animate-in zoom-in-95 duration-300" 
           />
           {item.name && (
@@ -3366,7 +3394,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
             {items.map((item, idx) => (
               <div 
                 key={idx} 
-                onClick={() => setSelectedCert(item)}
+                onClick={() =>{  setSelectedCert(item); }}
                 className="group relative aspect-square bg-white rounded-xl flex items-center justify-center p-5 md:p-6 cursor-zoom-in transition-all duration-300 hover:-translate-y-1"
                 style={{ border: `1px solid ${brandColor}15` }}
                 onMouseEnter={(e) => { 
@@ -3379,7 +3407,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                 }}
               >
                 {item.url ? (
-                  <SiteImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} />
+                  <SiteImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name ?? ''} />
                 ) : (
                   <ImageIcon size={40} className="text-slate-300" />
                 )}
@@ -3397,7 +3425,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
             ))}
           </div>
         </div>
-        <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
+        <CertificateModal item={selectedCert} isOpen={Boolean(selectedCert)} onClose={() =>{  setSelectedCert(null); }} />
       </section>
     );
   }
@@ -3414,7 +3442,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
             {items.map((item, idx) => (
               <div 
                 key={idx} 
-                onClick={() => setSelectedCert(item)}
+                onClick={() =>{  setSelectedCert(item); }}
                 className="group relative flex flex-col rounded-2xl overflow-hidden bg-white shadow-sm cursor-zoom-in h-full transition-all duration-300"
                 style={{ border: `1px solid ${brandColor}15` }}
                 onMouseEnter={(e) => { 
@@ -3429,7 +3457,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                 <div className="aspect-[5/4] bg-slate-50/50 flex items-center justify-center p-6 md:p-8 relative overflow-hidden">
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-colors duration-300" style={{ backgroundColor: `${brandColor}08` }} />
                   {item.url ? (
-                    <SiteImage src={item.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" alt={item.name || ''} />
+                    <SiteImage src={item.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" alt={item.name ?? ''} />
                   ) : (
                     <ImageIcon size={48} className="text-slate-300" />
                   )}
@@ -3441,7 +3469,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                 </div>
                 <div className="py-4 px-5 bg-white border-t flex items-center justify-between group-hover:bg-slate-50 transition-colors" style={{ borderColor: `${brandColor}10` }}>
                   <span className="font-semibold truncate text-sm" style={{ color: brandColor }}>
-                    {item.name || 'Chứng nhận'}
+                    {item.name ?? 'Chứng nhận'}
                   </span>
                   <ArrowUpRight size={16} className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} />
                 </div>
@@ -3449,7 +3477,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
             ))}
           </div>
         </div>
-        <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
+        <CertificateModal item={selectedCert} isOpen={Boolean(selectedCert)} onClose={() =>{  setSelectedCert(null); }} />
       </section>
     );
   }
@@ -3465,11 +3493,11 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
           {items.map((item, idx) => (
             <div 
               key={idx} 
-              onClick={() => setSelectedCert(item)}
+              onClick={() =>{  setSelectedCert(item); }}
               className="h-24 md:h-32 w-auto flex items-center justify-center px-4 hover:scale-110 transition-all duration-300 cursor-zoom-in relative group"
             >
               {item.url ? (
-                <SiteImage src={item.url} className="h-full w-auto object-contain max-w-[200px]" alt={item.name || ''} />
+                <SiteImage src={item.url} className="h-full w-auto object-contain max-w-[200px]" alt={item.name ?? ''} />
               ) : (
                 <div className="h-16 w-28 bg-slate-200 rounded flex items-center justify-center">
                   <ImageIcon size={28} className="text-slate-400" />
@@ -3483,7 +3511,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
             </div>
           ))}
         </TrustBadgesAutoScroll>
-        <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
+        <CertificateModal item={selectedCert} isOpen={Boolean(selectedCert)} onClose={() =>{  setSelectedCert(null); }} />
       </section>
     );
   }
@@ -3500,7 +3528,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
             {items.map((item, idx) => (
               <div 
                 key={idx} 
-                onClick={() => setSelectedCert(item)}
+                onClick={() =>{  setSelectedCert(item); }}
                 className="group relative bg-white p-2 md:p-3 shadow-md rounded-sm flex flex-col cursor-zoom-in w-[140px] h-[180px] md:w-[160px] md:h-[210px] transition-all duration-300"
                 style={{ border: `1px solid ${brandColor}15` }}
                 onMouseEnter={(e) => { 
@@ -3516,21 +3544,21 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                 <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full shadow-inner" style={{ backgroundColor: `${brandColor}60` }}></div>
                 <div className="flex-1 flex items-center justify-center p-3 relative overflow-hidden" style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}10` }}>
                   {item.url ? (
-                    <SiteImage src={item.url} className="w-full h-full object-contain" alt={item.name || ''} />
+                    <SiteImage src={item.url} className="w-full h-full object-contain" alt={item.name ?? ''} />
                   ) : (
                     <ImageIcon size={28} className="text-slate-300" />
                   )}
                 </div>
                 <div className="h-7 md:h-8 flex items-center justify-center mt-1">
                   <span className="text-[8px] md:text-[9px] font-semibold uppercase tracking-wider text-center truncate px-1" style={{ color: `${brandColor}cc` }}>
-                    {item.name ? (item.name.length > 18 ? item.name.substring(0, 16) + '...' : item.name) : 'Certificate'}
+                    {item.name ? (item.name.length > 18 ? item.name.slice(0, 16) + '...' : item.name) : 'Certificate'}
                   </span>
                 </div>
               </div>
             ))}
           </div>
         </div>
-        <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
+        <CertificateModal item={selectedCert} isOpen={Boolean(selectedCert)} onClose={() =>{  setSelectedCert(null); }} />
       </section>
     );
   }
@@ -3552,8 +3580,8 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                   }}
                   className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center transition-all hover:scale-110"
                   style={{ border: `1px solid ${brandColor}20` }}
@@ -3563,8 +3591,8 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                   }}
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg transition-all hover:scale-110"
                   style={{ backgroundColor: brandColor }}
@@ -3582,7 +3610,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
             <div
               id={carouselId}
               className="flex overflow-x-auto snap-x snap-mandatory gap-4 py-4 px-2 cursor-grab active:cursor-grabbing select-none"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
               onMouseDown={(e) => {
                 const el = e.currentTarget;
                 el.dataset.isDown = 'true';
@@ -3594,7 +3622,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
               onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
               onMouseMove={(e) => {
                 const el = e.currentTarget;
-                if (el.dataset.isDown !== 'true') return;
+                if (el.dataset.isDown !== 'true') {return;}
                 e.preventDefault();
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -3604,7 +3632,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
               {items.map((item, idx) => (
                 <div
                   key={idx}
-                  onClick={() => setSelectedCert(item)}
+                  onClick={() =>{  setSelectedCert(item); }}
                   className="snap-start flex-shrink-0 w-[140px] md:w-[180px] group cursor-zoom-in"
                   draggable={false}
                 >
@@ -3623,7 +3651,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                     }}
                   >
                     {item.url ? (
-                      <SiteImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} draggable={false} />
+                      <SiteImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name ?? ''} draggable={false} />
                     ) : (
                       <ImageIcon size={32} className="text-slate-300" />
                     )}
@@ -3639,7 +3667,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
 
           <style>{`#${carouselId}::-webkit-scrollbar { display: none; }`}</style>
         </div>
-        <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
+        <CertificateModal item={selectedCert} isOpen={Boolean(selectedCert)} onClose={() =>{  setSelectedCert(null); }} />
       </section>
     );
   }
@@ -3656,7 +3684,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
           {featuredItem && (
             <div 
-              onClick={() => setSelectedCert(featuredItem)}
+              onClick={() =>{  setSelectedCert(featuredItem); }}
               className="group cursor-zoom-in rounded-2xl overflow-hidden transition-all duration-300"
               style={{ backgroundColor: `${brandColor}08`, border: `2px solid ${brandColor}20` }}
               onMouseEnter={(e) => { 
@@ -3670,7 +3698,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
             >
               <div className="aspect-[4/3] flex items-center justify-center p-6 md:p-8 relative">
                 {featuredItem.url ? (
-                  <SiteImage src={featuredItem.url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt={featuredItem.name || ''} />
+                  <SiteImage src={featuredItem.url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt={featuredItem.name ?? ''} />
                 ) : (
                   <ImageIcon size={64} className="text-slate-300" />
                 )}
@@ -3687,7 +3715,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
               </div>
               <div className="py-3 md:py-4 text-center border-t" style={{ borderColor: `${brandColor}15` }}>
                 <span className="font-bold text-sm md:text-base" style={{ color: brandColor }}>
-                  {featuredItem.name || 'Chứng nhận nổi bật'}
+                  {featuredItem.name ?? 'Chứng nhận nổi bật'}
                 </span>
               </div>
             </div>
@@ -3696,7 +3724,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
             {otherItems.map((item, idx) => (
               <div 
                 key={idx}
-                onClick={() => setSelectedCert(item)}
+                onClick={() =>{  setSelectedCert(item); }}
                 className="group aspect-square rounded-xl flex items-center justify-center p-3 md:p-4 cursor-zoom-in transition-all duration-300"
                 style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
                 onMouseEnter={(e) => { 
@@ -3709,7 +3737,7 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
                 }}
               >
                 {item.url ? (
-                  <SiteImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || ''} />
+                  <SiteImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name ?? ''} />
                 ) : (
                   <ImageIcon size={24} className="text-slate-300" />
                 )}
@@ -3718,13 +3746,13 @@ function TrustBadgesSection({ config, brandColor, title }: { config: Record<stri
           </div>
         </div>
       </div>
-      <CertificateModal item={selectedCert} isOpen={!!selectedCert} onClose={() => setSelectedCert(null)} />
+      <CertificateModal item={selectedCert} isOpen={Boolean(selectedCert)} onClose={() =>{  setSelectedCert(null); }} />
     </section>
   );
 }
 
 function GallerySection({ config, brandColor, title, type }: { config: Record<string, unknown>; brandColor: string; title: string; type: string }) {
-  const items = (config.items as Array<{ url: string; link?: string }>) || [];
+  const items = (config.items as { url: string; link?: string }[]) || [];
   const style = (config.style as GalleryStyle) || (type === 'Gallery' ? 'spotlight' : 'grid');
   const partnersCarouselId = useSafeId('partners-carousel');
   const [selectedPhoto, setSelectedPhoto] = React.useState<{ url: string; link?: string } | null>(null);
@@ -3755,7 +3783,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
             <div 
               className="md:col-span-2 aspect-[4/3] md:aspect-auto bg-slate-100 relative group cursor-pointer overflow-hidden"
               style={{ minHeight: '300px' }}
-              onClick={() => setSelectedPhoto(featured)}
+              onClick={() =>{  setSelectedPhoto(featured); }}
             >
               {featured.url ? (
                 <SiteImage src={featured.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -3768,7 +3796,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                 <div 
                   key={idx} 
                   className="aspect-square bg-slate-100 relative group cursor-pointer overflow-hidden"
-                  onClick={() => setSelectedPhoto(photo)}
+                  onClick={() =>{  setSelectedPhoto(photo); }}
                 >
                   {photo.url ? (
                     <SiteImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -3780,7 +3808,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
             </div>
           </div>
         </div>
-        <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+        <GalleryLightbox photo={selectedPhoto} onClose={() =>{  setSelectedPhoto(null); }} />
       </section>
     );
   }
@@ -3808,7 +3836,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
               <div 
                 key={idx} 
                 className="aspect-square relative group cursor-pointer overflow-hidden bg-slate-100"
-                onClick={() => setSelectedPhoto(photo)}
+                onClick={() =>{  setSelectedPhoto(photo); }}
               >
                 {photo.url ? (
                   <SiteImage 
@@ -3823,7 +3851,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
             ))}
           </div>
         </div>
-        <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+        <GalleryLightbox photo={selectedPhoto} onClose={() =>{  setSelectedPhoto(null); }} />
       </section>
     );
   }
@@ -3855,7 +3883,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                 <div 
                   key={i} 
                   className={`${colSpan} relative group cursor-pointer overflow-hidden rounded-sm`}
-                  onClick={() => setSelectedPhoto(photo)}
+                  onClick={() =>{  setSelectedPhoto(photo); }}
                 >
                   {photo.url ? (
                     <SiteImage 
@@ -3873,7 +3901,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
             })}
           </div>
         </div>
-        <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+        <GalleryLightbox photo={selectedPhoto} onClose={() =>{  setSelectedPhoto(null); }} />
       </section>
     );
   }
@@ -3907,7 +3935,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
               <div 
                 key={idx} 
                 className="aspect-square rounded-lg overflow-hidden bg-slate-100 cursor-pointer group relative"
-                onClick={() => setSelectedPhoto(photo)}
+                onClick={() =>{  setSelectedPhoto(photo); }}
               >
                 {photo.url ? (
                   <SiteImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -3919,7 +3947,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
             ))}
           </div>
         </div>
-        <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+        <GalleryLightbox photo={selectedPhoto} onClose={() =>{  setSelectedPhoto(null); }} />
       </section>
     );
   }
@@ -3953,7 +3981,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
               <div 
                 key={idx} 
                 className="shrink-0 h-48 md:h-64 aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group"
-                onClick={() => setSelectedPhoto(photo)}
+                onClick={() =>{  setSelectedPhoto(photo); }}
               >
                 {photo.url ? (
                   <SiteImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -3966,7 +3994,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
             ))}
           </AutoScrollSlider>
         </div>
-        <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+        <GalleryLightbox photo={selectedPhoto} onClose={() =>{  setSelectedPhoto(null); }} />
       </section>
     );
   }
@@ -4002,7 +4030,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                 <div 
                   key={idx} 
                   className={`mb-3 break-inside-avoid rounded-xl overflow-hidden bg-slate-100 cursor-pointer group relative ${heightClass}`}
-                  onClick={() => setSelectedPhoto(photo)}
+                  onClick={() =>{  setSelectedPhoto(photo); }}
                 >
                   {photo.url ? (
                     <SiteImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -4015,7 +4043,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
             })}
           </div>
         </div>
-        <GalleryLightbox photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+        <GalleryLightbox photo={selectedPhoto} onClose={() =>{  setSelectedPhoto(null); }} />
       </section>
     );
   }
@@ -4037,7 +4065,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
             {items.map((item, idx) => (
               <a 
                 key={idx} 
-                href={item.link || '#'}
+                href={item.link ?? '#'}
                 className="w-full flex items-center justify-center p-4 rounded-xl hover:bg-slate-100/50 transition-colors duration-300 cursor-pointer group"
               >
                 {item.url ? (
@@ -4075,7 +4103,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
             
             <AutoScrollSlider speed={0.8}>
               {items.map((item, idx) => (
-                <a key={idx} href={item.link || '#'} className="shrink-0">
+                <a key={idx} href={item.link ?? '#'} className="shrink-0">
                   {item.url ? (
                     <SiteImage 
                       src={item.url} 
@@ -4110,7 +4138,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
           <div className="w-full relative py-6">
             <AutoScrollSlider speed={0.5}>
               {items.map((item, idx) => (
-                <a key={idx} href={item.link || '#'} className="shrink-0 group">
+                <a key={idx} href={item.link ?? '#'} className="shrink-0 group">
                   {item.url ? (
                     <SiteImage 
                       src={item.url} 
@@ -4154,8 +4182,8 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                   }}
                   className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
                 >
@@ -4164,8 +4192,8 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselId);
-                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                   }}
                   className="w-9 h-9 rounded-full flex items-center justify-center text-white transition-colors"
                   style={{ backgroundColor: brandColor }}
@@ -4187,9 +4215,9 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
               id={carouselId}
               className="flex overflow-x-auto snap-x snap-mandatory gap-6 py-4 px-2 cursor-grab active:cursor-grabbing select-none scrollbar-hide"
               style={{
-                scrollbarWidth: 'none',
+                WebkitOverflowScrolling: 'touch',
                 msOverflowStyle: 'none',
-                WebkitOverflowScrolling: 'touch'
+                scrollbarWidth: 'none'
               }}
               onMouseDown={(e) => {
                 const el = e.currentTarget;
@@ -4208,7 +4236,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
               }}
               onMouseMove={(e) => {
                 const el = e.currentTarget;
-                if (el.dataset.isDown !== 'true') return;
+                if (el.dataset.isDown !== 'true') {return;}
                 e.preventDefault();
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -4218,7 +4246,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
               {items.map((item, idx) => (
                 <a
                   key={idx}
-                  href={item.link || '#'}
+                  href={item.link ?? '#'}
                   className="snap-start flex-shrink-0 group flex flex-col items-center justify-center p-4 rounded-xl border transition-all w-[140px] md:w-[180px] aspect-[3/2] hover:shadow-lg"
                   style={{ borderColor: `${brandColor}15` }}
                   draggable={false}
@@ -4269,11 +4297,11 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
             {/* Featured Partner */}
             {featured && (
               <a
-                href={featured.link || '#'}
+                href={featured.link ?? '#'}
                 className="group relative md:row-span-2 rounded-2xl border overflow-hidden flex items-center justify-center p-8 aspect-square md:aspect-auto"
                 style={{ 
-                  borderColor: `${brandColor}20`,
-                  background: `linear-gradient(135deg, ${brandColor}08 0%, ${brandColor}03 100%)`
+                  background: `linear-gradient(135deg, ${brandColor}08 0%, ${brandColor}03 100%)`,
+                  borderColor: `${brandColor}20`
                 }}
               >
                 <div className="absolute top-3 left-3">
@@ -4300,7 +4328,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
               {others.map((item, idx) => (
                 <a
                   key={idx}
-                  href={item.link || '#'}
+                  href={item.link ?? '#'}
                   className="group flex items-center justify-center p-4 rounded-xl border transition-all aspect-[3/2] hover:shadow-md"
                   style={{ borderColor: `${brandColor}15` }}
                 >
@@ -4336,7 +4364,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
           {items.slice(0, 6).map((item, idx) => (
             <a 
               key={idx} 
-              href={item.link || '#'}
+              href={item.link ?? '#'}
               className="px-4 py-2 rounded-lg border transition-all flex items-center gap-3 group"
               style={{ 
                 backgroundColor: `${brandColor}05`,
@@ -4359,7 +4387,7 @@ function GallerySection({ config, brandColor, title, type }: { config: Record<st
 
 // ============ PRICING SECTION ============
 // 6 Styles: cards, horizontal, minimal, comparison, featured, compact
-type PricingPlan = { 
+interface PricingPlan { 
   name: string; 
   price: string; 
   yearlyPrice?: string;
@@ -4368,7 +4396,7 @@ type PricingPlan = {
   isPopular: boolean; 
   buttonText: string; 
   buttonLink: string;
-};
+}
 type PricingStyle = 'cards' | 'horizontal' | 'minimal' | 'comparison' | 'featured' | 'compact';
 
 function PricingSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
@@ -4378,8 +4406,8 @@ function PricingSection({ config, brandColor, title }: { config: Record<string, 
 
   // Centered layout helper for few items
   const getGridClass = (count: number) => {
-    if (count === 1) return 'grid-cols-1 max-w-md mx-auto';
-    if (count === 2) return 'md:grid-cols-2 max-w-2xl mx-auto';
+    if (count === 1) {return 'grid-cols-1 max-w-md mx-auto';}
+    if (count === 2) {return 'md:grid-cols-2 max-w-2xl mx-auto';}
     return 'md:grid-cols-3';
   };
 
@@ -4593,10 +4621,10 @@ function PricingSection({ config, brandColor, title }: { config: Record<string, 
 
   // Style: Featured - One plan highlighted large
   if (style === 'featured') {
-    const popularPlan = plans.find(p => p.isPopular) || plans[0];
+    const popularPlan = plans.find(p => p.isPopular) ?? plans[0];
     const otherPlans = plans.filter(p => p !== popularPlan).slice(0, 2);
     
-    if (!popularPlan) return null;
+    if (!popularPlan) {return null;}
     
     return (
       <section className="py-16 px-4">
@@ -4733,7 +4761,7 @@ function PricingSection({ config, brandColor, title }: { config: Record<string, 
 // 6 Professional Styles: Cards, List, Minimal, Table, Featured, Timeline
 type CareerStyle = 'cards' | 'list' | 'minimal' | 'table' | 'featured' | 'timeline';
 function CareerSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const jobs = (config.jobs as Array<{ title: string; department: string; location: string; type: string; salary: string; description?: string }>) || [];
+  const jobs = (config.jobs as { title: string; department: string; location: string; type: string; salary: string; description?: string }[]) || [];
   const style = (config.style as CareerStyle) || 'cards';
 
   // Empty state
@@ -5010,12 +5038,12 @@ function CareerSection({ config, brandColor, title }: { config: Record<string, u
   }
 
   // Style 6: Timeline - Grouped by department
-  const groupedJobs = jobs.reduce((acc, job, globalIdx) => {
+  const groupedJobs = jobs.reduce< Record<string, (typeof jobs[0] & { globalIdx: number })[]>>((acc, job, globalIdx) => {
     const dept = job.department || 'Đang cập nhật';
-    if (!acc[dept]) acc[dept] = [];
+    if (!acc[dept]) {acc[dept] = [];}
     acc[dept].push({ ...job, globalIdx: globalIdx + 1 });
     return acc;
-  }, {} as Record<string, (typeof jobs[0] & { globalIdx: number })[]>);
+  }, {});
 
   return (
     <section className="py-16 px-4">
@@ -5099,7 +5127,7 @@ function CareerSection({ config, brandColor, title }: { config: Record<string, u
 // 6 Professional Styles following Best Practices: Grid, Featured, List, Masonry, Carousel, Timeline
 type CaseStudyStyle = 'grid' | 'featured' | 'list' | 'masonry' | 'carousel' | 'timeline';
 function CaseStudySection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const projects = (config.projects as Array<{ title: string; category: string; image: string; description: string; link: string }>) || [];
+  const projects = (config.projects as { title: string; category: string; image: string; description: string; link: string }[]) || [];
   const style = (config.style as CaseStudyStyle) || 'grid';
   const caseStudyCarouselId = useSafeId('casestudy-carousel');
 
@@ -5330,8 +5358,8 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(caseStudyCarouselId);
-                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    const container = document.querySelector(`#${caseStudyCarouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                   }}
                   className="w-10 h-10 rounded-full bg-white shadow-md border flex items-center justify-center hover:scale-110 transition-transform"
                   style={{ borderColor: `${brandColor}20` }}
@@ -5341,8 +5369,8 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(caseStudyCarouselId);
-                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    const container = document.querySelector(`#${caseStudyCarouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                   }}
                   className="w-10 h-10 rounded-full bg-white shadow-md border flex items-center justify-center hover:scale-110 transition-transform"
                   style={{ borderColor: `${brandColor}20` }}
@@ -5356,7 +5384,7 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
             <div
               id={caseStudyCarouselId}
               className="flex overflow-x-auto snap-x snap-mandatory gap-6 py-4 px-2 cursor-grab active:cursor-grabbing select-none"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
               onMouseDown={(e) => {
                 const el = e.currentTarget;
                 el.dataset.isDown = 'true';
@@ -5368,7 +5396,7 @@ function CaseStudySection({ config, brandColor, title }: { config: Record<string
               onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
               onMouseMove={(e) => {
                 const el = e.currentTarget;
-                if (el.dataset.isDown !== 'true') return;
+                if (el.dataset.isDown !== 'true') {return;}
                 e.preventDefault();
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -5483,34 +5511,34 @@ type SpeedDialStyle = 'fab' | 'sidebar' | 'pills';
 
 const SpeedDialIcon = ({ name, size = 18 }: { name: string; size?: number }) => {
   const icons: Record<string, React.ReactNode> = {
-    'phone': <Phone size={size} />,
-    'mail': <Mail size={size} />,
-    'message-circle': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>,
-    'map-pin': <MapPin size={size} />,
-    'facebook': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>,
-    'instagram': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>,
-    'youtube': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>,
-    'zalo': <span className="text-[10px] font-bold">Zalo</span>,
     'calendar': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
-    'shopping-cart': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>,
+    'facebook': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>,
     'headphones': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>,
     'help-circle': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>,
+    'instagram': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>,
+    'mail': <Mail size={size} />,
+    'map-pin': <MapPin size={size} />,
+    'message-circle': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>,
+    'phone': <Phone size={size} />,
+    'shopping-cart': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>,
+    'youtube': <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>,
+    'zalo': <span className="text-[10px] font-bold">Zalo</span>,
   };
-  return <span className="inline-flex items-center justify-center">{icons[name] || <Phone size={size} />}</span>;
+  return <span className="inline-flex items-center justify-center">{icons[name] ?? <Phone size={size} />}</span>;
 };
 
 function SpeedDialSection({ config, brandColor }: { config: Record<string, unknown>; brandColor: string }) {
-  const actions = (config.actions as Array<{ icon: string; label: string; url: string; bgColor: string }>) || [];
+  const actions = (config.actions as { icon: string; label: string; url: string; bgColor: string }[]) || [];
   const style = (config.style as SpeedDialStyle) || 'fab';
   const position = (config.position as 'bottom-right' | 'bottom-left') || 'bottom-right';
   const isRight = position !== 'bottom-left';
 
-  if (actions.length === 0) return null;
+  if (actions.length === 0) {return null;}
 
   const linkProps = (url: string) => ({
     href: url || '#',
-    target: url?.startsWith('http') ? '_blank' as const : undefined,
     rel: url?.startsWith('http') ? 'noopener noreferrer' : undefined,
+    target: url?.startsWith('http') ? '_blank' as const : undefined,
   });
 
   // Style 1: FAB - Floating Action Buttons (vertical stack)
@@ -5567,7 +5595,7 @@ function SpeedDialSection({ config, brandColor }: { config: Record<string, unkno
       <div className={`fixed bottom-6 z-50 flex flex-col items-center ${isRight ? 'right-6' : 'left-6'}`} role="group" aria-label="Liên hệ nhanh">
         <div className="relative" style={{ height: `${Math.min(actions.length * 36 + 24, 200)}px` }}>
           {actions.map((action, idx) => (
-            <a key={idx} {...linkProps(action.url)} className="group absolute left-1/2 -translate-x-1/2 flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full shadow-lg text-white hover:scale-110 hover:z-50 transition-all duration-200 cursor-pointer" style={{ backgroundColor: action.bgColor || brandColor, bottom: `${idx * 36}px`, zIndex: actions.length - idx, boxShadow: `0 4px 12px ${action.bgColor || brandColor}40` }} aria-label={action.label || action.icon}>
+            <a key={idx} {...linkProps(action.url)} className="group absolute left-1/2 -translate-x-1/2 flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full shadow-lg text-white hover:scale-110 hover:z-50 transition-all duration-200 cursor-pointer" style={{ backgroundColor: action.bgColor || brandColor, bottom: `${idx * 36}px`, boxShadow: `0 4px 12px ${action.bgColor || brandColor}40`, zIndex: actions.length - idx }} aria-label={action.label || action.icon}>
               <SpeedDialIcon name={action.icon} size={18} />
               {action.label && <span className={`absolute px-2 py-1 bg-slate-900/90 text-white text-xs font-medium rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap ${isRight ? 'right-full mr-2' : 'left-full ml-2'}`}>{action.label}</span>}
             </a>
@@ -5580,7 +5608,7 @@ function SpeedDialSection({ config, brandColor }: { config: Record<string, unkno
   // Style 5: Dock - MacOS dock style
   if (style === 'dock') {
     return (
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-end justify-center rounded-2xl p-2 gap-1.5 md:gap-2" style={{ backgroundColor: `${brandColor}10`, backdropFilter: 'blur(8px)' }} role="group" aria-label="Liên hệ nhanh">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-end justify-center rounded-2xl p-2 gap-1.5 md:gap-2" style={{ backdropFilter: 'blur(8px)', backgroundColor: `${brandColor}10` }} role="group" aria-label="Liên hệ nhanh">
         {actions.map((action, idx) => (
           <a key={idx} {...linkProps(action.url)} className="group relative flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-xl text-white transition-all duration-200 cursor-pointer hover:scale-125 hover:-translate-y-2" style={{ backgroundColor: action.bgColor || brandColor, boxShadow: `0 4px 12px ${action.bgColor || brandColor}30` }} aria-label={action.label || action.icon}>
             <SpeedDialIcon name={action.icon} size={18} />
@@ -5616,7 +5644,7 @@ import { getCategoryIcon } from '@/app/admin/components/CategoryImageSelector';
 type ProductCategoriesStyle = 'grid' | 'carousel' | 'cards' | 'minimal' | 'showcase' | 'marquee';
 
 function ProductCategoriesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const categoriesConfig = (config.categories as Array<{ categoryId: string; customImage?: string; imageMode?: string }>) || [];
+  const categoriesConfig = (config.categories as { categoryId: string; customImage?: string; imageMode?: string }[]) || [];
   const style = (config.style as ProductCategoriesStyle) || 'grid';
   const productCatCarouselId = useSafeId('productcat-carousel');
   const showProductCount = (config.showProductCount as boolean) ?? true;
@@ -5649,9 +5677,9 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
   const resolvedCategories = categoriesConfig
     .map(item => {
       const cat = categoryMap[item.categoryId];
-      if (!cat) return null;
+      if (!cat) {return null;}
       
-      const imageMode = item.imageMode || 'default';
+      const imageMode = item.imageMode ?? 'default';
       let displayImage = cat.image;
       let displayIcon: string | undefined;
       
@@ -5659,7 +5687,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
         displayIcon = item.customImage.replace('icon:', '');
         displayImage = undefined;
       } else if (imageMode === 'upload' || imageMode === 'url') {
-        displayImage = item.customImage || cat.image;
+        displayImage = item.customImage ?? cat.image;
       }
       
       return {
@@ -5670,22 +5698,24 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
         productCount: productCountMap[item.categoryId] || 0,
       };
     })
-    .filter(Boolean) as Array<{ id: string; name: string; slug: string; image?: string; description?: string; displayImage?: string; displayIcon?: string; productCount: number }>;
+    .filter(Boolean) as { id: string; name: string; slug: string; image?: string; description?: string; displayImage?: string; displayIcon?: string; productCount: number }[];
 
-  if (resolvedCategories.length === 0) return null;
+  if (resolvedCategories.length === 0) {return null;}
 
   const getGridCols = () => {
     switch (columnsDesktop) {
-      case 3: return 'md:grid-cols-3';
-      case 5: return 'md:grid-cols-5';
-      case 6: return 'md:grid-cols-6';
-      default: return 'md:grid-cols-4';
+      case 3: { return 'md:grid-cols-3';
+      }
+      case 5: { return 'md:grid-cols-5';
+      }
+      case 6: { return 'md:grid-cols-6';
+      }
+      default: { return 'md:grid-cols-4';
+      }
     }
   };
 
-  const getMobileGridCols = () => {
-    return columnsMobile === 3 ? 'grid-cols-3' : 'grid-cols-2';
-  };
+  const getMobileGridCols = () => columnsMobile === 3 ? 'grid-cols-3' : 'grid-cols-2';
 
   // Helper: Render category visual (image or icon)
   const renderCategoryVisual = (cat: typeof resolvedCategories[0], iconSize: number = 48) => {
@@ -5693,7 +5723,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
     if (cat.displayIcon && iconData) {
       return (
         <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>
-          {React.createElement(iconData.icon, { size: iconSize, className: 'text-white' })}
+          {React.createElement(iconData.icon, { className: 'text-white', size: iconSize })}
         </div>
       );
     }
@@ -5763,8 +5793,8 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(productCatCarouselId);
-                      if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                      const container = document.querySelector(`#${productCatCarouselId}`);
+                      if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                     }}
                     className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white shadow-md border flex items-center justify-center hover:scale-110 transition-transform"
                     style={{ borderColor: `${brandColor}20` }}
@@ -5774,8 +5804,8 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(productCatCarouselId);
-                      if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                      const container = document.querySelector(`#${productCatCarouselId}`);
+                      if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                     }}
                     className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white shadow-md border flex items-center justify-center hover:scale-110 transition-transform"
                     style={{ borderColor: `${brandColor}20` }}
@@ -5798,7 +5828,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
             <div
               id={productCatCarouselId}
               className="flex overflow-x-auto snap-x snap-mandatory gap-3 md:gap-4 py-2 cursor-grab active:cursor-grabbing select-none"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
               onMouseDown={(e) => {
                 const el = e.currentTarget;
                 el.dataset.isDown = 'true';
@@ -5810,7 +5840,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
               onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
               onMouseMove={(e) => {
                 const el = e.currentTarget;
-                if (el.dataset.isDown !== 'true') return;
+                if (el.dataset.isDown !== 'true') {return;}
                 e.preventDefault();
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -5924,11 +5954,11 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
                 >
                   {cat.displayIcon && iconData ? (
                     React.createElement(iconData.icon, { size: 16, style: { color: brandColor } })
-                  ) : cat.displayImage ? (
+                  ) : (cat.displayImage ? (
                     <SiteImage src={cat.displayImage} alt="" className="w-5 h-5 md:w-6 md:h-6 rounded-full object-cover" />
                   ) : (
                     <Package size={16} style={{ color: brandColor }} />
-                  )}
+                  ))}
                   <span className="font-medium text-xs md:text-sm whitespace-nowrap">{cat.name}</span>
                   {showProductCount && (
                     <span className="text-xs text-slate-400">({cat.productCount})</span>
@@ -5945,7 +5975,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
   // Style 5: Showcase - Featured first item + grid of smaller items
   if (style === 'showcase') {
     const [featured, ...others] = resolvedCategories;
-    if (!featured) return null;
+    if (!featured) {return null;}
     
     return (
       <section className="py-10 md:py-16">
@@ -6073,7 +6103,7 @@ function ProductCategoriesSection({ config, brandColor, title }: { config: Recor
 type CategoryProductsStyle = 'grid' | 'carousel' | 'cards' | 'bento' | 'magazine' | 'showcase';
 
 function CategoryProductsSection({ config, brandColor, title: _title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const sections = (config.sections as Array<{ categoryId: string; itemCount: number }>) || [];
+  const sections = (config.sections as { categoryId: string; itemCount: number }[]) || [];
   const style = (config.style as CategoryProductsStyle) || 'grid';
   const catProductCarouselBaseId = useSafeId('catproduct-carousel');
   const showViewAll = (config.showViewAll as boolean) ?? true;
@@ -6089,9 +6119,9 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
   const resolvedSections = sections
     .map(section => {
       const category = categoriesData?.find(c => c._id === section.categoryId);
-      if (!category) return null;
+      if (!category) {return null;}
       
-      const products = (productsData || [])
+      const products = (productsData ?? [])
         .filter(p => p.categoryId === section.categoryId)
         .slice(0, section.itemCount);
       
@@ -6101,33 +6131,34 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
         products,
       };
     })
-    .filter(Boolean) as Array<{ 
+    .filter(Boolean) as { 
       categoryId: string; 
       itemCount: number;
       category: { _id: string; name: string; slug?: string; image?: string }; 
-      products: Array<{ _id: string; name: string; image?: string; price?: number; salePrice?: number; slug?: string }> 
-    }>;
+      products: { _id: string; name: string; image?: string; price?: number; salePrice?: number; slug?: string }[] 
+    }[];
 
   const getGridCols = () => {
     switch (columnsDesktop) {
-      case 3: return 'md:grid-cols-3';
-      case 5: return 'md:grid-cols-5';
-      default: return 'md:grid-cols-4';
+      case 3: { return 'md:grid-cols-3';
+      }
+      case 5: { return 'md:grid-cols-5';
+      }
+      default: { return 'md:grid-cols-4';
+      }
     }
   };
 
-  const getMobileGridCols = () => {
-    return columnsMobile === 1 ? 'grid-cols-1' : 'grid-cols-2';
-  };
+  const getMobileGridCols = () => columnsMobile === 1 ? 'grid-cols-1' : 'grid-cols-2';
 
   const formatPrice = (price?: number) => {
-    if (!price) return '0đ';
+    if (!price) {return '0đ';}
     return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
   };
 
   // Product Card Component with Equal Height (line-clamp + min-height)
   const ProductCard = ({ product }: { product: { _id: string; name: string; image?: string; price?: number; salePrice?: number; slug?: string } }) => (
-    <a href={`/san-pham/${product.slug || product._id}`} aria-label={`${sectionTitle}: ${product.name}`} className="group cursor-pointer flex flex-col h-full">
+    <a href={`/san-pham/${product.slug ?? product._id}`} aria-label={`${sectionTitle}: ${product.name}`} className="group cursor-pointer flex flex-col h-full">
       <div className="aspect-square rounded-lg overflow-hidden mb-2" style={{ backgroundColor: `${brandColor}08` }}>
         {product.image ? (
           <SiteImage 
@@ -6143,7 +6174,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
       </div>
       <h4 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{product.name || 'Tên sản phẩm'}</h4>
       <div className="flex flex-col mt-auto">
-        {product.salePrice && product.salePrice < (product.price || 0) ? (
+        {product.salePrice && product.salePrice < (product.price ?? 0) ? (
           <>
             <span className="font-bold text-sm" style={{ color: brandColor }}>
               {formatPrice(product.salePrice)}
@@ -6190,9 +6221,9 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                 <h2 className="text-xl md:text-2xl font-bold">{section.category.name}</h2>
                 {showViewAll && (
                   <a 
-                    href={`/products?category=${section.category.slug || section.category._id}`}
+                    href={`/products?category=${section.category.slug ?? section.category._id}`}
                     className="text-sm font-medium flex items-center gap-1 hover:underline px-3 py-1.5 rounded-lg border transition-colors"
-                    style={{ color: brandColor, borderColor: `${brandColor}30` }}
+                    style={{ borderColor: `${brandColor}30`, color: brandColor }}
                   >
                     Xem danh mục
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -6240,8 +6271,8 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                         <button
                           type="button"
                           onClick={() => {
-                            const container = document.getElementById(catProductCarouselId);
-                            if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                            const container = document.querySelector(`#${catProductCarouselId}`);
+                            if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                           }}
                           className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white shadow-md border flex items-center justify-center hover:scale-110 transition-transform"
                           style={{ borderColor: `${brandColor}20` }}
@@ -6251,8 +6282,8 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                         <button
                           type="button"
                           onClick={() => {
-                            const container = document.getElementById(catProductCarouselId);
-                            if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                            const container = document.querySelector(`#${catProductCarouselId}`);
+                            if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                           }}
                           className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white shadow-md border flex items-center justify-center hover:scale-110 transition-transform"
                           style={{ borderColor: `${brandColor}20` }}
@@ -6263,7 +6294,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                     )}
                     {showViewAll && (
                       <a
-                        href={`/products?category=${section.category.slug || section.category._id}`}
+                        href={`/products?category=${section.category.slug ?? section.category._id}`}
                         className="text-sm font-medium flex items-center gap-1 hover:underline"
                         style={{ color: brandColor }}
                       >
@@ -6281,7 +6312,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                     <div
                       id={catProductCarouselId}
                       className="flex overflow-x-auto snap-x snap-mandatory gap-4 py-2 cursor-grab active:cursor-grabbing select-none"
-                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+                      style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
                       onMouseDown={(e) => {
                         const el = e.currentTarget;
                         el.dataset.isDown = 'true';
@@ -6293,7 +6324,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                       onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
                       onMouseMove={(e) => {
                         const el = e.currentTarget;
-                        if (el.dataset.isDown !== 'true') return;
+                        if (el.dataset.isDown !== 'true') {return;}
                         e.preventDefault();
                         const x = e.pageX - el.offsetLeft;
                         const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -6303,7 +6334,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                       {section.products.map((product) => (
                         <a
                           key={product._id}
-                          href={`/san-pham/${product.slug || product._id}`}
+                          href={`/san-pham/${product.slug ?? product._id}`}
                           className="snap-start flex-shrink-0 w-40 md:w-48 group cursor-pointer"
                           draggable={false}
                         >
@@ -6323,7 +6354,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                           </div>
                           <h4 className="font-medium text-sm line-clamp-2 mb-1">{product.name}</h4>
                           <span className="font-bold text-base" style={{ color: brandColor }}>
-                            {formatPrice(product.salePrice || product.price)}
+                            {formatPrice(product.salePrice ?? product.price)}
                           </span>
                         </a>
                       ))}
@@ -6377,9 +6408,9 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                   </div>
                   {showViewAll && (
                     <a 
-                      href={`/products?category=${section.category.slug || section.category._id}`}
+                      href={`/products?category=${section.category.slug ?? section.category._id}`}
                       className="text-sm font-medium flex items-center gap-1 hover:underline px-3 py-1.5 rounded-lg transition-colors"
-                      style={{ color: brandColor, backgroundColor: `${brandColor}15` }}
+                      style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
                     >
                       Xem danh mục
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -6431,7 +6462,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                   </div>
                   {showViewAll && (
                     <a 
-                      href={`/products?category=${section.category.slug || section.category._id}`}
+                      href={`/products?category=${section.category.slug ?? section.category._id}`}
                       className="text-sm font-medium flex items-center gap-1.5 px-4 py-2 rounded-full transition-all hover:shadow-md"
                       style={{ backgroundColor: `${brandColor}10`, color: brandColor }}
                     >
@@ -6459,7 +6490,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                       {/* Featured - 2x2 */}
                       {featured && (
                         <a 
-                          href={`/san-pham/${featured.slug || featured._id}`}
+                          href={`/san-pham/${featured.slug ?? featured._id}`}
                           className="col-span-2 row-span-2 group cursor-pointer relative rounded-2xl overflow-hidden bg-slate-100"
                         >
                           {featured.image ? (
@@ -6483,7 +6514,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                             </span>
                             <h3 className="font-bold text-lg line-clamp-2 mb-1">{featured.name}</h3>
                             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
-                              {featured.salePrice && featured.salePrice < (featured.price || 0) ? (
+                              {featured.salePrice && featured.salePrice < (featured.price ?? 0) ? (
                                 <>
                                   <span className="font-bold text-lg">{formatPrice(featured.salePrice)}</span>
                                   <span className="text-xs text-white/60 line-through">{formatPrice(featured.price)}</span>
@@ -6500,7 +6531,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                       {others.map((product) => (
                         <a 
                           key={product._id}
-                          href={`/san-pham/${product.slug || product._id}`}
+                          href={`/san-pham/${product.slug ?? product._id}`}
                           className="group cursor-pointer relative rounded-xl overflow-hidden bg-slate-100"
                         >
                           {product.image ? (
@@ -6517,7 +6548,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                           <div className="absolute bottom-0 left-0 right-0 p-3 text-white transform translate-y-full group-hover:translate-y-0 transition-transform">
                             <h4 className="font-medium text-sm line-clamp-1">{product.name}</h4>
-                            <span className="font-bold text-sm">{formatPrice(product.salePrice || product.price)}</span>
+                            <span className="font-bold text-sm">{formatPrice(product.salePrice ?? product.price)}</span>
                           </div>
                         </a>
                       ))}
@@ -6556,7 +6587,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                   </div>
                   {showViewAll && (
                     <a 
-                      href={`/products?category=${section.category.slug || section.category._id}`}
+                      href={`/products?category=${section.category.slug ?? section.category._id}`}
                       className="font-semibold flex items-center gap-2 transition-all hover:gap-3"
                       style={{ color: brandColor }}
                     >
@@ -6584,7 +6615,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                       {/* Featured Item - Large */}
                       {featured && (
                         <a 
-                          href={`/san-pham/${featured.slug || featured._id}`}
+                          href={`/san-pham/${featured.slug ?? featured._id}`}
                           className="group cursor-pointer relative rounded-2xl overflow-hidden aspect-[4/5]"
                           style={{ backgroundColor: `${brandColor}08` }}
                         >
@@ -6611,7 +6642,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                             </span>
                             <h3 className="font-bold text-xl md:text-2xl line-clamp-2 mb-2">{featured.name}</h3>
                             <div className="flex items-baseline gap-3">
-                              {featured.salePrice && featured.salePrice < (featured.price || 0) ? (
+                              {featured.salePrice && featured.salePrice < (featured.price ?? 0) ? (
                                 <>
                                   <span className="font-bold text-2xl">{formatPrice(featured.salePrice)}</span>
                                   <span className="text-sm text-white/60 line-through">{formatPrice(featured.price)}</span>
@@ -6629,7 +6660,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                         {gridItems.map((product) => (
                           <a 
                             key={product._id}
-                            href={`/san-pham/${product.slug || product._id}`}
+                            href={`/san-pham/${product.slug ?? product._id}`}
                             className="group cursor-pointer"
                           >
                             <div 
@@ -6662,7 +6693,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                             </div>
                             <h4 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{product.name}</h4>
                             <div className="flex items-baseline gap-2 mt-1">
-                              {product.salePrice && product.salePrice < (product.price || 0) ? (
+                              {product.salePrice && product.salePrice < (product.price ?? 0) ? (
                                 <>
                                   <span className="font-bold text-sm" style={{ color: brandColor }}>
                                     {formatPrice(product.salePrice)}
@@ -6712,7 +6743,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
               </div>
               {showViewAll && (
                 <a 
-                  href={`/products?category=${section.category.slug || section.category._id}`}
+                  href={`/products?category=${section.category.slug ?? section.category._id}`}
                   className="group flex items-center gap-2 text-sm font-medium transition-colors"
                   style={{ color: brandColor }}
                 >
@@ -6736,7 +6767,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                 {section.products.map((product) => (
                   <a 
                     key={product._id}
-                    href={`/san-pham/${product.slug || product._id}`}
+                    href={`/san-pham/${product.slug ?? product._id}`}
                     className="group cursor-pointer block"
                   >
                     {/* Image Container với effects */}
@@ -6775,9 +6806,9 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                       </div>
                       
                       {/* Badge for sale */}
-                      {product.salePrice && product.salePrice < (product.price || 0) && (
+                      {product.salePrice && product.salePrice < (product.price ?? 0) && (
                         <div className="absolute top-3 left-3 px-2 py-1 rounded-lg text-xs font-bold text-white bg-red-500 z-30">
-                          -{Math.round((1 - product.salePrice / (product.price || 1)) * 100)}%
+                          -{Math.round((1 - product.salePrice / (product.price ?? 1)) * 100)}%
                         </div>
                       )}
                     </div>
@@ -6786,7 +6817,7 @@ function CategoryProductsSection({ config, brandColor, title: _title }: { config
                     <div className="space-y-1">
                       <h4 className="font-medium text-sm line-clamp-2 group-hover:opacity-80 transition-opacity">{product.name}</h4>
                       <div className="flex flex-col">
-                        {product.salePrice && product.salePrice < (product.price || 0) ? (
+                        {product.salePrice && product.salePrice < (product.price ?? 0) ? (
                           <>
                             <span className="font-bold text-sm" style={{ color: brandColor }}>
                               {formatPrice(product.salePrice)}
@@ -6827,12 +6858,12 @@ interface TeamMember {
 }
 
 const SocialIcon = ({ type, url, brandColor }: { type: 'facebook' | 'linkedin' | 'twitter' | 'email'; url?: string; brandColor: string }) => {
-  if (!url) return null;
+  if (!url) {return null;}
   const icons = {
+    email: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
     facebook: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>,
     linkedin: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>,
-    twitter: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
-    email: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    twitter: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
   };
   return (
     <a 
@@ -6968,8 +6999,8 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
               <button 
                 type="button"
                 onClick={() => {
-                  const container = document.getElementById(carouselId);
-                  if (container) container.scrollBy({ left: -cardWidth - gap, behavior: 'smooth' });
+                  const container = document.querySelector(`#${carouselId}`);
+                  if (container) {container.scrollBy({ behavior: 'smooth', left: -cardWidth - gap });}
                 }}
                 className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-md hover:shadow-lg text-slate-700 transition-all border border-slate-200"
               >
@@ -6978,8 +7009,8 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
               <button 
                 type="button"
                 onClick={() => {
-                  const container = document.getElementById(carouselId);
-                  if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                  const container = document.querySelector(`#${carouselId}`);
+                  if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                 }}
                 className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md hover:shadow-lg transition-all"
                 style={{ backgroundColor: brandColor }}
@@ -7002,9 +7033,9 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
               id={carouselId}
               className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-5 py-4 px-2 cursor-grab active:cursor-grabbing select-none"
               style={{ 
-                scrollbarWidth: 'none', 
+                WebkitOverflowScrolling: 'touch', 
                 msOverflowStyle: 'none',
-                WebkitOverflowScrolling: 'touch'
+                scrollbarWidth: 'none'
               }}
               onMouseDown={(e) => {
                 const el = e.currentTarget;
@@ -7023,7 +7054,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
               }}
               onMouseMove={(e) => {
                 const el = e.currentTarget;
-                if (el.dataset.isDown !== 'true') return;
+                if (el.dataset.isDown !== 'true') {return;}
                 e.preventDefault();
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -7129,7 +7160,7 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
               >
                 <div 
                   className="relative mx-auto mb-3 rounded-2xl overflow-hidden shadow-md transition-all duration-300 group-hover:shadow-xl group-hover:scale-105"
-                  style={{ width: cardSize, height: cardSize }}
+                  style={{ height: cardSize, width: cardSize }}
                 >
                   {member.avatar ? (
                     <SiteImage src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
@@ -7359,8 +7390,8 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
                   <div 
                     className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     style={{ 
-                      background: `conic-gradient(from 0deg, ${brandColor}, ${brandColor}40, ${brandColor})`,
                       animation: 'spin 4s linear infinite',
+                      background: `conic-gradient(from 0deg, ${brandColor}, ${brandColor}40, ${brandColor})`,
                       padding: '3px'
                     }}
                   />
@@ -7464,13 +7495,13 @@ function TeamSection({ config, brandColor, title }: { config: Record<string, unk
 // 6 Professional Styles: Icon Grid, Alternating, Compact, Cards, Carousel, Timeline
 type FeaturesStyle = 'iconGrid' | 'alternating' | 'compact' | 'cards' | 'carousel' | 'timeline';
 
-const featureIcons: Record<string, React.ElementType> = { Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, Check, Star };
+const featureIcons: Record<string, React.ElementType> = { Check, Cpu, Globe, Layers, Rocket, Settings, Shield, Star, Target, Zap };
 
 function FeaturesSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const items = (config.items as Array<{ icon?: string; title: string; description: string }>) || [];
+  const items = (config.items as { icon?: string; title: string; description: string }[]) || [];
   const style = (config.style as FeaturesStyle) || 'iconGrid';
   const featuresCarouselId = useSafeId('features-carousel');
-  const getIcon = (iconName?: string) => featureIcons[iconName || 'Zap'] || Zap;
+  const getIcon = (iconName?: string) => featureIcons[iconName ?? 'Zap'] || Zap;
 
   // Style 1: Icon Grid
   if (style === 'iconGrid') {
@@ -7633,8 +7664,8 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(featuresCarouselId);
-                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    const container = document.querySelector(`#${featuresCarouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                   }}
                   className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
                 >
@@ -7643,8 +7674,8 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(featuresCarouselId);
-                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    const container = document.querySelector(`#${featuresCarouselId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                   }}
                   className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
                 >
@@ -7657,7 +7688,7 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
             <div
               id={featuresCarouselId}
               className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+              style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
               onMouseDown={(e) => {
                 const el = e.currentTarget;
                 el.dataset.isDown = 'true';
@@ -7669,7 +7700,7 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
               onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
               onMouseMove={(e) => {
                 const el = e.currentTarget;
-                if (el.dataset.isDown !== 'true') return;
+                if (el.dataset.isDown !== 'true') {return;}
                 e.preventDefault();
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -7745,11 +7776,11 @@ function FeaturesSection({ config, brandColor, title }: { config: Record<string,
 type ProcessStyle = 'horizontal' | 'stepper' | 'cards' | 'accordion' | 'minimal' | 'grid';
 
 function ProcessSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const steps = (config.steps as Array<{ icon: string; title: string; description: string }>) || [];
+  const steps = (config.steps as { icon: string; title: string; description: string }[]) || [];
   const style = (config.style as ProcessStyle) || 'horizontal';
   const [activeAccordion, setActiveAccordion] = React.useState<number>(0);
 
-  if (steps.length === 0) return null;
+  if (steps.length === 0) {return null;}
 
   // Style 1: Horizontal - Compact progress bar layout
   if (style === 'horizontal') {
@@ -7909,7 +7940,7 @@ function ProcessSection({ config, brandColor, title }: { config: Record<string, 
                 <button 
                   type="button"
                   className="w-full flex items-center gap-3 p-4 text-left hover:bg-slate-50 transition-colors"
-                  onClick={() => setActiveAccordion(activeAccordion === idx ? -1 : idx)}
+                  onClick={() =>{  setActiveAccordion(activeAccordion === idx ? -1 : idx); }}
                 >
                   <div 
                     className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
@@ -8008,11 +8039,11 @@ function ProcessSection({ config, brandColor, title }: { config: Record<string, 
 type ClientsStyle = 'marquee' | 'dualRow' | 'wave' | 'grid' | 'carousel' | 'featured';
 
 function ClientsSection({ config, brandColor, title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
-  const items = (config.items as Array<{ url: string; link: string; name?: string }>) || [];
+  const items = (config.items as { url: string; link: string; name?: string }[]) || [];
   const style = (config.style as ClientsStyle) || 'marquee';
   const clientsCarouselId = useSafeId('clients-carousel');
 
-  if (items.length === 0) return null;
+  if (items.length === 0) {return null;}
 
   // CSS keyframes với pause on hover và prefers-reduced-motion
   const marqueeStyles = `
@@ -8032,14 +8063,14 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
   // Logo item renderer - tăng 20% size, bỏ grayscale
   const renderLogoItem = (item: { url: string; link: string; name?: string }, idx: number) => {
     const logo = item.url ? (
-      <SiteImage src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none" />
+      <SiteImage src={item.url} alt={item.name ?? `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none" />
     ) : (
       <div className="h-14 md:h-16 w-28 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}15` }}>
         <ImageIcon size={22} style={{ color: brandColor }} className="opacity-40" />
       </div>
     );
     return item.link ? (
-      <a key={`logo-${idx}`} href={item.link} target="_blank" rel="noopener noreferrer" className="shrink-0" role="listitem" aria-label={item.name || `Khách hàng ${idx + 1}`}>{logo}</a>
+      <a key={`logo-${idx}`} href={item.link} target="_blank" rel="noopener noreferrer" className="shrink-0" role="listitem" aria-label={item.name ?? `Khách hàng ${idx + 1}`}>{logo}</a>
     ) : (
       <div key={`logo-${idx}`} className="shrink-0" role="listitem">{logo}</div>
     );
@@ -8057,7 +8088,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
             <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full" style={{ backgroundColor: brandColor }} />
             {title}
           </h2>
-          <div className="clients-container relative py-4 overflow-hidden" role="list" style={{ maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
+          <div className="clients-container relative py-4 overflow-hidden" role="list" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
             <div className="clients-track flex items-center gap-10 md:gap-12" style={{ '--duration': `${baseDuration}s`, width: 'max-content' } as React.CSSProperties}>
               {items.map((item, idx) => renderLogoItem(item, idx))}
               {items.map((item, idx) => renderLogoItem(item, idx + items.length))}
@@ -8079,16 +8110,16 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
             {title}
           </h2>
           <div className="space-y-2" role="list">
-            <div className="clients-container relative py-2 overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
+            <div className="clients-container relative py-2 overflow-hidden" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
               <div className="clients-track flex items-center gap-10 md:gap-12" style={{ '--duration': `${baseDuration + 5}s`, width: 'max-content' } as React.CSSProperties}>
                 {items.map((item, idx) => renderLogoItem(item, idx))}
                 {items.map((item, idx) => renderLogoItem(item, idx + items.length))}
               </div>
             </div>
-            <div className="clients-container relative py-2 overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
+            <div className="clients-container relative py-2 overflow-hidden" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
               <div className="clients-track-reverse flex items-center gap-10 md:gap-12" style={{ '--duration': `${baseDuration + 10}s`, width: 'max-content' } as React.CSSProperties}>
-                {[...items].reverse().map((item, idx) => renderLogoItem(item, idx))}
-                {[...items].reverse().map((item, idx) => renderLogoItem(item, idx + items.length))}
+                {[...items].toReversed().map((item, idx) => renderLogoItem(item, idx))}
+                {[...items].toReversed().map((item, idx) => renderLogoItem(item, idx + items.length))}
               </div>
             </div>
           </div>
@@ -8107,13 +8138,13 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Đối tác & Khách hàng</div>
             <h2 className="text-lg md:text-xl font-bold tracking-tight text-slate-900">{title}</h2>
           </div>
-          <div className="clients-container relative py-4 overflow-hidden" role="list" style={{ maskImage: 'linear-gradient(to right, transparent, black 4%, black 96%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 4%, black 96%, transparent)' }}>
+          <div className="clients-container relative py-4 overflow-hidden" role="list" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 4%, black 96%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 4%, black 96%, transparent)' }}>
             <div className="clients-track flex items-center gap-8 md:gap-10" style={{ '--duration': `${baseDuration + 15}s`, width: 'max-content' } as React.CSSProperties}>
               {items.map((item, idx) => (
                 <div key={`wave-${idx}`} className="shrink-0 clients-float" style={{ animationDelay: `${idx * 0.3}s` }} role="listitem">
                   {item.url ? (
                     <div className="p-3 bg-white rounded-lg shadow-sm border border-slate-100">
-                      <SiteImage src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" />
+                      <SiteImage src={item.url} alt={item.name ?? `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" />
                     </div>
                   ) : (
                     <div className="h-[4.5rem] w-28 rounded-lg flex items-center justify-center bg-white shadow-sm border border-slate-100">
@@ -8126,7 +8157,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
                 <div key={`wave2-${idx}`} className="shrink-0 clients-float" style={{ animationDelay: `${(idx + items.length) * 0.3}s` }} role="listitem">
                   {item.url ? (
                     <div className="p-3 bg-white rounded-lg shadow-sm border border-slate-100">
-                      <SiteImage src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" />
+                      <SiteImage src={item.url} alt={item.name ?? `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" />
                     </div>
                   ) : (
                     <div className="h-[4.5rem] w-28 rounded-lg flex items-center justify-center bg-white shadow-sm border border-slate-100">
@@ -8161,7 +8192,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
             {visibleItems.map((item, idx) => (
               <div key={`grid-${idx}`} className="p-3 rounded-lg border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all cursor-pointer flex flex-col items-center" role="listitem">
                 {item.url ? (
-                  <SiteImage src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none" />
+                  <SiteImage src={item.url} alt={item.name ?? `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none" />
                 ) : (
                   <div className="h-14 md:h-16 w-24 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}>
                     <ImageIcon size={18} className="text-slate-300" />
@@ -8202,23 +8233,23 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
             </div>
             {items.length > 3 && (
               <div className="flex gap-1.5">
-                <button type="button" onClick={() => { const el = document.getElementById(carouselId); if (el) el.scrollBy({ left: -182, behavior: 'smooth' }); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all border border-slate-200" aria-label="Cuộn trái"><ChevronLeft size={14} /></button>
-                <button type="button" onClick={() => { const el = document.getElementById(carouselId); if (el) el.scrollBy({ left: 182, behavior: 'smooth' }); }} className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-all" style={{ backgroundColor: brandColor }} aria-label="Cuộn phải"><ChevronRight size={14} /></button>
+                <button type="button" onClick={() => { const el = document.querySelector(`#${carouselId}`); if (el) {el.scrollBy({ behavior: 'smooth', left: -182 });} }} className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all border border-slate-200" aria-label="Cuộn trái"><ChevronLeft size={14} /></button>
+                <button type="button" onClick={() => { const el = document.querySelector(`#${carouselId}`); if (el) {el.scrollBy({ behavior: 'smooth', left: 182 });} }} className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-all" style={{ backgroundColor: brandColor }} aria-label="Cuộn phải"><ChevronRight size={14} /></button>
               </div>
             )}
           </div>
           <div className="relative overflow-hidden mx-4 rounded-lg">
             <div className="absolute left-0 top-0 bottom-0 w-6 md:w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
             <div className="absolute right-0 top-0 bottom-0 w-6 md:w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
-            <div id={carouselId} className="flex overflow-x-auto snap-x snap-mandatory gap-3 py-3 px-1.5 cursor-grab active:cursor-grabbing select-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }} role="list"
+            <div id={carouselId} className="flex overflow-x-auto snap-x snap-mandatory gap-3 py-3 px-1.5 cursor-grab active:cursor-grabbing select-none" style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }} role="list"
               onMouseDown={(e) => { const el = e.currentTarget; el.dataset.isDown = 'true'; el.dataset.startX = String(e.pageX - el.offsetLeft); el.dataset.scrollLeft = String(el.scrollLeft); el.style.scrollBehavior = 'auto'; }}
               onMouseLeave={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
               onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
-              onMouseMove={(e) => { const el = e.currentTarget; if (el.dataset.isDown !== 'true') return; e.preventDefault(); const x = e.pageX - el.offsetLeft; const walk = (x - Number(el.dataset.startX)) * 1.5; el.scrollLeft = Number(el.dataset.scrollLeft) - walk; }}>
+              onMouseMove={(e) => { const el = e.currentTarget; if (el.dataset.isDown !== 'true') {return;} e.preventDefault(); const x = e.pageX - el.offsetLeft; const walk = (x - Number(el.dataset.startX)) * 1.5; el.scrollLeft = Number(el.dataset.scrollLeft) - walk; }}>
               {items.map((item, idx) => (
                 <div key={`carousel-${idx}`} className="flex-shrink-0 snap-start w-[170px]" role="listitem">
                   <div className="h-full p-3 rounded-lg border bg-slate-50 flex flex-col items-center justify-center transition-all hover:shadow-md" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; }}>
-                    {item.url ? <SiteImage src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" /> : <div className="h-12 w-full flex items-center justify-center"><ImageIcon size={22} className="text-slate-300" /></div>}
+                    {item.url ? <SiteImage src={item.url} alt={item.name ?? `Khách hàng ${idx + 1}`} className="h-12 w-auto object-contain select-none pointer-events-none" /> : <div className="h-12 w-full flex items-center justify-center"><ImageIcon size={22} className="text-slate-300" /></div>}
                     {item.name && <span className="text-[10px] text-slate-500 text-center mt-1.5 truncate w-full">{item.name}</span>}
                   </div>
                 </div>
@@ -8248,7 +8279,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3" role="list">
           {featuredItems.map((item, idx) => (
             <div key={`featured-${idx}`} className="group rounded-xl border bg-white flex flex-col items-center justify-center p-5 transition-all hover:shadow-lg" style={{ borderColor: `${brandColor}20`, boxShadow: `0 2px 8px ${brandColor}08` }} role="listitem">
-              {item.url ? <SiteImage src={item.url} alt={item.name || `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none transition-transform duration-300 group-hover:scale-105" /> : <div className="h-16 w-full flex items-center justify-center"><ImageIcon size={26} className="text-slate-300" /></div>}
+              {item.url ? <SiteImage src={item.url} alt={item.name ?? `Khách hàng ${idx + 1}`} className="h-14 md:h-16 w-auto object-contain select-none pointer-events-none transition-transform duration-300 group-hover:scale-105" /> : <div className="h-16 w-full flex items-center justify-center"><ImageIcon size={26} className="text-slate-300" /></div>}
               {item.name && <span className="font-medium text-slate-600 text-center mt-2 truncate w-full text-xs">{item.name}</span>}
             </div>
           ))}
@@ -8259,7 +8290,7 @@ function ClientsSection({ config, brandColor, title }: { config: Record<string, 
             <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6" role="list">
               {visibleOthers.map((item, idx) => (
                 <div key={`other-${idx}`} role="listitem">
-                  {item.url ? <SiteImage src={item.url} alt={item.name || `Khách hàng`} className="h-9 md:h-10 w-auto object-contain select-none pointer-events-none" /> : <div className="h-10 w-16 flex items-center justify-center"><ImageIcon size={16} className="text-slate-300" /></div>}
+                  {item.url ? <SiteImage src={item.url} alt={item.name ?? `Khách hàng`} className="h-9 md:h-10 w-auto object-contain select-none pointer-events-none" /> : <div className="h-10 w-16 flex items-center justify-center"><ImageIcon size={16} className="text-slate-300" /></div>}
                 </div>
               ))}
               {remainingCount > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>+{remainingCount}</span>}
@@ -8280,16 +8311,16 @@ type VideoStyle = 'centered' | 'split' | 'fullwidth' | 'cinema' | 'minimal' | 'p
 
 // Helper: Extract video ID and type
 const getVideoInfo = (url: string): { type: 'youtube' | 'vimeo' | 'drive' | 'direct'; id?: string } => {
-  if (!url) return { type: 'direct' };
+  if (!url) {return { type: 'direct' };}
   // YouTube: regular, shorts, embed, youtu.be
   const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([^&?/]+)/);
-  if (ytMatch) return { type: 'youtube', id: ytMatch[1] };
+  if (ytMatch) {return { id: ytMatch[1], type: 'youtube' };}
   // Vimeo
   const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  if (vimeoMatch) return { type: 'vimeo', id: vimeoMatch[1] };
+  if (vimeoMatch) {return { id: vimeoMatch[1], type: 'vimeo' };}
   // Google Drive
   const driveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([^/&?]+)/);
-  if (driveMatch) return { type: 'drive', id: driveMatch[1] };
+  if (driveMatch) {return { id: driveMatch[1], type: 'drive' };}
   return { type: 'direct' };
 };
 
@@ -8313,7 +8344,7 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
   const displayThumbnail = thumbnailUrl || (videoInfo.type === 'youtube' && videoInfo.id ? getYouTubeThumbnail(videoInfo.id) : '');
 
   const renderVideoEmbed = () => {
-    if (!isPlaying) return null;
+    if (!isPlaying) {return null;}
     const loopParams = loop ? '&loop=1' : '';
     const muteParams = muted ? '&mute=1' : '';
     if (videoInfo.type === 'youtube' && videoInfo.id) {
@@ -8329,7 +8360,7 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
   };
 
   const renderPlayButton = (size: 'sm' | 'lg' = 'lg') => (
-    <button onClick={() => setIsPlaying(true)} className="absolute inset-0 flex items-center justify-center group transition-all bg-black/30 hover:bg-black/40">
+    <button onClick={() =>{  setIsPlaying(true); }} className="absolute inset-0 flex items-center justify-center group transition-all bg-black/30 hover:bg-black/40">
       <div className={`rounded-full flex items-center justify-center transition-transform group-hover:scale-110 shadow-xl ${size === 'lg' ? 'w-16 h-16 md:w-20 md:h-20' : 'w-12 h-12'}`} style={{ backgroundColor: brandColor }}>
         <Play className={`text-white ml-1 ${size === 'lg' ? 'w-7 h-7 md:w-8 md:h-8' : 'w-5 h-5'}`} fill="white" />
       </div>
@@ -8410,7 +8441,7 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
               <div className="max-w-xl">
                 {heading && <h2 className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-4">{heading}</h2>}
                 {description && <p className="text-sm md:text-lg text-white/80 mb-6">{description}</p>}
-                <button onClick={() => setIsPlaying(true)} className="flex items-center gap-3 px-6 py-3 rounded-lg text-white font-medium transition-transform hover:scale-105" style={{ backgroundColor: brandColor }}>
+                <button onClick={() =>{  setIsPlaying(true); }} className="flex items-center gap-3 px-6 py-3 rounded-lg text-white font-medium transition-transform hover:scale-105" style={{ backgroundColor: brandColor }}>
                   <Play className="w-5 h-5" fill="white" />{buttonText || 'Xem video'}
                 </button>
               </div>
@@ -8486,7 +8517,7 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
       <div className="relative overflow-hidden min-h-[400px] md:min-h-[500px]">
         {!isPlaying && displayThumbnail && (
           <>
-            <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${displayThumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(8px)' }} />
+            <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${displayThumbnail})`, backgroundPosition: 'center', backgroundSize: 'cover', filter: 'blur(8px)' }} />
             <SiteImage src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
           </>
         )}
@@ -8499,7 +8530,7 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
               {heading && <h3 className="text-lg md:text-xl font-bold text-slate-900">{heading}</h3>}
               {description && <p className="text-slate-600 text-sm mt-1">{description}</p>}
               <div className="flex items-center gap-3 mt-4">
-                <button onClick={() => setIsPlaying(true)} className="flex items-center gap-2 px-5 py-2.5 font-medium rounded-lg text-white text-sm" style={{ backgroundColor: brandColor }}>
+                <button onClick={() =>{  setIsPlaying(true); }} className="flex items-center gap-2 px-5 py-2.5 font-medium rounded-lg text-white text-sm" style={{ backgroundColor: brandColor }}>
                   <Play className="w-4 h-4" fill="white" />{buttonText || 'Xem video'}
                 </button>
               </div>
@@ -8508,7 +8539,7 @@ function VideoSection({ config, brandColor, title }: { config: Record<string, un
         )}
         {!isPlaying && (
           <div className="absolute top-6 right-6 z-20">
-            <button onClick={() => setIsPlaying(true)} className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
+            <button onClick={() =>{  setIsPlaying(true); }} className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
               <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
             </button>
           </div>
@@ -8526,7 +8557,7 @@ type CountdownStyle = 'banner' | 'floating' | 'minimal' | 'split' | 'sticky' | '
 
 // Countdown Timer Hook with expired state
 const useCountdownTimer = (endDate: string) => {
-  const [timeLeft, setTimeLeft] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: false });
+  const [timeLeft, setTimeLeft] = React.useState({ days: 0, hours: 0, isExpired: false, minutes: 0, seconds: 0 });
 
   React.useEffect(() => {
     const calculateTime = () => {
@@ -8535,22 +8566,22 @@ const useCountdownTimer = (endDate: string) => {
       const diff = end - now;
 
       if (diff <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true });
+        setTimeLeft({ days: 0, hours: 0, isExpired: true, minutes: 0, seconds: 0 });
         return;
       }
 
       setTimeLeft({
         days: Math.floor(diff / (1000 * 60 * 60 * 24)),
         hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        isExpired: false,
         minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
         seconds: Math.floor((diff % (1000 * 60)) / 1000),
-        isExpired: false,
       });
     };
 
     calculateTime();
     const timer = setInterval(calculateTime, 1000);
-    return () => clearInterval(timer);
+    return () =>{  clearInterval(timer); };
   }, [endDate]);
 
   return timeLeft;
@@ -8575,7 +8606,7 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
   
   // Popup dismiss state - show once per session, dismiss on X/background/skip click
   const [isPopupDismissed, setIsPopupDismissed] = React.useState(() => {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined') {return false;}
     return sessionStorage.getItem('countdown-popup-dismissed') === 'true';
   });
   
@@ -8879,7 +8910,7 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
     >
       <div 
         className="bg-white rounded-2xl shadow-2xl overflow-hidden relative w-full max-w-md animate-in fade-in zoom-in-95 duration-300"
-        onClick={(e) => e.stopPropagation()} // Prevent dismiss when clicking popup content
+        onClick={(e) =>{  e.stopPropagation(); }} // Prevent dismiss when clicking popup content
       >
         {/* Close button */}
         <button 
@@ -8936,8 +8967,8 @@ function CountdownSection({ config, brandColor, title }: { config: Record<string
 // 6 Styles: classic, modern, corporate, minimal, centered, stacked
 // Synced with previews.tsx FooterPreview
 type FooterStyle = 'classic' | 'modern' | 'corporate' | 'minimal' | 'centered' | 'stacked';
-type FooterColumn = { title: string; links: Array<{ label: string; url: string }> };
-type SocialLinkItem = { platform: string; url: string; icon: string };
+interface FooterColumn { title: string; links: { label: string; url: string }[] }
+interface SocialLinkItem { platform: string; url: string; icon: string }
 
 function FooterSection({ config, brandColor }: { config: Record<string, unknown>; brandColor: string }) {
   const style = (config.style as FooterStyle) || 'classic';
@@ -8950,11 +8981,11 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
 
   // Best Practice: Dùng brandColor đậm làm nền thay vì màu đen cứng
   const shadeColor = (hex: string, percent: number): string => {
-    const num = parseInt(hex.replace('#', ''), 16);
+    const num = Number.parseInt(hex.replace('#', ''), 16);
     const R = Math.round((num >> 16) * (1 - percent / 100));
-    const G = Math.round((num >> 8 & 0x00FF) * (1 - percent / 100));
-    const B = Math.round((num & 0x0000FF) * (1 - percent / 100));
-    return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+    const G = Math.round((num >> 8 & 0x00_FF) * (1 - percent / 100));
+    const B = Math.round((num & 0x00_00_FF) * (1 - percent / 100));
+    return `#${(0x1_00_00_00 + R * 0x1_00_00 + G * 0x1_00 + B).toString(16).slice(1)}`;
   };
 
   const bgDark = shadeColor(brandColor, 65);
@@ -8962,37 +8993,43 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
   const borderColor = shadeColor(brandColor, 30);
 
   const socialColors: Record<string, string> = {
-    facebook: '#1877F2', instagram: '#E4405F', youtube: '#FF0000',
-    tiktok: '#000000', zalo: '#0084FF', twitter: '#1DA1F2', linkedin: '#0A66C2'
+    facebook: '#1877F2', instagram: '#E4405F', linkedin: '#0A66C2',
+    tiktok: '#000000', twitter: '#1DA1F2', youtube: '#FF0000', zalo: '#0084FF'
   };
 
   // Social icons
   const renderSocialIcon = (platform: string, size: number = 18) => {
     switch (platform) {
-      case 'facebook':
+      case 'facebook': {
         return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>;
-      case 'instagram':
+      }
+      case 'instagram': {
         return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>;
-      case 'youtube':
+      }
+      case 'youtube': {
         return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="white"/></svg>;
-      case 'tiktok':
+      }
+      case 'tiktok': {
         return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>;
-      case 'zalo':
+      }
+      case 'zalo': {
         return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M12.49 10.2722v-.4496h1.3467v6.3218h-.7704a.576.576 0 01-.5763-.5729l-.0006.0005a3.273 3.273 0 01-1.9372.6321c-1.8138 0-3.2844-1.4697-3.2844-3.2823 0-1.8125 1.4706-3.2822 3.2844-3.2822a3.273 3.273 0 011.9372.6321l.0006.0005zM6.9188 7.7896v.205c0 .3823-.051.6944-.2995 1.0605l-.03.0343c-.0542.0615-.1815.206-.2421.2843L2.024 14.8h4.8948v.7682a.5764.5764 0 01-.5767.5761H0v-.3622c0-.4436.1102-.6414.2495-.8476L4.8582 9.23H.1922V7.7896h6.7266zm8.5513 8.3548a.4805.4805 0 01-.4803-.4798v-7.875h1.4416v8.3548H15.47zM20.6934 9.6C22.52 9.6 24 11.0807 24 12.9044c0 1.8252-1.4801 3.306-3.3066 3.306-1.8264 0-3.3066-1.4808-3.3066-3.306 0-1.8237 1.4802-3.3044 3.3066-3.3044zm-10.1412 5.253c1.0675 0 1.9324-.8645 1.9324-1.9312 0-1.065-.865-1.9295-1.9324-1.9295s-1.9324.8644-1.9324 1.9295c0 1.0667.865 1.9312 1.9324 1.9312zm10.1412-.0033c1.0737 0 1.945-.8707 1.945-1.9453 0-1.073-.8713-1.9436-1.945-1.9436-1.0753 0-1.945.8706-1.945 1.9436 0 1.0746.8697 1.9453 1.945 1.9453z"/></svg>;
-      default:
+      }
+      default: {
         return <Globe size={size} />;
+      }
     }
   };
 
   const getSocials = () => socialLinks.length > 0 ? socialLinks : [
-    { platform: 'facebook', url: '#', icon: 'facebook' },
-    { platform: 'instagram', url: '#', icon: 'instagram' },
-    { platform: 'youtube', url: '#', icon: 'youtube' }
+    { icon: 'facebook', platform: 'facebook', url: '#' },
+    { icon: 'instagram', platform: 'instagram', url: '#' },
+    { icon: 'youtube', platform: 'youtube', url: '#' }
   ];
 
   const getColumns = () => columns.length > 0 ? columns : [
-    { title: 'Về chúng tôi', links: [{ label: 'Giới thiệu', url: '/about' }, { label: 'Tuyển dụng', url: '/careers' }] },
-    { title: 'Hỗ trợ', links: [{ label: 'FAQ', url: '/faq' }, { label: 'Liên hệ', url: '/contact' }] }
+    { links: [{ label: 'Giới thiệu', url: '/about' }, { label: 'Tuyển dụng', url: '/careers' }], title: 'Về chúng tôi' },
+    { links: [{ label: 'FAQ', url: '/faq' }, { label: 'Liên hệ', url: '/contact' }], title: 'Hỗ trợ' }
   ];
 
   // Style 1: Classic Dark
@@ -9170,7 +9207,7 @@ function FooterSection({ config, brandColor }: { config: Record<string, unknown>
           {showSocialLinks && (
             <div className="flex justify-center gap-3 mb-4">
               {getSocials().map((s, i) => (
-                <a key={i} href={s.url} className="h-8 w-8 flex items-center justify-center rounded-full transition-all hover:scale-110" style={{ backgroundColor: `${brandColor}20`, color: '#fff', border: `1px solid ${brandColor}30` }}>
+                <a key={i} href={s.url} className="h-8 w-8 flex items-center justify-center rounded-full transition-all hover:scale-110" style={{ backgroundColor: `${brandColor}20`, border: `1px solid ${brandColor}30`, color: '#fff' }}>
                   {renderSocialIcon(s.platform, 16)}
                 </a>
               ))}

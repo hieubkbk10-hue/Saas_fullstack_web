@@ -1,29 +1,29 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Shield, FileText, Palette, GitBranch, Loader2, Database, Trash2, RefreshCw, Settings, Users, Crown, Lock } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { Crown, Database, FileText, GitBranch, Loader2, Lock, Palette, RefreshCw, Settings, Shield, Trash2, Users } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus,
+  SettingInput, SettingsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'roles';
 
 const FEATURES_CONFIG = [
-  { key: 'enableDescription', label: 'Mô tả vai trò', icon: FileText, linkedField: 'description' },
-  { key: 'enableColor', label: 'Màu sắc', icon: Palette, linkedField: 'color' },
-  { key: 'enableHierarchy', label: 'Phân cấp', icon: GitBranch },
+  { icon: FileText, key: 'enableDescription', label: 'Mô tả vai trò', linkedField: 'description' },
+  { icon: Palette, key: 'enableColor', label: 'Màu sắc', linkedField: 'color' },
+  { icon: GitBranch, key: 'enableHierarchy', label: 'Phân cấp' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { maxRolesPerUser: number; rolesPerPage: number };
+interface SettingsState { maxRolesPerUser: number; rolesPerPage: number }
 type TabType = 'config' | 'data';
 
 export default function RolesModuleConfigPage() {
@@ -66,14 +66,14 @@ export default function RolesModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -94,9 +94,7 @@ export default function RolesModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
   const serverSettings = useMemo(() => {
     const maxRolesPerUser = settingsData?.find(s => s.settingKey === 'maxRolesPerUser')?.value as number ?? 1;
@@ -126,7 +124,7 @@ export default function RolesModuleConfigPage() {
 
   const handleToggleField = (id: string) => {
     const field = localFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalFields(prev => {
@@ -154,13 +152,13 @@ export default function RolesModuleConfigPage() {
       const promises: Promise<unknown>[] = [];
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
+          promises.push(toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY }));
         }
       }
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
+          promises.push(updateField({ enabled: field.enabled, id: field.id as Id<"moduleFields"> }));
         }
       }
       if (localSettings.maxRolesPerUser !== serverSettings.maxRolesPerUser) {
@@ -187,7 +185,7 @@ export default function RolesModuleConfigPage() {
   };
 
   const handleClearData = async () => {
-    if (!confirm('Xóa các vai trò custom (giữ lại vai trò hệ thống)?')) return;
+    if (!confirm('Xóa các vai trò custom (giữ lại vai trò hệ thống)?')) {return;}
     toast.loading('Đang xóa dữ liệu...');
     await clearRolesData();
     toast.dismiss();
@@ -195,7 +193,7 @@ export default function RolesModuleConfigPage() {
   };
 
   const handleResetAll = async () => {
-    if (!confirm('Reset dữ liệu về mặc định?')) return;
+    if (!confirm('Reset dữ liệu về mặc định?')) {return;}
     toast.loading('Đang reset dữ liệu...');
     await clearRolesData();
     await seedRolesModule();
@@ -232,7 +230,7 @@ export default function RolesModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-purple-500 text-purple-600 dark:text-purple-400'
@@ -242,7 +240,7 @@ export default function RolesModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-purple-500 text-purple-600 dark:text-purple-400'
@@ -263,13 +261,13 @@ export default function RolesModuleConfigPage() {
                 <SettingInput 
                   label="Max roles / user" 
                   value={localSettings.maxRolesPerUser} 
-                  onChange={(v) => setLocalSettings({...localSettings, maxRolesPerUser: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, maxRolesPerUser: v}); }}
                   focusColor="focus:border-purple-500"
                 />
                 <SettingInput 
                   label="Số vai trò / trang" 
                   value={localSettings.rolesPerPage} 
-                  onChange={(v) => setLocalSettings({...localSettings, rolesPerPage: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, rolesPerPage: v}); }}
                   focusColor="focus:border-purple-500"
                 />
               </SettingsCard>

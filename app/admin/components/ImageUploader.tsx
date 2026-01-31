@@ -1,27 +1,27 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Upload, Trash2, Loader2 } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { Loader2, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, cn } from './ui';
 
 // Slugify filename
 function slugifyFilename(filename: string): string {
-  const ext = filename.split('.').pop() || '';
+  const ext = filename.split('.').pop() ?? '';
   const name = filename.replace(/\.[^/.]+$/, '');
   
   const slugified = name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[đĐ]/g, "d")
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+    .replaceAll(/[\u0300-\u036F]/g, "")
+    .replaceAll(/[đĐ]/g, "d")
+    .replaceAll(/[^a-z0-9\s-]/g, '')
+    .replaceAll(/\s+/g, '-')
+    .replaceAll(/-+/g, '-')
     .trim();
   
   const timestamp = Date.now();
@@ -122,9 +122,9 @@ export function ImageUploader({
       
       // Upload to Convex storage
       const response = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': compressedFile.type },
         body: compressedFile,
+        headers: { 'Content-Type': compressedFile.type },
+        method: 'POST',
       });
       
       if (!response.ok) {
@@ -136,24 +136,24 @@ export function ImageUploader({
       // Get image dimensions
       const img = new window.Image();
       const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
-        img.onload = () => resolve({ width: img.width, height: img.height });
+        img.onload = () =>{  resolve({ height: img.height, width: img.width }); };
         img.src = URL.createObjectURL(compressedFile);
       });
       
       // Save to database
       const result = await saveImage({
-        storageId: storageId as Id<"_storage">,
         filename: slugifiedName,
+        folder,
+        height: dimensions.height,
         mimeType: compressedFile.type,
         size: compressedFile.size,
+        storageId: storageId as Id<"_storage">,
         width: dimensions.width,
-        height: dimensions.height,
-        folder,
       });
       
-      setPreview(result.url || undefined);
+      setPreview(result.url ?? undefined);
       setCurrentStorageId(storageId);
-      onChange(result.url || undefined, storageId);
+      onChange(result.url ?? undefined, storageId);
       toast.success('Tải ảnh lên thành công');
       
     } catch (error) {
@@ -167,12 +167,12 @@ export function ImageUploader({
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file) void handleFileSelect(file);
+    if (file) {void handleFileSelect(file);}
   }, [handleFileSelect]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) void handleFileSelect(file);
+    if (file) {void handleFileSelect(file);}
   }, [handleFileSelect]);
 
   const handleRemove = useCallback(async () => {
@@ -192,9 +192,9 @@ export function ImageUploader({
   }, [currentStorageId, deleteImage, onChange]);
 
   const aspectClasses = {
+    auto: 'min-h-[160px]',
     square: 'aspect-square',
     video: 'aspect-video',
-    auto: 'min-h-[160px]',
   };
 
   return (
@@ -231,7 +231,7 @@ export function ImageUploader({
         <div
           onClick={() => inputRef.current?.click()}
           onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
+          onDragOver={(e) =>{  e.preventDefault(); }}
           className={cn(
             'border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors',
             aspectClasses[aspectRatio],
@@ -267,9 +267,9 @@ export async function uploadImageToStorage(
   // Upload
   const uploadUrl = await generateUploadUrl();
   const response = await fetch(uploadUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': compressedFile.type },
     body: compressedFile,
+    headers: { 'Content-Type': compressedFile.type },
+    method: 'POST',
   });
   
   if (!response.ok) {

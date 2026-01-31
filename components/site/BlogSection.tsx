@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { FileText, Loader2, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, FileText, Loader2 } from 'lucide-react';
 
 // Modern News Feed UI/UX - 6 Variants (synced with BlogPreview)
 type BlogStyle = 'grid' | 'list' | 'featured' | 'magazine' | 'carousel' | 'minimal';
@@ -22,7 +22,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
   
   // Query real posts from database
   const postsData = useQuery(api.posts.listPublished, { 
-    paginationOpts: { numItems: Math.min(itemCount, 10), cursor: null } 
+    paginationOpts: { cursor: null, numItems: Math.min(itemCount, 10) } 
   });
   
   // Query categories for mapping
@@ -30,7 +30,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
   
   // Build category map for O(1) lookup
   const categoryMap = React.useMemo(() => {
-    if (!categories) return new Map<string, string>();
+    if (!categories) {return new Map<string, string>();}
     return new Map(categories.map(c => [c._id, c.name]));
   }, [categories]);
 
@@ -85,7 +85,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                     )}
                     <div className="absolute left-3 top-3">
                       <span className="px-2 py-1 text-xs font-medium rounded shadow-sm backdrop-blur-sm" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                        {categoryMap.get(post.categoryId) || 'Tin tức'}
+                        {categoryMap.get(post.categoryId) ?? 'Tin tức'}
                       </span>
                     </div>
                   </div>
@@ -132,7 +132,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                     )}
                   </div>
                   <div className="flex flex-1 flex-col justify-center p-4 sm:px-6">
-                    <div className="mb-2"><span className="text-xs font-semibold" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) || 'Tin tức'}</span></div>
+                    <div className="mb-2"><span className="text-xs font-semibold" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) ?? 'Tin tức'}</span></div>
                     <h3 className="mb-2 text-base md:text-lg font-bold leading-snug text-slate-900 group-hover:opacity-80 transition-colors line-clamp-2">{post.title}</h3>
                     {post.excerpt && <p className="text-sm text-slate-500 line-clamp-2 mb-2">{post.excerpt}</p>}
                     <div className="flex items-center gap-3">
@@ -184,7 +184,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                   <div className="relative z-10 p-6 md:p-8">
                     <div className="mb-3 flex items-center space-x-3">
                       <span className="px-2.5 py-1 text-xs font-medium rounded backdrop-blur-md" style={{ backgroundColor: `${brandColor}60`, color: 'white' }}>
-                        {categoryMap.get(featuredPost.categoryId) || 'Tin tức'}
+                        {categoryMap.get(featuredPost.categoryId) ?? 'Tin tức'}
                       </span>
                     </div>
                     <h3 className="mb-2 text-xl sm:text-2xl md:text-3xl font-bold leading-tight tracking-tight text-white">{featuredPost.title}</h3>
@@ -209,7 +209,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                       )}
                     </div>
                     <div className="flex flex-col flex-1 min-w-0">
-                      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) || 'Tin tức'}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) ?? 'Tin tức'}</span>
                       <h4 className="text-sm font-semibold leading-snug text-slate-900 line-clamp-2 group-hover:opacity-80 transition-colors">{post.title}</h4>
                       <time className="mt-1 text-[10px] text-slate-500">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
                     </div>
@@ -251,7 +251,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                   {featured.thumbnail ? <Image src={featured.thumbnail} alt={featured.title} fill className="object-cover" sizes="(min-width: 1024px) 50vw, 100vw" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}30, ${brandColor}60)` }} />}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <span className="px-2 py-1 text-[10px] font-bold rounded mb-2 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{categoryMap.get(featured.categoryId) || 'Tin tức'}</span>
+                    <span className="px-2 py-1 text-[10px] font-bold rounded mb-2 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{categoryMap.get(featured.categoryId) ?? 'Tin tức'}</span>
                     <h3 className="text-lg font-bold text-white line-clamp-2">{featured.title}</h3>
                   </div>
                 </article>
@@ -282,7 +282,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                   {featured.thumbnail ? <Image src={featured.thumbnail} alt={featured.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(min-width: 1024px) 50vw, 100vw" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}80)` }} />}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <span className="px-2.5 py-1 text-xs font-bold rounded mb-3 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{categoryMap.get(featured.categoryId) || 'Nổi bật'}</span>
+                    <span className="px-2.5 py-1 text-xs font-bold rounded mb-3 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{categoryMap.get(featured.categoryId) ?? 'Nổi bật'}</span>
                     <h3 className="text-xl font-bold text-white leading-tight line-clamp-2 mb-2">{featured.title}</h3>
                     {featured.excerpt && <p className="text-sm text-slate-200 line-clamp-2 mb-3">{featured.excerpt}</p>}
                     <time className="text-sm text-slate-300">{featured.publishedAt ? new Date(featured.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
@@ -298,7 +298,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                     {post.thumbnail ? <Image src={post.thumbnail} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(min-width: 1024px) 33vw, 50vw" /> : <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${brandColor}10` }}><FileText size={28} style={{ color: `${brandColor}40` }} /></div>}
                   </div>
                   <div className="p-4 flex flex-col flex-1">
-                    <span className="text-[10px] font-bold uppercase mb-1" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) || 'Tin tức'}</span>
+                    <span className="text-[10px] font-bold uppercase mb-1" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) ?? 'Tin tức'}</span>
                     <h4 className="text-base font-semibold text-slate-900 line-clamp-2 mb-2 group-hover:opacity-80 transition-colors">{post.title}</h4>
                     <time className="text-xs text-slate-500 mt-auto">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
                   </div>
@@ -334,8 +334,8 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselDomId);
-                      if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                      const container = document.querySelector(`#${carouselDomId}`);
+                      if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                     }}
                     className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
                   >
@@ -344,8 +344,8 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselDomId);
-                      if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                      const container = document.querySelector(`#${carouselDomId}`);
+                      if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                     }}
                     className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
                   >
@@ -360,8 +360,8 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselDomId);
-                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselDomId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                   }}
                   className="w-10 h-10 rounded-full border flex items-center justify-center transition-colors hover:bg-slate-50"
                   style={{ borderColor: `${brandColor}30` }}
@@ -371,8 +371,8 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselDomId);
-                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselDomId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                   }}
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
                   style={{ backgroundColor: brandColor }}
@@ -394,9 +394,9 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
               id={carouselDomId}
               className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-5 py-4 px-2 cursor-grab active:cursor-grabbing select-none scrollbar-hide"
               style={{
-                scrollbarWidth: 'none',
+                WebkitOverflowScrolling: 'touch',
                 msOverflowStyle: 'none',
-                WebkitOverflowScrolling: 'touch'
+                scrollbarWidth: 'none'
               }}
               onMouseDown={(e) => {
                 const el = e.currentTarget;
@@ -415,7 +415,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
               }}
               onMouseMove={(e) => {
                 const el = e.currentTarget;
-                if (el.dataset.isDown !== 'true') return;
+                if (el.dataset.isDown !== 'true') {return;}
                 e.preventDefault();
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -444,10 +444,10 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                     </div>
                     <div className="p-4 flex flex-col flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) || 'Tin tức'}</span>
+                        <span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) ?? 'Tin tức'}</span>
                       </div>
                       <h3 className="font-bold text-slate-900 line-clamp-2 mb-2 group-hover:opacity-80 transition-colors">{post.title}</h3>
-                      <p className="text-sm text-slate-500 line-clamp-2 mb-3 flex-1">{post.excerpt || ''}</p>
+                      <p className="text-sm text-slate-500 line-clamp-2 mb-3 flex-1">{post.excerpt ?? ''}</p>
                       <div className="flex items-center justify-between mt-auto">
                         <time className="text-xs text-slate-500">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
                         <ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} />
@@ -492,7 +492,7 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
                   <span className="text-xl md:text-2xl font-bold tabular-nums flex-shrink-0 w-8 md:w-10" style={{ color: `${brandColor}60` }}>{String(index + 1).padStart(2, '0')}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) || 'Tin tức'}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: brandColor }}>{categoryMap.get(post.categoryId) ?? 'Tin tức'}</span>
                       <span className="text-[10px] text-slate-400">•</span>
                       <time className="text-[10px] text-slate-500">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
                     </div>

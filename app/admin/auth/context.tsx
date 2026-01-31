@@ -1,27 +1,27 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
-type AdminUser = {
+interface AdminUser {
   id: string;
   name: string;
   email: string;
   roleId: string;
   isSuperAdmin: boolean;
   permissions: Record<string, string[]>;
-};
+}
 
-type AdminAuthContextType = {
+interface AdminAuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
-  isSessionVerified: boolean; // true khi đã verify session xong (dù valid hay invalid)
+  isSessionVerified: boolean; // True khi đã verify session xong (dù valid hay invalid)
   user: AdminUser | null;
   login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
   hasPermission: (moduleKey: string, action: string) => boolean;
-};
+}
 
 const AdminAuthContext = createContext<AdminAuthContextType | null>(null);
 
@@ -29,7 +29,7 @@ const ADMIN_TOKEN_KEY = 'admin_auth_token';
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {return null;}
     return localStorage.getItem(ADMIN_TOKEN_KEY);
   });
 
@@ -45,17 +45,17 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const activeToken = sessionResult?.valid === false ? null : token;
 
   // Check if session is valid
-  // isSessionVerified: true khi không có token HOẶC sessionResult đã có data (dù valid hay không)
+  // IsSessionVerified: true khi không có token HOẶC sessionResult đã có data (dù valid hay không)
   const isSessionVerified = !activeToken || sessionResult !== undefined;
-  const isAuthenticated = !!activeToken && sessionResult?.valid === true;
-  const isLoading = !!activeToken && sessionResult === undefined;
+  const isAuthenticated = Boolean(activeToken) && sessionResult?.valid === true;
+  const isLoading = Boolean(activeToken) && sessionResult === undefined;
   const user = sessionResult?.user ? {
-    id: sessionResult.user.id,
-    name: sessionResult.user.name,
     email: sessionResult.user.email,
-    roleId: sessionResult.user.roleId,
+    id: sessionResult.user.id,
     isSuperAdmin: sessionResult.user.isSuperAdmin,
+    name: sessionResult.user.name,
     permissions: sessionResult.user.permissions,
+    roleId: sessionResult.user.roleId,
   } : null;
 
   // Clear invalid token
@@ -72,9 +72,9 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem(ADMIN_TOKEN_KEY, result.token);
         setToken(result.token);
       }
-      return { success: result.success, message: result.message };
+      return { message: result.message, success: result.success };
     } catch {
-      return { success: false, message: 'Có lỗi xảy ra khi đăng nhập' };
+      return { message: 'Có lỗi xảy ra khi đăng nhập', success: false };
     }
   }, [loginMutation]);
 
@@ -87,10 +87,10 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   }, [token, logoutMutation]);
 
   const hasPermission = (moduleKey: string, action: string) => {
-    if (!user) return false;
-    if (user.isSuperAdmin) return true;
+    if (!user) {return false;}
+    if (user.isSuperAdmin) {return true;}
     
-    const permissions = user.permissions;
+    const {permissions} = user;
     
     // Check wildcard
     if (permissions["*"]?.includes("*") || permissions["*"]?.includes(action)) {
@@ -106,7 +106,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AdminAuthContext.Provider value={{ isAuthenticated, isLoading, isSessionVerified, user, login, logout, hasPermission }}>
+    <AdminAuthContext.Provider value={{ hasPermission, isAuthenticated, isLoading, isSessionVerified, login, logout, user }}>
       {children}
     </AdminAuthContext.Provider>
   );

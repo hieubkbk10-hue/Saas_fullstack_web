@@ -1,31 +1,31 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { ArrowLeft, Loader2, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ArrowLeft, Loader2, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../components/ui';
 
 const MODULE_KEY = 'orders';
 
-type OrderItem = {
+interface OrderItem {
   productId: Id<"products">;
   productName: string;
   quantity: number;
   price: number;
-};
+}
 
 type PaymentMethod = 'COD' | 'BankTransfer' | 'CreditCard' | 'EWallet';
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: 'COD', label: 'Thanh toán khi nhận hàng (COD)' },
-  { value: 'BankTransfer', label: 'Chuyển khoản ngân hàng' },
-  { value: 'CreditCard', label: 'Thẻ tín dụng' },
-  { value: 'EWallet', label: 'Ví điện tử' },
+  { label: 'Thanh toán khi nhận hàng (COD)', value: 'COD' },
+  { label: 'Chuyển khoản ngân hàng', value: 'BankTransfer' },
+  { label: 'Thẻ tín dụng', value: 'CreditCard' },
+  { label: 'Ví điện tử', value: 'EWallet' },
 ];
 
 export default function CreateOrderPage() {
@@ -57,14 +57,14 @@ export default function CreateOrderPage() {
   // Use Map for O(1) lookup
   const productMap = useMemo(() => {
     const map = new Map<string, { name: string; price: number; stock: number }>();
-    productsData?.forEach(p => map.set(p._id, { name: p.name, price: p.salePrice || p.price, stock: p.stock }));
+    productsData?.forEach(p => map.set(p._id, { name: p.name, price: p.salePrice ?? p.price, stock: p.stock }));
     return map;
   }, [productsData]);
 
   // Use Map for O(1) customer lookup
   const customerMap = useMemo(() => {
     const map = new Map<string, { name: string; phone: string; address?: string }>();
-    customersData?.forEach(c => map.set(c._id, { name: c.name, phone: c.phone, address: c.address }));
+    customersData?.forEach(c => map.set(c._id, { address: c.address, name: c.name, phone: c.phone }));
     return map;
   }, [customersData]);
 
@@ -72,17 +72,17 @@ export default function CreateOrderPage() {
   const totalAmount = subtotal + shippingFee;
 
   const addItem = () => {
-    if (!selectedProductId) return;
+    if (!selectedProductId) {return;}
     const product = productMap.get(selectedProductId);
-    if (!product) return;
+    if (!product) {return;}
 
     const existingIndex = items.findIndex(i => i.productId === selectedProductId);
-    if (existingIndex >= 0) {
+    if (existingIndex !== -1) {
       const newItems = [...items];
       newItems[existingIndex].quantity += quantity;
       setItems(newItems);
     } else {
-      setItems([...items, { productId: selectedProductId as Id<"products">, productName: product.name, quantity, price: product.price }]);
+      setItems([...items, { price: product.price, productId: selectedProductId, productName: product.name, quantity }]);
     }
     setSelectedProductId('');
     setQuantity(1);
@@ -93,7 +93,7 @@ export default function CreateOrderPage() {
   };
 
   const updateItemQuantity = (index: number, newQuantity: number) => {
-    if (newQuantity < 1) return;
+    if (newQuantity < 1) {return;}
     const newItems = [...items];
     newItems[index].quantity = newQuantity;
     setItems(newItems);
@@ -121,12 +121,12 @@ export default function CreateOrderPage() {
     setIsSubmitting(true);
     try {
       await createOrder({
-        customerId: customerId as Id<"customers">,
+        customerId: customerId,
         items,
-        shippingFee: enabledFields.has('shippingFee') ? shippingFee : undefined,
+        note: enabledFields.has('note') ? note : undefined,
         paymentMethod: enabledFields.has('paymentMethod') && paymentMethod ? paymentMethod : undefined,
         shippingAddress: enabledFields.has('shippingAddress') ? shippingAddress : undefined,
-        note: enabledFields.has('note') ? note : undefined,
+        shippingFee: enabledFields.has('shippingFee') ? shippingFee : undefined,
       });
       toast.success('Đã tạo đơn hàng thành công');
       router.push('/admin/orders');
@@ -137,7 +137,7 @@ export default function CreateOrderPage() {
     }
   };
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 
   if (isLoading) {
     return (
@@ -170,7 +170,7 @@ export default function CreateOrderPage() {
                 <select
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   value={customerId}
-                  onChange={(e) => handleCustomerChange(e.target.value)}
+                  onChange={(e) =>{  handleCustomerChange(e.target.value); }}
                   required
                 >
                   <option value="">Chọn khách hàng</option>
@@ -189,14 +189,14 @@ export default function CreateOrderPage() {
                   <select
                     className="flex-1 h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                     value={selectedProductId}
-                    onChange={(e) => setSelectedProductId(e.target.value as Id<"products">)}
+                    onChange={(e) =>{  setSelectedProductId(e.target.value as Id<"products">); }}
                   >
                     <option value="">Chọn sản phẩm</option>
                     {productsData?.filter(p => p.status === 'Active' && p.stock > 0).map(p => (
-                      <option key={p._id} value={p._id}>{p.name} - {formatPrice(p.salePrice || p.price)} (Kho: {p.stock})</option>
+                      <option key={p._id} value={p._id}>{p.name} - {formatPrice(p.salePrice ?? p.price)} (Kho: {p.stock})</option>
                     ))}
                   </select>
-                  <Input type="number" className="w-20" min={1} value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value) || 1)} />
+                  <Input type="number" className="w-20" min={1} value={quantity} onChange={(e) =>{  setQuantity(Number.parseInt(e.target.value) || 1); }} />
                   <Button type="button" onClick={addItem} disabled={!selectedProductId}><Plus size={16}/></Button>
                 </div>
 
@@ -214,10 +214,10 @@ export default function CreateOrderPage() {
                             className="w-16 h-8 text-center"
                             min={1}
                             value={item.quantity}
-                            onChange={(e) => updateItemQuantity(index, parseInt(e.target.value) || 1)}
+                            onChange={(e) =>{  updateItemQuantity(index, Number.parseInt(e.target.value) || 1); }}
                           />
                           <span className="font-medium w-28 text-right">{formatPrice(item.price * item.quantity)}</span>
-                          <Button type="button" variant="ghost" size="icon" className="text-red-500" onClick={() => removeItem(index)}>
+                          <Button type="button" variant="ghost" size="icon" className="text-red-500" onClick={() =>{  removeItem(index); }}>
                             <Trash2 size={16}/>
                           </Button>
                         </div>
@@ -243,7 +243,7 @@ export default function CreateOrderPage() {
                     <textarea
                       className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm min-h-[80px]"
                       value={shippingAddress}
-                      onChange={(e) => setShippingAddress(e.target.value)}
+                      onChange={(e) =>{  setShippingAddress(e.target.value); }}
                       placeholder="Nhập địa chỉ giao hàng"
                     />
                   </div>
@@ -259,7 +259,7 @@ export default function CreateOrderPage() {
                   <textarea
                     className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm min-h-[80px]"
                     value={note}
-                    onChange={(e) => setNote(e.target.value)}
+                    onChange={(e) =>{  setNote(e.target.value); }}
                     placeholder="Ghi chú cho đơn hàng"
                   />
                 </CardContent>
@@ -277,7 +277,7 @@ export default function CreateOrderPage() {
                   <select
                     className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                     value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                    onChange={(e) =>{  setPaymentMethod(e.target.value as PaymentMethod); }}
                   >
                     <option value="">Chọn phương thức</option>
                     {PAYMENT_METHODS.map(m => (
@@ -304,7 +304,7 @@ export default function CreateOrderPage() {
                       className="w-28 h-8 text-right"
                       min={0}
                       value={shippingFee}
-                      onChange={(e) => setShippingFee(parseInt(e.target.value) || 0)}
+                      onChange={(e) =>{  setShippingFee(Number.parseInt(e.target.value) || 0); }}
                     />
                   </div>
                 )}

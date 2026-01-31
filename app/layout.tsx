@@ -1,24 +1,24 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ConvexClientProvider } from "@/components/providers/convex-provider";
 import { PageViewTracker } from "@/components/PageViewTracker";
 import { BrandColorProvider } from "@/components/providers/BrandColorProvider";
+import { ConvexClientProvider } from "@/components/providers/convex-provider";
+import { Geist, Geist_Mono } from "next/font/google";
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
   subsets: ["latin"],
+  variable: "--font-geist-sans",
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
+  variable: "--font-geist-mono",
 });
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
+}>): React.ReactElement {
   return (
     <html lang="en">
       <body

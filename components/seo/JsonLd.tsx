@@ -2,17 +2,15 @@ interface JsonLdProps {
   data: Record<string, unknown>;
 }
 
-export function JsonLd({ data }: JsonLdProps) {
-  return (
+export const JsonLd = ({ data }: JsonLdProps): React.ReactElement => (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
     />
   );
-}
 
 // Schema generators
-export function generateOrganizationSchema(params: {
+export const generateOrganizationSchema = (params: {
   name: string;
   url: string;
   logo?: string;
@@ -20,8 +18,7 @@ export function generateOrganizationSchema(params: {
   email?: string;
   phone?: string;
   address?: string;
-}) {
-  return {
+}): Record<string, unknown> => ({
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: params.name,
@@ -36,10 +33,9 @@ export function generateOrganizationSchema(params: {
         streetAddress: params.address,
       },
     }),
-  };
-}
+})
 
-export function generateArticleSchema(params: {
+export const generateArticleSchema = (params: {
   title: string;
   description?: string;
   url: string;
@@ -47,8 +43,7 @@ export function generateArticleSchema(params: {
   publishedAt?: number;
   authorName?: string;
   siteName: string;
-}) {
-  return {
+}): Record<string, unknown> => ({
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: params.title,
@@ -66,10 +61,9 @@ export function generateArticleSchema(params: {
       '@type': 'Organization',
       name: params.siteName,
     },
-  };
-}
+})
 
-export function generateProductSchema(params: {
+export const generateProductSchema = (params: {
   name: string;
   description?: string;
   url: string;
@@ -80,8 +74,7 @@ export function generateProductSchema(params: {
   sku: string;
   inStock: boolean;
   brand?: string;
-}) {
-  return {
+}): Record<string, unknown> => ({
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: params.name,
@@ -97,17 +90,16 @@ export function generateProductSchema(params: {
     }),
     offers: {
       '@type': 'Offer',
-      price: params.salePrice || params.price,
-      priceCurrency: params.currency || 'VND',
       availability: params.inStock
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
+      price: params.salePrice ?? params.price,
+      priceCurrency: params.currency ?? 'VND',
       url: params.url,
     },
-  };
-}
+})
 
-export function generateServiceSchema(params: {
+export const generateServiceSchema = (params: {
   name: string;
   description?: string;
   url: string;
@@ -116,8 +108,7 @@ export function generateServiceSchema(params: {
   currency?: string;
   providerName: string;
   providerUrl?: string;
-}) {
-  return {
+}): Record<string, unknown> => ({
     '@context': 'https://schema.org',
     '@type': 'Service',
     name: params.name,
@@ -133,31 +124,27 @@ export function generateServiceSchema(params: {
       offers: {
         '@type': 'Offer',
         price: params.price,
-        priceCurrency: params.currency || 'VND',
+        priceCurrency: params.currency ?? 'VND',
       },
     }),
-  };
-}
+})
 
-export function generateBreadcrumbSchema(items: Array<{ name: string; url: string }>) {
-  return {
+export const generateBreadcrumbSchema = (items: { name: string; url: string }[]): Record<string, unknown> => ({
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: items.map((item, index) => ({
       '@type': 'ListItem',
-      position: index + 1,
-      name: item.name,
       item: item.url,
+      name: item.name,
+      position: index + 1,
     })),
-  };
-}
+})
 
-export function generateWebsiteSchema(params: {
+export const generateWebsiteSchema = (params: {
   name: string;
   url: string;
   description?: string;
-}) {
-  return {
+}): Record<string, unknown> => ({
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: params.name,
@@ -165,11 +152,10 @@ export function generateWebsiteSchema(params: {
     ...(params.description && { description: params.description }),
     potentialAction: {
       '@type': 'SearchAction',
+      'query-input': 'required name=search_term_string',
       target: {
         '@type': 'EntryPoint',
         urlTemplate: `${params.url}/search?q={search_term_string}`,
       },
-      'query-input': 'required name=search_term_string',
     },
-  };
-}
+})

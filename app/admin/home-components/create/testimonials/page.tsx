@@ -1,20 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, Star, GripVertical, User } from 'lucide-react';
-import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
+import { GripVertical, Plus, Star, Trash2, User } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
 import { TestimonialsPreview, type TestimonialsStyle } from '../../previews';
 
-type TestimonialItem = { id: number; name: string; role: string; content: string; avatar: string; rating: number };
+interface TestimonialItem { id: number; name: string; role: string; content: string; avatar: string; rating: number }
 
 export default function TestimonialsCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Đánh giá / Review', 'Testimonials');
   const brandColor = useBrandColor();
   
   const [testimonials, setTestimonials] = useState<TestimonialItem[]>([
-    { id: 1, name: 'Nguyễn Văn A', role: 'CEO, ABC Corp', content: 'Dịch vụ tuyệt vời! Chúng tôi rất hài lòng với chất lượng sản phẩm và dịch vụ hỗ trợ.', avatar: '', rating: 5 },
-    { id: 2, name: 'Trần Thị B', role: 'Manager, XYZ Ltd', content: 'Chất lượng vượt mong đợi. Đội ngũ chuyên nghiệp và tận tâm.', avatar: '', rating: 5 }
+    { avatar: '', content: 'Dịch vụ tuyệt vời! Chúng tôi rất hài lòng với chất lượng sản phẩm và dịch vụ hỗ trợ.', id: 1, name: 'Nguyễn Văn A', rating: 5, role: 'CEO, ABC Corp' },
+    { avatar: '', content: 'Chất lượng vượt mong đợi. Đội ngũ chuyên nghiệp và tận tâm.', id: 2, name: 'Trần Thị B', rating: 5, role: 'Manager, XYZ Ltd' }
   ]);
 
   const [style, setStyle] = useState<TestimonialsStyle>('cards');
@@ -23,19 +23,19 @@ export default function TestimonialsCreatePage() {
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
 
-  const handleAddTestimonial = () => setTestimonials([...testimonials, { id: Date.now(), name: '', role: '', content: '', avatar: '', rating: 5 }]);
+  const handleAddTestimonial = () =>{  setTestimonials([...testimonials, { avatar: '', content: '', id: Date.now(), name: '', rating: 5, role: '' }]); };
   const handleRemoveTestimonial = (id: number) => testimonials.length > 1 && setTestimonials(testimonials.filter(t => t.id !== id));
 
   // Drag & Drop handlers
-  const handleDragStart = (id: number) => setDraggedId(id);
+  const handleDragStart = (id: number) =>{  setDraggedId(id); };
   const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
   const handleDragOver = (e: React.DragEvent, id: number) => {
     e.preventDefault();
-    if (draggedId !== id) setDragOverId(id);
+    if (draggedId !== id) {setDragOverId(id);}
   };
   const handleDrop = (e: React.DragEvent, targetId: number) => {
     e.preventDefault();
-    if (!draggedId || draggedId === targetId) return;
+    if (!draggedId || draggedId === targetId) {return;}
     const newItems = [...testimonials];
     const draggedIndex = newItems.findIndex(i => i.id === draggedId);
     const targetIndex = newItems.findIndex(i => i.id === targetId);
@@ -47,7 +47,7 @@ export default function TestimonialsCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    void handleSubmit(e, { items: testimonials.map(t => ({ name: t.name, role: t.role, content: t.content, avatar: t.avatar, rating: t.rating })), style });
+    void handleSubmit(e, { items: testimonials.map(t => ({ avatar: t.avatar, content: t.content, name: t.name, rating: t.rating, role: t.role })), style });
   };
 
   return (
@@ -75,10 +75,10 @@ export default function TestimonialsCreatePage() {
             <div 
               key={item.id} 
               draggable
-              onDragStart={() => handleDragStart(item.id)}
+              onDragStart={() =>{  handleDragStart(item.id); }}
               onDragEnd={handleDragEnd}
-              onDragOver={(e) => handleDragOver(e, item.id)}
-              onDrop={(e) => handleDrop(e, item.id)}
+              onDragOver={(e) =>{  handleDragOver(e, item.id); }}
+              onDrop={(e) =>{  handleDrop(e, item.id); }}
               className={cn(
                 "p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3 transition-all",
                 draggedId === item.id && "opacity-50 scale-[0.98]",
@@ -99,7 +99,7 @@ export default function TestimonialsCreatePage() {
                   <Input 
                     placeholder="Tên khách hàng" 
                     value={item.name} 
-                    onChange={(e) => setTestimonials(testimonials.map(t => t.id === item.id ? {...t, name: e.target.value} : t))} 
+                    onChange={(e) =>{  setTestimonials(testimonials.map(t => t.id === item.id ? {...t, name: e.target.value} : t)); }} 
                   />
                   <p className="text-[10px] text-slate-400 mt-1">VD: Nguyễn Văn A</p>
                 </div>
@@ -107,7 +107,7 @@ export default function TestimonialsCreatePage() {
                   <Input 
                     placeholder="Chức vụ / Công ty" 
                     value={item.role} 
-                    onChange={(e) => setTestimonials(testimonials.map(t => t.id === item.id ? {...t, role: e.target.value} : t))} 
+                    onChange={(e) =>{  setTestimonials(testimonials.map(t => t.id === item.id ? {...t, role: e.target.value} : t)); }} 
                   />
                   <p className="text-[10px] text-slate-400 mt-1">VD: CEO, ABC Corp</p>
                 </div>
@@ -116,7 +116,7 @@ export default function TestimonialsCreatePage() {
                 <textarea 
                   placeholder="Nội dung đánh giá chi tiết từ khách hàng..." 
                   value={item.content} 
-                  onChange={(e) => setTestimonials(testimonials.map(t => t.id === item.id ? {...t, content: e.target.value} : t))}
+                  onChange={(e) =>{  setTestimonials(testimonials.map(t => t.id === item.id ? {...t, content: e.target.value} : t)); }}
                   className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm resize-y" 
                 />
                 <p className="text-[10px] text-slate-400 mt-1">Nội dung chi tiết giúp tăng độ tin cậy (2-4 dòng)</p>
@@ -129,7 +129,7 @@ export default function TestimonialsCreatePage() {
                       key={star} 
                       size={22} 
                       className={cn("cursor-pointer transition-colors", star <= item.rating ? "text-yellow-400 fill-yellow-400" : "text-slate-300 hover:text-yellow-200")}
-                      onClick={() => setTestimonials(testimonials.map(t => t.id === item.id ? {...t, rating: star} : t))} 
+                      onClick={() =>{  setTestimonials(testimonials.map(t => t.id === item.id ? {...t, rating: star} : t)); }} 
                     />
                   ))}
                 </div>

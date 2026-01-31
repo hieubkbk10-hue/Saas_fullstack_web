@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { ArrowLeft, Loader2, ShoppingBag, Package, User, MapPin, CreditCard, Truck } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ArrowLeft, CreditCard, Loader2, MapPin, Package, ShoppingBag, Truck, User } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Badge } from '../../../components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 
 const MODULE_KEY = 'orders';
 
@@ -17,23 +17,23 @@ type PaymentStatus = 'Pending' | 'Paid' | 'Failed' | 'Refunded';
 type PaymentMethod = 'COD' | 'BankTransfer' | 'CreditCard' | 'EWallet';
 
 const ORDER_STATUSES: { value: OrderStatus; label: string; color: string }[] = [
-  { value: 'Pending', label: 'Chờ xử lý', color: 'bg-slate-500' },
-  { value: 'Processing', label: 'Đang xử lý', color: 'bg-yellow-500' },
-  { value: 'Shipped', label: 'Đang giao', color: 'bg-blue-500' },
-  { value: 'Delivered', label: 'Hoàn thành', color: 'bg-green-500' },
-  { value: 'Cancelled', label: 'Đã hủy', color: 'bg-red-500' },
+  { color: 'bg-slate-500', label: 'Chờ xử lý', value: 'Pending' },
+  { color: 'bg-yellow-500', label: 'Đang xử lý', value: 'Processing' },
+  { color: 'bg-blue-500', label: 'Đang giao', value: 'Shipped' },
+  { color: 'bg-green-500', label: 'Hoàn thành', value: 'Delivered' },
+  { color: 'bg-red-500', label: 'Đã hủy', value: 'Cancelled' },
 ];
 
 const PAYMENT_STATUSES: { value: PaymentStatus; label: string }[] = [
-  { value: 'Pending', label: 'Chờ thanh toán' },
-  { value: 'Paid', label: 'Đã thanh toán' },
-  { value: 'Failed', label: 'Thất bại' },
-  { value: 'Refunded', label: 'Hoàn tiền' },
+  { label: 'Chờ thanh toán', value: 'Pending' },
+  { label: 'Đã thanh toán', value: 'Paid' },
+  { label: 'Thất bại', value: 'Failed' },
+  { label: 'Hoàn tiền', value: 'Refunded' },
 ];
 
 const PAYMENT_METHODS: Record<PaymentMethod, string> = {
-  COD: 'Thanh toán khi nhận hàng',
   BankTransfer: 'Chuyển khoản ngân hàng',
+  COD: 'Thanh toán khi nhận hàng',
   CreditCard: 'Thẻ tín dụng',
   EWallet: 'Ví điện tử',
 };
@@ -66,10 +66,10 @@ export default function EditOrderPage() {
   useEffect(() => {
     if (orderData) {
       setStatus(orderData.status as OrderStatus);
-      setPaymentStatus((orderData.paymentStatus as PaymentStatus) || 'Pending');
-      setTrackingNumber(orderData.trackingNumber || '');
-      setShippingAddress(orderData.shippingAddress || '');
-      setNote(orderData.note || '');
+      setPaymentStatus((orderData.paymentStatus!) || 'Pending');
+      setTrackingNumber(orderData.trackingNumber ?? '');
+      setShippingAddress(orderData.shippingAddress ?? '');
+      setNote(orderData.note ?? '');
     }
   }, [orderData]);
 
@@ -79,11 +79,11 @@ export default function EditOrderPage() {
     try {
       await updateOrder({
         id: orderId,
-        status,
-        paymentStatus: enabledFields.has('paymentStatus') ? paymentStatus : undefined,
-        trackingNumber: enabledFields.has('trackingNumber') ? trackingNumber : undefined,
-        shippingAddress: enabledFields.has('shippingAddress') ? shippingAddress : undefined,
         note: enabledFields.has('note') ? note : undefined,
+        paymentStatus: enabledFields.has('paymentStatus') ? paymentStatus : undefined,
+        shippingAddress: enabledFields.has('shippingAddress') ? shippingAddress : undefined,
+        status,
+        trackingNumber: enabledFields.has('trackingNumber') ? trackingNumber : undefined,
       });
       toast.success('Đã cập nhật đơn hàng');
     } catch (error) {
@@ -93,7 +93,7 @@ export default function EditOrderPage() {
     }
   };
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
   const formatDate = (timestamp: number) => new Date(timestamp).toLocaleString('vi-VN');
 
   if (isLoading) {
@@ -122,7 +122,7 @@ export default function EditOrderPage() {
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{orderData.orderNumber}</h1>
-            <Badge variant={status === 'Delivered' ? 'success' : status === 'Cancelled' ? 'destructive' : 'secondary'}>
+            <Badge variant={status === 'Delivered' ? 'success' : (status === 'Cancelled' ? 'destructive' : 'secondary')}>
               {ORDER_STATUSES.find(s => s.value === orderData.status)?.label}
             </Badge>
           </div>
@@ -203,7 +203,7 @@ export default function EditOrderPage() {
                   <textarea
                     className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm min-h-[80px]"
                     value={shippingAddress}
-                    onChange={(e) => setShippingAddress(e.target.value)}
+                    onChange={(e) =>{  setShippingAddress(e.target.value); }}
                   />
                 </CardContent>
               </Card>
@@ -217,7 +217,7 @@ export default function EditOrderPage() {
                   <textarea
                     className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm min-h-[80px]"
                     value={note}
-                    onChange={(e) => setNote(e.target.value)}
+                    onChange={(e) =>{  setNote(e.target.value); }}
                   />
                 </CardContent>
               </Card>
@@ -233,7 +233,7 @@ export default function EditOrderPage() {
                 <select
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as OrderStatus)}
+                  onChange={(e) =>{  setStatus(e.target.value as OrderStatus); }}
                 >
                   {ORDER_STATUSES.map(s => (
                     <option key={s.value} value={s.value}>{s.label}</option>
@@ -259,7 +259,7 @@ export default function EditOrderPage() {
                       <select
                         className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                         value={paymentStatus}
-                        onChange={(e) => setPaymentStatus(e.target.value as PaymentStatus)}
+                        onChange={(e) =>{  setPaymentStatus(e.target.value as PaymentStatus); }}
                       >
                         {PAYMENT_STATUSES.map(s => (
                           <option key={s.value} value={s.value}>{s.label}</option>
@@ -281,7 +281,7 @@ export default function EditOrderPage() {
                   <Label className="text-xs text-slate-500 mb-1 block">Mã vận đơn</Label>
                   <Input
                     value={trackingNumber}
-                    onChange={(e) => setTrackingNumber(e.target.value)}
+                    onChange={(e) =>{  setTrackingNumber(e.target.value); }}
                     placeholder="VD: VN123456789"
                   />
                 </CardContent>

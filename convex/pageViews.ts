@@ -5,46 +5,44 @@ import { v } from "convex/values";
 function getPeriodTimestamps(period: string) {
   const now = Date.now();
   const periodMs = {
-    "7d": 7 * 24 * 60 * 60 * 1000,
-    "30d": 30 * 24 * 60 * 60 * 1000,
-    "90d": 90 * 24 * 60 * 60 * 1000,
     "1y": 365 * 24 * 60 * 60 * 1000,
-  }[period] || 30 * 24 * 60 * 60 * 1000;
+    "30d": 30 * 24 * 60 * 60 * 1000,
+    "7d": 7 * 24 * 60 * 60 * 1000,
+    "90d": 90 * 24 * 60 * 60 * 1000,
+  }[period] ?? 30 * 24 * 60 * 60 * 1000;
   
   return {
     now,
     periodMs,
-    startDate: now - periodMs,
     prevStartDate: now - periodMs * 2,
+    startDate: now - periodMs,
   };
 }
 
 // Max records to fetch for analytics (prevents bandwidth explosion)
-const MAX_PAGEVIEWS_LIMIT = 10000;
+const MAX_PAGEVIEWS_LIMIT = 10_000;
 
 // Track a page view
 export const track = mutation({
   args: {
-    path: v.string(),
-    sessionId: v.string(),
-    referrer: v.optional(v.string()),
-    userAgent: v.optional(v.string()),
+    browser: v.optional(v.string()),
     device: v.optional(v.union(v.literal("mobile"), v.literal("desktop"), v.literal("tablet"))),
     os: v.optional(v.string()),
-    browser: v.optional(v.string()),
+    path: v.string(),
+    referrer: v.optional(v.string()),
+    sessionId: v.string(),
+    userAgent: v.optional(v.string()),
   },
-  returns: v.id("pageViews"),
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("pageViews", {
-      path: args.path,
-      sessionId: args.sessionId,
-      referrer: args.referrer,
-      userAgent: args.userAgent,
+  handler: async (ctx, args) => ctx.db.insert("pageViews", {
+      browser: args.browser,
       device: args.device,
       os: args.os,
-      browser: args.browser,
-    });
-  },
+      path: args.path,
+      referrer: args.referrer,
+      sessionId: args.sessionId,
+      userAgent: args.userAgent,
+    }),
+  returns: v.id("pageViews"),
 });
 
 // Get traffic summary stats - OPTIMIZED: use limit instead of collect()
@@ -52,14 +50,8 @@ export const getTrafficStats = query({
   args: {
     period: v.optional(v.string()),
   },
-  returns: v.object({
-    totalPageviews: v.number(),
-    uniqueVisitors: v.number(),
-    pageviewsChange: v.number(),
-    visitorsChange: v.number(),
-  }),
   handler: async (ctx, args) => {
-    const period = args.period || "30d";
+    const period = args.period ?? "30d";
     const { startDate, prevStartDate } = getPeriodTimestamps(period);
     
     // OPTIMIZED: Use take() with limit instead of collect()
@@ -85,28 +77,29 @@ export const getTrafficStats = query({
       : (currentSessions.size > 0 ? 100 : 0);
     
     return {
+      pageviewsChange,
       totalPageviews: currentViews.length,
       uniqueVisitors: currentSessions.size,
-      pageviewsChange,
       visitorsChange,
     };
   },
+  returns: v.object({
+    pageviewsChange: v.number(),
+    totalPageviews: v.number(),
+    uniqueVisitors: v.number(),
+    visitorsChange: v.number(),
+  }),
 });
 
 // Get traffic chart data - OPTIMIZED: use limit instead of collect()
 export const getTrafficChartData = query({
   args: {
-    period: v.optional(v.string()),
     groupBy: v.optional(v.union(v.literal("day"), v.literal("month"), v.literal("year"))),
+    period: v.optional(v.string()),
   },
-  returns: v.array(v.object({
-    date: v.string(),
-    pageviews: v.number(),
-    visitors: v.number(),
-  })),
   handler: async (ctx, args) => {
-    const period = args.period || "30d";
-    const groupBy = args.groupBy || "day";
+    const period = args.period ?? "30d";
+    const groupBy = args.groupBy ?? "day";
     const now = Date.now();
     
     // For monthly/yearly views, extend the period
@@ -117,11 +110,11 @@ export const getTrafficChartData = query({
       periodMs = 2 * 365 * 24 * 60 * 60 * 1000;
     } else {
       periodMs = {
-        "7d": 7 * 24 * 60 * 60 * 1000,
-        "30d": 30 * 24 * 60 * 60 * 1000,
-        "90d": 90 * 24 * 60 * 60 * 1000,
         "1y": 365 * 24 * 60 * 60 * 1000,
-      }[period] || 30 * 24 * 60 * 60 * 1000;
+        "30d": 30 * 24 * 60 * 60 * 1000,
+        "7d": 7 * 24 * 60 * 60 * 1000,
+        "90d": 90 * 24 * 60 * 60 * 1000,
+      }[period] ?? 30 * 24 * 60 * 60 * 1000;
     }
     
     const startDate = now - periodMs;
@@ -214,22 +207,22 @@ export const getTrafficChartData = query({
     
     return result;
   },
+  returns: v.array(v.object({
+    date: v.string(),
+    pageviews: v.number(),
+    visitors: v.number(),
+  })),
 });
 
 // Get top pages - OPTIMIZED: use limit instead of collect()
 export const getTopPages = query({
   args: {
-    period: v.optional(v.string()),
     limit: v.optional(v.number()),
+    period: v.optional(v.string()),
   },
-  returns: v.array(v.object({
-    path: v.string(),
-    views: v.number(),
-    percentage: v.number(),
-  })),
   handler: async (ctx, args) => {
-    const period = args.period || "30d";
-    const limit = args.limit || 10;
+    const period = args.period ?? "30d";
+    const limit = args.limit ?? 10;
     const { startDate } = getPeriodTimestamps(period);
     
     // OPTIMIZED: Use take() with limit
@@ -246,31 +239,31 @@ export const getTopPages = query({
     
     const total = filteredViews.length;
     
-    return Object.entries(pathCounts)
+    return (Object.entries(pathCounts) as Array<[string, number]>)
       .sort((a, b) => b[1] - a[1])
       .slice(0, limit)
       .map(([path, views]) => ({
         path,
-        views,
         percentage: total > 0 ? Math.round((views / total) * 100) : 0,
+        views,
       }));
   },
+  returns: v.array(v.object({
+    path: v.string(),
+    percentage: v.number(),
+    views: v.number(),
+  })),
 });
 
 // Get traffic by referrer/source - OPTIMIZED: use limit instead of collect()
 export const getTrafficSources = query({
   args: {
-    period: v.optional(v.string()),
     limit: v.optional(v.number()),
+    period: v.optional(v.string()),
   },
-  returns: v.array(v.object({
-    source: v.string(),
-    views: v.number(),
-    percentage: v.number(),
-  })),
   handler: async (ctx, args) => {
-    const period = args.period || "30d";
-    const limit = args.limit || 10;
+    const period = args.period ?? "30d";
+    const limit = args.limit ?? 10;
     const { startDate } = getPeriodTimestamps(period);
     
     // OPTIMIZED: Use take() with limit
@@ -296,15 +289,20 @@ export const getTrafficSources = query({
     
     const total = filteredViews.length;
     
-    return Object.entries(sourceCounts)
+    return (Object.entries(sourceCounts) as Array<[string, number]>)
       .sort((a, b) => b[1] - a[1])
       .slice(0, limit)
       .map(([source, views]) => ({
+        percentage: total > 0 ? Math.round((views / total) * 100) : 0,
         source,
         views,
-        percentage: total > 0 ? Math.round((views / total) * 100) : 0,
       }));
   },
+  returns: v.array(v.object({
+    percentage: v.number(),
+    source: v.string(),
+    views: v.number(),
+  })),
 });
 
 // Get device stats - OPTIMIZED: use limit instead of collect()
@@ -312,13 +310,8 @@ export const getDeviceStats = query({
   args: {
     period: v.optional(v.string()),
   },
-  returns: v.object({
-    devices: v.array(v.object({ device: v.string(), percentage: v.number() })),
-    os: v.array(v.object({ os: v.string(), percentage: v.number() })),
-    browsers: v.array(v.object({ browser: v.string(), percentage: v.number() })),
-  }),
   handler: async (ctx, args) => {
-    const period = args.period || "30d";
+    const period = args.period ?? "30d";
     const { startDate } = getPeriodTimestamps(period);
     
     // OPTIMIZED: Use take() with limit
@@ -334,9 +327,9 @@ export const getDeviceStats = query({
     const browserCounts: Record<string, number> = {};
     
     for (const view of filteredViews) {
-      const device = view.device || "unknown";
-      const os = view.os || "unknown";
-      const browser = view.browser || "unknown";
+      const device = view.device ?? "unknown";
+      const os = view.os ?? "unknown";
+      const browser = view.browser ?? "unknown";
       
       deviceCounts[device] = (deviceCounts[device] || 0) + 1;
       osCounts[os] = (osCounts[os] || 0) + 1;
@@ -344,27 +337,32 @@ export const getDeviceStats = query({
     }
     
     return {
-      devices: Object.entries(deviceCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([device, count]) => ({
-          device,
-          percentage: total > 0 ? Math.round((count / total) * 100) : 0,
-        })),
-      os: Object.entries(osCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([os, count]) => ({
-          os,
-          percentage: total > 0 ? Math.round((count / total) * 100) : 0,
-        })),
-      browsers: Object.entries(browserCounts)
+      browsers: (Object.entries(browserCounts) as Array<[string, number]>)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
         .map(([browser, count]) => ({
           browser,
           percentage: total > 0 ? Math.round((count / total) * 100) : 0,
         })),
+      devices: (Object.entries(deviceCounts) as Array<[string, number]>)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([device, count]) => ({
+          device,
+          percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+        })),
+      os: (Object.entries(osCounts) as Array<[string, number]>)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([os, count]) => ({
+          os,
+          percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+        })),
     };
   },
+  returns: v.object({
+    browsers: v.array(v.object({ browser: v.string(), percentage: v.number() })),
+    devices: v.array(v.object({ device: v.string(), percentage: v.number() })),
+    os: v.array(v.object({ os: v.string(), percentage: v.number() })),
+  }),
 });

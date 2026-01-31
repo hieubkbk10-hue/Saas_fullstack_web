@@ -3,8 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FileText, Eye } from 'lucide-react';
-import { Id } from '@/convex/_generated/dataModel';
+import { Eye, FileText } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
 
 interface Post {
   _id: Id<"posts">;
@@ -62,7 +62,7 @@ export function FullWidthLayout({ posts, brandColor, categoryMap, enabledFields 
                   className="text-xs font-medium px-1.5 py-0.5 rounded"
                   style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
                 >
-                  {categoryMap.get(post.categoryId) || 'Tin tức'}
+                  {categoryMap.get(post.categoryId) ?? 'Tin tức'}
                 </span>
               </div>
               <h2 className="text-sm font-semibold text-slate-900 line-clamp-2 group-hover:opacity-70 transition-opacity duration-200 flex-1">

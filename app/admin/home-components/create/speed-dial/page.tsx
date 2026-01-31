@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
-import { cn, Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
+import { GripVertical, Plus, Trash2 } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
 import { SpeedDialPreview, type SpeedDialStyle } from '../../previews';
 
 interface SpeedDialAction {
@@ -15,18 +15,18 @@ interface SpeedDialAction {
 }
 
 const ICON_OPTIONS = [
-  { value: 'phone', label: 'Điện thoại' },
-  { value: 'mail', label: 'Email' },
-  { value: 'message-circle', label: 'Chat' },
-  { value: 'map-pin', label: 'Địa chỉ' },
-  { value: 'facebook', label: 'Facebook' },
-  { value: 'instagram', label: 'Instagram' },
-  { value: 'youtube', label: 'Youtube' },
-  { value: 'zalo', label: 'Zalo' },
-  { value: 'calendar', label: 'Đặt lịch' },
-  { value: 'shopping-cart', label: 'Giỏ hàng' },
-  { value: 'headphones', label: 'Hỗ trợ' },
-  { value: 'help-circle', label: 'FAQ' },
+  { label: 'Điện thoại', value: 'phone' },
+  { label: 'Email', value: 'mail' },
+  { label: 'Chat', value: 'message-circle' },
+  { label: 'Địa chỉ', value: 'map-pin' },
+  { label: 'Facebook', value: 'facebook' },
+  { label: 'Instagram', value: 'instagram' },
+  { label: 'Youtube', value: 'youtube' },
+  { label: 'Zalo', value: 'zalo' },
+  { label: 'Đặt lịch', value: 'calendar' },
+  { label: 'Giỏ hàng', value: 'shopping-cart' },
+  { label: 'Hỗ trợ', value: 'headphones' },
+  { label: 'FAQ', value: 'help-circle' },
 ];
 
 export default function SpeedDialCreatePage() {
@@ -34,9 +34,9 @@ export default function SpeedDialCreatePage() {
   const brandColor = useBrandColor();
   
   const [actions, setActions] = useState<SpeedDialAction[]>([
-    { id: 1, icon: 'phone', label: 'Gọi ngay', url: 'tel:0123456789', bgColor: '#22c55e' },
-    { id: 2, icon: 'message-circle', label: 'Chat Zalo', url: 'https://zalo.me/yourpage', bgColor: '#0068ff' },
-    { id: 3, icon: 'mail', label: 'Email', url: 'mailto:contact@example.com', bgColor: '#ef4444' },
+    { bgColor: '#22c55e', icon: 'phone', id: 1, label: 'Gọi ngay', url: 'tel:0123456789' },
+    { bgColor: '#0068ff', icon: 'message-circle', id: 2, label: 'Chat Zalo', url: 'https://zalo.me/yourpage' },
+    { bgColor: '#ef4444', icon: 'mail', id: 3, label: 'Email', url: 'mailto:contact@example.com' },
   ]);
   const [style, setStyle] = useState<SpeedDialStyle>('fab');
   const [position, setPosition] = useState<'bottom-right' | 'bottom-left'>('bottom-right');
@@ -47,7 +47,7 @@ export default function SpeedDialCreatePage() {
 
   const addAction = () => {
     const newId = Math.max(0, ...actions.map(a => a.id)) + 1;
-    setActions([...actions, { id: newId, icon: 'phone', label: '', url: '', bgColor: brandColor }]);
+    setActions([...actions, { bgColor: brandColor, icon: 'phone', id: newId, label: '', url: '' }]);
   };
 
   const removeAction = (id: number) => {
@@ -61,15 +61,15 @@ export default function SpeedDialCreatePage() {
   };
 
   // Drag & Drop handlers
-  const handleDragStart = (id: number) => setDraggedId(id);
+  const handleDragStart = (id: number) =>{  setDraggedId(id); };
   const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
   const handleDragOver = (e: React.DragEvent, id: number) => {
     e.preventDefault();
-    if (draggedId !== id) setDragOverId(id);
+    if (draggedId !== id) {setDragOverId(id);}
   };
   const handleDrop = (e: React.DragEvent, id: number) => {
     e.preventDefault();
-    if (!draggedId || draggedId === id) return;
+    if (!draggedId || draggedId === id) {return;}
     const newActions = [...actions];
     const draggedIndex = newActions.findIndex(a => a.id === draggedId);
     const dropIndex = newActions.findIndex(a => a.id === id);
@@ -82,9 +82,9 @@ export default function SpeedDialCreatePage() {
 
   const onSubmit = (e: React.FormEvent) => {
     void handleSubmit(e, {
-      actions: actions.map(a => ({ icon: a.icon, label: a.label, url: a.url, bgColor: a.bgColor })),
-      style,
+      actions: actions.map(a => ({ bgColor: a.bgColor, icon: a.icon, label: a.label, url: a.url })),
       position,
+      style,
     });
   };
 
@@ -107,7 +107,7 @@ export default function SpeedDialCreatePage() {
             <Label>Vị trí hiển thị</Label>
             <select
               value={position}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPosition(e.target.value as 'bottom-right' | 'bottom-left')}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>{  setPosition(e.target.value as 'bottom-right' | 'bottom-left'); }}
               className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
             >
               <option value="bottom-right">Góc phải</option>
@@ -141,10 +141,10 @@ export default function SpeedDialCreatePage() {
                 dragOverId === action.id && "ring-2 ring-blue-500 ring-offset-2"
               )}
               draggable
-              onDragStart={() => handleDragStart(action.id)}
+              onDragStart={() =>{  handleDragStart(action.id); }}
               onDragEnd={handleDragEnd}
-              onDragOver={(e) => handleDragOver(e, action.id)}
-              onDrop={(e) => handleDrop(e, action.id)}
+              onDragOver={(e) =>{  handleDragOver(e, action.id); }}
+              onDrop={(e) =>{  handleDrop(e, action.id); }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -156,7 +156,7 @@ export default function SpeedDialCreatePage() {
                   variant="ghost" 
                   size="icon" 
                   className="text-red-500 h-8 w-8" 
-                  onClick={() => removeAction(action.id)}
+                  onClick={() =>{  removeAction(action.id); }}
                   disabled={actions.length <= 1}
                 >
                   <Trash2 size={14} />
@@ -168,7 +168,7 @@ export default function SpeedDialCreatePage() {
                   <Label className="text-xs text-slate-500">Icon</Label>
                   <select
                     value={action.icon}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateAction(action.id, 'icon', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>{  updateAction(action.id, 'icon', e.target.value); }}
                     className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
                   >
                     {ICON_OPTIONS.map(opt => (
@@ -182,12 +182,12 @@ export default function SpeedDialCreatePage() {
                     <Input 
                       type="color" 
                       value={action.bgColor} 
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateAction(action.id, 'bgColor', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>{  updateAction(action.id, 'bgColor', e.target.value); }}
                       className="w-12 h-9 p-1 cursor-pointer"
                     />
                     <Input 
                       value={action.bgColor} 
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateAction(action.id, 'bgColor', e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>{  updateAction(action.id, 'bgColor', e.target.value); }}
                       className="flex-1"
                     />
                   </div>
@@ -199,7 +199,7 @@ export default function SpeedDialCreatePage() {
                   <Label className="text-xs text-slate-500">Nhãn</Label>
                   <Input 
                     value={action.label} 
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateAction(action.id, 'label', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>{  updateAction(action.id, 'label', e.target.value); }}
                     placeholder="VD: Gọi ngay"
                   />
                 </div>
@@ -207,7 +207,7 @@ export default function SpeedDialCreatePage() {
                   <Label className="text-xs text-slate-500">URL / Liên kết</Label>
                   <Input 
                     value={action.url} 
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateAction(action.id, 'url', e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>{  updateAction(action.id, 'url', e.target.value); }}
                     placeholder="tel:0123456789"
                   />
                 </div>
@@ -224,9 +224,9 @@ export default function SpeedDialCreatePage() {
       <SpeedDialPreview 
         config={{
           actions,
-          style,
-          position,
           mainButtonColor: brandColor,
+          position,
+          style,
         }}
         brandColor={brandColor}
         selectedStyle={style}

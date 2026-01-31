@@ -4,16 +4,16 @@ import React, { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Noto_Sans } from 'next/font/google';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { Button, Card, CardContent } from '@/app/admin/components/ui';
-import { FileText, Calendar, Eye, ArrowLeft, Share2, Clock, ChevronRight, Home, Check, Link as LinkIcon } from 'lucide-react';
-import { Id } from '@/convex/_generated/dataModel';
+import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Eye, FileText, Home, Link as LinkIcon, Share2 } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
 
 const notoSans = Noto_Sans({
-  subsets: ['vietnamese', 'latin'],
   display: 'swap',
+  subsets: ['vietnamese', 'latin'],
 });
 
 type PostDetailStyle = 'classic' | 'modern' | 'minimal';
@@ -27,7 +27,7 @@ function usePostDetailStyle(): PostDetailStyle {
 function useEnabledPostFields(): Set<string> {
   const fields = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'posts' });
   return useMemo(() => {
-    if (!fields) return new Set<string>();
+    if (!fields) {return new Set<string>();}
     return new Set(fields.map(f => f.fieldKey));
   }, [fields]);
 }
@@ -52,7 +52,7 @@ export default function PostDetailPage({ params }: PageProps) {
   const relatedPosts = useQuery(
     api.posts.listByCategory,
     post?.categoryId 
-      ? { categoryId: post.categoryId, status: 'Published', paginationOpts: { numItems: 4, cursor: null } }
+      ? { categoryId: post.categoryId, paginationOpts: { cursor: null, numItems: 4 }, status: 'Published' }
       : 'skip'
   );
 
@@ -88,11 +88,11 @@ export default function PostDetailPage({ params }: PageProps) {
   }
 
   // Filter out current post from related
-  const filteredRelated = relatedPosts?.page.filter(p => p._id !== post._id).slice(0, 3) || [];
+  const filteredRelated = relatedPosts?.page.filter(p => p._id !== post._id).slice(0, 3) ?? [];
 
   const postData = {
     ...post,
-    categoryName: category?.name || 'Tin tức',
+    categoryName: category?.name ?? 'Tin tức',
   };
 
   return (
@@ -147,14 +147,14 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
       setScrollProgress(scroll);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () =>{  window.removeEventListener('scroll', handleScroll); };
   }, []);
 
   const handleShare = async () => {
     if (navigator?.clipboard) {
       await navigator.clipboard.writeText(window.location.href);
       setIsCopied(true);
-      window.setTimeout(() => setIsCopied(false), 2000);
+      window.setTimeout(() =>{  setIsCopied(false); }, 2000);
     }
   };
 
@@ -162,7 +162,7 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
     <div className="min-h-screen bg-background">
       <div
         className="fixed top-0 left-0 h-1 z-50 transition-all duration-300"
-        style={{ width: `${scrollProgress * 100}%`, backgroundColor: brandColor }}
+        style={{ backgroundColor: brandColor, width: `${scrollProgress * 100}%` }}
       />
 
       <main className="container mx-auto px-4 py-8 max-w-7xl">
@@ -191,7 +191,7 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
               <div className="flex items-center gap-2">
                 <span
                   className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
-                  style={{ backgroundColor: `${brandColor}15`, color: brandColor, borderColor: `${brandColor}30` }}
+                  style={{ backgroundColor: `${brandColor}15`, borderColor: `${brandColor}30`, color: brandColor }}
                 >
                   {post.categoryName}
                 </span>
@@ -319,7 +319,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
     if (navigator?.clipboard) {
       await navigator.clipboard.writeText(window.location.href);
       setIsCopied(true);
-      window.setTimeout(() => setIsCopied(false), 2000);
+      window.setTimeout(() =>{  setIsCopied(false); }, 2000);
     }
   };
   
@@ -361,7 +361,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
             <div className="flex items-center justify-center md:justify-start">
               <span
                 className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium"
-                style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderColor: `${brandColor}25` }}
+                style={{ backgroundColor: `${brandColor}10`, borderColor: `${brandColor}25`, color: brandColor }}
               >
                 {post.categoryName}
               </span>
@@ -482,7 +482,7 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
     if (navigator?.clipboard) {
       await navigator.clipboard.writeText(window.location.href);
       setIsCopied(true);
-      window.setTimeout(() => setIsCopied(false), 2000);
+      window.setTimeout(() =>{  setIsCopied(false); }, 2000);
     }
   };
 

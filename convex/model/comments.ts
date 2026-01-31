@@ -1,5 +1,5 @@
-import { QueryCtx, MutationCtx } from "../_generated/server";
-import { Doc, Id } from "../_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "../_generated/server";
+import type { Doc, Id } from "../_generated/dataModel";
 
 // ============================================================
 // HELPER FUNCTIONS - Comments Model Layer
@@ -18,7 +18,7 @@ export async function getById(
   ctx: QueryCtx,
   { id }: { id: Id<"comments"> }
 ): Promise<Doc<"comments"> | null> {
-  return await ctx.db.get(id);
+  return  ctx.db.get(id);
 }
 
 /**
@@ -29,7 +29,7 @@ export async function getByIdOrThrow(
   { id }: { id: Id<"comments"> }
 ): Promise<Doc<"comments">> {
   const comment = await ctx.db.get(id);
-  if (!comment) throw new Error("Comment not found");
+  if (!comment) {throw new Error("Comment not found");}
   return comment;
 }
 
@@ -40,7 +40,7 @@ export async function listWithLimit(
   ctx: QueryCtx,
   { limit = MAX_ITEMS_LIMIT }: { limit?: number } = {}
 ): Promise<Doc<"comments">[]> {
-  return await ctx.db
+  return  ctx.db
     .query("comments")
     .order("desc")
     .take(Math.min(limit, MAX_ITEMS_LIMIT));
@@ -53,7 +53,7 @@ export async function listByTargetType(
   ctx: QueryCtx,
   { targetType, limit = MAX_ITEMS_LIMIT }: { targetType: TargetType; limit?: number }
 ): Promise<Doc<"comments">[]> {
-  return await ctx.db
+  return  ctx.db
     .query("comments")
     .withIndex("by_target_status", (q) => q.eq("targetType", targetType))
     .take(Math.min(limit, MAX_ITEMS_LIMIT));
@@ -66,7 +66,7 @@ export async function listByStatus(
   ctx: QueryCtx,
   { status, limit = MAX_ITEMS_LIMIT }: { status: CommentStatus; limit?: number }
 ): Promise<Doc<"comments">[]> {
-  return await ctx.db
+  return  ctx.db
     .query("comments")
     .withIndex("by_status", (q) => q.eq("status", status))
     .take(Math.min(limit, MAX_ITEMS_LIMIT));
@@ -79,7 +79,7 @@ export async function listPending(
   ctx: QueryCtx,
   { limit = MAX_ITEMS_LIMIT }: { limit?: number } = {}
 ): Promise<Doc<"comments">[]> {
-  return await listByStatus(ctx, { status: "Pending", limit });
+  return  listByStatus(ctx, { limit, status: "Pending" });
 }
 
 /**
@@ -89,7 +89,7 @@ export async function listByTarget(
   ctx: QueryCtx,
   { targetType, targetId, limit = MAX_ITEMS_LIMIT }: { targetType: TargetType; targetId: string; limit?: number }
 ): Promise<Doc<"comments">[]> {
-  return await ctx.db
+  return  ctx.db
     .query("comments")
     .withIndex("by_target_status", (q) =>
       q.eq("targetType", targetType).eq("targetId", targetId)
@@ -104,7 +104,7 @@ export async function listByParent(
   ctx: QueryCtx,
   { parentId, limit = 50 }: { parentId: Id<"comments">; limit?: number }
 ): Promise<Doc<"comments">[]> {
-  return await ctx.db
+  return  ctx.db
     .query("comments")
     .withIndex("by_parent", (q) => q.eq("parentId", parentId))
     .take(Math.min(limit, 100));
@@ -199,16 +199,16 @@ export async function create(
 ): Promise<Id<"comments">> {
   const status = args.status ?? (await getDefaultStatus(ctx));
 
-  return await ctx.db.insert("comments", {
-    content: args.content,
-    authorName: args.authorName,
+  return  ctx.db.insert("comments", {
     authorEmail: args.authorEmail,
     authorIp: args.authorIp,
-    targetType: args.targetType,
-    targetId: args.targetId,
-    parentId: args.parentId,
+    authorName: args.authorName,
+    content: args.content,
     customerId: args.customerId,
+    parentId: args.parentId,
     status,
+    targetId: args.targetId,
+    targetType: args.targetType,
   });
 }
 
@@ -230,10 +230,10 @@ export async function update(
   const { id, ...updates } = args;
   const patchData: Record<string, unknown> = {};
 
-  if (updates.content !== undefined) patchData.content = updates.content;
-  if (updates.authorName !== undefined) patchData.authorName = updates.authorName;
-  if (updates.authorEmail !== undefined) patchData.authorEmail = updates.authorEmail;
-  if (updates.status !== undefined) patchData.status = updates.status;
+  if (updates.content !== undefined) {patchData.content = updates.content;}
+  if (updates.authorName !== undefined) {patchData.authorName = updates.authorName;}
+  if (updates.authorEmail !== undefined) {patchData.authorEmail = updates.authorEmail;}
+  if (updates.status !== undefined) {patchData.status = updates.status;}
 
   if (Object.keys(patchData).length > 0) {
     await ctx.db.patch(id, patchData);

@@ -1,45 +1,41 @@
-import { query, mutation, MutationCtx } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { userStatus } from "./lib/validators";
 
 const userDoc = v.object({
-  _id: v.id("users"),
   _creationTime: v.number(),
-  name: v.string(),
-  email: v.string(),
-  phone: v.optional(v.string()),
+  _id: v.id("users"),
   avatar: v.optional(v.string()),
+  email: v.string(),
+  lastLogin: v.optional(v.number()),
+  name: v.string(),
+  phone: v.optional(v.string()),
   roleId: v.id("roles"),
   status: userStatus,
-  lastLogin: v.optional(v.number()),
 });
 
 export const list = query({
   args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, args) => ctx.db.query("users").paginate(args.paginationOpts),
   returns: v.object({
-    page: v.array(userDoc),
-    isDone: v.boolean(),
     continueCursor: v.string(),
+    isDone: v.boolean(),
+    page: v.array(userDoc),
   }),
-  handler: async (ctx, args) => {
-    return await ctx.db.query("users").paginate(args.paginationOpts);
-  },
 });
 
 // USR-003 FIX: Thêm limit để tránh memory overflow
 export const listAll = query({
   args: {},
+  handler: async (ctx) => ctx.db.query("users").take(500),
   returns: v.array(userDoc),
-  handler: async (ctx) => {
-    return await ctx.db.query("users").take(500);
-  },
 });
 
 // USR-001 FIX: Dùng counter table thay vì fetch ALL
 export const count = query({
   args: {},
-  returns: v.number(),
   handler: async (ctx) => {
     const stats = await ctx.db
       .query("userStats")
@@ -47,12 +43,12 @@ export const count = query({
       .unique();
     return stats?.count ?? 0;
   },
+  returns: v.number(),
 });
 
 // Helper: Get count by status from counter table
 export const countByStatus = query({
   args: { status: userStatus },
-  returns: v.number(),
   handler: async (ctx, args) => {
     const stats = await ctx.db
       .query("userStats")
@@ -60,61 +56,54 @@ export const countByStatus = query({
       .unique();
     return stats?.count ?? 0;
   },
+  returns: v.number(),
 });
 
 export const getById = query({
   args: { id: v.id("users") },
+  handler: async (ctx, args) => ctx.db.get(args.id),
   returns: v.union(userDoc, v.null()),
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
-  },
 });
 
 export const getByEmail = query({
   args: { email: v.string() },
-  returns: v.union(userDoc, v.null()),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) => ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", args.email))
-      .unique();
-  },
+      .unique(),
+  returns: v.union(userDoc, v.null()),
 });
 
 export const getByRoleAndStatus = query({
   args: {
+    paginationOpts: paginationOptsValidator,
     roleId: v.id("roles"),
     status: userStatus,
-    paginationOpts: paginationOptsValidator,
   },
-  returns: v.object({
-    page: v.array(userDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) => ctx.db
       .query("users")
       .withIndex("by_role_status", (q) =>
         q.eq("roleId", args.roleId).eq("status", args.status)
       )
-      .paginate(args.paginationOpts);
-  },
+      .paginate(args.paginationOpts),
+  returns: v.object({
+    continueCursor: v.string(),
+    isDone: v.boolean(),
+    page: v.array(userDoc),
+  }),
 });
 
 export const getByStatus = query({
-  args: { status: userStatus, paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(userDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  args: { paginationOpts: paginationOptsValidator, status: userStatus },
+  handler: async (ctx, args) => ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", args.status))
-      .paginate(args.paginationOpts);
-  },
+      .paginate(args.paginationOpts),
+  returns: v.object({
+    continueCursor: v.string(),
+    isDone: v.boolean(),
+    page: v.array(userDoc),
+  }),
 });
 
 // Helper function to update userStats counter
@@ -130,20 +119,19 @@ async function updateUserStats(
   if (stats) {
     await ctx.db.patch(stats._id, { count: Math.max(0, stats.count + delta) });
   } else {
-    await ctx.db.insert("userStats", { key, count: Math.max(0, delta) });
+    await ctx.db.insert("userStats", { count: Math.max(0, delta), key });
   }
 }
 
 export const create = mutation({
   args: {
-    name: v.string(),
-    email: v.string(),
-    phone: v.optional(v.string()),
     avatar: v.optional(v.string()),
+    email: v.string(),
+    name: v.string(),
+    phone: v.optional(v.string()),
     roleId: v.id("roles"),
     status: userStatus,
   },
-  returns: v.id("users"),
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("users")
@@ -162,24 +150,24 @@ export const create = mutation({
     
     return userId;
   },
+  returns: v.id("users"),
 });
 
 export const update = mutation({
   args: {
-    id: v.id("users"),
-    name: v.optional(v.string()),
-    email: v.optional(v.string()),
-    phone: v.optional(v.string()),
     avatar: v.optional(v.string()),
+    email: v.optional(v.string()),
+    id: v.id("users"),
+    lastLogin: v.optional(v.number()),
+    name: v.optional(v.string()),
+    phone: v.optional(v.string()),
     roleId: v.optional(v.id("roles")),
     status: v.optional(userStatus),
-    lastLogin: v.optional(v.number()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
     const user = await ctx.db.get(id);
-    if (!user) throw new Error("User not found");
+    if (!user) {throw new Error("User not found");}
     
     // Update status counters if status changed
     if (updates.status && updates.status !== user.status) {
@@ -192,23 +180,23 @@ export const update = mutation({
     await ctx.db.patch(id, updates);
     return null;
   },
+  returns: v.null(),
 });
 
 export const updateLastLogin = mutation({
   args: { id: v.id("users") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, { lastLogin: Date.now() });
     return null;
   },
+  returns: v.null(),
 });
 
 export const remove = mutation({
   args: { id: v.id("users") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.id);
-    if (!user) throw new Error("User not found");
+    if (!user) {throw new Error("User not found");}
     
     await ctx.db.delete(args.id);
     
@@ -220,18 +208,18 @@ export const remove = mutation({
     
     return null;
   },
+  returns: v.null(),
 });
 
 // USR-005 FIX: Bulk delete with parallel execution
 export const bulkRemove = mutation({
   args: { ids: v.array(v.id("users")) },
-  returns: v.null(),
   handler: async (ctx, args) => {
-    const users = await Promise.all(args.ids.map((id) => ctx.db.get(id)));
+    const users = await Promise.all(args.ids.map( async (id) => ctx.db.get(id)));
     const validUsers = users.filter((u): u is NonNullable<typeof u> => u !== null);
     
     // Delete all users in parallel
-    await Promise.all(args.ids.map((id) => ctx.db.delete(id)));
+    await Promise.all(args.ids.map( async (id) => ctx.db.delete(id)));
     
     // Update counters
     const statusCounts: Record<string, number> = {};
@@ -241,11 +229,12 @@ export const bulkRemove = mutation({
     
     await Promise.all([
       updateUserStats(ctx, "total", -validUsers.length),
-      ...Object.entries(statusCounts).map(([status, count]) =>
+      ...Object.entries(statusCounts).map( async ([status, count]) =>
         updateUserStats(ctx, status, -count)
       ),
     ]);
     
     return null;
   },
+  returns: v.null(),
 });

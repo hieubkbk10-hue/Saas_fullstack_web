@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { Search, X, ChevronDown, SlidersHorizontal } from 'lucide-react';
-import { Id } from '@/convex/_generated/dataModel';
+import React, { useCallback, useState } from 'react';
+import { ChevronDown, Search, SlidersHorizontal, X } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
 
 export type SortOption = 'newest' | 'oldest' | 'popular' | 'title';
 
@@ -25,10 +25,10 @@ interface PostsFilterProps {
 }
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'newest', label: 'Mới nhất' },
-  { value: 'oldest', label: 'Cũ nhất' },
-  { value: 'popular', label: 'Xem nhiều' },
-  { value: 'title', label: 'Theo tên A-Z' },
+  { label: 'Mới nhất', value: 'newest' },
+  { label: 'Cũ nhất', value: 'oldest' },
+  { label: 'Xem nhiều', value: 'popular' },
+  { label: 'Theo tên A-Z', value: 'title' },
 ];
 
 export function PostsFilter({
@@ -50,7 +50,7 @@ export function PostsFilter({
     onSortChange('newest');
   }, [onSearchChange, onCategoryChange, onSortChange]);
 
-  const hasActiveFilters = selectedCategory || searchQuery || sortBy !== 'newest';
+  const hasActiveFilters = (selectedCategory ?? searchQuery) || sortBy !== 'newest';
   const selectedCategoryName = categories.find(c => c._id === selectedCategory)?.name;
 
   return (
@@ -65,13 +65,13 @@ export function PostsFilter({
               type="text"
               placeholder="Tìm kiếm..."
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={(e) =>{  onSearchChange(e.target.value); }}
               className="w-full pl-9 pr-9 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 text-sm"
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             />
             {searchQuery && (
               <button
-                onClick={() => onSearchChange('')}
+                onClick={() =>{  onSearchChange(''); }}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100"
               >
                 <X className="w-4 h-4 text-slate-400" />
@@ -82,8 +82,8 @@ export function PostsFilter({
           {/* Category Dropdown - Desktop */}
           <div className="hidden lg:block relative">
             <select
-              value={selectedCategory || ''}
-              onChange={(e) => onCategoryChange(e.target.value ? e.target.value as Id<"postCategories"> : null)}
+              value={selectedCategory ?? ''}
+              onChange={(e) =>{  onCategoryChange(e.target.value ? e.target.value as Id<"postCategories"> : null); }}
               className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 cursor-pointer min-w-[140px]"
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             >
@@ -104,7 +104,7 @@ export function PostsFilter({
           <div className="hidden lg:block relative">
             <select
               value={sortBy}
-              onChange={(e) => onSortChange(e.target.value as SortOption)}
+              onChange={(e) =>{  onSortChange(e.target.value as SortOption); }}
               className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 cursor-pointer"
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             >
@@ -119,7 +119,7 @@ export function PostsFilter({
 
           {/* Mobile Filter Toggle */}
           <button
-            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            onClick={() =>{  setShowMobileFilters(!showMobileFilters); }}
             className="lg:hidden flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm"
           >
             <SlidersHorizontal className="w-4 h-4" />
@@ -143,7 +143,7 @@ export function PostsFilter({
               </label>
               <div className="flex flex-wrap gap-1.5">
                 <button
-                  onClick={() => onCategoryChange(null)}
+                  onClick={() =>{  onCategoryChange(null); }}
                   className={`px-2.5 py-1 rounded-full text-sm font-medium transition-colors ${
                     !selectedCategory
                       ? 'text-white'
@@ -156,7 +156,7 @@ export function PostsFilter({
                 {categories.map((category) => (
                   <button
                     key={category._id}
-                    onClick={() => onCategoryChange(category._id)}
+                    onClick={() =>{  onCategoryChange(category._id); }}
                     className={`px-2.5 py-1 rounded-full text-sm font-medium transition-colors ${
                       selectedCategory === category._id
                         ? 'text-white'
@@ -177,7 +177,7 @@ export function PostsFilter({
               </label>
               <select
                 value={sortBy}
-                onChange={(e) => onSortChange(e.target.value as SortOption)}
+                onChange={(e) =>{  onSortChange(e.target.value as SortOption); }}
                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2"
                 style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
               >
@@ -208,7 +208,7 @@ export function PostsFilter({
             >
               {selectedCategoryName}
               <button
-                onClick={() => onCategoryChange(null)}
+                onClick={() =>{  onCategoryChange(null); }}
                 className="hover:opacity-70"
               >
                 <X className="w-3 h-3" />
@@ -219,7 +219,7 @@ export function PostsFilter({
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
               &quot;{searchQuery}&quot;
               <button
-                onClick={() => onSearchChange('')}
+                onClick={() =>{  onSearchChange(''); }}
                 className="hover:opacity-70"
               >
                 <X className="w-3 h-3" />

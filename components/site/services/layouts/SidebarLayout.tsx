@@ -3,8 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Briefcase, Eye, Search, Clock, Folder, Star } from 'lucide-react';
-import { Id } from '@/convex/_generated/dataModel';
+import { Briefcase, Clock, Eye, Folder, Search, Star } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
 
 interface Service {
   _id: Id<"services">;
@@ -39,8 +39,8 @@ interface SidebarLayoutProps {
 }
 
 function formatPrice(price?: number): string {
-  if (!price) return 'Liên hệ';
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  if (!price) {return 'Liên hệ';}
+  return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 }
 
 export function SidebarLayout({
@@ -66,7 +66,7 @@ export function SidebarLayout({
     const timer = setTimeout(() => {
       onSearchChange(localSearch);
     }, 300);
-    return () => clearTimeout(timer);
+    return () =>{  clearTimeout(timer); };
   }, [localSearch, onSearchChange]);
 
   return (
@@ -88,7 +88,7 @@ export function SidebarLayout({
               type="text"
               placeholder="Nhập từ khóa..."
               value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
+              onChange={(e) =>{  setLocalSearch(e.target.value); }}
               className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2"
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             />
@@ -103,7 +103,7 @@ export function SidebarLayout({
             <ul className="space-y-1">
               <li>
                 <button
-                  onClick={() => onCategoryChange(null)}
+                  onClick={() =>{  onCategoryChange(null); }}
                   className={`w-full text-left px-3 py-2.5 rounded text-sm transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                     !selectedCategory ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'
                   }`}
@@ -117,7 +117,7 @@ export function SidebarLayout({
               {categories.map((category) => (
                 <li key={category._id}>
                   <button
-                    onClick={() => onCategoryChange(category._id)}
+                    onClick={() =>{  onCategoryChange(category._id); }}
                     className={`w-full text-left px-3 py-2.5 rounded text-sm transition-colors min-h-11 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                       selectedCategory === category._id ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'
                     }`}
@@ -173,7 +173,7 @@ export function SidebarLayout({
                     <div className="p-4 flex-1 flex flex-col justify-center">
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                          {categoryMap.get(service.categoryId) || 'Dịch vụ'}
+                          {categoryMap.get(service.categoryId) ?? 'Dịch vụ'}
                         </span>
                         <span className="text-xs text-slate-400">{service.publishedAt ? new Date(service.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
                       </div>

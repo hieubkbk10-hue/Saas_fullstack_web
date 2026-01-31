@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Trash2, Search, Loader2, RefreshCw, Heart, User, Package, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ChevronLeft, ChevronRight, Heart, Loader2, Package, RefreshCw, Search, Trash2, User } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
-import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
+import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'wishlist';
@@ -39,7 +39,7 @@ function WishlistContent() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCustomer, setFilterCustomer] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Id<"wishlist">[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,7 +65,7 @@ function WishlistContent() {
       { key: 'product', label: 'Sản phẩm', required: true },
       { key: 'price', label: 'Giá' },
     ];
-    if (enabledFields.has('note')) cols.push({ key: 'note', label: 'Ghi chú' });
+    if (enabledFields.has('note')) {cols.push({ key: 'note', label: 'Ghi chú' });}
     cols.push({ key: 'createdAt', label: 'Ngày thêm' });
     cols.push({ key: 'actions', label: 'Hành động', required: true });
     return cols;
@@ -77,18 +77,17 @@ function WishlistContent() {
 
   const customerMap = useMemo(() => {
     const map: Record<string, { name: string; email: string }> = {};
-    customersData?.forEach(c => { map[c._id] = { name: c.name, email: c.email }; });
+    customersData?.forEach(c => { map[c._id] = { email: c.email, name: c.name }; });
     return map;
   }, [customersData]);
 
   const productMap = useMemo(() => {
     const map: Record<string, { name: string; price: number; salePrice?: number; image?: string }> = {};
-    productsData?.forEach(p => { map[p._id] = { name: p.name, price: p.price, salePrice: p.salePrice, image: p.image }; });
+    productsData?.forEach(p => { map[p._id] = { image: p.image, name: p.name, price: p.price, salePrice: p.salePrice }; });
     return map;
   }, [productsData]);
 
-  const wishlistItems = useMemo(() => {
-    return wishlistData?.map(item => ({
+  const wishlistItems = useMemo(() => wishlistData?.map(item => ({
       ...item,
       id: item._id,
       customerName: customerMap[item.customerId]?.name || 'Không xác định',
@@ -97,8 +96,7 @@ function WishlistContent() {
       productPrice: productMap[item.productId]?.price || 0,
       productSalePrice: productMap[item.productId]?.salePrice,
       productImage: productMap[item.productId]?.image,
-    })) || [];
-  }, [wishlistData, customerMap, productMap]);
+    })) ?? [], [wishlistData, customerMap, productMap]);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -111,7 +109,7 @@ function WishlistContent() {
   };
 
   const handleSort = (key: string) => {
-    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
     setCurrentPage(1);
   };
 
@@ -143,8 +141,8 @@ function WishlistContent() {
   }, [sortedData, currentPage, itemsPerPage]);
 
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(item => item._id));
-  const toggleSelectItem = (id: Id<"wishlist">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(item => item._id)); };
+  const toggleSelectItem = (id: Id<"wishlist">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
 
   const handleDelete = async (id: Id<"wishlist">) => {
     if (confirm('Xóa sản phẩm này khỏi wishlist?')) {
@@ -162,7 +160,7 @@ function WishlistContent() {
     if (confirm(`Xóa ${selectedIds.length} mục đã chọn?`)) {
       try {
         const count = selectedIds.length;
-        await Promise.all(selectedIds.map(id => removeItem({ id })));
+        await Promise.all(selectedIds.map( async id => removeItem({ id })));
         setSelectedIds([]);
         toast.success(`Đã xóa ${count} mục`);
       } catch {
@@ -184,7 +182,7 @@ function WishlistContent() {
     }
   };
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
   const formatDate = (timestamp: number) => new Date(timestamp).toLocaleDateString('vi-VN');
 
   // Stats
@@ -196,10 +194,10 @@ function WishlistContent() {
       productCounts[item.productId] = (productCounts[item.productId] || 0) + 1;
     });
     return {
+      mostWishlisted: (Object.entries(productCounts) as Array<[string, number]>).sort((a, b) => b[1] - a[1])[0],
       totalItems: wishlistItems.length,
       uniqueCustomers: Object.keys(customerCounts).length,
       uniqueProducts: Object.keys(productCounts).length,
-      mostWishlisted: Object.entries(productCounts).sort((a, b) => b[1] - a[1])[0],
     };
   }, [wishlistItems]);
 
@@ -275,16 +273,16 @@ function WishlistContent() {
         </Card>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between">
           <div className="flex flex-wrap gap-3 flex-1">
             <div className="relative max-w-xs">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input placeholder="Tìm khách hàng, sản phẩm..." className="pl-9 w-48" value={searchTerm} onChange={(e) => handleSearchChange(e.target.value)} />
+              <Input placeholder="Tìm khách hàng, sản phẩm..." className="pl-9 w-48" value={searchTerm} onChange={(e) =>{  handleSearchChange(e.target.value); }} />
             </div>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterCustomer} onChange={(e) => handleCustomerChange(e.target.value)}>
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterCustomer} onChange={(e) =>{  handleCustomerChange(e.target.value); }}>
               <option value="">Tất cả khách hàng</option>
               {customersData?.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
             </select>
@@ -306,7 +304,7 @@ function WishlistContent() {
           <TableBody>
             {paginatedData.map(item => (
               <TableRow key={item._id} className={selectedIds.includes(item._id) ? 'bg-pink-500/5' : ''}>
-                {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(item._id)} onChange={() => toggleSelectItem(item._id)} /></TableCell>}
+                {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(item._id)} onChange={() =>{  toggleSelectItem(item._id); }} /></TableCell>}
                 {visibleColumns.includes('customer') && (
                   <TableCell>
                     <div>
@@ -342,12 +340,12 @@ function WishlistContent() {
                   </TableCell>
                 )}
                 {visibleColumns.includes('note') && enabledFields.has('note') && (
-                  <TableCell className="text-slate-500 text-sm max-w-[150px] truncate">{item.note || '-'}</TableCell>
+                  <TableCell className="text-slate-500 text-sm max-w-[150px] truncate">{item.note ?? '-'}</TableCell>
                 )}
                 {visibleColumns.includes('createdAt') && <TableCell className="text-slate-500 text-sm">{formatDate(item._creationTime)}</TableCell>}
                 {visibleColumns.includes('actions') && (
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(item._id)}><Trash2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(item._id)}><Trash2 size={16}/></Button>
                   </TableCell>
                 )}
               </TableRow>
@@ -372,7 +370,7 @@ function WishlistContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
+                  onClick={() =>{  setCurrentPage(p => p - 1); }}
                 >
                   <ChevronLeft size={16} />
                 </Button>
@@ -383,7 +381,7 @@ function WishlistContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
+                  onClick={() =>{  setCurrentPage(p => p + 1); }}
                 >
                   <ChevronRight size={16} />
                 </Button>

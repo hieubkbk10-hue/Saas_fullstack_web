@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, RefreshCw } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { Edit, ExternalLink, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
-import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
+import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 export default function PostCategoriesListPage() {
@@ -28,7 +28,7 @@ function PostCategoriesContent() {
   const clearPostsData = useMutation(api.seed.clearPostsData);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [visibleColumns, setVisibleColumns] = useState(['select', 'thumbnail', 'name', 'slug', 'count', 'status', 'actions']);
   const [selectedIds, setSelectedIds] = useState<Id<"postCategories">[]>([]);
 
@@ -43,13 +43,11 @@ function PostCategoriesContent() {
     return map;
   }, [postsData]);
 
-  const categories = useMemo(() => {
-    return categoriesData?.map(cat => ({
+  const categories = useMemo(() => categoriesData?.map(cat => ({
       ...cat,
       id: cat._id,
       count: postCountMap[cat._id] || 0,
-    })) || [];
-  }, [categoriesData, postCountMap]);
+    })) ?? [], [categoriesData, postCountMap]);
 
   const columns = [
     { key: 'select', label: 'Chọn' },
@@ -62,7 +60,7 @@ function PostCategoriesContent() {
   ];
 
   const handleSort = (key: string) => {
-    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
   };
 
   const toggleColumn = (key: string) => {
@@ -79,8 +77,8 @@ function PostCategoriesContent() {
 
   const sortedData = useSortableData(filteredData, sortConfig);
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(item => item.id as Id<"postCategories">));
-  const toggleSelectItem = (id: Id<"postCategories">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(item => item.id as Id<"postCategories">)); };
+  const toggleSelectItem = (id: Id<"postCategories">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
 
   const handleDelete = async (id: Id<"postCategories">) => {
     if (confirm('Xóa danh mục này?')) {
@@ -141,14 +139,14 @@ function PostCategoriesContent() {
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
       
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between">
           <div className="flex gap-4 flex-1">
             <div className="relative max-w-xs flex-1">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input placeholder="Tìm kiếm danh mục..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <Input placeholder="Tìm kiếm danh mục..." className="pl-9" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); }} />
             </div>
           </div>
           <ColumnToggle columns={columns} visibleColumns={visibleColumns} onToggle={toggleColumn} />
@@ -173,7 +171,7 @@ function PostCategoriesContent() {
             {sortedData.map(cat => (
               <TableRow key={cat.id} className={selectedIds.includes(cat.id) ? 'bg-blue-500/5' : ''}>
                 {visibleColumns.includes('select') && (
-                  <TableCell><SelectCheckbox checked={selectedIds.includes(cat.id)} onChange={() => toggleSelectItem(cat.id)} /></TableCell>
+                  <TableCell><SelectCheckbox checked={selectedIds.includes(cat.id)} onChange={() =>{  toggleSelectItem(cat.id); }} /></TableCell>
                 )}
                 {visibleColumns.includes('thumbnail') && (
                   <TableCell>
@@ -195,9 +193,9 @@ function PostCategoriesContent() {
                 {visibleColumns.includes('actions') && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem trên web" onClick={() => openFrontend(cat.slug)}><ExternalLink size={16}/></Button>
+                      <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem trên web" onClick={() =>{  openFrontend(cat.slug); }}><ExternalLink size={16}/></Button>
                       <Link href={`/admin/post-categories/${cat.id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(cat.id as Id<"postCategories">)}><Trash2 size={16}/></Button>
+                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(cat.id as Id<"postCategories">)}><Trash2 size={16}/></Button>
                     </div>
                   </TableCell>
                 )}

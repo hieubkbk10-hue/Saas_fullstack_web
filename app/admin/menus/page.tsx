@@ -1,23 +1,23 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { 
-  Button, Card, CardHeader, CardTitle, CardContent, Input, Label, cn
+  Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn
 } from '../components/ui';
 import { ModuleGuard } from '../components/ModuleGuard';
 import { 
-  Plus, Trash2, Save, ArrowUp, ArrowDown, GripVertical, ChevronRight, 
-  Menu, Loader2, RefreshCw, ExternalLink, Eye, EyeOff, ChevronLeft
+  ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ExternalLink, Eye, EyeOff, 
+  GripVertical, Loader2, Menu, Plus, RefreshCw, Save, Trash2
 } from 'lucide-react';
 import { MenuPreview } from './MenuPreview';
 
 const MODULE_KEY = 'menus';
 
-type MenuItem = {
+interface MenuItem {
   _id: Id<"menuItems">;
   _creationTime: number;
   menuId: Id<"menus">;
@@ -29,7 +29,7 @@ type MenuItem = {
   icon?: string;
   openInNewTab?: boolean;
   active: boolean;
-};
+}
 
 export default function MenuBuilderPageWrapper() {
   return (
@@ -134,9 +134,7 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
   const showNested = enabledFeatures.enableNested ?? true;
   const showNewTab = enabledFeatures.enableNewTab ?? true;
 
-  const items = useMemo(() => {
-    return menuItemsData?.sort((a, b) => a.order - b.order) || [];
-  }, [menuItemsData]);
+  const items = useMemo(() => menuItemsData ? [...menuItemsData].sort((a, b) => a.order - b.order) : [], [menuItemsData]);
 
   // Pagination
   const totalPages = Math.ceil(items.length / menusPerPage);
@@ -149,7 +147,7 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
 
   // TICKET #10 FIX: Show detailed error message
   const handleMove = async (index: number, direction: 'up' | 'down') => {
-    if ((direction === 'up' && index === 0) || (direction === 'down' && index === items.length - 1)) return;
+    if ((direction === 'up' && index === 0) || (direction === 'down' && index === items.length - 1)) {return;}
     
     const swapIndex = direction === 'up' ? index - 1 : index + 1;
     const newItems = [...items];
@@ -236,10 +234,10 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
       ? Math.min(item.depth + 1, maxDepth - 1) 
       : Math.max(item.depth - 1, 0);
     
-    if (newDepth === item.depth) return;
+    if (newDepth === item.depth) {return;}
     
     try {
-      await updateMenuItem({ id: item._id, depth: newDepth });
+      await updateMenuItem({ depth: newDepth, id: item._id });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Có lỗi khi cập nhật');
     }
@@ -248,7 +246,7 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
   // TICKET #10 FIX: Show detailed error message
   const handleToggleActive = async (item: MenuItem) => {
     try {
-      await updateMenuItem({ id: item._id, active: !item.active });
+      await updateMenuItem({ active: !item.active, id: item._id });
       toast.success(item.active ? 'Đã ẩn menu item' : 'Đã hiện menu item');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Có lỗi khi cập nhật');
@@ -271,11 +269,11 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
   const handleAdd = async () => {
     try {
       await createMenuItem({
-        menuId,
-        label: 'Liên kết mới',
-        url: '/',
-        depth: 0,
         active: true,
+        depth: 0,
+        label: 'Liên kết mới',
+        menuId,
+        url: '/',
       });
       toast.success('Đã thêm liên kết mới');
     } catch (error) {
@@ -300,7 +298,7 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
 
   const handleSaveItem = async (item: MenuItem) => {
     const edited = editingItems.get(item._id);
-    if (!edited) return;
+    if (!edited) {return;}
     
     if (edited.label === item.label && edited.url === item.url) {
       setEditingItems(prev => {
@@ -351,10 +349,10 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
             <div 
               key={item._id}
               draggable
-              onDragStart={(e) => handleDragStart(e, actualIndex)}
-              onDragOver={(e) => handleDragOver(e, actualIndex)}
+              onDragStart={(e) =>{  handleDragStart(e, actualIndex); }}
+              onDragOver={(e) =>{  handleDragOver(e, actualIndex); }}
               onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, actualIndex)}
+              onDrop={ async (e) => handleDrop(e, actualIndex)}
               onDragEnd={handleDragEnd}
               className={cn(
                 "flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border rounded-lg shadow-sm transition-all",
@@ -366,9 +364,9 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
               )}
             >
               <div className="flex flex-col gap-1 text-slate-300 cursor-grab active:cursor-grabbing">
-                <button type="button" onClick={() => handleMove(actualIndex, 'up')} className="hover:text-orange-600 disabled:opacity-30" disabled={actualIndex === 0}><ArrowUp size={14}/></button>
+                <button type="button" onClick={ async () => handleMove(actualIndex, 'up')} className="hover:text-orange-600 disabled:opacity-30" disabled={actualIndex === 0}><ArrowUp size={14}/></button>
                 <GripVertical size={14} className="text-slate-400" />
-                <button type="button" onClick={() => handleMove(actualIndex, 'down')} className="hover:text-orange-600 disabled:opacity-30" disabled={actualIndex === items.length - 1}><ArrowDown size={14}/></button>
+                <button type="button" onClick={ async () => handleMove(actualIndex, 'down')} className="hover:text-orange-600 disabled:opacity-30" disabled={actualIndex === items.length - 1}><ArrowDown size={14}/></button>
               </div>
               
               <div className="flex-1 grid grid-cols-2 gap-4">
@@ -376,14 +374,14 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
                   <Label className="text-xs text-slate-500">Nhãn hiển thị</Label>
                   {isEditing ? (
                     <Input 
-                      value={editedValues?.label || ''} 
-                      onChange={(e) => updateEditingItem(item._id, 'label', e.target.value)} 
+                      value={editedValues?.label ?? ''} 
+                      onChange={(e) =>{  updateEditingItem(item._id, 'label', e.target.value); }} 
                       className="h-8 text-sm" 
                     />
                   ) : (
                     <div 
                       className="h-8 px-3 py-1.5 text-sm rounded-md bg-slate-50 dark:bg-slate-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
-                      onClick={() => startEditing(item)}
+                      onClick={() =>{  startEditing(item); }}
                     >
                       {item.label}
                     </div>
@@ -393,14 +391,14 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
                   <Label className="text-xs text-slate-500">URL</Label>
                   {isEditing ? (
                     <Input 
-                      value={editedValues?.url || ''} 
-                      onChange={(e) => updateEditingItem(item._id, 'url', e.target.value)} 
+                      value={editedValues?.url ?? ''} 
+                      onChange={(e) =>{  updateEditingItem(item._id, 'url', e.target.value); }} 
                       className="h-8 text-sm font-mono text-xs" 
                     />
                   ) : (
                     <div 
                       className="h-8 px-3 py-1.5 text-sm font-mono text-xs rounded-md bg-slate-50 dark:bg-slate-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 truncate"
-                      onClick={() => startEditing(item)}
+                      onClick={() =>{  startEditing(item); }}
                     >
                       {item.url}
                     </div>
@@ -415,7 +413,7 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
                     variant="ghost" 
                     size="icon" 
                     className="h-8 w-8 text-green-600 hover:bg-green-50" 
-                    onClick={() => handleSaveItem(item)}
+                    onClick={ async () => handleSaveItem(item)}
                     disabled={isSaving}
                   >
                     <Save size={14}/>
@@ -424,10 +422,10 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
                   <>
                     {showNested && (
                       <>
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleIndent(item, 'out')} disabled={item.depth === 0} title="Thụt lề trái">
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={ async () => handleIndent(item, 'out')} disabled={item.depth === 0} title="Thụt lề trái">
                           <ChevronRight size={14} className="rotate-180"/>
                         </Button>
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleIndent(item, 'in')} disabled={item.depth >= maxDepth - 1} title="Thụt lề phải">
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={ async () => handleIndent(item, 'in')} disabled={item.depth >= maxDepth - 1} title="Thụt lề phải">
                           <ChevronRight size={14}/>
                         </Button>
                       </>
@@ -435,12 +433,12 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
                     {showNewTab && item.openInNewTab && (
                       <span title="Mở tab mới"><ExternalLink size={14} className="text-slate-400" /></span>
                     )}
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggleActive(item)} title={item.active ? 'Ẩn' : 'Hiện'}>
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={ async () => handleToggleActive(item)} title={item.active ? 'Ẩn' : 'Hiện'}>
                       {item.active ? <Eye size={14}/> : <EyeOff size={14} className="text-slate-400"/>}
                     </Button>
                   </>
                 )}
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-50" onClick={() => handleDelete(item._id)}>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-50" onClick={ async () => handleDelete(item._id)}>
                   <Trash2 size={14}/>
                 </Button>
               </div>
@@ -462,7 +460,7 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() =>{  setCurrentPage(p => Math.max(1, p - 1)); }}
                 disabled={currentPage === 1}
               >
                 <ChevronLeft size={14} />
@@ -473,7 +471,7 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={() =>{  setCurrentPage(p => Math.min(totalPages, p + 1)); }}
                 disabled={currentPage === totalPages}
               >
                 <ChevronRight size={14} />

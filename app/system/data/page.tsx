@@ -1,53 +1,53 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useCallback, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
 import { 
-  Database, Trash2, RefreshCw, Play, AlertTriangle, Check, 
-  Loader2, ChevronDown, Package, Users, FileText, Settings,
-  ShoppingCart, Image, Globe, BarChart3, Shield
+  AlertTriangle, BarChart3, Check, ChevronDown, Database, FileText, 
+  Globe, Image, Loader2, Package, Play, RefreshCw,
+  Settings, Shield, ShoppingCart, Trash2, Users
 } from 'lucide-react';
 
-type TableStat = {
+interface TableStat {
   table: string;
   count: number;
   category: string;
   isApproximate: boolean;
-};
+}
 
 const categoryIcons: Record<string, React.ElementType> = {
+  commerce: ShoppingCart,
+  config: Settings,
+  content: FileText,
+  logs: BarChart3,
+  media: Image,
   system: Settings,
   user: Users,
-  commerce: ShoppingCart,
-  content: FileText,
-  media: Image,
   website: Globe,
-  config: Settings,
-  logs: BarChart3,
 };
 
 const categoryColors: Record<string, string> = {
+  commerce: 'text-emerald-500 bg-emerald-500/10',
+  config: 'text-amber-500 bg-amber-500/10',
+  content: 'text-blue-500 bg-blue-500/10',
+  logs: 'text-slate-500 bg-slate-500/10',
+  media: 'text-pink-500 bg-pink-500/10',
   system: 'text-orange-500 bg-orange-500/10',
   user: 'text-purple-500 bg-purple-500/10',
-  commerce: 'text-emerald-500 bg-emerald-500/10',
-  content: 'text-blue-500 bg-blue-500/10',
-  media: 'text-pink-500 bg-pink-500/10',
   website: 'text-cyan-500 bg-cyan-500/10',
-  config: 'text-amber-500 bg-amber-500/10',
-  logs: 'text-slate-500 bg-slate-500/10',
 };
 
 const categoryLabels: Record<string, string> = {
+  commerce: 'Bán hàng',
+  config: 'Cấu hình',
+  content: 'Nội dung',
+  logs: 'Logs',
+  media: 'Media',
   system: 'Hệ thống',
   user: 'Người dùng',
-  commerce: 'Bán hàng',
-  content: 'Nội dung',
-  media: 'Media',
   website: 'Website',
-  config: 'Cấu hình',
-  logs: 'Logs',
 };
 
 function StatsSkeleton() {
@@ -119,17 +119,17 @@ export default function DataManagerPage() {
   }, [seedAll]);
 
   const handleClearTable = useCallback(async (table: string) => {
-    if (!confirm(`Xóa tất cả dữ liệu trong bảng "${table}"?`)) return;
+    if (!confirm(`Xóa tất cả dữ liệu trong bảng "${table}"?`)) {return;}
     setClearingTable(table);
     try {
       const result = await clearTable({ table });
       if (result.hasMore) {
         toast.warning(`Đã xóa ${result.deleted} records từ "${table}"`, {
-          description: 'Còn dữ liệu chưa xóa hết. Vui lòng xóa lại.',
           action: {
             label: 'Xóa tiếp',
-            onClick: () => handleClearTable(table),
+            onClick:  async () => handleClearTable(table),
           },
+          description: 'Còn dữ liệu chưa xóa hết. Vui lòng xóa lại.',
         });
       } else {
         toast.success(`Đã xóa ${result.deleted} records từ "${table}"`);
@@ -151,11 +151,11 @@ export default function DataManagerPage() {
       
       if (result.hasMore) {
         toast.warning(`Đã xóa ${result.totalDeleted} records`, {
-          description: 'Còn dữ liệu chưa xóa hết. Vui lòng xóa lại.',
           action: {
             label: 'Xóa tiếp',
-            onClick: () => handleClearAll(excludeSystem),
+            onClick:  async () => handleClearAll(excludeSystem),
           },
+          description: 'Còn dữ liệu chưa xóa hết. Vui lòng xóa lại.',
         });
       } else {
         toast.success(`Đã xóa ${result.totalDeleted} records`, {
@@ -178,14 +178,14 @@ export default function DataManagerPage() {
   };
 
   const groupedStats = tableStats?.reduce((acc, stat) => {
-    if (!acc[stat.category]) acc[stat.category] = [];
+    if (!acc[stat.category]) {acc[stat.category] = [];}
     acc[stat.category].push(stat);
     return acc;
-  }, {} as Record<string, TableStat[]>) || {};
+  }, {} as Record<string, TableStat[]>) ?? {};
 
-  const totalRecords = tableStats?.reduce((sum, s) => sum + s.count, 0) || 0;
-  const hasApproximate = tableStats?.some(t => t.isApproximate) || false;
-  const totalTables = tableStats?.length || 0;
+  const totalRecords = tableStats?.reduce((sum, s) => sum + s.count, 0) ?? 0;
+  const hasApproximate = tableStats?.some(t => t.isApproximate) ?? false;
+  const totalTables = tableStats?.length ?? 0;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -245,7 +245,7 @@ export default function DataManagerPage() {
             </p>
             <div className="flex gap-2">
               <button
-                onClick={() => handleSeedAll(false)}
+                onClick={ async () => handleSeedAll(false)}
                 disabled={isSeeding}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
@@ -253,7 +253,7 @@ export default function DataManagerPage() {
                 Seed (bỏ qua có sẵn)
               </button>
               <button
-                onClick={() => handleSeedAll(true)}
+                onClick={ async () => handleSeedAll(true)}
                 disabled={isSeeding}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
@@ -287,7 +287,7 @@ export default function DataManagerPage() {
             </p>
             {!showConfirmClearAll ? (
               <button
-                onClick={() => setShowConfirmClearAll(true)}
+                onClick={() =>{  setShowConfirmClearAll(true); }}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 <Trash2 size={16} />
@@ -301,7 +301,7 @@ export default function DataManagerPage() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleClearAll(true)}
+                    onClick={ async () => handleClearAll(true)}
                     disabled={isClearing}
                     className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                   >
@@ -309,7 +309,7 @@ export default function DataManagerPage() {
                     Giữ System
                   </button>
                   <button
-                    onClick={() => handleClearAll(false)}
+                    onClick={ async () => handleClearAll(false)}
                     disabled={isClearing}
                     className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                   >
@@ -317,7 +317,7 @@ export default function DataManagerPage() {
                     Xóa hết
                   </button>
                   <button
-                    onClick={() => setShowConfirmClearAll(false)}
+                    onClick={() =>{  setShowConfirmClearAll(false); }}
                     className="px-3 py-2 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                   >
                     Hủy
@@ -356,7 +356,7 @@ export default function DataManagerPage() {
               return (
                 <div key={category}>
                   <button
-                    onClick={() => toggleCategory(category)}
+                    onClick={() =>{  toggleCategory(category); }}
                     className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
@@ -405,7 +405,7 @@ export default function DataManagerPage() {
                                 </td>
                                 <td className="px-4 py-2 text-right">
                                   <button
-                                    onClick={() => handleClearTable(table.table)}
+                                    onClick={ async () => handleClearTable(table.table)}
                                     disabled={clearingTable === table.table || table.count === 0}
                                     className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                     title={table.count === 0 ? 'Bảng trống' : `Xóa ${table.count} records`}

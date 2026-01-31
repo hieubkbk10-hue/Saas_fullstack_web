@@ -1,4 +1,5 @@
-import { query, mutation, MutationCtx } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 // HIGH-004 FIX: Helper function to update promotionStats counter
@@ -14,7 +15,7 @@ async function updatePromotionStats(
   if (stats) {
     await ctx.db.patch(stats._id, { count: Math.max(0, stats.count + delta) });
   } else {
-    await ctx.db.insert("promotionStats", { key, count: Math.max(0, delta) });
+    await ctx.db.insert("promotionStats", { count: Math.max(0, delta), key });
   }
 }
 
@@ -28,99 +29,88 @@ const promotionStatus = v.union(
 const discountType = v.union(v.literal("percent"), v.literal("fixed"));
 
 const promotionDoc = v.object({
-  _id: v.id("promotions"),
   _creationTime: v.number(),
-  name: v.string(),
+  _id: v.id("promotions"),
+  applicableIds: v.optional(v.array(v.string())),
+  applicableTo: v.optional(
+    v.union(v.literal("all"), v.literal("products"), v.literal("categories"))
+  ),
   code: v.string(),
   description: v.optional(v.string()),
   discountType: discountType,
   discountValue: v.number(),
-  minOrderAmount: v.optional(v.number()),
+  endDate: v.optional(v.number()),
   maxDiscountAmount: v.optional(v.number()),
+  minOrderAmount: v.optional(v.number()),
+  name: v.string(),
+  order: v.number(),
+  startDate: v.optional(v.number()),
+  status: promotionStatus,
   usageLimit: v.optional(v.number()),
   usedCount: v.number(),
-  startDate: v.optional(v.number()),
-  endDate: v.optional(v.number()),
-  status: promotionStatus,
-  applicableTo: v.optional(
-    v.union(v.literal("all"), v.literal("products"), v.literal("categories"))
-  ),
-  applicableIds: v.optional(v.array(v.string())),
-  order: v.number(),
 });
 
 // HIGH-004 FIX: Thêm limit
 export const listAll = query({
   args: {},
+  handler: async (ctx) => ctx.db.query("promotions").take(500),
   returns: v.array(promotionDoc),
-  handler: async (ctx) => {
-    return await ctx.db.query("promotions").take(500);
-  },
 });
 
 // HIGH-004 FIX: Thêm limit
 export const listActive = query({
   args: {},
-  returns: v.array(promotionDoc),
-  handler: async (ctx) => {
-    return await ctx.db
+  handler: async (ctx) => ctx.db
       .query("promotions")
       .withIndex("by_status", (q) => q.eq("status", "Active"))
-      .take(200);
-  },
+      .take(200),
+  returns: v.array(promotionDoc),
 });
 
 export const getById = query({
   args: { id: v.id("promotions") },
+  handler: async (ctx, args) => ctx.db.get(args.id),
   returns: v.union(promotionDoc, v.null()),
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
-  },
 });
 
 export const getByCode = query({
   args: { code: v.string() },
-  returns: v.union(promotionDoc, v.null()),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) => ctx.db
       .query("promotions")
       .withIndex("by_code", (q) => q.eq("code", args.code.toUpperCase()))
-      .unique();
-  },
+      .unique(),
+  returns: v.union(promotionDoc, v.null()),
 });
 
 // HIGH-004 FIX: Thêm limit
 export const listByStatus = query({
   args: { status: promotionStatus },
-  returns: v.array(promotionDoc),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) => ctx.db
       .query("promotions")
       .withIndex("by_status", (q) => q.eq("status", args.status))
-      .take(200);
-  },
+      .take(200),
+  returns: v.array(promotionDoc),
 });
 
 // MED-001 FIX: Thêm validation discountValue + HIGH-004: Update counters
 export const create = mutation({
   args: {
-    name: v.string(),
+    applicableIds: v.optional(v.array(v.string())),
+    applicableTo: v.optional(
+      v.union(v.literal("all"), v.literal("products"), v.literal("categories"))
+    ),
     code: v.string(),
     description: v.optional(v.string()),
     discountType: discountType,
     discountValue: v.number(),
-    minOrderAmount: v.optional(v.number()),
-    maxDiscountAmount: v.optional(v.number()),
-    usageLimit: v.optional(v.number()),
-    startDate: v.optional(v.number()),
     endDate: v.optional(v.number()),
+    maxDiscountAmount: v.optional(v.number()),
+    minOrderAmount: v.optional(v.number()),
+    name: v.string(),
+    startDate: v.optional(v.number()),
     status: v.optional(promotionStatus),
-    applicableTo: v.optional(
-      v.union(v.literal("all"), v.literal("products"), v.literal("categories"))
-    ),
-    applicableIds: v.optional(v.array(v.string())),
+    usageLimit: v.optional(v.number()),
   },
-  returns: v.id("promotions"),
   handler: async (ctx, args) => {
     // MED-001: Validate discountValue
     if (args.discountValue <= 0) {
@@ -135,7 +125,7 @@ export const create = mutation({
       .query("promotions")
       .withIndex("by_code", (q) => q.eq("code", code))
       .unique();
-    if (existing) throw new Error("Mã voucher đã tồn tại");
+    if (existing) {throw new Error("Mã voucher đã tồn tại");}
     
     // Get order from last item
     const lastItem = await ctx.db.query("promotions").order("desc").first();
@@ -159,34 +149,34 @@ export const create = mutation({
     
     return id;
   },
+  returns: v.id("promotions"),
 });
 
 // MED-001 FIX: Thêm validation + HIGH-004: Update counters khi status thay đổi
 export const update = mutation({
   args: {
-    id: v.id("promotions"),
-    name: v.optional(v.string()),
+    applicableIds: v.optional(v.array(v.string())),
+    applicableTo: v.optional(
+      v.union(v.literal("all"), v.literal("products"), v.literal("categories"))
+    ),
     code: v.optional(v.string()),
     description: v.optional(v.string()),
     discountType: v.optional(discountType),
     discountValue: v.optional(v.number()),
-    minOrderAmount: v.optional(v.number()),
-    maxDiscountAmount: v.optional(v.number()),
-    usageLimit: v.optional(v.number()),
-    startDate: v.optional(v.number()),
     endDate: v.optional(v.number()),
-    status: v.optional(promotionStatus),
-    applicableTo: v.optional(
-      v.union(v.literal("all"), v.literal("products"), v.literal("categories"))
-    ),
-    applicableIds: v.optional(v.array(v.string())),
+    id: v.id("promotions"),
+    maxDiscountAmount: v.optional(v.number()),
+    minOrderAmount: v.optional(v.number()),
+    name: v.optional(v.string()),
     order: v.optional(v.number()),
+    startDate: v.optional(v.number()),
+    status: v.optional(promotionStatus),
+    usageLimit: v.optional(v.number()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
     const promotion = await ctx.db.get(id);
-    if (!promotion) throw new Error("Promotion not found");
+    if (!promotion) {throw new Error("Promotion not found");}
     
     // MED-001: Validate discountValue nếu được cập nhật
     if (args.discountValue !== undefined) {
@@ -205,7 +195,7 @@ export const update = mutation({
         .query("promotions")
         .withIndex("by_code", (q) => q.eq("code", code))
         .unique();
-      if (existing) throw new Error("Mã voucher đã tồn tại");
+      if (existing) {throw new Error("Mã voucher đã tồn tại");}
       updates.code = code;
     }
     
@@ -229,15 +219,15 @@ export const update = mutation({
     
     return null;
   },
+  returns: v.null(),
 });
 
 // HIGH-004 FIX: Update totalUsed counter
 export const incrementUsage = mutation({
   args: { id: v.id("promotions") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const promotion = await ctx.db.get(args.id);
-    if (!promotion) throw new Error("Promotion not found");
+    if (!promotion) {throw new Error("Promotion not found");}
     await ctx.db.patch(args.id, { usedCount: promotion.usedCount + 1 });
     
     // Update totalUsed counter
@@ -245,15 +235,15 @@ export const incrementUsage = mutation({
     
     return null;
   },
+  returns: v.null(),
 });
 
 // HIGH-004 FIX: Update counters khi remove
 export const remove = mutation({
   args: { id: v.id("promotions") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const promotion = await ctx.db.get(args.id);
-    if (!promotion) throw new Error("Promotion not found");
+    if (!promotion) {throw new Error("Promotion not found");}
     
     await ctx.db.delete(args.id);
     
@@ -267,12 +257,12 @@ export const remove = mutation({
     
     return null;
   },
+  returns: v.null(),
 });
 
 // HIGH-004 FIX: Dùng counter table thay vì fetch ALL
 export const count = query({
   args: { status: v.optional(promotionStatus) },
-  returns: v.number(),
   handler: async (ctx, args) => {
     const key = args.status ?? "total";
     const stats = await ctx.db
@@ -281,45 +271,40 @@ export const count = query({
       .unique();
     return stats?.count ?? 0;
   },
+  returns: v.number(),
 });
 
 // HIGH-004 FIX: Dùng counter table thay vì fetch ALL
 export const getStats = query({
   args: {},
-  returns: v.object({
-    totalCount: v.number(),
-    activeCount: v.number(),
-    expiredCount: v.number(),
-    scheduledCount: v.number(),
-    totalUsed: v.number(),
-    percentTypeCount: v.number(),
-    fixedTypeCount: v.number(),
-  }),
   handler: async (ctx) => {
     // Fetch tất cả stats 1 lần
     const allStats = await ctx.db.query("promotionStats").take(100);
     const statsMap = new Map(allStats.map(s => [s.key, s.count]));
 
     return {
-      totalCount: statsMap.get("total") ?? 0,
       activeCount: statsMap.get("Active") ?? 0,
       expiredCount: statsMap.get("Expired") ?? 0,
-      scheduledCount: statsMap.get("Scheduled") ?? 0,
-      totalUsed: statsMap.get("totalUsed") ?? 0,
-      percentTypeCount: statsMap.get("percent") ?? 0,
       fixedTypeCount: statsMap.get("fixed") ?? 0,
+      percentTypeCount: statsMap.get("percent") ?? 0,
+      scheduledCount: statsMap.get("Scheduled") ?? 0,
+      totalCount: statsMap.get("total") ?? 0,
+      totalUsed: statsMap.get("totalUsed") ?? 0,
     };
   },
+  returns: v.object({
+    activeCount: v.number(),
+    expiredCount: v.number(),
+    fixedTypeCount: v.number(),
+    percentTypeCount: v.number(),
+    scheduledCount: v.number(),
+    totalCount: v.number(),
+    totalUsed: v.number(),
+  }),
 });
 
 export const validateCode = query({
   args: { code: v.string(), orderAmount: v.optional(v.number()) },
-  returns: v.object({
-    valid: v.boolean(),
-    message: v.string(),
-    promotion: v.union(promotionDoc, v.null()),
-    discountAmount: v.number(),
-  }),
   handler: async (ctx, args) => {
     const promotion = await ctx.db
       .query("promotions")
@@ -327,32 +312,32 @@ export const validateCode = query({
       .unique();
 
     if (!promotion) {
-      return { valid: false, message: "Mã voucher không tồn tại", promotion: null, discountAmount: 0 };
+      return { discountAmount: 0, message: "Mã voucher không tồn tại", promotion: null, valid: false };
     }
 
     if (promotion.status !== "Active") {
-      return { valid: false, message: "Mã voucher không còn hiệu lực", promotion: null, discountAmount: 0 };
+      return { discountAmount: 0, message: "Mã voucher không còn hiệu lực", promotion: null, valid: false };
     }
 
     const now = Date.now();
     if (promotion.startDate && now < promotion.startDate) {
-      return { valid: false, message: "Mã voucher chưa đến thời gian sử dụng", promotion: null, discountAmount: 0 };
+      return { discountAmount: 0, message: "Mã voucher chưa đến thời gian sử dụng", promotion: null, valid: false };
     }
     if (promotion.endDate && now > promotion.endDate) {
-      return { valid: false, message: "Mã voucher đã hết hạn", promotion: null, discountAmount: 0 };
+      return { discountAmount: 0, message: "Mã voucher đã hết hạn", promotion: null, valid: false };
     }
 
     if (promotion.usageLimit && promotion.usedCount >= promotion.usageLimit) {
-      return { valid: false, message: "Mã voucher đã hết lượt sử dụng", promotion: null, discountAmount: 0 };
+      return { discountAmount: 0, message: "Mã voucher đã hết lượt sử dụng", promotion: null, valid: false };
     }
 
     const orderAmount = args.orderAmount ?? 0;
     if (promotion.minOrderAmount && orderAmount < promotion.minOrderAmount) {
       return { 
-        valid: false, 
+        discountAmount: 0, 
         message: `Đơn hàng tối thiểu ${promotion.minOrderAmount.toLocaleString()}đ`, 
         promotion: null, 
-        discountAmount: 0 
+        valid: false 
       };
     }
 
@@ -366,6 +351,12 @@ export const validateCode = query({
       discountAmount = promotion.discountValue;
     }
 
-    return { valid: true, message: "Áp dụng thành công", promotion, discountAmount };
+    return { discountAmount, message: "Áp dụng thành công", promotion, valid: true };
   },
+  returns: v.object({
+    discountAmount: v.number(),
+    message: v.string(),
+    promotion: v.union(promotionDoc, v.null()),
+    valid: v.boolean(),
+  }),
 });

@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, ExternalLink, Search, Loader2, RefreshCw, ChevronLeft, ChevronRight, Briefcase } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { Briefcase, ChevronLeft, ChevronRight, Edit, ExternalLink, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
-import { SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
+import { BulkActionBar, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 export default function ServicesListPage() {
@@ -28,7 +28,7 @@ function ServicesContent() {
   const seedServicesModule = useMutation(api.seed.seedServicesModule);
   const clearServicesData = useMutation(api.seed.clearServicesData);
   
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [selectedIds, setSelectedIds] = useState<Id<"services">[]>([]);
@@ -47,13 +47,11 @@ function ServicesContent() {
     return map;
   }, [categoriesData]);
 
-  const services = useMemo(() => {
-    return servicesData?.map(service => ({
+  const services = useMemo(() => servicesData?.map(service => ({
       ...service,
       id: service._id,
       category: categoryMap[service.categoryId] || 'Không có',
-    })) || [];
-  }, [servicesData, categoryMap]);
+    })) ?? [], [servicesData, categoryMap]);
 
   const filteredServices = useMemo(() => {
     let data = [...services];
@@ -75,7 +73,7 @@ function ServicesContent() {
   }, [sortedServices, currentPage, servicesPerPage]);
 
   const handleSort = (key: string) => {
-    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
     setCurrentPage(1);
   };
 
@@ -84,8 +82,8 @@ function ServicesContent() {
     setCurrentPage(1);
   };
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedServices.length ? [] : paginatedServices.map(s => s._id));
-  const toggleSelectItem = (id: Id<"services">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedServices.length ? [] : paginatedServices.map(s => s._id)); };
+  const toggleSelectItem = (id: Id<"services">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
 
   const handleDelete = async (id: Id<"services">) => {
     if (confirm('Xóa dịch vụ này?')) {
@@ -125,8 +123,8 @@ function ServicesContent() {
   };
 
   const formatPrice = (price?: number) => {
-    if (!price) return '-';
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+    if (!price) {return '-';}
+    return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
   };
 
   const openFrontend = (slug: string) => {
@@ -158,15 +156,15 @@ function ServicesContent() {
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
           <div className="relative max-w-xs flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm dịch vụ..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Input placeholder="Tìm kiếm dịch vụ..." className="pl-9" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); }} />
           </div>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => handleFilterChange(e.target.value)}>
+          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  handleFilterChange(e.target.value); }}>
             <option value="">Tất cả trạng thái</option>
             <option value="Published">Đã xuất bản</option>
             <option value="Draft">Bản nháp</option>
@@ -188,7 +186,7 @@ function ServicesContent() {
           <TableBody>
             {paginatedServices.map(service => (
               <TableRow key={service._id} className={selectedIds.includes(service._id) ? 'bg-teal-500/5' : ''}>
-                <TableCell><SelectCheckbox checked={selectedIds.includes(service._id)} onChange={() => toggleSelectItem(service._id)} /></TableCell>
+                <TableCell><SelectCheckbox checked={selectedIds.includes(service._id)} onChange={() =>{  toggleSelectItem(service._id); }} /></TableCell>
                 <TableCell>
                   {service.thumbnail ? (
                     <Image src={service.thumbnail} width={48} height={32} className="w-12 h-8 object-cover rounded" alt={service.title} />
@@ -200,15 +198,15 @@ function ServicesContent() {
                 <TableCell>{service.category}</TableCell>
                 <TableCell className="text-slate-500">{formatPrice(service.price)}</TableCell>
                 <TableCell>
-                  <Badge variant={service.status === 'Published' ? 'success' : service.status === 'Draft' ? 'secondary' : 'warning'}>
-                    {service.status === 'Published' ? 'Đã xuất bản' : service.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ'}
+                  <Badge variant={service.status === 'Published' ? 'success' : (service.status === 'Draft' ? 'secondary' : 'warning')}>
+                    {service.status === 'Published' ? 'Đã xuất bản' : (service.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ')}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" className="text-teal-600 hover:text-teal-700" title="Xem dịch vụ" onClick={() => openFrontend(service.slug)}><ExternalLink size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-teal-600 hover:text-teal-700" title="Xem dịch vụ" onClick={() =>{  openFrontend(service.slug); }}><ExternalLink size={16}/></Button>
                     <Link href={`/admin/services/${service._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(service._id)}><Trash2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(service._id)}><Trash2 size={16}/></Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -229,9 +227,9 @@ function ServicesContent() {
             </span>
             {totalPages > 1 && (
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}><ChevronLeft size={16} /></Button>
+                <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() =>{  setCurrentPage(p => p - 1); }}><ChevronLeft size={16} /></Button>
                 <span className="text-sm text-slate-600 dark:text-slate-400">Trang {currentPage} / {totalPages}</span>
-                <Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}><ChevronRight size={16} /></Button>
+                <Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() =>{  setCurrentPage(p => p + 1); }}><ChevronRight size={16} /></Button>
               </div>
             )}
           </div>

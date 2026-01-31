@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -34,25 +34,25 @@ export default function PostCategoryCreatePage() {
     const val = e.target.value;
     setName(val);
     const generatedSlug = val.toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[đĐ]/g, "d")
-      .replace(/[^a-z0-9\s]/g, '')
-      .replace(/\s+/g, '-');
+      .normalize("NFD").replaceAll(/[\u0300-\u036F]/g, "")
+      .replaceAll(/[đĐ]/g, "d")
+      .replaceAll(/[^a-z0-9\s]/g, '')
+      .replaceAll(/\s+/g, '-');
     setSlug(generatedSlug);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !slug.trim()) return;
+    if (!name.trim() || !slug.trim()) {return;}
 
     setIsSubmitting(true);
     try {
       await createCategory({
+        active: true,
+        description: description.trim() || undefined,
         name: name.trim(),
         slug: slug.trim(),
-        description: description.trim() || undefined,
         thumbnail,
-        active: true,
       });
       toast.success("Đã tạo danh mục mới");
       router.push('/admin/post-categories');
@@ -75,30 +75,30 @@ export default function PostCategoryCreatePage() {
       <Card className="max-w-md mx-auto md:mx-0">
         <form onSubmit={handleSubmit}>
           <CardContent className="p-6 space-y-4">
-            {/* name - always shown (system field) */}
+            {/* Name - always shown (system field) */}
             <div className="space-y-2">
               <Label>Tên danh mục <span className="text-red-500">*</span></Label>
               <Input value={name} onChange={handleNameChange} required placeholder="Ví dụ: Công nghệ, Đời sống..." autoFocus />
             </div>
-            {/* slug - always shown (system field) */}
+            {/* Slug - always shown (system field) */}
             <div className="space-y-2">
               <Label>Slug</Label>
-              <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="tu-dong-tao-tu-ten" className="font-mono text-sm" />
+              <Input value={slug} onChange={(e) =>{  setSlug(e.target.value); }} placeholder="tu-dong-tao-tu-ten" className="font-mono text-sm" />
             </div>
-            {/* description - conditional */}
+            {/* Description - conditional */}
             {enabledFields.has('description') && (
               <div className="space-y-2">
                 <Label>Mô tả</Label>
-                <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Mô tả ngắn về danh mục..." />
+                <Input value={description} onChange={(e) =>{  setDescription(e.target.value); }} placeholder="Mô tả ngắn về danh mục..." />
               </div>
             )}
-            {/* thumbnail - conditional */}
+            {/* Thumbnail - conditional */}
             {enabledFields.has('thumbnail') && (
               <div className="space-y-2">
                 <Label>Ảnh đại diện</Label>
                 <ImageUploader
                   value={thumbnail}
-                  onChange={(url) => setThumbnail(url)}
+                  onChange={(url) =>{  setThumbnail(url); }}
                   folder="post-categories"
                   aspectRatio="video"
                 />
@@ -107,7 +107,7 @@ export default function PostCategoryCreatePage() {
           </CardContent>
           
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
-            <Button type="button" variant="ghost" onClick={() => router.push('/admin/post-categories')}>Hủy bỏ</Button>
+            <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/post-categories'); }}>Hủy bỏ</Button>
             <Button type="submit" variant="accent" disabled={isSubmitting}>
               {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
               Tạo danh mục

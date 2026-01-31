@@ -1,15 +1,17 @@
 'use client';
 
-import React from 'react';
-import { useQuery } from 'convex/react';
-import { api } from '@/convex/_generated/api';
 import { ComponentRenderer } from '@/components/site/ComponentRenderer';
+import { api } from '@/convex/_generated/api';
+import { useQuery } from 'convex/react';
 import { Loader2 } from 'lucide-react';
+import React from 'react';
 
-export default function HomePage() {
+const EMPTY_COMPONENTS_COUNT = 0;
+
+export default function HomePage(): React.ReactElement {
   const components = useQuery(api.homeComponents.listActive);
 
-  if (components === undefined) {
+  if (typeof components === 'undefined') {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
@@ -17,7 +19,7 @@ export default function HomePage() {
     );
   }
 
-  if (components.length === 0) {
+  if (components.length === EMPTY_COMPONENTS_COUNT) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
@@ -35,8 +37,8 @@ export default function HomePage() {
 
   // Sort theo order, filter bỏ Footer (Footer được render từ layout)
   const sortedComponents = [...components]
-    .filter((c) => c.type !== 'Footer')
-    .sort((a, b) => a.order - b.order);
+    .filter((componentItem) => componentItem.type !== 'Footer')
+    .sort((firstComponent, secondComponent) => firstComponent.order - secondComponent.order);
 
   return (
     <>
@@ -45,11 +47,11 @@ export default function HomePage() {
           key={component._id} 
           component={{
             _id: component._id,
-            type: component.type,
-            title: component.title,
             active: component.active,
-            order: component.order,
             config: component.config as Record<string, unknown>,
+            order: component.order,
+            title: component.title,
+            type: component.type,
           }} 
         />
       ))}

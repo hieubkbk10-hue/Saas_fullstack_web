@@ -2,30 +2,30 @@
 
 import React from 'react';
 import { 
-  Hash, FileText, Edit3, Image, Clock, Tag, ToggleLeft, 
-  Mail, Phone, Key, DollarSign, Layers, FolderTree, Calendar, Code, Palette
+  Calendar, Clock, Code, DollarSign, Edit3, FileText, FolderTree, 
+  Hash, Image, Key, Layers, Mail, Palette, Phone, Tag, ToggleLeft
 } from 'lucide-react';
-import { FieldConfig, FieldType } from '@/types/moduleConfig';
-import { ToggleSwitch } from './ToggleSwitch';
+import type { FieldConfig, FieldType } from '@/types/module-config';
+import { ToggleSwitch } from './toggle-switch';
 
 const fieldTypeIcons: Record<FieldType, React.ComponentType<{ size?: number }>> = {
-  text: Hash,
-  textarea: FileText,
-  richtext: Edit3,
-  email: Mail,
-  phone: Phone,
-  password: Key,
-  number: Hash,
-  price: DollarSign,
-  image: Image,
-  gallery: Layers,
-  select: FolderTree,
-  tags: Tag,
-  date: Clock,
-  daterange: Calendar,
-  json: Code,
   boolean: ToggleLeft,
   color: Palette,
+  date: Clock,
+  daterange: Calendar,
+  email: Mail,
+  gallery: Layers,
+  image: Image,
+  json: Code,
+  number: Hash,
+  password: Key,
+  phone: Phone,
+  price: DollarSign,
+  richtext: Edit3,
+  select: FolderTree,
+  tags: Tag,
+  text: Hash,
+  textarea: FileText,
 };
 
 interface FieldRowProps {
@@ -71,7 +71,7 @@ export const FieldRow: React.FC<FieldRowProps> = ({
       
       <ToggleSwitch 
         enabled={field.enabled} 
-        onChange={() => onToggle(field.id)}
+        onChange={() =>{  onToggle(field.id); }}
         disabled={field.isSystem && field.required}
         color={toggleColor}
       />

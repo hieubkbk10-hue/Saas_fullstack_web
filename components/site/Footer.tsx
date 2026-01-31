@@ -5,8 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { useBrandColor, useSiteSettings, useContactSettings } from './hooks';
-import { Mail, Phone, MapPin, Facebook, Instagram, Youtube } from 'lucide-react';
+import { useBrandColor, useContactSettings, useSiteSettings } from './hooks';
+import { Facebook, Instagram, Mail, MapPin, Phone, Youtube } from 'lucide-react';
 
 export function Footer() {
   const brandColor = useBrandColor();
@@ -23,14 +23,14 @@ export function Footer() {
 
     items.forEach(item => {
       if (item.depth === 0) {
-        if (currentColumn) columns.push(currentColumn);
-        currentColumn = { title: item.label, links: [] };
+        if (currentColumn) {columns.push(currentColumn);}
+        currentColumn = { links: [], title: item.label };
       } else if (currentColumn && item.depth === 1) {
         currentColumn.links.push({ label: item.label, url: item.url });
       }
     });
 
-    if (currentColumn) columns.push(currentColumn);
+    if (currentColumn) {columns.push(currentColumn);}
 
     return columns;
   })() : [];
@@ -51,13 +51,13 @@ export function Footer() {
                   className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold"
                   style={{ backgroundColor: brandColor }}
                 >
-                  {(siteName || 'V').charAt(0)}
+                  {(siteName ?? 'V').charAt(0)}
                 </div>
               )}
               <span className="font-bold text-lg">{siteName}</span>
             </Link>
             <p className="text-slate-400 text-sm mb-4">
-              {siteDescription || 'Chúng tôi cung cấp các giải pháp tốt nhất cho bạn.'}
+              {siteDescription ?? 'Chúng tôi cung cấp các giải pháp tốt nhất cho bạn.'}
             </p>
             
             {/* Contact Info */}

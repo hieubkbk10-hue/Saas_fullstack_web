@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, use, useEffect, useMemo } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, CardContent, Input, Label, Badge, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, cn } from '../../../components/ui';
+import { Badge, Button, Card, CardContent, Input, Label, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from '../../../components/ui';
 
 const MODULE_KEY = 'productCategories';
 
@@ -41,29 +41,27 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
     if (categoryData) {
       setName(categoryData.name);
       setSlug(categoryData.slug);
-      setDescription(categoryData.description || '');
-      setParentId(categoryData.parentId || '');
+      setDescription(categoryData.description ?? '');
+      setParentId(categoryData.parentId ?? '');
       setActive(categoryData.active);
     }
   }, [categoryData]);
 
-  const relatedProducts = useMemo(() => {
-    return productsData?.filter(p => p.categoryId === id) || [];
-  }, [productsData, id]);
+  const relatedProducts = useMemo(() => productsData?.filter(p => p.categoryId === id) ?? [], [productsData, id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) {return;}
 
     setIsSubmitting(true);
     try {
       await updateCategory({
+        active,
+        description: description.trim() || undefined,
         id: id as Id<"productCategories">,
         name: name.trim(),
-        slug: slug.trim(),
-        description: description.trim() || undefined,
         parentId: parentId ? parentId as Id<"productCategories"> : undefined,
-        active,
+        slug: slug.trim(),
       });
       toast.success('Cập nhật danh mục thành công');
     } catch (error) {
@@ -85,7 +83,7 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
     return <div className="text-center py-8 text-slate-500">Không tìm thấy danh mục</div>;
   }
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20">
@@ -101,7 +99,7 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
 
       <div className="flex border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('info')}
+          onClick={() =>{  setActiveTab('info'); }}
           className={cn(
             "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
             activeTab === 'info' ? "border-orange-500 text-orange-600" : "border-transparent text-slate-500 hover:text-slate-700"
@@ -110,7 +108,7 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
           Thông tin chung
         </button>
         <button
-          onClick={() => setActiveTab('products')}
+          onClick={() =>{  setActiveTab('products'); }}
           className={cn(
             "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
             activeTab === 'products' ? "border-orange-500 text-orange-600" : "border-transparent text-slate-500 hover:text-slate-700"
@@ -126,19 +124,19 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
             <CardContent className="p-6 space-y-4">
               <div className="space-y-2">
                 <Label>Tên danh mục <span className="text-red-500">*</span></Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Ví dụ: Điện thoại, Áo sơ mi..." autoFocus />
+                <Input value={name} onChange={(e) =>{  setName(e.target.value); }} required placeholder="Ví dụ: Điện thoại, Áo sơ mi..." autoFocus />
               </div>
 
               <div className="space-y-2">
                 <Label>Slug</Label>
-                <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="slug" className="font-mono text-sm" />
+                <Input value={slug} onChange={(e) =>{  setSlug(e.target.value); }} placeholder="slug" className="font-mono text-sm" />
               </div>
               
               <div className="space-y-2">
                 <Label>Danh mục cha</Label>
                 <select 
                   value={parentId}
-                  onChange={(e) => setParentId(e.target.value)}
+                  onChange={(e) =>{  setParentId(e.target.value); }}
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
                   <option value="">-- Không có (Danh mục gốc) --</option>
@@ -153,7 +151,7 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
                   <Label>Mô tả</Label>
                   <textarea
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    onChange={(e) =>{  setDescription(e.target.value); }}
                     placeholder="Mô tả ngắn về danh mục..."
                     className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   />
@@ -164,7 +162,7 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
                 <Label>Trạng thái</Label>
                 <select 
                   value={active ? 'active' : 'inactive'}
-                  onChange={(e) => setActive(e.target.value === 'active')}
+                  onChange={(e) =>{  setActive(e.target.value === 'active'); }}
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
                   <option value="active">Hoạt động</option>
@@ -174,7 +172,7 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
             </CardContent>
             
             <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
-              <Button type="button" variant="ghost" onClick={() => router.push('/admin/categories')}>Hủy bỏ</Button>
+              <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/categories'); }}>Hủy bỏ</Button>
               <Button type="submit" variant="accent" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
                 Lưu thay đổi
@@ -216,7 +214,7 @@ export default function CategoryEditPage({ params }: { params: Promise<{ id: str
                   <TableCell className={prod.stock < 10 ? 'text-red-500 font-medium' : ''}>{prod.stock}</TableCell>
                   <TableCell>
                     <Badge variant={prod.status === 'Active' ? 'success' : 'secondary'}>
-                      {prod.status === 'Active' ? 'Đang bán' : prod.status === 'Draft' ? 'Nháp' : 'Lưu trữ'}
+                      {prod.status === 'Active' ? 'Đang bán' : (prod.status === 'Draft' ? 'Nháp' : 'Lưu trữ')}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">

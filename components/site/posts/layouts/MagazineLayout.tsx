@@ -3,9 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FileText, Eye, Bookmark, Search, ChevronDown } from 'lucide-react';
-import { Id } from '@/convex/_generated/dataModel';
-import { SortOption } from '../PostsFilter';
+import { Bookmark, ChevronDown, Eye, FileText, Search } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import type { SortOption } from '../PostsFilter';
 
 interface Post {
   _id: Id<"posts">;
@@ -40,10 +40,10 @@ interface MagazineLayoutProps {
 }
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'newest', label: 'Mới nhất' },
-  { value: 'oldest', label: 'Cũ nhất' },
-  { value: 'popular', label: 'Xem nhiều' },
-  { value: 'title', label: 'Theo tên A-Z' },
+  { label: 'Mới nhất', value: 'newest' },
+  { label: 'Cũ nhất', value: 'oldest' },
+  { label: 'Xem nhiều', value: 'popular' },
+  { label: 'Theo tên A-Z', value: 'title' },
 ];
 
 export function MagazineLayout({
@@ -88,7 +88,7 @@ export function MagazineLayout({
               <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-6">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="px-2 py-0.5 rounded text-xs font-medium text-white" style={{ backgroundColor: brandColor }}>
-                    {categoryMap.get(mainFeatured.categoryId) || 'Nổi bật'}
+                    {categoryMap.get(mainFeatured.categoryId) ?? 'Nổi bật'}
                   </span>
                 </div>
                 <h2 className="text-xl lg:text-2xl font-bold text-white mb-2 leading-tight line-clamp-2">
@@ -124,7 +124,7 @@ export function MagazineLayout({
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <span className="inline-block px-2 py-0.5 rounded text-xs font-medium text-white mb-1" style={{ backgroundColor: brandColor }}>
-                      {categoryMap.get(post.categoryId) || 'Tin tức'}
+                      {categoryMap.get(post.categoryId) ?? 'Tin tức'}
                     </span>
                     <h3 className="text-base font-semibold text-white line-clamp-2">{post.title}</h3>
                   </div>
@@ -145,7 +145,7 @@ export function MagazineLayout({
               type="text"
               placeholder="Tìm kiếm..."
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={(e) =>{  onSearchChange(e.target.value); }}
               className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 text-sm"
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             />
@@ -154,8 +154,8 @@ export function MagazineLayout({
           {/* Category Dropdown */}
           <div className="relative">
             <select
-              value={selectedCategory || ''}
-              onChange={(e) => onCategoryChange(e.target.value ? e.target.value as Id<"postCategories"> : null)}
+              value={selectedCategory ?? ''}
+              onChange={(e) =>{  onCategoryChange(e.target.value ? e.target.value as Id<"postCategories"> : null); }}
               className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 cursor-pointer min-w-[140px]"
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             >
@@ -176,7 +176,7 @@ export function MagazineLayout({
           <div className="relative">
             <select
               value={sortBy}
-              onChange={(e) => onSortChange(e.target.value as SortOption)}
+              onChange={(e) =>{  onSortChange(e.target.value as SortOption); }}
               className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 cursor-pointer"
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             >
@@ -226,7 +226,7 @@ export function MagazineLayout({
                   <div className="flex-1 flex flex-col p-3">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                        {categoryMap.get(post.categoryId) || 'Tin tức'}
+                        {categoryMap.get(post.categoryId) ?? 'Tin tức'}
                       </span>
                       {post.publishedAt && (
                         <>

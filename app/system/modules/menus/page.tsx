@@ -1,36 +1,36 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Menu, ExternalLink, FolderTree, Loader2, Database, Trash2, RefreshCw, Settings, Link2 } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { Database, ExternalLink, FolderTree, Link2, Loader2, Menu, RefreshCw, Settings, Trash2 } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput, SettingSelect,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus, SettingInput,
+  SettingSelect, SettingsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'menus';
 
-type MenuRecord = {
+interface MenuRecord {
   _id: Id<'menus'>;
   name: string;
   location: string;
   _creationTime?: number;
-};
+}
 
 const FEATURES_CONFIG = [
-  { key: 'enableNested', label: 'Menu lồng nhau', icon: FolderTree, description: 'Cho phép tạo menu con nhiều cấp', linkedField: 'parentId' },
-  { key: 'enableNewTab', label: 'Mở tab mới', icon: ExternalLink, description: 'Cho phép mở link trong tab mới', linkedField: 'openInNewTab' },
-  { key: 'enableIcon', label: 'Icon menu', icon: Menu, description: 'Cho phép gán icon cho menu item', linkedField: 'icon' },
+  { description: 'Cho phép tạo menu con nhiều cấp', icon: FolderTree, key: 'enableNested', label: 'Menu lồng nhau', linkedField: 'parentId' },
+  { description: 'Cho phép mở link trong tab mới', icon: ExternalLink, key: 'enableNewTab', label: 'Mở tab mới', linkedField: 'openInNewTab' },
+  { description: 'Cho phép gán icon cho menu item', icon: Menu, key: 'enableIcon', label: 'Icon menu', linkedField: 'icon' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { maxDepth: number; defaultLocation: string; menusPerPage: number };
+interface SettingsState { maxDepth: number; defaultLocation: string; menusPerPage: number }
 type TabType = 'config' | 'data';
 
 export default function MenusModuleConfigPage() {
@@ -55,7 +55,7 @@ export default function MenusModuleConfigPage() {
   // Local state
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ maxDepth: 3, defaultLocation: 'header', menusPerPage: 10 });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ defaultLocation: 'header', maxDepth: 3, menusPerPage: 10 });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -74,14 +74,14 @@ export default function MenusModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -92,7 +92,7 @@ export default function MenusModuleConfigPage() {
       const maxDepth = settingsData.find(s => s.settingKey === 'maxDepth')?.value as number ?? 3;
       const defaultLocation = settingsData.find(s => s.settingKey === 'defaultLocation')?.value as string ?? 'header';
       const menusPerPage = settingsData.find(s => s.settingKey === 'menusPerPage')?.value as number ?? 10;
-      setLocalSettings({ maxDepth, defaultLocation, menusPerPage });
+      setLocalSettings({ defaultLocation, maxDepth, menusPerPage });
     }
   }, [settingsData]);
 
@@ -103,15 +103,13 @@ export default function MenusModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
   const serverSettings = useMemo(() => {
     const maxDepth = settingsData?.find(s => s.settingKey === 'maxDepth')?.value as number ?? 3;
     const defaultLocation = settingsData?.find(s => s.settingKey === 'defaultLocation')?.value as string ?? 'header';
     const menusPerPage = settingsData?.find(s => s.settingKey === 'menusPerPage')?.value as number ?? 10;
-    return { maxDepth, defaultLocation, menusPerPage };
+    return { defaultLocation, maxDepth, menusPerPage };
   }, [settingsData]);
 
   // Check for changes
@@ -137,7 +135,7 @@ export default function MenusModuleConfigPage() {
 
   const handleToggleField = (id: string) => {
     const field = localFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalFields(prev => {
@@ -166,13 +164,13 @@ export default function MenusModuleConfigPage() {
       
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
+          promises.push(toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY }));
         }
       }
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
+          promises.push(updateField({ enabled: field.enabled, id: field.id as Id<"moduleFields"> }));
         }
       }
       if (localSettings.maxDepth !== serverSettings.maxDepth) {
@@ -203,7 +201,7 @@ export default function MenusModuleConfigPage() {
   };
 
   const handleClearData = async () => {
-    if (!confirm('Xóa toàn bộ dữ liệu menu?')) return;
+    if (!confirm('Xóa toàn bộ dữ liệu menu?')) {return;}
     toast.loading('Đang xóa dữ liệu...');
     await clearMenusData();
     toast.dismiss();
@@ -211,7 +209,7 @@ export default function MenusModuleConfigPage() {
   };
 
   const handleResetData = async () => {
-    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
+    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) {return;}
     toast.loading('Đang reset dữ liệu...');
     await clearMenusData();
     await seedMenusModule();
@@ -247,7 +245,7 @@ export default function MenusModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-orange-500 text-orange-600 dark:text-orange-400'
@@ -257,7 +255,7 @@ export default function MenusModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-orange-500 text-orange-600 dark:text-orange-400'
@@ -289,23 +287,23 @@ export default function MenusModuleConfigPage() {
                     <SettingInput 
                       label="Độ sâu tối đa" 
                       value={localSettings.maxDepth} 
-                      onChange={(v) => setLocalSettings({...localSettings, maxDepth: v})}
+                      onChange={(v) =>{  setLocalSettings({...localSettings, maxDepth: v}); }}
                       focusColor="focus:border-orange-500"
                     />
                     <SettingInput 
                       label="Items mỗi trang" 
                       value={localSettings.menusPerPage} 
-                      onChange={(v) => setLocalSettings({...localSettings, menusPerPage: v})}
+                      onChange={(v) =>{  setLocalSettings({...localSettings, menusPerPage: v}); }}
                       focusColor="focus:border-orange-500"
                     />
                     <SettingSelect
                       label="Vị trí mặc định"
                       value={localSettings.defaultLocation}
-                      onChange={(v) => setLocalSettings({...localSettings, defaultLocation: v})}
+                      onChange={(v) =>{  setLocalSettings({...localSettings, defaultLocation: v}); }}
                       options={[
-                        { value: 'header', label: 'Header' },
-                        { value: 'footer', label: 'Footer' },
-                        { value: 'sidebar', label: 'Sidebar' },
+                        { label: 'Header', value: 'header' },
+                        { label: 'Footer', value: 'footer' },
+                        { label: 'Sidebar', value: 'sidebar' },
                       ]}
                       focusColor="focus:border-orange-500"
                     />
@@ -341,7 +339,7 @@ export default function MenusModuleConfigPage() {
 
       {activeTab === 'data' && (
         <MenusDataTab 
-          menusData={menusData || []}
+          menusData={menusData ?? []}
           onSeedData={handleSeedData}
           onClearData={handleClearData}
           onResetData={handleResetData}
@@ -371,7 +369,7 @@ function MenusDataTab({
   const footerItemsData = useQuery(api.menus.listMenuItems, footerMenu ? { menuId: footerMenu._id } : "skip");
   const sidebarItemsData = useQuery(api.menus.listMenuItems, sidebarMenu ? { menuId: sidebarMenu._id } : "skip");
 
-  const totalItems = (headerItemsData?.length || 0) + (footerItemsData?.length || 0) + (sidebarItemsData?.length || 0);
+  const totalItems = (headerItemsData?.length ?? 0) + (footerItemsData?.length ?? 0) + (sidebarItemsData?.length ?? 0);
 
   return (
     <div className="space-y-6">
@@ -426,7 +424,7 @@ function MenusDataTab({
               <Menu className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{headerItemsData?.length || 0}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{headerItemsData?.length ?? 0}</p>
               <p className="text-sm text-slate-500">Header Items</p>
             </div>
           </div>
@@ -437,7 +435,7 @@ function MenusDataTab({
               <Menu className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{footerItemsData?.length || 0}</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{footerItemsData?.length ?? 0}</p>
               <p className="text-sm text-slate-500">Footer Items</p>
             </div>
           </div>
@@ -461,9 +459,9 @@ function MenusDataTab({
           <TableBody>
             {menusData.map(menu => {
               let itemCount = 0;
-              if (menu.location === 'header') itemCount = headerItemsData?.length || 0;
-              else if (menu.location === 'footer') itemCount = footerItemsData?.length || 0;
-              else if (menu.location === 'sidebar') itemCount = sidebarItemsData?.length || 0;
+              if (menu.location === 'header') {itemCount = headerItemsData?.length ?? 0;}
+              else if (menu.location === 'footer') {itemCount = footerItemsData?.length ?? 0;}
+              else if (menu.location === 'sidebar') {itemCount = sidebarItemsData?.length ?? 0;}
               
               return (
                 <TableRow key={menu._id}>

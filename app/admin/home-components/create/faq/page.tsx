@@ -1,44 +1,44 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, GripVertical, HelpCircle } from 'lucide-react';
+import { GripVertical, HelpCircle, Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { FaqPreview, type FaqStyle, type FaqConfig } from '../../previews';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
+import { type FaqConfig, FaqPreview, type FaqStyle } from '../../previews';
 
 export default function FaqCreatePage() {
   const { title, setTitle, active, setActive, handleSubmit, isSubmitting } = useComponentForm('Câu hỏi thường gặp', 'FAQ');
   const brandColor = useBrandColor();
   
   const [faqItems, setFaqItems] = useState([
-    { id: 1, question: 'Làm thế nào để đặt hàng?', answer: 'Bạn có thể đặt hàng trực tuyến qua website hoặc gọi hotline.' },
-    { id: 2, question: 'Chính sách đổi trả ra sao?', answer: 'Chúng tôi hỗ trợ đổi trả trong vòng 30 ngày.' }
+    { answer: 'Bạn có thể đặt hàng trực tuyến qua website hoặc gọi hotline.', id: 1, question: 'Làm thế nào để đặt hàng?' },
+    { answer: 'Chúng tôi hỗ trợ đổi trả trong vòng 30 ngày.', id: 2, question: 'Chính sách đổi trả ra sao?' }
   ]);
   const [style, setStyle] = useState<FaqStyle>('accordion');
   
   // Config for two-column style
   const [faqConfig, setFaqConfig] = useState<FaqConfig>({
-    description: 'Tìm câu trả lời cho các thắc mắc phổ biến của bạn',
+    buttonLink: '/lien-he',
     buttonText: 'Liên hệ hỗ trợ',
-    buttonLink: '/lien-he'
+    description: 'Tìm câu trả lời cho các thắc mắc phổ biến của bạn'
   });
 
   // Drag & Drop state
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
 
-  const handleAddFaq = () => setFaqItems([...faqItems, { id: Date.now(), question: '', answer: '' }]);
+  const handleAddFaq = () =>{  setFaqItems([...faqItems, { answer: '', id: Date.now(), question: '' }]); };
   const handleRemoveFaq = (id: number) => faqItems.length > 1 && setFaqItems(faqItems.filter(f => f.id !== id));
 
   // Drag handlers
   const dragProps = (id: number) => ({
     draggable: true,
-    onDragStart: () => setDraggedId(id),
     onDragEnd: () => { setDraggedId(null); setDragOverId(null); },
-    onDragOver: (e: React.DragEvent) => { e.preventDefault(); if (draggedId !== id) setDragOverId(id); },
+    onDragOver: (e: React.DragEvent) => { e.preventDefault(); if (draggedId !== id) {setDragOverId(id);} },
+    onDragStart: () =>{  setDraggedId(id); },
     onDrop: (e: React.DragEvent) => {
       e.preventDefault();
-      if (!draggedId || draggedId === id) return;
+      if (!draggedId || draggedId === id) {return;}
       const newItems = [...faqItems];
       const draggedIdx = newItems.findIndex(i => i.id === draggedId);
       const targetIdx = newItems.findIndex(i => i.id === id);
@@ -52,7 +52,7 @@ export default function FaqCreatePage() {
 
   const onSubmit = (e: React.FormEvent) => {
     void handleSubmit(e, { 
-      items: faqItems.map(f => ({ question: f.question, answer: f.answer })), 
+      items: faqItems.map(f => ({ answer: f.answer, question: f.question })), 
       style,
       ...faqConfig
     });
@@ -117,12 +117,12 @@ export default function FaqCreatePage() {
                 <Input 
                   placeholder="Nhập câu hỏi..." 
                   value={item.question} 
-                  onChange={(e) => setFaqItems(faqItems.map(f => f.id === item.id ? {...f, question: e.target.value} : f))} 
+                  onChange={(e) =>{  setFaqItems(faqItems.map(f => f.id === item.id ? {...f, question: e.target.value} : f)); }} 
                 />
                 <textarea 
                   placeholder="Nhập câu trả lời..." 
                   value={item.answer} 
-                  onChange={(e) => setFaqItems(faqItems.map(f => f.id === item.id ? {...f, answer: e.target.value} : f))}
+                  onChange={(e) =>{  setFaqItems(faqItems.map(f => f.id === item.id ? {...f, answer: e.target.value} : f)); }}
                   className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                 />
               </div>
@@ -142,8 +142,8 @@ export default function FaqCreatePage() {
               <Label className="text-sm mb-1.5 block">Mô tả ngắn</Label>
               <Input 
                 placeholder="Tìm câu trả lời cho các thắc mắc phổ biến của bạn" 
-                value={faqConfig.description || ''} 
-                onChange={(e) => setFaqConfig({...faqConfig, description: e.target.value})} 
+                value={faqConfig.description ?? ''} 
+                onChange={(e) =>{  setFaqConfig({...faqConfig, description: e.target.value}); }} 
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -151,16 +151,16 @@ export default function FaqCreatePage() {
                 <Label className="text-sm mb-1.5 block">Nút CTA - Text</Label>
                 <Input 
                   placeholder="Liên hệ hỗ trợ" 
-                  value={faqConfig.buttonText || ''} 
-                  onChange={(e) => setFaqConfig({...faqConfig, buttonText: e.target.value})} 
+                  value={faqConfig.buttonText ?? ''} 
+                  onChange={(e) =>{  setFaqConfig({...faqConfig, buttonText: e.target.value}); }} 
                 />
               </div>
               <div>
                 <Label className="text-sm mb-1.5 block">Nút CTA - Link</Label>
                 <Input 
                   placeholder="/lien-he" 
-                  value={faqConfig.buttonLink || ''} 
-                  onChange={(e) => setFaqConfig({...faqConfig, buttonLink: e.target.value})} 
+                  value={faqConfig.buttonLink ?? ''} 
+                  onChange={(e) =>{  setFaqConfig({...faqConfig, buttonLink: e.target.value}); }} 
                 />
               </div>
             </div>

@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -13,10 +13,10 @@ const MODULE_KEY = 'roles';
 
 const permissionActions = ['view', 'create', 'edit', 'delete'];
 const actionLabels: Record<string, string> = {
-  view: 'Xem',
   create: 'Tạo',
-  edit: 'Sửa',
   delete: 'Xóa',
+  edit: 'Sửa',
+  view: 'Xem',
 };
 
 export default function RoleCreatePage() {
@@ -47,7 +47,7 @@ export default function RoleCreatePage() {
 
   // Get permission modules (enabled modules that are not system-only)
   const permissionModules = useMemo(() => {
-    if (!modulesData) return [];
+    if (!modulesData) {return [];}
     return modulesData
       .filter(m => m.enabled && !['settings', 'homepage'].includes(m.key))
       .map(m => ({ key: m.key, label: m.name }));
@@ -58,9 +58,9 @@ export default function RoleCreatePage() {
       const current = prev[module] || [];
       if (current.includes(action)) {
         return { ...prev, [module]: current.filter(a => a !== action) };
-      } else {
-        return { ...prev, [module]: [...current, action] };
       }
+        return { ...prev, [module]: [...current, action] };
+      
     });
   };
 
@@ -69,9 +69,9 @@ export default function RoleCreatePage() {
       const current = prev[module] || [];
       if (current.length === permissionActions.length) {
         return { ...prev, [module]: [] };
-      } else {
-        return { ...prev, [module]: [...permissionActions] };
       }
+        return { ...prev, [module]: [...permissionActions] };
+      
     });
   };
 
@@ -91,16 +91,16 @@ export default function RoleCreatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {return;}
 
     setIsSubmitting(true);
     try {
       await createRole({ 
-        name: name.trim(), 
+        color: showColor ? color : undefined, 
         description: description.trim(),
-        color: showColor ? color : undefined,
-        permissions,
         isSystem: false,
+        name: name.trim(),
+        permissions,
       });
       toast.success('Đã tạo vai trò mới');
       router.push('/admin/roles');
@@ -133,7 +133,7 @@ export default function RoleCreatePage() {
               <Label>Tên vai trò <span className="text-red-500">*</span></Label>
               <Input 
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) =>{  setName(e.target.value); }}
                 placeholder="Ví dụ: Biên tập viên..." 
                 className={errors.name ? 'border-red-500' : ''}
               />
@@ -146,7 +146,7 @@ export default function RoleCreatePage() {
                 <textarea 
                   className={`w-full min-h-[80px] rounded-md border ${errors.description ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) =>{  setDescription(e.target.value); }}
                   placeholder="Mô tả quyền hạn của vai trò này..."
                 />
                 {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
@@ -160,12 +160,12 @@ export default function RoleCreatePage() {
                   <input 
                     type="color" 
                     value={color}
-                    onChange={(e) => setColor(e.target.value)}
+                    onChange={(e) =>{  setColor(e.target.value); }}
                     className="w-10 h-10 rounded cursor-pointer border border-slate-200 dark:border-slate-700"
                   />
                   <Input 
                     value={color}
-                    onChange={(e) => setColor(e.target.value)}
+                    onChange={(e) =>{  setColor(e.target.value); }}
                     placeholder="#3b82f6"
                     className="w-32"
                   />
@@ -200,7 +200,7 @@ export default function RoleCreatePage() {
                       <input
                         type="checkbox"
                         checked={allChecked}
-                        onChange={() => toggleAllForModule(module.key)}
+                        onChange={() =>{  toggleAllForModule(module.key); }}
                         className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                       />
                     </div>
@@ -209,7 +209,7 @@ export default function RoleCreatePage() {
                         <input
                           type="checkbox"
                           checked={modulePerms.includes(action)}
-                          onChange={() => togglePermission(module.key, action)}
+                          onChange={() =>{  togglePermission(module.key, action); }}
                           className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                         />
                       </div>
@@ -225,7 +225,7 @@ export default function RoleCreatePage() {
         </Card>
 
         <div className="mt-6 flex justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={() => router.push('/admin/roles')} disabled={isSubmitting}>
+          <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/roles'); }} disabled={isSubmitting}>
             Hủy bỏ
           </Button>
           <Button type="submit" variant="accent" disabled={isSubmitting}>

@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, Search, Loader2, RefreshCw, ShoppingBag, Eye } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { Edit, Eye, Loader2, Plus, RefreshCw, Search, ShoppingBag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
-import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
+import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'orders';
@@ -17,32 +17,32 @@ type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancell
 type PaymentStatus = 'Pending' | 'Paid' | 'Failed' | 'Refunded';
 
 const STATUS_COLORS: Record<OrderStatus, 'secondary' | 'warning' | 'success' | 'destructive'> = {
+  Cancelled: 'destructive',
+  Delivered: 'success',
   Pending: 'secondary',
   Processing: 'warning',
   Shipped: 'warning',
-  Delivered: 'success',
-  Cancelled: 'destructive',
 };
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
+  Cancelled: 'Đã hủy',
+  Delivered: 'Hoàn thành',
   Pending: 'Chờ xử lý',
   Processing: 'Đang xử lý',
   Shipped: 'Đang giao',
-  Delivered: 'Hoàn thành',
-  Cancelled: 'Đã hủy',
 };
 
 const PAYMENT_STATUS_COLORS: Record<PaymentStatus, 'secondary' | 'success' | 'destructive'> = {
-  Pending: 'secondary',
-  Paid: 'success',
   Failed: 'destructive',
+  Paid: 'success',
+  Pending: 'secondary',
   Refunded: 'secondary',
 };
 
 const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  Pending: 'Chờ TT',
-  Paid: 'Đã TT',
   Failed: 'Thất bại',
+  Paid: 'Đã TT',
+  Pending: 'Chờ TT',
   Refunded: 'Hoàn tiền',
 };
 
@@ -69,7 +69,7 @@ function OrdersContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterPaymentStatus, setFilterPaymentStatus] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Id<"orders">[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -93,8 +93,8 @@ function OrdersContent() {
       { key: 'totalAmount', label: 'Tổng tiền' },
       { key: 'status', label: 'Trạng thái' },
     ];
-    if (enabledFields.has('paymentStatus')) cols.push({ key: 'paymentStatus', label: 'Thanh toán' });
-    if (enabledFields.has('trackingNumber')) cols.push({ key: 'trackingNumber', label: 'Mã vận đơn' });
+    if (enabledFields.has('paymentStatus')) {cols.push({ key: 'paymentStatus', label: 'Thanh toán' });}
+    if (enabledFields.has('trackingNumber')) {cols.push({ key: 'trackingNumber', label: 'Mã vận đơn' });}
     cols.push({ key: 'createdAt', label: 'Ngày tạo' });
     cols.push({ key: 'actions', label: 'Hành động', required: true });
     return cols;
@@ -109,8 +109,8 @@ function OrdersContent() {
   useEffect(() => {
     if (fieldsData !== undefined) {
       setVisibleColumns(prev => {
-        const validKeys = columns.map(c => c.key);
-        return prev.filter(key => validKeys.includes(key));
+        const validKeys = new Set(columns.map(c => c.key));
+        return prev.filter(key => validKeys.has(key));
       });
     }
   }, [fieldsData, columns]);
@@ -122,17 +122,15 @@ function OrdersContent() {
     return map;
   }, [customersData]);
 
-  const orders = useMemo(() => {
-    return ordersData?.map(o => ({
+  const orders = useMemo(() => ordersData?.map(o => ({
       ...o,
       id: o._id,
-      customerName: customerMap.get(o.customerId) || 'Không xác định',
+      customerName: customerMap.get(o.customerId) ?? 'Không xác định',
       itemsCount: o.items.reduce((sum, item) => sum + item.quantity, 0),
-    })) || [];
-  }, [ordersData, customerMap]);
+    })) ?? [], [ordersData, customerMap]);
 
   const handleSort = (key: string) => {
-    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
   };
 
   const toggleColumn = (key: string) => {
@@ -148,8 +146,8 @@ function OrdersContent() {
         o.customerName.toLowerCase().includes(term)
       );
     }
-    if (filterStatus) data = data.filter(o => o.status === filterStatus);
-    if (filterPaymentStatus) data = data.filter(o => o.paymentStatus === filterPaymentStatus);
+    if (filterStatus) {data = data.filter(o => o.status === filterStatus);}
+    if (filterPaymentStatus) {data = data.filter(o => o.paymentStatus === filterPaymentStatus);}
     return data;
   }, [orders, searchTerm, filterStatus, filterPaymentStatus]);
 
@@ -170,8 +168,8 @@ function OrdersContent() {
     setCurrentPage(1);
   }, [searchTerm, filterStatus, filterPaymentStatus]);
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(o => o._id));
-  const toggleSelectItem = (id: Id<"orders">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(o => o._id)); };
+  const toggleSelectItem = (id: Id<"orders">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
 
   const handleDelete = async (id: Id<"orders">) => {
     if (confirm('Xóa đơn hàng này?')) {
@@ -215,7 +213,7 @@ function OrdersContent() {
     }
   };
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
   const formatDate = (timestamp: number) => new Date(timestamp).toLocaleDateString('vi-VN');
 
   if (isLoading) {
@@ -244,7 +242,7 @@ function OrdersContent() {
       <BulkActionBar 
         selectedCount={selectedIds.length} 
         onDelete={handleBulkDelete} 
-        onClearSelection={() => setSelectedIds([])} 
+        onClearSelection={() =>{  setSelectedIds([]); }} 
         isLoading={isDeleting}
       />
 
@@ -253,9 +251,9 @@ function OrdersContent() {
           <div className="flex flex-wrap gap-3 flex-1">
             <div className="relative max-w-xs">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input placeholder="Tìm mã đơn, khách hàng..." className="pl-9 w-48" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <Input placeholder="Tìm mã đơn, khách hàng..." className="pl-9 w-48" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); }} />
             </div>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  setFilterStatus(e.target.value); }}>
               <option value="">Tất cả trạng thái</option>
               <option value="Pending">Chờ xử lý</option>
               <option value="Processing">Đang xử lý</option>
@@ -264,7 +262,7 @@ function OrdersContent() {
               <option value="Cancelled">Đã hủy</option>
             </select>
             {enabledFields.has('paymentStatus') && (
-              <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterPaymentStatus} onChange={(e) => setFilterPaymentStatus(e.target.value)}>
+              <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterPaymentStatus} onChange={(e) =>{  setFilterPaymentStatus(e.target.value); }}>
                 <option value="">Tất cả TT toán</option>
                 <option value="Pending">Chờ thanh toán</option>
                 <option value="Paid">Đã thanh toán</option>
@@ -293,7 +291,7 @@ function OrdersContent() {
           <TableBody>
             {paginatedData.map(order => (
               <TableRow key={order._id} className={selectedIds.includes(order._id) ? 'bg-emerald-500/5' : ''}>
-                {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(order._id)} onChange={() => toggleSelectItem(order._id)} /></TableCell>}
+                {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(order._id)} onChange={() =>{  toggleSelectItem(order._id); }} /></TableCell>}
                 {visibleColumns.includes('orderNumber') && <TableCell className="font-mono text-sm font-medium text-emerald-600">{order.orderNumber}</TableCell>}
                 {visibleColumns.includes('customer') && <TableCell>{order.customerName}</TableCell>}
                 {visibleColumns.includes('items') && (
@@ -320,7 +318,7 @@ function OrdersContent() {
                   </TableCell>
                 )}
                 {visibleColumns.includes('trackingNumber') && enabledFields.has('trackingNumber') && (
-                  <TableCell className="font-mono text-xs text-slate-500">{order.trackingNumber || '-'}</TableCell>
+                  <TableCell className="font-mono text-xs text-slate-500">{order.trackingNumber ?? '-'}</TableCell>
                 )}
                 {visibleColumns.includes('createdAt') && <TableCell className="text-slate-500 text-sm">{formatDate(order._creationTime)}</TableCell>}
                 {visibleColumns.includes('actions') && (
@@ -328,7 +326,7 @@ function OrdersContent() {
                     <div className="flex justify-end gap-2">
                       <Link href={`/admin/orders/${order._id}/edit`}><Button variant="ghost" size="icon" title="Xem chi tiết"><Eye size={16}/></Button></Link>
                       <Link href={`/admin/orders/${order._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(order._id)}><Trash2 size={16}/></Button>
+                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(order._id)}><Trash2 size={16}/></Button>
                     </div>
                   </TableCell>
                 )}
@@ -354,7 +352,7 @@ function OrdersContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
+                  onClick={() =>{  setCurrentPage(p => p - 1); }}
                 >
                   Trước
                 </Button>
@@ -365,7 +363,7 @@ function OrdersContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
+                  onClick={() =>{  setCurrentPage(p => p + 1); }}
                 >
                   Sau
                 </Button>

@@ -1,28 +1,28 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import React, { useMemo, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import Image from 'next/image';
-import { ArrowLeft, Loader2, ShoppingCart, Package, User, Clock, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle, Clock, Loader2, Package, ShoppingCart, Trash2, User } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, CardContent, CardHeader, CardTitle, Badge, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui';
 
 type CartStatus = 'Active' | 'Converted' | 'Abandoned';
 
 const STATUS_COLORS: Record<CartStatus, 'default' | 'success' | 'destructive'> = {
+  Abandoned: 'destructive',
   Active: 'default',
   Converted: 'success',
-  Abandoned: 'destructive',
 };
 
 const STATUS_LABELS: Record<CartStatus, string> = {
+  Abandoned: 'Bỏ dở',
   Active: 'Hoạt động',
   Converted: 'Đã đặt hàng',
-  Abandoned: 'Bỏ dở',
 };
 
 export default function CartDetailPage() {
@@ -58,7 +58,7 @@ export default function CartDetailPage() {
   React.useEffect(() => {
     if (cartData) {
       setStatus(cartData.status as CartStatus);
-      setNote(cartData.note || '');
+      setNote(cartData.note ?? '');
     }
   }, [cartData]);
 
@@ -121,13 +121,11 @@ export default function CartDetailPage() {
     }
   };
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
   const formatDate = (timestamp: number) => new Date(timestamp).toLocaleString('vi-VN');
 
   // Check if note changed
-  const noteChanged = useMemo(() => {
-    return note !== (cartData?.note || '');
-  }, [note, cartData?.note]);
+  const noteChanged = useMemo(() => note !== (cartData?.note ?? ''), [note, cartData?.note]);
 
   if (isLoading) {
     return (
@@ -182,14 +180,14 @@ export default function CartDetailPage() {
                   <p className="text-sm text-slate-500">{customerData.phone}</p>
                   <p className="text-sm text-slate-500">{customerData.email}</p>
                 </div>
-              ) : cartData.sessionId ? (
+              ) : (cartData.sessionId ? (
                 <div className="space-y-1">
                   <p className="text-sm text-slate-500">Khách vãng lai (Guest)</p>
                   <p className="text-xs text-slate-400 font-mono">Session: {cartData.sessionId}</p>
                 </div>
               ) : (
                 <p className="text-slate-500">Không có thông tin khách hàng</p>
-              )}
+              ))}
             </CardContent>
           </Card>
 
@@ -234,7 +232,7 @@ export default function CartDetailPage() {
                         <TableCell className="text-right">{formatPrice(item.price)}</TableCell>
                         <TableCell className="text-right font-medium">{formatPrice(item.subtotal)}</TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleRemoveItem(item._id)}>
+                          <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleRemoveItem(item._id)}>
                             <Trash2 size={14} />
                           </Button>
                         </TableCell>
@@ -260,14 +258,14 @@ export default function CartDetailPage() {
           </Card>
 
           {/* Note - only show if feature enabled */}
-          {enabledFeatures.enableNote !== false && (
+          {enabledFeatures.enableNote && (
             <Card>
               <CardHeader className="pb-3"><CardTitle>Ghi chú</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 <textarea
                   className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm min-h-[80px]"
                   value={note}
-                  onChange={(e) => setNote(e.target.value)}
+                  onChange={(e) =>{  setNote(e.target.value); }}
                   placeholder="Thêm ghi chú cho giỏ hàng..."
                 />
                 {noteChanged && (
@@ -291,7 +289,7 @@ export default function CartDetailPage() {
                 <Button
                   variant={status === 'Active' ? 'default' : 'outline'}
                   className={`justify-start gap-2 ${status === 'Active' ? 'bg-emerald-600 hover:bg-emerald-500' : ''}`}
-                  onClick={() => handleUpdateStatus('Active')}
+                  onClick={ async () => handleUpdateStatus('Active')}
                   disabled={isUpdating || status === 'Active'}
                 >
                   <ShoppingCart size={16} /> Hoạt động
@@ -299,7 +297,7 @@ export default function CartDetailPage() {
                 <Button
                   variant={status === 'Abandoned' ? 'default' : 'outline'}
                   className={`justify-start gap-2 ${status === 'Abandoned' ? 'bg-amber-600 hover:bg-amber-500' : ''}`}
-                  onClick={() => handleUpdateStatus('Abandoned')}
+                  onClick={ async () => handleUpdateStatus('Abandoned')}
                   disabled={isUpdating || status === 'Abandoned'}
                 >
                   <AlertTriangle size={16} /> Bỏ dở
@@ -307,7 +305,7 @@ export default function CartDetailPage() {
                 <Button
                   variant={status === 'Converted' ? 'default' : 'outline'}
                   className={`justify-start gap-2 ${status === 'Converted' ? 'bg-blue-600 hover:bg-blue-500' : ''}`}
-                  onClick={() => handleUpdateStatus('Converted')}
+                  onClick={ async () => handleUpdateStatus('Converted')}
                   disabled={isUpdating || status === 'Converted'}
                 >
                   <CheckCircle size={16} /> Đã đặt hàng
@@ -326,7 +324,7 @@ export default function CartDetailPage() {
                 <span className="text-slate-500">Tạo lúc:</span>
                 <span>{formatDate(cartData._creationTime)}</span>
               </div>
-              {enabledFeatures.enableExpiry !== false && cartData.expiresAt && (
+              {enabledFeatures.enableExpiry && cartData.expiresAt && (
                 <div className="flex justify-between">
                   <span className="text-slate-500">Hết hạn:</span>
                   <span className={cartData.expiresAt < Date.now() ? 'text-red-500' : ''}>

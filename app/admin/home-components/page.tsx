@@ -3,19 +3,20 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
-  Plus, Edit, Trash2, Grid, LayoutTemplate, AlertCircle, Package, 
-  Briefcase, FileText, Users, MousePointerClick, HelpCircle, 
-  User as UserIcon, Check, Star, Award, Tag, Image as ImageIcon, Phone, Loader2, GripVertical
+  AlertCircle, Award, Briefcase, Check, Edit, FileText, Grid, 
+  GripVertical, HelpCircle, Image as ImageIcon, LayoutTemplate, Loader2, 
+  MousePointerClick, Package, Phone, Plus, Star, Tag, Trash2, User as UserIcon, Users
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { cn, Button, Card, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
+import type { Id } from '@/convex/_generated/dataModel';
+import { Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from '../components/ui';
 import { BulkActionBar, SelectCheckbox } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 export default function HomeComponentsPageWrapper() {
@@ -27,28 +28,28 @@ export default function HomeComponentsPageWrapper() {
 }
 
 const COMPONENT_TYPES = [
-  { value: 'Hero', label: 'Hero Banner', icon: LayoutTemplate, description: 'Banner chính đầu trang' },
-  { value: 'Stats', label: 'Thống kê', icon: AlertCircle, description: 'Số liệu nổi bật' },
-  { value: 'ProductList', label: 'Danh sách Sản phẩm', icon: Package, description: 'Sản phẩm theo danh mục' },
-  { value: 'ServiceList', label: 'Danh sách Dịch vụ', icon: Briefcase, description: 'Các dịch vụ cung cấp' },
-  { value: 'Blog', label: 'Tin tức / Blog', icon: FileText, description: 'Bài viết mới nhất' },
-  { value: 'Partners', label: 'Đối tác / Logos', icon: Users, description: 'Logo đối tác, khách hàng' },
-  { value: 'CTA', label: 'Kêu gọi hành động (CTA)', icon: MousePointerClick, description: 'Nút đăng ký, mua ngay' },
-  { value: 'FAQ', label: 'Câu hỏi thường gặp', icon: HelpCircle, description: 'Hỏi đáp' },
-  { value: 'About', label: 'Về chúng tôi', icon: UserIcon, description: 'Giới thiệu ngắn gọn' },
-  { value: 'Footer', label: 'Footer', icon: LayoutTemplate, description: 'Chân trang' },
-  { value: 'Services', label: 'Dịch vụ chi tiết', icon: Briefcase, description: 'Mô tả dịch vụ' },
-  { value: 'Benefits', label: 'Lợi ích', icon: Check, description: 'Tại sao chọn chúng tôi' },
-  { value: 'Testimonials', label: 'Đánh giá / Review', icon: Star, description: 'Ý kiến khách hàng' },
-  { value: 'TrustBadges', label: 'Chứng nhận', icon: Award, description: 'Giải thưởng, chứng chỉ' },
-  { value: 'Pricing', label: 'Bảng giá', icon: Tag, description: 'Các gói dịch vụ' },
-  { value: 'Gallery', label: 'Thư viện ảnh', icon: ImageIcon, description: 'Hình ảnh hoạt động' },
-  { value: 'CaseStudy', label: 'Dự án thực tế', icon: FileText, description: 'Case study tiêu biểu' },
-  { value: 'Career', label: 'Tuyển dụng', icon: Users, description: 'Vị trí đang tuyển' },
-  { value: 'Contact', label: 'Liên hệ', icon: Phone, description: 'Form liên hệ, bản đồ' },
-  { value: 'ProductGrid', label: 'Sản phẩm', icon: Package, description: 'Grid sản phẩm' },
-  { value: 'News', label: 'Tin tức', icon: FileText, description: 'Tin mới' },
-  { value: 'Banner', label: 'Banner', icon: LayoutTemplate, description: 'Banner slider' },
+  { description: 'Banner chính đầu trang', icon: LayoutTemplate, label: 'Hero Banner', value: 'Hero' },
+  { description: 'Số liệu nổi bật', icon: AlertCircle, label: 'Thống kê', value: 'Stats' },
+  { description: 'Sản phẩm theo danh mục', icon: Package, label: 'Danh sách Sản phẩm', value: 'ProductList' },
+  { description: 'Các dịch vụ cung cấp', icon: Briefcase, label: 'Danh sách Dịch vụ', value: 'ServiceList' },
+  { description: 'Bài viết mới nhất', icon: FileText, label: 'Tin tức / Blog', value: 'Blog' },
+  { description: 'Logo đối tác, khách hàng', icon: Users, label: 'Đối tác / Logos', value: 'Partners' },
+  { description: 'Nút đăng ký, mua ngay', icon: MousePointerClick, label: 'Kêu gọi hành động (CTA)', value: 'CTA' },
+  { description: 'Hỏi đáp', icon: HelpCircle, label: 'Câu hỏi thường gặp', value: 'FAQ' },
+  { description: 'Giới thiệu ngắn gọn', icon: UserIcon, label: 'Về chúng tôi', value: 'About' },
+  { description: 'Chân trang', icon: LayoutTemplate, label: 'Footer', value: 'Footer' },
+  { description: 'Mô tả dịch vụ', icon: Briefcase, label: 'Dịch vụ chi tiết', value: 'Services' },
+  { description: 'Tại sao chọn chúng tôi', icon: Check, label: 'Lợi ích', value: 'Benefits' },
+  { description: 'Ý kiến khách hàng', icon: Star, label: 'Đánh giá / Review', value: 'Testimonials' },
+  { description: 'Giải thưởng, chứng chỉ', icon: Award, label: 'Chứng nhận', value: 'TrustBadges' },
+  { description: 'Các gói dịch vụ', icon: Tag, label: 'Bảng giá', value: 'Pricing' },
+  { description: 'Hình ảnh hoạt động', icon: ImageIcon, label: 'Thư viện ảnh', value: 'Gallery' },
+  { description: 'Case study tiêu biểu', icon: FileText, label: 'Dự án thực tế', value: 'CaseStudy' },
+  { description: 'Vị trí đang tuyển', icon: Users, label: 'Tuyển dụng', value: 'Career' },
+  { description: 'Form liên hệ, bản đồ', icon: Phone, label: 'Liên hệ', value: 'Contact' },
+  { description: 'Grid sản phẩm', icon: Package, label: 'Sản phẩm', value: 'ProductGrid' },
+  { description: 'Tin mới', icon: FileText, label: 'Tin tức', value: 'News' },
+  { description: 'Banner slider', icon: LayoutTemplate, label: 'Banner', value: 'Banner' },
 ];
 
 interface SortableRowProps {
@@ -63,7 +64,7 @@ interface SortableRowProps {
 function SortableRow({ comp, index, isSelected, onToggleSelect, onToggleActive, onDelete }: SortableRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: comp._id });
   const style = { transform: CSS.Transform.toString(transform), transition };
-  const TypeIcon = COMPONENT_TYPES.find(t => t.value === comp.type)?.icon || Grid;
+  const TypeIcon = COMPONENT_TYPES.find(t => t.value === comp.type)?.icon ?? Grid;
 
   return (
     <TableRow 
@@ -82,7 +83,7 @@ function SortableRow({ comp, index, isSelected, onToggleSelect, onToggleActive, 
       <TableCell className="font-medium text-slate-500">{index + 1}</TableCell>
       <TableCell>
         <div className="font-medium">{comp.title}</div>
-        <div className="text-xs text-slate-400 truncate max-w-[300px]">{comp.config?.preview || comp.config?.description || ''}</div>
+        <div className="text-xs text-slate-400 truncate max-w-[300px]">{(comp.config?.preview ?? comp.config?.description) ?? ''}</div>
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
@@ -142,7 +143,7 @@ function HomeComponentsPage() {
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id) {return;}
 
     const oldIndex = sortedComponents.findIndex(c => c._id === active.id);
     const newIndex = sortedComponents.findIndex(c => c._id === over.id);
@@ -156,8 +157,8 @@ function HomeComponentsPage() {
     }
   };
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === sortedComponents.length ? [] : sortedComponents.map(c => c._id));
-  const toggleSelectItem = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === sortedComponents.length ? [] : sortedComponents.map(c => c._id)); };
+  const toggleSelectItem = (id: string) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
 
   const handleDelete = async (id: Id<"homeComponents">) => {
     if (confirm('Xóa component này khỏi trang chủ?')) {
@@ -173,7 +174,7 @@ function HomeComponentsPage() {
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} component đã chọn?`)) {
       try {
-        await Promise.all(selectedIds.map(id => removeMutation({ id: id as Id<"homeComponents"> })));
+        await Promise.all(selectedIds.map( async id => removeMutation({ id: id as Id<"homeComponents"> })));
         setSelectedIds([]);
         toast.success(`Đã xóa ${selectedIds.length} component`);
       } catch {
@@ -204,7 +205,7 @@ function HomeComponentsPage() {
         </Link>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
 
       <Card>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -234,9 +235,9 @@ function HomeComponentsPage() {
                     comp={comp}
                     index={index}
                     isSelected={selectedIds.includes(comp._id)}
-                    onToggleSelect={() => toggleSelectItem(comp._id)}
-                    onToggleActive={() => toggleActive(comp._id)}
-                    onDelete={() => handleDelete(comp._id)}
+                    onToggleSelect={() =>{  toggleSelectItem(comp._id); }}
+                    onToggleActive={ async () => toggleActive(comp._id)}
+                    onDelete={ async () => handleDelete(comp._id)}
                   />
                 ))}
               </SortableContext>

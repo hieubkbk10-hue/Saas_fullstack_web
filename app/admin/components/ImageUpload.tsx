@@ -1,27 +1,27 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import Image from 'next/image';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Upload, X, Loader2 } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { Loader2, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, cn } from './ui';
 
 const COMPRESSION_QUALITY = 0.85;
 
 function slugifyFilename(filename: string): string {
-  const ext = filename.split('.').pop() || '';
+  const ext = filename.split('.').pop() ?? '';
   const name = filename.replace(/\.[^/.]+$/, '');
   const slugified = name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[đĐ]/g, "d")
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+    .replaceAll(/[\u0300-\u036F]/g, "")
+    .replaceAll(/[đĐ]/g, "d")
+    .replaceAll(/[^a-z0-9\s-]/g, '')
+    .replaceAll(/\s+/g, '-')
+    .replaceAll(/-+/g, '-')
     .trim();
   const timestamp = Date.now();
   return `${slugified}-${timestamp}.${ext}`;
@@ -56,7 +56,7 @@ async function compressImage(file: File, quality: number = COMPRESSION_QUALITY):
         quality
       );
     };
-    img.onerror = () => resolve(file);
+    img.onerror = () =>{  resolve(file); };
     img.src = URL.createObjectURL(file);
   });
 }
@@ -93,9 +93,9 @@ export function ImageUpload({ value, onChange, folder = 'products', className }:
       const uploadUrl = await generateUploadUrl();
 
       const response = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': compressedFile.type },
         body: compressedFile,
+        headers: { 'Content-Type': compressedFile.type },
+        method: 'POST',
       });
 
       if (!response.ok) {
@@ -105,11 +105,11 @@ export function ImageUpload({ value, onChange, folder = 'products', className }:
       const { storageId } = await response.json();
 
       const result = await saveImage({
-        storageId: storageId as Id<"_storage">,
         filename: slugifiedName,
+        folder,
         mimeType: compressedFile.type,
         size: compressedFile.size,
-        folder,
+        storageId: storageId as Id<"_storage">,
       });
 
       if (result.url) {
@@ -126,13 +126,13 @@ export function ImageUpload({ value, onChange, folder = 'products', className }:
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) void handleUpload(file);
+    if (file) {void handleUpload(file);}
   };
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (file) void handleUpload(file);
+    if (file) {void handleUpload(file);}
   }, [handleUpload]);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -177,7 +177,10 @@ export function ImageUpload({ value, onChange, folder = 'products', className }:
       )}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
-      onClick={() => document.getElementById('image-upload-input')?.click()}
+      onClick={() => {
+        const input = document.getElementById('image-upload-input') as HTMLInputElement | null;
+        input?.click();
+      }}
     >
       <input
         id="image-upload-input"

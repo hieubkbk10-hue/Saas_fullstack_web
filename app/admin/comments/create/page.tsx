@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { ArrowLeft, Loader2, FileText, Package, Save } from 'lucide-react';
+import { ArrowLeft, FileText, Loader2, Package, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Input, Badge } from '../../components/ui';
+import { Badge, Button, Card, Input } from '../../components/ui';
 import { ModuleGuard } from '../../components/ModuleGuard';
 
 export default function CreateCommentPage() {
@@ -25,12 +25,12 @@ function CreateCommentContent() {
   const createComment = useMutation(api.comments.create);
 
   const [formData, setFormData] = useState({
-    authorName: '',
     authorEmail: '',
+    authorName: '',
     content: '',
-    targetType: 'post' as 'post' | 'product',
-    targetId: '',
     status: 'Pending' as 'Pending' | 'Approved' | 'Spam',
+    targetId: '',
+    targetType: 'post' as 'post' | 'product',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,9 +38,9 @@ function CreateCommentContent() {
 
   const targets = useMemo(() => {
     if (formData.targetType === 'post') {
-      return postsData?.map(p => ({ id: p._id, name: p.title })) || [];
+      return postsData?.map(p => ({ id: p._id, name: p.title })) ?? [];
     }
-    return productsData?.map(p => ({ id: p._id, name: p.name })) || [];
+    return productsData?.map(p => ({ id: p._id, name: p.name })) ?? [];
   }, [formData.targetType, postsData, productsData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,12 +53,12 @@ function CreateCommentContent() {
     setIsSubmitting(true);
     try {
       await createComment({
-        authorName: formData.authorName.trim(),
         authorEmail: formData.authorEmail.trim() || undefined,
+        authorName: formData.authorName.trim(),
         content: formData.content.trim(),
-        targetType: formData.targetType,
-        targetId: formData.targetId,
         status: formData.status,
+        targetId: formData.targetId,
+        targetType: formData.targetType,
       });
       toast.success('Đã tạo bình luận thành công!');
       router.push('/admin/comments');
@@ -99,7 +99,7 @@ function CreateCommentContent() {
               </label>
               <Input
                 value={formData.authorName}
-                onChange={(e) => setFormData({ ...formData, authorName: e.target.value })}
+                onChange={(e) =>{  setFormData({ ...formData, authorName: e.target.value }); }}
                 placeholder="Nhập tên..."
                 required
               />
@@ -109,7 +109,7 @@ function CreateCommentContent() {
               <Input
                 type="email"
                 value={formData.authorEmail}
-                onChange={(e) => setFormData({ ...formData, authorEmail: e.target.value })}
+                onChange={(e) =>{  setFormData({ ...formData, authorEmail: e.target.value }); }}
                 placeholder="email@example.com"
               />
             </div>
@@ -122,7 +122,7 @@ function CreateCommentContent() {
                 type="button"
                 variant={formData.targetType === 'post' ? 'default' : 'outline'}
                 className="gap-2"
-                onClick={() => setFormData({ ...formData, targetType: 'post', targetId: '' })}
+                onClick={() =>{  setFormData({ ...formData, targetType: 'post', targetId: '' }); }}
               >
                 <FileText size={16} /> Bài viết
               </Button>
@@ -130,7 +130,7 @@ function CreateCommentContent() {
                 type="button"
                 variant={formData.targetType === 'product' ? 'default' : 'outline'}
                 className="gap-2"
-                onClick={() => setFormData({ ...formData, targetType: 'product', targetId: '' })}
+                onClick={() =>{  setFormData({ ...formData, targetType: 'product', targetId: '' }); }}
               >
                 <Package size={16} /> Sản phẩm
               </Button>
@@ -144,7 +144,7 @@ function CreateCommentContent() {
             <select
               className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
               value={formData.targetId}
-              onChange={(e) => setFormData({ ...formData, targetId: e.target.value })}
+              onChange={(e) =>{  setFormData({ ...formData, targetId: e.target.value }); }}
               required
             >
               <option value="">-- Chọn {formData.targetType === 'post' ? 'bài viết' : 'sản phẩm'} --</option>
@@ -161,7 +161,7 @@ function CreateCommentContent() {
             <textarea
               className="w-full min-h-[120px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm resize-y"
               value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              onChange={(e) =>{  setFormData({ ...formData, content: e.target.value }); }}
               placeholder="Nhập nội dung bình luận..."
               required
             />
@@ -176,10 +176,10 @@ function CreateCommentContent() {
                   type="button"
                   variant={formData.status === status ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setFormData({ ...formData, status })}
+                  onClick={() =>{  setFormData({ ...formData, status }); }}
                 >
-                  <Badge variant={status === 'Approved' ? 'default' : status === 'Pending' ? 'secondary' : 'destructive'} className="pointer-events-none">
-                    {status === 'Approved' ? 'Đã duyệt' : status === 'Pending' ? 'Chờ duyệt' : 'Spam'}
+                  <Badge variant={status === 'Approved' ? 'default' : (status === 'Pending' ? 'secondary' : 'destructive')} className="pointer-events-none">
+                    {status === 'Approved' ? 'Đã duyệt' : (status === 'Pending' ? 'Chờ duyệt' : 'Spam')}
                   </Badge>
                 </Button>
               ))}

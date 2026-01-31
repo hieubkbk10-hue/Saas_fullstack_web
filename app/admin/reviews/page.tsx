@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Trash2, Package, Loader2, RefreshCw, Check, Ban, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { Ban, Check, ChevronLeft, ChevronRight, Loader2, Package, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
+import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, SelectCheckbox } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
@@ -64,7 +64,7 @@ function ReviewsContent() {
       author: c.authorName,
       productName: productMap[c.targetId] || 'Sản phẩm không tồn tại',
       created: c._creationTime,
-    })) || [];
+    })) ?? [];
 
     if (filterStatus) {
       data = data.filter(c => c.status === filterStatus);
@@ -96,8 +96,8 @@ function ReviewsContent() {
     setCurrentPage(1);
   };
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedReviews.length ? [] : paginatedReviews.map(c => c.id));
-  const toggleSelectItem = (id: Id<"comments">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedReviews.length ? [] : paginatedReviews.map(c => c.id)); };
+  const toggleSelectItem = (id: Id<"comments">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
 
   const handleDelete = async (id: Id<"comments">) => {
     if(confirm('Xóa vĩnh viễn đánh giá này?')) {
@@ -114,7 +114,7 @@ function ReviewsContent() {
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} đánh giá đã chọn?`)) {
       try {
-        await Promise.all(selectedIds.map(id => deleteComment({ id })));
+        await Promise.all(selectedIds.map( async id => deleteComment({ id })));
         setSelectedIds([]);
         toast.success(`Đã xóa ${selectedIds.length} đánh giá`);
       } catch (error) {
@@ -161,21 +161,21 @@ function ReviewsContent() {
         <Button variant="outline" onClick={handleReset} className="gap-2"><RefreshCw size={16}/> Reset</Button>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
           <div className="relative max-w-xs">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm..." className="pl-9 w-48" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Input placeholder="Tìm kiếm..." className="pl-9 w-48" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); }} />
           </div>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterProduct} onChange={(e) => handleFilterChange(setFilterProduct, e.target.value)}>
+          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterProduct} onChange={(e) =>{  handleFilterChange(setFilterProduct, e.target.value); }}>
             <option value="">Tất cả sản phẩm</option>
             {productsData?.map(p => (
               <option key={p._id} value={p._id}>{p.name}</option>
             ))}
           </select>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => handleFilterChange(setFilterStatus, e.target.value)}>
+          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  handleFilterChange(setFilterStatus, e.target.value); }}>
             <option value="">Tất cả trạng thái</option>
             <option value="Approved">Đã duyệt</option>
             <option value="Pending">Chờ duyệt</option>
@@ -197,10 +197,10 @@ function ReviewsContent() {
           <TableBody>
             {paginatedReviews.map(review => (
               <TableRow key={review.id} className={selectedIds.includes(review.id) ? 'bg-orange-500/5' : ''}>
-                <TableCell><SelectCheckbox checked={selectedIds.includes(review.id)} onChange={() => toggleSelectItem(review.id)} /></TableCell>
+                <TableCell><SelectCheckbox checked={selectedIds.includes(review.id)} onChange={() =>{  toggleSelectItem(review.id); }} /></TableCell>
                 <TableCell>
                   <div className="font-medium">{review.author}</div>
-                  <div className="text-xs text-slate-400">{review.authorEmail || 'N/A'}</div>
+                  <div className="text-xs text-slate-400">{review.authorEmail ?? 'N/A'}</div>
                 </TableCell>
                 <TableCell><p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2">{review.content}</p></TableCell>
                 <TableCell>
@@ -210,20 +210,20 @@ function ReviewsContent() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={review.status === 'Approved' ? 'success' : review.status === 'Pending' ? 'secondary' : 'destructive'}>
-                    {review.status === 'Approved' ? 'Đã duyệt' : review.status === 'Pending' ? 'Chờ duyệt' : 'Spam'}
+                  <Badge variant={review.status === 'Approved' ? 'success' : (review.status === 'Pending' ? 'secondary' : 'destructive')}>
+                    {review.status === 'Approved' ? 'Đã duyệt' : (review.status === 'Pending' ? 'Chờ duyệt' : 'Spam')}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-xs text-slate-500">{new Date(review.created).toLocaleString('vi-VN')}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
                     {review.status !== 'Approved' && (
-                      <Button variant="ghost" size="icon" className="text-green-500 hover:text-green-600" title="Duyệt" onClick={() => handleApprove(review.id)}><Check size={16}/></Button>
+                      <Button variant="ghost" size="icon" className="text-green-500 hover:text-green-600" title="Duyệt" onClick={ async () => handleApprove(review.id)}><Check size={16}/></Button>
                     )}
                     {review.status !== 'Spam' && (
-                      <Button variant="ghost" size="icon" className="text-orange-500 hover:text-orange-600" title="Đánh dấu spam" onClick={() => handleSpam(review.id)}><Ban size={16}/></Button>
+                      <Button variant="ghost" size="icon" className="text-orange-500 hover:text-orange-600" title="Đánh dấu spam" onClick={ async () => handleSpam(review.id)}><Ban size={16}/></Button>
                     )}
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" title="Xóa" onClick={() => handleDelete(review.id)}><Trash2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" title="Xóa" onClick={ async () => handleDelete(review.id)}><Trash2 size={16}/></Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -248,7 +248,7 @@ function ReviewsContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
+                  onClick={() =>{  setCurrentPage(p => p - 1); }}
                 >
                   <ChevronLeft size={16} />
                 </Button>
@@ -259,7 +259,7 @@ function ReviewsContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
+                  onClick={() =>{  setCurrentPage(p => p + 1); }}
                 >
                   <ChevronRight size={16} />
                 </Button>

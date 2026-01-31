@@ -5,8 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Package, Loader2, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ArrowRight, ChevronLeft, ChevronRight, Loader2, Package } from 'lucide-react';
 
 // 6 Styles theo mẫu previews.tsx
 // 'minimal' = Luxury Minimal, 'commerce' = Commerce Card, 'bento' = Bento Grid
@@ -19,12 +19,12 @@ interface ProductListSectionProps {
   title: string;
 }
 
-type SectionHeaderProps = {
+interface SectionHeaderProps {
   brandColor: string;
   subTitle: string;
   sectionTitle: string;
   showViewAll: boolean;
-};
+}
 
 const SectionHeader = ({ brandColor, subTitle, sectionTitle, showViewAll }: SectionHeaderProps) => (
   <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-end md:justify-between md:mb-10">
@@ -60,7 +60,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
   const subTitle = (config.subTitle as string) || 'Bộ sưu tập';
   const sectionTitle = (config.sectionTitle as string) || title;
   const carouselId = React.useId();
-  const carouselElementId = `product-carousel-${carouselId.replace(/:/g, '')}`;
+  const carouselElementId = `product-carousel-${carouselId.replaceAll(':', '')}`;
   
   // Query products based on selection mode
   const productsData = useQuery(
@@ -70,7 +70,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
   
   // Get products to display based on selection mode
   const products = React.useMemo(() => {
-    if (!productsData) return [];
+    if (!productsData) {return [];}
     
     if (selectionMode === 'manual' && selectedProductIds.length > 0) {
       const productMap = new Map(productsData.map(p => [p._id, p]));
@@ -109,13 +109,13 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
 
   // Format price
   const formatPrice = (price?: number) => {
-    if (!price) return '';
+    if (!price) {return '';}
     return price.toLocaleString('vi-VN') + 'đ';
   };
 
   // Calculate discount
   const getDiscount = (price?: number, salePrice?: number) => {
-    if (!price || !salePrice || salePrice >= price) return null;
+    if (!price || !salePrice || salePrice >= price) {return null;}
     return `-${Math.round(((price - salePrice) / price) * 100)}%`;
   };
 
@@ -172,7 +172,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                       {product.name}
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="font-bold text-slate-900">{formatPrice(product.salePrice || product.price)}</span>
+                      <span className="font-bold text-slate-900">{formatPrice(product.salePrice ?? product.price)}</span>
                       {product.salePrice && product.price && product.salePrice < product.price && (
                         <span className="text-xs text-slate-400 line-through">
                           {formatPrice(product.price)}
@@ -235,7 +235,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                     </h3>
                     
                     <div className="flex items-baseline gap-2 mb-4 mt-auto pt-2">
-                      <span className="text-base font-bold text-slate-900 group-hover:opacity-80 transition-colors">{formatPrice(product.salePrice || product.price)}</span>
+                      <span className="text-base font-bold text-slate-900 group-hover:opacity-80 transition-colors">{formatPrice(product.salePrice ?? product.price)}</span>
                       {product.salePrice && product.price && product.salePrice < product.price && (
                         <span className="text-xs text-slate-400 line-through">
                           {formatPrice(product.price)}
@@ -290,8 +290,8 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselElementId);
-                      if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                      const container = document.querySelector(`#${carouselElementId}`);
+                      if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                     }}
                     className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
                   >
@@ -300,8 +300,8 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                   <button
                     type="button"
                     onClick={() => {
-                      const container = document.getElementById(carouselElementId);
-                      if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                      const container = document.querySelector(`#${carouselElementId}`);
+                      if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                     }}
                     className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50"
                   >
@@ -316,8 +316,8 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselElementId);
-                    if (container) container.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselElementId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });}
                   }}
                   className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
                 >
@@ -326,8 +326,8 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                 <button
                   type="button"
                   onClick={() => {
-                    const container = document.getElementById(carouselElementId);
-                    if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                    const container = document.querySelector(`#${carouselElementId}`);
+                    if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                   }}
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white transition-colors"
                   style={{ backgroundColor: brandColor }}
@@ -349,9 +349,9 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
               id={carouselElementId}
               className="flex overflow-x-auto snap-x snap-mandatory gap-3 md:gap-5 py-4 px-2 cursor-grab active:cursor-grabbing select-none scrollbar-hide"
               style={{
-                scrollbarWidth: 'none',
+                WebkitOverflowScrolling: 'touch',
                 msOverflowStyle: 'none',
-                WebkitOverflowScrolling: 'touch'
+                scrollbarWidth: 'none'
               }}
               onMouseDown={(e) => {
                 const el = e.currentTarget;
@@ -370,7 +370,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
               }}
               onMouseMove={(e) => {
                 const el = e.currentTarget;
-                if (el.dataset.isDown !== 'true') return;
+                if (el.dataset.isDown !== 'true') {return;}
                 e.preventDefault();
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -405,7 +405,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                     </div>
                     <h3 className="font-medium text-slate-900 text-sm truncate group-hover:opacity-80 transition-colors">{product.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="font-bold text-sm" style={{ color: brandColor }}>{formatPrice(product.salePrice || product.price)}</span>
+                      <span className="font-bold text-sm" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>
                       {product.salePrice && product.price && product.salePrice < product.price && (
                         <span className="text-xs text-slate-400 line-through">{formatPrice(product.price)}</span>
                       )}
@@ -459,7 +459,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                     )}
                   </div>
                   <h3 className="font-medium text-xs text-slate-900 truncate group-hover:opacity-80 transition-colors">{product.name}</h3>
-                  <span className="font-bold text-xs mt-0.5 block" style={{ color: brandColor }}>{formatPrice(product.salePrice || product.price)}</span>
+                  <span className="font-bold text-xs mt-0.5 block" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>
                 </Link>
               );
             })}
@@ -495,7 +495,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                     {discount && <span className="absolute top-2 left-2 text-[10px] font-bold text-white px-1.5 py-0.5 rounded" style={{ backgroundColor: brandColor }}>{discount}</span>}
                   </div>
                   <h4 className="font-medium text-sm text-slate-900 truncate">{product.name}</h4>
-                  <span className="text-sm font-bold mt-1" style={{ color: brandColor }}>{formatPrice(product.salePrice || product.price)}</span>
+                  <span className="text-sm font-bold mt-1" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>
                 </Link>
               );
             })}
@@ -528,7 +528,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                 <span className="inline-block px-2 py-1 rounded text-xs font-medium text-white/90 mb-2" style={{ backgroundColor: `${brandColor}80` }}>Nổi bật</span>
                 <h3 className="text-xl md:text-2xl font-bold text-white mb-2">{showcaseFeatured?.name}</h3>
                 <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-white">{formatPrice(showcaseFeatured?.salePrice || showcaseFeatured?.price)}</span>
+                  <span className="text-xl font-bold text-white">{formatPrice(showcaseFeatured?.salePrice ?? showcaseFeatured?.price)}</span>
                   <span className="px-4 py-2 rounded-lg text-white text-sm font-medium" style={{ backgroundColor: brandColor }}>Xem chi tiết</span>
                 </div>
               </div>
@@ -550,7 +550,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                     </div>
                     <h4 className="font-medium text-sm text-slate-900 truncate group-hover:opacity-80 transition-colors">{product.name}</h4>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-sm font-bold" style={{ color: brandColor }}>{formatPrice(product.salePrice || product.price)}</span>
+                      <span className="text-sm font-bold" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>
                       {product.salePrice && product.price && product.salePrice < product.price && (
                         <span className="text-[10px] text-slate-400 line-through">{formatPrice(product.price)}</span>
                       )}
@@ -566,7 +566,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
   }
 
   // Style 3: Bento Grid - Asymmetric layout với hero card lớn (default)
-  const featured = products[products.length - 1] || products[0];
+  const featured = products.at(-1) ?? products[0];
   const others = products.slice(0, 4);
   const featuredDiscount = getDiscount(featured?.price, featured?.salePrice);
 
@@ -610,7 +610,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
               <h3 className="text-2xl md:text-4xl font-bold mb-3 leading-tight text-white">{featured?.name}</h3>
               
               <div className="flex flex-row items-center justify-between gap-4 mt-2">
-                <span className="text-2xl font-bold text-white">{formatPrice(featured?.salePrice || featured?.price)}</span>
+                <span className="text-2xl font-bold text-white">{formatPrice(featured?.salePrice ?? featured?.price)}</span>
                 
                 <span className="rounded-full px-6 py-2 text-white border-0 shadow-lg" style={{ backgroundColor: brandColor, boxShadow: `0 4px 6px ${brandColor}20` }}>
                   Xem chi tiết
@@ -666,7 +666,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                   </h4>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-sm font-bold" style={{ color: brandColor }}>
-                      {formatPrice(product.salePrice || product.price)}
+                      {formatPrice(product.salePrice ?? product.price)}
                     </span>
                     {product.salePrice && product.price && product.salePrice < product.price && (
                       <span className="text-[10px] text-slate-400 line-through opacity-70">
@@ -699,7 +699,7 @@ export function ProductListSection({ config, brandColor, title }: ProductListSec
                   )}
                 </div>
                 <h4 className="font-medium text-sm text-slate-900 truncate group-hover:opacity-80 transition-colors">{product.name}</h4>
-                <span className="text-sm font-bold mt-1" style={{ color: brandColor }}>{formatPrice(product.salePrice || product.price)}</span>
+                <span className="text-sm font-bold mt-1" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>
               </Link>
             );
           })}

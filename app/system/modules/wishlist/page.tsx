@@ -1,28 +1,28 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Heart, Bell, Loader2, Database, Trash2, RefreshCw, Settings, User, Package } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { Bell, Database, Heart, Loader2, Package, RefreshCw, Settings, Trash2, User } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus,
+  SettingInput, SettingsCard
 } from '@/components/modules/shared';
-import { Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'wishlist';
 
 const FEATURES_CONFIG = [
-  { key: 'enableNote', label: 'Ghi chú', icon: Heart, description: 'Cho phép khách thêm ghi chú cho SP yêu thích', linkedField: 'note' },
-  { key: 'enableNotification', label: 'Thông báo', icon: Bell, description: 'Thông báo khi SP giảm giá/có hàng' },
+  { description: 'Cho phép khách thêm ghi chú cho SP yêu thích', icon: Heart, key: 'enableNote', label: 'Ghi chú', linkedField: 'note' },
+  { description: 'Thông báo khi SP giảm giá/có hàng', icon: Bell, key: 'enableNotification', label: 'Thông báo' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { maxItemsPerCustomer: number; itemsPerPage: number };
+interface SettingsState { maxItemsPerCustomer: number; itemsPerPage: number }
 type TabType = 'config' | 'data';
 
 export default function WishlistModuleConfigPage() {
@@ -49,7 +49,7 @@ export default function WishlistModuleConfigPage() {
   // Local state
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ maxItemsPerCustomer: 50, itemsPerPage: 20 });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ itemsPerPage: 20, maxItemsPerCustomer: 50 });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -68,14 +68,14 @@ export default function WishlistModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -85,7 +85,7 @@ export default function WishlistModuleConfigPage() {
     if (settingsData) {
       const maxItemsPerCustomer = settingsData.find(s => s.settingKey === 'maxItemsPerCustomer')?.value as number ?? 50;
       const itemsPerPage = settingsData.find(s => s.settingKey === 'itemsPerPage')?.value as number ?? 20;
-      setLocalSettings({ maxItemsPerCustomer, itemsPerPage });
+      setLocalSettings({ itemsPerPage, maxItemsPerCustomer });
     }
   }, [settingsData]);
 
@@ -96,14 +96,12 @@ export default function WishlistModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
   const serverSettings = useMemo(() => {
     const maxItemsPerCustomer = settingsData?.find(s => s.settingKey === 'maxItemsPerCustomer')?.value as number ?? 50;
     const itemsPerPage = settingsData?.find(s => s.settingKey === 'itemsPerPage')?.value as number ?? 20;
-    return { maxItemsPerCustomer, itemsPerPage };
+    return { itemsPerPage, maxItemsPerCustomer };
   }, [settingsData]);
 
   // Check for changes
@@ -128,7 +126,7 @@ export default function WishlistModuleConfigPage() {
 
   const handleToggleField = (id: string) => {
     const field = localFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalFields(prev => {
@@ -154,13 +152,13 @@ export default function WishlistModuleConfigPage() {
     try {
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          await toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY });
         }
       }
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
+          await updateField({ enabled: field.enabled, id: field.id as Id<'moduleFields'> });
         }
       }
       if (localSettings.maxItemsPerCustomer !== serverSettings.maxItemsPerCustomer) {
@@ -192,7 +190,7 @@ export default function WishlistModuleConfigPage() {
   };
 
   const handleClearData = async () => {
-    if (!confirm('Xóa toàn bộ dữ liệu wishlist?')) return;
+    if (!confirm('Xóa toàn bộ dữ liệu wishlist?')) {return;}
     try {
       toast.loading('Đang xóa dữ liệu...');
       await clearWishlistData();
@@ -206,7 +204,7 @@ export default function WishlistModuleConfigPage() {
   };
 
   const handleResetData = async () => {
-    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
+    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) {return;}
     try {
       toast.loading('Đang reset dữ liệu...');
       await clearWishlistData();
@@ -229,12 +227,12 @@ export default function WishlistModuleConfigPage() {
 
   const productMap = useMemo(() => {
     const map: Record<string, { name: string; price: number }> = {};
-    productsData?.forEach(p => { map[p._id] = { name: p.name, price: p.salePrice || p.price }; });
+    productsData?.forEach(p => { map[p._id] = { name: p.name, price: p.salePrice ?? p.price }; });
     return map;
   }, [productsData]);
 
   const stats = useMemo(() => {
-    if (!wishlistData) return { total: 0, uniqueCustomers: 0, uniqueProducts: 0 };
+    if (!wishlistData) {return { total: 0, uniqueCustomers: 0, uniqueProducts: 0 };}
     const customerIds = new Set(wishlistData.map(w => w.customerId));
     const productIds = new Set(wishlistData.map(w => w.productId));
     return {
@@ -244,7 +242,7 @@ export default function WishlistModuleConfigPage() {
     };
   }, [wishlistData]);
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
   const formatDate = (timestamp: number) => new Date(timestamp).toLocaleDateString('vi-VN');
 
   if (isLoading) {
@@ -272,7 +270,7 @@ export default function WishlistModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-pink-500 text-pink-600 dark:text-pink-400'
@@ -282,7 +280,7 @@ export default function WishlistModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-pink-500 text-pink-600 dark:text-pink-400'
@@ -303,13 +301,13 @@ export default function WishlistModuleConfigPage() {
                 <SettingInput 
                   label="Max SP / khách" 
                   value={localSettings.maxItemsPerCustomer} 
-                  onChange={(v) => setLocalSettings({...localSettings, maxItemsPerCustomer: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, maxItemsPerCustomer: v}); }}
                   focusColor="focus:border-pink-500"
                 />
                 <SettingInput 
                   label="Số mục / trang" 
                   value={localSettings.itemsPerPage} 
-                  onChange={(v) => setLocalSettings({...localSettings, itemsPerPage: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, itemsPerPage: v}); }}
                   focusColor="focus:border-pink-500"
                 />
               </SettingsCard>
@@ -422,7 +420,7 @@ export default function WishlistModuleConfigPage() {
                     <TableCell className="font-medium">{customerMap[item.customerId] || 'N/A'}</TableCell>
                     <TableCell>{productMap[item.productId]?.name || 'N/A'}</TableCell>
                     <TableCell className="text-right">{productMap[item.productId] ? formatPrice(productMap[item.productId].price) : '-'}</TableCell>
-                    <TableCell className="text-slate-500 text-sm max-w-[150px] truncate">{item.note || '-'}</TableCell>
+                    <TableCell className="text-slate-500 text-sm max-w-[150px] truncate">{item.note ?? '-'}</TableCell>
                     <TableCell className="text-slate-500 text-sm">{formatDate(item._creationTime)}</TableCell>
                   </TableRow>
                 ))}

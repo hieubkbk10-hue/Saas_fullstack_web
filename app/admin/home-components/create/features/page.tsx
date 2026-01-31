@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { GripVertical, Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
 import { FeaturesPreview, type FeaturesStyle } from '../../previews';
 
 export default function FeaturesCreatePage() {
@@ -11,12 +11,12 @@ export default function FeaturesCreatePage() {
   const brandColor = useBrandColor();
   
   const [featuresItems, setFeaturesItems] = useState([
-    { id: 1, icon: 'Zap', title: 'Tốc độ nhanh', description: 'Hiệu suất tối ưu với thời gian phản hồi dưới 100ms.' },
-    { id: 2, icon: 'Shield', title: 'Bảo mật cao', description: 'Mã hóa end-to-end, bảo vệ dữ liệu người dùng.' },
-    { id: 3, icon: 'Cpu', title: 'AI thông minh', description: 'Tích hợp trí tuệ nhân tạo, tự động hóa quy trình.' },
-    { id: 4, icon: 'Globe', title: 'Đa nền tảng', description: 'Hoạt động trên mọi thiết bị: Web, iOS, Android.' },
-    { id: 5, icon: 'Rocket', title: 'Dễ triển khai', description: 'Cài đặt nhanh chóng, hướng dẫn chi tiết.' },
-    { id: 6, icon: 'Target', title: 'Phân tích sâu', description: 'Dashboard trực quan, theo dõi KPIs real-time.' }
+    { description: 'Hiệu suất tối ưu với thời gian phản hồi dưới 100ms.', icon: 'Zap', id: 1, title: 'Tốc độ nhanh' },
+    { description: 'Mã hóa end-to-end, bảo vệ dữ liệu người dùng.', icon: 'Shield', id: 2, title: 'Bảo mật cao' },
+    { description: 'Tích hợp trí tuệ nhân tạo, tự động hóa quy trình.', icon: 'Cpu', id: 3, title: 'AI thông minh' },
+    { description: 'Hoạt động trên mọi thiết bị: Web, iOS, Android.', icon: 'Globe', id: 4, title: 'Đa nền tảng' },
+    { description: 'Cài đặt nhanh chóng, hướng dẫn chi tiết.', icon: 'Rocket', id: 5, title: 'Dễ triển khai' },
+    { description: 'Dashboard trực quan, theo dõi KPIs real-time.', icon: 'Target', id: 6, title: 'Phân tích sâu' }
   ]);
   const [style, setStyle] = useState<FeaturesStyle>('iconGrid');
   
@@ -26,12 +26,12 @@ export default function FeaturesCreatePage() {
 
   const dragProps = (id: number) => ({
     draggable: true,
-    onDragStart: () => setDraggedId(id),
     onDragEnd: () => { setDraggedId(null); setDragOverId(null); },
-    onDragOver: (e: React.DragEvent) => { e.preventDefault(); if (draggedId !== id) setDragOverId(id); },
+    onDragOver: (e: React.DragEvent) => { e.preventDefault(); if (draggedId !== id) {setDragOverId(id);} },
+    onDragStart: () =>{  setDraggedId(id); },
     onDrop: (e: React.DragEvent) => {
       e.preventDefault();
-      if (!draggedId || draggedId === id) return;
+      if (!draggedId || draggedId === id) {return;}
       const newItems = [...featuresItems];
       const draggedIdx = newItems.findIndex(i => i.id === draggedId);
       const targetIdx = newItems.findIndex(i => i.id === id);
@@ -43,7 +43,7 @@ export default function FeaturesCreatePage() {
   });
 
   const onSubmit = (e: React.FormEvent) => {
-    void handleSubmit(e, { items: featuresItems.map(f => ({ icon: f.icon, title: f.title, description: f.description })), style });
+    void handleSubmit(e, { items: featuresItems.map(f => ({ description: f.description, icon: f.icon, title: f.title })), style });
   };
 
   return (
@@ -63,7 +63,7 @@ export default function FeaturesCreatePage() {
             type="button" 
             variant="outline" 
             size="sm" 
-            onClick={() => setFeaturesItems([...featuresItems, { id: Date.now(), icon: 'Zap', title: '', description: '' }])} 
+            onClick={() =>{  setFeaturesItems([...featuresItems, { description: '', icon: 'Zap', id: Date.now(), title: '' }]); }} 
             className="gap-2"
           >
             <Plus size={14} /> Thêm
@@ -98,7 +98,7 @@ export default function FeaturesCreatePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <select 
                   value={item.icon} 
-                  onChange={(e) => setFeaturesItems(featuresItems.map(f => f.id === item.id ? {...f, icon: e.target.value} : f))}
+                  onChange={(e) =>{  setFeaturesItems(featuresItems.map(f => f.id === item.id ? {...f, icon: e.target.value} : f)); }}
                   className="h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
                 >
                   <option value="Zap">Zap - Nhanh</option>
@@ -115,14 +115,14 @@ export default function FeaturesCreatePage() {
                 <Input 
                   placeholder="Tiêu đề" 
                   value={item.title} 
-                  onChange={(e) => setFeaturesItems(featuresItems.map(f => f.id === item.id ? {...f, title: e.target.value} : f))} 
+                  onChange={(e) =>{  setFeaturesItems(featuresItems.map(f => f.id === item.id ? {...f, title: e.target.value} : f)); }} 
                   className="md:col-span-2"
                 />
               </div>
               <Input 
                 placeholder="Mô tả ngắn" 
                 value={item.description} 
-                onChange={(e) => setFeaturesItems(featuresItems.map(f => f.id === item.id ? {...f, description: e.target.value} : f))} 
+                onChange={(e) =>{  setFeaturesItems(featuresItems.map(f => f.id === item.id ? {...f, description: e.target.value} : f)); }} 
               />
             </div>
           ))}

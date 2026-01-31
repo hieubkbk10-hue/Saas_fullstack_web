@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, GripVertical, Briefcase, Shield, Star, Users, Phone, Target, Zap, Globe, Rocket, Settings, Layers, Cpu, Clock, MapPin, Mail, Building2, Check, Package } from 'lucide-react';
-import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
+import { Briefcase, Building2, Check, Clock, Cpu, Globe, GripVertical, Layers, Mail, MapPin, Package, Phone, Plus, Rocket, Settings, Shield, Star, Target, Trash2, Users, Zap } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
 import { ServicesPreview, type ServicesStyle } from '../../previews';
 
 // Available icons for services
@@ -14,9 +14,9 @@ export default function ServicesCreatePage() {
   const brandColor = useBrandColor();
   
   const [servicesItems, setServicesItems] = useState([
-    { id: 1, icon: 'Briefcase', title: 'Tư vấn chiến lược', description: 'Đội ngũ chuyên gia giàu kinh nghiệm' },
-    { id: 2, icon: 'Shield', title: 'Bảo hành trọn đời', description: 'Cam kết chất lượng sản phẩm' },
-    { id: 3, icon: 'Package', title: 'Giao hàng nhanh', description: 'Miễn phí vận chuyển toàn quốc' }
+    { description: 'Đội ngũ chuyên gia giàu kinh nghiệm', icon: 'Briefcase', id: 1, title: 'Tư vấn chiến lược' },
+    { description: 'Cam kết chất lượng sản phẩm', icon: 'Shield', id: 2, title: 'Bảo hành trọn đời' },
+    { description: 'Miễn phí vận chuyển toàn quốc', icon: 'Package', id: 3, title: 'Giao hàng nhanh' }
   ]);
   const [style, setStyle] = useState<ServicesStyle>('elegantGrid');
 
@@ -24,22 +24,22 @@ export default function ServicesCreatePage() {
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
 
-  const handleAddService = () => setServicesItems([...servicesItems, { id: Date.now(), icon: 'Star', title: '', description: '' }]);
+  const handleAddService = () =>{  setServicesItems([...servicesItems, { description: '', icon: 'Star', id: Date.now(), title: '' }]); };
   const handleRemoveService = (id: number) => servicesItems.length > 1 && setServicesItems(servicesItems.filter(s => s.id !== id));
   const handleUpdateService = (id: number, field: string, value: string) => {
     setServicesItems(servicesItems.map(s => s.id === id ? { ...s, [field]: value } : s));
   };
 
   // Drag handlers
-  const handleDragStart = (id: number) => setDraggedId(id);
+  const handleDragStart = (id: number) =>{  setDraggedId(id); };
   const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
   const handleDragOver = (e: React.DragEvent, id: number) => {
     e.preventDefault();
-    if (draggedId !== id) setDragOverId(id);
+    if (draggedId !== id) {setDragOverId(id);}
   };
   const handleDrop = (e: React.DragEvent, targetId: number) => {
     e.preventDefault();
-    if (!draggedId || draggedId === targetId) return;
+    if (!draggedId || draggedId === targetId) {return;}
     const newItems = [...servicesItems];
     const draggedIdx = newItems.findIndex(i => i.id === draggedId);
     const targetIdx = newItems.findIndex(i => i.id === targetId);
@@ -51,12 +51,12 @@ export default function ServicesCreatePage() {
   };
 
   const onSubmit = (e: React.FormEvent) => {
-    void handleSubmit(e, { items: servicesItems.map(s => ({ icon: s.icon, title: s.title, description: s.description })), style });
+    void handleSubmit(e, { items: servicesItems.map(s => ({ description: s.description, icon: s.icon, title: s.title })), style });
   };
 
   // Get icon component
   const getIconComponent = (iconName: string) => {
-    const icons: Record<string, React.ComponentType<{ size?: number; style?: React.CSSProperties }>> = { Briefcase, Shield, Star, Users, Phone, Target, Zap, Globe, Rocket, Settings, Layers, Cpu, Clock, MapPin, Mail, Building2, Check, Package };
+    const icons: Record<string, React.ComponentType<{ size?: number; style?: React.CSSProperties }>> = { Briefcase, Building2, Check, Clock, Cpu, Globe, Layers, Mail, MapPin, Package, Phone, Rocket, Settings, Shield, Star, Target, Users, Zap };
     return icons[iconName] || Star;
   };
 
@@ -84,10 +84,10 @@ export default function ServicesCreatePage() {
               <div 
                 key={item.id} 
                 draggable
-                onDragStart={() => handleDragStart(item.id)}
+                onDragStart={() =>{  handleDragStart(item.id); }}
                 onDragEnd={handleDragEnd}
-                onDragOver={(e) => handleDragOver(e, item.id)}
-                onDrop={(e) => handleDrop(e, item.id)}
+                onDragOver={(e) =>{  handleDragOver(e, item.id); }}
+                onDrop={(e) =>{  handleDrop(e, item.id); }}
                 className={cn(
                   "p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3 border-2 transition-all cursor-grab active:cursor-grabbing",
                   draggedId === item.id && "opacity-50",
@@ -110,7 +110,7 @@ export default function ServicesCreatePage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                   <select 
                     value={item.icon} 
-                    onChange={(e) => handleUpdateService(item.id, 'icon', e.target.value)}
+                    onChange={(e) =>{  handleUpdateService(item.id, 'icon', e.target.value); }}
                     className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                   >
                     {AVAILABLE_ICONS.map((icon) => (
@@ -120,13 +120,13 @@ export default function ServicesCreatePage() {
                   <Input 
                     placeholder="Tiêu đề" 
                     value={item.title} 
-                    onChange={(e) => handleUpdateService(item.id, 'title', e.target.value)}
+                    onChange={(e) =>{  handleUpdateService(item.id, 'title', e.target.value); }}
                     className="md:col-span-1"
                   />
                   <Input 
                     placeholder="Mô tả ngắn" 
                     value={item.description} 
-                    onChange={(e) => handleUpdateService(item.id, 'description', e.target.value)}
+                    onChange={(e) =>{  handleUpdateService(item.id, 'description', e.target.value); }}
                     className="md:col-span-2"
                   />
                 </div>

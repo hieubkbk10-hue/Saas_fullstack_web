@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Briefcase, Clock, Star } from 'lucide-react';
-import { Id } from '@/convex/_generated/dataModel';
+import React from 'react';
+import type { Id } from '@/convex/_generated/dataModel';
 
 interface Service {
   _id: Id<"services">;
@@ -28,12 +28,12 @@ interface FullWidthLayoutProps {
   enabledFields: Set<string>;
 }
 
-function formatPrice(price?: number): string {
-  if (!price) return 'Liên hệ';
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-}
+const formatPrice = (price?: number): string => {
+  if (!price) {return 'Liên hệ';}
+  return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
+};
 
-export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, enabledFields }: FullWidthLayoutProps) {
+export const FullWidthLayout = ({ services, brandColor, categoryMap, viewMode, enabledFields }: FullWidthLayoutProps): React.ReactElement => {
   const showExcerpt = enabledFields.has('excerpt');
   const showPrice = enabledFields.has('price');
   const showDuration = enabledFields.has('duration');
@@ -89,7 +89,7 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
                     className="text-xs font-medium px-2 py-0.5 rounded"
                     style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
                   >
-                    {categoryMap.get(service.categoryId) || 'Dịch vụ'}
+                    {categoryMap.get(service.categoryId) ?? 'Dịch vụ'}
                   </span>
                   <span className="text-xs text-slate-400">{service.publishedAt ? new Date(service.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
                 </div>
@@ -168,7 +168,7 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
                   className="text-xs font-medium px-2 py-0.5 rounded"
                   style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
                 >
-                  {categoryMap.get(service.categoryId) || 'Dịch vụ'}
+                  {categoryMap.get(service.categoryId) ?? 'Dịch vụ'}
                 </span>
               </div>
               <h2 className="text-base font-semibold text-slate-900 line-clamp-2 group-hover:opacity-70 transition-opacity duration-200 flex-1">
@@ -206,4 +206,4 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
       ))}
     </div>
   );
-}
+};

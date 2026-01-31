@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, Search, Loader2, RefreshCw, ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { Check, ChevronLeft, ChevronRight, Copy, Edit, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
-import { SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
+import { BulkActionBar, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'promotions';
@@ -29,7 +29,7 @@ function PromotionsContent() {
   const seedPromotionsModule = useMutation(api.seed.seedPromotionsModule);
   const clearPromotionsData = useMutation(api.seed.clearPromotionsData);
   
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterType, setFilterType] = useState('');
@@ -52,12 +52,10 @@ function PromotionsContent() {
     return features;
   }, [featuresData]);
 
-  const promotions = useMemo(() => {
-    return promotionsData?.map(p => ({
+  const promotions = useMemo(() => promotionsData?.map(p => ({
       ...p,
       id: p._id,
-    })) || [];
-  }, [promotionsData]);
+    })) ?? [], [promotionsData]);
 
   const filteredPromotions = useMemo(() => {
     let data = [...promotions];
@@ -87,18 +85,18 @@ function PromotionsContent() {
   }, [sortedPromotions, currentPage, promotionsPerPage]);
 
   const handleSort = (key: string) => {
-    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
     setCurrentPage(1);
   };
 
   const handleFilterChange = (type: 'status' | 'type', value: string) => {
-    if (type === 'status') setFilterStatus(value);
-    else setFilterType(value);
+    if (type === 'status') {setFilterStatus(value);}
+    else {setFilterType(value);}
     setCurrentPage(1);
   };
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedPromotions.length ? [] : paginatedPromotions.map(p => p._id));
-  const toggleSelectItem = (id: Id<"promotions">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedPromotions.length ? [] : paginatedPromotions.map(p => p._id)); };
+  const toggleSelectItem = (id: Id<"promotions">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
 
   // TICKET #10 FIX: Show detailed error message
   const handleDelete = async (id: Id<"promotions">) => {
@@ -117,7 +115,7 @@ function PromotionsContent() {
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} khuyến mãi đã chọn?`)) {
       try {
-        await Promise.all(selectedIds.map(id => deletePromotion({ id })));
+        await Promise.all(selectedIds.map( async id => deletePromotion({ id })));
         setSelectedIds([]);
         toast.success(`Đã xóa ${selectedIds.length} khuyến mãi`);
       } catch (error) {
@@ -146,31 +144,36 @@ function PromotionsContent() {
       await navigator.clipboard.writeText(code);
       setCopiedCode(code);
       toast.success('Đã copy mã voucher');
-      setTimeout(() => setCopiedCode(null), 2000);
+      setTimeout(() =>{  setCopiedCode(null); }, 2000);
     } catch {
       toast.error('Không thể copy, vui lòng copy thủ công');
     }
   };
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
   
   const formatDate = (timestamp: number | undefined) => {
-    if (!timestamp) return '-';
+    if (!timestamp) {return '-';}
     return new Date(timestamp).toLocaleDateString('vi-VN');
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'Active':
+      case 'Active': {
         return <Badge variant="success">Hoạt động</Badge>;
-      case 'Inactive':
+      }
+      case 'Inactive': {
         return <Badge variant="secondary">Tạm dừng</Badge>;
-      case 'Expired':
+      }
+      case 'Expired': {
         return <Badge variant="destructive">Hết hạn</Badge>;
-      case 'Scheduled':
+      }
+      case 'Scheduled': {
         return <Badge variant="warning">Chờ kích hoạt</Badge>;
-      default:
+      }
+      default: {
         return <Badge variant="outline">{status}</Badge>;
+      }
     }
   };
 
@@ -197,22 +200,22 @@ function PromotionsContent() {
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
           <div className="relative max-w-xs flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm tên, mã voucher..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Input placeholder="Tìm tên, mã voucher..." className="pl-9" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); }} />
           </div>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => handleFilterChange('status', e.target.value)}>
+          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  handleFilterChange('status', e.target.value); }}>
             <option value="">Tất cả trạng thái</option>
             <option value="Active">Hoạt động</option>
             <option value="Inactive">Tạm dừng</option>
             <option value="Expired">Hết hạn</option>
             <option value="Scheduled">Chờ kích hoạt</option>
           </select>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterType} onChange={(e) => handleFilterChange('type', e.target.value)}>
+          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterType} onChange={(e) =>{  handleFilterChange('type', e.target.value); }}>
             <option value="">Tất cả loại</option>
             <option value="percent">Giảm theo %</option>
             <option value="fixed">Giảm cố định</option>
@@ -233,14 +236,14 @@ function PromotionsContent() {
           <TableBody>
             {paginatedPromotions.map(promo => (
               <TableRow key={promo._id} className={selectedIds.includes(promo._id) ? 'bg-pink-500/5' : ''}>
-                <TableCell><SelectCheckbox checked={selectedIds.includes(promo._id)} onChange={() => toggleSelectItem(promo._id)} /></TableCell>
+                <TableCell><SelectCheckbox checked={selectedIds.includes(promo._id)} onChange={() =>{  toggleSelectItem(promo._id); }} /></TableCell>
                 <TableCell>
                   <div>
                     <p className="font-medium text-slate-900 dark:text-slate-100">{promo.name}</p>
                     <div className="flex items-center gap-1 mt-1">
                       <code className="text-xs text-pink-600 bg-pink-50 dark:bg-pink-900/20 px-1.5 py-0.5 rounded font-mono">{promo.code}</code>
                       <button 
-                        onClick={() => copyCode(promo.code)}
+                        onClick={ async () => copyCode(promo.code)}
                         className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
                         title="Copy mã"
                       >
@@ -286,7 +289,7 @@ function PromotionsContent() {
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Link href={`/admin/promotions/${promo._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(promo._id)}><Trash2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(promo._id)}><Trash2 size={16}/></Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -311,7 +314,7 @@ function PromotionsContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
+                  onClick={() =>{  setCurrentPage(p => p - 1); }}
                 >
                   <ChevronLeft size={16} />
                 </Button>
@@ -322,7 +325,7 @@ function PromotionsContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
+                  onClick={() =>{  setCurrentPage(p => p + 1); }}
                 >
                   <ChevronRight size={16} />
                 </Button>

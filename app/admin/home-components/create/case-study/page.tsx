@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { CaseStudyPreview, CaseStudyStyle } from '../../previews';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
+import type { CaseStudyStyle } from '../../previews';
+import { CaseStudyPreview } from '../../previews';
 import { SettingsImageUploader } from '../../../components/SettingsImageUploader';
 
 interface Project {
@@ -29,18 +30,18 @@ export default function CaseStudyCreatePage() {
   }, [caseStudyStyle]);
   
   const [projects, setProjects] = useState<Project[]>([
-    { id: 'project-1', title: 'Dự án Website ABC Corp', category: 'Website', image: '', description: 'Thiết kế và phát triển website doanh nghiệp', link: '' },
-    { id: 'project-2', title: 'Ứng dụng Mobile XYZ', category: 'Mobile App', image: '', description: 'Ứng dụng đặt hàng cho chuỗi F&B', link: '' }
+    { category: 'Website', description: 'Thiết kế và phát triển website doanh nghiệp', id: 'project-1', image: '', link: '', title: 'Dự án Website ABC Corp' },
+    { category: 'Mobile App', description: 'Ứng dụng đặt hàng cho chuỗi F&B', id: 'project-2', image: '', link: '', title: 'Ứng dụng Mobile XYZ' }
   ]);
 
   const handleAddProject = () => {
     setProjects([...projects, { 
-      id: `project-${Date.now()}`, 
-      title: '', 
       category: '', 
-      image: '', 
       description: '', 
-      link: '' 
+      id: `project-${Date.now()}`, 
+      image: '', 
+      link: '', 
+      title: '' 
     }]);
   };
 
@@ -56,7 +57,7 @@ export default function CaseStudyCreatePage() {
 
   const onSubmit = (e: React.FormEvent) => {
     void handleSubmit(e, { 
-      projects: projects.map(p => ({ title: p.title, category: p.category, image: p.image, description: p.description, link: p.link })),
+      projects: projects.map(p => ({ category: p.category, description: p.description, image: p.image, link: p.link, title: p.title })),
       style: caseStudyStyle
     });
   };
@@ -94,7 +95,7 @@ export default function CaseStudyCreatePage() {
                   variant="ghost" 
                   size="icon" 
                   className="text-red-500 h-8 w-8" 
-                  onClick={() => handleRemoveProject(project.id)}
+                  onClick={() =>{  handleRemoveProject(project.id); }}
                   disabled={projects.length <= 1}
                 >
                   <Trash2 size={14} />
@@ -107,7 +108,7 @@ export default function CaseStudyCreatePage() {
                   <Label className="text-sm mb-2 block">Hình ảnh dự án</Label>
                   <SettingsImageUploader
                     value={project.image}
-                    onChange={(url) => updateProject(project.id, 'image', url || '')}
+                    onChange={(url) =>{  updateProject(project.id, 'image', url ?? ''); }}
                     folder="case-studies"
                     previewSize="lg"
                   />
@@ -121,7 +122,7 @@ export default function CaseStudyCreatePage() {
                       <Input 
                         placeholder="VD: Website ABC Corp" 
                         value={project.title} 
-                        onChange={(e) => updateProject(project.id, 'title', e.target.value)} 
+                        onChange={(e) =>{  updateProject(project.id, 'title', e.target.value); }} 
                       />
                     </div>
                     <div>
@@ -129,7 +130,7 @@ export default function CaseStudyCreatePage() {
                       <Input 
                         placeholder="VD: Website, Mobile..." 
                         value={project.category} 
-                        onChange={(e) => updateProject(project.id, 'category', e.target.value)} 
+                        onChange={(e) =>{  updateProject(project.id, 'category', e.target.value); }} 
                       />
                     </div>
                   </div>
@@ -138,7 +139,7 @@ export default function CaseStudyCreatePage() {
                     <Input 
                       placeholder="Mô tả ngắn về dự án" 
                       value={project.description} 
-                      onChange={(e) => updateProject(project.id, 'description', e.target.value)} 
+                      onChange={(e) =>{  updateProject(project.id, 'description', e.target.value); }} 
                     />
                   </div>
                   <div>
@@ -146,7 +147,7 @@ export default function CaseStudyCreatePage() {
                     <Input 
                       placeholder="https://example.com/project" 
                       value={project.link} 
-                      onChange={(e) => updateProject(project.id, 'link', e.target.value)} 
+                      onChange={(e) =>{  updateProject(project.id, 'link', e.target.value); }} 
                     />
                   </div>
                 </div>
@@ -158,12 +159,12 @@ export default function CaseStudyCreatePage() {
 
       <CaseStudyPreview 
         projects={projects.map((p, idx) => ({ 
-          id: idx + 1, 
-          title: p.title, 
           category: p.category, 
-          image: p.image, 
           description: p.description, 
-          link: p.link 
+          id: idx + 1, 
+          image: p.image, 
+          link: p.link, 
+          title: p.title 
         }))} 
         brandColor={brandColor}
         selectedStyle={caseStudyStyle}

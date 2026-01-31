@@ -1,37 +1,37 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, Search, Loader2, RefreshCw, Send, Ban, Bell, Info, CheckCircle, AlertTriangle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { AlertTriangle, Ban, Bell, CheckCircle, ChevronLeft, ChevronRight, Edit, Info, Loader2, Plus, RefreshCw, Search, Send, Trash2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
-import { SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
+import { BulkActionBar, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'notifications';
 
 const TYPE_CONFIG = {
-  info: { icon: Info, color: 'text-blue-500', bg: 'bg-blue-500/10', label: 'Thông tin' },
-  success: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10', label: 'Thành công' },
-  warning: { icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-500/10', label: 'Cảnh báo' },
-  error: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10', label: 'Lỗi' },
+  error: { bg: 'bg-red-500/10', color: 'text-red-500', icon: XCircle, label: 'Lỗi' },
+  info: { bg: 'bg-blue-500/10', color: 'text-blue-500', icon: Info, label: 'Thông tin' },
+  success: { bg: 'bg-green-500/10', color: 'text-green-500', icon: CheckCircle, label: 'Thành công' },
+  warning: { bg: 'bg-amber-500/10', color: 'text-amber-500', icon: AlertTriangle, label: 'Cảnh báo' },
 };
 
 const STATUS_CONFIG = {
-  Draft: { variant: 'secondary' as const, label: 'Bản nháp' },
-  Scheduled: { variant: 'warning' as const, label: 'Đã hẹn' },
-  Sent: { variant: 'success' as const, label: 'Đã gửi' },
-  Cancelled: { variant: 'destructive' as const, label: 'Đã hủy' },
+  Cancelled: { label: 'Đã hủy', variant: 'destructive' as const },
+  Draft: { label: 'Bản nháp', variant: 'secondary' as const },
+  Scheduled: { label: 'Đã hẹn', variant: 'warning' as const },
+  Sent: { label: 'Đã gửi', variant: 'success' as const },
 };
 
 const TARGET_LABELS = {
   all: 'Tất cả',
   customers: 'Khách hàng',
-  users: 'Admin',
   specific: 'Cụ thể',
+  users: 'Admin',
 };
 
 export default function NotificationsListPage() {
@@ -52,7 +52,7 @@ function NotificationsContent() {
   const seedNotificationsModule = useMutation(api.seed.seedNotificationsModule);
   const clearNotificationsData = useMutation(api.seed.clearNotificationsData);
 
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterType, setFilterType] = useState('');
@@ -74,14 +74,12 @@ function NotificationsContent() {
     return features;
   }, [featuresData]);
 
-  const notifications = useMemo(() => {
-    return notificationsData?.map(n => ({
+  const notifications = useMemo(() => notificationsData?.map(n => ({
       ...n,
       typeLabel: TYPE_CONFIG[n.type]?.label || n.type,
       statusLabel: STATUS_CONFIG[n.status]?.label || n.status,
       targetLabel: TARGET_LABELS[n.targetType] || n.targetType,
-    })) || [];
-  }, [notificationsData]);
+    })) ?? [], [notificationsData]);
 
   const filteredNotifications = useMemo(() => {
     let data = [...notifications];
@@ -122,12 +120,12 @@ function NotificationsContent() {
   };
 
   const handleSort = (key: string) => {
-    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
     setCurrentPage(1);
   };
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedNotifications.length ? [] : paginatedNotifications.map(n => n._id));
-  const toggleSelectItem = (id: Id<"notifications">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedNotifications.length ? [] : paginatedNotifications.map(n => n._id)); };
+  const toggleSelectItem = (id: Id<"notifications">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
 
   const handleDelete = async (id: Id<"notifications">) => {
     if (confirm('Xóa thông báo này?')) {
@@ -166,7 +164,7 @@ function NotificationsContent() {
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} thông báo đã chọn?`)) {
       try {
-        await Promise.all(selectedIds.map(id => deleteNotification({ id })));
+        await Promise.all(selectedIds.map( async id => deleteNotification({ id })));
         setSelectedIds([]);
         toast.success(`Đã xóa ${selectedIds.length} thông báo`);
       } catch (error) {
@@ -188,7 +186,7 @@ function NotificationsContent() {
   };
 
   const formatDate = (timestamp?: number) => {
-    if (!timestamp) return '-';
+    if (!timestamp) {return '-';}
     return new Date(timestamp).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
   };
 
@@ -215,18 +213,18 @@ function NotificationsContent() {
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
           <div className="relative max-w-xs flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm tiêu đề..." className="pl-9" value={searchTerm} onChange={(e) => handleSearchChange(e.target.value)} />
+            <Input placeholder="Tìm kiếm tiêu đề..." className="pl-9" value={searchTerm} onChange={(e) =>{  handleSearchChange(e.target.value); }} />
           </div>
           <select 
             className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
             value={filterStatus} 
-            onChange={(e) => handleStatusChange(e.target.value)}
+            onChange={(e) =>{  handleStatusChange(e.target.value); }}
           >
             <option value="">Tất cả trạng thái</option>
             <option value="Draft">Bản nháp</option>
@@ -237,7 +235,7 @@ function NotificationsContent() {
           <select 
             className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
             value={filterType} 
-            onChange={(e) => handleTypeChange(e.target.value)}
+            onChange={(e) =>{  handleTypeChange(e.target.value); }}
           >
             <option value="">Tất cả loại</option>
             <option value="info">Thông tin</option>
@@ -266,7 +264,7 @@ function NotificationsContent() {
               const statusConfig = STATUS_CONFIG[notif.status];
               return (
                 <TableRow key={notif._id} className={selectedIds.includes(notif._id) ? 'bg-pink-500/5' : ''}>
-                  <TableCell><SelectCheckbox checked={selectedIds.includes(notif._id)} onChange={() => toggleSelectItem(notif._id)} /></TableCell>
+                  <TableCell><SelectCheckbox checked={selectedIds.includes(notif._id)} onChange={() =>{  toggleSelectItem(notif._id); }} /></TableCell>
                   <TableCell>
                     <div className={`w-8 h-8 rounded-lg ${typeConfig?.bg} flex items-center justify-center`}>
                       <TypeIcon size={16} className={typeConfig?.color} />
@@ -288,18 +286,18 @@ function NotificationsContent() {
                   <TableCell className="text-slate-500">{notif.readCount.toLocaleString()}</TableCell>
                   {(enabledFeatures.enableScheduling ?? true) && (
                     <TableCell className="text-slate-500 text-sm">
-                      {notif.status === 'Sent' ? formatDate(notif.sentAt) : notif.status === 'Scheduled' ? formatDate(notif.scheduledAt) : '-'}
+                      {notif.status === 'Sent' ? formatDate(notif.sentAt) : (notif.status === 'Scheduled' ? formatDate(notif.scheduledAt) : '-')}
                     </TableCell>
                   )}
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       {(notif.status === 'Draft' || notif.status === 'Scheduled') && (
-                        <Button variant="ghost" size="icon" className="text-green-500 hover:text-green-600" onClick={() => handleSend(notif._id)} title="Gửi ngay">
+                        <Button variant="ghost" size="icon" className="text-green-500 hover:text-green-600" onClick={ async () => handleSend(notif._id)} title="Gửi ngay">
                           <Send size={16}/>
                         </Button>
                       )}
                       {notif.status === 'Scheduled' && (
-                        <Button variant="ghost" size="icon" className="text-amber-500 hover:text-amber-600" onClick={() => handleCancel(notif._id)} title="Hủy">
+                        <Button variant="ghost" size="icon" className="text-amber-500 hover:text-amber-600" onClick={ async () => handleCancel(notif._id)} title="Hủy">
                           <Ban size={16}/>
                         </Button>
                       )}
@@ -308,7 +306,7 @@ function NotificationsContent() {
                           <Button variant="ghost" size="icon"><Edit size={16}/></Button>
                         </Link>
                       )}
-                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(notif._id)}><Trash2 size={16}/></Button>
+                      <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(notif._id)}><Trash2 size={16}/></Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -334,7 +332,7 @@ function NotificationsContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
+                  onClick={() =>{  setCurrentPage(p => p - 1); }}
                 >
                   <ChevronLeft size={16} />
                 </Button>
@@ -345,7 +343,7 @@ function NotificationsContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
+                  onClick={() =>{  setCurrentPage(p => p + 1); }}
                 >
                   <ChevronRight size={16} />
                 </Button>

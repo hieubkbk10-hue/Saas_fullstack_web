@@ -3,6 +3,9 @@
 import React from 'react';
 import { Settings } from 'lucide-react';
 
+const DEFAULT_MAX = 100;
+const DEFAULT_MIN = 1;
+
 interface SettingsCardProps {
   children: React.ReactNode;
   title?: string;
@@ -22,12 +25,12 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
   </div>
 );
 
-type BaseSettingInputProps = {
+interface BaseSettingInputProps {
   label: string;
   focusColor?: string;
   min?: number;
   max?: number;
-};
+}
 
 type NumberSettingInputProps = BaseSettingInputProps & {
   type?: 'number';
@@ -43,46 +46,52 @@ type TextSettingInputProps = BaseSettingInputProps & {
 
 type SettingInputProps = NumberSettingInputProps | TextSettingInputProps;
 
+const parseNumberInput = (value: string, minValue: number, maxValue: number): number => {
+  if (value === '') {
+    return minValue;
+  }
+  const parsedValue = Number.parseInt(value, 10);
+  if (Number.isNaN(parsedValue)) {
+    return minValue;
+  }
+  return Math.max(minValue, Math.min(maxValue, parsedValue));
+};
+
 export const SettingInput: React.FC<SettingInputProps> = (props) => {
   const {
     label,
     value,
     focusColor = 'focus:border-cyan-500',
-    min = 1,
-    max = 100,
+    min = DEFAULT_MIN,
+    max = DEFAULT_MAX,
   } = props;
   const type = props.type ?? 'number';
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     if (props.type === 'text') {
-      props.onChange(e.target.value);
+      props.onChange(event.target.value);
       return;
     }
-
-    const val = e.target.value;
-    if (val === '') {
-      props.onChange(min);
-      return;
-    }
-    const num = parseInt(val);
-    if (isNaN(num)) {
-      props.onChange(min);
-    } else {
-      props.onChange(Math.max(min, Math.min(max, num)));
-    }
+    const nextValue = parseNumberInput(event.target.value, min, max);
+    props.onChange(nextValue);
   };
+
+  const inputProps: React.InputHTMLAttributes<HTMLInputElement> = {
+    className: `w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none ${focusColor}`,
+    onChange: handleChange,
+    type,
+    value,
+  };
+
+  if (type === 'number') {
+    inputProps.max = max;
+    inputProps.min = min;
+  }
 
   return (
     <div>
       <label className="text-xs text-slate-500 mb-1 block">{label}</label>
-      <input 
-        type={type}
-        value={value}
-        onChange={handleChange}
-        min={type === 'number' ? min : undefined}
-        max={type === 'number' ? max : undefined}
-        className={`w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none ${focusColor}`}
-      />
+      <input {...inputProps} />
     </div>
   );
 };
@@ -106,11 +115,11 @@ export const SettingSelect: React.FC<SettingSelectProps> = ({
     <label className="text-xs text-slate-500 mb-1 block">{label}</label>
     <select 
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(event) =>{  onChange(event.target.value); }}
       className={`w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none ${focusColor}`}
     >
-      {options.map(opt => (
-        <option key={opt.value} value={opt.value}>{opt.label}</option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>{option.label}</option>
       ))}
     </select>
   </div>

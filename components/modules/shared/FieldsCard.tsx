@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FieldConfig } from '@/types/moduleConfig';
+import type { FieldConfig } from '@/types/module-config';
 import { FieldRow } from './FieldRow';
 
 interface FieldsCardProps {

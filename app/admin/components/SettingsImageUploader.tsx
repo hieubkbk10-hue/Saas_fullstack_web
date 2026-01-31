@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Upload, Trash2, Loader2, Link, Image as ImageIcon } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { Image as ImageIcon, Link, Loader2, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Input, cn } from './ui';
 
@@ -17,11 +17,11 @@ function slugify(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[đĐ]/g, 'd')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+    .replaceAll(/[\u0300-\u036F]/g, '')
+    .replaceAll(/[đĐ]/g, 'd')
+    .replaceAll(/[^a-z0-9\s-]/g, '')
+    .replaceAll(/\s+/g, '-')
+    .replaceAll(/-+/g, '-')
     .trim() || 'image';
 }
 
@@ -61,7 +61,7 @@ async function convertToWebP(file: File, quality: number = WEBP_QUALITY): Promis
         quality
       );
     };
-    img.onerror = () => reject(new Error('Failed to load image'));
+    img.onerror = () =>{  reject(new Error('Failed to load image')); };
     img.src = URL.createObjectURL(file);
   });
 }
@@ -129,9 +129,9 @@ export function SettingsImageUploader({
 
       // Upload to Convex storage
       const response = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': webpFile.type },
         body: webpFile,
+        headers: { 'Content-Type': webpFile.type },
+        method: 'POST',
       });
 
       if (!response.ok) {
@@ -143,24 +143,24 @@ export function SettingsImageUploader({
       // Get image dimensions
       const img = new window.Image();
       const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
-        img.onload = () => resolve({ width: img.width, height: img.height });
+        img.onload = () =>{  resolve({ height: img.height, width: img.width }); };
         img.src = URL.createObjectURL(webpFile);
       });
 
       // Save to database
       const result = await saveImage({
-        storageId: storageId as Id<"_storage">,
         filename,
+        folder,
+        height: dimensions.height,
         mimeType: 'image/webp',
         size: webpFile.size,
+        storageId: storageId as Id<"_storage">,
         width: dimensions.width,
-        height: dimensions.height,
-        folder,
       });
 
-      setPreview(result.url || undefined);
+      setPreview(result.url ?? undefined);
       setCurrentStorageId(storageId);
-      onChange(result.url || undefined);
+      onChange(result.url ?? undefined);
       toast.success('Tải ảnh lên thành công (WebP 85%)');
     } catch (error) {
       console.error('Upload error:', error);
@@ -174,7 +174,7 @@ export function SettingsImageUploader({
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file) void handleFileUpload(file);
+    if (file) {void handleFileUpload(file);}
   }, [handleFileUpload]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -189,11 +189,11 @@ export function SettingsImageUploader({
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) void handleFileUpload(file);
+    if (file) {void handleFileUpload(file);}
   }, [handleFileUpload]);
 
   const handleUrlSubmit = useCallback(() => {
-    if (!urlInput.trim()) return;
+    if (!urlInput.trim()) {return;}
 
     // Basic URL validation
     try {
@@ -231,9 +231,9 @@ export function SettingsImageUploader({
   }, [currentStorageId, deleteImage, onChange]);
 
   const previewSizes = {
-    sm: 'w-16 h-16',
-    md: 'w-24 h-24',
     lg: 'w-32 h-32',
+    md: 'w-24 h-24',
+    sm: 'w-16 h-16',
   };
 
   return (
@@ -248,7 +248,7 @@ export function SettingsImageUploader({
       <div className="flex gap-2">
         <button
           type="button"
-          onClick={() => setMode('upload')}
+          onClick={() =>{  setMode('upload'); }}
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
             mode === 'upload'
@@ -261,7 +261,7 @@ export function SettingsImageUploader({
         </button>
         <button
           type="button"
-          onClick={() => setMode('url')}
+          onClick={() =>{  setMode('url'); }}
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
             mode === 'url'
@@ -364,7 +364,7 @@ export function SettingsImageUploader({
           <div className="flex gap-2">
             <Input
               value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
+              onChange={(e) =>{  setUrlInput(e.target.value); }}
               placeholder="https://example.com/image.png"
               className="flex-1"
               onKeyDown={(e) => {

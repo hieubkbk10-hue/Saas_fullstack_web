@@ -1,8 +1,8 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { getConvexClient } from '@/lib/convex';
 import { api } from '@/convex/_generated/api';
-import { getSiteSettings, getSEOSettings } from '@/lib/getSettings';
-import { JsonLd, generateServiceSchema, generateBreadcrumbSchema } from '@/components/seo/JsonLd';
+import { getSEOSettings, getSiteSettings } from '@/lib/get-settings';
+import { JsonLd, generateBreadcrumbSchema, generateServiceSchema } from '@/components/seo/JsonLd';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -21,19 +21,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!service) {
     return {
-      title: 'Không tìm thấy dịch vụ',
       description: 'Dịch vụ này không tồn tại hoặc đã bị xóa.',
+      title: 'Không tìm thấy dịch vụ',
     };
   }
 
-  const baseUrl = site.site_url || process.env.NEXT_PUBLIC_SITE_URL || '';
-  const title = service.metaTitle || service.title;
-  const description = service.metaDescription || service.excerpt || seo.seo_description;
-  const image = service.thumbnail || seo.seo_og_image;
+  const baseUrl = (site.site_url || process.env.NEXT_PUBLIC_SITE_URL) ?? '';
+  const title = service.metaTitle ?? service.title;
+  const description = (service.metaDescription ?? service.excerpt) ?? seo.seo_description;
+  const image = service.thumbnail ?? seo.seo_og_image;
   const keywords = seo.seo_keywords ? seo.seo_keywords.split(',').map(k => k.trim()) : [];
 
   return {
-    title,
+    alternates: {
+      canonical: `${baseUrl}/services/${service.slug}`,
+    },
     description,
     keywords,
     openGraph: {
@@ -45,14 +47,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: site.site_name,
       locale: site.site_language === 'vi' ? 'vi_VN' : 'en_US',
     },
+    title,
     twitter: {
       card: 'summary_large_image',
       title,
       description,
       images: image ? [image] : undefined,
-    },
-    alternates: {
-      canonical: `${baseUrl}/services/${service.slug}`,
     },
   };
 }
@@ -67,20 +67,20 @@ export default async function ServiceLayout({ params, children }: Props) {
     getSEOSettings(),
   ]);
 
-  if (!service) return children;
+  if (!service) {return children;}
 
-  const baseUrl = site.site_url || process.env.NEXT_PUBLIC_SITE_URL || '';
+  const baseUrl = (site.site_url || process.env.NEXT_PUBLIC_SITE_URL) ?? '';
   const serviceUrl = `${baseUrl}/services/${service.slug}`;
-  const image = service.thumbnail || seo.seo_og_image;
+  const image = service.thumbnail ?? seo.seo_og_image;
 
   const serviceSchema = generateServiceSchema({
-    name: service.metaTitle || service.title,
-    description: service.metaDescription || service.excerpt || seo.seo_description,
-    url: serviceUrl,
+    description: (service.metaDescription ?? service.excerpt) ?? seo.seo_description,
     image,
+    name: service.metaTitle ?? service.title,
     price: service.price,
     providerName: site.site_name,
     providerUrl: baseUrl,
+    url: serviceUrl,
   });
 
   const breadcrumbSchema = generateBreadcrumbSchema([

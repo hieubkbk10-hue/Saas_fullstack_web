@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
-import { Shield, User, Mail, Lock, Save, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader2, Lock, Mail, Save, Shield, User } from 'lucide-react';
 
 export default function AdminConfigPage() {
   const superAdmin = useQuery(api.auth.getSuperAdmin);
@@ -41,7 +41,7 @@ export default function AdminConfigPage() {
 
     setIsSubmitting(true);
     try {
-      const result = await createSuperAdmin({ email, password, name: name || undefined });
+      const result = await createSuperAdmin({ email, name: name || undefined, password });
       if (result.success) {
         toast.success(result.message);
         setPassword('');
@@ -73,8 +73,8 @@ export default function AdminConfigPage() {
     try {
       const result = await updateSuperAdmin({
         email: email !== superAdmin?.email ? email : undefined,
-        password: password || undefined,
         name: name !== superAdmin?.name ? name : undefined,
+        password: password || undefined,
       });
       if (result.success) {
         toast.success(result.message);
@@ -147,7 +147,7 @@ export default function AdminConfigPage() {
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) =>{  setName(e.target.value); }}
             className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-slate-800 dark:text-white placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none transition-colors"
             placeholder="Super Admin"
           />
@@ -161,7 +161,7 @@ export default function AdminConfigPage() {
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) =>{  setEmail(e.target.value); }}
             className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-slate-800 dark:text-white placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none transition-colors"
             placeholder="admin@example.com"
             required
@@ -176,7 +176,7 @@ export default function AdminConfigPage() {
           <input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) =>{  setPassword(e.target.value); }}
             className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-slate-800 dark:text-white placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none transition-colors"
             placeholder={hasSuperAdmin ? '••••••••' : 'Nhập mật khẩu'}
             required={!hasSuperAdmin}
@@ -191,10 +191,10 @@ export default function AdminConfigPage() {
           <input
             type="password"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) =>{  setConfirmPassword(e.target.value); }}
             className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-slate-800 dark:text-white placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none transition-colors"
             placeholder="Nhập lại mật khẩu"
-            required={!hasSuperAdmin || !!password}
+            required={!hasSuperAdmin || Boolean(password)}
           />
         </div>
 

@@ -3,9 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FileText, Eye, Search, Folder, ChevronDown } from 'lucide-react';
-import { Id } from '@/convex/_generated/dataModel';
-import { SortOption } from '../PostsFilter';
+import { ChevronDown, Eye, FileText, Folder, Search } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import type { SortOption } from '../PostsFilter';
 
 interface Post {
   _id: Id<"posts">;
@@ -39,10 +39,10 @@ interface SidebarLayoutProps {
 }
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'newest', label: 'Mới nhất' },
-  { value: 'oldest', label: 'Cũ nhất' },
-  { value: 'popular', label: 'Xem nhiều' },
-  { value: 'title', label: 'Theo tên A-Z' },
+  { label: 'Mới nhất', value: 'newest' },
+  { label: 'Cũ nhất', value: 'oldest' },
+  { label: 'Xem nhiều', value: 'popular' },
+  { label: 'Theo tên A-Z', value: 'title' },
 ];
 
 export function SidebarLayout({
@@ -75,7 +75,7 @@ export function SidebarLayout({
               type="text"
               placeholder="Nhập từ khóa..."
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={(e) =>{  onSearchChange(e.target.value); }}
               className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2"
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             />
@@ -90,7 +90,7 @@ export function SidebarLayout({
             <ul className="space-y-0.5">
               <li>
                 <button
-                  onClick={() => onCategoryChange(null)}
+                  onClick={() =>{  onCategoryChange(null); }}
                   className={`w-full text-left px-2.5 py-1.5 rounded text-sm transition-colors ${
                     !selectedCategory ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'
                   }`}
@@ -102,7 +102,7 @@ export function SidebarLayout({
               {categories.map((category) => (
                 <li key={category._id}>
                   <button
-                    onClick={() => onCategoryChange(category._id)}
+                    onClick={() =>{  onCategoryChange(category._id); }}
                     className={`w-full text-left px-2.5 py-1.5 rounded text-sm transition-colors ${
                       selectedCategory === category._id ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'
                     }`}
@@ -121,7 +121,7 @@ export function SidebarLayout({
             <div className="relative">
               <select
                 value={sortBy}
-                onChange={(e) => onSortChange(e.target.value as SortOption)}
+                onChange={(e) =>{  onSortChange(e.target.value as SortOption); }}
                 className="w-full appearance-none px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 cursor-pointer"
                 style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
               >
@@ -171,7 +171,7 @@ export function SidebarLayout({
                     <div className="p-3 flex-1 flex flex-col justify-center">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                          {categoryMap.get(post.categoryId) || 'Tin tức'}
+                          {categoryMap.get(post.categoryId) ?? 'Tin tức'}
                         </span>
                         {post.publishedAt && (
                           <span className="text-xs text-slate-400">

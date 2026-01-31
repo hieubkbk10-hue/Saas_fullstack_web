@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Terminal, Loader2, Lock, User } from 'lucide-react';
+import { Loader2, Lock, Terminal, User } from 'lucide-react';
 import { useSystemAuth } from '../context';
 
 export default function SystemLoginPage() {
@@ -76,7 +76,7 @@ export default function SystemLoginPage() {
               <input
                 type="text"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) =>{  setEmail(e.target.value); }}
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-4 py-3 text-white placeholder:text-slate-600 focus:border-cyan-500 focus:outline-none transition-colors"
                 placeholder="Nhập tài khoản"
                 required
@@ -94,7 +94,7 @@ export default function SystemLoginPage() {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) =>{  setPassword(e.target.value); }}
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-4 py-3 text-white placeholder:text-slate-600 focus:border-cyan-500 focus:outline-none transition-colors"
                 placeholder="Nhập mật khẩu"
                 required

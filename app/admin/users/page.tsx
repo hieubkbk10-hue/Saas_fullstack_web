@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, Search, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ChevronLeft, ChevronRight, Edit, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
-import { SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
+import { BulkActionBar, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'users';
@@ -32,7 +32,7 @@ function UsersContent() {
   const seedUsersModule = useMutation(api.seed.seedUsersModule);
   const clearUsersData = useMutation(api.seed.clearUsersData);
 
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -56,17 +56,15 @@ function UsersContent() {
 
   const roleMap = useMemo(() => {
     const map: Record<string, { name: string; color?: string }> = {};
-    rolesData?.forEach(role => { map[role._id] = { name: role.name, color: role.color }; });
+    rolesData?.forEach(role => { map[role._id] = { color: role.color, name: role.name }; });
     return map;
   }, [rolesData]);
 
-  const users = useMemo(() => {
-    return usersData?.map(user => ({
+  const users = useMemo(() => usersData?.map(user => ({
       ...user,
       roleName: roleMap[user.roleId]?.name || 'N/A',
       roleColor: roleMap[user.roleId]?.color,
-    })) || [];
-  }, [usersData, roleMap]);
+    })) ?? [], [usersData, roleMap]);
 
   const filteredUsers = useMemo(() => {
     let data = [...users];
@@ -95,7 +93,7 @@ function UsersContent() {
   }, [sortedUsers, currentPage, usersPerPage]);
 
   const handleSort = (key: string) => {
-    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
     setCurrentPage(1);
   };
 
@@ -114,8 +112,8 @@ function UsersContent() {
     setCurrentPage(1);
   };
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedUsers.length ? [] : paginatedUsers.map(u => u._id));
-  const toggleSelectItem = (id: Id<"users">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedUsers.length ? [] : paginatedUsers.map(u => u._id)); };
+  const toggleSelectItem = (id: Id<"users">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
 
   const handleDelete = async (id: Id<"users">) => {
     if (confirm('Bạn có chắc muốn xóa người dùng này?')) {
@@ -159,7 +157,7 @@ function UsersContent() {
   };
 
   const formatLastLogin = (timestamp?: number) => {
-    if (!timestamp) return 'Chưa đăng nhập';
+    if (!timestamp) {return 'Chưa đăng nhập';}
     const date = new Date(timestamp);
     return date.toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
   };
@@ -187,18 +185,18 @@ function UsersContent() {
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
           <div className="relative max-w-xs flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm theo tên, email..." className="pl-9" value={searchTerm} onChange={(e) => handleSearch(e.target.value)} />
+            <Input placeholder="Tìm kiếm theo tên, email..." className="pl-9" value={searchTerm} onChange={(e) =>{  handleSearch(e.target.value); }} />
           </div>
           <select 
             className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
             value={filterRole} 
-            onChange={(e) => handleFilterRole(e.target.value)}
+            onChange={(e) =>{  handleFilterRole(e.target.value); }}
           >
             <option value="">Tất cả vai trò</option>
             {rolesData?.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
@@ -206,7 +204,7 @@ function UsersContent() {
           <select 
             className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
             value={filterStatus} 
-            onChange={(e) => handleFilterStatus(e.target.value)}
+            onChange={(e) =>{  handleFilterStatus(e.target.value); }}
           >
             <option value="">Tất cả trạng thái</option>
             <option value="Active">Hoạt động</option>
@@ -228,7 +226,7 @@ function UsersContent() {
           <TableBody>
             {paginatedUsers.map(user => (
               <TableRow key={user._id} className={selectedIds.includes(user._id) ? 'bg-blue-500/5' : ''}>
-                <TableCell><SelectCheckbox checked={selectedIds.includes(user._id)} onChange={() => toggleSelectItem(user._id)} /></TableCell>
+                <TableCell><SelectCheckbox checked={selectedIds.includes(user._id)} onChange={() =>{  toggleSelectItem(user._id); }} /></TableCell>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     {(enabledFeatures.enableAvatar ?? true) && (
@@ -250,7 +248,7 @@ function UsersContent() {
                   {user.roleColor ? (
                     <span 
                       className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
-                      style={{ backgroundColor: user.roleColor, color: '#fff', borderColor: user.roleColor }}
+                      style={{ backgroundColor: user.roleColor, borderColor: user.roleColor, color: '#fff' }}
                     >
                       {user.roleName}
                     </span>
@@ -259,8 +257,8 @@ function UsersContent() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={user.status === 'Active' ? 'success' : user.status === 'Inactive' ? 'secondary' : 'destructive'}>
-                    {user.status === 'Active' ? 'Hoạt động' : user.status === 'Inactive' ? 'Không hoạt động' : 'Bị cấm'}
+                  <Badge variant={user.status === 'Active' ? 'success' : (user.status === 'Inactive' ? 'secondary' : 'destructive')}>
+                    {user.status === 'Active' ? 'Hoạt động' : (user.status === 'Inactive' ? 'Không hoạt động' : 'Bị cấm')}
                   </Badge>
                 </TableCell>
                 {(enabledFeatures.enableLastLogin ?? true) && (
@@ -269,7 +267,7 @@ function UsersContent() {
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Link href={`/admin/users/${user._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(user._id)}><Trash2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(user._id)}><Trash2 size={16}/></Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -294,7 +292,7 @@ function UsersContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
+                  onClick={() =>{  setCurrentPage(p => p - 1); }}
                 >
                   <ChevronLeft size={16} />
                 </Button>
@@ -305,7 +303,7 @@ function UsersContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
+                  onClick={() =>{  setCurrentPage(p => p + 1); }}
                 >
                   <ChevronRight size={16} />
                 </Button>

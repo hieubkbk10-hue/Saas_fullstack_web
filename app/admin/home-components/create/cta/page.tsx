@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
 import { CTAPreview, type CTAStyle } from '../../previews';
 
 export default function CTACreatePage() {
@@ -10,13 +10,13 @@ export default function CTACreatePage() {
   const brandColor = useBrandColor();
   
   const [ctaConfig, setCtaConfig] = useState({
-    title: 'Sẵn sàng bắt đầu?',
-    description: 'Đăng ký ngay hôm nay để nhận ưu đãi đặc biệt',
-    buttonText: 'Đăng ký ngay',
+    badge: '',
     buttonLink: '/register',
-    secondaryButtonText: 'Tìm hiểu thêm',
+    buttonText: 'Đăng ký ngay',
+    description: 'Đăng ký ngay hôm nay để nhận ưu đãi đặc biệt',
     secondaryButtonLink: '/about',
-    badge: ''
+    secondaryButtonText: 'Tìm hiểu thêm',
+    title: 'Sẵn sàng bắt đầu?'
   });
   const [style, setStyle] = useState<CTAStyle>('banner');
 
@@ -43,7 +43,7 @@ export default function CTACreatePage() {
             <Label>Badge (tùy chọn)</Label>
             <Input 
               value={ctaConfig.badge} 
-              onChange={(e) => setCtaConfig({...ctaConfig, badge: e.target.value})} 
+              onChange={(e) =>{  setCtaConfig({...ctaConfig, badge: e.target.value}); }} 
               placeholder="VD: Ưu đãi có hạn, Hot deal, Mới..." 
             />
             <p className="text-xs text-slate-500">Hiển thị nhãn nổi bật phía trên tiêu đề (urgency indicator)</p>
@@ -52,7 +52,7 @@ export default function CTACreatePage() {
             <Label>Tiêu đề</Label>
             <Input 
               value={ctaConfig.title} 
-              onChange={(e) => setCtaConfig({...ctaConfig, title: e.target.value})} 
+              onChange={(e) =>{  setCtaConfig({...ctaConfig, title: e.target.value}); }} 
               placeholder="Sẵn sàng bắt đầu?" 
             />
           </div>
@@ -60,7 +60,7 @@ export default function CTACreatePage() {
             <Label>Mô tả</Label>
             <textarea 
               value={ctaConfig.description} 
-              onChange={(e) => setCtaConfig({...ctaConfig, description: e.target.value})} 
+              onChange={(e) =>{  setCtaConfig({...ctaConfig, description: e.target.value}); }} 
               placeholder="Đăng ký ngay..."
               className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" 
             />
@@ -70,7 +70,7 @@ export default function CTACreatePage() {
               <Label>Text nút chính</Label>
               <Input 
                 value={ctaConfig.buttonText} 
-                onChange={(e) => setCtaConfig({...ctaConfig, buttonText: e.target.value})} 
+                onChange={(e) =>{  setCtaConfig({...ctaConfig, buttonText: e.target.value}); }} 
                 placeholder="Đăng ký ngay" 
               />
             </div>
@@ -78,7 +78,7 @@ export default function CTACreatePage() {
               <Label>Liên kết nút chính</Label>
               <Input 
                 value={ctaConfig.buttonLink} 
-                onChange={(e) => setCtaConfig({...ctaConfig, buttonLink: e.target.value})} 
+                onChange={(e) =>{  setCtaConfig({...ctaConfig, buttonLink: e.target.value}); }} 
                 placeholder="/register" 
               />
             </div>
@@ -88,7 +88,7 @@ export default function CTACreatePage() {
               <Label>Text nút phụ (tùy chọn)</Label>
               <Input 
                 value={ctaConfig.secondaryButtonText} 
-                onChange={(e) => setCtaConfig({...ctaConfig, secondaryButtonText: e.target.value})} 
+                onChange={(e) =>{  setCtaConfig({...ctaConfig, secondaryButtonText: e.target.value}); }} 
                 placeholder="Tìm hiểu thêm" 
               />
             </div>
@@ -96,7 +96,7 @@ export default function CTACreatePage() {
               <Label>Liên kết nút phụ</Label>
               <Input 
                 value={ctaConfig.secondaryButtonLink} 
-                onChange={(e) => setCtaConfig({...ctaConfig, secondaryButtonLink: e.target.value})} 
+                onChange={(e) =>{  setCtaConfig({...ctaConfig, secondaryButtonLink: e.target.value}); }} 
                 placeholder="/about" 
               />
             </div>

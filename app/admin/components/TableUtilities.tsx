@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowUpDown, SlidersHorizontal, ChevronDown, Trash2, Loader2 } from 'lucide-react';
-import { cn, Button, TableHead } from './ui';
+import { ArrowUpDown, ChevronDown, Loader2, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { Button, TableHead, cn } from './ui';
 
 export const ColumnToggle = ({ columns, visibleColumns, onToggle }: {
   columns: { key: string; label: string; required?: boolean }[];
@@ -13,14 +13,14 @@ export const ColumnToggle = ({ columns, visibleColumns, onToggle }: {
   
   return (
     <div className="relative">
-      <Button variant="outline" size="sm" className="gap-2 h-9" onClick={() => setOpen(!open)}>
+      <Button variant="outline" size="sm" className="gap-2 h-9" onClick={() =>{  setOpen(!open); }}>
         <SlidersHorizontal size={14} />
         Cột hiển thị
         <ChevronDown size={14} />
       </Button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-40" onClick={() =>{  setOpen(false); }} />
           <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 py-2">
             <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Chọn cột hiển thị</div>
             {columns.map(col => (
@@ -55,7 +55,7 @@ export const SortableHeader = ({ label, sortKey, sortConfig, onSort, className }
 }) => (
   <TableHead
     className={cn("cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors select-none", className)}
-    onClick={() => onSort(sortKey)}
+    onClick={() =>{  onSort(sortKey); }}
   >
     <div className="flex items-center">
       {label}
@@ -71,9 +71,9 @@ export function useSortableData<T>(items: T[], config: { key: string | null; dir
       sortableItems.sort((a, b) => {
         const aVal = a[config.key as keyof T] as string | number | undefined | null;
         const bVal = b[config.key as keyof T] as string | number | undefined | null;
-        if (aVal == null || bVal == null) return 0;
-        if (aVal < bVal) return config.direction === 'asc' ? -1 : 1;
-        if (aVal > bVal) return config.direction === 'asc' ? 1 : -1;
+        if (aVal == null || bVal == null) {return 0;}
+        if (aVal < bVal) {return config.direction === 'asc' ? -1 : 1;}
+        if (aVal > bVal) {return config.direction === 'asc' ? 1 : -1;}
         return 0;
       });
     }
@@ -88,7 +88,7 @@ export const BulkActionBar = ({ selectedCount, onDelete, onClearSelection, isLoa
   onClearSelection: () => void;
   isLoading?: boolean;
 }) => {
-  if (selectedCount === 0) return null;
+  if (selectedCount === 0) {return null;}
   
   return (
     <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 flex items-center justify-between">
@@ -117,7 +117,7 @@ export const SelectCheckbox = ({ checked, onChange, indeterminate }: {
   
   React.useEffect(() => {
     if (ref.current) {
-      ref.current.indeterminate = indeterminate || false;
+      ref.current.indeterminate = indeterminate ?? false;
     }
   }, [indeterminate]);
 

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Save, Loader2, Palette, Trash2 } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Loader2, Palette, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../components/ui';
 import { ModuleGuard } from '../components/ModuleGuard';
 import { SettingsImageUploader } from '../components/SettingsImageUploader';
 import { useSettingsCleanup } from '../components/useSettingsCleanup';
@@ -16,10 +16,10 @@ const MODULE_KEY = 'settings';
 // Color utilities
 const hexToHSL = (hex: string): { h: number; s: number; l: number } => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!result) return { h: 0, s: 0, l: 0 };
-  const r = parseInt(result[1], 16) / 255;
-  const g = parseInt(result[2], 16) / 255;
-  const b = parseInt(result[3], 16) / 255;
+  if (!result) {return { h: 0, l: 0, s: 0 };}
+  const r = Number.parseInt(result[1], 16) / 255;
+  const g = Number.parseInt(result[2], 16) / 255;
+  const b = Number.parseInt(result[3], 16) / 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
   let h = 0, s = 0;
   const l = (max + min) / 2;
@@ -27,12 +27,15 @@ const hexToHSL = (hex: string): { h: number; s: number; l: number } => {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
     switch (max) {
-      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-      case g: h = ((b - r) / d + 2) / 6; break;
-      case b: h = ((r - g) / d + 4) / 6; break;
+      case r: { h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      }
+      case g: { h = ((b - r) / d + 2) / 6; break;
+      }
+      case b: { h = ((r - g) / d + 4) / 6; break;
+      }
     }
   }
-  return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+  return { h: Math.round(h * 360), l: Math.round(l * 100), s: Math.round(s * 100) };
 };
 
 const hslToHex = (h: number, s: number, l: number): string => {
@@ -56,20 +59,20 @@ const isValidHexColor = (color: string): boolean => /^#[0-9A-Fa-f]{6}$/.test(col
 
 // Tab config với feature mapping
 const TAB_CONFIG = [
-  { id: 'site', label: 'Chung', feature: null }, // Luôn hiển thị
-  { id: 'contact', label: 'Liên hệ', feature: 'enableContact' },
-  { id: 'seo', label: 'SEO', feature: 'enableSEO' },
-  { id: 'social', label: 'Mạng xã hội', feature: 'enableSocial' },
-  { id: 'mail', label: 'Email', feature: 'enableMail' },
+  { feature: null, id: 'site', label: 'Chung' }, // Luôn hiển thị
+  { feature: 'enableContact', id: 'contact', label: 'Liên hệ' },
+  { feature: 'enableSEO', id: 'seo', label: 'SEO' },
+  { feature: 'enableSocial', id: 'social', label: 'Mạng xã hội' },
+  { feature: 'enableMail', id: 'mail', label: 'Email' },
 ];
 
 // Group labels for display
 const GROUP_LABELS: Record<string, string> = {
-  site: 'Thông tin chung',
   contact: 'Thông tin liên hệ',
-  seo: 'Cài đặt SEO',
-  social: 'Mạng xã hội',
   mail: 'Cấu hình Email',
+  seo: 'Cài đặt SEO',
+  site: 'Thông tin chung',
+  social: 'Mạng xã hội',
 };
 
 export default function SettingsPage() {
@@ -108,11 +111,9 @@ function SettingsContent() {
   }, [featuresData]);
 
   // Filter tabs based on enabled features
-  const visibleTabs = useMemo(() => {
-    return TAB_CONFIG.filter(tab => 
-      tab.feature === null || enabledFeatures[tab.feature] !== false
-    );
-  }, [enabledFeatures]);
+  const visibleTabs = useMemo(() => TAB_CONFIG.filter(tab => 
+      tab.feature === null ||  enabledFeatures[tab.feature]
+    ), [enabledFeatures]);
 
   // Filter and group fields based on enabled status and feature
   const fieldsByGroup = useMemo(() => {
@@ -120,14 +121,14 @@ function SettingsContent() {
     
     fieldsData?.forEach(field => {
       // Skip disabled fields
-      if (!field.enabled) return;
+      if (!field.enabled) {return;}
       
       // Skip fields whose linked feature is disabled
-      if (field.linkedFeature && enabledFeatures[field.linkedFeature] === false) return;
+      if (field.linkedFeature && ! enabledFeatures[field.linkedFeature]) {return;}
       
-      const group = field.group || 'site';
-      if (!groups[group]) groups[group] = [];
-      groups[group]!.push(field);
+      const group = field.group ?? 'site';
+      groups[group] ??= [];
+      groups[group].push(field);
     });
 
     // Sort fields by order within each group
@@ -152,15 +153,13 @@ function SettingsContent() {
 
   // Reset active tab if current tab becomes hidden
   useEffect(() => {
-    if (!visibleTabs.find(t => t.id === activeTab)) {
+    if (!visibleTabs.some(t => t.id === activeTab)) {
       setActiveTab(visibleTabs[0]?.id || 'site');
     }
   }, [visibleTabs, activeTab]);
 
   // Detect changes
-  const hasChanges = useMemo(() => {
-    return Object.keys(form).some(key => form[key] !== initialForm[key]);
-  }, [form, initialForm]);
+  const hasChanges = useMemo(() => Object.keys(form).some(key => form[key] !== initialForm[key]), [form, initialForm]);
 
   const updateField = (key: string, value: string) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -169,7 +168,7 @@ function SettingsContent() {
   // Validate before save
   const validateForm = (): boolean => {
     // Validate color fields
-    const colorFields = fieldsData?.filter(f => f.type === 'color') || [];
+    const colorFields = fieldsData?.filter(f => f.type === 'color') ?? [];
     for (const field of colorFields) {
       const value = form[field.fieldKey];
       if (value && !isValidHexColor(value)) {
@@ -179,7 +178,7 @@ function SettingsContent() {
     }
 
     // Validate required fields
-    const requiredFields = fieldsData?.filter(f => f.required && f.enabled) || [];
+    const requiredFields = fieldsData?.filter(f => f.required && f.enabled) ?? [];
     for (const field of requiredFields) {
       if (!form[field.fieldKey]?.trim()) {
         toast.error(`${field.name} là bắt buộc`);
@@ -191,18 +190,18 @@ function SettingsContent() {
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {return;}
 
     setIsSaving(true);
     try {
       // Get all enabled fields and their groups
       const settingsToSave = fieldsData
-        ?.filter(f => f.enabled && (!f.linkedFeature || enabledFeatures[f.linkedFeature] !== false))
+        ?.filter(f => f.enabled && (!f.linkedFeature ||  enabledFeatures[f.linkedFeature]))
         .map(field => ({
+          group: field.group ?? 'site',
           key: field.fieldKey,
           value: form[field.fieldKey] ?? '',
-          group: field.group || 'site',
-        })) || [];
+        })) ?? [];
 
       await setMultiple({ settings: settingsToSave });
       setInitialForm({ ...form });
@@ -220,10 +219,10 @@ function SettingsContent() {
     setIsCleaning(true);
     try {
       // Get all image field values that are being used
-      const imageFields = fieldsData?.filter(f => f.type === 'image' && f.enabled) || [];
+      const imageFields = fieldsData?.filter(f => f.type === 'image' && f.enabled) ?? [];
       const usedUrls = imageFields
         .map(f => form[f.fieldKey])
-        .filter((url): url is string => !!url);
+        .filter((url): url is string => Boolean(url));
 
       await cleanupUnusedImages(usedUrls);
     } finally {
@@ -237,7 +236,7 @@ function SettingsContent() {
     const key = field.fieldKey;
 
     switch (field.type) {
-      case 'color':
+      case 'color': {
         return (
           <div className="space-y-2" key={key}>
             <Label>{field.name}</Label>
@@ -245,7 +244,7 @@ function SettingsContent() {
               <input
                 type="color"
                 value={isValidHexColor(value) ? value : '#3b82f6'}
-                onChange={(e) => updateField(key, e.target.value)}
+                onChange={(e) =>{  updateField(key, e.target.value); }}
                 className="w-10 h-10 rounded-lg cursor-pointer border border-slate-200 dark:border-slate-700"
               />
               <Input
@@ -266,7 +265,7 @@ function SettingsContent() {
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => updateField(key, shade)}
+                    onClick={() =>{  updateField(key, shade); }}
                     className="flex-1 h-8 transition-all hover:scale-y-125 hover:z-10 relative group"
                     style={{ backgroundColor: shade }}
                     title={shade.toUpperCase()}
@@ -283,21 +282,23 @@ function SettingsContent() {
             )}
           </div>
         );
+      }
 
-      case 'textarea':
+      case 'textarea': {
         return (
           <div className="space-y-2" key={key}>
             <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
             <textarea
               value={value}
-              onChange={(e) => updateField(key, e.target.value)}
+              onChange={(e) =>{  updateField(key, e.target.value); }}
               className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
               placeholder={`Nhập ${field.name.toLowerCase()}...`}
             />
           </div>
         );
+      }
 
-      case 'select':
+      case 'select': {
         // Handle specific select fields
         if (key === 'site_timezone') {
           return (
@@ -305,7 +306,7 @@ function SettingsContent() {
               <Label>{field.name}</Label>
               <select
                 value={value}
-                onChange={(e) => updateField(key, e.target.value)}
+                onChange={(e) =>{  updateField(key, e.target.value); }}
                 className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
               >
                 <option value="Asia/Ho_Chi_Minh">GMT+07:00 Bangkok, Hanoi, Jakarta</option>
@@ -322,7 +323,7 @@ function SettingsContent() {
               <Label>{field.name}</Label>
               <select
                 value={value}
-                onChange={(e) => updateField(key, e.target.value)}
+                onChange={(e) =>{  updateField(key, e.target.value); }}
                 className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
               >
                 <option value="vi">Tiếng Việt</option>
@@ -337,7 +338,7 @@ function SettingsContent() {
               <Label>{field.name}</Label>
               <select
                 value={value}
-                onChange={(e) => updateField(key, e.target.value)}
+                onChange={(e) =>{  updateField(key, e.target.value); }}
                 className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
               >
                 <option value="smtp">SMTP</option>
@@ -353,7 +354,7 @@ function SettingsContent() {
               <Label>{field.name}</Label>
               <select
                 value={value}
-                onChange={(e) => updateField(key, e.target.value)}
+                onChange={(e) =>{  updateField(key, e.target.value); }}
                 className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
               >
                 <option value="tls">TLS</option>
@@ -369,88 +370,95 @@ function SettingsContent() {
             <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
             <Input
               value={value}
-              onChange={(e) => updateField(key, e.target.value)}
+              onChange={(e) =>{  updateField(key, e.target.value); }}
               placeholder={`Nhập ${field.name.toLowerCase()}...`}
             />
           </div>
         );
+      }
 
-      case 'number':
+      case 'number': {
         return (
           <div className="space-y-2" key={key}>
             <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
             <Input
               type="number"
               value={value}
-              onChange={(e) => updateField(key, e.target.value)}
+              onChange={(e) =>{  updateField(key, e.target.value); }}
               placeholder={`Nhập ${field.name.toLowerCase()}...`}
             />
           </div>
         );
+      }
 
-      case 'image':
+      case 'image': {
         return (
           <div className="space-y-2" key={key}>
             <SettingsImageUploader
               label={field.name}
               value={value}
-              onChange={(url) => updateField(key, url || '')}
+              onChange={(url) =>{  updateField(key, url ?? ''); }}
               folder="settings"
               previewSize={key.includes('favicon') ? 'sm' : 'md'}
             />
           </div>
         );
+      }
 
-      case 'email':
+      case 'email': {
         return (
           <div className="space-y-2" key={key}>
             <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
             <Input
               type="email"
               value={value}
-              onChange={(e) => updateField(key, e.target.value)}
+              onChange={(e) =>{  updateField(key, e.target.value); }}
               placeholder="example@domain.com"
             />
           </div>
         );
+      }
 
-      case 'phone':
+      case 'phone': {
         return (
           <div className="space-y-2" key={key}>
             <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
             <Input
               type="tel"
               value={value}
-              onChange={(e) => updateField(key, e.target.value)}
+              onChange={(e) =>{  updateField(key, e.target.value); }}
               placeholder="0901234567"
             />
           </div>
         );
+      }
 
-      case 'tags':
+      case 'tags': {
         return (
           <div className="space-y-2" key={key}>
             <Label>{field.name}</Label>
             <TagInput
               value={value}
-              onChange={(val) => updateField(key, val)}
+              onChange={(val) =>{  updateField(key, val); }}
               placeholder="Nhập từ khóa và nhấn Enter..."
             />
             <p className="text-xs text-slate-500">Nhấn Enter để thêm, Backspace để xóa</p>
           </div>
         );
+      }
 
-      default: // text
+      default: { // Text
         return (
           <div className="space-y-2" key={key}>
             <Label>{field.name} {field.required && <span className="text-red-500">*</span>}</Label>
             <Input
               value={value}
-              onChange={(e) => updateField(key, e.target.value)}
+              onChange={(e) =>{  updateField(key, e.target.value); }}
               placeholder={`Nhập ${field.name.toLowerCase()}...`}
             />
           </div>
         );
+      }
     }
   };
 
@@ -462,7 +470,7 @@ function SettingsContent() {
     );
   }
 
-  const currentFields = fieldsByGroup[activeTab] || [];
+  const currentFields = fieldsByGroup[activeTab] ?? [];
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
@@ -478,7 +486,7 @@ function SettingsContent() {
             {visibleTabs.map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() =>{  setActiveTab(tab.id); }}
                 className={cn(
                   "text-left px-4 py-2 rounded-md text-sm font-medium transition-colors",
                   activeTab === tab.id

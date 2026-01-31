@@ -1,43 +1,44 @@
-import { query, mutation, MutationCtx } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 
 // ============ VALIDATORS ============
 const mediaDoc = v.object({
-  _id: v.id("images"),
   _creationTime: v.number(),
-  storageId: v.id("_storage"),
+  _id: v.id("images"),
+  alt: v.optional(v.string()),
   filename: v.string(),
+  folder: v.optional(v.string()),
+  height: v.optional(v.number()),
   mimeType: v.string(),
   size: v.number(),
-  width: v.optional(v.number()),
-  height: v.optional(v.number()),
-  alt: v.optional(v.string()),
-  folder: v.optional(v.string()),
+  storageId: v.id("_storage"),
   uploadedBy: v.optional(v.id("users")),
+  width: v.optional(v.number()),
 });
 
 const mediaWithUrl = v.object({
-  _id: v.id("images"),
   _creationTime: v.number(),
-  storageId: v.id("_storage"),
+  _id: v.id("images"),
+  alt: v.optional(v.string()),
   filename: v.string(),
+  folder: v.optional(v.string()),
+  height: v.optional(v.number()),
   mimeType: v.string(),
   size: v.number(),
-  width: v.optional(v.number()),
-  height: v.optional(v.number()),
-  alt: v.optional(v.string()),
-  folder: v.optional(v.string()),
+  storageId: v.id("_storage"),
   uploadedBy: v.optional(v.id("users")),
   url: v.union(v.string(), v.null()),
+  width: v.optional(v.number()),
 });
 
 // ============ HELPER FUNCTIONS ============
 
 // Get media type key from mimeType
 function getMediaTypeKey(mimeType: string): "image" | "video" | "document" | "other" {
-  if (mimeType.startsWith("image/")) return "image";
-  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType.startsWith("image/")) {return "image";}
+  if (mimeType.startsWith("video/")) {return "video";}
   if (mimeType === "application/pdf" || mimeType.includes("document") || mimeType.includes("spreadsheet")) {
     return "document";
   }
@@ -63,8 +64,8 @@ async function updateMediaStats(
     });
   } else if (countDelta > 0) {
     await ctx.db.insert("mediaStats", {
-      key: typeKey,
       count: countDelta,
+      key: typeKey,
       totalSize: sizeDelta,
     });
   }
@@ -76,7 +77,7 @@ async function updateMediaFolder(
   folderName: string | undefined,
   countDelta: number
 ) {
-  if (!folderName) return;
+  if (!folderName) {return;}
 
   const existing = await ctx.db
     .query("mediaFolders")
@@ -91,7 +92,7 @@ async function updateMediaFolder(
       await ctx.db.patch(existing._id, { count: newCount });
     }
   } else if (countDelta > 0) {
-    await ctx.db.insert("mediaFolders", { name: folderName, count: countDelta });
+    await ctx.db.insert("mediaFolders", { count: countDelta, name: folderName });
   }
 }
 
@@ -100,143 +101,121 @@ async function updateMediaFolder(
 // List with pagination
 export const list = query({
   args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, args) => ctx.db.query("images").order("desc").paginate(args.paginationOpts),
   returns: v.object({
-    page: v.array(mediaDoc),
-    isDone: v.boolean(),
     continueCursor: v.string(),
+    isDone: v.boolean(),
+    page: v.array(mediaDoc),
   }),
-  handler: async (ctx, args) => {
-    return await ctx.db.query("images").order("desc").paginate(args.paginationOpts);
-  },
 });
 
 // List all (for System Config preview - limited)
 export const listAll = query({
   args: {},
+  handler: async (ctx) => ctx.db.query("images").order("desc").take(100),
   returns: v.array(mediaDoc),
-  handler: async (ctx) => {
-    return await ctx.db.query("images").order("desc").take(100);
-  },
 });
 
 // List with URLs (for Admin grid view)
 export const listWithUrls = query({
   args: { limit: v.optional(v.number()) },
-  returns: v.array(mediaWithUrl),
   handler: async (ctx, args) => {
     const limit = args.limit ?? 50;
     const images = await ctx.db.query("images").order("desc").take(limit);
     
-    return await Promise.all(
+    return  Promise.all(
       images.map(async (img) => ({
         ...img,
         url: await ctx.storage.getUrl(img.storageId),
       }))
     );
   },
+  returns: v.array(mediaWithUrl),
 });
 
 // Get by ID
 export const getById = query({
   args: { id: v.id("images") },
+  handler: async (ctx, args) => ctx.db.get(args.id),
   returns: v.union(mediaDoc, v.null()),
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
-  },
 });
 
 // Get by ID with URL
 export const getByIdWithUrl = query({
   args: { id: v.id("images") },
-  returns: v.union(mediaWithUrl, v.null()),
   handler: async (ctx, args) => {
     const image = await ctx.db.get(args.id);
-    if (!image) return null;
+    if (!image) {return null;}
     const url = await ctx.storage.getUrl(image.storageId);
     return { ...image, url };
   },
+  returns: v.union(mediaWithUrl, v.null()),
 });
 
 // List by folder with pagination
 export const listByFolder = query({
   args: { folder: v.string(), paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(mediaDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) => ctx.db
       .query("images")
       .withIndex("by_folder", (q) => q.eq("folder", args.folder))
       .order("desc")
-      .paginate(args.paginationOpts);
-  },
+      .paginate(args.paginationOpts),
+  returns: v.object({
+    continueCursor: v.string(),
+    isDone: v.boolean(),
+    page: v.array(mediaDoc),
+  }),
 });
 
 // List by mimeType with pagination
 export const listByMimeType = query({
   args: { mimeType: v.string(), paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(mediaDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) => ctx.db
       .query("images")
       .withIndex("by_mimeType", (q) => q.eq("mimeType", args.mimeType))
-      .paginate(args.paginationOpts);
-  },
+      .paginate(args.paginationOpts),
+  returns: v.object({
+    continueCursor: v.string(),
+    isDone: v.boolean(),
+    page: v.array(mediaDoc),
+  }),
 });
 
 // List by uploader
 export const listByUploader = query({
-  args: { uploadedBy: v.id("users"), paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(mediaDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  args: { paginationOpts: paginationOptsValidator, uploadedBy: v.id("users") },
+  handler: async (ctx, args) => ctx.db
       .query("images")
       .withIndex("by_uploadedBy", (q) => q.eq("uploadedBy", args.uploadedBy))
       .order("desc")
-      .paginate(args.paginationOpts);
-  },
+      .paginate(args.paginationOpts),
+  returns: v.object({
+    continueCursor: v.string(),
+    isDone: v.boolean(),
+    page: v.array(mediaDoc),
+  }),
 });
 
 // Get URL from storageId
 export const getUrl = query({
   args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => ctx.storage.getUrl(args.storageId),
   returns: v.union(v.string(), v.null()),
-  handler: async (ctx, args) => {
-    return await ctx.storage.getUrl(args.storageId);
-  },
 });
 
 // Get all folders (optimized - reads from mediaFolders table)
 export const getFolders = query({
   args: {},
-  returns: v.array(v.string()),
   handler: async (ctx) => {
     const folders = await ctx.db.query("mediaFolders").collect();
     return folders.map(f => f.name).sort();
   },
+  returns: v.array(v.string()),
 });
 
 // Get statistics (optimized - reads from mediaStats counter table)
 export const getStats = query({
   args: {},
-  returns: v.object({
-    totalCount: v.number(),
-    totalSize: v.number(),
-    imageCount: v.number(),
-    videoCount: v.number(),
-    documentCount: v.number(),
-    otherCount: v.number(),
-  }),
   handler: async (ctx) => {
     const stats = await ctx.db.query("mediaStats").collect();
     const statsMap = new Map(stats.map(s => [s.key, s]));
@@ -248,20 +227,27 @@ export const getStats = query({
     const other = statsMap.get("other");
 
     return {
+      documentCount: document?.count ?? 0,
+      imageCount: image?.count ?? 0,
+      otherCount: other?.count ?? 0,
       totalCount: total?.count ?? 0,
       totalSize: total?.totalSize ?? 0,
-      imageCount: image?.count ?? 0,
       videoCount: video?.count ?? 0,
-      documentCount: document?.count ?? 0,
-      otherCount: other?.count ?? 0,
     };
   },
+  returns: v.object({
+    documentCount: v.number(),
+    imageCount: v.number(),
+    otherCount: v.number(),
+    totalCount: v.number(),
+    totalSize: v.number(),
+    videoCount: v.number(),
+  }),
 });
 
 // Count media (optimized - reads from counter tables)
 export const count = query({
   args: { folder: v.optional(v.string()) },
-  returns: v.number(),
   handler: async (ctx, args) => {
     if (args.folder) {
       const folderName = args.folder;
@@ -277,6 +263,7 @@ export const count = query({
       .first();
     return totalStat?.count ?? 0;
   },
+  returns: v.number(),
 });
 
 // ============ MUTATIONS ============
@@ -284,29 +271,23 @@ export const count = query({
 // Generate upload URL
 export const generateUploadUrl = mutation({
   args: {},
+  handler: async (ctx) => ctx.storage.generateUploadUrl(),
   returns: v.string(),
-  handler: async (ctx) => {
-    return await ctx.storage.generateUploadUrl();
-  },
 });
 
 // Create media record
 export const create = mutation({
   args: {
-    storageId: v.id("_storage"),
+    alt: v.optional(v.string()),
     filename: v.string(),
+    folder: v.optional(v.string()),
+    height: v.optional(v.number()),
     mimeType: v.string(),
     size: v.number(),
-    width: v.optional(v.number()),
-    height: v.optional(v.number()),
-    alt: v.optional(v.string()),
-    folder: v.optional(v.string()),
+    storageId: v.id("_storage"),
     uploadedBy: v.optional(v.id("users")),
+    width: v.optional(v.number()),
   },
-  returns: v.object({
-    id: v.id("images"),
-    url: v.union(v.string(), v.null()),
-  }),
   handler: async (ctx, args) => {
     const id = await ctx.db.insert("images", args);
     const url = await ctx.storage.getUrl(args.storageId);
@@ -319,27 +300,30 @@ export const create = mutation({
 
     return { id, url };
   },
+  returns: v.object({
+    id: v.id("images"),
+    url: v.union(v.string(), v.null()),
+  }),
 });
 
 // Update media metadata
 export const update = mutation({
   args: {
-    id: v.id("images"),
-    filename: v.optional(v.string()),
     alt: v.optional(v.string()),
+    filename: v.optional(v.string()),
     folder: v.optional(v.string()),
+    id: v.id("images"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
     const media = await ctx.db.get(id);
-    if (!media) throw new Error("Media not found");
+    if (!media) {throw new Error("Media not found");}
     
     // Filter out undefined values
     const filteredUpdates: Record<string, string> = {};
-    if (updates.filename !== undefined) filteredUpdates.filename = updates.filename;
-    if (updates.alt !== undefined) filteredUpdates.alt = updates.alt;
-    if (updates.folder !== undefined) filteredUpdates.folder = updates.folder;
+    if (updates.filename !== undefined) {filteredUpdates.filename = updates.filename;}
+    if (updates.alt !== undefined) {filteredUpdates.alt = updates.alt;}
+    if (updates.folder !== undefined) {filteredUpdates.folder = updates.folder;}
     
     // Update folder counter if folder changed
     if (updates.folder !== undefined && updates.folder !== media.folder) {
@@ -350,15 +334,15 @@ export const update = mutation({
     await ctx.db.patch(id, filteredUpdates);
     return null;
   },
+  returns: v.null(),
 });
 
 // Remove single media
 export const remove = mutation({
   args: { id: v.id("images") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const media = await ctx.db.get(args.id);
-    if (!media) throw new Error("Media not found");
+    if (!media) {throw new Error("Media not found");}
     
     try {
       await ctx.storage.delete(media.storageId);
@@ -375,25 +359,25 @@ export const remove = mutation({
 
     return null;
   },
+  returns: v.null(),
 });
 
 // Bulk remove (optimized - batch load to avoid N+1)
 export const bulkRemove = mutation({
   args: { ids: v.array(v.id("images")) },
-  returns: v.number(),
   handler: async (ctx, args) => {
     // Batch load all media items (avoid N+1)
-    const mediaItems = await Promise.all(args.ids.map(id => ctx.db.get(id)));
+    const mediaItems = await Promise.all(args.ids.map( async id => ctx.db.get(id)));
     const validItems = mediaItems.filter((m): m is NonNullable<typeof m> => m !== null);
 
     // Aggregate counter updates
     type MediaStatsKey = "total" | "image" | "video" | "document" | "other";
     const statsUpdates: Record<MediaStatsKey, { count: number; size: number }> = {
-      total: { count: 0, size: 0 },
-      image: { count: 0, size: 0 },
-      video: { count: 0, size: 0 },
       document: { count: 0, size: 0 },
+      image: { count: 0, size: 0 },
       other: { count: 0, size: 0 },
+      total: { count: 0, size: 0 },
+      video: { count: 0, size: 0 },
     };
     const folderUpdates: Record<string, number> = {};
 
@@ -432,4 +416,5 @@ export const bulkRemove = mutation({
 
     return validItems.length;
   },
+  returns: v.number(),
 });

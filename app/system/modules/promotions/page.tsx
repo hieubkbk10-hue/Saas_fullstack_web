@@ -1,40 +1,40 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Ticket, Users, ShoppingCart, Percent, DollarSign, Loader2, Database, Trash2, RefreshCw, Settings, Clock, CalendarClock, CheckCircle } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { CalendarClock, CheckCircle, Clock, Database, DollarSign, Loader2, Percent, RefreshCw, Settings, ShoppingCart, Ticket, Trash2, Users } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus,
+  SettingInput, SettingsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 import { useUnsavedChangesWarning } from '../../hooks/useUnsavedChangesWarning';
 
 const MODULE_KEY = 'promotions';
 
 const FEATURES_CONFIG = [
-  { key: 'enableUsageLimit', label: 'Giới hạn lượt dùng', icon: Users, linkedField: 'usageLimit' },
-  { key: 'enableMinOrder', label: 'Đơn tối thiểu', icon: ShoppingCart, linkedField: 'minOrderAmount' },
-  { key: 'enableMaxDiscount', label: 'Giảm tối đa', icon: DollarSign, linkedField: 'maxDiscountAmount' },
-  { key: 'enableSchedule', label: 'Hẹn giờ', icon: CalendarClock },
-  { key: 'enableApplicable', label: 'Áp dụng có chọn lọc', icon: CheckCircle },
+  { icon: Users, key: 'enableUsageLimit', label: 'Giới hạn lượt dùng', linkedField: 'usageLimit' },
+  { icon: ShoppingCart, key: 'enableMinOrder', label: 'Đơn tối thiểu', linkedField: 'minOrderAmount' },
+  { icon: DollarSign, key: 'enableMaxDiscount', label: 'Giảm tối đa', linkedField: 'maxDiscountAmount' },
+  { icon: CalendarClock, key: 'enableSchedule', label: 'Hẹn giờ' },
+  { icon: CheckCircle, key: 'enableApplicable', label: 'Áp dụng có chọn lọc' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { promotionsPerPage: number };
+interface SettingsState { promotionsPerPage: number }
 type TabType = 'config' | 'data';
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(amount);
 }
 
 function formatDate(timestamp: number | undefined): string {
-  if (!timestamp) return '-';
+  if (!timestamp) {return '-';}
   return new Date(timestamp).toLocaleDateString('vi-VN');
 }
 
@@ -77,14 +77,14 @@ export default function PromotionsModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -104,9 +104,7 @@ export default function PromotionsModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
   const serverSettings = useMemo(() => {
     const promotionsPerPage = settingsData?.find(s => s.settingKey === 'promotionsPerPage')?.value as number ?? 20;
@@ -137,7 +135,7 @@ export default function PromotionsModuleConfigPage() {
 
   const handleToggleField = (id: string) => {
     const field = localFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalFields(prev => {
@@ -163,13 +161,13 @@ export default function PromotionsModuleConfigPage() {
     try {
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          await toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY });
         }
       }
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
+          await updateField({ enabled: field.enabled, id: field.id as Id<'moduleFields'> });
         }
       }
       if (localSettings.promotionsPerPage !== serverSettings.promotionsPerPage) {
@@ -192,7 +190,7 @@ export default function PromotionsModuleConfigPage() {
   };
 
   const handleClearData = async () => {
-    if (!confirm('Xóa toàn bộ voucher/khuyến mãi?')) return;
+    if (!confirm('Xóa toàn bộ voucher/khuyến mãi?')) {return;}
     toast.loading('Đang xóa dữ liệu...');
     await clearPromotionsData();
     toast.dismiss();
@@ -200,7 +198,7 @@ export default function PromotionsModuleConfigPage() {
   };
 
   const handleResetAll = async () => {
-    if (!confirm('Reset dữ liệu về mặc định?')) return;
+    if (!confirm('Reset dữ liệu về mặc định?')) {return;}
     toast.loading('Đang reset dữ liệu...');
     await clearPromotionsData();
     await seedPromotionsModule();
@@ -218,16 +216,21 @@ export default function PromotionsModuleConfigPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'Active':
+      case 'Active': {
         return <Badge variant="success">Hoạt động</Badge>;
-      case 'Inactive':
+      }
+      case 'Inactive': {
         return <Badge variant="secondary">Tạm dừng</Badge>;
-      case 'Expired':
+      }
+      case 'Expired': {
         return <Badge variant="destructive">Hết hạn</Badge>;
-      case 'Scheduled':
+      }
+      case 'Scheduled': {
         return <Badge variant="warning">Chờ kích hoạt</Badge>;
-      default:
+      }
+      default: {
         return <Badge variant="outline">{status}</Badge>;
+      }
     }
   };
 
@@ -248,7 +251,7 @@ export default function PromotionsModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-pink-500 text-pink-600 dark:text-pink-400'
@@ -258,7 +261,7 @@ export default function PromotionsModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-pink-500 text-pink-600 dark:text-pink-400'
@@ -279,7 +282,7 @@ export default function PromotionsModuleConfigPage() {
                 <SettingInput 
                   label="Số voucher / trang" 
                   value={localSettings.promotionsPerPage} 
-                  onChange={(v) => setLocalSettings({...localSettings, promotionsPerPage: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, promotionsPerPage: v}); }}
                   focusColor="focus:border-pink-500"
                 />
               </SettingsCard>

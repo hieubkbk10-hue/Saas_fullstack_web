@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { 
-  ArrowLeft, Home, Save, Loader2,
-  ImageIcon, FileText, LayoutGrid, Users, Phone
+  ArrowLeft, FileText, Home, ImageIcon,
+  LayoutGrid, Loader2, Phone, Save, Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Input, Label } from '../../../components/ui';
@@ -17,12 +17,12 @@ import { ModuleGuard } from '../../../components/ModuleGuard';
 const MODULE_KEY = 'homepage';
 
 const SECTION_TYPES = [
-  { value: 'hero', label: 'Hero Banner', icon: ImageIcon, description: 'Banner chính đầu trang' },
-  { value: 'about', label: 'Giới thiệu', icon: FileText, description: 'Section giới thiệu công ty' },
-  { value: 'products', label: 'Sản phẩm nổi bật', icon: LayoutGrid, description: 'Hiển thị sản phẩm featured' },
-  { value: 'posts', label: 'Bài viết mới', icon: FileText, description: 'Hiển thị bài viết gần đây' },
-  { value: 'partners', label: 'Đối tác', icon: Users, description: 'Logo đối tác/khách hàng' },
-  { value: 'contact', label: 'Liên hệ', icon: Phone, description: 'Form liên hệ nhanh' },
+  { description: 'Banner chính đầu trang', icon: ImageIcon, label: 'Hero Banner', value: 'hero' },
+  { description: 'Section giới thiệu công ty', icon: FileText, label: 'Giới thiệu', value: 'about' },
+  { description: 'Hiển thị sản phẩm featured', icon: LayoutGrid, label: 'Sản phẩm nổi bật', value: 'products' },
+  { description: 'Hiển thị bài viết gần đây', icon: FileText, label: 'Bài viết mới', value: 'posts' },
+  { description: 'Logo đối tác/khách hàng', icon: Users, label: 'Đối tác', value: 'partners' },
+  { description: 'Form liên hệ nhanh', icon: Phone, label: 'Liên hệ', value: 'contact' },
 ];
 
 export default function EditHomepageSectionPage() {
@@ -43,10 +43,10 @@ function EditContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
-    type: 'hero',
     active: true,
     config: '{}',
+    title: '',
+    type: 'hero',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -54,10 +54,10 @@ function EditContent() {
   useEffect(() => {
     if (componentData && !isDataLoaded) {
       setFormData({
-        title: componentData.title,
-        type: componentData.type,
         active: componentData.active,
         config: JSON.stringify(componentData.config, null, 2),
+        title: componentData.title,
+        type: componentData.type,
       });
       setIsDataLoaded(true);
     }
@@ -82,7 +82,7 @@ function EditContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {return;}
 
     setIsSubmitting(true);
     try {
@@ -94,11 +94,11 @@ function EditContent() {
       }
 
       await updateComponent({
+        active: formData.active,
+        config,
         id,
         title: formData.title.trim(),
         type: formData.type,
-        active: formData.active,
-        config,
       });
       toast.success('Đã cập nhật section!');
     } catch (error) {
@@ -159,7 +159,7 @@ function EditContent() {
                   <Input
                     id="title"
                     value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) =>{  setFormData(prev => ({ ...prev, title: e.target.value })); }}
                     placeholder="VD: Hero Banner, Giới thiệu..."
                     className={errors.title ? 'border-red-500' : ''}
                   />
@@ -173,7 +173,7 @@ function EditContent() {
                       <button
                         key={value}
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, type: value }))}
+                        onClick={() =>{  setFormData(prev => ({ ...prev, type: value })); }}
                         className={`p-3 rounded-lg border-2 text-left transition-all ${
                           formData.type === value 
                             ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' 
@@ -202,7 +202,7 @@ function EditContent() {
               </p>
               <textarea
                 value={formData.config}
-                onChange={(e) => setFormData(prev => ({ ...prev, config: e.target.value }))}
+                onChange={(e) =>{  setFormData(prev => ({ ...prev, config: e.target.value })); }}
                 rows={12}
                 className={`w-full font-mono text-sm bg-slate-50 dark:bg-slate-950 border rounded-lg p-4 outline-none focus:border-orange-500 ${
                   errors.config ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'
@@ -220,7 +220,7 @@ function EditContent() {
                 <input
                   type="checkbox"
                   checked={formData.active}
-                  onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
+                  onChange={(e) =>{  setFormData(prev => ({ ...prev, active: e.target.checked })); }}
                   className="w-5 h-5 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                 />
                 <span className="text-slate-700 dark:text-slate-300">Hiển thị section</span>

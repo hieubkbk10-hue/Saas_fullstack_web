@@ -98,9 +98,9 @@ export const dependencyType = v.union(v.literal("all"), v.literal("any"));
 
 // SEO fields
 export const seoFields = {
-  slug: v.string(),
-  metaTitle: v.optional(v.string()),
   metaDescription: v.optional(v.string()),
+  metaTitle: v.optional(v.string()),
+  slug: v.string(),
 };
 
 // Timestamp fields (for manual tracking beyond _creationTime)
@@ -111,6 +111,6 @@ export const timestampFields = {
 
 // Ordering fields
 export const orderingFields = {
-  order: v.number(),
   active: v.boolean(),
+  order: v.number(),
 };

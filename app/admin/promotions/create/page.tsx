@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../components/ui';
 
 const MODULE_KEY = 'promotions';
 
@@ -70,17 +70,17 @@ export default function PromotionCreatePage() {
     setIsSubmitting(true);
     try {
       await createPromotion({
-        name: name.trim(),
         code: code.trim().toUpperCase(),
         description: description.trim() || undefined,
         discountType,
         discountValue,
-        minOrderAmount: enabledFeatures.enableMinOrder ? minOrderAmount : undefined,
-        maxDiscountAmount: enabledFeatures.enableMaxDiscount && discountType === 'percent' ? maxDiscountAmount : undefined,
-        usageLimit: enabledFeatures.enableUsageLimit ? usageLimit : undefined,
-        startDate: enabledFeatures.enableSchedule && startDate ? new Date(startDate).getTime() : undefined,
         endDate: enabledFeatures.enableSchedule && endDate ? new Date(endDate).getTime() : undefined,
+        maxDiscountAmount: enabledFeatures.enableMaxDiscount && discountType === 'percent' ? maxDiscountAmount : undefined,
+        minOrderAmount: enabledFeatures.enableMinOrder ? minOrderAmount : undefined,
+        name: name.trim(),
+        startDate: enabledFeatures.enableSchedule && startDate ? new Date(startDate).getTime() : undefined,
         status,
+        usageLimit: enabledFeatures.enableUsageLimit ? usageLimit : undefined,
       });
       toast.success('Tạo khuyến mãi thành công');
       router.push('/admin/promotions');
@@ -109,7 +109,7 @@ export default function PromotionCreatePage() {
                 <Label>Tên khuyến mãi <span className="text-red-500">*</span></Label>
                 <Input 
                   value={name} 
-                  onChange={(e) => setName(e.target.value)} 
+                  onChange={(e) =>{  setName(e.target.value); }} 
                   required 
                   placeholder="VD: Giảm 10% đơn hàng" 
                 />
@@ -136,7 +136,7 @@ export default function PromotionCreatePage() {
                 <Label>Mô tả</Label>
                 <textarea 
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) =>{  setDescription(e.target.value); }}
                   className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   placeholder="Mô tả chi tiết về khuyến mãi..."
                 />
@@ -151,7 +151,7 @@ export default function PromotionCreatePage() {
                 <Label>Loại giảm giá <span className="text-red-500">*</span></Label>
                 <select 
                   value={discountType}
-                  onChange={(e) => setDiscountType(e.target.value as 'percent' | 'fixed')}
+                  onChange={(e) =>{  setDiscountType(e.target.value as 'percent' | 'fixed'); }}
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
                   <option value="percent">Giảm theo phần trăm (%)</option>
@@ -168,7 +168,7 @@ export default function PromotionCreatePage() {
                 <Input 
                   type="number"
                   value={discountValue} 
-                  onChange={(e) => setDiscountValue(Number(e.target.value))}
+                  onChange={(e) =>{  setDiscountValue(Number(e.target.value)); }}
                   required
                   min={1}
                   max={discountType === 'percent' ? 100 : undefined}
@@ -181,8 +181,8 @@ export default function PromotionCreatePage() {
                   <Label>Đơn hàng tối thiểu (VND)</Label>
                   <Input 
                     type="number"
-                    value={minOrderAmount || ''} 
-                    onChange={(e) => setMinOrderAmount(e.target.value ? Number(e.target.value) : undefined)}
+                    value={minOrderAmount ?? ''} 
+                    onChange={(e) =>{  setMinOrderAmount(e.target.value ? Number(e.target.value) : undefined); }}
                     min={0}
                     placeholder="VD: 500000"
                   />
@@ -195,8 +195,8 @@ export default function PromotionCreatePage() {
                   <Label>Giảm tối đa (VND)</Label>
                   <Input 
                     type="number"
-                    value={maxDiscountAmount || ''} 
-                    onChange={(e) => setMaxDiscountAmount(e.target.value ? Number(e.target.value) : undefined)}
+                    value={maxDiscountAmount ?? ''} 
+                    onChange={(e) =>{  setMaxDiscountAmount(e.target.value ? Number(e.target.value) : undefined); }}
                     min={0}
                     placeholder="VD: 500000"
                   />
@@ -216,7 +216,7 @@ export default function PromotionCreatePage() {
                     <Input 
                       type="datetime-local"
                       value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
+                      onChange={(e) =>{  setStartDate(e.target.value); }}
                     />
                   </div>
                   <div className="space-y-2">
@@ -224,7 +224,7 @@ export default function PromotionCreatePage() {
                     <Input 
                       type="datetime-local"
                       value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
+                      onChange={(e) =>{  setEndDate(e.target.value); }}
                     />
                   </div>
                 </div>
@@ -242,7 +242,7 @@ export default function PromotionCreatePage() {
                 <Label>Trạng thái</Label>
                 <select 
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as 'Active' | 'Inactive' | 'Scheduled')}
+                  onChange={(e) =>{  setStatus(e.target.value as 'Active' | 'Inactive' | 'Scheduled'); }}
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
                   <option value="Active">Hoạt động</option>
@@ -261,8 +261,8 @@ export default function PromotionCreatePage() {
                   <Label>Số lượt sử dụng tối đa</Label>
                   <Input 
                     type="number"
-                    value={usageLimit || ''} 
-                    onChange={(e) => setUsageLimit(e.target.value ? Number(e.target.value) : undefined)}
+                    value={usageLimit ?? ''} 
+                    onChange={(e) =>{  setUsageLimit(e.target.value ? Number(e.target.value) : undefined); }}
                     min={1}
                     placeholder="VD: 100"
                   />
@@ -275,9 +275,9 @@ export default function PromotionCreatePage() {
       </div>
 
       <div className="fixed bottom-0 left-0 lg:left-[280px] right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center z-10">
-        <Button type="button" variant="ghost" onClick={() => router.push('/admin/promotions')}>Hủy bỏ</Button>
+        <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/promotions'); }}>Hủy bỏ</Button>
         <div className="flex gap-2">
-          <Button type="button" variant="secondary" onClick={() => setStatus('Inactive')}>Lưu nháp</Button>
+          <Button type="button" variant="secondary" onClick={() =>{  setStatus('Inactive'); }}>Lưu nháp</Button>
           <Button type="submit" className="bg-pink-600 hover:bg-pink-500" disabled={isSubmitting}>
             {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
             Tạo khuyến mãi

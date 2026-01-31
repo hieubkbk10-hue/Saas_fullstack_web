@@ -1,17 +1,17 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { Id } from '@/convex/_generated/dataModel';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
 import { 
-  Card, CardHeader, CardTitle, CardContent, Input, cn, Button, Label
+  Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn
 } from '../components/ui';
 import { 
-  Eye, Phone, Mail, User, Heart, ShoppingCart, Search, Settings, 
-  Monitor, Tablet, Smartphone, HelpCircle, ChevronDown as ChevronDownIcon, ChevronRight,
-  Check, Save, Link as LinkIcon, Database
+  Check, ChevronDown as ChevronDownIcon, ChevronRight, Database, Eye, Heart, HelpCircle, Link as LinkIcon, 
+  Mail, Monitor, Phone, Save, Search, Settings,
+  ShoppingCart, Smartphone, Tablet, User
 } from 'lucide-react';
 
 const DEFAULT_BRAND_COLOR = '#f97316';
@@ -19,14 +19,14 @@ const DEFAULT_BRAND_COLOR = '#f97316';
 type MenuPreviewDevice = 'desktop' | 'tablet' | 'mobile';
 type MenuPreviewStyle = 'classic' | 'topbar' | 'transparent';
 
-type MenuItem = {
+interface MenuItem {
   _id: Id<"menuItems">;
   label: string;
   url: string;
   order: number;
   depth: number;
   active: boolean;
-};
+}
 
 interface MenuItemWithChildren extends MenuItem {
   children: MenuItemWithChildren[];
@@ -66,26 +66,26 @@ interface HeaderConfig {
 
 const DEFAULT_CONFIG: HeaderConfig = {
   brandName: 'YourBrand',
+  cart: { show: true, url: '/cart' },
   cta: { show: true, text: 'Liên hệ', url: '/contact' },
-  topbar: {
+  login: { show: true, text: 'Đăng nhập', url: '/login' },
+  search: { 
+    placeholder: 'Tìm kiếm...', 
+    searchPosts: true, 
+    searchProducts: true,
     show: true,
-    hotline: '1900 1234',
+  },
+  topbar: {
     email: 'contact@example.com',
-    showTrackOrder: true,
-    trackOrderUrl: '/orders/tracking',
+    hotline: '1900 1234',
+    show: true,
     showStoreSystem: true,
+    showTrackOrder: true,
     storeSystemUrl: '/stores',
+    trackOrderUrl: '/orders/tracking',
     useSettingsData: false,
   },
-  search: { 
-    show: true, 
-    placeholder: 'Tìm kiếm...', 
-    searchProducts: true,
-    searchPosts: true,
-  },
-  cart: { show: true, url: '/cart' },
   wishlist: { show: true, url: '/wishlist' },
-  login: { show: true, url: '/login', text: 'Đăng nhập' },
 };
 
 export function MenuPreview({ items }: MenuPreviewProps) {
@@ -157,9 +157,9 @@ export function MenuPreview({ items }: MenuPreviewProps) {
   }, [config.topbar, settingsPhone, settingsEmail]);
 
   const devices = [
-    { id: 'desktop' as const, icon: Monitor, label: 'Desktop' },
-    { id: 'tablet' as const, icon: Tablet, label: 'Tablet' },
-    { id: 'mobile' as const, icon: Smartphone, label: 'Mobile' }
+    { icon: Monitor, id: 'desktop' as const, label: 'Desktop' },
+    { icon: Tablet, id: 'tablet' as const, label: 'Tablet' },
+    { icon: Smartphone, id: 'mobile' as const, label: 'Mobile' }
   ];
 
   const styles = [
@@ -170,8 +170,8 @@ export function MenuPreview({ items }: MenuPreviewProps) {
 
   const deviceWidths = {
     desktop: 'w-full',
-    tablet: 'w-[768px] max-w-full',
-    mobile: 'w-[375px] max-w-full'
+    mobile: 'w-[375px] max-w-full',
+    tablet: 'w-[768px] max-w-full'
   };
 
   const activeItems = useMemo(() => items.filter(i => i.active), [items]);
@@ -179,8 +179,8 @@ export function MenuPreview({ items }: MenuPreviewProps) {
   const handleApplyToSite = async () => {
     setIsSaving(true);
     try {
-      await setSetting({ key: 'header_style', value: previewStyle, group: 'site' });
-      await setSetting({ key: 'header_config', value: config, group: 'site' });
+      await setSetting({ group: 'site', key: 'header_style', value: previewStyle });
+      await setSetting({ group: 'site', key: 'header_config', value: config });
       setSavedStyle(previewStyle);
       toast.success('Đã áp dụng style cho trang chủ');
     } catch {
@@ -234,8 +234,8 @@ export function MenuPreview({ items }: MenuPreviewProps) {
               <div
                 key={item._id}
                 className="relative"
-                onMouseEnter={() => setHoveredItem(item._id)}
-                onMouseLeave={() => setHoveredItem(null)}
+                onMouseEnter={() =>{  setHoveredItem(item._id); }}
+                onMouseLeave={() =>{  setHoveredItem(null); }}
               >
                 <button
                   className={cn(
@@ -277,7 +277,7 @@ export function MenuPreview({ items }: MenuPreviewProps) {
             ))}
           </nav>
         ) : (
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+          <button onClick={() =>{  setMobileMenuOpen(!mobileMenuOpen); }} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
             <div className="w-5 h-4 flex flex-col justify-between">
               <span className={cn("w-full h-0.5 bg-slate-600 rounded transition-all", mobileMenuOpen && "rotate-45 translate-y-1.5")}></span>
               <span className={cn("w-full h-0.5 bg-slate-600 rounded transition-all", mobileMenuOpen && "opacity-0")}></span>
@@ -378,7 +378,7 @@ export function MenuPreview({ items }: MenuPreviewProps) {
                     <span className="absolute -top-1 -right-1 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
                   </a>
                 )}
-                <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2">
+                <button onClick={() =>{  setMobileMenuOpen(!mobileMenuOpen); }} className="p-2">
                   <div className="w-5 h-4 flex flex-col justify-between">
                     <span className={cn("w-full h-0.5 bg-slate-600 rounded transition-all", mobileMenuOpen && "rotate-45 translate-y-1.5")}></span>
                     <span className={cn("w-full h-0.5 bg-slate-600 rounded transition-all", mobileMenuOpen && "opacity-0")}></span>
@@ -409,7 +409,7 @@ export function MenuPreview({ items }: MenuPreviewProps) {
         <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
           <nav className="flex items-center gap-1">
             {menuTree.map((item) => (
-              <div key={item._id} className="relative" onMouseEnter={() => setHoveredItem(item._id)} onMouseLeave={() => setHoveredItem(null)}>
+              <div key={item._id} className="relative" onMouseEnter={() =>{  setHoveredItem(item._id); }} onMouseLeave={() =>{  setHoveredItem(null); }}>
                 <a href={item.url} className={cn("px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1", hoveredItem === item._id ? "text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700")} style={hoveredItem === item._id ? { backgroundColor: brandColor } : {}}>
                   {item.label}
                   {item.children.length > 0 && <ChevronDownIcon size={14} />}
@@ -476,7 +476,7 @@ export function MenuPreview({ items }: MenuPreviewProps) {
           <>
             <nav className="flex items-center gap-1">
               {menuTree.map((item) => (
-                <div key={item._id} className="relative" onMouseEnter={() => setHoveredItem(item._id)} onMouseLeave={() => setHoveredItem(null)}>
+                <div key={item._id} className="relative" onMouseEnter={() =>{  setHoveredItem(item._id); }} onMouseLeave={() =>{  setHoveredItem(null); }}>
                   <a 
                     href={item.url} 
                     className={cn(
@@ -502,7 +502,7 @@ export function MenuPreview({ items }: MenuPreviewProps) {
             )}
           </>
         ) : (
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-white">
+          <button onClick={() =>{  setMobileMenuOpen(!mobileMenuOpen); }} className="p-2 text-white">
             <div className="w-5 h-4 flex flex-col justify-between">
               <span className={cn("w-full h-0.5 bg-white rounded transition-all", mobileMenuOpen && "rotate-45 translate-y-1.5")}></span>
               <span className={cn("w-full h-0.5 bg-white rounded transition-all", mobileMenuOpen && "opacity-0")}></span>
@@ -574,18 +574,18 @@ export function MenuPreview({ items }: MenuPreviewProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-1.5">
             <Label className="text-xs">Tên thương hiệu</Label>
-            <Input value={config.brandName} onChange={(e) => setConfig({ ...config, brandName: e.target.value })} placeholder="YourBrand" className="h-8 text-sm" />
+            <Input value={config.brandName} onChange={(e) =>{  setConfig({ ...config, brandName: e.target.value }); }} placeholder="YourBrand" className="h-8 text-sm" />
           </div>
           <div className="space-y-1.5">
             <label className="flex items-center gap-2 text-xs font-medium">
-              <input type="checkbox" checked={config.cta.show} onChange={(e) => setConfig({ ...config, cta: { ...config.cta, show: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+              <input type="checkbox" checked={config.cta.show} onChange={(e) =>{  setConfig({ ...config, cta: { ...config.cta, show: e.target.checked } }); }} className="w-3.5 h-3.5 rounded" />
               Nút CTA
             </label>
-            {config.cta.show && <Input value={config.cta.text} onChange={(e) => setConfig({ ...config, cta: { ...config.cta, text: e.target.value } })} placeholder="Liên hệ" className="h-8 text-sm" />}
+            {config.cta.show && <Input value={config.cta.text} onChange={(e) =>{  setConfig({ ...config, cta: { ...config.cta, text: e.target.value } }); }} placeholder="Liên hệ" className="h-8 text-sm" />}
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">URL CTA</Label>
-            <Input value={config.cta.url} onChange={(e) => setConfig({ ...config, cta: { ...config.cta, url: e.target.value } })} placeholder="/contact" className="h-8 text-sm" disabled={!config.cta.show} />
+            <Input value={config.cta.url} onChange={(e) =>{  setConfig({ ...config, cta: { ...config.cta, url: e.target.value } }); }} placeholder="/contact" className="h-8 text-sm" disabled={!config.cta.show} />
           </div>
         </div>
       </div>
@@ -601,7 +601,7 @@ export function MenuPreview({ items }: MenuPreviewProps) {
           {/* Use Settings Data Toggle */}
           <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/50">
             <label className="flex items-center gap-2 text-xs font-medium text-blue-700 dark:text-blue-400">
-              <input type="checkbox" checked={config.topbar.useSettingsData} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, useSettingsData: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+              <input type="checkbox" checked={config.topbar.useSettingsData} onChange={(e) =>{  setConfig({ ...config, topbar: { ...config.topbar, useSettingsData: e.target.checked } }); }} className="w-3.5 h-3.5 rounded" />
               <Database size={14} />
               Dùng dữ liệu từ /admin/settings (SĐT, Email từ tab Liên hệ)
             </label>
@@ -615,7 +615,7 @@ export function MenuPreview({ items }: MenuPreviewProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <label className="flex items-center gap-2 text-xs font-medium">
-                <input type="checkbox" checked={config.topbar.show} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, show: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+                <input type="checkbox" checked={config.topbar.show} onChange={(e) =>{  setConfig({ ...config, topbar: { ...config.topbar, show: e.target.checked } }); }} className="w-3.5 h-3.5 rounded" />
                 Hiển thị Topbar
               </label>
               
@@ -623,11 +623,11 @@ export function MenuPreview({ items }: MenuPreviewProps) {
                 <>
                   <div className="space-y-1.5">
                     <Label className="text-xs flex items-center gap-1"><Phone size={12} /> Hotline</Label>
-                    <Input value={config.topbar.hotline} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, hotline: e.target.value } })} placeholder="1900 1234" className="h-8 text-sm" />
+                    <Input value={config.topbar.hotline} onChange={(e) =>{  setConfig({ ...config, topbar: { ...config.topbar, hotline: e.target.value } }); }} placeholder="1900 1234" className="h-8 text-sm" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs flex items-center gap-1"><Mail size={12} /> Email</Label>
-                    <Input value={config.topbar.email} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, email: e.target.value } })} placeholder="contact@example.com" className="h-8 text-sm" />
+                    <Input value={config.topbar.email} onChange={(e) =>{  setConfig({ ...config, topbar: { ...config.topbar, email: e.target.value } }); }} placeholder="contact@example.com" className="h-8 text-sm" />
                   </div>
                 </>
               )}
@@ -636,20 +636,20 @@ export function MenuPreview({ items }: MenuPreviewProps) {
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <label className="flex items-center gap-2 text-xs font-medium">
-                  <input type="checkbox" checked={config.topbar.showTrackOrder} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, showTrackOrder: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+                  <input type="checkbox" checked={config.topbar.showTrackOrder} onChange={(e) =>{  setConfig({ ...config, topbar: { ...config.topbar, showTrackOrder: e.target.checked } }); }} className="w-3.5 h-3.5 rounded" />
                   Theo dõi đơn hàng
                 </label>
                 {config.topbar.showTrackOrder && (
-                  <Input value={config.topbar.trackOrderUrl} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, trackOrderUrl: e.target.value } })} placeholder="/orders/tracking" className="h-8 text-sm" />
+                  <Input value={config.topbar.trackOrderUrl} onChange={(e) =>{  setConfig({ ...config, topbar: { ...config.topbar, trackOrderUrl: e.target.value } }); }} placeholder="/orders/tracking" className="h-8 text-sm" />
                 )}
               </div>
               <div className="space-y-1.5">
                 <label className="flex items-center gap-2 text-xs font-medium">
-                  <input type="checkbox" checked={config.topbar.showStoreSystem} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, showStoreSystem: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+                  <input type="checkbox" checked={config.topbar.showStoreSystem} onChange={(e) =>{  setConfig({ ...config, topbar: { ...config.topbar, showStoreSystem: e.target.checked } }); }} className="w-3.5 h-3.5 rounded" />
                   Hệ thống cửa hàng
                 </label>
                 {config.topbar.showStoreSystem && (
-                  <Input value={config.topbar.storeSystemUrl} onChange={(e) => setConfig({ ...config, topbar: { ...config.topbar, storeSystemUrl: e.target.value } })} placeholder="/stores" className="h-8 text-sm" />
+                  <Input value={config.topbar.storeSystemUrl} onChange={(e) =>{  setConfig({ ...config, topbar: { ...config.topbar, storeSystemUrl: e.target.value } }); }} placeholder="/stores" className="h-8 text-sm" />
                 )}
               </div>
             </div>
@@ -663,11 +663,11 @@ export function MenuPreview({ items }: MenuPreviewProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
                 <label className="flex items-center gap-2 text-xs font-medium">
-                  <input type="checkbox" checked={config.search.show} onChange={(e) => setConfig({ ...config, search: { ...config.search, show: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+                  <input type="checkbox" checked={config.search.show} onChange={(e) =>{  setConfig({ ...config, search: { ...config.search, show: e.target.checked } }); }} className="w-3.5 h-3.5 rounded" />
                   Hiển thị thanh tìm kiếm
                 </label>
                 {config.search.show && (
-                  <Input value={config.search.placeholder} onChange={(e) => setConfig({ ...config, search: { ...config.search, placeholder: e.target.value } })} placeholder="Tìm kiếm..." className="h-8 text-sm" />
+                  <Input value={config.search.placeholder} onChange={(e) =>{  setConfig({ ...config, search: { ...config.search, placeholder: e.target.value } }); }} placeholder="Tìm kiếm..." className="h-8 text-sm" />
                 )}
               </div>
               {config.search.show && (
@@ -675,11 +675,11 @@ export function MenuPreview({ items }: MenuPreviewProps) {
                   <Label className="text-xs text-slate-500">Tìm kiếm trong:</Label>
                   <div className="flex flex-wrap gap-3">
                     <label className={cn("flex items-center gap-2 text-xs", !enabledModules.products && "opacity-50")}>
-                      <input type="checkbox" checked={config.search.searchProducts} onChange={(e) => setConfig({ ...config, search: { ...config.search, searchProducts: e.target.checked } })} className="w-3.5 h-3.5 rounded" disabled={!enabledModules.products} />
+                      <input type="checkbox" checked={config.search.searchProducts} onChange={(e) =>{  setConfig({ ...config, search: { ...config.search, searchProducts: e.target.checked } }); }} className="w-3.5 h-3.5 rounded" disabled={!enabledModules.products} />
                       Sản phẩm {!enabledModules.products && <span className="text-[10px] text-slate-400">(tắt)</span>}
                     </label>
                     <label className={cn("flex items-center gap-2 text-xs", !enabledModules.posts && "opacity-50")}>
-                      <input type="checkbox" checked={config.search.searchPosts} onChange={(e) => setConfig({ ...config, search: { ...config.search, searchPosts: e.target.checked } })} className="w-3.5 h-3.5 rounded" disabled={!enabledModules.posts} />
+                      <input type="checkbox" checked={config.search.searchPosts} onChange={(e) =>{  setConfig({ ...config, search: { ...config.search, searchPosts: e.target.checked } }); }} className="w-3.5 h-3.5 rounded" disabled={!enabledModules.posts} />
                       Bài viết {!enabledModules.posts && <span className="text-[10px] text-slate-400">(tắt)</span>}
                     </label>
                   </div>
@@ -696,31 +696,31 @@ export function MenuPreview({ items }: MenuPreviewProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className={cn("flex items-center gap-2 text-xs font-medium", !enabledModules.cart && "opacity-50")}>
-                  <input type="checkbox" checked={config.cart.show} onChange={(e) => setConfig({ ...config, cart: { ...config.cart, show: e.target.checked } })} className="w-3.5 h-3.5 rounded" disabled={!enabledModules.cart} />
+                  <input type="checkbox" checked={config.cart.show} onChange={(e) =>{  setConfig({ ...config, cart: { ...config.cart, show: e.target.checked } }); }} className="w-3.5 h-3.5 rounded" disabled={!enabledModules.cart} />
                   <ShoppingCart size={12} /> Giỏ hàng {!enabledModules.cart && <span className="text-[10px] text-slate-400">(tắt)</span>}
                 </label>
                 {config.cart.show && enabledModules.cart && (
-                  <Input value={config.cart.url} onChange={(e) => setConfig({ ...config, cart: { ...config.cart, url: e.target.value } })} placeholder="/cart" className="h-8 text-sm" />
+                  <Input value={config.cart.url} onChange={(e) =>{  setConfig({ ...config, cart: { ...config.cart, url: e.target.value } }); }} placeholder="/cart" className="h-8 text-sm" />
                 )}
               </div>
               <div className="space-y-2">
                 <label className={cn("flex items-center gap-2 text-xs font-medium", !enabledModules.wishlist && "opacity-50")}>
-                  <input type="checkbox" checked={config.wishlist.show} onChange={(e) => setConfig({ ...config, wishlist: { ...config.wishlist, show: e.target.checked } })} className="w-3.5 h-3.5 rounded" disabled={!enabledModules.wishlist} />
+                  <input type="checkbox" checked={config.wishlist.show} onChange={(e) =>{  setConfig({ ...config, wishlist: { ...config.wishlist, show: e.target.checked } }); }} className="w-3.5 h-3.5 rounded" disabled={!enabledModules.wishlist} />
                   <Heart size={12} /> Yêu thích {!enabledModules.wishlist && <span className="text-[10px] text-slate-400">(tắt)</span>}
                 </label>
                 {config.wishlist.show && enabledModules.wishlist && (
-                  <Input value={config.wishlist.url} onChange={(e) => setConfig({ ...config, wishlist: { ...config.wishlist, url: e.target.value } })} placeholder="/wishlist" className="h-8 text-sm" />
+                  <Input value={config.wishlist.url} onChange={(e) =>{  setConfig({ ...config, wishlist: { ...config.wishlist, url: e.target.value } }); }} placeholder="/wishlist" className="h-8 text-sm" />
                 )}
               </div>
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-xs font-medium">
-                  <input type="checkbox" checked={config.login.show} onChange={(e) => setConfig({ ...config, login: { ...config.login, show: e.target.checked } })} className="w-3.5 h-3.5 rounded" />
+                  <input type="checkbox" checked={config.login.show} onChange={(e) =>{  setConfig({ ...config, login: { ...config.login, show: e.target.checked } }); }} className="w-3.5 h-3.5 rounded" />
                   <User size={12} /> Đăng nhập
                 </label>
                 {config.login.show && (
                   <div className="flex gap-2">
-                    <Input value={config.login.text} onChange={(e) => setConfig({ ...config, login: { ...config.login, text: e.target.value } })} placeholder="Đăng nhập" className="h-8 text-sm flex-1" />
-                    <Input value={config.login.url} onChange={(e) => setConfig({ ...config, login: { ...config.login, url: e.target.value } })} placeholder="/login" className="h-8 text-sm flex-1" />
+                    <Input value={config.login.text} onChange={(e) =>{  setConfig({ ...config, login: { ...config.login, text: e.target.value } }); }} placeholder="Đăng nhập" className="h-8 text-sm flex-1" />
+                    <Input value={config.login.url} onChange={(e) =>{  setConfig({ ...config, login: { ...config.login, url: e.target.value } }); }} placeholder="/login" className="h-8 text-sm flex-1" />
                   </div>
                 )}
               </div>
@@ -755,12 +755,12 @@ export function MenuPreview({ items }: MenuPreviewProps) {
           </CardTitle>
           <div className="flex gap-2 flex-wrap items-center">
             <Button type="button" variant={hasChanges ? "accent" : "outline"} size="sm" onClick={handleApplyToSite} disabled={isSaving} className="gap-1.5">
-              {isSaving ? (<>Đang lưu...</>) : savedStyle === previewStyle ? (<><Check size={14} />Đã áp dụng</>) : (<><Save size={14} />Áp dụng cho Site</>)}
+              {isSaving ? (<>Đang lưu...</>) : (savedStyle === previewStyle ? (<><Check size={14} />Đã áp dụng</>) : (<><Save size={14} />Áp dụng cho Site</>))}
             </Button>
             
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
             
-            <button type="button" onClick={() => setShowSettings(!showSettings)} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all", showSettings ? "bg-orange-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900")}>
+            <button type="button" onClick={() =>{  setShowSettings(!showSettings); }} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all", showSettings ? "bg-orange-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900")}>
               <Settings size={14} />Cấu hình
             </button>
             <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">

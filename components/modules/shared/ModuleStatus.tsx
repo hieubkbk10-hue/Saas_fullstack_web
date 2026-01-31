@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Check, Lock } from 'lucide-react';
-import { ToggleSwitch } from './ToggleSwitch';
+import { ToggleSwitch } from './toggle-switch';
 
 interface ModuleStatusProps {
   isCore?: boolean;
@@ -41,7 +41,7 @@ export const ModuleStatus: React.FC<ModuleStatusProps> = ({
           {enabled ? 'Module đang hoạt động' : 'Module đang tắt'}
         </span>
       </div>
-      <ToggleSwitch enabled={enabled} onChange={onToggle || (() => {})} color={toggleColor} />
+      <ToggleSwitch enabled={enabled} onChange={onToggle ?? (() => {})} color={toggleColor} />
     </div>
   );
 };

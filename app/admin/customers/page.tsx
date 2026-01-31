@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, Search, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ChevronLeft, ChevronRight, Edit, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
-import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
+import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'customers';
@@ -36,7 +36,7 @@ function CustomersContent() {
   // States
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [visibleColumns, setVisibleColumns] = useState(['select', 'customer', 'contact', 'orders', 'totalSpent', 'status', 'actions']);
   const [selectedIds, setSelectedIds] = useState<Id<"customers">[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,12 +70,10 @@ function CustomersContent() {
   ];
 
   // Map customers data
-  const customers = useMemo(() => {
-    return customersData?.map(c => ({
+  const customers = useMemo(() => customersData?.map(c => ({
       ...c,
       id: c._id,
-    })) || [];
-  }, [customersData]);
+    })) ?? [], [customersData]);
 
   // Filter data
   const filteredData = useMemo(() => {
@@ -104,7 +102,7 @@ function CustomersContent() {
   }, [sortedData, currentPage, customersPerPage]);
 
   const handleSort = (key: string) => {
-    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
     setCurrentPage(1);
     setSelectedIds([]);
   };
@@ -125,13 +123,13 @@ function CustomersContent() {
     setVisibleColumns(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
   };
 
-  const toggleSelectAll = () => setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(c => c._id));
-  const toggleSelectItem = (id: Id<"customers">) => setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(c => c._id)); };
+  const toggleSelectItem = (id: Id<"customers">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
 
   const handleDelete = async (id: Id<"customers">) => {
     if (confirm('Xóa khách hàng này? Các đơn hàng liên quan sẽ được giữ lại.')) {
       try {
-        await deleteCustomer({ id, cascadeOrders: false });
+        await deleteCustomer({ cascadeOrders: false, id });
         toast.success('Đã xóa khách hàng');
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Có lỗi khi xóa khách hàng';
@@ -142,7 +140,7 @@ function CustomersContent() {
 
   // CUST-007 FIX: Bulk delete with progress indicator
   const handleBulkDelete = async () => {
-    if (!confirm(`Xóa ${selectedIds.length} khách hàng đã chọn?`)) return;
+    if (!confirm(`Xóa ${selectedIds.length} khách hàng đã chọn?`)) {return;}
     
     const total = selectedIds.length;
     let deleted = 0;
@@ -152,7 +150,7 @@ function CustomersContent() {
     
     for (const id of selectedIds) {
       try {
-        await deleteCustomer({ id, cascadeOrders: false });
+        await deleteCustomer({ cascadeOrders: false, id });
         deleted++;
         toast.loading(`Đang xóa ${deleted}/${total}...`);
       } catch {
@@ -207,7 +205,7 @@ function CustomersContent() {
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between">
@@ -218,13 +216,13 @@ function CustomersContent() {
                 placeholder="Tìm tên, email, SĐT..."
                 className="pl-9 w-56"
                 value={searchTerm}
-                onChange={(e) => handleSearchChange(e.target.value)}
+                onChange={(e) =>{  handleSearchChange(e.target.value); }}
               />
             </div>
             <select
               className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
               value={filterStatus}
-              onChange={(e) => handleFilterChange(e.target.value)}
+              onChange={(e) =>{  handleFilterChange(e.target.value); }}
             >
               <option value="">Tất cả trạng thái</option>
               <option value="Active">Hoạt động</option>
@@ -260,7 +258,7 @@ function CustomersContent() {
               <TableRow key={customer._id} className={selectedIds.includes(customer._id) ? 'bg-blue-500/5' : ''}>
                 {visibleColumns.includes('select') && (
                   <TableCell>
-                    <SelectCheckbox checked={selectedIds.includes(customer._id)} onChange={() => toggleSelectItem(customer._id)} />
+                    <SelectCheckbox checked={selectedIds.includes(customer._id)} onChange={() =>{  toggleSelectItem(customer._id); }} />
                   </TableCell>
                 )}
                 {visibleColumns.includes('customer') && (
@@ -286,7 +284,7 @@ function CustomersContent() {
                   </TableCell>
                 )}
                 {visibleColumns.includes('city') && (
-                  <TableCell className="text-slate-500">{customer.city || '-'}</TableCell>
+                  <TableCell className="text-slate-500">{customer.city ?? '-'}</TableCell>
                 )}
                 {visibleColumns.includes('orders') && (
                   <TableCell className="text-center">
@@ -295,7 +293,7 @@ function CustomersContent() {
                 )}
                 {visibleColumns.includes('totalSpent') && (
                   <TableCell className="text-right font-medium">
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(customer.totalSpent)}
+                    {new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(customer.totalSpent)}
                   </TableCell>
                 )}
                 {visibleColumns.includes('status') && (
@@ -315,7 +313,7 @@ function CustomersContent() {
                         variant="ghost"
                         size="icon"
                         className="text-red-500 hover:text-red-600"
-                        onClick={() => handleDelete(customer._id)}
+                        onClick={ async () => handleDelete(customer._id)}
                       >
                         <Trash2 size={16} />
                       </Button>
@@ -345,7 +343,7 @@ function CustomersContent() {
                   variant="outline"
                   size="sm"
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
+                  onClick={() =>{  setCurrentPage(p => p - 1); }}
                 >
                   <ChevronLeft size={16} />
                 </Button>
@@ -356,7 +354,7 @@ function CustomersContent() {
                   variant="outline"
                   size="sm"
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
+                  onClick={() =>{  setCurrentPage(p => p + 1); }}
                 >
                   <ChevronRight size={16} />
                 </Button>

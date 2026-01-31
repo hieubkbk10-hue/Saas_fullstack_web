@@ -1,24 +1,25 @@
-import { query, mutation, MutationCtx } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { productStatus } from "./lib/validators";
 
 const productDoc = v.object({
-  _id: v.id("products"),
   _creationTime: v.number(),
-  name: v.string(),
-  sku: v.string(),
-  slug: v.string(),
+  _id: v.id("products"),
   categoryId: v.id("productCategories"),
-  price: v.number(),
-  salePrice: v.optional(v.number()),
-  stock: v.number(),
-  status: productStatus,
+  description: v.optional(v.string()),
   image: v.optional(v.string()),
   images: v.optional(v.array(v.string())),
-  sales: v.number(),
-  description: v.optional(v.string()),
+  name: v.string(),
   order: v.number(),
+  price: v.number(),
+  salePrice: v.optional(v.number()),
+  sales: v.number(),
+  sku: v.string(),
+  slug: v.string(),
+  status: productStatus,
+  stock: v.number(),
 });
 
 // ============================================================
@@ -27,25 +28,22 @@ const productDoc = v.object({
 
 export const list = query({
   args: { paginationOpts: paginationOptsValidator },
-  handler: async (ctx, args) => {
-    return await ctx.db.query("products").paginate(args.paginationOpts);
-  },
+  handler: async (ctx, args) =>  ctx.db.query("products").paginate(args.paginationOpts),
 });
 
 // FIX #1: Replace listAll with take() limit - use for admin dropdown/select only
 export const listAll = query({
   args: { limit: v.optional(v.number()) },
-  returns: v.array(productDoc),
   handler: async (ctx, args) => {
     const maxLimit = args.limit ?? 100; // Default max 100, configurable
-    return await ctx.db.query("products").take(maxLimit);
+    return  ctx.db.query("products").take(maxLimit);
   },
+  returns: v.array(productDoc),
 });
 
 // FIX #2: Use counter table for count instead of fetching ALL
 export const count = query({
   args: { status: v.optional(productStatus) },
-  returns: v.number(),
   handler: async (ctx, args) => {
     const key = args.status ?? "total";
     const stats = await ctx.db
@@ -54,75 +52,70 @@ export const count = query({
       .unique();
     return stats?.count ?? 0;
   },
+  returns: v.number(),
 });
 
 // Get counts for all statuses in one query (for dashboard)
 export const getStats = query({
   args: {},
-  returns: v.object({
-    total: v.number(),
-    active: v.number(),
-    draft: v.number(),
-    archived: v.number(),
-  }),
   handler: async (ctx) => {
     const stats = await ctx.db.query("productStats").collect();
     const statsMap = new Map(stats.map((s) => [s.key, s.count]));
     return {
-      total: statsMap.get("total") ?? 0,
       active: statsMap.get("Active") ?? 0,
-      draft: statsMap.get("Draft") ?? 0,
       archived: statsMap.get("Archived") ?? 0,
+      draft: statsMap.get("Draft") ?? 0,
+      total: statsMap.get("total") ?? 0,
     };
   },
+  returns: v.object({
+    active: v.number(),
+    archived: v.number(),
+    draft: v.number(),
+    total: v.number(),
+  }),
 });
 
 export const getById = query({
   args: { id: v.id("products") },
+  handler: async (ctx, args) => ctx.db.get(args.id),
   returns: v.union(productDoc, v.null()),
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
-  },
 });
 
 export const getBySku = query({
   args: { sku: v.string() },
-  returns: v.union(productDoc, v.null()),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) => ctx.db
       .query("products")
       .withIndex("by_sku", (q) => q.eq("sku", args.sku))
-      .unique();
-  },
+      .unique(),
+  returns: v.union(productDoc, v.null()),
 });
 
 export const getBySlug = query({
   args: { slug: v.string() },
-  returns: v.union(productDoc, v.null()),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) => ctx.db
       .query("products")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
-      .unique();
-  },
+      .unique(),
+  returns: v.union(productDoc, v.null()),
 });
 
 export const listByCategory = query({
   args: {
     categoryId: v.id("productCategories"),
-    status: v.optional(productStatus),
     paginationOpts: paginationOptsValidator,
+    status: v.optional(productStatus),
   },
   handler: async (ctx, args) => {
     if (args.status) {
-      return await ctx.db
+      return  ctx.db
         .query("products")
         .withIndex("by_category_status", (q) =>
           q.eq("categoryId", args.categoryId).eq("status", args.status!)
         )
         .paginate(args.paginationOpts);
     }
-    return await ctx.db
+    return  ctx.db
       .query("products")
       .withIndex("by_category_status", (q) => q.eq("categoryId", args.categoryId))
       .paginate(args.paginationOpts);
@@ -130,18 +123,16 @@ export const listByCategory = query({
 });
 
 export const listByStatus = query({
-  args: { status: productStatus, paginationOpts: paginationOptsValidator },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  args: { paginationOpts: paginationOptsValidator, status: productStatus },
+  handler: async (ctx, args) =>  ctx.db
       .query("products")
       .withIndex("by_status_order", (q) => q.eq("status", args.status))
-      .paginate(args.paginationOpts);
-  },
+      .paginate(args.paginationOpts),
 });
 
 // FIX #9: Add filter for threshold
 export const listLowStock = query({
-  args: { threshold: v.number(), paginationOpts: paginationOptsValidator },
+  args: { paginationOpts: paginationOptsValidator, threshold: v.number() },
   handler: async (ctx, args) => {
     const result = await ctx.db
       .query("products")
@@ -154,13 +145,11 @@ export const listLowStock = query({
 
 export const listBestSellers = query({
   args: { paginationOpts: paginationOptsValidator },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) =>  ctx.db
       .query("products")
       .withIndex("by_status_sales", (q) => q.eq("status", "Active"))
       .order("desc")
-      .paginate(args.paginationOpts);
-  },
+      .paginate(args.paginationOpts),
 });
 
 // ============================================================
@@ -170,8 +159,9 @@ export const listBestSellers = query({
 // Search active products with filters
 export const searchPublished = query({
   args: {
-    search: v.optional(v.string()),
     categoryId: v.optional(v.id("productCategories")),
+    limit: v.optional(v.number()),
+    search: v.optional(v.string()),
     sortBy: v.optional(
       v.union(
         v.literal("newest"),
@@ -182,9 +172,7 @@ export const searchPublished = query({
         v.literal("name")
       )
     ),
-    limit: v.optional(v.number()),
   },
-  returns: v.array(productDoc),
   handler: async (ctx, args) => {
     const limit = Math.min(args.limit ?? 20, 100);
     let products;
@@ -216,28 +204,35 @@ export const searchPublished = query({
     // Sort
     const sortBy = args.sortBy ?? "newest";
     switch (sortBy) {
-      case "newest":
+      case "newest": {
         products.sort((a, b) => b._creationTime - a._creationTime);
         break;
-      case "oldest":
+      }
+      case "oldest": {
         products.sort((a, b) => a._creationTime - b._creationTime);
         break;
-      case "popular":
+      }
+      case "popular": {
         products.sort((a, b) => b.sales - a.sales);
         break;
-      case "price_asc":
+      }
+      case "price_asc": {
         products.sort((a, b) => (a.salePrice ?? a.price) - (b.salePrice ?? b.price));
         break;
-      case "price_desc":
+      }
+      case "price_desc": {
         products.sort((a, b) => (b.salePrice ?? b.price) - (a.salePrice ?? a.price));
         break;
-      case "name":
+      }
+      case "name": {
         products.sort((a, b) => a.name.localeCompare(b.name));
         break;
+      }
     }
 
     return products.slice(0, limit);
   },
+  returns: v.array(productDoc),
 });
 
 // Count published products
@@ -245,7 +240,6 @@ export const countPublished = query({
   args: {
     categoryId: v.optional(v.id("productCategories")),
   },
-  returns: v.number(),
   handler: async (ctx, args) => {
     if (args.categoryId) {
       const products = await ctx.db
@@ -262,60 +256,61 @@ export const countPublished = query({
       .unique();
     return stats?.count ?? 0;
   },
+  returns: v.number(),
 });
 
 // Featured products (best sellers)
 export const listFeatured = query({
   args: { limit: v.optional(v.number()) },
-  returns: v.array(productDoc),
   handler: async (ctx, args) => {
     const limit = Math.min(args.limit ?? 8, 20);
-    return await ctx.db
+    return  ctx.db
       .query("products")
       .withIndex("by_status_sales", (q) => q.eq("status", "Active"))
       .order("desc")
       .take(limit);
   },
+  returns: v.array(productDoc),
 });
 
 // Recent products
 export const listRecent = query({
   args: { limit: v.optional(v.number()) },
-  returns: v.array(productDoc),
   handler: async (ctx, args) => {
     const limit = Math.min(args.limit ?? 8, 20);
-    return await ctx.db
+    return  ctx.db
       .query("products")
       .withIndex("by_status_order", (q) => q.eq("status", "Active"))
       .order("desc")
       .take(limit);
   },
+  returns: v.array(productDoc),
 });
 
 // Popular products (by sales)
 export const listPopular = query({
   args: { limit: v.optional(v.number()) },
-  returns: v.array(productDoc),
   handler: async (ctx, args) => {
     const limit = Math.min(args.limit ?? 8, 20);
-    return await ctx.db
+    return  ctx.db
       .query("products")
       .withIndex("by_status_sales", (q) => q.eq("status", "Active"))
       .order("desc")
       .take(limit);
   },
+  returns: v.array(productDoc),
 });
 
 // Increment views
 export const incrementViews = mutation({
   args: { id: v.id("products") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const product = await ctx.db.get(args.id);
-    if (!product) return null;
+    if (!product) {return null;}
     // Note: products schema doesn't have views field, using sales as proxy or skip
     return null;
   },
+  returns: v.null(),
 });
 
 // ============================================================
@@ -341,7 +336,7 @@ async function updateStats(
         lastOrder: totalStats.lastOrder + 1,
       });
     } else {
-      await ctx.db.insert("productStats", { key: "total", count: 1, lastOrder: 0 });
+      await ctx.db.insert("productStats", { count: 1, key: "total", lastOrder: 0 });
     }
   } else if (statusChange.old && !statusChange.new) {
     // Deleting product
@@ -371,7 +366,7 @@ async function updateStats(
     if (newStats) {
       await ctx.db.patch(newStats._id, { count: newStats.count + 1 });
     } else {
-      await ctx.db.insert("productStats", { key: newStatus, count: 1, lastOrder: 0 });
+      await ctx.db.insert("productStats", { count: 1, key: newStatus, lastOrder: 0 });
     }
   }
 }
@@ -387,34 +382,33 @@ async function getNextOrder(ctx: MutationCtx): Promise<number> {
 
 export const create = mutation({
   args: {
-    name: v.string(),
-    sku: v.string(),
-    slug: v.string(),
     categoryId: v.id("productCategories"),
-    price: v.number(),
-    salePrice: v.optional(v.number()),
-    stock: v.optional(v.number()),
-    status: v.optional(productStatus),
+    description: v.optional(v.string()),
     image: v.optional(v.string()),
     images: v.optional(v.array(v.string())),
-    description: v.optional(v.string()),
+    name: v.string(),
     order: v.optional(v.number()),
+    price: v.number(),
+    salePrice: v.optional(v.number()),
+    sku: v.string(),
+    slug: v.string(),
+    status: v.optional(productStatus),
+    stock: v.optional(v.number()),
   },
-  returns: v.id("products"),
   handler: async (ctx, args) => {
     // Validate unique SKU
     const existingSku = await ctx.db
       .query("products")
       .withIndex("by_sku", (q) => q.eq("sku", args.sku))
       .unique();
-    if (existingSku) throw new Error("SKU already exists");
+    if (existingSku) {throw new Error("SKU already exists");}
 
     // Validate unique slug
     const existingSlug = await ctx.db
       .query("products")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .unique();
-    if (existingSlug) throw new Error("Slug already exists");
+    if (existingSlug) {throw new Error("Slug already exists");}
 
     // FIX #3: Get next order from stats instead of fetching ALL
     const nextOrder = await getNextOrder(ctx);
@@ -428,7 +422,7 @@ export const create = mutation({
           q.eq("moduleKey", "products").eq("settingKey", "defaultStatus")
         )
         .unique();
-      if (setting?.value === "Active") defaultStatus = "Active";
+      if (setting?.value === "Active") {defaultStatus = "Active";}
     }
     const status = args.status ?? defaultStatus;
 
@@ -445,29 +439,29 @@ export const create = mutation({
 
     return productId;
   },
+  returns: v.id("products"),
 });
 
 export const update = mutation({
   args: {
-    id: v.id("products"),
-    name: v.optional(v.string()),
-    sku: v.optional(v.string()),
-    slug: v.optional(v.string()),
     categoryId: v.optional(v.id("productCategories")),
-    price: v.optional(v.number()),
-    salePrice: v.optional(v.number()),
-    stock: v.optional(v.number()),
-    status: v.optional(productStatus),
+    description: v.optional(v.string()),
+    id: v.id("products"),
     image: v.optional(v.string()),
     images: v.optional(v.array(v.string())),
-    description: v.optional(v.string()),
+    name: v.optional(v.string()),
     order: v.optional(v.number()),
+    price: v.optional(v.number()),
+    salePrice: v.optional(v.number()),
+    sku: v.optional(v.string()),
+    slug: v.optional(v.string()),
+    status: v.optional(productStatus),
+    stock: v.optional(v.number()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
     const product = await ctx.db.get(id);
-    if (!product) throw new Error("Product not found");
+    if (!product) {throw new Error("Product not found");}
 
     // Validate unique SKU if changing
     if (args.sku && args.sku !== product.sku) {
@@ -476,7 +470,7 @@ export const update = mutation({
         .query("products")
         .withIndex("by_sku", (q) => q.eq("sku", newSku))
         .unique();
-      if (existing) throw new Error("SKU already exists");
+      if (existing) {throw new Error("SKU already exists");}
     }
 
     // Validate unique slug if changing
@@ -486,50 +480,50 @@ export const update = mutation({
         .query("products")
         .withIndex("by_slug", (q) => q.eq("slug", newSlug))
         .unique();
-      if (existing) throw new Error("Slug already exists");
+      if (existing) {throw new Error("Slug already exists");}
     }
 
     // Update stats if status changed
     if (args.status && args.status !== product.status) {
-      await updateStats(ctx, { old: product.status, new: args.status });
+      await updateStats(ctx, { new: args.status, old: product.status });
     }
 
     await ctx.db.patch(id, updates);
     return null;
   },
+  returns: v.null(),
 });
 
 export const updateStock = mutation({
   args: { id: v.id("products"), quantity: v.number() },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const product = await ctx.db.get(args.id);
-    if (!product) throw new Error("Product not found");
+    if (!product) {throw new Error("Product not found");}
     const newStock = product.stock + args.quantity;
-    if (newStock < 0) throw new Error("Insufficient stock");
+    if (newStock < 0) {throw new Error("Insufficient stock");}
     await ctx.db.patch(args.id, { stock: newStock });
     return null;
   },
+  returns: v.null(),
 });
 
 export const incrementSales = mutation({
   args: { id: v.id("products"), quantity: v.number() },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const product = await ctx.db.get(args.id);
-    if (!product) throw new Error("Product not found");
+    if (!product) {throw new Error("Product not found");}
     await ctx.db.patch(args.id, { sales: product.sales + args.quantity });
     return null;
   },
+  returns: v.null(),
 });
 
 // FIX #7: Batch delete with Promise.all for cascade operations
 export const remove = mutation({
   args: { id: v.id("products") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const product = await ctx.db.get(args.id);
-    if (!product) throw new Error("Product not found");
+    if (!product) {throw new Error("Product not found");}
 
     // Collect all related items first
     const [comments, wishlistItems, cartItems] = await Promise.all([
@@ -551,9 +545,9 @@ export const remove = mutation({
 
     // Batch delete all related items with Promise.all
     await Promise.all([
-      ...comments.map((c) => ctx.db.delete(c._id)),
-      ...wishlistItems.map((w) => ctx.db.delete(w._id)),
-      ...cartItems.map((c) => ctx.db.delete(c._id)),
+      ...comments.map( async (c) => ctx.db.delete(c._id)),
+      ...wishlistItems.map( async (w) => ctx.db.delete(w._id)),
+      ...cartItems.map( async (c) => ctx.db.delete(c._id)),
     ]);
 
     // Delete the product
@@ -564,30 +558,30 @@ export const remove = mutation({
 
     return null;
   },
+  returns: v.null(),
 });
 
 // FIX #4: Batch reorder with Promise.all
 export const reorder = mutation({
   args: { items: v.array(v.object({ id: v.id("products"), order: v.number() })) },
-  returns: v.null(),
   handler: async (ctx, args) => {
     await Promise.all(
-      args.items.map((item) => ctx.db.patch(item.id, { order: item.order }))
+      args.items.map( async (item) => ctx.db.patch(item.id, { order: item.order }))
     );
     return null;
   },
+  returns: v.null(),
 });
 
 // Bulk delete for admin (FIX #10 support)
 export const bulkRemove = mutation({
   args: { ids: v.array(v.id("products")) },
-  returns: v.number(),
   handler: async (ctx, args) => {
     let deletedCount = 0;
 
     for (const id of args.ids) {
       const product = await ctx.db.get(id);
-      if (!product) continue;
+      if (!product) {continue;}
 
       // Collect related items
       const [comments, wishlistItems, cartItems] = await Promise.all([
@@ -609,9 +603,9 @@ export const bulkRemove = mutation({
 
       // Batch delete related items
       await Promise.all([
-        ...comments.map((c) => ctx.db.delete(c._id)),
-        ...wishlistItems.map((w) => ctx.db.delete(w._id)),
-        ...cartItems.map((c) => ctx.db.delete(c._id)),
+        ...comments.map( async (c) => ctx.db.delete(c._id)),
+        ...wishlistItems.map( async (w) => ctx.db.delete(w._id)),
+        ...cartItems.map( async (c) => ctx.db.delete(c._id)),
       ]);
 
       // Delete product and update stats
@@ -622,36 +616,37 @@ export const bulkRemove = mutation({
 
     return deletedCount;
   },
+  returns: v.number(),
 });
 
 // Initialize stats (run once or when resetting)
 export const initStats = mutation({
   args: {},
-  returns: v.null(),
   handler: async (ctx) => {
     // Clear existing stats
     const existingStats = await ctx.db.query("productStats").collect();
-    await Promise.all(existingStats.map((s) => ctx.db.delete(s._id)));
+    await Promise.all(existingStats.map( async (s) => ctx.db.delete(s._id)));
 
     // Count products by status
     const products = await ctx.db.query("products").collect();
-    const counts = { total: 0, Active: 0, Draft: 0, Archived: 0 };
+    const counts = { Active: 0, Archived: 0, Draft: 0, total: 0 };
     let maxOrder = 0;
 
     for (const p of products) {
       counts.total++;
       counts[p.status as keyof typeof counts]++;
-      if (p.order > maxOrder) maxOrder = p.order;
+      if (p.order > maxOrder) {maxOrder = p.order;}
     }
 
     // Insert stats
     await Promise.all([
-      ctx.db.insert("productStats", { key: "total", count: counts.total, lastOrder: maxOrder }),
-      ctx.db.insert("productStats", { key: "Active", count: counts.Active, lastOrder: 0 }),
-      ctx.db.insert("productStats", { key: "Draft", count: counts.Draft, lastOrder: 0 }),
-      ctx.db.insert("productStats", { key: "Archived", count: counts.Archived, lastOrder: 0 }),
+      ctx.db.insert("productStats", { count: counts.total, key: "total", lastOrder: maxOrder }),
+      ctx.db.insert("productStats", { count: counts.Active, key: "Active", lastOrder: 0 }),
+      ctx.db.insert("productStats", { count: counts.Draft, key: "Draft", lastOrder: 0 }),
+      ctx.db.insert("productStats", { count: counts.Archived, key: "Archived", lastOrder: 0 }),
     ]);
 
     return null;
   },
+  returns: v.null(),
 });

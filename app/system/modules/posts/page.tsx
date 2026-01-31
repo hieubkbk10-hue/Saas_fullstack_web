@@ -1,57 +1,57 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { FileText, FolderTree, Tag, Star, Clock, Loader2, Database, Trash2, RefreshCw, MessageSquare, Settings, Palette, Eye, Monitor, Tablet, Smartphone, ArrowLeft } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { ArrowLeft, Clock, Database, Eye, FileText, FolderTree, Loader2, MessageSquare, Monitor, Palette, RefreshCw, Settings, Smartphone, Star, Tablet, Tag, Trash2 } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput, SettingSelect,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus, SettingInput,
+  SettingSelect, SettingsCard
 } from '@/components/modules/shared';
-import { Card, CardContent, CardHeader, CardTitle, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, cn } from '@/app/admin/components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'posts';
 const CATEGORY_MODULE_KEY = 'postCategories';
 
 const FEATURES_CONFIG = [
-  { key: 'enableTags', label: 'Tags', icon: Tag, linkedField: 'tags' },
-  { key: 'enableFeatured', label: 'Nổi bật', icon: Star, linkedField: 'featured' },
-  { key: 'enableScheduling', label: 'Hẹn giờ', icon: Clock, linkedField: 'publish_date' },
+  { icon: Tag, key: 'enableTags', label: 'Tags', linkedField: 'tags' },
+  { icon: Star, key: 'enableFeatured', label: 'Nổi bật', linkedField: 'featured' },
+  { icon: Clock, key: 'enableScheduling', label: 'Hẹn giờ', linkedField: 'publish_date' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { postsPerPage: number; defaultStatus: string };
+interface SettingsState { postsPerPage: number; defaultStatus: string }
 type TabType = 'config' | 'data' | 'appearance';
 type PostsListStyle = 'fullwidth' | 'sidebar' | 'magazine';
 type PostsDetailStyle = 'classic' | 'modern' | 'minimal';
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
 
 const LIST_STYLES: { id: PostsListStyle; label: string; description: string }[] = [
-  { id: 'fullwidth', label: 'Full Width', description: 'Horizontal filter bar + grid/list toggle, tối ưu mobile' },
-  { id: 'sidebar', label: 'Sidebar', description: 'Classic blog với sidebar filters, categories, recent posts' },
-  { id: 'magazine', label: 'Magazine', description: 'Hero slider + category tabs, phong cách editorial' },
+  { description: 'Horizontal filter bar + grid/list toggle, tối ưu mobile', id: 'fullwidth', label: 'Full Width' },
+  { description: 'Classic blog với sidebar filters, categories, recent posts', id: 'sidebar', label: 'Sidebar' },
+  { description: 'Hero slider + category tabs, phong cách editorial', id: 'magazine', label: 'Magazine' },
 ];
 
 const DETAIL_STYLES: { id: PostsDetailStyle; label: string; description: string }[] = [
-  { id: 'classic', label: 'Classic', description: 'Truyền thống với sidebar bài liên quan' },
-  { id: 'modern', label: 'Modern', description: 'Hero lớn, full-width, hiện đại' },
-  { id: 'minimal', label: 'Minimal', description: 'Tối giản, tập trung vào nội dung' },
+  { description: 'Truyền thống với sidebar bài liên quan', id: 'classic', label: 'Classic' },
+  { description: 'Hero lớn, full-width, hiện đại', id: 'modern', label: 'Modern' },
+  { description: 'Tối giản, tập trung vào nội dung', id: 'minimal', label: 'Minimal' },
 ];
 
 const deviceWidths = {
   desktop: 'w-full',
-  tablet: 'w-[768px] max-w-full',
-  mobile: 'w-[375px] max-w-full'
+  mobile: 'w-[375px] max-w-full',
+  tablet: 'w-[768px] max-w-full'
 };
 
 const devices = [
-  { id: 'desktop' as const, icon: Monitor, label: 'Desktop' },
-  { id: 'tablet' as const, icon: Tablet, label: 'Tablet' },
-  { id: 'mobile' as const, icon: Smartphone, label: 'Mobile' }
+  { icon: Monitor, id: 'desktop' as const, label: 'Desktop' },
+  { icon: Tablet, id: 'tablet' as const, label: 'Tablet' },
+  { icon: Smartphone, id: 'mobile' as const, label: 'Mobile' }
 ];
 
 export default function PostsModuleConfigPage() {
@@ -92,7 +92,7 @@ export default function PostsModuleConfigPage() {
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localPostFields, setLocalPostFields] = useState<FieldConfig[]>([]);
   const [localCategoryFields, setLocalCategoryFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ postsPerPage: 10, defaultStatus: 'draft' });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ defaultStatus: 'draft', postsPerPage: 10 });
   const [isSaving, setIsSaving] = useState(false);
 
   // Appearance tab states
@@ -120,14 +120,14 @@ export default function PostsModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalPostFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -136,13 +136,13 @@ export default function PostsModuleConfigPage() {
   useEffect(() => {
     if (categoryFieldsData) {
       setLocalCategoryFields(categoryFieldsData.map(f => ({
+        enabled: f.enabled,
         id: f._id,
+        isSystem: f.isSystem,
         key: f.fieldKey,
         name: f.name,
-        type: f.type,
         required: f.required,
-        enabled: f.enabled,
-        isSystem: f.isSystem,
+        type: f.type,
       })));
     }
   }, [categoryFieldsData]);
@@ -152,7 +152,7 @@ export default function PostsModuleConfigPage() {
     if (settingsData) {
       const postsPerPage = settingsData.find(s => s.settingKey === 'postsPerPage')?.value as number ?? 10;
       const defaultStatus = settingsData.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'draft';
-      setLocalSettings({ postsPerPage, defaultStatus });
+      setLocalSettings({ defaultStatus, postsPerPage });
     }
   }, [settingsData]);
 
@@ -173,18 +173,14 @@ export default function PostsModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverPostFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverPostFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
-  const serverCategoryFields = useMemo(() => {
-    return categoryFieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [categoryFieldsData]);
+  const serverCategoryFields = useMemo(() => categoryFieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [categoryFieldsData]);
 
   const serverSettings = useMemo(() => {
     const postsPerPage = settingsData?.find(s => s.settingKey === 'postsPerPage')?.value as number ?? 10;
     const defaultStatus = settingsData?.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'draft';
-    return { postsPerPage, defaultStatus };
+    return { defaultStatus, postsPerPage };
   }, [settingsData]);
 
   // Check for changes
@@ -214,7 +210,7 @@ export default function PostsModuleConfigPage() {
 
   const handleTogglePostField = (id: string) => {
     const field = localPostFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalPostFields(prev => {
@@ -248,7 +244,7 @@ export default function PostsModuleConfigPage() {
       // Collect feature updates
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
+          promises.push(toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY }));
         }
       }
       
@@ -256,7 +252,7 @@ export default function PostsModuleConfigPage() {
       for (const field of localPostFields) {
         const server = serverPostFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
+          promises.push(updateField({ enabled: field.enabled, id: field.id as Id<"moduleFields"> }));
         }
       }
       
@@ -264,7 +260,7 @@ export default function PostsModuleConfigPage() {
       for (const field of localCategoryFields) {
         const server = serverCategoryFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
+          promises.push(updateField({ enabled: field.enabled, id: field.id as Id<"moduleFields"> }));
         }
       }
       
@@ -296,7 +292,7 @@ export default function PostsModuleConfigPage() {
   };
 
   const handleClearAll = async () => {
-    if (!confirm('Xóa toàn bộ dữ liệu bài viết, danh mục và bình luận?')) return;
+    if (!confirm('Xóa toàn bộ dữ liệu bài viết, danh mục và bình luận?')) {return;}
     toast.loading('Đang xóa dữ liệu...');
     await clearComments();
     await clearPostsData();
@@ -305,7 +301,7 @@ export default function PostsModuleConfigPage() {
   };
 
   const handleResetAll = async () => {
-    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
+    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) {return;}
     toast.loading('Đang reset dữ liệu...');
     await clearComments();
     await clearPostsData();
@@ -331,8 +327,8 @@ export default function PostsModuleConfigPage() {
     try {
       await setMultipleSettings({
         settings: [
-          { key: 'posts_list_style', value: listStyle, group: 'posts' },
-          { key: 'posts_detail_style', value: detailStyle, group: 'posts' },
+          { group: 'posts', key: 'posts_list_style', value: listStyle },
+          { group: 'posts', key: 'posts_detail_style', value: detailStyle },
         ]
       });
       setAppearanceHasChanges(false);
@@ -366,15 +362,15 @@ export default function PostsModuleConfigPage() {
         iconBgClass="bg-cyan-500/10"
         iconTextClass="text-cyan-600 dark:text-cyan-400"
         buttonClass="bg-cyan-600 hover:bg-cyan-500"
-        onSave={activeTab === 'config' ? handleSave : activeTab === 'appearance' ? handleSaveAppearance : undefined}
-        hasChanges={activeTab === 'config' ? hasChanges : activeTab === 'appearance' ? appearanceHasChanges : false}
+        onSave={activeTab === 'config' ? handleSave : (activeTab === 'appearance' ? handleSaveAppearance : undefined)}
+        hasChanges={activeTab === 'config' ? hasChanges : (activeTab === 'appearance' ? appearanceHasChanges : false)}
         isSaving={isSaving}
       />
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
@@ -384,7 +380,7 @@ export default function PostsModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
@@ -394,7 +390,7 @@ export default function PostsModuleConfigPage() {
           <Database size={16} /> Dữ liệu
         </button>
         <button
-          onClick={() => setActiveTab('appearance')}
+          onClick={() =>{  setActiveTab('appearance'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'appearance'
               ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
@@ -415,14 +411,14 @@ export default function PostsModuleConfigPage() {
                 <SettingInput 
                   label="Số bài / trang" 
                   value={localSettings.postsPerPage} 
-                  onChange={(v) => setLocalSettings({...localSettings, postsPerPage: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, postsPerPage: v}); }}
                   focusColor="focus:border-cyan-500"
                 />
                 <SettingSelect
                   label="Trạng thái mặc định"
                   value={localSettings.defaultStatus}
-                  onChange={(v) => setLocalSettings({...localSettings, defaultStatus: v})}
-                  options={[{ value: 'draft', label: 'Bản nháp' }, { value: 'published', label: 'Xuất bản' }]}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, defaultStatus: v}); }}
+                  options={[{ label: 'Bản nháp', value: 'draft' }, { label: 'Xuất bản', value: 'published' }]}
                   focusColor="focus:border-cyan-500"
                 />
               </SettingsCard>
@@ -542,8 +538,8 @@ export default function PostsModuleConfigPage() {
                     <TableCell className="font-medium">{post.title}</TableCell>
                     <TableCell><Badge variant="secondary">{categoryMap[post.categoryId] || 'N/A'}</Badge></TableCell>
                     <TableCell>
-                      <Badge variant={post.status === 'Published' ? 'default' : post.status === 'Draft' ? 'secondary' : 'outline'}>
-                        {post.status === 'Published' ? 'Xuất bản' : post.status === 'Draft' ? 'Nháp' : 'Lưu trữ'}
+                      <Badge variant={post.status === 'Published' ? 'default' : (post.status === 'Draft' ? 'secondary' : 'outline')}>
+                        {post.status === 'Published' ? 'Xuất bản' : (post.status === 'Draft' ? 'Nháp' : 'Lưu trữ')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">{post.views?.toLocaleString() ?? 0}</TableCell>
@@ -560,7 +556,7 @@ export default function PostsModuleConfigPage() {
             </Table>
             {postsStatus === 'CanLoadMore' && (
               <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-center">
-                <Button variant="ghost" size="sm" onClick={() => loadMorePosts(10)}>
+                <Button variant="ghost" size="sm" onClick={() =>{  loadMorePosts(10); }}>
                   Tải thêm bài viết
                 </Button>
               </div>
@@ -627,8 +623,8 @@ export default function PostsModuleConfigPage() {
                     <TableCell className="font-medium">{comment.authorName}</TableCell>
                     <TableCell className="text-slate-600 dark:text-slate-400 max-w-xs truncate">{comment.content}</TableCell>
                     <TableCell>
-                      <Badge variant={comment.status === 'Approved' ? 'default' : comment.status === 'Pending' ? 'secondary' : 'destructive'}>
-                        {comment.status === 'Approved' ? 'Đã duyệt' : comment.status === 'Pending' ? 'Chờ duyệt' : 'Spam'}
+                      <Badge variant={comment.status === 'Approved' ? 'default' : (comment.status === 'Pending' ? 'secondary' : 'destructive')}>
+                        {comment.status === 'Approved' ? 'Đã duyệt' : (comment.status === 'Pending' ? 'Chờ duyệt' : 'Spam')}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -644,7 +640,7 @@ export default function PostsModuleConfigPage() {
             </Table>
             {commentsStatus === 'CanLoadMore' && (
               <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-center">
-                <Button variant="ghost" size="sm" onClick={() => loadMoreComments(10)}>
+                <Button variant="ghost" size="sm" onClick={() =>{  loadMoreComments(10); }}>
                   Tải thêm bình luận
                 </Button>
               </div>
@@ -729,7 +725,7 @@ export default function PostsModuleConfigPage() {
                   {/* Page toggle */}
                   <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
                     <button
-                      onClick={() => setActivePreview('list')}
+                      onClick={() =>{  setActivePreview('list'); }}
                       className={cn(
                         "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
                         activePreview === 'list' ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-500"
@@ -738,7 +734,7 @@ export default function PostsModuleConfigPage() {
                       Danh sách
                     </button>
                     <button
-                      onClick={() => setActivePreview('detail')}
+                      onClick={() =>{  setActivePreview('detail'); }}
                       className={cn(
                         "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
                         activePreview === 'detail' ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-500"
@@ -752,7 +748,7 @@ export default function PostsModuleConfigPage() {
                     {devices.map((d) => (
                       <button
                         key={d.id}
-                        onClick={() => setPreviewDevice(d.id)}
+                        onClick={() =>{  setPreviewDevice(d.id); }}
                         title={d.label}
                         className={cn(
                           "p-1.5 rounded-md transition-all",
@@ -778,7 +774,7 @@ export default function PostsModuleConfigPage() {
               <div className="mt-3 text-xs text-slate-500 text-center">
                 {activePreview === 'list' ? 'Trang /posts' : 'Trang /posts/[slug]'}
                 {' • '}Style: <strong>{activePreview === 'list' ? LIST_STYLES.find(s => s.id === listStyle)?.label : DETAIL_STYLES.find(s => s.id === detailStyle)?.label}</strong>
-                {' • '}{previewDevice === 'desktop' ? '1920px' : previewDevice === 'tablet' ? '768px' : '375px'}
+                {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
               </div>
             </CardContent>
           </Card>
@@ -812,10 +808,10 @@ function BrowserFrame({ children }: { children: React.ReactNode }) {
 // List Preview Component
 function ListPreview({ style, brandColor, device }: { style: PostsListStyle; brandColor: string; device: PreviewDevice }) {
   const mockPosts = [
-    { id: 1, title: 'Bài viết nổi bật số 1', category: 'Tin tức', date: '10/01/2026', views: 1234 },
-    { id: 2, title: 'Hướng dẫn sử dụng sản phẩm', category: 'Hướng dẫn', date: '09/01/2026', views: 567 },
-    { id: 3, title: 'Cập nhật tính năng mới', category: 'Tin tức', date: '08/01/2026', views: 890 },
-    { id: 4, title: 'Tips và tricks hữu ích', category: 'Tips', date: '07/01/2026', views: 432 },
+    { category: 'Tin tức', date: '10/01/2026', id: 1, title: 'Bài viết nổi bật số 1', views: 1234 },
+    { category: 'Hướng dẫn', date: '09/01/2026', id: 2, title: 'Hướng dẫn sử dụng sản phẩm', views: 567 },
+    { category: 'Tin tức', date: '08/01/2026', id: 3, title: 'Cập nhật tính năng mới', views: 890 },
+    { category: 'Tips', date: '07/01/2026', id: 4, title: 'Tips và tricks hữu ích', views: 432 },
   ];
   const categories = ['Tất cả', 'Tin tức', 'Hướng dẫn', 'Tips'];
 

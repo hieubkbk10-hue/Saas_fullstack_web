@@ -1,8 +1,8 @@
-export { ToggleSwitch } from './ToggleSwitch';
+export { ToggleSwitch } from './toggle-switch';
 export { FieldRow } from './FieldRow';
-export { ModuleHeader } from './ModuleHeader';
+export { ModuleHeader } from './module-header';
 export { ModuleStatus } from './ModuleStatus';
 export { ConventionNote, Code } from './ConventionNote';
-export { SettingsCard, SettingInput, SettingSelect } from './SettingsCard';
+export { SettingsCard, SettingInput, SettingSelect } from './settings-card';
 export { FeaturesCard } from './FeaturesCard';
 export { FieldsCard } from './FieldsCard';

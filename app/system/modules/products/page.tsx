@@ -1,58 +1,58 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, usePaginatedQuery } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Package, FolderTree, Tag, DollarSign, Box, Image, Loader2, Database, Trash2, RefreshCw, MessageSquare, Settings, Palette, Eye, Monitor, Tablet, Smartphone, ShoppingCart } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { Box, Database, DollarSign, Eye, FolderTree, Image, Loader2, MessageSquare, Monitor, Package, Palette, RefreshCw, Settings, ShoppingCart, Smartphone, Tablet, Tag, Trash2 } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput, SettingSelect,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus, SettingInput,
+  SettingSelect, SettingsCard
 } from '@/components/modules/shared';
-import { Card, CardContent, CardHeader, CardTitle, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, cn } from '@/app/admin/components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'products';
 const CATEGORY_MODULE_KEY = 'productCategories';
 
 const FEATURES_CONFIG = [
-  { key: 'enableSalePrice', label: 'Giá khuyến mãi', icon: DollarSign, linkedField: 'salePrice' },
-  { key: 'enableGallery', label: 'Thư viện ảnh', icon: Image, linkedField: 'images' },
-  { key: 'enableSKU', label: 'Mã SKU', icon: Tag, linkedField: 'sku' },
-  { key: 'enableStock', label: 'Quản lý kho', icon: Box, linkedField: 'stock' },
+  { icon: DollarSign, key: 'enableSalePrice', label: 'Giá khuyến mãi', linkedField: 'salePrice' },
+  { icon: Image, key: 'enableGallery', label: 'Thư viện ảnh', linkedField: 'images' },
+  { icon: Tag, key: 'enableSKU', label: 'Mã SKU', linkedField: 'sku' },
+  { icon: Box, key: 'enableStock', label: 'Quản lý kho', linkedField: 'stock' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { productsPerPage: number; defaultStatus: string; lowStockThreshold: number };
+interface SettingsState { productsPerPage: number; defaultStatus: string; lowStockThreshold: number }
 type TabType = 'config' | 'data' | 'appearance';
 type ProductsListStyle = 'grid' | 'list' | 'catalog';
 type ProductsDetailStyle = 'classic' | 'modern' | 'minimal';
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
 
 const LIST_STYLES: { id: ProductsListStyle; label: string; description: string }[] = [
-  { id: 'grid', label: 'Grid', description: 'Lưới sản phẩm với filter bar, phổ biến nhất' },
-  { id: 'list', label: 'List', description: 'Danh sách dọc với ảnh thumbnail, phù hợp so sánh' },
-  { id: 'catalog', label: 'Catalog', description: 'Kiểu catalog với sidebar danh mục' },
+  { description: 'Lưới sản phẩm với filter bar, phổ biến nhất', id: 'grid', label: 'Grid' },
+  { description: 'Danh sách dọc với ảnh thumbnail, phù hợp so sánh', id: 'list', label: 'List' },
+  { description: 'Kiểu catalog với sidebar danh mục', id: 'catalog', label: 'Catalog' },
 ];
 
 const DETAIL_STYLES: { id: ProductsDetailStyle; label: string; description: string }[] = [
-  { id: 'classic', label: 'Classic', description: 'Layout 2 cột với gallery và info' },
-  { id: 'modern', label: 'Modern', description: 'Full-width hero, landing page style' },
-  { id: 'minimal', label: 'Minimal', description: 'Tối giản, tập trung sản phẩm' },
+  { description: 'Layout 2 cột với gallery và info', id: 'classic', label: 'Classic' },
+  { description: 'Full-width hero, landing page style', id: 'modern', label: 'Modern' },
+  { description: 'Tối giản, tập trung sản phẩm', id: 'minimal', label: 'Minimal' },
 ];
 
 const deviceWidths = {
   desktop: 'w-full',
-  tablet: 'w-[768px] max-w-full',
-  mobile: 'w-[375px] max-w-full'
+  mobile: 'w-[375px] max-w-full',
+  tablet: 'w-[768px] max-w-full'
 };
 
 const devices = [
-  { id: 'desktop' as const, icon: Monitor, label: 'Desktop' },
-  { id: 'tablet' as const, icon: Tablet, label: 'Tablet' },
-  { id: 'mobile' as const, icon: Smartphone, label: 'Mobile' }
+  { icon: Monitor, id: 'desktop' as const, label: 'Desktop' },
+  { icon: Tablet, id: 'tablet' as const, label: 'Tablet' },
+  { icon: Smartphone, id: 'mobile' as const, label: 'Mobile' }
 ];
 
 export default function ProductsModuleConfigPage() {
@@ -95,7 +95,7 @@ export default function ProductsModuleConfigPage() {
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localProductFields, setLocalProductFields] = useState<FieldConfig[]>([]);
   const [localCategoryFields, setLocalCategoryFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ productsPerPage: 12, defaultStatus: 'Draft', lowStockThreshold: 10 });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ defaultStatus: 'Draft', lowStockThreshold: 10, productsPerPage: 12 });
   const [isSaving, setIsSaving] = useState(false);
 
   // Appearance tab states
@@ -121,14 +121,14 @@ export default function ProductsModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalProductFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -136,13 +136,13 @@ export default function ProductsModuleConfigPage() {
   useEffect(() => {
     if (categoryFieldsData) {
       setLocalCategoryFields(categoryFieldsData.map(f => ({
+        enabled: f.enabled,
         id: f._id,
+        isSystem: f.isSystem,
         key: f.fieldKey,
         name: f.name,
-        type: f.type,
         required: f.required,
-        enabled: f.enabled,
-        isSystem: f.isSystem,
+        type: f.type,
       })));
     }
   }, [categoryFieldsData]);
@@ -152,7 +152,7 @@ export default function ProductsModuleConfigPage() {
       const productsPerPage = settingsData.find(s => s.settingKey === 'productsPerPage')?.value as number ?? 12;
       const defaultStatus = settingsData.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'Draft';
       const lowStockThreshold = settingsData.find(s => s.settingKey === 'lowStockThreshold')?.value as number ?? 10;
-      setLocalSettings({ productsPerPage, defaultStatus, lowStockThreshold });
+      setLocalSettings({ defaultStatus, lowStockThreshold, productsPerPage });
     }
   }, [settingsData]);
 
@@ -172,19 +172,15 @@ export default function ProductsModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverProductFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverProductFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
-  const serverCategoryFields = useMemo(() => {
-    return categoryFieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [categoryFieldsData]);
+  const serverCategoryFields = useMemo(() => categoryFieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [categoryFieldsData]);
 
   const serverSettings = useMemo(() => {
     const productsPerPage = settingsData?.find(s => s.settingKey === 'productsPerPage')?.value as number ?? 12;
     const defaultStatus = settingsData?.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'Draft';
     const lowStockThreshold = settingsData?.find(s => s.settingKey === 'lowStockThreshold')?.value as number ?? 10;
-    return { productsPerPage, defaultStatus, lowStockThreshold };
+    return { defaultStatus, lowStockThreshold, productsPerPage };
   }, [settingsData]);
 
   const hasChanges = useMemo(() => {
@@ -213,7 +209,7 @@ export default function ProductsModuleConfigPage() {
 
   const handleToggleProductField = (id: string) => {
     const field = localProductFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalProductFields(prev => {
@@ -244,19 +240,19 @@ export default function ProductsModuleConfigPage() {
       const promises: Promise<unknown>[] = [];
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
+          promises.push(toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY }));
         }
       }
       for (const field of localProductFields) {
         const server = serverProductFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
+          promises.push(updateField({ enabled: field.enabled, id: field.id as Id<"moduleFields"> }));
         }
       }
       for (const field of localCategoryFields) {
         const server = serverCategoryFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
+          promises.push(updateField({ enabled: field.enabled, id: field.id as Id<"moduleFields"> }));
         }
       }
       if (localSettings.productsPerPage !== serverSettings.productsPerPage) {
@@ -287,7 +283,7 @@ export default function ProductsModuleConfigPage() {
   };
 
   const handleClearAll = async () => {
-    if (!confirm('Xóa toàn bộ dữ liệu sản phẩm, danh mục và đánh giá?')) return;
+    if (!confirm('Xóa toàn bộ dữ liệu sản phẩm, danh mục và đánh giá?')) {return;}
     toast.loading('Đang xóa dữ liệu...');
     await clearComments();
     await clearProductsData();
@@ -297,7 +293,7 @@ export default function ProductsModuleConfigPage() {
   };
 
   const handleResetAll = async () => {
-    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
+    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) {return;}
     toast.loading('Đang reset dữ liệu...');
     await clearComments();
     await clearProductsData();
@@ -324,8 +320,8 @@ export default function ProductsModuleConfigPage() {
     try {
       await setMultipleSettings({
         settings: [
-          { key: 'products_list_style', value: listStyle, group: 'products' },
-          { key: 'products_detail_style', value: detailStyle, group: 'products' },
+          { group: 'products', key: 'products_list_style', value: listStyle },
+          { group: 'products', key: 'products_detail_style', value: detailStyle },
         ]
       });
       setAppearanceHasChanges(false);
@@ -349,7 +345,7 @@ export default function ProductsModuleConfigPage() {
   const categoryMap: Record<string, string> = {};
   categoryStats?.forEach(cat => { categoryMap[cat._id] = cat.name; });
 
-  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -360,15 +356,15 @@ export default function ProductsModuleConfigPage() {
         iconBgClass="bg-orange-500/10"
         iconTextClass="text-orange-600 dark:text-orange-400"
         buttonClass="bg-orange-600 hover:bg-orange-500"
-        onSave={activeTab === 'config' ? handleSave : activeTab === 'appearance' ? handleSaveAppearance : undefined}
-        hasChanges={activeTab === 'config' ? hasChanges : activeTab === 'appearance' ? appearanceHasChanges : false}
+        onSave={activeTab === 'config' ? handleSave : (activeTab === 'appearance' ? handleSaveAppearance : undefined)}
+        hasChanges={activeTab === 'config' ? hasChanges : (activeTab === 'appearance' ? appearanceHasChanges : false)}
         isSaving={isSaving}
       />
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={cn(
             "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
             activeTab === 'config'
@@ -379,7 +375,7 @@ export default function ProductsModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={cn(
             "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
             activeTab === 'data'
@@ -390,7 +386,7 @@ export default function ProductsModuleConfigPage() {
           <Database size={16} /> Dữ liệu
         </button>
         <button
-          onClick={() => setActiveTab('appearance')}
+          onClick={() =>{  setActiveTab('appearance'); }}
           className={cn(
             "flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
             activeTab === 'appearance'
@@ -412,20 +408,20 @@ export default function ProductsModuleConfigPage() {
                 <SettingInput 
                   label="Số SP / trang" 
                   value={localSettings.productsPerPage} 
-                  onChange={(v) => setLocalSettings({...localSettings, productsPerPage: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, productsPerPage: v}); }}
                   focusColor="focus:border-orange-500"
                 />
                 <SettingSelect
                   label="Trạng thái mặc định"
                   value={localSettings.defaultStatus}
-                  onChange={(v) => setLocalSettings({...localSettings, defaultStatus: v})}
-                  options={[{ value: 'Draft', label: 'Bản nháp' }, { value: 'Active', label: 'Đang bán' }]}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, defaultStatus: v}); }}
+                  options={[{ label: 'Bản nháp', value: 'Draft' }, { label: 'Đang bán', value: 'Active' }]}
                   focusColor="focus:border-orange-500"
                 />
                 <SettingInput 
                   label="Ngưỡng tồn kho thấp" 
                   value={localSettings.lowStockThreshold} 
-                  onChange={(v) => setLocalSettings({...localSettings, lowStockThreshold: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, lowStockThreshold: v}); }}
                   focusColor="focus:border-orange-500"
                 />
               </SettingsCard>
@@ -553,8 +549,8 @@ export default function ProductsModuleConfigPage() {
                     </TableCell>
                     <TableCell className={`text-center ${product.stock < 10 ? 'text-red-500 font-medium' : ''}`}>{product.stock}</TableCell>
                     <TableCell>
-                      <Badge variant={product.status === 'Active' ? 'success' : product.status === 'Draft' ? 'secondary' : 'warning'}>
-                        {product.status === 'Active' ? 'Đang bán' : product.status === 'Draft' ? 'Nháp' : 'Lưu trữ'}
+                      <Badge variant={product.status === 'Active' ? 'success' : (product.status === 'Draft' ? 'secondary' : 'warning')}>
+                        {product.status === 'Active' ? 'Đang bán' : (product.status === 'Draft' ? 'Nháp' : 'Lưu trữ')}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -570,7 +566,7 @@ export default function ProductsModuleConfigPage() {
             </Table>
             {productsStatus === 'CanLoadMore' && (
               <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-center">
-                <Button variant="ghost" size="sm" onClick={() => loadMoreProducts(10)}>
+                <Button variant="ghost" size="sm" onClick={() =>{  loadMoreProducts(10); }}>
                   Tải thêm sản phẩm
                 </Button>
               </div>
@@ -630,8 +626,8 @@ export default function ProductsModuleConfigPage() {
                     <TableCell className="font-medium">{review.authorName}</TableCell>
                     <TableCell className="text-slate-600 dark:text-slate-400 max-w-xs truncate">{review.content}</TableCell>
                     <TableCell>
-                      <Badge variant={review.status === 'Approved' ? 'success' : review.status === 'Pending' ? 'secondary' : 'destructive'}>
-                        {review.status === 'Approved' ? 'Đã duyệt' : review.status === 'Pending' ? 'Chờ duyệt' : 'Spam'}
+                      <Badge variant={review.status === 'Approved' ? 'success' : (review.status === 'Pending' ? 'secondary' : 'destructive')}>
+                        {review.status === 'Approved' ? 'Đã duyệt' : (review.status === 'Pending' ? 'Chờ duyệt' : 'Spam')}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -647,7 +643,7 @@ export default function ProductsModuleConfigPage() {
             </Table>
             {reviewsStatus === 'CanLoadMore' && (
               <div className="p-3 border-t border-slate-100 dark:border-slate-800 text-center">
-                <Button variant="ghost" size="sm" onClick={() => loadMoreReviews(10)}>
+                <Button variant="ghost" size="sm" onClick={() =>{  loadMoreReviews(10); }}>
                   Tải thêm đánh giá
                 </Button>
               </div>
@@ -729,7 +725,7 @@ export default function ProductsModuleConfigPage() {
                 <div className="flex items-center gap-4">
                   <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
                     <button
-                      onClick={() => setActivePreview('list')}
+                      onClick={() =>{  setActivePreview('list'); }}
                       className={cn(
                         "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
                         activePreview === 'list' ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-500"
@@ -738,7 +734,7 @@ export default function ProductsModuleConfigPage() {
                       Danh sách
                     </button>
                     <button
-                      onClick={() => setActivePreview('detail')}
+                      onClick={() =>{  setActivePreview('detail'); }}
                       className={cn(
                         "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
                         activePreview === 'detail' ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-500"
@@ -751,7 +747,7 @@ export default function ProductsModuleConfigPage() {
                     {devices.map((d) => (
                       <button
                         key={d.id}
-                        onClick={() => setPreviewDevice(d.id)}
+                        onClick={() =>{  setPreviewDevice(d.id); }}
                         title={d.label}
                         className={cn(
                           "p-1.5 rounded-md transition-all",
@@ -777,7 +773,7 @@ export default function ProductsModuleConfigPage() {
               <div className="mt-3 text-xs text-slate-500 text-center">
                 {activePreview === 'list' ? 'Trang /products' : 'Trang /products/[slug]'}
                 {' • '}Style: <strong>{activePreview === 'list' ? LIST_STYLES.find(s => s.id === listStyle)?.label : DETAIL_STYLES.find(s => s.id === detailStyle)?.label}</strong>
-                {' • '}{previewDevice === 'desktop' ? '1920px' : previewDevice === 'tablet' ? '768px' : '375px'}
+                {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
               </div>
             </CardContent>
           </Card>
@@ -811,13 +807,13 @@ function BrowserFrame({ children }: { children: React.ReactNode }) {
 // List Preview Component
 function ListPreview({ style, brandColor, device }: { style: ProductsListStyle; brandColor: string; device: PreviewDevice }) {
   const mockProducts = [
-    { id: 1, name: 'iPhone 15 Pro Max 256GB', category: 'Điện thoại', price: 29990000, salePrice: 27990000 },
-    { id: 2, name: 'MacBook Air M2 13 inch', category: 'Laptop', price: 27990000, salePrice: null },
-    { id: 3, name: 'AirPods Pro 2', category: 'Phụ kiện', price: 5990000, salePrice: 4990000 },
-    { id: 4, name: 'Apple Watch Series 9', category: 'Đồng hồ', price: 11990000, salePrice: null },
+    { category: 'Điện thoại', id: 1, name: 'iPhone 15 Pro Max 256GB', price: 29_990_000, salePrice: 27_990_000 },
+    { category: 'Laptop', id: 2, name: 'MacBook Air M2 13 inch', price: 27_990_000, salePrice: null },
+    { category: 'Phụ kiện', id: 3, name: 'AirPods Pro 2', price: 5_990_000, salePrice: 4_990_000 },
+    { category: 'Đồng hồ', id: 4, name: 'Apple Watch Series 9', price: 11_990_000, salePrice: null },
   ];
   const categories = ['Tất cả', 'Điện thoại', 'Laptop', 'Phụ kiện', 'Đồng hồ'];
-  const formatPrice = (p: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
+  const formatPrice = (p: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(p);
 
   if (style === 'grid') {
     return (
@@ -953,7 +949,7 @@ function ListPreview({ style, brandColor, device }: { style: ProductsListStyle; 
 
 // Detail Preview Component
 function DetailPreview({ style, brandColor, device }: { style: ProductsDetailStyle; brandColor: string; device: PreviewDevice }) {
-  const formatPrice = (p: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p);
+  const formatPrice = (p: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(p);
 
   if (style === 'classic') {
     return (
@@ -977,8 +973,8 @@ function DetailPreview({ style, brandColor, device }: { style: ProductsDetailSty
             <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Điện thoại</span>
             <h1 className="font-bold text-lg mt-2">iPhone 15 Pro Max 256GB</h1>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-xl font-bold" style={{ color: brandColor }}>{formatPrice(27990000)}</span>
-              <span className="text-sm text-slate-400 line-through">{formatPrice(29990000)}</span>
+              <span className="text-xl font-bold" style={{ color: brandColor }}>{formatPrice(27_990_000)}</span>
+              <span className="text-sm text-slate-400 line-through">{formatPrice(29_990_000)}</span>
             </div>
             <div className="flex items-center gap-2 mt-3 text-xs text-green-600">
               <span className="w-2 h-2 bg-green-500 rounded-full" />
@@ -1004,8 +1000,8 @@ function DetailPreview({ style, brandColor, device }: { style: ProductsDetailSty
             iPhone 15 Pro Max 256GB
           </h1>
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-2xl font-bold" style={{ color: brandColor }}>{formatPrice(27990000)}</span>
-            <span className="text-sm text-slate-400 line-through">{formatPrice(29990000)}</span>
+            <span className="text-2xl font-bold" style={{ color: brandColor }}>{formatPrice(27_990_000)}</span>
+            <span className="text-sm text-slate-400 line-through">{formatPrice(29_990_000)}</span>
             <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-medium rounded">-7%</span>
           </div>
           <button className="mt-4 px-6 py-2.5 rounded-full text-white text-sm font-medium flex items-center gap-2" style={{ backgroundColor: brandColor }}>
@@ -1032,8 +1028,8 @@ function DetailPreview({ style, brandColor, device }: { style: ProductsDetailSty
         <span className="text-xs font-medium uppercase tracking-wider" style={{ color: brandColor }}>Điện thoại</span>
         <h1 className="font-bold text-lg mt-2">iPhone 15 Pro Max 256GB</h1>
         <div className="flex items-center justify-center gap-2 mt-2">
-          <span className="text-xl font-bold" style={{ color: brandColor }}>{formatPrice(27990000)}</span>
-          <span className="text-sm text-slate-400 line-through">{formatPrice(29990000)}</span>
+          <span className="text-xl font-bold" style={{ color: brandColor }}>{formatPrice(27_990_000)}</span>
+          <span className="text-sm text-slate-400 line-through">{formatPrice(29_990_000)}</span>
         </div>
       </div>
       <div className="aspect-square bg-slate-100 rounded-lg mb-4 flex items-center justify-center max-w-xs mx-auto">

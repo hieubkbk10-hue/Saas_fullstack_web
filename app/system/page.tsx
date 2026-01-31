@@ -2,16 +2,16 @@
 
 import React, { useState } from 'react';
 import { 
-  AreaChart, 
   Area, 
-  XAxis, 
-  YAxis, 
+  AreaChart, 
   CartesianGrid, 
+  ResponsiveContainer, 
   Tooltip, 
-  ResponsiveContainer 
+  XAxis, 
+  YAxis 
 } from 'recharts';
-import { ExternalLink, Settings, Eye, EyeOff, Save, Trash2, Edit3, Database, HardDrive, AlertCircle } from 'lucide-react';
-import { useQuery, useMutation } from 'convex/react';
+import { AlertCircle, Database, Edit3, ExternalLink, Eye, EyeOff, HardDrive, Save, Settings, Trash2 } from 'lucide-react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useI18n } from './i18n/context';
 
@@ -29,8 +29,8 @@ export default function OverviewPage() {
   const [form, setForm] = useState({
     dashboardUrl: '',
     email: '',
-    password: '',
     notes: '',
+    password: '',
   });
 
   // Fetch bandwidth data from usageStats
@@ -45,21 +45,21 @@ export default function OverviewPage() {
     if (config) {
       setForm({
         dashboardUrl: config.dashboardUrl,
-        email: config.email || '',
-        password: config.password || '',
-        notes: config.notes || '',
+        email: config.email ?? '',
+        notes: config.notes ?? '',
+        password: config.password ?? '',
       });
     }
     setIsEditing(true);
   };
 
   const handleSave = async () => {
-    if (!form.dashboardUrl.trim()) return;
+    if (!form.dashboardUrl.trim()) {return;}
     await upsert({
       dashboardUrl: form.dashboardUrl,
       email: form.email || undefined,
-      password: form.password || undefined,
       notes: form.notes || undefined,
+      password: form.password || undefined,
     });
     setIsEditing(false);
   };
@@ -67,7 +67,7 @@ export default function OverviewPage() {
   const handleDelete = async () => {
     if (confirm(t.common.confirm + '?')) {
       await remove();
-      setForm({ dashboardUrl: '', email: '', password: '', notes: '' });
+      setForm({ dashboardUrl: '', email: '', notes: '', password: '' });
     }
   };
 
@@ -107,13 +107,13 @@ export default function OverviewPage() {
               {t.overview.noConfig}
             </p>
             <button
-              onClick={() => setIsEditing(true)}
+              onClick={() =>{  setIsEditing(true); }}
               className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
             >
               {t.overview.addConfig}
             </button>
           </div>
-        ) : isEditing ? (
+        ) : (isEditing ? (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
@@ -123,7 +123,7 @@ export default function OverviewPage() {
                 <input
                   type="url"
                   value={form.dashboardUrl}
-                  onChange={(e) => setForm({ ...form, dashboardUrl: e.target.value })}
+                  onChange={(e) =>{  setForm({ ...form, dashboardUrl: e.target.value }); }}
                   placeholder="https://dashboard.convex.dev/t/your-team/settings/usage"
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                 />
@@ -136,7 +136,7 @@ export default function OverviewPage() {
                 <input
                   type="email"
                   value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  onChange={(e) =>{  setForm({ ...form, email: e.target.value }); }}
                   placeholder="your@email.com"
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                 />
@@ -150,13 +150,13 @@ export default function OverviewPage() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    onChange={(e) =>{  setForm({ ...form, password: e.target.value }); }}
                     placeholder="••••••••"
                     className="w-full px-3 py-2 pr-10 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() =>{  setShowPassword(!showPassword); }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -170,7 +170,7 @@ export default function OverviewPage() {
                 </label>
                 <textarea
                   value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  onChange={(e) =>{  setForm({ ...form, notes: e.target.value }); }}
                   rows={2}
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
                 />
@@ -187,7 +187,7 @@ export default function OverviewPage() {
                 {t.common.save}
               </button>
               <button
-                onClick={() => setIsEditing(false)}
+                onClick={() =>{  setIsEditing(false); }}
                 className="px-4 py-2 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 {t.common.cancel}
@@ -219,7 +219,7 @@ export default function OverviewPage() {
                       {showPassword ? config.password : '••••••••'}
                     </p>
                     <button
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={() =>{  setShowPassword(!showPassword); }}
                       className="text-slate-400 hover:text-slate-600"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -260,7 +260,7 @@ export default function OverviewPage() {
               </button>
             </div>
           </div>
-        )}
+        ))}
       </div>
 
       {/* Bandwidth Chart */}
@@ -276,7 +276,7 @@ export default function OverviewPage() {
             {timeRanges.map((range) => (
               <button 
                 key={range} 
-                onClick={() => setSelectedRange(range)}
+                onClick={() =>{  setSelectedRange(range); }}
                 className={`text-xs px-2.5 py-1.5 rounded border transition-all ${
                   selectedRange === range 
                     ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-600 dark:text-cyan-400' 
@@ -351,9 +351,9 @@ export default function OverviewPage() {
                   formatter={(value, name) => {
                     const formattedValue = typeof value === 'number'
                       ? value.toLocaleString()
-                      : Array.isArray(value)
+                      : (Array.isArray(value)
                         ? value.join(', ')
-                        : String(value);
+                        : String(value));
                     return [
                       `${formattedValue} MB`,
                       name === 'dbBandwidth' ? t.overview.dbBandwidth : t.overview.fileBandwidth

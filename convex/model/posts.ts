@@ -1,5 +1,5 @@
-import { QueryCtx, MutationCtx } from "../_generated/server";
-import { Doc, Id } from "../_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "../_generated/server";
+import type { Doc, Id } from "../_generated/dataModel";
 
 // ============================================================
 // HELPER FUNCTIONS - Posts Model Layer
@@ -14,7 +14,7 @@ export async function getById(
   ctx: QueryCtx,
   { id }: { id: Id<"posts"> }
 ): Promise<Doc<"posts"> | null> {
-  return await ctx.db.get(id);
+  return  ctx.db.get(id);
 }
 
 /**
@@ -25,7 +25,7 @@ export async function getByIdOrThrow(
   { id }: { id: Id<"posts"> }
 ): Promise<Doc<"posts">> {
   const post = await ctx.db.get(id);
-  if (!post) throw new Error("Post not found");
+  if (!post) {throw new Error("Post not found");}
   return post;
 }
 
@@ -36,7 +36,7 @@ export async function getBySlug(
   ctx: QueryCtx,
   { slug }: { slug: string }
 ): Promise<Doc<"posts"> | null> {
-  return await ctx.db
+  return  ctx.db
     .query("posts")
     .withIndex("by_slug", (q) => q.eq("slug", slug))
     .unique();
@@ -53,8 +53,8 @@ export async function isSlugExists(
     .query("posts")
     .withIndex("by_slug", (q) => q.eq("slug", slug))
     .unique();
-  if (!existing) return false;
-  if (excludeId && existing._id === excludeId) return false;
+  if (!existing) {return false;}
+  if (excludeId && existing._id === excludeId) {return false;}
   return true;
 }
 
@@ -66,7 +66,7 @@ export async function listWithLimit(
   ctx: QueryCtx,
   { limit = MAX_ITEMS_LIMIT }: { limit?: number } = {}
 ): Promise<Doc<"posts">[]> {
-  return await ctx.db
+  return  ctx.db
     .query("posts")
     .order("desc")
     .take(Math.min(limit, MAX_ITEMS_LIMIT));
@@ -79,7 +79,7 @@ export async function listByStatus(
   ctx: QueryCtx,
   { status, limit = MAX_ITEMS_LIMIT }: { status: Doc<"posts">["status"]; limit?: number }
 ): Promise<Doc<"posts">[]> {
-  return await ctx.db
+  return  ctx.db
     .query("posts")
     .withIndex("by_status_publishedAt", (q) => q.eq("status", status))
     .order("desc")
@@ -93,7 +93,7 @@ export async function listByCategory(
   ctx: QueryCtx,
   { categoryId, limit = MAX_ITEMS_LIMIT }: { categoryId: Id<"postCategories">; limit?: number }
 ): Promise<Doc<"posts">[]> {
-  return await ctx.db
+  return  ctx.db
     .query("posts")
     .withIndex("by_category_status", (q) => q.eq("categoryId", categoryId))
     .take(Math.min(limit, MAX_ITEMS_LIMIT));
@@ -164,18 +164,18 @@ export async function create(
   const order = args.order ?? (await getNextOrder(ctx));
   const status = args.status ?? "Draft";
 
-  return await ctx.db.insert("posts", {
-    title: args.title,
-    slug: args.slug,
+  return  ctx.db.insert("posts", {
+    authorId: args.authorId,
+    categoryId: args.categoryId,
     content: args.content,
     excerpt: args.excerpt,
-    thumbnail: args.thumbnail,
-    categoryId: args.categoryId,
-    authorId: args.authorId,
-    status,
-    views: 0,
-    publishedAt: status === "Published" ? Date.now() : undefined,
     order,
+    publishedAt: status === "Published" ? Date.now() : undefined,
+    slug: args.slug,
+    status,
+    thumbnail: args.thumbnail,
+    title: args.title,
+    views: 0,
   });
 }
 
@@ -199,7 +199,7 @@ export async function update(
   const post = await getByIdOrThrow(ctx, { id: args.id });
 
   if (args.slug && args.slug !== post.slug) {
-    if (await isSlugExists(ctx, { slug: args.slug, excludeId: args.id })) {
+    if (await isSlugExists(ctx, { excludeId: args.id, slug: args.slug })) {
       throw new Error("Slug already exists");
     }
   }

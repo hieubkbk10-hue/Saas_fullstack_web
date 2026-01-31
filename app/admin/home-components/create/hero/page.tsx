@@ -2,9 +2,11 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { HeroBannerPreview, HeroStyle, HeroContent } from '../../previews';
-import { MultiImageUploader, ImageItem } from '../../../components/MultiImageUploader';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
+import type { HeroContent, HeroStyle } from '../../previews';
+import { HeroBannerPreview } from '../../previews';
+import type { ImageItem } from '../../../components/MultiImageUploader';
+import { MultiImageUploader } from '../../../components/MultiImageUploader';
 
 interface HeroSlide extends ImageItem {
   id: string | number;
@@ -20,16 +22,16 @@ export default function HeroCreatePage() {
   const brandColor = useBrandColor();
   
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([
-    { id: 'slide-1', url: '', image: '', link: '' }
+    { id: 'slide-1', image: '', link: '', url: '' }
   ]);
   const [heroStyle, setHeroStyle] = useState<HeroStyle>('slider');
   const [heroContent, setHeroContent] = useState<HeroContent>({
     badge: 'Nổi bật',
-    heading: 'Khám phá bộ sưu tập mới nhất',
+    countdownText: 'Còn 3 ngày',
     description: 'Sản phẩm chất lượng cao với giá thành hợp lý',
+    heading: 'Khám phá bộ sưu tập mới nhất',
     primaryButtonText: 'Khám phá ngay',
     secondaryButtonText: 'Tìm hiểu thêm',
-    countdownText: 'Còn 3 ngày',
   });
 
   const handleSlidesChange = (slides: HeroSlide[]) => {
@@ -44,9 +46,9 @@ export default function HeroCreatePage() {
 
   const onSubmit = (e: React.FormEvent) => {
     void handleSubmit(e, { 
-      slides: heroSlides.map(s => ({ image: s.url || s.image, link: s.link })), 
+      content: needsContentForm(heroStyle) ? heroContent : undefined, 
+      slides: heroSlides.map(s => ({ image: s.url || s.image, link: s.link })),
       style: heroStyle,
-      content: needsContentForm(heroStyle) ? heroContent : undefined,
     });
   };
 
@@ -96,7 +98,7 @@ export default function HeroCreatePage() {
                 <Label>Badge / Nhãn</Label>
                 <Input 
                   value={heroContent.badge} 
-                  onChange={(e) => setHeroContent({...heroContent, badge: e.target.value})}
+                  onChange={(e) =>{  setHeroContent({...heroContent, badge: e.target.value}); }}
                   placeholder="VD: Nổi bật, Hot, Mới..."
                 />
               </div>
@@ -104,7 +106,7 @@ export default function HeroCreatePage() {
                 <Label>Tiêu đề chính</Label>
                 <Input 
                   value={heroContent.heading} 
-                  onChange={(e) => setHeroContent({...heroContent, heading: e.target.value})}
+                  onChange={(e) =>{  setHeroContent({...heroContent, heading: e.target.value}); }}
                   placeholder="Tiêu đề lớn hiển thị trên hero"
                 />
               </div>
@@ -113,7 +115,7 @@ export default function HeroCreatePage() {
               <Label>Mô tả</Label>
               <textarea 
                 value={heroContent.description} 
-                onChange={(e) => setHeroContent({...heroContent, description: e.target.value})}
+                onChange={(e) =>{  setHeroContent({...heroContent, description: e.target.value}); }}
                 placeholder="Mô tả ngắn gọn..."
                 className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
               />
@@ -123,7 +125,7 @@ export default function HeroCreatePage() {
                 <Label>Nút chính</Label>
                 <Input 
                   value={heroContent.primaryButtonText} 
-                  onChange={(e) => setHeroContent({...heroContent, primaryButtonText: e.target.value})}
+                  onChange={(e) =>{  setHeroContent({...heroContent, primaryButtonText: e.target.value}); }}
                   placeholder="VD: Khám phá ngay, Mua ngay..."
                 />
               </div>
@@ -132,7 +134,7 @@ export default function HeroCreatePage() {
                   <Label>Nút phụ</Label>
                   <Input 
                     value={heroContent.secondaryButtonText} 
-                    onChange={(e) => setHeroContent({...heroContent, secondaryButtonText: e.target.value})}
+                    onChange={(e) =>{  setHeroContent({...heroContent, secondaryButtonText: e.target.value}); }}
                     placeholder="VD: Tìm hiểu thêm..."
                   />
                 </div>
@@ -142,7 +144,7 @@ export default function HeroCreatePage() {
                   <Label>Text đếm ngược / Phụ</Label>
                   <Input 
                     value={heroContent.countdownText} 
-                    onChange={(e) => setHeroContent({...heroContent, countdownText: e.target.value})}
+                    onChange={(e) =>{  setHeroContent({...heroContent, countdownText: e.target.value}); }}
                     placeholder="VD: Còn 3 ngày, Chỉ hôm nay..."
                   />
                 </div>

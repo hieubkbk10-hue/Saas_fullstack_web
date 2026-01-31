@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { 
-  Upload, Trash2, Search, Loader2, Grid, List, 
-  FolderOpen, Image as ImageIcon, FileVideo, FileText, 
-  Edit, Eye, Copy, Check, X
+  Check, Copy, Edit, Eye, FileText, FileVideo, 
+  FolderOpen, Grid, Image as ImageIcon, List, 
+  Loader2, Search, Trash2, Upload, X
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Input, Badge, cn } from '../components/ui';
+import { Badge, Button, Card, Input, cn } from '../components/ui';
 import { BulkActionBar, SelectCheckbox } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
@@ -55,24 +55,24 @@ async function compressImage(file: File, quality: number = COMPRESSION_QUALITY):
         quality
       );
     };
-    img.onerror = () => resolve(file);
+    img.onerror = () =>{  resolve(file); };
     img.src = URL.createObjectURL(file);
   });
 }
 
 // Slugify filename
 function slugifyFilename(filename: string): string {
-  const ext = filename.split('.').pop() || '';
+  const ext = filename.split('.').pop() ?? '';
   const name = filename.replace(/\.[^/.]+$/, '');
   
   const slugified = name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[đĐ]/g, "d")
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+    .replaceAll(/[\u0300-\u036F]/g, "")
+    .replaceAll(/[đĐ]/g, "d")
+    .replaceAll(/[^a-z0-9\s-]/g, '')
+    .replaceAll(/\s+/g, '-')
+    .replaceAll(/-+/g, '-')
     .trim();
   
   const timestamp = Date.now();
@@ -80,23 +80,23 @@ function slugifyFilename(filename: string): string {
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) {return '0 B';}
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
 function getFileIcon(mimeType: string) {
-  if (mimeType.startsWith('image/')) return ImageIcon;
-  if (mimeType.startsWith('video/')) return FileVideo;
+  if (mimeType.startsWith('image/')) {return ImageIcon;}
+  if (mimeType.startsWith('video/')) {return FileVideo;}
   return FileText;
 }
 
 function getMimeTypeLabel(mimeType: string): string {
-  if (mimeType.startsWith('image/')) return 'Hình ảnh';
-  if (mimeType.startsWith('video/')) return 'Video';
-  if (mimeType === 'application/pdf') return 'PDF';
+  if (mimeType.startsWith('image/')) {return 'Hình ảnh';}
+  if (mimeType.startsWith('video/')) {return 'Video';}
+  if (mimeType === 'application/pdf') {return 'PDF';}
   return 'Tài liệu';
 }
 
@@ -156,7 +156,7 @@ function MediaContent() {
 
   // Filter media
   const filteredMedia = useMemo(() => {
-    if (!mediaData) return [];
+    if (!mediaData) {return [];}
     
     let data = [...mediaData];
     
@@ -168,9 +168,9 @@ function MediaContent() {
     // Type filter
     if (filterType !== 'all') {
       data = data.filter(m => {
-        if (filterType === 'image') return m.mimeType.startsWith('image/');
-        if (filterType === 'video') return m.mimeType.startsWith('video/');
-        if (filterType === 'document') return m.mimeType === 'application/pdf' || m.mimeType.includes('document');
+        if (filterType === 'image') {return m.mimeType.startsWith('image/');}
+        if (filterType === 'video') {return m.mimeType.startsWith('video/');}
+        if (filterType === 'document') {return m.mimeType === 'application/pdf' || m.mimeType.includes('document');}
         return true;
       });
     }
@@ -194,7 +194,7 @@ function MediaContent() {
 
   // Upload handler with compression
   const handleFileSelect = useCallback(async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {return;}
 
     setIsUploading(true);
     setUploadProgress(0);
@@ -203,7 +203,7 @@ function MediaContent() {
     let uploadedCount = 0;
 
     try {
-      for (const file of Array.from(files)) {
+      for (const file of files) {
         // Validate file
         if (file.size > 10 * 1024 * 1024) {
           toast.error(`${file.name}: File vượt quá 10MB`);
@@ -222,9 +222,9 @@ function MediaContent() {
 
         // Upload compressed file to storage
         const response = await fetch(uploadUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': finalMimeType },
           body: compressedBlob,
+          headers: { 'Content-Type': finalMimeType },
+          method: 'POST',
         });
 
         if (!response.ok) {
@@ -241,23 +241,23 @@ function MediaContent() {
         if (file.type.startsWith('image/')) {
           const img = new window.Image();
           const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
-            img.onload = () => resolve({ width: img.width, height: img.height });
-            img.onerror = () => resolve({ width: 0, height: 0 });
+            img.onload = () =>{  resolve({ height: img.height, width: img.width }); };
+            img.onerror = () =>{  resolve({ height: 0, width: 0 }); };
             img.src = URL.createObjectURL(compressedBlob);
           });
-          width = dimensions.width;
-          height = dimensions.height;
+          ({ width } = dimensions);
+          ({ height } = dimensions);
         }
 
         // Save to database with compressed size
         await createMedia({
-          storageId: storageId as Id<"_storage">,
           filename: slugifiedName,
+          folder: 'uploads',
+          height,
           mimeType: finalMimeType,
           size: compressedBlob.size,
+          storageId: storageId as Id<"_storage">,
           width,
-          height,
-          folder: 'uploads',
         });
 
         uploadedCount++;
@@ -271,13 +271,13 @@ function MediaContent() {
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
-      if (inputRef.current) inputRef.current.value = '';
+      if (inputRef.current) {inputRef.current.value = '';}
     }
   }, [generateUploadUrl, createMedia]);
 
   // Delete handlers
   const handleDelete = async (id: Id<"images">) => {
-    if (!confirm('Xóa file này? Thao tác không thể hoàn tác.')) return;
+    if (!confirm('Xóa file này? Thao tác không thể hoàn tác.')) {return;}
     
     try {
       await removeMedia({ id });
@@ -289,7 +289,7 @@ function MediaContent() {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Xóa ${selectedIds.length} file đã chọn? Thao tác không thể hoàn tác.`)) return;
+    if (!confirm(`Xóa ${selectedIds.length} file đã chọn? Thao tác không thể hoàn tác.`)) {return;}
     
     try {
       const count = await bulkRemoveMedia({ ids: selectedIds });
@@ -302,11 +302,11 @@ function MediaContent() {
 
   // Copy URL
   const handleCopyUrl = async (url: string | null, id: string) => {
-    if (!url) return;
+    if (!url) {return;}
     try {
       await navigator.clipboard.writeText(url);
       setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
+      setTimeout(() =>{  setCopiedId(null); }, 2000);
       toast.success('Đã copy URL');
     } catch {
       toast.error('Không thể copy URL');
@@ -369,7 +369,7 @@ function MediaContent() {
       <BulkActionBar 
         selectedCount={selectedIds.length} 
         onDelete={handleBulkDelete} 
-        onClearSelection={() => setSelectedIds([])} 
+        onClearSelection={() =>{  setSelectedIds([]); }} 
       />
 
       {/* Filters */}
@@ -383,7 +383,7 @@ function MediaContent() {
                 placeholder="Tìm kiếm..." 
                 className="pl-9 w-[200px]" 
                 value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)} 
+                onChange={(e) =>{  setSearchTerm(e.target.value); }} 
               />
             </div>
 
@@ -391,7 +391,7 @@ function MediaContent() {
             <select 
               className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value as FilterType)}
+              onChange={(e) =>{  setFilterType(e.target.value as FilterType); }}
             >
               <option value="all">Tất cả loại</option>
               <option value="image">Hình ảnh ({statsData?.imageCount ?? 0})</option>
@@ -404,7 +404,7 @@ function MediaContent() {
               <select 
                 className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 value={filterFolder}
-                onChange={(e) => setFilterFolder(e.target.value)}
+                onChange={(e) =>{  setFilterFolder(e.target.value); }}
               >
                 <option value="">Tất cả thư mục</option>
                 {foldersData.map(folder => (
@@ -417,7 +417,7 @@ function MediaContent() {
           {/* View mode */}
           <div className="flex gap-1 border border-slate-200 dark:border-slate-700 rounded-md p-1">
             <button
-              onClick={() => setViewMode('grid')}
+              onClick={() =>{  setViewMode('grid'); }}
               className={cn(
                 'p-2 rounded transition-colors',
                 viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-700 text-cyan-600' : 'text-slate-400 hover:text-slate-600'
@@ -426,7 +426,7 @@ function MediaContent() {
               <Grid size={18} />
             </button>
             <button
-              onClick={() => setViewMode('list')}
+              onClick={() =>{  setViewMode('list'); }}
               className={cn(
                 'p-2 rounded transition-colors',
                 viewMode === 'list' ? 'bg-slate-100 dark:bg-slate-700 text-cyan-600' : 'text-slate-400 hover:text-slate-600'
@@ -441,7 +441,7 @@ function MediaContent() {
         <div 
           className="p-4"
           onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
+          onDragOver={(e) =>{  e.preventDefault(); }}
         >
           {filteredMedia.length === 0 ? (
             <div 
@@ -454,7 +454,7 @@ function MediaContent() {
               </p>
               <p className="text-sm text-slate-400">Kéo thả hoặc click để tải lên</p>
             </div>
-          ) : viewMode === 'grid' ? (
+          ) : (viewMode === 'grid' ? (
             // Grid View
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {filteredMedia.map(media => {
@@ -473,7 +473,7 @@ function MediaContent() {
                     {/* Thumbnail */}
                     <div 
                       className="relative aspect-square bg-slate-100 dark:bg-slate-700 flex items-center justify-center"
-                      onClick={() => toggleSelectItem(media._id)}
+                      onClick={() =>{  toggleSelectItem(media._id); }}
                     >
                       {isImage && media.url ? (
                         <Image src={media.url} alt={media.filename} fill sizes="100%" className="object-cover" />
@@ -489,7 +489,7 @@ function MediaContent() {
                     )}>
                       <SelectCheckbox 
                         checked={isSelected} 
-                        onChange={() => toggleSelectItem(media._id)} 
+                        onChange={() =>{  toggleSelectItem(media._id); }} 
                       />
                     </div>
 
@@ -498,7 +498,7 @@ function MediaContent() {
                       {isImage && media.url && (
                         <button
                           className="p-1.5 bg-white dark:bg-slate-800 rounded shadow hover:bg-slate-50"
-                          onClick={() => setPreviewMedia(media)}
+                          onClick={() =>{  setPreviewMedia(media); }}
                           title="Xem"
                         >
                           <Eye size={14} />
@@ -506,7 +506,7 @@ function MediaContent() {
                       )}
                       <button
                         className="p-1.5 bg-white dark:bg-slate-800 rounded shadow hover:bg-slate-50"
-                        onClick={() => handleCopyUrl(media.url, media._id)}
+                        onClick={ async () => handleCopyUrl(media.url, media._id)}
                         title="Copy URL"
                       >
                         {copiedId === media._id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
@@ -518,7 +518,7 @@ function MediaContent() {
                       </Link>
                       <button
                         className="p-1.5 bg-white dark:bg-slate-800 rounded shadow hover:bg-red-50 text-red-500"
-                        onClick={() => handleDelete(media._id)}
+                        onClick={ async () => handleDelete(media._id)}
                         title="Xóa"
                       >
                         <Trash2 size={14} />
@@ -560,7 +560,7 @@ function MediaContent() {
                       isSelected ? 'border-cyan-500 bg-cyan-500/5' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
                     )}
                   >
-                    <SelectCheckbox checked={isSelected} onChange={() => toggleSelectItem(media._id)} />
+                    <SelectCheckbox checked={isSelected} onChange={() =>{  toggleSelectItem(media._id); }} />
                     
                     {/* Thumbnail */}
                     <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
@@ -593,7 +593,7 @@ function MediaContent() {
                     <div className="flex items-center gap-2">
                       <button
                         className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                        onClick={() => handleCopyUrl(media.url, media._id)}
+                        onClick={ async () => handleCopyUrl(media.url, media._id)}
                         title="Copy URL"
                       >
                         {copiedId === media._id ? <Check size={16} className="text-green-500" /> : <Copy size={16} className="text-slate-400" />}
@@ -605,7 +605,7 @@ function MediaContent() {
                       </Link>
                       <button
                         className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        onClick={() => handleDelete(media._id)}
+                        onClick={ async () => handleDelete(media._id)}
                         title="Xóa"
                       >
                         <Trash2 size={16} className="text-red-500" />
@@ -615,7 +615,7 @@ function MediaContent() {
                 );
               })}
             </div>
-          )}
+          ))}
         </div>
 
         {/* Footer */}
@@ -630,21 +630,21 @@ function MediaContent() {
       {previewMedia && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-          onClick={() => setPreviewMedia(null)}
+          onClick={() =>{  setPreviewMedia(null); }}
         >
           <button 
             className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-            onClick={() => setPreviewMedia(null)}
+            onClick={() =>{  setPreviewMedia(null); }}
           >
             <X size={24} className="text-white" />
           </button>
           <Image 
-            src={previewMedia.url || ''} 
+            src={previewMedia.url ?? ''} 
             alt={previewMedia.filename} 
             width={previewMedia.width ?? 1200}
             height={previewMedia.height ?? 900}
             className="max-w-[90vw] max-h-[90vh] object-contain"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) =>{  e.stopPropagation(); }}
           />
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur px-4 py-2 rounded-lg text-white text-sm">
             {previewMedia.filename} - {formatBytes(previewMedia.size)}

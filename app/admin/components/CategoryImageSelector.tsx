@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import {
   Upload, Trash2, Loader2, Image as ImageIcon,
   // Common category icons
@@ -21,59 +21,59 @@ import { Button, Input, cn } from './ui';
 
 // Available icons for categories
 const CATEGORY_ICONS = [
-  { name: 'shopping-bag', icon: ShoppingBag, label: 'Túi mua sắm' },
-  { name: 'shirt', icon: Shirt, label: 'Thời trang' },
-  { name: 'smartphone', icon: Smartphone, label: 'Điện thoại' },
-  { name: 'laptop', icon: Laptop, label: 'Laptop' },
-  { name: 'watch', icon: Watch, label: 'Đồng hồ' },
-  { name: 'home', icon: Home, label: 'Nhà cửa' },
-  { name: 'car', icon: Car, label: 'Xe cộ' },
-  { name: 'utensils', icon: Utensils, label: 'Ẩm thực' },
-  { name: 'flower', icon: Flower2, label: 'Hoa' },
-  { name: 'baby', icon: Baby, label: 'Mẹ & Bé' },
-  { name: 'dumbbell', icon: Dumbbell, label: 'Thể thao' },
-  { name: 'book', icon: Book, label: 'Sách' },
-  { name: 'music', icon: Music, label: 'Âm nhạc' },
-  { name: 'camera', icon: Camera, label: 'Máy ảnh' },
-  { name: 'gamepad', icon: Gamepad2, label: 'Game' },
-  { name: 'plane', icon: Plane, label: 'Du lịch' },
-  { name: 'heart', icon: Heart, label: 'Yêu thích' },
-  { name: 'gift', icon: Gift, label: 'Quà tặng' },
-  { name: 'sparkles', icon: Sparkles, label: 'Làm đẹp' },
-  { name: 'crown', icon: Crown, label: 'Cao cấp' },
-  { name: 'diamond', icon: Diamond, label: 'Trang sức' },
-  { name: 'star', icon: Star, label: 'Nổi bật' },
-  { name: 'sun', icon: Sun, label: 'Mùa hè' },
-  { name: 'moon', icon: Moon, label: 'Đêm' },
-  { name: 'coffee', icon: Coffee, label: 'Cà phê' },
-  { name: 'pizza', icon: Pizza, label: 'Đồ ăn' },
-  { name: 'cake', icon: Cake, label: 'Bánh' },
-  { name: 'wine', icon: Wine, label: 'Đồ uống' },
-  { name: 'apple', icon: Apple, label: 'Trái cây' },
-  { name: 'leaf', icon: Leaf, label: 'Thiên nhiên' },
-  { name: 'tree', icon: TreeDeciduous, label: 'Cây cối' },
-  { name: 'dog', icon: Dog, label: 'Thú cưng' },
-  { name: 'cat', icon: Cat, label: 'Mèo' },
-  { name: 'bird', icon: Bird, label: 'Chim' },
-  { name: 'fish', icon: Fish, label: 'Cá' },
-  { name: 'palette', icon: Palette, label: 'Nghệ thuật' },
-  { name: 'brush', icon: Brush, label: 'Vẽ' },
-  { name: 'scissors', icon: Scissors, label: 'Cắt may' },
-  { name: 'hammer', icon: Hammer, label: 'Dụng cụ' },
-  { name: 'wrench', icon: Wrench, label: 'Sửa chữa' },
-  { name: 'zap', icon: Zap, label: 'Điện' },
-  { name: 'wifi', icon: Wifi, label: 'Công nghệ' },
-  { name: 'headphones', icon: Headphones, label: 'Tai nghe' },
-  { name: 'tv', icon: Tv, label: 'TV' },
-  { name: 'speaker', icon: Speaker, label: 'Loa' },
-  { name: 'package', icon: Package, label: 'Sản phẩm' },
-  { name: 'box', icon: Box, label: 'Hộp' },
-  { name: 'truck', icon: Truck, label: 'Vận chuyển' },
-  { name: 'building', icon: Building2, label: 'Văn phòng' },
-  { name: 'store', icon: Store, label: 'Cửa hàng' },
-  { name: 'briefcase', icon: Briefcase, label: 'Công việc' },
-  { name: 'graduation', icon: GraduationCap, label: 'Giáo dục' },
-  { name: 'medical', icon: Stethoscope, label: 'Y tế' },
+  { icon: ShoppingBag, label: 'Túi mua sắm', name: 'shopping-bag' },
+  { icon: Shirt, label: 'Thời trang', name: 'shirt' },
+  { icon: Smartphone, label: 'Điện thoại', name: 'smartphone' },
+  { icon: Laptop, label: 'Laptop', name: 'laptop' },
+  { icon: Watch, label: 'Đồng hồ', name: 'watch' },
+  { icon: Home, label: 'Nhà cửa', name: 'home' },
+  { icon: Car, label: 'Xe cộ', name: 'car' },
+  { icon: Utensils, label: 'Ẩm thực', name: 'utensils' },
+  { icon: Flower2, label: 'Hoa', name: 'flower' },
+  { icon: Baby, label: 'Mẹ & Bé', name: 'baby' },
+  { icon: Dumbbell, label: 'Thể thao', name: 'dumbbell' },
+  { icon: Book, label: 'Sách', name: 'book' },
+  { icon: Music, label: 'Âm nhạc', name: 'music' },
+  { icon: Camera, label: 'Máy ảnh', name: 'camera' },
+  { icon: Gamepad2, label: 'Game', name: 'gamepad' },
+  { icon: Plane, label: 'Du lịch', name: 'plane' },
+  { icon: Heart, label: 'Yêu thích', name: 'heart' },
+  { icon: Gift, label: 'Quà tặng', name: 'gift' },
+  { icon: Sparkles, label: 'Làm đẹp', name: 'sparkles' },
+  { icon: Crown, label: 'Cao cấp', name: 'crown' },
+  { icon: Diamond, label: 'Trang sức', name: 'diamond' },
+  { icon: Star, label: 'Nổi bật', name: 'star' },
+  { icon: Sun, label: 'Mùa hè', name: 'sun' },
+  { icon: Moon, label: 'Đêm', name: 'moon' },
+  { icon: Coffee, label: 'Cà phê', name: 'coffee' },
+  { icon: Pizza, label: 'Đồ ăn', name: 'pizza' },
+  { icon: Cake, label: 'Bánh', name: 'cake' },
+  { icon: Wine, label: 'Đồ uống', name: 'wine' },
+  { icon: Apple, label: 'Trái cây', name: 'apple' },
+  { icon: Leaf, label: 'Thiên nhiên', name: 'leaf' },
+  { icon: TreeDeciduous, label: 'Cây cối', name: 'tree' },
+  { icon: Dog, label: 'Thú cưng', name: 'dog' },
+  { icon: Cat, label: 'Mèo', name: 'cat' },
+  { icon: Bird, label: 'Chim', name: 'bird' },
+  { icon: Fish, label: 'Cá', name: 'fish' },
+  { icon: Palette, label: 'Nghệ thuật', name: 'palette' },
+  { icon: Brush, label: 'Vẽ', name: 'brush' },
+  { icon: Scissors, label: 'Cắt may', name: 'scissors' },
+  { icon: Hammer, label: 'Dụng cụ', name: 'hammer' },
+  { icon: Wrench, label: 'Sửa chữa', name: 'wrench' },
+  { icon: Zap, label: 'Điện', name: 'zap' },
+  { icon: Wifi, label: 'Công nghệ', name: 'wifi' },
+  { icon: Headphones, label: 'Tai nghe', name: 'headphones' },
+  { icon: Tv, label: 'TV', name: 'tv' },
+  { icon: Speaker, label: 'Loa', name: 'speaker' },
+  { icon: Package, label: 'Sản phẩm', name: 'package' },
+  { icon: Box, label: 'Hộp', name: 'box' },
+  { icon: Truck, label: 'Vận chuyển', name: 'truck' },
+  { icon: Building2, label: 'Văn phòng', name: 'building' },
+  { icon: Store, label: 'Cửa hàng', name: 'store' },
+  { icon: Briefcase, label: 'Công việc', name: 'briefcase' },
+  { icon: GraduationCap, label: 'Giáo dục', name: 'graduation' },
+  { icon: Stethoscope, label: 'Y tế', name: 'medical' },
 ];
 
 export function getCategoryIcon(name: string) {
@@ -82,7 +82,7 @@ export function getCategoryIcon(name: string) {
 
 export function renderCategoryIcon(name: string, size: number = 24, className?: string) {
   const iconData = getCategoryIcon(name);
-  if (!iconData) return null;
+  if (!iconData) {return null;}
   const IconComponent = iconData.icon;
   return <IconComponent size={size} className={className} />;
 }
@@ -93,11 +93,11 @@ function slugifyFilename(filename: string): string {
   const slugified = name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[đĐ]/g, "d")
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+    .replaceAll(/[\u0300-\u036F]/g, "")
+    .replaceAll(/[đĐ]/g, "d")
+    .replaceAll(/[^a-z0-9\s-]/g, '')
+    .replaceAll(/\s+/g, '-')
+    .replaceAll(/-+/g, '-')
     .trim();
   const timestamp = Date.now();
   return `${slugified}-${timestamp}.webp`;
@@ -118,7 +118,13 @@ async function compressToWebP(file: File, quality: number = 0.85): Promise<Blob>
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
       canvas.toBlob(
-        (blob) => blob ? resolve(blob) : reject(new Error('Failed to compress')),
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to compress'));
+          }
+        },
         'image/webp',
         quality
       );
@@ -131,10 +137,10 @@ async function compressToWebP(file: File, quality: number = 0.85): Promise<Blob>
 type ImageMode = 'default' | 'icon' | 'upload' | 'url';
 
 const resolveImageMode = (value: string): ImageMode => {
-  if (!value) return 'default';
-  if (value.startsWith('icon:')) return 'icon';
-  if (value.startsWith('http') || value.startsWith('/')) return 'url';
-  if (value.startsWith('data:') || value.includes('convex')) return 'upload';
+  if (!value) {return 'default';}
+  if (value.startsWith('icon:')) {return 'icon';}
+  if (value.startsWith('http') || value.startsWith('/')) {return 'url';}
+  if (value.startsWith('data:') || value.includes('convex')) {return 'upload';}
   return 'default';
 };
 
@@ -224,32 +230,32 @@ export function CategoryImageSelector({
 
       const uploadUrl = await generateUploadUrl();
       const response = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'image/webp' },
         body: compressedFile,
+        headers: { 'Content-Type': 'image/webp' },
+        method: 'POST',
       });
 
-      if (!response.ok) throw new Error('Upload failed');
+      if (!response.ok) {throw new Error('Upload failed');}
 
       const { storageId } = await response.json();
 
       const img = new window.Image();
       const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
-        img.onload = () => resolve({ width: img.width, height: img.height });
+        img.onload = () =>{  resolve({ height: img.height, width: img.width }); };
         img.src = URL.createObjectURL(compressedFile);
       });
 
       const result = await saveImage({
-        storageId: storageId as Id<"_storage">,
         filename: slugifiedName,
+        folder: 'category-images',
+        height: dimensions.height,
         mimeType: 'image/webp',
         size: compressedFile.size,
+        storageId: storageId as Id<"_storage">,
         width: dimensions.width,
-        height: dimensions.height,
-        folder: 'category-images',
       });
 
-      const imageUrl = result.url || '';
+      const imageUrl = result.url ?? '';
       setUploadedUrl(imageUrl);
       onChange(imageUrl, 'upload');
       toast.success('Tải ảnh lên thành công');
@@ -285,7 +291,7 @@ export function CategoryImageSelector({
       <div className="flex flex-wrap gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
         <button
           type="button"
-          onClick={() => handleModeChange('default')}
+          onClick={() =>{  handleModeChange('default'); }}
           className={cn(
             "flex-1 min-w-[70px] px-2 py-1.5 text-xs font-medium rounded-md transition-all",
             mode === 'default' 
@@ -309,7 +315,7 @@ export function CategoryImageSelector({
         </button>
         <button
           type="button"
-          onClick={() => handleModeChange('upload')}
+          onClick={() =>{  handleModeChange('upload'); }}
           className={cn(
             "flex-1 min-w-[70px] px-2 py-1.5 text-xs font-medium rounded-md transition-all",
             mode === 'upload' 
@@ -321,7 +327,7 @@ export function CategoryImageSelector({
         </button>
         <button
           type="button"
-          onClick={() => handleModeChange('url')}
+          onClick={() =>{  handleModeChange('url'); }}
           className={cn(
             "flex-1 min-w-[70px] px-2 py-1.5 text-xs font-medium rounded-md transition-all",
             mode === 'url' 
@@ -340,7 +346,7 @@ export function CategoryImageSelector({
         accept="image/*"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) void handleFileSelect(file);
+          if (file) {void handleFileSelect(file);}
         }}
         className="hidden"
       />
@@ -382,7 +388,7 @@ export function CategoryImageSelector({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowIconPicker(!showIconPicker)}
+                onClick={() =>{  setShowIconPicker(!showIconPicker); }}
               >
                 Đổi
               </Button>
@@ -397,7 +403,7 @@ export function CategoryImageSelector({
                   <button
                     key={iconData.name}
                     type="button"
-                    onClick={() => handleIconSelect(iconData.name)}
+                    onClick={() =>{  handleIconSelect(iconData.name); }}
                     title={iconData.label}
                     className={cn(
                       "w-10 h-10 rounded-lg flex items-center justify-center transition-all",
@@ -405,7 +411,7 @@ export function CategoryImageSelector({
                         ? "ring-2 ring-offset-2 text-white"
                         : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"
                     )}
-                    style={selectedIcon === iconData.name ? { backgroundColor: brandColor, '--tw-ring-color': brandColor } as React.CSSProperties : {}}
+                    style={selectedIcon === iconData.name ? { '--tw-ring-color': brandColor, backgroundColor: brandColor } as React.CSSProperties : {}}
                   >
                     {React.createElement(iconData.icon, { size: 20 })}
                   </button>
@@ -482,7 +488,7 @@ export function CategoryImageSelector({
         <div className="flex gap-2">
           <Input 
             value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
+            onChange={(e) =>{  setUrlInput(e.target.value); }}
             placeholder="https://example.com/image.jpg"
             className="flex-1"
           />

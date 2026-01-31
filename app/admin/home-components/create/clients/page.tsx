@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import Image from 'next/image';
-import { Plus, Upload, Loader2, Link as LinkIcon, ImageIcon } from 'lucide-react';
-import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
+import { ImageIcon, Link as LinkIcon, Loader2, Plus, Upload } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, cn } from '../../../components/ui';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
 import { ClientsPreview, type ClientsStyle } from '../../previews';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 
 interface ClientItem {
@@ -26,9 +26,9 @@ export default function ClientsCreatePage() {
   const saveImage = useMutation(api.storage.saveImage);
   
   const [clientItems, setClientItems] = useState<ClientItem[]>([
-    { id: 'item-1', url: '', link: '', name: '', inputMode: 'upload' },
-    { id: 'item-2', url: '', link: '', name: '', inputMode: 'upload' },
-    { id: 'item-3', url: '', link: '', name: '', inputMode: 'upload' },
+    { id: 'item-1', inputMode: 'upload', link: '', name: '', url: '' },
+    { id: 'item-2', inputMode: 'upload', link: '', name: '', url: '' },
+    { id: 'item-3', inputMode: 'upload', link: '', name: '', url: '' },
   ]);
   const [style, setStyle] = useState<ClientsStyle>('marquee');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
@@ -37,16 +37,16 @@ export default function ClientsCreatePage() {
     setUploadingId(itemId);
     try {
       const uploadUrl = await generateUploadUrl();
-      const result = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': file.type }, body: file });
+      const result = await fetch(uploadUrl, { body: file, headers: { 'Content-Type': file.type }, method: 'POST' });
       const { storageId } = await result.json();
       
       // Save to DB and get URL
       const saved = await saveImage({
-        storageId: storageId as Id<"_storage">,
         filename: file.name,
+        folder: 'clients',
         mimeType: file.type,
         size: file.size,
-        folder: 'clients',
+        storageId: storageId as Id<"_storage">,
       });
       
       if (saved.url) {
@@ -68,12 +68,12 @@ export default function ClientsCreatePage() {
   };
 
   const addItem = () => {
-    if (clientItems.length >= 20) return;
-    setClientItems([...clientItems, { id: `item-${Date.now()}`, url: '', link: '', name: '', inputMode: 'upload' }]);
+    if (clientItems.length >= 20) {return;}
+    setClientItems([...clientItems, { id: `item-${Date.now()}`, inputMode: 'upload', link: '', name: '', url: '' }]);
   };
 
   const removeItem = (id: string) => {
-    if (clientItems.length <= 3) return;
+    if (clientItems.length <= 3) {return;}
     setClientItems(clientItems.filter(item => item.id !== id));
   };
 
@@ -83,7 +83,7 @@ export default function ClientsCreatePage() {
 
   const moveItem = (idx: number, direction: -1 | 1) => {
     const newIdx = idx + direction;
-    if (newIdx < 0 || newIdx >= clientItems.length) return;
+    if (newIdx < 0 || newIdx >= clientItems.length) {return;}
     const newItems = [...clientItems];
     [newItems[idx], newItems[newIdx]] = [newItems[newIdx], newItems[idx]];
     setClientItems(newItems);
@@ -91,7 +91,7 @@ export default function ClientsCreatePage() {
 
   const onSubmit = (e: React.FormEvent) => {
     void handleSubmit(e, { 
-      items: clientItems.map(c => ({ url: c.url, link: c.link, name: c.name })), 
+      items: clientItems.map(c => ({ link: c.link, name: c.name, url: c.url })), 
       style 
     });
   };
@@ -135,7 +135,7 @@ export default function ClientsCreatePage() {
                   {idx > 0 && (
                     <button 
                       type="button"
-                      onClick={() => moveItem(idx, -1)}
+                      onClick={() =>{  moveItem(idx, -1); }}
                       className="w-5 h-5 bg-slate-600 text-white rounded text-[10px] hover:bg-slate-700"
                     >
                       ←
@@ -144,7 +144,7 @@ export default function ClientsCreatePage() {
                   {idx < clientItems.length - 1 && (
                     <button 
                       type="button"
-                      onClick={() => moveItem(idx, 1)}
+                      onClick={() =>{  moveItem(idx, 1); }}
                       className="w-5 h-5 bg-slate-600 text-white rounded text-[10px] hover:bg-slate-700"
                     >
                       →
@@ -152,7 +152,7 @@ export default function ClientsCreatePage() {
                   )}
                   <button 
                     type="button"
-                    onClick={() => removeItem(item.id)}
+                    onClick={() =>{  removeItem(item.id); }}
                     disabled={clientItems.length <= 3}
                     className="w-5 h-5 bg-red-500 text-white rounded text-[10px] hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -166,7 +166,7 @@ export default function ClientsCreatePage() {
                   <div className="flex mb-1">
                     <button
                       type="button"
-                      onClick={() => toggleInputMode(item.id)}
+                      onClick={() =>{  toggleInputMode(item.id); }}
                       className={cn(
                         "flex-1 text-[9px] py-0.5 rounded-l border transition-colors",
                         item.inputMode === 'upload' 
@@ -178,7 +178,7 @@ export default function ClientsCreatePage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => toggleInputMode(item.id)}
+                      onClick={() =>{  toggleInputMode(item.id); }}
                       className={cn(
                         "flex-1 text-[9px] py-0.5 rounded-r border-t border-b border-r transition-colors",
                         item.inputMode === 'url' 
@@ -198,7 +198,7 @@ export default function ClientsCreatePage() {
                         className="hidden"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (file) void handleImageUpload(item.id, file);
+                          if (file) {void handleImageUpload(item.id, file);}
                         }}
                       />
                       <div className={cn(
@@ -207,14 +207,14 @@ export default function ClientsCreatePage() {
                       )}>
                         {uploadingId === item.id ? (
                           <Loader2 size={20} className="animate-spin text-slate-400" />
-                        ) : item.url ? (
+                        ) : (item.url ? (
                           <Image src={item.url} alt="" width={300} height={200} className="w-full h-full object-contain bg-white dark:bg-slate-900" />
                         ) : (
                           <div className="text-center p-1">
                             <Upload size={16} className="mx-auto text-slate-400 mb-0.5" />
                             <span className="text-[10px] text-slate-400">Click để upload</span>
                           </div>
-                        )}
+                        ))}
                       </div>
                     </label>
                   ) : (
@@ -224,7 +224,7 @@ export default function ClientsCreatePage() {
                         <Input
                           placeholder="https://example.com/logo.png"
                           value={item.url}
-                          onChange={(e) => updateItem(item.id, 'url', e.target.value)}
+                          onChange={(e) =>{  updateItem(item.id, 'url', e.target.value); }}
                           className="h-6 text-xs pl-6 pr-2"
                         />
                       </div>
@@ -242,7 +242,7 @@ export default function ClientsCreatePage() {
                   <Input
                     placeholder="Tên"
                     value={item.name}
-                    onChange={(e) => updateItem(item.id, 'name', e.target.value)}
+                    onChange={(e) =>{  updateItem(item.id, 'name', e.target.value); }}
                     className="h-6 text-xs px-2"
                   />
                   <div className="relative">
@@ -250,7 +250,7 @@ export default function ClientsCreatePage() {
                     <Input
                       placeholder="Link"
                       value={item.link}
-                      onChange={(e) => updateItem(item.id, 'link', e.target.value)}
+                      onChange={(e) =>{  updateItem(item.id, 'link', e.target.value); }}
                       className="h-6 text-xs pl-6 pr-2"
                     />
                   </div>
@@ -271,7 +271,7 @@ export default function ClientsCreatePage() {
       </Card>
 
       <ClientsPreview 
-        items={clientItems.map((item, idx) => ({ id: idx + 1, url: item.url, link: item.link, name: item.name }))} 
+        items={clientItems.map((item, idx) => ({ id: idx + 1, link: item.link, name: item.name, url: item.url }))} 
         brandColor={brandColor}
         selectedStyle={style}
         onStyleChange={setStyle}

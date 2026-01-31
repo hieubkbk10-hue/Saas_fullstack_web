@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
 
@@ -6,9 +6,12 @@ import { v } from "convex/values";
 function simpleHash(password: string): string {
   let hash = 0;
   for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i);
+    const char = password.codePointAt(i);
+    if (char === undefined) {
+      continue;
+    }
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
+    hash &= hash;
   }
   return `sh_${Math.abs(hash).toString(16)}_${password.length}`;
 }
@@ -31,43 +34,39 @@ export const verifySystemLogin = mutation({
     email: v.string(),
     password: v.string(),
   },
-  returns: v.object({
-    success: v.boolean(),
-    message: v.string(),
-    token: v.optional(v.string()),
-  }),
   handler: async (ctx, args) => {
     if (args.email !== SYSTEM_CREDENTIALS.email) {
-      return { success: false, message: "Thông tin đăng nhập không đúng" };
+      return { message: "Thông tin đăng nhập không đúng", success: false };
     }
     
     if (!verifyPassword(args.password, SYSTEM_CREDENTIALS.passwordHash)) {
-      return { success: false, message: "Thông tin đăng nhập không đúng" };
+      return { message: "Thông tin đăng nhập không đúng", success: false };
     }
     
     // Generate simple session token
-    const token = `sys_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+    const token = `sys_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     
     // Store session
     await ctx.db.insert("systemSessions", {
-      token,
       createdAt: Date.now(),
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+      token, // 24 hours
     });
     
-    return { success: true, message: "Đăng nhập thành công", token };
+    return { message: "Đăng nhập thành công", success: true, token };
   },
+  returns: v.object({
+    message: v.string(),
+    success: v.boolean(),
+    token: v.optional(v.string()),
+  }),
 });
 
 export const verifySystemSession = query({
   args: { token: v.string() },
-  returns: v.object({
-    valid: v.boolean(),
-    message: v.string(),
-  }),
   handler: async (ctx, args) => {
     if (!args.token || !args.token.startsWith("sys_")) {
-      return { valid: false, message: "Token không hợp lệ" };
+      return { message: "Token không hợp lệ", valid: false };
     }
     
     const session = await ctx.db
@@ -76,20 +75,23 @@ export const verifySystemSession = query({
       .unique();
     
     if (!session) {
-      return { valid: false, message: "Session không tồn tại" };
+      return { message: "Session không tồn tại", valid: false };
     }
     
     if (session.expiresAt < Date.now()) {
-      return { valid: false, message: "Session đã hết hạn" };
+      return { message: "Session đã hết hạn", valid: false };
     }
     
-    return { valid: true, message: "Session hợp lệ" };
+    return { message: "Session hợp lệ", valid: true };
   },
+  returns: v.object({
+    message: v.string(),
+    valid: v.boolean(),
+  }),
 });
 
 export const logoutSystem = mutation({
   args: { token: v.string() },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const session = await ctx.db
       .query("systemSessions")
@@ -101,6 +103,7 @@ export const logoutSystem = mutation({
     }
     return null;
   },
+  returns: v.null(),
 });
 
 // ============================================================
@@ -112,18 +115,6 @@ export const verifyAdminLogin = mutation({
     email: v.string(),
     password: v.string(),
   },
-  returns: v.object({
-    success: v.boolean(),
-    message: v.string(),
-    token: v.optional(v.string()),
-    user: v.optional(v.object({
-      id: v.string(),
-      name: v.string(),
-      email: v.string(),
-      roleId: v.string(),
-      isSuperAdmin: v.boolean(),
-    })),
-  }),
   handler: async (ctx, args) => {
     // Find admin user by email
     const adminUser = await ctx.db
@@ -132,63 +123,63 @@ export const verifyAdminLogin = mutation({
       .unique();
     
     if (!adminUser) {
-      return { success: false, message: "Email hoặc mật khẩu không đúng" };
+      return { message: "Email hoặc mật khẩu không đúng", success: false };
     }
     
     if (adminUser.status !== "Active") {
-      return { success: false, message: "Tài khoản đã bị vô hiệu hóa" };
+      return { message: "Tài khoản đã bị vô hiệu hóa", success: false };
     }
     
     if (!verifyPassword(args.password, adminUser.passwordHash)) {
-      return { success: false, message: "Email hoặc mật khẩu không đúng" };
+      return { message: "Email hoặc mật khẩu không đúng", success: false };
     }
     
     // Generate session token
-    const token = `adm_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+    const token = `adm_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     
     // Store session
     await ctx.db.insert("adminSessions", {
-      token,
       adminUserId: adminUser._id,
       createdAt: Date.now(),
-      expiresAt: Date.now() + 8 * 60 * 60 * 1000, // 8 hours
+      expiresAt: Date.now() + 8 * 60 * 60 * 1000,
+      token, // 8 hours
     });
     
     // Update last login
     await ctx.db.patch(adminUser._id, { lastLogin: Date.now() });
     
     return {
-      success: true,
       message: "Đăng nhập thành công",
+      success: true,
       token,
       user: {
-        id: adminUser._id,
-        name: adminUser.name,
         email: adminUser.email,
-        roleId: adminUser.roleId,
+        id: adminUser._id,
         isSuperAdmin: adminUser.isSuperAdmin ?? false,
+        name: adminUser.name,
+        roleId: adminUser.roleId,
       },
     };
   },
+  returns: v.object({
+    message: v.string(),
+    success: v.boolean(),
+    token: v.optional(v.string()),
+    user: v.optional(v.object({
+      email: v.string(),
+      id: v.string(),
+      isSuperAdmin: v.boolean(),
+      name: v.string(),
+      roleId: v.string(),
+    })),
+  }),
 });
 
 export const verifyAdminSession = query({
   args: { token: v.string() },
-  returns: v.object({
-    valid: v.boolean(),
-    message: v.string(),
-    user: v.optional(v.object({
-      id: v.string(),
-      name: v.string(),
-      email: v.string(),
-      roleId: v.string(),
-      isSuperAdmin: v.boolean(),
-      permissions: v.record(v.string(), v.array(v.string())),
-    })),
-  }),
   handler: async (ctx, args) => {
     if (!args.token || !args.token.startsWith("adm_")) {
-      return { valid: false, message: "Token không hợp lệ" };
+      return { message: "Token không hợp lệ", valid: false };
     }
     
     const session = await ctx.db
@@ -197,38 +188,49 @@ export const verifyAdminSession = query({
       .unique();
     
     if (!session) {
-      return { valid: false, message: "Session không tồn tại" };
+      return { message: "Session không tồn tại", valid: false };
     }
     
     if (session.expiresAt < Date.now()) {
-      return { valid: false, message: "Session đã hết hạn" };
+      return { message: "Session đã hết hạn", valid: false };
     }
     
     const adminUser = await ctx.db.get(session.adminUserId);
     if (!adminUser || adminUser.status !== "Active") {
-      return { valid: false, message: "Tài khoản không hợp lệ" };
+      return { message: "Tài khoản không hợp lệ", valid: false };
     }
     
     const role = await ctx.db.get(adminUser.roleId);
     
     return {
-      valid: true,
       message: "Session hợp lệ",
       user: {
-        id: adminUser._id,
-        name: adminUser.name,
         email: adminUser.email,
-        roleId: adminUser.roleId,
+        id: adminUser._id,
         isSuperAdmin: adminUser.isSuperAdmin ?? false,
+        name: adminUser.name,
         permissions: role?.permissions ?? {},
+        roleId: adminUser.roleId,
       },
+      valid: true,
     };
   },
+  returns: v.object({
+    message: v.string(),
+    user: v.optional(v.object({
+      email: v.string(),
+      id: v.string(),
+      isSuperAdmin: v.boolean(),
+      name: v.string(),
+      permissions: v.record(v.string(), v.array(v.string())),
+      roleId: v.string(),
+    })),
+    valid: v.boolean(),
+  }),
 });
 
 export const logoutAdmin = mutation({
   args: { token: v.string() },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const session = await ctx.db
       .query("adminSessions")
@@ -240,6 +242,7 @@ export const logoutAdmin = mutation({
     }
     return null;
   },
+  returns: v.null(),
 });
 
 // ============================================================
@@ -249,13 +252,9 @@ export const logoutAdmin = mutation({
 export const createSuperAdmin = mutation({
   args: {
     email: v.string(),
-    password: v.string(),
     name: v.optional(v.string()),
+    password: v.string(),
   },
-  returns: v.object({
-    success: v.boolean(),
-    message: v.string(),
-  }),
   handler: async (ctx, args) => {
     // Check if SuperAdmin already exists
     const existingSuperAdmin = await ctx.db
@@ -264,7 +263,7 @@ export const createSuperAdmin = mutation({
       .first();
     
     if (existingSuperAdmin) {
-      return { success: false, message: "SuperAdmin đã tồn tại" };
+      return { message: "SuperAdmin đã tồn tại", success: false };
     }
     
     // Check email unique
@@ -274,7 +273,7 @@ export const createSuperAdmin = mutation({
       .unique();
     
     if (existingEmail) {
-      return { success: false, message: "Email đã được sử dụng" };
+      return { message: "Email đã được sử dụng", success: false };
     }
     
     // Get or create SuperAdmin role
@@ -285,11 +284,11 @@ export const createSuperAdmin = mutation({
     
     if (!superAdminRole) {
       const roleId = await ctx.db.insert("roles", {
-        name: "Super Admin",
-        description: "Quản trị viên cao nhất, toàn quyền hệ thống",
         color: "#ef4444",
-        isSystem: true,
+        description: "Quản trị viên cao nhất, toàn quyền hệ thống",
         isSuperAdmin: true,
+        isSystem: true,
+        name: "Super Admin",
         permissions: { "*": ["*"] },
       });
       superAdminRole = await ctx.db.get(roleId);
@@ -297,59 +296,59 @@ export const createSuperAdmin = mutation({
     
     // Create SuperAdmin user
     await ctx.db.insert("adminUsers", {
-      name: args.name || "Super Admin",
+      createdAt: Date.now(),
       email: args.email,
+      isSuperAdmin: true,
+      name: args.name ?? "Super Admin",
       passwordHash: simpleHash(args.password),
       roleId: superAdminRole!._id,
       status: "Active",
-      isSuperAdmin: true,
-      createdAt: Date.now(),
     });
     
-    return { success: true, message: "Đã tạo SuperAdmin thành công" };
+    return { message: "Đã tạo SuperAdmin thành công", success: true };
   },
+  returns: v.object({
+    message: v.string(),
+    success: v.boolean(),
+  }),
 });
 
 export const getSuperAdmin = query({
   args: {},
-  returns: v.union(
-    v.object({
-      id: v.string(),
-      name: v.string(),
-      email: v.string(),
-      status: v.string(),
-      createdAt: v.number(),
-    }),
-    v.null()
-  ),
   handler: async (ctx) => {
     const superAdmin = await ctx.db
       .query("adminUsers")
       .filter((q) => q.eq(q.field("isSuperAdmin"), true))
       .first();
     
-    if (!superAdmin) return null;
+    if (!superAdmin) {return null;}
     
     return {
+      createdAt: superAdmin.createdAt,
+      email: superAdmin.email,
       id: superAdmin._id,
       name: superAdmin.name,
-      email: superAdmin.email,
       status: superAdmin.status,
-      createdAt: superAdmin.createdAt,
     };
   },
+  returns: v.union(
+    v.object({
+      createdAt: v.number(),
+      email: v.string(),
+      id: v.string(),
+      name: v.string(),
+      status: v.string(),
+    }),
+    v.null()
+  ),
 });
 
 export const updateSuperAdminCredentials = mutation({
   args: {
     email: v.optional(v.string()),
-    password: v.optional(v.string()),
     name: v.optional(v.string()),
+    password: v.optional(v.string()),
   },
-  returns: v.object({
-    success: v.boolean(),
-    message: v.string(),
-  }),
   handler: async (ctx, args) => {
     const superAdmin = await ctx.db
       .query("adminUsers")
@@ -357,7 +356,7 @@ export const updateSuperAdminCredentials = mutation({
       .first();
     
     if (!superAdmin) {
-      return { success: false, message: "SuperAdmin chưa được tạo" };
+      return { message: "SuperAdmin chưa được tạo", success: false };
     }
     
     const updates: Partial<Doc<"adminUsers">> = {};
@@ -371,7 +370,7 @@ export const updateSuperAdminCredentials = mutation({
         .unique();
       
       if (existingEmail) {
-        return { success: false, message: "Email đã được sử dụng" };
+        return { message: "Email đã được sử dụng", success: false };
       }
       updates.email = args.email;
     }
@@ -388,8 +387,12 @@ export const updateSuperAdminCredentials = mutation({
       await ctx.db.patch(superAdmin._id, updates);
     }
     
-    return { success: true, message: "Đã cập nhật thông tin SuperAdmin" };
+    return { message: "Đã cập nhật thông tin SuperAdmin", success: true };
   },
+  returns: v.object({
+    message: v.string(),
+    success: v.boolean(),
+  }),
 });
 
 // ============================================================
@@ -398,14 +401,10 @@ export const updateSuperAdminCredentials = mutation({
 
 export const checkPermission = query({
   args: {
-    token: v.string(),
-    moduleKey: v.string(),
     action: v.string(),
+    moduleKey: v.string(),
+    token: v.string(),
   },
-  returns: v.object({
-    allowed: v.boolean(),
-    reason: v.string(),
-  }),
   handler: async (ctx, args) => {
     // Verify session first
     const session = await ctx.db
@@ -443,7 +442,7 @@ export const checkPermission = query({
     }
     
     // Check permissions
-    const permissions = role.permissions;
+    const {permissions} = role;
     
     // Check wildcard
     if (permissions["*"]?.includes("*") || permissions["*"]?.includes(args.action)) {
@@ -457,4 +456,8 @@ export const checkPermission = query({
     
     return { allowed: false, reason: "Không có quyền thực hiện" };
   },
+  returns: v.object({
+    allowed: v.boolean(),
+    reason: v.string(),
+  }),
 });

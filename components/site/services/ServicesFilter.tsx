@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { Search, X, ChevronDown, SlidersHorizontal } from 'lucide-react';
-import { Id } from '@/convex/_generated/dataModel';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ChevronDown, Search, SlidersHorizontal, X } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
 
 export type ServiceSortOption = 'newest' | 'oldest' | 'popular' | 'title' | 'price_asc' | 'price_desc';
 
@@ -25,12 +25,12 @@ interface ServicesFilterProps {
 }
 
 const SORT_OPTIONS: { value: ServiceSortOption; label: string }[] = [
-  { value: 'newest', label: 'Mới nhất' },
-  { value: 'oldest', label: 'Cũ nhất' },
-  { value: 'popular', label: 'Xem nhiều' },
-  { value: 'title', label: 'Theo tên A-Z' },
-  { value: 'price_asc', label: 'Giá: Thấp đến cao' },
-  { value: 'price_desc', label: 'Giá: Cao đến thấp' },
+  { label: 'Mới nhất', value: 'newest' },
+  { label: 'Cũ nhất', value: 'oldest' },
+  { label: 'Xem nhiều', value: 'popular' },
+  { label: 'Theo tên A-Z', value: 'title' },
+  { label: 'Giá: Thấp đến cao', value: 'price_asc' },
+  { label: 'Giá: Cao đến thấp', value: 'price_desc' },
 ];
 
 export function ServicesFilter({
@@ -52,7 +52,7 @@ export function ServicesFilter({
     const timer = setTimeout(() => {
       onSearchChange(localSearch);
     }, 300);
-    return () => clearTimeout(timer);
+    return () =>{  clearTimeout(timer); };
   }, [localSearch, onSearchChange]);
 
   const clearFilters = useCallback(() => {
@@ -62,7 +62,7 @@ export function ServicesFilter({
     onSortChange('newest');
   }, [onSearchChange, onCategoryChange, onSortChange]);
 
-  const hasActiveFilters = selectedCategory || searchQuery || sortBy !== 'newest';
+  const hasActiveFilters = (selectedCategory ?? searchQuery) || sortBy !== 'newest';
   const selectedCategoryName = categories.find(c => c._id === selectedCategory)?.name;
 
   return (
@@ -77,7 +77,7 @@ export function ServicesFilter({
               type="text"
               placeholder="Tìm kiếm dịch vụ..."
               value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
+              onChange={(e) =>{  setLocalSearch(e.target.value); }}
               className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 text-sm"
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             />
@@ -116,7 +116,7 @@ export function ServicesFilter({
           <div className="hidden lg:block relative lg:ml-auto">
             <select
               value={sortBy}
-              onChange={(e) => onSortChange(e.target.value as ServiceSortOption)}
+              onChange={(e) =>{  onSortChange(e.target.value as ServiceSortOption); }}
               className="appearance-none px-4 py-2 pr-10 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 cursor-pointer"
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             >
@@ -131,7 +131,7 @@ export function ServicesFilter({
 
           {/* Mobile Filter Toggle */}
           <button
-            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            onClick={() =>{  setShowMobileFilters(!showMobileFilters); }}
             className="lg:hidden flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm"
           >
             <SlidersHorizontal className="w-4 h-4" />
@@ -181,7 +181,7 @@ export function ServicesFilter({
               </label>
               <select
                 value={sortBy}
-                onChange={(e) => onSortChange(e.target.value as ServiceSortOption)}
+                onChange={(e) =>{  onSortChange(e.target.value as ServiceSortOption); }}
                 className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2"
                 style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
               >
@@ -212,7 +212,7 @@ export function ServicesFilter({
             >
               {selectedCategoryName}
               <button
-                onClick={() => onCategoryChange(null)}
+                onClick={() =>{  onCategoryChange(null); }}
                 className="hover:opacity-70"
               >
                 <X className="w-3 h-3" />

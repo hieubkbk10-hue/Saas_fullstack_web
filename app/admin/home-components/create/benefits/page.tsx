@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { GripVertical, Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { BenefitsPreview, type BenefitsStyle, type BenefitsConfig } from '../../previews';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
+import { type BenefitsConfig, BenefitsPreview, type BenefitsStyle } from '../../previews';
 
 const MIN_ITEMS = 1;
 const MAX_ITEMS = 8;
@@ -14,32 +14,32 @@ export default function BenefitsCreatePage() {
   const brandColor = useBrandColor();
   
   const [benefitsItems, setBenefitsItems] = useState([
-    { id: 1, icon: 'Check', title: 'Chất lượng đảm bảo', description: 'Sản phẩm chính hãng 100%, nguồn gốc xuất xứ rõ ràng.' },
-    { id: 2, icon: 'Clock', title: 'Tiết kiệm thời gian', description: 'Giao hàng hỏa tốc trong 24h, quy trình xử lý đơn hàng tối ưu.' },
-    { id: 3, icon: 'Shield', title: 'An toàn bảo mật', description: 'Thanh toán được mã hóa SSL, bảo vệ tuyệt đối thông tin cá nhân.' },
-    { id: 4, icon: 'Star', title: 'Hỗ trợ tận tâm', description: 'Đội ngũ CSKH hoạt động 24/7, giải quyết khiếu nại trong 1h.' }
+    { description: 'Sản phẩm chính hãng 100%, nguồn gốc xuất xứ rõ ràng.', icon: 'Check', id: 1, title: 'Chất lượng đảm bảo' },
+    { description: 'Giao hàng hỏa tốc trong 24h, quy trình xử lý đơn hàng tối ưu.', icon: 'Clock', id: 2, title: 'Tiết kiệm thời gian' },
+    { description: 'Thanh toán được mã hóa SSL, bảo vệ tuyệt đối thông tin cá nhân.', icon: 'Shield', id: 3, title: 'An toàn bảo mật' },
+    { description: 'Đội ngũ CSKH hoạt động 24/7, giải quyết khiếu nại trong 1h.', icon: 'Star', id: 4, title: 'Hỗ trợ tận tâm' }
   ]);
   const [style, setStyle] = useState<BenefitsStyle>('cards');
   const [config, setConfig] = useState<BenefitsConfig>({
-    subHeading: 'Vì sao chọn chúng tôi?',
-    heading: 'Giá trị cốt lõi',
+    buttonLink: '',
     buttonText: '',
-    buttonLink: ''
+    heading: 'Giá trị cốt lõi',
+    subHeading: 'Vì sao chọn chúng tôi?'
   });
 
   // Drag & Drop state
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
 
-  const handleDragStart = (id: number) => setDraggedId(id);
+  const handleDragStart = (id: number) =>{  setDraggedId(id); };
   const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
   const handleDragOver = (e: React.DragEvent, id: number) => {
     e.preventDefault();
-    if (draggedId !== id) setDragOverId(id);
+    if (draggedId !== id) {setDragOverId(id);}
   };
   const handleDrop = (e: React.DragEvent, targetId: number) => {
     e.preventDefault();
-    if (!draggedId || draggedId === targetId) return;
+    if (!draggedId || draggedId === targetId) {return;}
     const newItems = [...benefitsItems];
     const draggedIndex = newItems.findIndex(i => i.id === draggedId);
     const targetIndex = newItems.findIndex(i => i.id === targetId);
@@ -51,12 +51,12 @@ export default function BenefitsCreatePage() {
   };
 
   const addItem = () => {
-    if (benefitsItems.length >= MAX_ITEMS) return;
-    setBenefitsItems([...benefitsItems, { id: Date.now(), icon: 'Star', title: '', description: '' }]);
+    if (benefitsItems.length >= MAX_ITEMS) {return;}
+    setBenefitsItems([...benefitsItems, { description: '', icon: 'Star', id: Date.now(), title: '' }]);
   };
 
   const removeItem = (id: number) => {
-    if (benefitsItems.length <= MIN_ITEMS) return;
+    if (benefitsItems.length <= MIN_ITEMS) {return;}
     setBenefitsItems(benefitsItems.filter(b => b.id !== id));
   };
 
@@ -66,12 +66,12 @@ export default function BenefitsCreatePage() {
 
   const onSubmit = (e: React.FormEvent) => {
     void handleSubmit(e, { 
-      items: benefitsItems.map(b => ({ icon: b.icon, title: b.title, description: b.description })), 
-      style,
-      subHeading: config.subHeading,
-      heading: config.heading,
+      buttonLink: config.buttonLink, 
       buttonText: config.buttonText,
-      buttonLink: config.buttonLink
+      heading: config.heading,
+      items: benefitsItems.map(b => ({ description: b.description, icon: b.icon, title: b.title })),
+      style,
+      subHeading: config.subHeading
     });
   };
 
@@ -96,16 +96,16 @@ export default function BenefitsCreatePage() {
               <Label>Badge text</Label>
               <Input 
                 placeholder="Vì sao chọn chúng tôi?" 
-                value={config.subHeading || ''} 
-                onChange={(e) => setConfig({ ...config, subHeading: e.target.value })} 
+                value={config.subHeading ?? ''} 
+                onChange={(e) =>{  setConfig({ ...config, subHeading: e.target.value }); }} 
               />
             </div>
             <div>
               <Label>Tiêu đề chính</Label>
               <Input 
                 placeholder="Giá trị cốt lõi" 
-                value={config.heading || ''} 
-                onChange={(e) => setConfig({ ...config, heading: e.target.value })} 
+                value={config.heading ?? ''} 
+                onChange={(e) =>{  setConfig({ ...config, heading: e.target.value }); }} 
               />
             </div>
           </div>
@@ -116,16 +116,16 @@ export default function BenefitsCreatePage() {
                 <Label>Nút CTA (tùy chọn)</Label>
                 <Input 
                   placeholder="Tìm hiểu thêm" 
-                  value={config.buttonText || ''} 
-                  onChange={(e) => setConfig({ ...config, buttonText: e.target.value })} 
+                  value={config.buttonText ?? ''} 
+                  onChange={(e) =>{  setConfig({ ...config, buttonText: e.target.value }); }} 
                 />
               </div>
               <div>
                 <Label>Link nút CTA</Label>
                 <Input 
                   placeholder="/lien-he" 
-                  value={config.buttonLink || ''} 
-                  onChange={(e) => setConfig({ ...config, buttonLink: e.target.value })} 
+                  value={config.buttonLink ?? ''} 
+                  onChange={(e) =>{  setConfig({ ...config, buttonLink: e.target.value }); }} 
                 />
               </div>
             </div>
@@ -155,10 +155,10 @@ export default function BenefitsCreatePage() {
             <div 
               key={item.id} 
               draggable
-              onDragStart={() => handleDragStart(item.id)}
+              onDragStart={() =>{  handleDragStart(item.id); }}
               onDragEnd={handleDragEnd}
-              onDragOver={(e) => handleDragOver(e, item.id)}
-              onDrop={(e) => handleDrop(e, item.id)}
+              onDragOver={(e) =>{  handleDragOver(e, item.id); }}
+              onDrop={(e) =>{  handleDrop(e, item.id); }}
               className={`p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3 transition-all cursor-grab active:cursor-grabbing ${
                 draggedId === item.id ? 'opacity-50 scale-[0.98]' : ''
               } ${dragOverId === item.id ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
@@ -173,7 +173,7 @@ export default function BenefitsCreatePage() {
                   variant="ghost" 
                   size="icon" 
                   className="text-red-500 h-8 w-8" 
-                  onClick={() => removeItem(item.id)}
+                  onClick={() =>{  removeItem(item.id); }}
                   disabled={benefitsItems.length <= MIN_ITEMS}
                 >
                   <Trash2 size={14} />
@@ -182,13 +182,13 @@ export default function BenefitsCreatePage() {
               <Input 
                 placeholder="Tiêu đề lợi ích" 
                 value={item.title} 
-                onChange={(e) => updateItem(item.id, 'title', e.target.value)} 
+                onChange={(e) =>{  updateItem(item.id, 'title', e.target.value); }} 
               />
               <Input 
                 placeholder="Mô tả ngắn (max 100 ký tự)" 
                 value={item.description} 
                 maxLength={150}
-                onChange={(e) => updateItem(item.id, 'description', e.target.value)} 
+                onChange={(e) =>{  updateItem(item.id, 'description', e.target.value); }} 
               />
               <p className="text-xs text-slate-400 text-right">{item.description.length}/150</p>
             </div>

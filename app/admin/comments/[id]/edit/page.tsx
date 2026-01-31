@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { ArrowLeft, Loader2, FileText, Package, Save } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ArrowLeft, FileText, Loader2, Package, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Input, Badge } from '../../../components/ui';
+import { Badge, Button, Card, Input } from '../../../components/ui';
 import { ModuleGuard } from '../../../components/ModuleGuard';
 
 export default function EditCommentPage() {
@@ -29,8 +29,8 @@ function EditCommentContent() {
   const updateComment = useMutation(api.comments.update);
 
   const [formData, setFormData] = useState({
-    authorName: '',
     authorEmail: '',
+    authorName: '',
     content: '',
     status: 'Pending' as 'Pending' | 'Approved' | 'Spam',
   });
@@ -43,8 +43,8 @@ function EditCommentContent() {
   useEffect(() => {
     if (commentData && !initialized) {
       setFormData({
+        authorEmail: commentData.authorEmail ?? '',
         authorName: commentData.authorName,
-        authorEmail: commentData.authorEmail || '',
         content: commentData.content,
         status: commentData.status,
       });
@@ -53,11 +53,11 @@ function EditCommentContent() {
   }, [commentData, initialized]);
 
   const targetName = useMemo(() => {
-    if (!commentData) return '';
+    if (!commentData) {return '';}
     if (commentData.targetType === 'post') {
-      return postsData?.find(p => p._id === commentData.targetId)?.title || 'Bài viết không tồn tại';
+      return postsData?.find(p => p._id === commentData.targetId)?.title ?? 'Bài viết không tồn tại';
     }
-    return productsData?.find(p => p._id === commentData.targetId)?.name || 'Sản phẩm không tồn tại';
+    return productsData?.find(p => p._id === commentData.targetId)?.name ?? 'Sản phẩm không tồn tại';
   }, [commentData, postsData, productsData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,10 +70,10 @@ function EditCommentContent() {
     setIsSubmitting(true);
     try {
       await updateComment({
-        id: commentId,
-        authorName: formData.authorName.trim(),
         authorEmail: formData.authorEmail.trim() || undefined,
+        authorName: formData.authorName.trim(),
         content: formData.content.trim(),
+        id: commentId,
         status: formData.status,
       });
       toast.success('Đã cập nhật bình luận!');
@@ -140,7 +140,7 @@ function EditCommentContent() {
               </label>
               <Input
                 value={formData.authorName}
-                onChange={(e) => setFormData({ ...formData, authorName: e.target.value })}
+                onChange={(e) =>{  setFormData({ ...formData, authorName: e.target.value }); }}
                 placeholder="Nhập tên..."
                 required
               />
@@ -150,7 +150,7 @@ function EditCommentContent() {
               <Input
                 type="email"
                 value={formData.authorEmail}
-                onChange={(e) => setFormData({ ...formData, authorEmail: e.target.value })}
+                onChange={(e) =>{  setFormData({ ...formData, authorEmail: e.target.value }); }}
                 placeholder="email@example.com"
               />
             </div>
@@ -163,7 +163,7 @@ function EditCommentContent() {
             <textarea
               className="w-full min-h-[120px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm resize-y"
               value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              onChange={(e) =>{  setFormData({ ...formData, content: e.target.value }); }}
               placeholder="Nhập nội dung bình luận..."
               required
             />
@@ -178,10 +178,10 @@ function EditCommentContent() {
                   type="button"
                   variant={formData.status === status ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setFormData({ ...formData, status })}
+                  onClick={() =>{  setFormData({ ...formData, status }); }}
                 >
-                  <Badge variant={status === 'Approved' ? 'default' : status === 'Pending' ? 'secondary' : 'destructive'} className="pointer-events-none">
-                    {status === 'Approved' ? 'Đã duyệt' : status === 'Pending' ? 'Chờ duyệt' : 'Spam'}
+                  <Badge variant={status === 'Approved' ? 'default' : (status === 'Pending' ? 'secondary' : 'destructive')} className="pointer-events-none">
+                    {status === 'Approved' ? 'Đã duyệt' : (status === 'Pending' ? 'Chờ duyệt' : 'Spam')}
                   </Badge>
                 </Button>
               ))}

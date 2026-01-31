@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, KeyboardEvent } from 'react';
+import type { KeyboardEvent } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import { cn } from './ui';
 
 interface TagInputProps {
-  value: string; // comma-separated string
+  value: string; // Comma-separated string
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
@@ -23,7 +24,7 @@ export function TagInput({ value, onChange, placeholder = 'Nhập và Enter...',
 
   const addTag = useCallback((tag: string) => {
     const trimmed = tag.trim();
-    if (!trimmed) return;
+    if (!trimmed) {return;}
     
     // Check duplicate
     if (tags.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
@@ -65,7 +66,7 @@ export function TagInput({ value, onChange, placeholder = 'Nhập và Enter...',
           {tag}
           <button
             type="button"
-            onClick={() => removeTag(index)}
+            onClick={() =>{  removeTag(index); }}
             className="p-0.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
           >
             <X size={12} />
@@ -75,9 +76,9 @@ export function TagInput({ value, onChange, placeholder = 'Nhập và Enter...',
       <input
         type="text"
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={(e) =>{  setInputValue(e.target.value); }}
         onKeyDown={handleKeyDown}
-        onBlur={() => addTag(inputValue)}
+        onBlur={() =>{  addTag(inputValue); }}
         placeholder={tags.length === 0 ? placeholder : ''}
         className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
       />

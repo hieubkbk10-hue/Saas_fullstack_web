@@ -1,126 +1,110 @@
-import { query, mutation, internalMutation } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 
 const logDoc = v.object({
-  _id: v.id("activityLogs"),
   _creationTime: v.number(),
-  userId: v.id("users"),
+  _id: v.id("activityLogs"),
   action: v.string(),
-  targetType: v.string(),
-  targetId: v.string(),
   details: v.optional(v.any()),
   ip: v.optional(v.string()),
+  targetId: v.string(),
+  targetType: v.string(),
+  userId: v.id("users"),
 });
 
 export const list = query({
   args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, args) => ctx.db.query("activityLogs").order("desc").paginate(args.paginationOpts),
   returns: v.object({
-    page: v.array(logDoc),
-    isDone: v.boolean(),
     continueCursor: v.string(),
+    isDone: v.boolean(),
+    page: v.array(logDoc),
   }),
-  handler: async (ctx, args) => {
-    return await ctx.db.query("activityLogs").order("desc").paginate(args.paginationOpts);
-  },
 });
 
 export const getById = query({
   args: { id: v.id("activityLogs") },
+  handler: async (ctx, args) => ctx.db.get(args.id),
   returns: v.union(logDoc, v.null()),
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
-  },
 });
 
 export const listByUser = query({
-  args: { userId: v.id("users"), paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(logDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  args: { paginationOpts: paginationOptsValidator, userId: v.id("users") },
+  handler: async (ctx, args) => ctx.db
       .query("activityLogs")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .order("desc")
-      .paginate(args.paginationOpts);
-  },
+      .paginate(args.paginationOpts),
+  returns: v.object({
+    continueCursor: v.string(),
+    isDone: v.boolean(),
+    page: v.array(logDoc),
+  }),
 });
 
 export const listByTargetType = query({
-  args: { targetType: v.string(), paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(logDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  args: { paginationOpts: paginationOptsValidator, targetType: v.string() },
+  handler: async (ctx, args) => ctx.db
       .query("activityLogs")
       .withIndex("by_targetType", (q) => q.eq("targetType", args.targetType))
       .order("desc")
-      .paginate(args.paginationOpts);
-  },
+      .paginate(args.paginationOpts),
+  returns: v.object({
+    continueCursor: v.string(),
+    isDone: v.boolean(),
+    page: v.array(logDoc),
+  }),
 });
 
 export const listByAction = query({
   args: { action: v.string(), paginationOpts: paginationOptsValidator },
-  returns: v.object({
-    page: v.array(logDoc),
-    isDone: v.boolean(),
-    continueCursor: v.string(),
-  }),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) => ctx.db
       .query("activityLogs")
       .withIndex("by_action", (q) => q.eq("action", args.action))
       .order("desc")
-      .paginate(args.paginationOpts);
-  },
+      .paginate(args.paginationOpts),
+  returns: v.object({
+    continueCursor: v.string(),
+    isDone: v.boolean(),
+    page: v.array(logDoc),
+  }),
 });
 
 export const log = mutation({
   args: {
-    userId: v.id("users"),
     action: v.string(),
-    targetType: v.string(),
-    targetId: v.string(),
     details: v.optional(v.any()),
     ip: v.optional(v.string()),
+    targetId: v.string(),
+    targetType: v.string(),
+    userId: v.id("users"),
   },
+  handler: async (ctx, args) => ctx.db.insert("activityLogs", args),
   returns: v.id("activityLogs"),
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("activityLogs", args);
-  },
 });
 
 export const logInternal = internalMutation({
   args: {
-    userId: v.id("users"),
     action: v.string(),
-    targetType: v.string(),
-    targetId: v.string(),
     details: v.optional(v.any()),
     ip: v.optional(v.string()),
+    targetId: v.string(),
+    targetType: v.string(),
+    userId: v.id("users"),
   },
+  handler: async (ctx, args) => ctx.db.insert("activityLogs", args),
   returns: v.id("activityLogs"),
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("activityLogs", args);
-  },
 });
 
 export const getRecentByUser = query({
-  args: { userId: v.id("users"), limit: v.optional(v.number()) },
-  returns: v.array(logDoc),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  args: { limit: v.optional(v.number()), userId: v.id("users") },
+  handler: async (ctx, args) => ctx.db
       .query("activityLogs")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .order("desc")
-      .take(args.limit ?? 10);
-  },
+      .take(args.limit ?? 10),
+  returns: v.array(logDoc),
 });
 
 // OPTIMIZED: Use limit instead of collect() to prevent bandwidth explosion
@@ -128,11 +112,6 @@ const MAX_LOGS_LIMIT = 5000;
 
 export const getStats = query({
   args: { since: v.optional(v.number()) },
-  returns: v.object({
-    totalLogs: v.number(),
-    byAction: v.array(v.object({ action: v.string(), count: v.number() })),
-    byTargetType: v.array(v.object({ targetType: v.string(), count: v.number() })),
-  }),
   handler: async (ctx, args) => {
     // OPTIMIZED: Use take() with limit instead of collect()
     const logs = await ctx.db.query("activityLogs")
@@ -150,21 +129,25 @@ export const getStats = query({
       targetCounts[log.targetType] = (targetCounts[log.targetType] || 0) + 1;
     }
     return {
-      totalLogs: filteredLogs.length,
       byAction: Object.entries(actionCounts)
         .map(([action, count]) => ({ action, count }))
         .sort((a, b) => b.count - a.count),
       byTargetType: Object.entries(targetCounts)
-        .map(([targetType, count]) => ({ targetType, count }))
+        .map(([targetType, count]) => ({ count, targetType }))
         .sort((a, b) => b.count - a.count),
+      totalLogs: filteredLogs.length,
     };
   },
+  returns: v.object({
+    byAction: v.array(v.object({ action: v.string(), count: v.number() })),
+    byTargetType: v.array(v.object({ count: v.number(), targetType: v.string() })),
+    totalLogs: v.number(),
+  }),
 });
 
 // OPTIMIZED: Batch delete with limit to prevent timeout
 export const cleanup = internalMutation({
   args: { olderThan: v.number() },
-  returns: v.number(),
   handler: async (ctx, args) => {
     // Batch delete: only delete up to 1000 records per call to avoid timeout
     const BATCH_SIZE = 1000;
@@ -181,4 +164,5 @@ export const cleanup = internalMutation({
     }
     return deleted;
   },
+  returns: v.number(),
 });

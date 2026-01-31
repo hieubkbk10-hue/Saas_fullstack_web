@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState, useMemo, use } from 'react';
+import React, { use, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Plus, Trash2, GripVertical, Loader2, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowDown, ArrowUp, GripVertical, Loader2, Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 
-type MenuItem = {
+interface MenuItem {
   _id: Id<"menuItems">;
   _creationTime: number;
   menuId: Id<"menus">;
@@ -22,7 +22,7 @@ type MenuItem = {
   icon?: string;
   openInNewTab?: boolean;
   active: boolean;
-};
+}
 
 export default function MenuEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -37,18 +37,16 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
   const removeMenuItem = useMutation(api.menus.removeMenuItem);
   const reorderMenuItems = useMutation(api.menus.reorderMenuItems);
 
-  const [formData, setFormData] = useState({ name: '', location: '' });
+  const [formData, setFormData] = useState({ location: '', name: '' });
   const [localItems, setLocalItems] = useState<Map<string, { label: string; url: string }>>(new Map());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const items = useMemo(() => {
-    return menuItemsData?.sort((a, b) => a.order - b.order) || [];
-  }, [menuItemsData]);
+  const items = useMemo(() => menuItemsData ? [...menuItemsData].sort((a, b) => a.order - b.order) : [], [menuItemsData]);
 
   // Initialize form when menu loads
   React.useEffect(() => {
     if (menu) {
-      setFormData({ name: menu.name, location: menu.location });
+      setFormData({ location: menu.location, name: menu.name });
     }
   }, [menu]);
 
@@ -79,8 +77,8 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
     try {
       await updateMenu({ 
         id: menu._id, 
-        name: formData.name, 
-        location: formData.location 
+        location: formData.location, 
+        name: formData.name 
       });
       
       // Update edited items
@@ -103,11 +101,11 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
   const handleAddItem = async () => {
     try {
       await createMenuItem({
-        menuId: menu._id,
-        label: 'Liên kết mới',
-        url: '/',
-        depth: 0,
         active: true,
+        depth: 0,
+        label: 'Liên kết mới',
+        menuId: menu._id,
+        url: '/',
       });
       toast.success('Đã thêm mục menu');
     } catch {
@@ -116,7 +114,7 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
   };
 
   const handleDeleteItem = async (itemId: Id<"menuItems">) => {
-    if (!confirm('Xóa mục menu này?')) return;
+    if (!confirm('Xóa mục menu này?')) {return;}
     try {
       await removeMenuItem({ id: itemId });
       setLocalItems(prev => {
@@ -131,7 +129,7 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
   };
 
   const handleMove = async (index: number, direction: 'up' | 'down') => {
-    if ((direction === 'up' && index === 0) || (direction === 'down' && index === items.length - 1)) return;
+    if ((direction === 'up' && index === 0) || (direction === 'down' && index === items.length - 1)) {return;}
     
     const swapIndex = direction === 'up' ? index - 1 : index + 1;
     const updates = [
@@ -150,7 +148,7 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
     setLocalItems(prev => {
       const newMap = new Map(prev);
       const item = items.find(i => i._id === itemId);
-      const current = newMap.get(itemId) || { label: item?.label || '', url: item?.url || '' };
+      const current = newMap.get(itemId) ?? { label: item?.label ?? '', url: item?.url ?? '' };
       newMap.set(itemId, { ...current, [field]: value });
       return newMap;
     });
@@ -176,7 +174,7 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
                 <Label>Tên menu <span className="text-red-500">*</span></Label>
                 <Input 
                   value={formData.name} 
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) =>{  setFormData(prev => ({ ...prev, name: e.target.value })); }}
                   required 
                 />
               </div>
@@ -185,7 +183,7 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
                 <select 
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   value={formData.location}
-                  onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                  onChange={(e) =>{  setFormData(prev => ({ ...prev, location: e.target.value })); }}
                 >
                   <option value="header">Header</option>
                   <option value="footer">Footer</option>
@@ -214,7 +212,7 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
                   <div className="flex flex-col gap-0.5 text-slate-400">
                     <button 
                       type="button" 
-                      onClick={() => handleMove(index, 'up')} 
+                      onClick={ async () => handleMove(index, 'up')} 
                       className="hover:text-orange-600 disabled:opacity-30" 
                       disabled={index === 0}
                     >
@@ -223,7 +221,7 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
                     <GripVertical size={14} />
                     <button 
                       type="button" 
-                      onClick={() => handleMove(index, 'down')} 
+                      onClick={ async () => handleMove(index, 'down')} 
                       className="hover:text-orange-600 disabled:opacity-30" 
                       disabled={index === items.length - 1}
                     >
@@ -232,13 +230,13 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
                   </div>
                   <Input 
                     value={getItemValue(item, 'label')} 
-                    onChange={(e) => updateLocalItem(item._id, 'label', e.target.value)}
+                    onChange={(e) =>{  updateLocalItem(item._id, 'label', e.target.value); }}
                     className="flex-1 h-9" 
                     placeholder="Label"
                   />
                   <Input 
                     value={getItemValue(item, 'url')} 
-                    onChange={(e) => updateLocalItem(item._id, 'url', e.target.value)}
+                    onChange={(e) =>{  updateLocalItem(item._id, 'url', e.target.value); }}
                     className="flex-1 h-9 font-mono text-xs" 
                     placeholder="URL" 
                   />
@@ -247,7 +245,7 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
                     variant="ghost" 
                     size="icon" 
                     className="text-red-500 hover:text-red-600 h-9 w-9" 
-                    onClick={() => handleDeleteItem(item._id)}
+                    onClick={ async () => handleDeleteItem(item._id)}
                   >
                     <Trash2 size={14} />
                   </Button>
@@ -263,7 +261,7 @@ export default function MenuEditPage({ params }: { params: Promise<{ id: string 
         </Card>
 
         <div className="mt-6 flex justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={() => router.push('/admin/menus')}>Hủy bỏ</Button>
+          <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/menus'); }}>Hủy bỏ</Button>
           <Button type="submit" className="bg-orange-600 hover:bg-orange-500" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
             Lưu thay đổi

@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, use } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Loader2, FolderTree } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { FolderTree, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, Input, Label } from '../../../components/ui';
 
@@ -36,7 +36,7 @@ export default function ServiceCategoryEditPage({ params }: { params: Promise<{ 
     if (categoryData && !initialized) {
       setName(categoryData.name);
       setSlug(categoryData.slug);
-      setDescription(categoryData.description || '');
+      setDescription(categoryData.description ?? '');
       setActive(categoryData.active);
       setInitialized(true);
     }
@@ -46,25 +46,25 @@ export default function ServiceCategoryEditPage({ params }: { params: Promise<{ 
     const val = e.target.value;
     setName(val);
     const generatedSlug = val.toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[đĐ]/g, "d")
-      .replace(/[^a-z0-9\s]/g, '')
-      .replace(/\s+/g, '-');
+      .normalize("NFD").replaceAll(/[\u0300-\u036F]/g, "")
+      .replaceAll(/[đĐ]/g, "d")
+      .replaceAll(/[^a-z0-9\s]/g, '')
+      .replaceAll(/\s+/g, '-');
     setSlug(generatedSlug);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !slug.trim()) return;
+    if (!name.trim() || !slug.trim()) {return;}
 
     setIsSubmitting(true);
     try {
       await updateCategory({
+        active,
+        description: description.trim() || undefined,
         id: id as Id<"serviceCategories">,
         name: name.trim(),
         slug: slug.trim(),
-        description: description.trim() || undefined,
-        active,
       });
       toast.success("Đã cập nhật danh mục");
     } catch (error) {
@@ -114,12 +114,12 @@ export default function ServiceCategoryEditPage({ params }: { params: Promise<{ 
             </div>
             <div className="space-y-2">
               <Label>Slug</Label>
-              <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="tu-dong-tao-tu-ten" className="font-mono text-sm" />
+              <Input value={slug} onChange={(e) =>{  setSlug(e.target.value); }} placeholder="tu-dong-tao-tu-ten" className="font-mono text-sm" />
             </div>
             {enabledFields.has('description') && (
               <div className="space-y-2">
                 <Label>Mô tả</Label>
-                <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Mô tả ngắn về danh mục..." />
+                <Input value={description} onChange={(e) =>{  setDescription(e.target.value); }} placeholder="Mô tả ngắn về danh mục..." />
               </div>
             )}
             <div className="flex items-center gap-2">
@@ -127,7 +127,7 @@ export default function ServiceCategoryEditPage({ params }: { params: Promise<{ 
                 type="checkbox" 
                 id="active" 
                 checked={active} 
-                onChange={(e) => setActive(e.target.checked)}
+                onChange={(e) =>{  setActive(e.target.checked); }}
                 className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
               />
               <Label htmlFor="active" className="cursor-pointer">Hoạt động</Label>
@@ -135,7 +135,7 @@ export default function ServiceCategoryEditPage({ params }: { params: Promise<{ 
           </CardContent>
           
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
-            <Button type="button" variant="ghost" onClick={() => router.push('/admin/service-categories')}>Hủy bỏ</Button>
+            <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/service-categories'); }}>Hủy bỏ</Button>
             <Button type="submit" disabled={isSubmitting} className="bg-teal-600 hover:bg-teal-500">
               {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
               Lưu thay đổi

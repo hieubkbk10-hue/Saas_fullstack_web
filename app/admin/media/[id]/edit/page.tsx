@@ -1,29 +1,29 @@
 'use client';
 
-import React, { useState, use, useEffect, useMemo } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Loader2, ArrowLeft, Image as ImageIcon, FileVideo, FileText, Copy, Check, ExternalLink, Trash2 } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ArrowLeft, Check, Copy, ExternalLink, FileText, FileVideo, Image as ImageIcon, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label, Badge } from '../../../components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 
 const MODULE_KEY = 'media';
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) {return '0 B';}
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
 function getFileIcon(mimeType: string) {
-  if (mimeType.startsWith('image/')) return ImageIcon;
-  if (mimeType.startsWith('video/')) return FileVideo;
+  if (mimeType.startsWith('image/')) {return ImageIcon;}
+  if (mimeType.startsWith('video/')) {return FileVideo;}
   return FileText;
 }
 
@@ -58,8 +58,8 @@ export default function MediaEditPage({ params }: { params: Promise<{ id: string
   useEffect(() => {
     if (mediaData) {
       setFilename(mediaData.filename);
-      setAlt(mediaData.alt || '');
-      setFolder(mediaData.folder || '');
+      setAlt(mediaData.alt ?? '');
+      setFolder(mediaData.folder ?? '');
     }
   }, [mediaData]);
 
@@ -74,10 +74,10 @@ export default function MediaEditPage({ params }: { params: Promise<{ id: string
     try {
       const finalFolder = newFolder.trim() || folder;
       await updateMedia({
-        id: id as Id<"images">,
-        filename: filename.trim(),
         alt: alt.trim() || undefined,
+        filename: filename.trim(),
         folder: finalFolder || undefined,
+        id: id as Id<"images">,
       });
       toast.success('Cập nhật thành công');
     } catch (error) {
@@ -88,7 +88,7 @@ export default function MediaEditPage({ params }: { params: Promise<{ id: string
   };
 
   const handleDelete = async () => {
-    if (!confirm('Xóa file này? Thao tác không thể hoàn tác.')) return;
+    if (!confirm('Xóa file này? Thao tác không thể hoàn tác.')) {return;}
     
     try {
       await removeMedia({ id: id as Id<"images"> });
@@ -100,11 +100,11 @@ export default function MediaEditPage({ params }: { params: Promise<{ id: string
   };
 
   const handleCopyUrl = async () => {
-    if (!mediaData?.url) return;
+    if (!mediaData?.url) {return;}
     try {
       await navigator.clipboard.writeText(mediaData.url);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() =>{  setCopied(false); }, 2000);
       toast.success('Đã copy URL');
     } catch {
       toast.error('Không thể copy URL');
@@ -171,11 +171,11 @@ export default function MediaEditPage({ params }: { params: Promise<{ id: string
                 <div className="relative aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
                   {isImage && mediaData.url ? (
                     <Image src={mediaData.url} alt={alt || filename} fill sizes="100%" className="object-contain" />
-                  ) : isVideo && mediaData.url ? (
+                  ) : (isVideo && mediaData.url ? (
                     <video src={mediaData.url} controls className="w-full h-full object-contain" />
                   ) : (
                     <FileIcon size={64} className="text-slate-400" />
-                  )}
+                  ))}
                 </div>
 
                 {/* File info */}
@@ -244,7 +244,7 @@ export default function MediaEditPage({ params }: { params: Promise<{ id: string
                   <Label>Tên file <span className="text-red-500">*</span></Label>
                   <Input 
                     value={filename} 
-                    onChange={(e) => setFilename(e.target.value)} 
+                    onChange={(e) =>{  setFilename(e.target.value); }} 
                     required
                     placeholder="image.jpg"
                   />
@@ -256,7 +256,7 @@ export default function MediaEditPage({ params }: { params: Promise<{ id: string
                     <Label>Alt text (SEO)</Label>
                     <Input 
                       value={alt} 
-                      onChange={(e) => setAlt(e.target.value)}
+                      onChange={(e) =>{  setAlt(e.target.value); }}
                       placeholder="Mô tả hình ảnh cho SEO và accessibility"
                     />
                     <p className="text-xs text-slate-500">
@@ -294,7 +294,7 @@ export default function MediaEditPage({ params }: { params: Promise<{ id: string
                         value={newFolder} 
                         onChange={(e) => {
                           setNewFolder(e.target.value);
-                          if (e.target.value) setFolder('');
+                          if (e.target.value) {setFolder('');}
                         }}
                         placeholder="Tên thư mục mới"
                       />

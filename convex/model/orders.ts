@@ -1,5 +1,5 @@
-import { QueryCtx, MutationCtx } from "../_generated/server";
-import { Doc, Id } from "../_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "../_generated/server";
+import type { Doc, Id } from "../_generated/dataModel";
 
 // ============================================================
 // HELPER FUNCTIONS - Orders Model Layer
@@ -12,12 +12,12 @@ type OrderStatus = "Pending" | "Processing" | "Shipped" | "Delivered" | "Cancell
 type PaymentStatus = "Pending" | "Paid" | "Failed" | "Refunded";
 type PaymentMethod = "COD" | "BankTransfer" | "CreditCard" | "EWallet";
 
-type OrderItem = {
+interface OrderItem {
   productId: Id<"products">;
   productName: string;
   quantity: number;
   price: number;
-};
+}
 
 /**
  * Get order by ID with null check
@@ -26,7 +26,7 @@ export async function getById(
   ctx: QueryCtx,
   { id }: { id: Id<"orders"> }
 ): Promise<Doc<"orders"> | null> {
-  return await ctx.db.get(id);
+  return  ctx.db.get(id);
 }
 
 /**
@@ -37,7 +37,7 @@ export async function getByIdOrThrow(
   { id }: { id: Id<"orders"> }
 ): Promise<Doc<"orders">> {
   const order = await ctx.db.get(id);
-  if (!order) throw new Error("Order not found");
+  if (!order) {throw new Error("Order not found");}
   return order;
 }
 
@@ -48,7 +48,7 @@ export async function getByOrderNumber(
   ctx: QueryCtx,
   { orderNumber }: { orderNumber: string }
 ): Promise<Doc<"orders"> | null> {
-  return await ctx.db
+  return  ctx.db
     .query("orders")
     .withIndex("by_orderNumber", (q) => q.eq("orderNumber", orderNumber))
     .unique();
@@ -62,7 +62,7 @@ export async function listWithLimit(
   ctx: QueryCtx,
   { limit = MAX_ITEMS_LIMIT }: { limit?: number } = {}
 ): Promise<Doc<"orders">[]> {
-  return await ctx.db
+  return  ctx.db
     .query("orders")
     .order("desc")
     .take(Math.min(limit, MAX_ITEMS_LIMIT));
@@ -75,7 +75,7 @@ export async function listByStatus(
   ctx: QueryCtx,
   { status, limit = MAX_ITEMS_LIMIT }: { status: OrderStatus; limit?: number }
 ): Promise<Doc<"orders">[]> {
-  return await ctx.db
+  return  ctx.db
     .query("orders")
     .withIndex("by_status", (q) => q.eq("status", status))
     .order("desc")
@@ -89,7 +89,7 @@ export async function listByCustomer(
   ctx: QueryCtx,
   { customerId, limit = MAX_ITEMS_LIMIT }: { customerId: Id<"customers">; limit?: number }
 ): Promise<Doc<"orders">[]> {
-  return await ctx.db
+  return  ctx.db
     .query("orders")
     .withIndex("by_customer", (q) => q.eq("customerId", customerId))
     .order("desc")
@@ -137,7 +137,7 @@ export async function countByCustomer(
  */
 export function generateOrderNumber(): string {
   const now = new Date();
-  const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
+  const dateStr = now.toISOString().slice(0, 10).replaceAll('-', "");
   const randomNum = Math.floor(1000 + Math.random() * 9000);
   return `ORD-${dateStr}-${randomNum}`;
 }
@@ -173,18 +173,18 @@ export async function create(
   const orderNumber = generateOrderNumber();
   const { subtotal, totalAmount } = calculateTotals(args.items, args.shippingFee);
 
-  return await ctx.db.insert("orders", {
-    orderNumber,
+  return  ctx.db.insert("orders", {
     customerId: args.customerId,
     items: args.items,
-    subtotal,
-    shippingFee: args.shippingFee ?? 0,
-    totalAmount,
-    status: "Pending",
+    note: args.note,
+    orderNumber,
     paymentMethod: args.paymentMethod,
     paymentStatus: "Pending",
     shippingAddress: args.shippingAddress,
-    note: args.note,
+    shippingFee: args.shippingFee ?? 0,
+    status: "Pending",
+    subtotal,
+    totalAmount,
   });
 }
 
@@ -210,7 +210,7 @@ export async function update(
     Object.entries(updates).filter(([, v]) => v !== undefined)
   );
 
-  if (Object.keys(filteredUpdates).length === 0) return;
+  if (Object.keys(filteredUpdates).length === 0) {return;}
 
   await ctx.db.patch(id, filteredUpdates);
 }
@@ -302,11 +302,11 @@ export async function getStats(
   const orders = await ctx.db.query("orders").order("desc").take(limit);
 
   return {
-    total: orders.length,
+    cancelled: orders.filter((o) => o.status === "Cancelled").length,
+    delivered: orders.filter((o) => o.status === "Delivered").length,
     pending: orders.filter((o) => o.status === "Pending").length,
     processing: orders.filter((o) => o.status === "Processing" || o.status === "Shipped").length,
-    delivered: orders.filter((o) => o.status === "Delivered").length,
-    cancelled: orders.filter((o) => o.status === "Cancelled").length,
+    total: orders.length,
     totalRevenue: orders
       .filter((o) => o.status === "Delivered")
       .reduce((sum, o) => sum + o.totalAmount, 0),

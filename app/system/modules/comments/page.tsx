@@ -1,29 +1,29 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { MessageSquare, ThumbsUp, Reply, Shield, Loader2, Database, Trash2, RefreshCw, FileText, Package, Settings } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { Database, FileText, Loader2, MessageSquare, Package, RefreshCw, Reply, Settings, Shield, ThumbsUp, Trash2 } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput, SettingSelect,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus, SettingInput,
+  SettingSelect, SettingsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'comments';
 
 const FEATURES_CONFIG = [
-  { key: 'enableLikes', label: 'Lượt thích', icon: ThumbsUp, linkedField: 'likesCount' },
-  { key: 'enableReplies', label: 'Trả lời', icon: Reply, linkedField: 'parentId' },
-  { key: 'enableModeration', label: 'Kiểm duyệt', icon: Shield },
+  { icon: ThumbsUp, key: 'enableLikes', label: 'Lượt thích', linkedField: 'likesCount' },
+  { icon: Reply, key: 'enableReplies', label: 'Trả lời', linkedField: 'parentId' },
+  { icon: Shield, key: 'enableModeration', label: 'Kiểm duyệt' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { commentsPerPage: number; defaultStatus: string; autoApprove: boolean };
+interface SettingsState { commentsPerPage: number; defaultStatus: string; autoApprove: boolean }
 type TabType = 'config' | 'data';
 
 export default function CommentsModuleConfigPage() {
@@ -54,7 +54,7 @@ export default function CommentsModuleConfigPage() {
   // Local state
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ commentsPerPage: 20, defaultStatus: 'Pending', autoApprove: false });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ autoApprove: false, commentsPerPage: 20, defaultStatus: 'Pending' });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -73,14 +73,14 @@ export default function CommentsModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -91,7 +91,7 @@ export default function CommentsModuleConfigPage() {
       const commentsPerPage = settingsData.find(s => s.settingKey === 'commentsPerPage')?.value as number ?? 20;
       const defaultStatus = settingsData.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'Pending';
       const autoApprove = settingsData.find(s => s.settingKey === 'autoApprove')?.value as boolean ?? false;
-      setLocalSettings({ commentsPerPage, defaultStatus, autoApprove });
+      setLocalSettings({ autoApprove, commentsPerPage, defaultStatus });
     }
   }, [settingsData]);
 
@@ -102,15 +102,13 @@ export default function CommentsModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
   const serverSettings = useMemo(() => {
     const commentsPerPage = settingsData?.find(s => s.settingKey === 'commentsPerPage')?.value as number ?? 20;
     const defaultStatus = settingsData?.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'Pending';
     const autoApprove = settingsData?.find(s => s.settingKey === 'autoApprove')?.value as boolean ?? false;
-    return { commentsPerPage, defaultStatus, autoApprove };
+    return { autoApprove, commentsPerPage, defaultStatus };
   }, [settingsData]);
 
   // Check for changes
@@ -136,7 +134,7 @@ export default function CommentsModuleConfigPage() {
 
   const handleToggleField = (id: string) => {
     const field = localFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalFields(prev => {
@@ -165,14 +163,14 @@ export default function CommentsModuleConfigPage() {
       // Collect features
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
+          promises.push(toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY }));
         }
       }
       // Collect fields
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
+          promises.push(updateField({ enabled: field.enabled, id: field.id as Id<"moduleFields"> }));
         }
       }
       // Collect settings
@@ -212,7 +210,7 @@ export default function CommentsModuleConfigPage() {
   };
 
   const handleClearData = async () => {
-    if (!confirm('Xóa toàn bộ bình luận?')) return;
+    if (!confirm('Xóa toàn bộ bình luận?')) {return;}
     toast.loading('Đang xóa dữ liệu...');
     await clearComments();
     toast.dismiss();
@@ -220,7 +218,7 @@ export default function CommentsModuleConfigPage() {
   };
 
   const handleResetAll = async () => {
-    if (!confirm('Reset toàn bộ dữ liệu và cấu hình?')) return;
+    if (!confirm('Reset toàn bộ dữ liệu và cấu hình?')) {return;}
     toast.loading('Đang reset...');
     await clearComments();
     await clearCommentsConfig();
@@ -253,7 +251,7 @@ export default function CommentsModuleConfigPage() {
     const pending = commentsData?.filter(c => c.status === 'Pending').length ?? 0;
     const approved = commentsData?.filter(c => c.status === 'Approved').length ?? 0;
     const spam = commentsData?.filter(c => c.status === 'Spam').length ?? 0;
-    return { total, postComments, productComments, pending, approved, spam };
+    return { approved, pending, postComments, productComments, spam, total };
   }, [commentsData]);
 
   if (isLoading) {
@@ -284,7 +282,7 @@ export default function CommentsModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
@@ -294,7 +292,7 @@ export default function CommentsModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
@@ -326,16 +324,16 @@ export default function CommentsModuleConfigPage() {
                     <SettingInput 
                       label="Số bình luận / trang" 
                       value={localSettings.commentsPerPage} 
-                      onChange={(v) => setLocalSettings({...localSettings, commentsPerPage: v})}
+                      onChange={(v) =>{  setLocalSettings({...localSettings, commentsPerPage: v}); }}
                       focusColor="focus:border-cyan-500"
                     />
                     <SettingSelect
                       label="Trạng thái mặc định"
                       value={localSettings.defaultStatus}
-                      onChange={(v) => setLocalSettings({...localSettings, defaultStatus: v})}
+                      onChange={(v) =>{  setLocalSettings({...localSettings, defaultStatus: v}); }}
                       options={[
-                        { value: 'Pending', label: 'Chờ duyệt' },
-                        { value: 'Approved', label: 'Tự động duyệt' }
+                        { label: 'Chờ duyệt', value: 'Pending' },
+                        { label: 'Tự động duyệt', value: 'Approved' }
                       ]}
                       focusColor="focus:border-cyan-500"
                     />
@@ -463,8 +461,8 @@ export default function CommentsModuleConfigPage() {
                         : (productMap[comment.targetId] || 'N/A')}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={comment.status === 'Approved' ? 'default' : comment.status === 'Pending' ? 'secondary' : 'destructive'}>
-                        {comment.status === 'Approved' ? 'Đã duyệt' : comment.status === 'Pending' ? 'Chờ duyệt' : 'Spam'}
+                      <Badge variant={comment.status === 'Approved' ? 'default' : (comment.status === 'Pending' ? 'secondary' : 'destructive')}>
+                        {comment.status === 'Approved' ? 'Đã duyệt' : (comment.status === 'Pending' ? 'Chờ duyệt' : 'Spam')}
                       </Badge>
                     </TableCell>
                   </TableRow>

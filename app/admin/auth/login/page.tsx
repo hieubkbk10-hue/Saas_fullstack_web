@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LayoutGrid, Loader2, Lock, Mail } from 'lucide-react';
 import { useAdminAuth } from '../context';
@@ -76,7 +76,7 @@ export default function AdminLoginPage() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) =>{  setEmail(e.target.value); }}
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg pl-10 pr-4 py-3 text-slate-800 dark:text-white placeholder:text-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
                 placeholder="admin@example.com"
                 required
@@ -94,7 +94,7 @@ export default function AdminLoginPage() {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) =>{  setPassword(e.target.value); }}
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg pl-10 pr-4 py-3 text-slate-800 dark:text-white placeholder:text-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
                 placeholder="Nhập mật khẩu"
                 required

@@ -1,30 +1,30 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { ShoppingCart, Clock, Users, StickyNote, Loader2, Database, Trash2, RefreshCw, Settings, Package, AlertTriangle, CheckCircle } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { AlertTriangle, CheckCircle, Clock, Database, Loader2, Package, RefreshCw, Settings, ShoppingCart, StickyNote, Trash2, Users } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus,
+  SettingInput, SettingsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'cart';
 const CART_ITEMS_KEY = 'cartItems';
 
 const FEATURES_CONFIG = [
-  { key: 'enableExpiry', label: 'Hết hạn giỏ hàng', icon: Clock, linkedField: 'expiresAt' },
-  { key: 'enableGuestCart', label: 'Giỏ hàng khách', icon: Users, linkedField: 'sessionId' },
-  { key: 'enableNote', label: 'Ghi chú', icon: StickyNote, linkedField: 'note' },
+  { icon: Clock, key: 'enableExpiry', label: 'Hết hạn giỏ hàng', linkedField: 'expiresAt' },
+  { icon: Users, key: 'enableGuestCart', label: 'Giỏ hàng khách', linkedField: 'sessionId' },
+  { icon: StickyNote, key: 'enableNote', label: 'Ghi chú', linkedField: 'note' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { cartsPerPage: number; expiryDays: number; maxItemsPerCart: number; autoCleanupAbandoned: boolean };
+interface SettingsState { cartsPerPage: number; expiryDays: number; maxItemsPerCart: number; autoCleanupAbandoned: boolean }
 type TabType = 'config' | 'data';
 
 export default function CartModuleConfigPage() {
@@ -56,7 +56,7 @@ export default function CartModuleConfigPage() {
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localCartFields, setLocalCartFields] = useState<FieldConfig[]>([]);
   const [localItemFields, setLocalItemFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ cartsPerPage: 20, expiryDays: 7, maxItemsPerCart: 50, autoCleanupAbandoned: true });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ autoCleanupAbandoned: true, cartsPerPage: 20, expiryDays: 7, maxItemsPerCart: 50 });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -75,14 +75,14 @@ export default function CartModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalCartFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -91,21 +91,19 @@ export default function CartModuleConfigPage() {
   useEffect(() => {
     if (cartItemFieldsData) {
       setLocalItemFields(cartItemFieldsData.map(f => ({
+        enabled: f.enabled,
         id: f._id,
+        isSystem: f.isSystem,
         key: f.fieldKey,
         name: f.name,
-        type: f.type,
         required: f.required,
-        enabled: f.enabled,
-        isSystem: f.isSystem,
+        type: f.type,
       })));
     }
   }, [cartItemFieldsData]);
 
   // FIX Issue #9: Convert settings to Map for O(1) lookup instead of O(n) Array.find()
-  const settingsMap = useMemo(() => {
-    return new Map(settingsData?.map(s => [s.settingKey, s.value]) ?? []);
-  }, [settingsData]);
+  const settingsMap = useMemo(() => new Map(settingsData?.map(s => [s.settingKey, s.value]) ?? []), [settingsData]);
 
   // Sync settings using Map lookup
   useEffect(() => {
@@ -114,7 +112,7 @@ export default function CartModuleConfigPage() {
       const expiryDays = (settingsMap.get('expiryDays') as number) ?? 7;
       const maxItemsPerCart = (settingsMap.get('maxItemsPerCart') as number) ?? 50;
       const autoCleanupAbandoned = (settingsMap.get('autoCleanupAbandoned') as boolean) ?? true;
-      setLocalSettings({ cartsPerPage, expiryDays, maxItemsPerCart, autoCleanupAbandoned });
+      setLocalSettings({ autoCleanupAbandoned, cartsPerPage, expiryDays, maxItemsPerCart });
     }
   }, [settingsData, settingsMap]);
 
@@ -125,13 +123,9 @@ export default function CartModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverCartFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverCartFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
-  const serverItemFields = useMemo(() => {
-    return cartItemFieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [cartItemFieldsData]);
+  const serverItemFields = useMemo(() => cartItemFieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [cartItemFieldsData]);
 
   // FIX Issue #9: Use Map lookup for server settings comparison
   const serverSettings = useMemo(() => {
@@ -139,17 +133,13 @@ export default function CartModuleConfigPage() {
     const expiryDays = (settingsMap.get('expiryDays') as number) ?? 7;
     const maxItemsPerCart = (settingsMap.get('maxItemsPerCart') as number) ?? 50;
     const autoCleanupAbandoned = (settingsMap.get('autoCleanupAbandoned') as boolean) ?? true;
-    return { cartsPerPage, expiryDays, maxItemsPerCart, autoCleanupAbandoned };
+    return { autoCleanupAbandoned, cartsPerPage, expiryDays, maxItemsPerCart };
   }, [settingsMap]);
 
   // FIX Issue #9: Convert server fields to Maps for O(1) lookup
-  const serverCartFieldsMap = useMemo(() => {
-    return new Map<string, boolean>(serverCartFields.map(f => [String(f.id), f.enabled]));
-  }, [serverCartFields]);
+  const serverCartFieldsMap = useMemo(() => new Map<string, boolean>(serverCartFields.map(f => [String(f.id), f.enabled])), [serverCartFields]);
 
-  const serverItemFieldsMap = useMemo(() => {
-    return new Map<string, boolean>(serverItemFields.map(f => [String(f.id), f.enabled]));
-  }, [serverItemFields]);
+  const serverItemFieldsMap = useMemo(() => new Map<string, boolean>(serverItemFields.map(f => [String(f.id), f.enabled])), [serverItemFields]);
 
   // Check for changes using Map lookups
   const hasChanges = useMemo(() => {
@@ -179,7 +169,7 @@ export default function CartModuleConfigPage() {
 
   const handleToggleCartField = (id: string) => {
     const field = localCartFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalCartFields(prev => {
@@ -210,21 +200,21 @@ export default function CartModuleConfigPage() {
       // Save features
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          await toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY });
         }
       }
       // Save cart fields - FIX: Use Map lookup instead of Array.find()
       for (const field of localCartFields) {
         const serverEnabled = serverCartFieldsMap.get(field.id);
         if (serverEnabled !== undefined && field.enabled !== serverEnabled) {
-          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
+          await updateField({ enabled: field.enabled, id: field.id as Id<'moduleFields'> });
         }
       }
       // Save item fields - FIX: Use Map lookup instead of Array.find()
       for (const field of localItemFields) {
         const serverEnabled = serverItemFieldsMap.get(field.id);
         if (serverEnabled !== undefined && field.enabled !== serverEnabled) {
-          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
+          await updateField({ enabled: field.enabled, id: field.id as Id<'moduleFields'> });
         }
       }
       // Save settings
@@ -258,7 +248,7 @@ export default function CartModuleConfigPage() {
   };
 
   const handleClearData = async () => {
-    if (!confirm('Xóa toàn bộ giỏ hàng?')) return;
+    if (!confirm('Xóa toàn bộ giỏ hàng?')) {return;}
     toast.loading('Đang xóa dữ liệu...');
     await clearCartData();
     toast.dismiss();
@@ -266,7 +256,7 @@ export default function CartModuleConfigPage() {
   };
 
   const handleResetAll = async () => {
-    if (!confirm('Reset toàn bộ dữ liệu và cấu hình?')) return;
+    if (!confirm('Reset toàn bộ dữ liệu và cấu hình?')) {return;}
     toast.loading('Đang reset...');
     await clearCartData();
     await clearCartConfig();
@@ -291,7 +281,7 @@ export default function CartModuleConfigPage() {
     const converted = statsData?.converted ?? cartsData?.filter(c => c.status === 'Converted').length ?? 0;
     const totalValue = statsData?.totalValue ?? cartsData?.filter(c => c.status === 'Active').reduce((sum, c) => sum + c.totalAmount, 0) ?? 0;
     const totalItems = cartItemsData?.length ?? 0;
-    return { total, active, abandoned, converted, totalValue, totalItems };
+    return { abandoned, active, converted, total, totalItems, totalValue };
   }, [statsData, cartsData, cartItemsData]);
 
   if (isLoading) {
@@ -322,7 +312,7 @@ export default function CartModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
@@ -332,7 +322,7 @@ export default function CartModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
@@ -364,25 +354,25 @@ export default function CartModuleConfigPage() {
                     <SettingInput 
                       label="Số giỏ hàng / trang" 
                       value={localSettings.cartsPerPage} 
-                      onChange={(v) => setLocalSettings({...localSettings, cartsPerPage: v})}
+                      onChange={(v) =>{  setLocalSettings({...localSettings, cartsPerPage: v}); }}
                       focusColor="focus:border-emerald-500"
                     />
                     <SettingInput 
                       label="Hết hạn sau (ngày)" 
                       value={localSettings.expiryDays} 
-                      onChange={(v) => setLocalSettings({...localSettings, expiryDays: v})}
+                      onChange={(v) =>{  setLocalSettings({...localSettings, expiryDays: v}); }}
                       focusColor="focus:border-emerald-500"
                     />
                     <SettingInput 
                       label="Tối đa SP / giỏ" 
                       value={localSettings.maxItemsPerCart} 
-                      onChange={(v) => setLocalSettings({...localSettings, maxItemsPerCart: v})}
+                      onChange={(v) =>{  setLocalSettings({...localSettings, maxItemsPerCart: v}); }}
                       focusColor="focus:border-emerald-500"
                     />
                     <div className="flex items-center justify-between py-2">
                       <span className="text-sm text-slate-600 dark:text-slate-300">Tự động dọn abandoned</span>
                       <button
-                        onClick={() => setLocalSettings({...localSettings, autoCleanupAbandoned: !localSettings.autoCleanupAbandoned})}
+                        onClick={() =>{  setLocalSettings({...localSettings, autoCleanupAbandoned: !localSettings.autoCleanupAbandoned}); }}
                         className={`w-10 h-5 rounded-full transition-colors ${localSettings.autoCleanupAbandoned ? 'bg-emerald-500' : 'bg-slate-300'}`}
                       >
                         <span className={`block w-4 h-4 rounded-full bg-white transform transition-transform ${localSettings.autoCleanupAbandoned ? 'translate-x-5' : 'translate-x-0.5'}`} />
@@ -516,10 +506,10 @@ export default function CartModuleConfigPage() {
                     <TableCell>
                       <Badge variant={
                         cart.status === 'Active' ? 'default' : 
-                        cart.status === 'Converted' ? 'secondary' : 'destructive'
+                        (cart.status === 'Converted' ? 'secondary' : 'destructive')
                       }>
                         {cart.status === 'Active' ? 'Hoạt động' : 
-                         cart.status === 'Converted' ? 'Đã đặt' : 'Bỏ dở'}
+                         (cart.status === 'Converted' ? 'Đã đặt' : 'Bỏ dở')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-slate-500">

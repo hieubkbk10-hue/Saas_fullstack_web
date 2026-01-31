@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 type ShortcutHandler = () => void;
 
@@ -60,7 +60,7 @@ export function useKeyboardShortcuts(shortcuts: ShortcutConfig[]) {
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return () =>{  document.removeEventListener('keydown', handleKeyDown); };
   }, [handleKeyDown]);
 }
 
@@ -76,28 +76,28 @@ export function useFormShortcuts(options: {
   
   if (options.onSave) {
     shortcuts.push({
-      key: 's',
       ctrl: true,
-      handler: options.onSave,
       description: 'Save (Ctrl+S)',
+      handler: options.onSave,
+      key: 's',
     });
   }
   
   if (options.onCancel) {
     shortcuts.push({
-      key: 'Escape',
-      handler: options.onCancel,
       description: 'Cancel (Esc)',
+      handler: options.onCancel,
+      key: 'Escape',
     });
   }
   
   if (options.onDelete) {
     shortcuts.push({
-      key: 'd',
       ctrl: true,
-      shift: true,
-      handler: options.onDelete,
       description: 'Delete (Ctrl+Shift+D)',
+      handler: options.onDelete,
+      key: 'd',
+      shift: true,
     });
   }
   
@@ -117,37 +117,37 @@ export function useTableShortcuts(options: {
   
   if (options.onSearch) {
     shortcuts.push({
-      key: 'f',
       ctrl: true,
-      handler: options.onSearch,
       description: 'Search (Ctrl+F)',
+      handler: options.onSearch,
+      key: 'f',
     });
   }
   
   if (options.onRefresh) {
     shortcuts.push({
-      key: 'r',
       ctrl: true,
-      handler: options.onRefresh,
       description: 'Refresh (Ctrl+R)',
+      handler: options.onRefresh,
+      key: 'r',
     });
   }
   
   if (options.onNew) {
     shortcuts.push({
-      key: 'n',
       ctrl: true,
-      handler: options.onNew,
       description: 'New (Ctrl+N)',
+      handler: options.onNew,
+      key: 'n',
     });
   }
   
   if (options.onSelectAll) {
     shortcuts.push({
-      key: 'a',
       ctrl: true,
-      handler: options.onSelectAll,
       description: 'Select All (Ctrl+A)',
+      handler: options.onSelectAll,
+      key: 'a',
     });
   }
   

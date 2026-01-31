@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, use, useEffect, useMemo } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../../components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 
 const MODULE_KEY = 'promotions';
 
@@ -44,7 +44,7 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
     if (promotionData) {
       setName(promotionData.name);
       setCode(promotionData.code);
-      setDescription(promotionData.description || '');
+      setDescription(promotionData.description ?? '');
       setDiscountType(promotionData.discountType);
       setDiscountValue(promotionData.discountValue);
       setMinOrderAmount(promotionData.minOrderAmount);
@@ -75,18 +75,18 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
     setIsSubmitting(true);
     try {
       await updatePromotion({
-        id: id as Id<"promotions">,
-        name: name.trim(),
         code: code.trim().toUpperCase(),
         description: description.trim() || undefined,
         discountType,
         discountValue,
-        minOrderAmount: enabledFeatures.enableMinOrder ? minOrderAmount : undefined,
-        maxDiscountAmount: enabledFeatures.enableMaxDiscount && discountType === 'percent' ? maxDiscountAmount : undefined,
-        usageLimit: enabledFeatures.enableUsageLimit ? usageLimit : undefined,
-        startDate: enabledFeatures.enableSchedule && startDate ? new Date(startDate).getTime() : undefined,
         endDate: enabledFeatures.enableSchedule && endDate ? new Date(endDate).getTime() : undefined,
+        id: id as Id<"promotions">,
+        maxDiscountAmount: enabledFeatures.enableMaxDiscount && discountType === 'percent' ? maxDiscountAmount : undefined,
+        minOrderAmount: enabledFeatures.enableMinOrder ? minOrderAmount : undefined,
+        name: name.trim(),
+        startDate: enabledFeatures.enableSchedule && startDate ? new Date(startDate).getTime() : undefined,
         status,
+        usageLimit: enabledFeatures.enableUsageLimit ? usageLimit : undefined,
       });
       toast.success('Cập nhật khuyến mãi thành công');
     } catch (error) {
@@ -126,7 +126,7 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
                 <Label>Tên khuyến mãi <span className="text-red-500">*</span></Label>
                 <Input 
                   value={name} 
-                  onChange={(e) => setName(e.target.value)} 
+                  onChange={(e) =>{  setName(e.target.value); }} 
                   required 
                 />
               </div>
@@ -146,7 +146,7 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
                 <Label>Mô tả</Label>
                 <textarea 
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) =>{  setDescription(e.target.value); }}
                   className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 />
               </div>
@@ -160,7 +160,7 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
                 <Label>Loại giảm giá <span className="text-red-500">*</span></Label>
                 <select 
                   value={discountType}
-                  onChange={(e) => setDiscountType(e.target.value as 'percent' | 'fixed')}
+                  onChange={(e) =>{  setDiscountType(e.target.value as 'percent' | 'fixed'); }}
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
                   <option value="percent">Giảm theo phần trăm (%)</option>
@@ -177,7 +177,7 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
                 <Input 
                   type="number"
                   value={discountValue} 
-                  onChange={(e) => setDiscountValue(Number(e.target.value))}
+                  onChange={(e) =>{  setDiscountValue(Number(e.target.value)); }}
                   required
                   min={1}
                   max={discountType === 'percent' ? 100 : undefined}
@@ -189,8 +189,8 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
                   <Label>Đơn hàng tối thiểu (VND)</Label>
                   <Input 
                     type="number"
-                    value={minOrderAmount || ''} 
-                    onChange={(e) => setMinOrderAmount(e.target.value ? Number(e.target.value) : undefined)}
+                    value={minOrderAmount ?? ''} 
+                    onChange={(e) =>{  setMinOrderAmount(e.target.value ? Number(e.target.value) : undefined); }}
                     min={0}
                   />
                 </div>
@@ -201,8 +201,8 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
                   <Label>Giảm tối đa (VND)</Label>
                   <Input 
                     type="number"
-                    value={maxDiscountAmount || ''} 
-                    onChange={(e) => setMaxDiscountAmount(e.target.value ? Number(e.target.value) : undefined)}
+                    value={maxDiscountAmount ?? ''} 
+                    onChange={(e) =>{  setMaxDiscountAmount(e.target.value ? Number(e.target.value) : undefined); }}
                     min={0}
                   />
                 </div>
@@ -220,7 +220,7 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
                     <Input 
                       type="datetime-local"
                       value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
+                      onChange={(e) =>{  setStartDate(e.target.value); }}
                     />
                   </div>
                   <div className="space-y-2">
@@ -228,7 +228,7 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
                     <Input 
                       type="datetime-local"
                       value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
+                      onChange={(e) =>{  setEndDate(e.target.value); }}
                     />
                   </div>
                 </div>
@@ -245,7 +245,7 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
                 <Label>Trạng thái</Label>
                 <select 
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as 'Active' | 'Inactive' | 'Scheduled' | 'Expired')}
+                  onChange={(e) =>{  setStatus(e.target.value as 'Active' | 'Inactive' | 'Scheduled' | 'Expired'); }}
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
                   <option value="Active">Hoạt động</option>
@@ -271,8 +271,8 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
                   <Label>Số lượt sử dụng tối đa</Label>
                   <Input 
                     type="number"
-                    value={usageLimit || ''} 
-                    onChange={(e) => setUsageLimit(e.target.value ? Number(e.target.value) : undefined)}
+                    value={usageLimit ?? ''} 
+                    onChange={(e) =>{  setUsageLimit(e.target.value ? Number(e.target.value) : undefined); }}
                     min={1}
                   />
                   <p className="text-xs text-slate-500">Để trống nếu không giới hạn</p>
@@ -284,9 +284,9 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
       </div>
 
       <div className="fixed bottom-0 left-0 lg:left-[280px] right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center z-10">
-        <Button type="button" variant="ghost" onClick={() => router.push('/admin/promotions')}>Hủy bỏ</Button>
+        <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/promotions'); }}>Hủy bỏ</Button>
         <div className="flex gap-2">
-          <Button type="button" variant="secondary" onClick={() => setStatus('Inactive')}>Lưu nháp</Button>
+          <Button type="button" variant="secondary" onClick={() =>{  setStatus('Inactive'); }}>Lưu nháp</Button>
           <Button type="submit" className="bg-pink-600 hover:bg-pink-500" disabled={isSubmitting}>
             {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
             Cập nhật

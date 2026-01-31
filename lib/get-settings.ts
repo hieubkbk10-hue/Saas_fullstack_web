@@ -1,5 +1,5 @@
-import { getConvexClient } from "./convex";
 import { api } from "@/convex/_generated/api";
+import { getConvexClient } from "./convex";
 
 export interface SiteSettings {
   site_name: string;
@@ -26,7 +26,15 @@ export interface ContactSettings {
   contact_hotline: string;
 }
 
+export interface PublicSettings {
+  contact: ContactSettings;
+  seo: SEOSettings;
+  site: SiteSettings;
+}
+
 const SETTINGS_KEYS = {
+  contact: ["contact_email", "contact_phone", "contact_address", "contact_hotline"],
+  seo: ["seo_title", "seo_description", "seo_keywords", "seo_og_image"],
   site: [
     "site_name",
     "site_tagline",
@@ -37,62 +45,50 @@ const SETTINGS_KEYS = {
     "site_timezone",
     "site_language",
   ],
-  seo: ["seo_title", "seo_description", "seo_keywords", "seo_og_image"],
-  contact: ["contact_email", "contact_phone", "contact_address", "contact_hotline"],
 };
 
-export async function getSiteSettings(): Promise<SiteSettings> {
+export const getSiteSettings =  async (): Promise<SiteSettings> => {
   const client = getConvexClient();
-  const settings = await client.query(api.settings.getMultiple, {
+  return client.query(api.settings.getMultiple, {
     keys: SETTINGS_KEYS.site,
-  });
-
-  return {
+  }).then((settings) => ({
+    site_brand_color: (settings.site_brand_color as string) || "#3b82f6",
+    site_favicon: (settings.site_favicon as string) || "",
+    site_language: (settings.site_language as string) || "vi",
+    site_logo: (settings.site_logo as string) || "",
     site_name: (settings.site_name as string) || "VietAdmin",
     site_tagline: (settings.site_tagline as string) || "",
-    site_url: (settings.site_url as string) || "",
-    site_logo: (settings.site_logo as string) || "",
-    site_favicon: (settings.site_favicon as string) || "",
-    site_brand_color: (settings.site_brand_color as string) || "#3b82f6",
     site_timezone: (settings.site_timezone as string) || "Asia/Ho_Chi_Minh",
-    site_language: (settings.site_language as string) || "vi",
-  };
-}
+    site_url: (settings.site_url as string) || "",
+  }));
+};
 
-export async function getSEOSettings(): Promise<SEOSettings> {
+export const getSEOSettings =  async (): Promise<SEOSettings> => {
   const client = getConvexClient();
-  const settings = await client.query(api.settings.getMultiple, {
+  return client.query(api.settings.getMultiple, {
     keys: SETTINGS_KEYS.seo,
-  });
-
-  return {
-    seo_title: (settings.seo_title as string) || "",
+  }).then((settings) => ({
     seo_description: (settings.seo_description as string) || "",
     seo_keywords: (settings.seo_keywords as string) || "",
     seo_og_image: (settings.seo_og_image as string) || "",
-  };
-}
+    seo_title: (settings.seo_title as string) || "",
+  }));
+};
 
-export async function getContactSettings(): Promise<ContactSettings> {
+export const getContactSettings =  async (): Promise<ContactSettings> => {
   const client = getConvexClient();
-  const settings = await client.query(api.settings.getMultiple, {
+  return client.query(api.settings.getMultiple, {
     keys: SETTINGS_KEYS.contact,
-  });
-
-  return {
-    contact_email: (settings.contact_email as string) || "",
-    contact_phone: (settings.contact_phone as string) || "",
+  }).then((settings) => ({
     contact_address: (settings.contact_address as string) || "",
+    contact_email: (settings.contact_email as string) || "",
     contact_hotline: (settings.contact_hotline as string) || "",
-  };
-}
+    contact_phone: (settings.contact_phone as string) || "",
+  }));
+};
 
-export async function getAllPublicSettings() {
-  const [site, seo, contact] = await Promise.all([
+export const getAllPublicSettings =  async (): Promise<PublicSettings> => Promise.all([
     getSiteSettings(),
     getSEOSettings(),
     getContactSettings(),
-  ]);
-
-  return { site, seo, contact };
-}
+  ]).then(([site, seo, contact]) => ({ contact, seo, site }));

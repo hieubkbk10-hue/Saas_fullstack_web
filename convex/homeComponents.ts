@@ -1,14 +1,15 @@
-import { query, mutation, MutationCtx } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 const homeComponentDoc = v.object({
-  _id: v.id("homeComponents"),
   _creationTime: v.number(),
-  type: v.string(),
-  title: v.string(),
+  _id: v.id("homeComponents"),
   active: v.boolean(),
-  order: v.number(),
   config: v.any(),
+  order: v.number(),
+  title: v.string(),
+  type: v.string(),
 });
 
 // CRIT-002 FIX: Helper function to update homeComponentStats counter
@@ -24,60 +25,51 @@ async function updateHomeComponentStats(
   if (stats) {
     await ctx.db.patch(stats._id, { count: Math.max(0, stats.count + delta) });
   } else {
-    await ctx.db.insert("homeComponentStats", { key, count: Math.max(0, delta) });
+    await ctx.db.insert("homeComponentStats", { count: Math.max(0, delta), key });
   }
 }
 
 // CRIT-002 FIX: Thêm limit
 export const listAll = query({
   args: {},
+  handler: async (ctx) => ctx.db.query("homeComponents").take(100),
   returns: v.array(homeComponentDoc),
-  handler: async (ctx) => {
-    return await ctx.db.query("homeComponents").take(100);
-  },
 });
 
 export const listActive = query({
   args: {},
-  returns: v.array(homeComponentDoc),
-  handler: async (ctx) => {
-    return await ctx.db
+  handler: async (ctx) => ctx.db
       .query("homeComponents")
       .withIndex("by_active_order", (q) => q.eq("active", true))
-      .collect();
-  },
+      .collect(),
+  returns: v.array(homeComponentDoc),
 });
 
 // CRIT-002 FIX: Thêm limit
 export const listByType = query({
   args: { type: v.string() },
-  returns: v.array(homeComponentDoc),
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) => ctx.db
       .query("homeComponents")
       .withIndex("by_type", (q) => q.eq("type", args.type))
-      .take(50);
-  },
+      .take(50),
+  returns: v.array(homeComponentDoc),
 });
 
 export const getById = query({
   args: { id: v.id("homeComponents") },
+  handler: async (ctx, args) => ctx.db.get(args.id),
   returns: v.union(homeComponentDoc, v.null()),
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
-  },
 });
 
 // CRIT-002 FIX: Dùng counter table và fix count logic
 export const create = mutation({
   args: {
-    type: v.string(),
-    title: v.string(),
     active: v.optional(v.boolean()),
-    order: v.optional(v.number()),
     config: v.any(),
+    order: v.optional(v.number()),
+    title: v.string(),
+    type: v.string(),
   },
-  returns: v.id("homeComponents"),
   handler: async (ctx, args) => {
     // Get order from last item instead of count
     const lastItem = await ctx.db.query("homeComponents").order("desc").first();
@@ -99,23 +91,23 @@ export const create = mutation({
     
     return id;
   },
+  returns: v.id("homeComponents"),
 });
 
 // TICKET #6 FIX: Update counters khi active hoặc type thay đổi
 export const update = mutation({
   args: {
-    id: v.id("homeComponents"),
-    type: v.optional(v.string()),
-    title: v.optional(v.string()),
     active: v.optional(v.boolean()),
-    order: v.optional(v.number()),
     config: v.optional(v.any()),
+    id: v.id("homeComponents"),
+    order: v.optional(v.number()),
+    title: v.optional(v.string()),
+    type: v.optional(v.string()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
     const component = await ctx.db.get(id);
-    if (!component) throw new Error("Component not found");
+    if (!component) {throw new Error("Component not found");}
     
     // Update counters nếu active thay đổi
     if (args.active !== undefined && args.active !== component.active) {
@@ -136,26 +128,26 @@ export const update = mutation({
     await ctx.db.patch(id, updates);
     return null;
   },
+  returns: v.null(),
 });
 
 export const updateConfig = mutation({
-  args: { id: v.id("homeComponents"), config: v.any() },
-  returns: v.null(),
+  args: { config: v.any(), id: v.id("homeComponents") },
   handler: async (ctx, args) => {
     const component = await ctx.db.get(args.id);
-    if (!component) throw new Error("Component not found");
+    if (!component) {throw new Error("Component not found");}
     await ctx.db.patch(args.id, { config: args.config });
     return null;
   },
+  returns: v.null(),
 });
 
 // CRIT-002 FIX: Update counters khi toggle
 export const toggle = mutation({
   args: { id: v.id("homeComponents") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const component = await ctx.db.get(args.id);
-    if (!component) throw new Error("Component not found");
+    if (!component) {throw new Error("Component not found");}
     
     const newActive = !component.active;
     await ctx.db.patch(args.id, { active: newActive });
@@ -168,15 +160,15 @@ export const toggle = mutation({
     
     return null;
   },
+  returns: v.null(),
 });
 
 // CRIT-002 FIX: Update counters khi remove
 export const remove = mutation({
   args: { id: v.id("homeComponents") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const component = await ctx.db.get(args.id);
-    if (!component) throw new Error("Component not found");
+    if (!component) {throw new Error("Component not found");}
     
     await ctx.db.delete(args.id);
     
@@ -189,36 +181,36 @@ export const remove = mutation({
     
     return null;
   },
+  returns: v.null(),
 });
 
 // TICKET #3 FIX: Dùng Promise.all thay vì sequential updates
 export const reorder = mutation({
   args: { items: v.array(v.object({ id: v.id("homeComponents"), order: v.number() })) },
-  returns: v.null(),
   handler: async (ctx, args) => {
-    await Promise.all(args.items.map(item => ctx.db.patch(item.id, { order: item.order })));
+    await Promise.all(args.items.map( async item => ctx.db.patch(item.id, { order: item.order })));
     return null;
   },
+  returns: v.null(),
 });
 
 // CRIT-002 FIX: Update counters và fix count logic
 export const duplicate = mutation({
   args: { id: v.id("homeComponents") },
-  returns: v.id("homeComponents"),
   handler: async (ctx, args) => {
     const component = await ctx.db.get(args.id);
-    if (!component) throw new Error("Component not found");
+    if (!component) {throw new Error("Component not found");}
     
     // Get order from last item
     const lastItem = await ctx.db.query("homeComponents").order("desc").first();
     const newOrder = lastItem ? lastItem.order + 1 : 0;
     
     const id = await ctx.db.insert("homeComponents", {
-      type: component.type,
-      title: `${component.title} (Copy)`,
       active: false,
-      order: newOrder,
       config: component.config,
+      order: newOrder,
+      title: `${component.title} (Copy)`,
+      type: component.type,
     });
     
     // Update counters (duplicate is always inactive)
@@ -230,12 +222,12 @@ export const duplicate = mutation({
     
     return id;
   },
+  returns: v.id("homeComponents"),
 });
 
 // CRIT-002 FIX: Dùng counter table thay vì fetch ALL
 export const count = query({
   args: {},
-  returns: v.number(),
   handler: async (ctx) => {
     const stats = await ctx.db
       .query("homeComponentStats")
@@ -243,20 +235,12 @@ export const count = query({
       .unique();
     return stats?.count ?? 0;
   },
+  returns: v.number(),
 });
 
 // CRIT-002 FIX: Dùng counter table thay vì fetch ALL
 export const getStats = query({
   args: {},
-  returns: v.object({
-    totalCount: v.number(),
-    activeCount: v.number(),
-    inactiveCount: v.number(),
-    typeBreakdown: v.array(v.object({
-      type: v.string(),
-      count: v.number(),
-    })),
-  }),
   handler: async (ctx) => {
     // Fetch tất cả stats 1 lần
     const allStats = await ctx.db.query("homeComponentStats").take(100);
@@ -270,21 +254,29 @@ export const getStats = query({
     const excludeKeys = new Set(["total", "active", "inactive"]);
     const typeBreakdown = allStats
       .filter(s => !excludeKeys.has(s.key) && s.count > 0)
-      .map(s => ({ type: s.key, count: s.count }));
+      .map(s => ({ count: s.count, type: s.key }));
 
     return {
-      totalCount,
       activeCount,
       inactiveCount,
+      totalCount,
       typeBreakdown,
     };
   },
+  returns: v.object({
+    activeCount: v.number(),
+    inactiveCount: v.number(),
+    totalCount: v.number(),
+    typeBreakdown: v.array(v.object({
+      count: v.number(),
+      type: v.string(),
+    })),
+  }),
 });
 
 // CRIT-002 FIX: Dùng counter table thay vì fetch ALL
 export const getTypes = query({
   args: {},
-  returns: v.array(v.string()),
   handler: async (ctx) => {
     const allStats = await ctx.db.query("homeComponentStats").take(100);
     const excludeKeys = new Set(["total", "active", "inactive"]);
@@ -293,4 +285,5 @@ export const getTypes = query({
       .map(s => s.key);
     return types.sort();
   },
+  returns: v.array(v.string()),
 });

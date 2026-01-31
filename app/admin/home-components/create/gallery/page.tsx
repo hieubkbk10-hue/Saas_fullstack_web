@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Image as ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { GalleryPreview, TrustBadgesPreview, type GalleryStyle, type TrustBadgesStyle } from '../../previews';
-import { MultiImageUploader, ImageItem } from '../../../components/MultiImageUploader';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
+import { GalleryPreview, type GalleryStyle, TrustBadgesPreview, type TrustBadgesStyle } from '../../previews';
+import type { ImageItem } from '../../../components/MultiImageUploader';
+import { MultiImageUploader } from '../../../components/MultiImageUploader';
 
 interface GalleryItem extends ImageItem {
   id: string | number;
@@ -20,14 +21,14 @@ function GalleryCreateContent() {
   const type = (searchParams.get('type') as 'Partners' | 'Gallery' | 'TrustBadges') || 'Gallery';
   
   const titles: Record<string, string> = {
-    Partners: 'Đối tác / Logos',
     Gallery: 'Thư viện ảnh',
+    Partners: 'Đối tác / Logos',
     TrustBadges: 'Chứng nhận'
   };
 
   const folders: Record<string, string> = {
-    Partners: 'partners',
     Gallery: 'gallery',
+    Partners: 'partners',
     TrustBadges: 'trust-badges'
   };
   
@@ -35,15 +36,15 @@ function GalleryCreateContent() {
   const brandColor = useBrandColor();
   
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([
-    { id: 'item-1', url: '', link: '', name: '' },
-    { id: 'item-2', url: '', link: '', name: '' }
+    { id: 'item-1', link: '', name: '', url: '' },
+    { id: 'item-2', link: '', name: '', url: '' }
   ]);
   const [style, setStyle] = useState<GalleryStyle>(type === 'Gallery' ? 'spotlight' : 'grid');
   const [trustBadgesStyle, setTrustBadgesStyle] = useState<TrustBadgesStyle>('cards');
 
   const onSubmit = (e: React.FormEvent) => {
     const finalStyle = type === 'TrustBadges' ? trustBadgesStyle : style;
-    void handleSubmit(e, { items: galleryItems.map(g => ({ url: g.url, link: g.link, name: g.name })), style: finalStyle });
+    void handleSubmit(e, { items: galleryItems.map(g => ({ link: g.link, name: g.name, url: g.url })), style: finalStyle });
   };
 
   return (
@@ -59,7 +60,7 @@ function GalleryCreateContent() {
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-base">
-            {type === 'Partners' ? 'Logo đối tác' : type === 'TrustBadges' ? 'Chứng nhận' : 'Thư viện ảnh'}
+            {type === 'Partners' ? 'Logo đối tác' : (type === 'TrustBadges' ? 'Chứng nhận' : 'Thư viện ảnh')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -71,16 +72,16 @@ function GalleryCreateContent() {
             extraFields={
               type === 'Partners' 
                 ? [{ key: 'link', placeholder: 'Link website đối tác (tùy chọn)', type: 'url' }]
-                : type === 'TrustBadges'
+                : (type === 'TrustBadges'
                 ? [{ key: 'name', placeholder: 'Tên chứng nhận/bằng cấp', type: 'text' }]
-                : []
+                : [])
             }
             minItems={1}
             maxItems={20}
-            aspectRatio={type === 'Partners' ? 'video' : type === 'Gallery' ? 'video' : 'square'}
-            columns={type === 'Gallery' ? 2 : type === 'TrustBadges' ? 3 : 2}
+            aspectRatio={type === 'Partners' ? 'video' : (type === 'Gallery' ? 'video' : 'square')}
+            columns={type === 'Gallery' ? 2 : (type === 'TrustBadges' ? 3 : 2)}
             showReorder={true}
-            addButtonText={type === 'Partners' ? 'Thêm logo' : type === 'TrustBadges' ? 'Thêm chứng nhận' : 'Thêm ảnh'}
+            addButtonText={type === 'Partners' ? 'Thêm logo' : (type === 'TrustBadges' ? 'Thêm chứng nhận' : 'Thêm ảnh')}
             emptyText="Chưa có ảnh nào"
             layout="vertical"
           />
@@ -89,7 +90,7 @@ function GalleryCreateContent() {
 
       {type === 'TrustBadges' ? (
         <TrustBadgesPreview 
-          items={galleryItems.map((item, idx) => ({ id: idx + 1, url: item.url, link: item.link, name: item.name }))} 
+          items={galleryItems.map((item, idx) => ({ id: idx + 1, link: item.link, name: item.name, url: item.url }))} 
           brandColor={brandColor}
           selectedStyle={trustBadgesStyle}
           onStyleChange={setTrustBadgesStyle}
@@ -97,7 +98,7 @@ function GalleryCreateContent() {
       ) : (
         <>
           <GalleryPreview 
-            items={galleryItems.map((item, idx) => ({ id: idx + 1, url: item.url, link: item.link }))} 
+            items={galleryItems.map((item, idx) => ({ id: idx + 1, link: item.link, url: item.url }))} 
             brandColor={brandColor} 
             componentType={type}
             selectedStyle={style}

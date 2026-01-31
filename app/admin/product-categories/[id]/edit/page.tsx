@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, use, useEffect, useMemo } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, Input, Label } from '../../../components/ui';
@@ -36,23 +36,23 @@ export default function ProductCategoryEditPage({ params }: { params: Promise<{ 
     if (categoryData) {
       setName(categoryData.name);
       setSlug(categoryData.slug);
-      setDescription(categoryData.description || '');
+      setDescription(categoryData.description ?? '');
       setActive(categoryData.active);
     }
   }, [categoryData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) {return;}
 
     setIsSubmitting(true);
     try {
       await updateCategory({
+        active,
+        description: description.trim() || undefined,
         id: id as Id<"productCategories">,
         name: name.trim(),
         slug: slug.trim(),
-        description: description.trim() || undefined,
-        active,
       });
       toast.success('Cập nhật danh mục thành công');
     } catch (error) {
@@ -96,7 +96,7 @@ export default function ProductCategoryEditPage({ params }: { params: Promise<{ 
               <Label>Tên danh mục <span className="text-red-500">*</span></Label>
               <Input 
                 value={name} 
-                onChange={(e) => setName(e.target.value)} 
+                onChange={(e) =>{  setName(e.target.value); }} 
                 required 
                 placeholder="Nhập tên danh mục..." 
                 autoFocus 
@@ -107,7 +107,7 @@ export default function ProductCategoryEditPage({ params }: { params: Promise<{ 
               <Label>Slug</Label>
               <Input 
                 value={slug} 
-                onChange={(e) => setSlug(e.target.value)} 
+                onChange={(e) =>{  setSlug(e.target.value); }} 
                 placeholder="slug" 
                 className="font-mono text-sm" 
               />
@@ -118,7 +118,7 @@ export default function ProductCategoryEditPage({ params }: { params: Promise<{ 
                 <Label>Mô tả</Label>
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) =>{  setDescription(e.target.value); }}
                   placeholder="Mô tả ngắn về danh mục..."
                   className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 />
@@ -129,7 +129,7 @@ export default function ProductCategoryEditPage({ params }: { params: Promise<{ 
               <Label>Trạng thái</Label>
               <select 
                 value={active ? 'active' : 'inactive'}
-                onChange={(e) => setActive(e.target.value === 'active')}
+                onChange={(e) =>{  setActive(e.target.value === 'active'); }}
                 className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
               >
                 <option value="active">Hoạt động</option>
@@ -142,7 +142,7 @@ export default function ProductCategoryEditPage({ params }: { params: Promise<{ 
             <Button 
               type="button" 
               variant="ghost" 
-              onClick={() => router.push('/admin/product-categories')}
+              onClick={() =>{  router.push('/admin/product-categories'); }}
             >
               Hủy bỏ
             </Button>

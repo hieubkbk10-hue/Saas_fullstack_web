@@ -1,9 +1,9 @@
 'use client';
 
+import { Globe, RefreshCw, Save } from 'lucide-react';
 import React from 'react';
-import { Save, Globe, RefreshCw } from 'lucide-react';
 
-export default function SEOConfigPage() {
+export default function SEOConfigPage(): React.ReactElement {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <div>

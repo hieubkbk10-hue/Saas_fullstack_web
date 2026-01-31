@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useEffect, Suspense } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import {
-  PostsFilter,
   FullWidthLayout,
-  SidebarLayout,
   MagazineLayout,
+  PostsFilter,
+  SidebarLayout,
   type SortOption,
 } from '@/components/site/posts';
 
@@ -19,16 +19,16 @@ type PostsListLayout = 'fullwidth' | 'sidebar' | 'magazine';
 function usePostsLayout(): PostsListLayout {
   const setting = useQuery(api.settings.getByKey, { key: 'posts_list_style' });
   const value = setting?.value as string;
-  if (value === 'grid' || value === 'list') return 'fullwidth';
-  if (value === 'sidebar') return 'sidebar';
-  if (value === 'magazine') return 'magazine';
+  if (value === 'grid' || value === 'list') {return 'fullwidth';}
+  if (value === 'sidebar') {return 'sidebar';}
+  if (value === 'magazine') {return 'magazine';}
   return 'fullwidth';
 }
 
 function useEnabledPostFields(): Set<string> {
   const fields = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'posts' });
   return useMemo(() => {
-    if (!fields) return new Set<string>();
+    if (!fields) {return new Set<string>();}
     return new Set(fields.map(f => f.fieldKey));
   }, [fields]);
 }
@@ -93,7 +93,7 @@ function PostsContent() {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
     }, 300);
-    return () => clearTimeout(timer);
+    return () =>{  clearTimeout(timer); };
   }, [searchQuery]);
 
   // Queries
@@ -101,17 +101,17 @@ function PostsContent() {
   
   const categoryFromUrl = useMemo(() => {
     const catSlug = searchParams.get('catpost');
-    if (!catSlug || !categories) return null;
+    if (!catSlug || !categories) {return null;}
     const matchedCategory = categories.find((c) => c.slug === catSlug);
     return matchedCategory?._id ?? null;
   }, [searchParams, categories]);
 
   const activeCategory = selectedCategory ?? categoryFromUrl;
   const posts = useQuery(api.posts.searchPublished, {
-    search: debouncedSearchQuery || undefined,
     categoryId: activeCategory ?? undefined,
-    sortBy,
     limit: 24,
+    search: debouncedSearchQuery || undefined,
+    sortBy,
   });
   const totalCount = useQuery(api.posts.countPublished, {
     categoryId: activeCategory ?? undefined,
@@ -120,7 +120,7 @@ function PostsContent() {
 
   // Build category map for O(1) lookup
   const categoryMap = useMemo(() => {
-    if (!categories) return new Map<string, string>();
+    if (!categories) {return new Map<string, string>();}
     return new Map(categories.map((c) => [c._id, c.name]));
   }, [categories]);
 
@@ -181,7 +181,7 @@ function PostsContent() {
                 onSearchChange={handleSearchChange}
                 sortBy={sortBy}
                 onSortChange={handleSortChange}
-                totalResults={totalCount ?? (posts?.length || 0)}
+                totalResults={totalCount ?? (posts?.length ?? 0)}
                 brandColor={brandColor}
               />
             </div>
@@ -230,7 +230,7 @@ function PostsContent() {
         )}
 
         {/* Load More (for all layouts) */}
-        {(posts?.length || 0) >= 24 && (
+        {(posts?.length ?? 0) >= 24 && (
           <div className="text-center mt-6">
             <button
               className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 hover:opacity-80"

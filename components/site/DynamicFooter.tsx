@@ -6,18 +6,18 @@ import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor, useSiteSettings, useSocialLinks } from './hooks';
-import { Facebook, Instagram, Youtube, Twitter, Linkedin, Github, Globe } from 'lucide-react';
+import { Facebook, Github, Globe, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react';
 
-type SocialLinkItem = { id: number; platform: string; url: string; icon: string };
-type FooterConfig = {
+interface SocialLinkItem { id: number; platform: string; url: string; icon: string }
+interface FooterConfig {
   logo?: string;
   description?: string;
-  columns?: Array<{ id: number; title: string; links: Array<{ label: string; url: string }> }>;
+  columns?: { id: number; title: string; links: { label: string; url: string }[] }[];
   socialLinks?: SocialLinkItem[];
   copyright?: string;
   showSocialLinks?: boolean;
   style?: 'classic' | 'modern' | 'corporate' | 'minimal' | 'centered' | 'stacked';
-};
+}
 
 // Custom TikTok icon (Lucide không có)
 const TikTokIcon = ({ size = 18 }: { size?: number }) => (
@@ -36,26 +36,35 @@ const ZaloIcon = ({ size = 18 }: { size?: number }) => (
 // Social icons based on platform
 const SocialIcon = ({ platform, size = 18 }: { platform: string; size?: number }) => {
   switch (platform) {
-    case 'facebook': return <Facebook size={size} />;
-    case 'instagram': return <Instagram size={size} />;
-    case 'youtube': return <Youtube size={size} />;
-    case 'tiktok': return <TikTokIcon size={size} />;
-    case 'zalo': return <ZaloIcon size={size} />;
-    case 'twitter': return <Twitter size={size} />;
-    case 'linkedin': return <Linkedin size={size} />;
-    case 'github': return <Github size={size} />;
-    default: return <Globe size={size} />;
+    case 'facebook': { return <Facebook size={size} />;
+    }
+    case 'instagram': { return <Instagram size={size} />;
+    }
+    case 'youtube': { return <Youtube size={size} />;
+    }
+    case 'tiktok': { return <TikTokIcon size={size} />;
+    }
+    case 'zalo': { return <ZaloIcon size={size} />;
+    }
+    case 'twitter': { return <Twitter size={size} />;
+    }
+    case 'linkedin': { return <Linkedin size={size} />;
+    }
+    case 'github': { return <Github size={size} />;
+    }
+    default: { return <Globe size={size} />;
+    }
   }
 };
 
 // Utility: Create shade from brandColor (same as previews.tsx)
 // Multiplies RGB by (1 - percent/100) to keep brand hue while darkening
 const shadeColor = (hex: string, percent: number): string => {
-  const num = parseInt(hex.replace('#', ''), 16);
+  const num = Number.parseInt(hex.replace('#', ''), 16);
   const R = Math.round((num >> 16) * (1 - percent / 100));
-  const G = Math.round((num >> 8 & 0x00FF) * (1 - percent / 100));
-  const B = Math.round((num & 0x0000FF) * (1 - percent / 100));
-  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+  const G = Math.round((num >> 8 & 0x00_FF) * (1 - percent / 100));
+  const B = Math.round((num & 0x00_00_FF) * (1 - percent / 100));
+  return `#${(0x1_00_00_00 + R * 0x1_00_00 + G * 0x1_00 + B).toString(16).slice(1)}`;
 };
 
 export function DynamicFooter() {
@@ -65,7 +74,7 @@ export function DynamicFooter() {
   const components = useQuery(api.homeComponents.listActive);
   
   const footerComponent = React.useMemo(() => {
-    if (!components) return null;
+    if (!components) {return null;}
     return components.find(c => c.type === 'Footer' && c.active);
   }, [components]);
 
@@ -78,15 +87,15 @@ export function DynamicFooter() {
     }
     // Fallback to settings socials
     const settingSocials: SocialLinkItem[] = [];
-    if (socialLinks.facebook) settingSocials.push({ id: 1, platform: 'facebook', url: socialLinks.facebook, icon: 'facebook' });
-    if (socialLinks.instagram) settingSocials.push({ id: 2, platform: 'instagram', url: socialLinks.instagram, icon: 'instagram' });
-    if (socialLinks.youtube) settingSocials.push({ id: 3, platform: 'youtube', url: socialLinks.youtube, icon: 'youtube' });
-    if (socialLinks.tiktok) settingSocials.push({ id: 4, platform: 'tiktok', url: socialLinks.tiktok, icon: 'tiktok' });
-    if (socialLinks.zalo) settingSocials.push({ id: 5, platform: 'zalo', url: socialLinks.zalo, icon: 'zalo' });
+    if (socialLinks.facebook) {settingSocials.push({ icon: 'facebook', id: 1, platform: 'facebook', url: socialLinks.facebook });}
+    if (socialLinks.instagram) {settingSocials.push({ icon: 'instagram', id: 2, platform: 'instagram', url: socialLinks.instagram });}
+    if (socialLinks.youtube) {settingSocials.push({ icon: 'youtube', id: 3, platform: 'youtube', url: socialLinks.youtube });}
+    if (socialLinks.tiktok) {settingSocials.push({ icon: 'tiktok', id: 4, platform: 'tiktok', url: socialLinks.tiktok });}
+    if (socialLinks.zalo) {settingSocials.push({ icon: 'zalo', id: 5, platform: 'zalo', url: socialLinks.zalo });}
     return settingSocials.length > 0 ? settingSocials : [
-      { id: 1, platform: 'facebook', url: '#', icon: 'facebook' },
-      { id: 2, platform: 'instagram', url: '#', icon: 'instagram' },
-      { id: 3, platform: 'youtube', url: '#', icon: 'youtube' },
+      { icon: 'facebook', id: 1, platform: 'facebook', url: '#' },
+      { icon: 'instagram', id: 2, platform: 'instagram', url: '#' },
+      { icon: 'youtube', id: 3, platform: 'youtube', url: '#' },
     ];
   };
 
@@ -96,8 +105,8 @@ export function DynamicFooter() {
       return config.columns;
     }
     return [
-      { id: 1, title: 'Về chúng tôi', links: [{ label: 'Giới thiệu', url: '/about' }, { label: 'Tuyển dụng', url: '/careers' }, { label: 'Đội ngũ', url: '/team' }, { label: 'Tin tức', url: '/blog' }] },
-      { id: 2, title: 'Hỗ trợ', links: [{ label: 'FAQ', url: '/faq' }, { label: 'Liên hệ', url: '/contact' }, { label: 'Chính sách', url: '/policy' }, { label: 'Báo cáo', url: '/report' }] }
+      { id: 1, links: [{ label: 'Giới thiệu', url: '/about' }, { label: 'Tuyển dụng', url: '/careers' }, { label: 'Đội ngũ', url: '/team' }, { label: 'Tin tức', url: '/blog' }], title: 'Về chúng tôi' },
+      { id: 2, links: [{ label: 'FAQ', url: '/faq' }, { label: 'Liên hệ', url: '/contact' }, { label: 'Chính sách', url: '/policy' }, { label: 'Báo cáo', url: '/report' }], title: 'Hỗ trợ' }
     ];
   };
 
@@ -108,7 +117,7 @@ export function DynamicFooter() {
       <footer className="text-white" style={{ backgroundColor: fallbackBgDark }}>
         <div className="py-6 px-4">
           <p className="text-center text-sm text-slate-500">
-            © {currentYear} {siteName || 'VietAdmin'}. All rights reserved.
+            © {currentYear} {siteName ?? 'VietAdmin'}. All rights reserved.
           </p>
         </div>
       </footer>
@@ -116,8 +125,8 @@ export function DynamicFooter() {
   }
 
   const config = footerComponent.config as FooterConfig;
-  const style = config.style || 'classic';
-  const logo = config.logo || siteLogo;
+  const style = config.style ?? 'classic';
+  const logo = config.logo ?? siteLogo;
   const socials = getSocials(config);
   const columns = getColumns(config);
 
@@ -129,13 +138,13 @@ export function DynamicFooter() {
   // Social media brand colors
   const socialColors: Record<string, string> = {
     facebook: '#1877F2',
-    instagram: '#E4405F', 
-    youtube: '#FF0000',
-    tiktok: '#000000',
-    zalo: '#0084FF',
-    twitter: '#1DA1F2',
+    github: '#181717', 
+    instagram: '#E4405F',
     linkedin: '#0A66C2',
-    github: '#181717',
+    tiktok: '#000000',
+    twitter: '#1DA1F2',
+    youtube: '#FF0000',
+    zalo: '#0084FF',
   };
 
   // Style 1: Classic Dark - Standard layout với brand column và menu columns
@@ -150,17 +159,17 @@ export function DynamicFooter() {
               <Link href="/" className="flex items-center gap-2">
                 <div className="p-1.5 rounded-lg" style={{ backgroundColor: bgMedium, border: `1px solid ${borderColor}` }}>
                   {logo ? (
-                    <Image src={logo} alt={siteName || 'VietAdmin'} width={24} height={24} className="h-6 w-6 object-contain brightness-110" />
+                    <Image src={logo} alt={siteName ?? 'VietAdmin'} width={24} height={24} className="h-6 w-6 object-contain brightness-110" />
                   ) : (
                     <div className="h-6 w-6 rounded flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: brandColor }}>
-                      {(siteName || 'V').charAt(0)}
+                      {(siteName ?? 'V').charAt(0)}
                     </div>
                   )}
                 </div>
-                <span className="text-lg font-bold tracking-tight text-white">{siteName || 'VietAdmin'}</span>
+                <span className="text-lg font-bold tracking-tight text-white">{siteName ?? 'VietAdmin'}</span>
               </Link>
               <p className="text-sm leading-relaxed max-w-sm text-white/80">
-                {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
+                {config.description ?? 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
               </p>
               {config.showSocialLinks !== false && (
                 <div className="flex gap-2">
@@ -203,7 +212,7 @@ export function DynamicFooter() {
           </div>
 
           <div className="mt-8 pt-4" style={{ borderTop: `1px solid ${borderColor}50` }}>
-            <p className="text-xs text-white/60">{config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}</p>
+            <p className="text-xs text-white/60">{config.copyright ?? `© ${currentYear} ${siteName ?? 'VietAdmin'}. All rights reserved.`}</p>
           </div>
         </div>
       </footer>
@@ -220,16 +229,16 @@ export function DynamicFooter() {
           <div className="flex flex-col items-center gap-2">
             <div className="h-12 w-12 rounded-xl flex items-center justify-center shadow-lg shadow-black/20 mb-1" style={{ background: `linear-gradient(to top right, ${bgMedium}, ${borderColor})` }}>
               {logo ? (
-                <Image src={logo} alt={siteName || 'VietAdmin'} width={28} height={28} className="h-7 w-7 object-contain drop-shadow-md" />
+                <Image src={logo} alt={siteName ?? 'VietAdmin'} width={28} height={28} className="h-7 w-7 object-contain drop-shadow-md" />
               ) : (
                 <div className="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold text-base" style={{ backgroundColor: brandColor }}>
-                  {(siteName || 'V').charAt(0)}
+                  {(siteName ?? 'V').charAt(0)}
                 </div>
               )}
             </div>
-            <h2 className="text-lg font-bold text-white tracking-tight">{siteName || 'VietAdmin'}</h2>
+            <h2 className="text-lg font-bold text-white tracking-tight">{siteName ?? 'VietAdmin'}</h2>
             <p className="max-w-md text-sm leading-relaxed text-white/80">
-              {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
+              {config.description ?? 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
             </p>
           </div>
 
@@ -269,7 +278,7 @@ export function DynamicFooter() {
 
           {/* Copyright */}
           <div className="text-xs font-medium text-white/60">
-            {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
+            {config.copyright ?? `© ${currentYear} ${siteName ?? 'VietAdmin'}. All rights reserved.`}
           </div>
         </div>
       </footer>
@@ -286,13 +295,13 @@ export function DynamicFooter() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 pb-6" style={{ borderBottom: `1px solid ${borderColor}` }}>
             <Link href="/" className="flex items-center gap-2">
               {logo ? (
-                <Image src={logo} alt={siteName || 'VietAdmin'} width={24} height={24} className="h-6 w-6 object-contain" />
+                <Image src={logo} alt={siteName ?? 'VietAdmin'} width={24} height={24} className="h-6 w-6 object-contain" />
               ) : (
                 <div className="h-6 w-6 rounded flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: brandColor }}>
-                  {(siteName || 'V').charAt(0)}
+                  {(siteName ?? 'V').charAt(0)}
                 </div>
               )}
-              <span className="text-base font-bold text-white">{siteName || 'VietAdmin'}</span>
+              <span className="text-base font-bold text-white">{siteName ?? 'VietAdmin'}</span>
             </Link>
             {config.showSocialLinks !== false && (
               <div className="flex gap-3">
@@ -317,7 +326,7 @@ export function DynamicFooter() {
             <div className="md:col-span-2 md:pr-6">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2">Về Công Ty</h4>
               <p className="text-sm leading-relaxed text-white/80">
-                {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
+                {config.description ?? 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ và sáng tạo kỹ thuật số.'}
               </p>
             </div>
             
@@ -339,7 +348,7 @@ export function DynamicFooter() {
 
           {/* Bottom Row */}
           <div className="pt-4 text-xs text-center md:text-left text-white/60">
-            {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
+            {config.copyright ?? `© ${currentYear} ${siteName ?? 'VietAdmin'}. All rights reserved.`}
           </div>
         </div>
       </footer>
@@ -356,14 +365,14 @@ export function DynamicFooter() {
             {/* Left: Logo & Copy */}
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3">
               {logo ? (
-                <Image src={logo} alt={siteName || 'VietAdmin'} width={20} height={20} className="h-5 w-5 opacity-80" />
+                <Image src={logo} alt={siteName ?? 'VietAdmin'} width={20} height={20} className="h-5 w-5 opacity-80" />
               ) : (
                 <div className="h-5 w-5 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: brandColor }}>
-                  {(siteName || 'V').charAt(0)}
+                  {(siteName ?? 'V').charAt(0)}
                 </div>
               )}
               <span className="text-xs font-medium text-white/60">
-                {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
+                {config.copyright ?? `© ${currentYear} ${siteName ?? 'VietAdmin'}. All rights reserved.`}
               </span>
             </div>
 
@@ -403,16 +412,16 @@ export function DynamicFooter() {
               style={{ backgroundColor: `${brandColor}20`, border: `2px solid ${brandColor}40` }}
             >
               {logo ? (
-                <Image src={logo} alt={siteName || 'VietAdmin'} width={28} height={28} className="h-7 w-7 object-contain" />
+                <Image src={logo} alt={siteName ?? 'VietAdmin'} width={28} height={28} className="h-7 w-7 object-contain" />
               ) : (
                 <div className="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: brandColor }}>
-                  {(siteName || 'V').charAt(0)}
+                  {(siteName ?? 'V').charAt(0)}
                 </div>
               )}
             </div>
-            <h2 className="text-lg font-bold text-white tracking-tight">{siteName || 'VietAdmin'}</h2>
+            <h2 className="text-lg font-bold text-white tracking-tight">{siteName ?? 'VietAdmin'}</h2>
             <p className="text-xs leading-relaxed text-white/70 max-w-xs md:max-w-md">
-              {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}
+              {config.description ?? 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}
             </p>
           </div>
 
@@ -450,7 +459,7 @@ export function DynamicFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="h-8 w-8 flex items-center justify-center rounded-full transition-all hover:scale-110"
-                  style={{ backgroundColor: `${brandColor}20`, color: '#fff', border: `1px solid ${brandColor}30` }}
+                  style={{ backgroundColor: `${brandColor}20`, border: `1px solid ${brandColor}30`, color: '#fff' }}
                 >
                   <SocialIcon platform={s.platform} size={16} />
                 </a>
@@ -460,7 +469,7 @@ export function DynamicFooter() {
 
           {/* Copyright */}
           <p className="text-[10px] text-white/50">
-            {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
+            {config.copyright ?? `© ${currentYear} ${siteName ?? 'VietAdmin'}. All rights reserved.`}
           </p>
         </div>
       </footer>
@@ -479,15 +488,15 @@ export function DynamicFooter() {
             style={{ backgroundColor: brandColor }}
           >
             {logo ? (
-              <Image src={logo} alt={siteName || 'VietAdmin'} width={24} height={24} className="h-6 w-6 object-contain brightness-110" />
+              <Image src={logo} alt={siteName ?? 'VietAdmin'} width={24} height={24} className="h-6 w-6 object-contain brightness-110" />
             ) : (
-              <span className="text-white font-bold text-sm">{(siteName || 'V').charAt(0)}</span>
+              <span className="text-white font-bold text-sm">{(siteName ?? 'V').charAt(0)}</span>
             )}
           </div>
           <div className="md:flex-1">
-            <h3 className="text-sm font-bold text-white mb-1">{siteName || 'VietAdmin'}</h3>
+            <h3 className="text-sm font-bold text-white mb-1">{siteName ?? 'VietAdmin'}</h3>
             <p className="text-xs text-white/70 leading-relaxed line-clamp-2">
-              {config.description || 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}
+              {config.description ?? 'Đối tác tin cậy của bạn trong mọi giải pháp công nghệ.'}
             </p>
           </div>
         </div>
@@ -526,7 +535,7 @@ export function DynamicFooter() {
             </div>
           )}
           <p className="text-[10px] text-white/50">
-            {config.copyright || `© ${currentYear} ${siteName || 'VietAdmin'}. All rights reserved.`}
+            {config.copyright ?? `© ${currentYear} ${siteName ?? 'VietAdmin'}. All rights reserved.`}
           </p>
         </div>
       </div>

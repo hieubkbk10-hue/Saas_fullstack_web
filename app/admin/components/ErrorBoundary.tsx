@@ -1,6 +1,7 @@
 'use client';
 
-import React, { Component, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import React, { Component } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button, Card } from './ui';
 
@@ -22,7 +23,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return { error, hasError: true };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
@@ -30,7 +31,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: undefined });
+    this.setState({ error: undefined, hasError: false });
   };
 
   render() {
@@ -50,7 +51,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 Đã xảy ra lỗi
               </h3>
               <p className="text-sm text-slate-500 mt-1 max-w-md">
-                {this.state.error?.message || 'Không thể hiển thị nội dung này. Vui lòng thử lại.'}
+                {this.state.error?.message ?? 'Không thể hiển thị nội dung này. Vui lòng thử lại.'}
               </p>
             </div>
             <Button onClick={this.handleReset} variant="outline" className="gap-2">
@@ -93,7 +94,7 @@ export function ErrorFallback({
       <div className="flex flex-col items-center gap-3">
         <AlertTriangle className="w-6 h-6 text-red-500" />
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          {error?.message || 'Đã xảy ra lỗi'}
+          {error?.message ?? 'Đã xảy ra lỗi'}
         </p>
         {resetErrorBoundary && (
           <Button onClick={resetErrorBoundary} variant="ghost" size="sm">

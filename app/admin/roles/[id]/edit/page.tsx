@@ -1,23 +1,23 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, use } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Loader2, AlertTriangle } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Badge } from '../../../components/ui';
+import { AlertTriangle, Loader2 } from 'lucide-react';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 
 const MODULE_KEY = 'roles';
 
 const permissionActions = ['view', 'create', 'edit', 'delete'];
 const actionLabels: Record<string, string> = {
-  view: 'Xem',
   create: 'Tạo',
-  edit: 'Sửa',
   delete: 'Xóa',
+  edit: 'Sửa',
+  view: 'Xem',
 };
 
 export default function RoleEditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -54,7 +54,7 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
     if (roleData && !isInitialized) {
       setName(roleData.name);
       setDescription(roleData.description);
-      setColor(roleData.color || '#3b82f6');
+      setColor(roleData.color ?? '#3b82f6');
       setPermissions(roleData.permissions);
       setIsInitialized(true);
     }
@@ -62,7 +62,7 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
 
   // Get permission modules (enabled modules that are not system-only)
   const permissionModules = useMemo(() => {
-    if (!modulesData) return [];
+    if (!modulesData) {return [];}
     return modulesData
       .filter(m => m.enabled && !['settings', 'homepage'].includes(m.key))
       .map(m => ({ key: m.key, label: m.name }));
@@ -73,9 +73,9 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
       const current = prev[module] || [];
       if (current.includes(action)) {
         return { ...prev, [module]: current.filter(a => a !== action) };
-      } else {
-        return { ...prev, [module]: [...current, action] };
       }
+        return { ...prev, [module]: [...current, action] };
+      
     });
   };
 
@@ -84,9 +84,9 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
       const current = prev[module] || [];
       if (current.length === permissionActions.length) {
         return { ...prev, [module]: [] };
-      } else {
-        return { ...prev, [module]: [...permissionActions] };
       }
+        return { ...prev, [module]: [...permissionActions] };
+      
     });
   };
 
@@ -106,15 +106,15 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {return;}
 
     setIsSubmitting(true);
     try {
       await updateRole({ 
-        id: id as Id<"roles">,
-        name: name.trim(), 
-        description: description.trim(),
         color: showColor ? color : undefined,
+        description: description.trim(), 
+        id: id as Id<"roles">,
+        name: name.trim(),
         permissions,
       });
       toast.success('Đã cập nhật vai trò');
@@ -180,7 +180,7 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
               <Label>Tên vai trò <span className="text-red-500">*</span></Label>
               <Input 
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) =>{  setName(e.target.value); }}
                 placeholder="Ví dụ: Biên tập viên..." 
                 className={errors.name ? 'border-red-500' : ''}
                 disabled={isSystemRole}
@@ -194,7 +194,7 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
                 <textarea 
                   className={`w-full min-h-[80px] rounded-md border ${errors.description ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed`}
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) =>{  setDescription(e.target.value); }}
                   placeholder="Mô tả quyền hạn của vai trò này..."
                   disabled={isSystemRole}
                 />
@@ -209,13 +209,13 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
                   <input 
                     type="color" 
                     value={color}
-                    onChange={(e) => setColor(e.target.value)}
+                    onChange={(e) =>{  setColor(e.target.value); }}
                     className="w-10 h-10 rounded cursor-pointer border border-slate-200 dark:border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={isSystemRole}
                   />
                   <Input 
                     value={color}
-                    onChange={(e) => setColor(e.target.value)}
+                    onChange={(e) =>{  setColor(e.target.value); }}
                     placeholder="#3b82f6"
                     className="w-32"
                     disabled={isSystemRole}
@@ -257,7 +257,7 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
                         <input
                           type="checkbox"
                           checked={allChecked}
-                          onChange={() => toggleAllForModule(module.key)}
+                          onChange={() =>{  toggleAllForModule(module.key); }}
                           className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
                           disabled={isSystemRole}
                         />
@@ -267,7 +267,7 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
                           <input
                             type="checkbox"
                             checked={modulePerms.includes(action)}
-                            onChange={() => togglePermission(module.key, action)}
+                            onChange={() =>{  togglePermission(module.key, action); }}
                             className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
                             disabled={isSystemRole}
                           />
@@ -285,7 +285,7 @@ export default function RoleEditPage({ params }: { params: Promise<{ id: string 
         </Card>
 
         <div className="mt-6 flex justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={() => router.push('/admin/roles')} disabled={isSubmitting}>
+          <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/roles'); }} disabled={isSubmitting}>
             {isSystemRole ? 'Đóng' : 'Hủy bỏ'}
           </Button>
           {!isSystemRole && (

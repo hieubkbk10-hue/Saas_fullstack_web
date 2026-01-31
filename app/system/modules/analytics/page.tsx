@@ -1,41 +1,41 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { BarChart3, TrendingUp, Users, Package, Loader2, Database, Settings, RefreshCw, Trash2, FileDown, AlertTriangle } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { AlertTriangle, BarChart3, Database, FileDown, Loader2, Package, RefreshCw, Settings, Trash2, TrendingUp, Users } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingSelect, SettingInput, FeaturesCard, FieldsCard, ToggleSwitch
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus, SettingInput, SettingSelect, SettingsCard, ToggleSwitch
 } from '@/components/modules/shared';
-import { Card, Badge, Button } from '@/app/admin/components/ui';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { Badge, Button, Card } from '@/app/admin/components/ui';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 const MODULE_KEY = 'analytics';
 
 const FEATURES_CONFIG = [
-  { key: 'enableSales', label: 'Báo cáo doanh thu', icon: TrendingUp, description: 'Thống kê đơn hàng, doanh thu theo thời gian', linkedField: 'revenue' },
-  { key: 'enableCustomers', label: 'Báo cáo khách hàng', icon: Users, description: 'Khách mới, khách quay lại, phân khúc', linkedField: 'newCustomers' },
-  { key: 'enableProducts', label: 'Báo cáo sản phẩm', icon: Package, description: 'Sản phẩm bán chạy, tồn kho, xu hướng', linkedField: 'topProducts' },
-  { key: 'enableTraffic', label: 'Báo cáo lượt truy cập', icon: BarChart3, description: 'Pageviews, sessions, nguồn traffic', linkedField: 'pageviews' },
-  { key: 'enableExport', label: 'Xuất báo cáo', icon: FileDown, description: 'Export CSV, Excel, PDF', linkedField: 'exportFormat' },
+  { description: 'Thống kê đơn hàng, doanh thu theo thời gian', icon: TrendingUp, key: 'enableSales', label: 'Báo cáo doanh thu', linkedField: 'revenue' },
+  { description: 'Khách mới, khách quay lại, phân khúc', icon: Users, key: 'enableCustomers', label: 'Báo cáo khách hàng', linkedField: 'newCustomers' },
+  { description: 'Sản phẩm bán chạy, tồn kho, xu hướng', icon: Package, key: 'enableProducts', label: 'Báo cáo sản phẩm', linkedField: 'topProducts' },
+  { description: 'Pageviews, sessions, nguồn traffic', icon: BarChart3, key: 'enableTraffic', label: 'Báo cáo lượt truy cập', linkedField: 'pageviews' },
+  { description: 'Export CSV, Excel, PDF', icon: FileDown, key: 'enableExport', label: 'Xuất báo cáo', linkedField: 'exportFormat' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { defaultPeriod: string; autoRefresh: boolean; refreshInterval: number };
+interface SettingsState { defaultPeriod: string; autoRefresh: boolean; refreshInterval: number }
 type TabType = 'config' | 'data';
 
 // Format currency VND
 function formatCurrency(value: number): string {
-  if (value >= 1000000000) {
-    return `${(value / 1000000000).toFixed(1)}B`;
+  if (value >= 1_000_000_000) {
+    return `${(value / 1_000_000_000).toFixed(1)}B`;
   }
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1)}M`;
   }
   if (value >= 1000) {
     return `${(value / 1000).toFixed(1)}K`;
@@ -62,7 +62,7 @@ export default function AnalyticsModuleConfigPage() {
   // Local state
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ defaultPeriod: '30d', autoRefresh: true, refreshInterval: 300 });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ autoRefresh: true, defaultPeriod: '30d', refreshInterval: 300 });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -81,14 +81,14 @@ export default function AnalyticsModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -99,7 +99,7 @@ export default function AnalyticsModuleConfigPage() {
       const defaultPeriod = settingsData.find(s => s.settingKey === 'defaultPeriod')?.value as string ?? '30d';
       const autoRefresh = settingsData.find(s => s.settingKey === 'autoRefresh')?.value as boolean ?? true;
       const refreshInterval = settingsData.find(s => s.settingKey === 'refreshInterval')?.value as number ?? 300;
-      setLocalSettings({ defaultPeriod, autoRefresh, refreshInterval });
+      setLocalSettings({ autoRefresh, defaultPeriod, refreshInterval });
     }
   }, [settingsData]);
 
@@ -110,15 +110,13 @@ export default function AnalyticsModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
   const serverSettings = useMemo(() => {
     const defaultPeriod = settingsData?.find(s => s.settingKey === 'defaultPeriod')?.value as string ?? '30d';
     const autoRefresh = settingsData?.find(s => s.settingKey === 'autoRefresh')?.value as boolean ?? true;
     const refreshInterval = settingsData?.find(s => s.settingKey === 'refreshInterval')?.value as number ?? 300;
-    return { defaultPeriod, autoRefresh, refreshInterval };
+    return { autoRefresh, defaultPeriod, refreshInterval };
   }, [settingsData]);
 
   // Check for changes
@@ -155,14 +153,14 @@ export default function AnalyticsModuleConfigPage() {
       // Save changed features
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          await toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY });
         }
       }
       // Save changed fields
       for (const field of localFields) {
         const serverField = serverFields.find(sf => sf.id === field.id);
         if (serverField && field.enabled !== serverField.enabled) {
-          await updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled });
+          await updateField({ enabled: field.enabled, id: field.id as Id<"moduleFields"> });
         }
       }
       // Save changed settings
@@ -241,7 +239,7 @@ export default function AnalyticsModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-pink-500 text-pink-600 dark:text-pink-400'
@@ -251,7 +249,7 @@ export default function AnalyticsModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-pink-500 text-pink-600 dark:text-pink-400'
@@ -283,12 +281,12 @@ export default function AnalyticsModuleConfigPage() {
                     <SettingSelect
                       label="Khoảng thời gian mặc định"
                       value={localSettings.defaultPeriod}
-                      onChange={(v) => setLocalSettings({...localSettings, defaultPeriod: v})}
+                      onChange={(v) =>{  setLocalSettings({...localSettings, defaultPeriod: v}); }}
                       options={[
-                        { value: '7d', label: '7 ngày' },
-                        { value: '30d', label: '30 ngày' },
-                        { value: '90d', label: '90 ngày' },
-                        { value: '1y', label: '1 năm' },
+                        { label: '7 ngày', value: '7d' },
+                        { label: '30 ngày', value: '30d' },
+                        { label: '90 ngày', value: '90d' },
+                        { label: '1 năm', value: '1y' },
                       ]}
                       focusColor="focus:border-pink-500"
                     />
@@ -296,7 +294,7 @@ export default function AnalyticsModuleConfigPage() {
                       <span className="text-xs text-slate-700 dark:text-slate-200">Tự động refresh</span>
                       <ToggleSwitch 
                         enabled={localSettings.autoRefresh}
-                        onChange={() => setLocalSettings({...localSettings, autoRefresh: !localSettings.autoRefresh})}
+                        onChange={() =>{  setLocalSettings({...localSettings, autoRefresh: !localSettings.autoRefresh}); }}
                         color="bg-pink-500"
                       />
                     </div>
@@ -304,7 +302,7 @@ export default function AnalyticsModuleConfigPage() {
                       <SettingInput
                         label="Refresh interval (giây)"
                         value={localSettings.refreshInterval}
-                        onChange={(v) => setLocalSettings({...localSettings, refreshInterval: v})}
+                        onChange={(v) =>{  setLocalSettings({...localSettings, refreshInterval: v}); }}
                         focusColor="focus:border-pink-500"
                       />
                     )}
@@ -371,7 +369,7 @@ function AnalyticsDataTab({
   const summaryStats = useQuery(api.analytics.getSummaryStats, { period: selectedPeriod });
   const chartData = useQuery(api.analytics.getRevenueChartData, { period: selectedPeriod });
   const topProducts = useQuery(api.analytics.getTopProducts, { limit: 5 });
-  const lowStockProducts = useQuery(api.analytics.getLowStockProducts, { threshold: 10, limit: 5 });
+  const lowStockProducts = useQuery(api.analytics.getLowStockProducts, { limit: 5, threshold: 10 });
 
   const isLoading = summaryStats === undefined;
 
@@ -381,50 +379,50 @@ function AnalyticsDataTab({
   }, []);
 
   useEffect(() => {
-    if (!settings.autoRefresh || settings.refreshInterval <= 0) return;
+    if (!settings.autoRefresh || settings.refreshInterval <= 0) {return;}
     
     const interval = setInterval(() => {
       setLastRefresh(Date.now());
     }, settings.refreshInterval * 1000);
     
-    return () => clearInterval(interval);
+    return () =>{  clearInterval(interval); };
   }, [settings.autoRefresh, settings.refreshInterval]);
 
   // Stats cards config based on enabled features
   const statsCards = useMemo(() => {
     const cards = [];
     
-    if (featuresEnabled.enableSales === true) {
+    if (featuresEnabled.enableSales) {
       cards.push({
-        label: 'Doanh thu',
-        value: summaryStats ? formatCurrency(summaryStats.revenue.value) : '...',
         change: summaryStats?.revenue.change ?? 0,
         icon: TrendingUp,
+        label: 'Doanh thu',
+        value: summaryStats ? formatCurrency(summaryStats.revenue.value) : '...',
       });
       cards.push({
-        label: 'Đơn hàng',
-        value: summaryStats?.orders.value.toLocaleString('vi-VN') ?? '...',
         change: summaryStats?.orders.change ?? 0,
         icon: Package,
+        label: 'Đơn hàng',
+        value: summaryStats?.orders.value.toLocaleString('vi-VN') ?? '...',
       });
     }
     
-    if (featuresEnabled.enableCustomers === true) {
+    if (featuresEnabled.enableCustomers) {
       cards.push({
-        label: 'Khách mới',
-        value: summaryStats?.customers.value.toLocaleString('vi-VN') ?? '...',
         change: summaryStats?.customers.change ?? 0,
         icon: Users,
+        label: 'Khách mới',
+        value: summaryStats?.customers.value.toLocaleString('vi-VN') ?? '...',
       });
     }
     
-    if (featuresEnabled.enableProducts === true) {
+    if (featuresEnabled.enableProducts) {
       cards.push({
+        change: 0,
+        extra: summaryStats?.products.lowStock ? `${summaryStats.products.lowStock} sắp hết` : undefined,
+        icon: Package,
         label: 'Sản phẩm',
         value: summaryStats?.products.value.toLocaleString('vi-VN') ?? '...',
-        change: 0,
-        icon: Package,
-        extra: summaryStats?.products.lowStock ? `${summaryStats.products.lowStock} sắp hết` : undefined,
       });
     }
     
@@ -446,7 +444,7 @@ function AnalyticsDataTab({
         <div className="flex items-center gap-2">
           <select
             value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
+            onChange={(e) =>{  setSelectedPeriod(e.target.value); }}
             className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-800"
           >
             <option value="7d">7 ngày</option>
@@ -502,7 +500,7 @@ function AnalyticsDataTab({
       )}
 
       {/* Revenue Chart */}
-      {featuresEnabled.enableSales === true && chartData && chartData.length > 0 && (
+      {featuresEnabled.enableSales && chartData && chartData.length > 0 && (
         <Card className="p-6">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Biểu đồ doanh thu</h3>
           <div className="h-64">
@@ -544,7 +542,7 @@ function AnalyticsDataTab({
       )}
 
       {/* Orders Chart */}
-      {featuresEnabled.enableSales === true && chartData && chartData.length > 0 && (
+      {featuresEnabled.enableSales && chartData && chartData.length > 0 && (
         <Card className="p-6">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Số đơn hàng</h3>
           <div className="h-48">
@@ -570,7 +568,7 @@ function AnalyticsDataTab({
       )}
 
       {/* Top Products */}
-      {featuresEnabled.enableProducts === true && topProducts && topProducts.length > 0 && (
+      {featuresEnabled.enableProducts && topProducts && topProducts.length > 0 && (
         <Card className="p-6">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Sản phẩm bán chạy</h3>
           <div className="space-y-3">
@@ -592,7 +590,7 @@ function AnalyticsDataTab({
       )}
 
       {/* Low Stock Warning */}
-      {featuresEnabled.enableProducts === true && lowStockProducts && lowStockProducts.length > 0 && (
+      {featuresEnabled.enableProducts && lowStockProducts && lowStockProducts.length > 0 && (
         <Card className="p-6 border-amber-200 dark:border-amber-800">
           <h3 className="text-lg font-semibold text-amber-600 dark:text-amber-400 mb-4 flex items-center gap-2">
             <AlertTriangle size={20} /> Sản phẩm sắp hết hàng

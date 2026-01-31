@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, use, useEffect, useMemo } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../../components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { LexicalEditor } from '../../../components/LexicalEditor';
 import { ImageUpload } from '../../../components/ImageUpload';
 import { ModuleGuard } from '../../../components/ModuleGuard';
@@ -57,10 +57,10 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
       setSlug(productData.slug);
       setSku(productData.sku);
       setPrice(productData.price.toString());
-      setSalePrice(productData.salePrice?.toString() || '');
+      setSalePrice(productData.salePrice?.toString() ?? '');
       setStock(productData.stock.toString());
       setCategoryId(productData.categoryId);
-      setDescription(productData.description || '');
+      setDescription(productData.description ?? '');
       setImage(productData.image);
       setStatus(productData.status);
       setIsDataLoaded(true);
@@ -82,17 +82,17 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
     setIsSubmitting(true);
     try {
       await updateProduct({
-        id: id as Id<"products">,
-        name: name.trim(),
-        slug: slug.trim(),
-        sku: sku.trim() || productData?.sku || `SKU-${Date.now()}`,
-        price: parseInt(price) || 0,
-        salePrice: salePrice ? parseInt(salePrice) : undefined,
-        stock: parseInt(stock) || 0,
         categoryId: categoryId as Id<"productCategories">,
         description: description.trim() || undefined,
+        id: id as Id<"products">,
         image,
+        name: name.trim(),
+        price: parseInt(price) || 0,
+        salePrice: salePrice ? parseInt(salePrice) : undefined,
+        sku: (sku.trim() || productData?.sku) ?? `SKU-${Date.now()}`,
+        slug: slug.trim(),
         status,
+        stock: parseInt(stock) || 0,
       });
       toast.success("Cập nhật sản phẩm thành công");
     } catch (error) {
@@ -138,22 +138,22 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
                   const val = e.target.value;
                   setName(val);
                   const generatedSlug = val.toLowerCase()
-                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                    .replace(/[đĐ]/g, "d")
-                    .replace(/[^a-z0-9\s]/g, '')
-                    .replace(/\s+/g, '-');
+                    .normalize("NFD").replaceAll(/[\u0300-\u036F]/g, "")
+                    .replaceAll(/[đĐ]/g, "d")
+                    .replaceAll(/[^a-z0-9\s]/g, '')
+                    .replaceAll(/\s+/g, '-');
                   setSlug(generatedSlug);
                 }} required placeholder="Nhập tên sản phẩm..." autoFocus />
               </div>
               <div className={enabledFields.has('sku') ? "grid grid-cols-2 gap-4" : ""}>
                 <div className="space-y-2">
                   <Label>Slug</Label>
-                  <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="slug" className="font-mono text-sm" />
+                  <Input value={slug} onChange={(e) =>{  setSlug(e.target.value); }} placeholder="slug" className="font-mono text-sm" />
                 </div>
                 {enabledFields.has('sku') && (
                   <div className="space-y-2">
                     <Label>Mã SKU <span className="text-red-500">*</span></Label>
-                    <Input value={sku} onChange={(e) => setSku(e.target.value)} required placeholder="VD: PROD-001" className="font-mono" />
+                    <Input value={sku} onChange={(e) =>{  setSku(e.target.value); }} required placeholder="VD: PROD-001" className="font-mono" />
                   </div>
                 )}
               </div>
@@ -178,19 +178,19 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
               <div className={enabledFields.has('salePrice') ? "grid grid-cols-2 gap-4" : ""}>
                 <div className="space-y-2">
                   <Label>Giá bán (VNĐ) <span className="text-red-500">*</span></Label>
-                  <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} required placeholder="0" min="0" />
+                  <Input type="number" value={price} onChange={(e) =>{  setPrice(e.target.value); }} required placeholder="0" min="0" />
                 </div>
                 {enabledFields.has('salePrice') && (
                   <div className="space-y-2">
                     <Label>Giá khuyến mãi (VNĐ)</Label>
-                    <Input type="number" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} placeholder="Để trống nếu không KM" min="0" />
+                    <Input type="number" value={salePrice} onChange={(e) =>{  setSalePrice(e.target.value); }} placeholder="Để trống nếu không KM" min="0" />
                   </div>
                 )}
               </div>
               {enabledFields.has('stock') && (
                 <div className="space-y-2">
                   <Label>Số lượng tồn kho</Label>
-                  <Input type="number" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="0" min="0" />
+                  <Input type="number" value={stock} onChange={(e) =>{  setStock(e.target.value); }} placeholder="0" min="0" />
                 </div>
               )}
             </CardContent>
@@ -205,7 +205,7 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
                 <Label>Trạng thái</Label>
                 <select 
                   value={status} 
-                  onChange={(e) => setStatus(e.target.value as 'Draft' | 'Active' | 'Archived')}
+                  onChange={(e) =>{  setStatus(e.target.value as 'Draft' | 'Active' | 'Archived'); }}
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
                   <option value="Draft">Bản nháp</option>
@@ -217,7 +217,7 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
                 <Label>Danh mục <span className="text-red-500">*</span></Label>
                 <select 
                   value={categoryId} 
-                  onChange={(e) => setCategoryId(e.target.value)}
+                  onChange={(e) =>{  setCategoryId(e.target.value); }}
                   required
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
@@ -256,7 +256,7 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
       </div>
 
       <div className="fixed bottom-0 left-0 lg:left-[280px] right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center z-10">
-        <Button type="button" variant="ghost" onClick={() => router.push('/admin/products')}>Hủy bỏ</Button>
+        <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/products'); }}>Hủy bỏ</Button>
         <Button type="submit" variant="accent" disabled={isSubmitting}>
           {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
           Lưu thay đổi

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, CardContent, Input, Label } from '../../components/ui';
@@ -17,7 +17,7 @@ export default function CategoryCreatePage() {
   const categoriesData = useQuery(api.productCategories.listAll, {});
   const createCategory = useMutation(api.productCategories.create);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
-  void fieldsData; // mark as intentionally unused for now
+  void fieldsData; // Mark as intentionally unused for now
 
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -36,25 +36,25 @@ export default function CategoryCreatePage() {
     const val = e.target.value;
     setName(val);
     const generatedSlug = val.toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[đĐ]/g, "d")
-      .replace(/[^a-z0-9\s]/g, '')
-      .replace(/\s+/g, '-');
+      .normalize("NFD").replaceAll(/[\u0300-\u036F]/g, "")
+      .replaceAll(/[đĐ]/g, "d")
+      .replaceAll(/[^a-z0-9\s]/g, '')
+      .replaceAll(/\s+/g, '-');
     setSlug(generatedSlug);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !slug.trim()) return;
+    if (!name.trim() || !slug.trim()) {return;}
 
     setIsSubmitting(true);
     try {
       await createCategory({
-        name: name.trim(),
-        slug: slug.trim(),
-        description: description.trim() || undefined,
-        parentId: parentId ? parentId as Id<"productCategories"> : undefined,
         active,
+        description: description.trim() || undefined,
+        name: name.trim(),
+        parentId: parentId ? parentId as Id<"productCategories"> : undefined,
+        slug: slug.trim(),
       });
       toast.success('Tạo danh mục thành công');
       router.push('/admin/categories');
@@ -84,14 +84,14 @@ export default function CategoryCreatePage() {
 
             <div className="space-y-2">
               <Label>Slug</Label>
-              <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="tu-dong-tao-tu-ten" className="font-mono text-sm" />
+              <Input value={slug} onChange={(e) =>{  setSlug(e.target.value); }} placeholder="tu-dong-tao-tu-ten" className="font-mono text-sm" />
             </div>
             
             <div className="space-y-2">
               <Label>Danh mục cha</Label>
               <select 
                 value={parentId}
-                onChange={(e) => setParentId(e.target.value)}
+                onChange={(e) =>{  setParentId(e.target.value); }}
                 className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
               >
                 <option value="">-- Không có (Danh mục gốc) --</option>
@@ -106,7 +106,7 @@ export default function CategoryCreatePage() {
                 <Label>Mô tả</Label>
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) =>{  setDescription(e.target.value); }}
                   placeholder="Mô tả ngắn về danh mục..."
                   className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 />
@@ -117,7 +117,7 @@ export default function CategoryCreatePage() {
               <Label>Trạng thái</Label>
               <select 
                 value={active ? 'active' : 'inactive'}
-                onChange={(e) => setActive(e.target.value === 'active')}
+                onChange={(e) =>{  setActive(e.target.value === 'active'); }}
                 className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
               >
                 <option value="active">Hoạt động</option>
@@ -127,7 +127,7 @@ export default function CategoryCreatePage() {
           </CardContent>
           
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
-            <Button type="button" variant="ghost" onClick={() => router.push('/admin/categories')}>Hủy bỏ</Button>
+            <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/categories'); }}>Hủy bỏ</Button>
             <Button type="submit" variant="accent" disabled={isSubmitting}>
               {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
               Tạo danh mục

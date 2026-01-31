@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
 import { StatsPreview, type StatsStyle } from '../../previews';
 
 export default function StatsCreatePage() {
@@ -11,15 +11,15 @@ export default function StatsCreatePage() {
   const brandColor = useBrandColor();
   
   const [statsItems, setStatsItems] = useState([
-    { id: 1, value: '1000+', label: 'Khách hàng' },
-    { id: 2, value: '50+', label: 'Đối tác' },
-    { id: 3, value: '99%', label: 'Hài lòng' },
-    { id: 4, value: '24/7', label: 'Hỗ trợ' }
+    { id: 1, label: 'Khách hàng', value: '1000+' },
+    { id: 2, label: 'Đối tác', value: '50+' },
+    { id: 3, label: 'Hài lòng', value: '99%' },
+    { id: 4, label: 'Hỗ trợ', value: '24/7' }
   ]);
   const [style, setStyle] = useState<StatsStyle>('horizontal');
 
   const onSubmit = (e: React.FormEvent) => {
-    void handleSubmit(e, { items: statsItems.map(s => ({ value: s.value, label: s.label })), style });
+    void handleSubmit(e, { items: statsItems.map(s => ({ label: s.label, value: s.value })), style });
   };
 
   return (
@@ -39,7 +39,7 @@ export default function StatsCreatePage() {
             type="button" 
             variant="outline" 
             size="sm" 
-            onClick={() => setStatsItems([...statsItems, { id: Date.now(), value: '', label: '' }])} 
+            onClick={() =>{  setStatsItems([...statsItems, { id: Date.now(), label: '', value: '' }]); }} 
             className="gap-2"
           >
             <Plus size={14} /> Thêm
@@ -54,13 +54,13 @@ export default function StatsCreatePage() {
               <Input 
                 placeholder="Số liệu (VD: 1000+)" 
                 value={item.value} 
-                onChange={(e) => setStatsItems(statsItems.map(s => s.id === item.id ? {...s, value: e.target.value} : s))} 
+                onChange={(e) =>{  setStatsItems(statsItems.map(s => s.id === item.id ? {...s, value: e.target.value} : s)); }} 
                 className="flex-1" 
               />
               <Input 
                 placeholder="Nhãn (VD: Khách hàng)" 
                 value={item.label} 
-                onChange={(e) => setStatsItems(statsItems.map(s => s.id === item.id ? {...s, label: e.target.value} : s))} 
+                onChange={(e) =>{  setStatsItems(statsItems.map(s => s.id === item.id ? {...s, label: e.target.value} : s)); }} 
                 className="flex-1" 
               />
               <Button 

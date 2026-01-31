@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import React from 'react';
 
 interface ModuleHeaderProps {
   icon: React.ComponentType<{ size?: number }>;
@@ -28,12 +28,24 @@ export const ModuleHeader: React.FC<ModuleHeaderProps> = ({
   isSaving = false,
 }) => {
   const router = useRouter();
+  let buttonStateClass = 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed';
+  let buttonIcon = <Save size={16} />;
+  let buttonLabel = 'Lưu thay đổi';
+
+  if (hasChanges) {
+    buttonStateClass = `${buttonClass} text-white`;
+  }
+
+  if (isSaving) {
+    buttonIcon = <Loader2 size={16} className="animate-spin" />;
+    buttonLabel = 'Đang lưu...';
+  }
   
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <button 
-          onClick={() => router.push('/system/modules')}
+          onClick={() =>{  router.push('/system/modules'); }}
           className="p-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
         >
           <ArrowLeft size={20} />
@@ -52,14 +64,10 @@ export const ModuleHeader: React.FC<ModuleHeaderProps> = ({
       <button 
         onClick={onSave}
         disabled={!hasChanges || isSaving}
-        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-          hasChanges 
-            ? `${buttonClass} text-white` 
-            : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
-        }`}
+        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${buttonStateClass}`}
       >
-        {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-        {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
+        {buttonIcon}
+        {buttonLabel}
       </button>
     </div>
   );

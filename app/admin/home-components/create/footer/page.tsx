@@ -1,25 +1,25 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, Download, GripVertical, LayoutGrid, Share2 } from 'lucide-react';
+import { Download, GripVertical, LayoutGrid, Plus, Share2, Trash2 } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
-import { cn, Card, CardContent, CardHeader, CardTitle, Input, Label, Button } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
 import { FooterPreview, type FooterStyle } from '../../previews';
 import { SettingsImageUploader } from '../../../components/SettingsImageUploader';
 
-type FooterLink = { label: string; url: string };
-type FooterColumn = { id: number; title: string; links: FooterLink[] };
-type SocialLink = { id: number; platform: string; url: string; icon: string };
+interface FooterLink { label: string; url: string }
+interface FooterColumn { id: number; title: string; links: FooterLink[] }
+interface SocialLink { id: number; platform: string; url: string; icon: string }
 
 const SOCIAL_PLATFORMS = [
-  { key: 'facebook', label: 'Facebook', icon: 'facebook' },
-  { key: 'instagram', label: 'Instagram', icon: 'instagram' },
-  { key: 'youtube', label: 'Youtube', icon: 'youtube' },
-  { key: 'tiktok', label: 'TikTok', icon: 'tiktok' },
-  { key: 'zalo', label: 'Zalo', icon: 'zalo' },
+  { icon: 'facebook', key: 'facebook', label: 'Facebook' },
+  { icon: 'instagram', key: 'instagram', label: 'Instagram' },
+  { icon: 'youtube', key: 'youtube', label: 'Youtube' },
+  { icon: 'tiktok', key: 'tiktok', label: 'TikTok' },
+  { icon: 'zalo', key: 'zalo', label: 'Zalo' },
 ];
 
 export default function FooterCreatePage() {
@@ -35,15 +35,15 @@ export default function FooterCreatePage() {
   const socialZalo = useQuery(api.settings.getByKey, { key: 'social_zalo' });
   
   const [footerConfig, setFooterConfig] = useState({
-    logo: '',
-    description: 'Công ty TNHH ABC - Đối tác tin cậy của bạn',
     columns: [
-      { id: 1, title: 'Về chúng tôi', links: [{ label: 'Giới thiệu', url: '/about' }, { label: 'Tuyển dụng', url: '/careers' }] },
-      { id: 2, title: 'Hỗ trợ', links: [{ label: 'FAQ', url: '/faq' }, { label: 'Liên hệ', url: '/contact' }] }
+      { id: 1, links: [{ label: 'Giới thiệu', url: '/about' }, { label: 'Tuyển dụng', url: '/careers' }], title: 'Về chúng tôi' },
+      { id: 2, links: [{ label: 'FAQ', url: '/faq' }, { label: 'Liên hệ', url: '/contact' }], title: 'Hỗ trợ' }
     ] as FooterColumn[],
-    socialLinks: [] as SocialLink[],
     copyright: '© 2024 VietAdmin. All rights reserved.',
-    showSocialLinks: true
+    description: 'Công ty TNHH ABC - Đối tác tin cậy của bạn',
+    logo: '',
+    showSocialLinks: true,
+    socialLinks: [] as SocialLink[]
   });
   const [style, setStyle] = useState<FooterStyle>('classic');
 
@@ -61,19 +61,19 @@ export default function FooterCreatePage() {
     let idCounter = 1;
     
     if (socialFacebook?.value) {
-      newSocialLinks.push({ id: idCounter++, platform: 'facebook', url: socialFacebook.value as string, icon: 'facebook' });
+      newSocialLinks.push({ icon: 'facebook', id: idCounter++, platform: 'facebook', url: socialFacebook.value as string });
     }
     if (socialInstagram?.value) {
-      newSocialLinks.push({ id: idCounter++, platform: 'instagram', url: socialInstagram.value as string, icon: 'instagram' });
+      newSocialLinks.push({ icon: 'instagram', id: idCounter++, platform: 'instagram', url: socialInstagram.value as string });
     }
     if (socialYoutube?.value) {
-      newSocialLinks.push({ id: idCounter++, platform: 'youtube', url: socialYoutube.value as string, icon: 'youtube' });
+      newSocialLinks.push({ icon: 'youtube', id: idCounter++, platform: 'youtube', url: socialYoutube.value as string });
     }
     if (socialTiktok?.value) {
-      newSocialLinks.push({ id: idCounter++, platform: 'tiktok', url: socialTiktok.value as string, icon: 'tiktok' });
+      newSocialLinks.push({ icon: 'tiktok', id: idCounter++, platform: 'tiktok', url: socialTiktok.value as string });
     }
     if (socialZalo?.value) {
-      newSocialLinks.push({ id: idCounter++, platform: 'zalo', url: socialZalo.value as string, icon: 'zalo' });
+      newSocialLinks.push({ icon: 'zalo', id: idCounter++, platform: 'zalo', url: socialZalo.value as string });
     }
     
     setFooterConfig(prev => ({
@@ -90,15 +90,15 @@ export default function FooterCreatePage() {
   };
 
   // Column drag handlers
-  const handleColumnDragStart = (columnId: number) => setDraggedColumnId(columnId);
+  const handleColumnDragStart = (columnId: number) =>{  setDraggedColumnId(columnId); };
   const handleColumnDragEnd = () => { setDraggedColumnId(null); setDragOverColumnId(null); };
   const handleColumnDragOver = (e: React.DragEvent, columnId: number) => {
     e.preventDefault();
-    if (draggedColumnId !== columnId) setDragOverColumnId(columnId);
+    if (draggedColumnId !== columnId) {setDragOverColumnId(columnId);}
   };
   const handleColumnDrop = (e: React.DragEvent, targetId: number) => {
     e.preventDefault();
-    if (!draggedColumnId || draggedColumnId === targetId) return;
+    if (!draggedColumnId || draggedColumnId === targetId) {return;}
     const newColumns = [...footerConfig.columns];
     const draggedIndex = newColumns.findIndex(c => c.id === draggedColumnId);
     const targetIndex = newColumns.findIndex(c => c.id === targetId);
@@ -110,15 +110,15 @@ export default function FooterCreatePage() {
   };
 
   // Social drag handlers
-  const handleSocialDragStart = (socialId: number) => setDraggedSocialId(socialId);
+  const handleSocialDragStart = (socialId: number) =>{  setDraggedSocialId(socialId); };
   const handleSocialDragEnd = () => { setDraggedSocialId(null); setDragOverSocialId(null); };
   const handleSocialDragOver = (e: React.DragEvent, socialId: number) => {
     e.preventDefault();
-    if (draggedSocialId !== socialId) setDragOverSocialId(socialId);
+    if (draggedSocialId !== socialId) {setDragOverSocialId(socialId);}
   };
   const handleSocialDrop = (e: React.DragEvent, targetId: number) => {
     e.preventDefault();
-    if (!draggedSocialId || draggedSocialId === targetId) return;
+    if (!draggedSocialId || draggedSocialId === targetId) {return;}
     const newSocials = [...footerConfig.socialLinks];
     const draggedIndex = newSocials.findIndex(s => s.id === draggedSocialId);
     const targetIndex = newSocials.findIndex(s => s.id === targetId);
@@ -134,7 +134,7 @@ export default function FooterCreatePage() {
     const newId = Math.max(0, ...footerConfig.columns.map(c => c.id)) + 1;
     setFooterConfig({
       ...footerConfig,
-      columns: [...footerConfig.columns, { id: newId, title: `Cột ${newId}`, links: [{ label: 'Link mới', url: '#' }] }]
+      columns: [...footerConfig.columns, { id: newId, links: [{ label: 'Link mới', url: '#' }], title: `Cột ${newId}` }]
     });
   };
 
@@ -185,8 +185,8 @@ export default function FooterCreatePage() {
 
   // Social links management
   const addSocialLink = () => {
-    const usedPlatforms = footerConfig.socialLinks.map(s => s.platform);
-    const availablePlatform = SOCIAL_PLATFORMS.find(p => !usedPlatforms.includes(p.key));
+    const usedPlatforms = new Set(footerConfig.socialLinks.map(s => s.platform));
+    const availablePlatform = SOCIAL_PLATFORMS.find(p => !usedPlatforms.has(p.key));
     if (!availablePlatform) {
       toast.error('Đã thêm đủ tất cả mạng xã hội');
       return;
@@ -194,7 +194,7 @@ export default function FooterCreatePage() {
     const newId = Math.max(0, ...footerConfig.socialLinks.map(s => s.id)) + 1;
     setFooterConfig({
       ...footerConfig,
-      socialLinks: [...footerConfig.socialLinks, { id: newId, platform: availablePlatform.key, url: '', icon: availablePlatform.icon }]
+      socialLinks: [...footerConfig.socialLinks, { icon: availablePlatform.icon, id: newId, platform: availablePlatform.key, url: '' }]
     });
   };
 
@@ -209,10 +209,10 @@ export default function FooterCreatePage() {
     setFooterConfig({
       ...footerConfig,
       socialLinks: footerConfig.socialLinks.map(s => {
-        if (s.id !== id) return s;
+        if (s.id !== id) {return s;}
         if (field === 'platform') {
           const platform = SOCIAL_PLATFORMS.find(p => p.key === value);
-          return { ...s, platform: value, icon: platform?.icon || value };
+          return { ...s, platform: value, icon: platform?.icon ?? value };
         }
         return { ...s, [field]: value };
       })
@@ -246,7 +246,7 @@ export default function FooterCreatePage() {
             <Label>Logo</Label>
             <SettingsImageUploader
               value={footerConfig.logo}
-              onChange={(url) => setFooterConfig({...footerConfig, logo: url || ''})}
+              onChange={(url) =>{  setFooterConfig({...footerConfig, logo: url ?? ''}); }}
               folder="footer"
               previewSize="sm"
             />
@@ -255,7 +255,7 @@ export default function FooterCreatePage() {
             <Label>Mô tả công ty</Label>
             <textarea 
               value={footerConfig.description} 
-              onChange={(e) => setFooterConfig({...footerConfig, description: e.target.value})} 
+              onChange={(e) =>{  setFooterConfig({...footerConfig, description: e.target.value}); }} 
               placeholder="Công ty TNHH ABC - Đối tác tin cậy của bạn"
               className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" 
             />
@@ -264,7 +264,7 @@ export default function FooterCreatePage() {
             <Label>Copyright</Label>
             <Input 
               value={footerConfig.copyright} 
-              onChange={(e) => setFooterConfig({...footerConfig, copyright: e.target.value})} 
+              onChange={(e) =>{  setFooterConfig({...footerConfig, copyright: e.target.value}); }} 
               placeholder="© 2024 Company. All rights reserved." 
             />
           </div>
@@ -272,7 +272,7 @@ export default function FooterCreatePage() {
             <input 
               type="checkbox" 
               checked={footerConfig.showSocialLinks} 
-              onChange={(e) => setFooterConfig({...footerConfig, showSocialLinks: e.target.checked})} 
+              onChange={(e) =>{  setFooterConfig({...footerConfig, showSocialLinks: e.target.checked}); }} 
               className="w-4 h-4 rounded" 
             />
             <Label>Hiển thị social links</Label>
@@ -317,10 +317,10 @@ export default function FooterCreatePage() {
               <div 
                 key={column.id} 
                 draggable
-                onDragStart={() => handleColumnDragStart(column.id)}
+                onDragStart={() =>{  handleColumnDragStart(column.id); }}
                 onDragEnd={handleColumnDragEnd}
-                onDragOver={(e) => handleColumnDragOver(e, column.id)}
-                onDrop={(e) => handleColumnDrop(e, column.id)}
+                onDragOver={(e) =>{  handleColumnDragOver(e, column.id); }}
+                onDrop={(e) =>{  handleColumnDrop(e, column.id); }}
                 className={cn(
                   "border rounded-lg p-4 space-y-3 transition-all",
                   draggedColumnId === column.id && "opacity-50",
@@ -332,7 +332,7 @@ export default function FooterCreatePage() {
                   <GripVertical size={16} className="text-slate-400 cursor-grab flex-shrink-0" />
                   <Input
                     value={column.title}
-                    onChange={(e) => updateColumn(column.id, 'title', e.target.value)}
+                    onChange={(e) =>{  updateColumn(column.id, 'title', e.target.value); }}
                     placeholder="Tiêu đề cột"
                     className="flex-1"
                   />
@@ -340,7 +340,7 @@ export default function FooterCreatePage() {
                     type="button" 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => removeColumn(column.id)}
+                    onClick={() =>{  removeColumn(column.id); }}
                     className="text-red-500 hover:text-red-600 hover:bg-red-50"
                   >
                     <Trash2 size={14} />
@@ -354,13 +354,13 @@ export default function FooterCreatePage() {
                     <div key={linkIdx} className="flex items-center gap-2">
                       <Input
                         value={link.label}
-                        onChange={(e) => updateLink(column.id, linkIdx, 'label', e.target.value)}
+                        onChange={(e) =>{  updateLink(column.id, linkIdx, 'label', e.target.value); }}
                         placeholder="Tên link"
                         className="flex-1"
                       />
                       <Input
                         value={link.url}
-                        onChange={(e) => updateLink(column.id, linkIdx, 'url', e.target.value)}
+                        onChange={(e) =>{  updateLink(column.id, linkIdx, 'url', e.target.value); }}
                         placeholder="/url"
                         className="flex-1"
                       />
@@ -368,7 +368,7 @@ export default function FooterCreatePage() {
                         type="button" 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => removeLink(column.id, linkIdx)}
+                        onClick={() =>{  removeLink(column.id, linkIdx); }}
                         className="text-red-500 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
                         disabled={column.links.length <= 1}
                       >
@@ -380,7 +380,7 @@ export default function FooterCreatePage() {
                     type="button" 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => addLink(column.id)}
+                    onClick={() =>{  addLink(column.id); }}
                     className="text-slate-500 hover:text-slate-700"
                   >
                     <Plus size={12} className="mr-1" /> Thêm link
@@ -434,10 +434,10 @@ export default function FooterCreatePage() {
               <div 
                 key={social.id} 
                 draggable
-                onDragStart={() => handleSocialDragStart(social.id)}
+                onDragStart={() =>{  handleSocialDragStart(social.id); }}
                 onDragEnd={handleSocialDragEnd}
-                onDragOver={(e) => handleSocialDragOver(e, social.id)}
-                onDrop={(e) => handleSocialDrop(e, social.id)}
+                onDragOver={(e) =>{  handleSocialDragOver(e, social.id); }}
+                onDrop={(e) =>{  handleSocialDrop(e, social.id); }}
                 className={cn(
                   "flex items-center gap-3 p-2 rounded-lg transition-all",
                   draggedSocialId === social.id && "opacity-50",
@@ -447,7 +447,7 @@ export default function FooterCreatePage() {
                 <GripVertical size={16} className="text-slate-400 cursor-grab flex-shrink-0" />
                 <select
                   value={social.platform}
-                  onChange={(e) => updateSocialLink(social.id, 'platform', e.target.value)}
+                  onChange={(e) =>{  updateSocialLink(social.id, 'platform', e.target.value); }}
                   className="w-36 h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
                 >
                   {SOCIAL_PLATFORMS.map(p => (
@@ -462,7 +462,7 @@ export default function FooterCreatePage() {
                 </select>
                 <Input
                   value={social.url}
-                  onChange={(e) => updateSocialLink(social.id, 'url', e.target.value)}
+                  onChange={(e) =>{  updateSocialLink(social.id, 'url', e.target.value); }}
                   placeholder="https://facebook.com/yourpage"
                   className="flex-1"
                 />
@@ -470,7 +470,7 @@ export default function FooterCreatePage() {
                   type="button" 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => removeSocialLink(social.id)}
+                  onClick={() =>{  removeSocialLink(social.id); }}
                   className="text-red-500 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
                 >
                   <Trash2 size={14} />

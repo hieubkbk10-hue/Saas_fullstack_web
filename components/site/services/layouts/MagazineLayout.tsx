@@ -3,8 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Briefcase, Eye, TrendingUp, Star, Clock } from 'lucide-react';
-import { Id } from '@/convex/_generated/dataModel';
+import { Briefcase, Clock, Eye, Star, TrendingUp } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
 
 interface Service {
   _id: Id<"services">;
@@ -38,8 +38,8 @@ interface MagazineLayoutProps {
 }
 
 function formatPrice(price?: number): string {
-  if (!price) return 'Liên hệ';
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  if (!price) {return 'Liên hệ';}
+  return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 }
 
 export function MagazineLayout({
@@ -92,7 +92,7 @@ export function MagazineLayout({
                     className="px-2 py-0.5 rounded text-xs font-semibold text-white bg-black/60 backdrop-blur-sm ring-1 ring-black/30"
                     style={{ borderColor: brandColor }}
                   >
-                    {categoryMap.get(mainFeatured.categoryId) || 'Nổi bật'}
+                    {categoryMap.get(mainFeatured.categoryId) ?? 'Nổi bật'}
                   </span>
                   <span className="px-2 py-0.5 rounded text-xs font-semibold bg-black/60 text-white flex items-center gap-1 backdrop-blur-sm ring-1 ring-black/30">
                     <Star size={10} className="fill-current" /> Dịch vụ nổi bật
@@ -143,7 +143,7 @@ export function MagazineLayout({
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold text-white mb-1 bg-black/60 backdrop-blur-sm ring-1 ring-black/30">
-                      {categoryMap.get(service.categoryId) || 'Dịch vụ'}
+                      {categoryMap.get(service.categoryId) ?? 'Dịch vụ'}
                     </span>
                     <h3 className="text-base font-semibold text-white line-clamp-2">{service.title}</h3>
                     {showPrice && (
@@ -160,7 +160,7 @@ export function MagazineLayout({
       {/* Category Navigation - Pill Style */}
       <section className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin border-b border-slate-200">
         <button
-          onClick={() => onCategoryChange(null)}
+          onClick={() =>{  onCategoryChange(null); }}
           className={`px-4 py-2.5 min-h-11 rounded-full text-sm font-medium whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
             !selectedCategory ? 'text-white' : 'bg-transparent text-slate-600 hover:bg-slate-100'
           }`}
@@ -171,7 +171,7 @@ export function MagazineLayout({
         {categories.map((category) => (
           <button
             key={category._id}
-            onClick={() => onCategoryChange(category._id)}
+            onClick={() =>{  onCategoryChange(category._id); }}
             className={`px-4 py-2.5 min-h-11 rounded-full text-sm font-medium whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
               selectedCategory === category._id ? 'text-white' : 'bg-transparent text-slate-600 hover:bg-slate-100'
             }`}
@@ -202,7 +202,7 @@ export function MagazineLayout({
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <span className="text-xs font-medium" style={{ color: brandColor }}>{categoryMap.get(service.categoryId) || 'Dịch vụ'}</span>
+                  <span className="text-xs font-medium" style={{ color: brandColor }}>{categoryMap.get(service.categoryId) ?? 'Dịch vụ'}</span>
                   <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 group-hover:opacity-70 transition-opacity duration-200 mt-0.5">{service.title}</h3>
                   {showPrice && (
                     <span className="text-xs font-bold mt-1 block" style={{ color: brandColor }}>{formatPrice(service.price)}</span>
@@ -258,7 +258,7 @@ export function MagazineLayout({
                   </div>
                   <div className="flex-1 flex flex-col">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium" style={{ color: brandColor }}>{categoryMap.get(service.categoryId) || 'Dịch vụ'}</span>
+                      <span className="text-sm font-medium" style={{ color: brandColor }}>{categoryMap.get(service.categoryId) ?? 'Dịch vụ'}</span>
                       <span className="text-slate-300">•</span>
                       <span className="text-sm text-slate-500">{service.publishedAt ? new Date(service.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
                     </div>

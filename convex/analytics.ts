@@ -1,21 +1,22 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 
 // Helper: Calculate period timestamps
 function getPeriodTimestamps(period: string) {
   const now = Date.now();
   const periodMs = {
-    "7d": 7 * 24 * 60 * 60 * 1000,
-    "30d": 30 * 24 * 60 * 60 * 1000,
-    "90d": 90 * 24 * 60 * 60 * 1000,
     "1y": 365 * 24 * 60 * 60 * 1000,
-  }[period] || 30 * 24 * 60 * 60 * 1000;
+    "30d": 30 * 24 * 60 * 60 * 1000,
+    "7d": 7 * 24 * 60 * 60 * 1000,
+    "90d": 90 * 24 * 60 * 60 * 1000,
+  }[period] ?? 30 * 24 * 60 * 60 * 1000;
   
   return {
     now,
     periodMs,
-    startDate: now - periodMs,
     prevStartDate: now - periodMs * 2,
+    startDate: now - periodMs,
   };
 }
 
@@ -27,21 +28,14 @@ export const getRevenueStats = query({
   args: {
     period: v.optional(v.string()),
   },
-  returns: v.object({
-    totalRevenue: v.number(),
-    totalOrders: v.number(),
-    avgOrderValue: v.number(),
-    revenueChange: v.number(),
-    ordersChange: v.number(),
-  }),
   handler: async (ctx, args) => {
-    const period = args.period || "30d";
+    const period = args.period ?? "30d";
     const { startDate, prevStartDate } = getPeriodTimestamps(period);
     
     // OPTIMIZED: Query by status index instead of fetching ALL
     // Fetch orders for each valid status with limit (max 1000 per status)
     const ordersByStatus = await Promise.all(
-      VALID_ORDER_STATUSES.map(status =>
+      VALID_ORDER_STATUSES.map( async status =>
         ctx.db.query("orders")
           .withIndex("by_status", q => q.eq("status", status))
           .take(1000)
@@ -70,13 +64,20 @@ export const getRevenueStats = query({
       : (totalOrders > 0 ? 100 : 0);
     
     return {
-      totalRevenue,
-      totalOrders,
       avgOrderValue,
-      revenueChange,
       ordersChange,
+      revenueChange,
+      totalOrders,
+      totalRevenue,
     };
   },
+  returns: v.object({
+    avgOrderValue: v.number(),
+    ordersChange: v.number(),
+    revenueChange: v.number(),
+    totalOrders: v.number(),
+    totalRevenue: v.number(),
+  }),
 });
 
 // Get customer statistics - OPTIMIZED: use status index
@@ -84,14 +85,8 @@ export const getCustomerStats = query({
   args: {
     period: v.optional(v.string()),
   },
-  returns: v.object({
-    totalCustomers: v.number(),
-    newCustomers: v.number(),
-    activeCustomers: v.number(),
-    newCustomersChange: v.number(),
-  }),
   handler: async (ctx, args) => {
-    const period = args.period || "30d";
+    const period = args.period ?? "30d";
     const { startDate, prevStartDate } = getPeriodTimestamps(period);
     
     // OPTIMIZED: Query by status index with limits
@@ -118,12 +113,18 @@ export const getCustomerStats = query({
       : (newCustomers > 0 ? 100 : 0);
     
     return {
-      totalCustomers,
-      newCustomers,
       activeCustomers: activeCustomers.length,
+      newCustomers,
       newCustomersChange,
+      totalCustomers,
     };
   },
+  returns: v.object({
+    activeCustomers: v.number(),
+    newCustomers: v.number(),
+    newCustomersChange: v.number(),
+    totalCustomers: v.number(),
+  }),
 });
 
 // Get top selling products
@@ -131,15 +132,8 @@ export const getTopProducts = query({
   args: {
     limit: v.optional(v.number()),
   },
-  returns: v.array(v.object({
-    id: v.string(),
-    name: v.string(),
-    sales: v.number(),
-    revenue: v.number(),
-    image: v.optional(v.string()),
-  })),
   handler: async (ctx, args) => {
-    const limit = args.limit || 5;
+    const limit = args.limit ?? 5;
     
     const products = await ctx.db
       .query("products")
@@ -149,52 +143,59 @@ export const getTopProducts = query({
     
     // Filter active products and sort by sales
     const activeProducts = products
-      .filter(p => p.status === "Active")
-      .sort((a, b) => b.sales - a.sales)
+      .filter((product: Doc<"products">) => product.status === "Active")
+      .sort((a: Doc<"products">, b: Doc<"products">) => b.sales - a.sales)
       .slice(0, limit);
     
-    return activeProducts.map(p => ({
-      id: p._id,
-      name: p.name,
-      sales: p.sales,
-      revenue: p.sales * (p.salePrice || p.price),
-      image: p.image,
+    return activeProducts.map((product: Doc<"products">) => ({
+      id: product._id,
+      image: product.image,
+      name: product.name,
+      revenue: product.sales * (product.salePrice ?? product.price),
+      sales: product.sales,
     }));
   },
+  returns: v.array(v.object({
+    id: v.string(),
+    image: v.optional(v.string()),
+    name: v.string(),
+    revenue: v.number(),
+    sales: v.number(),
+  })),
 });
 
 // Get low stock products
 export const getLowStockProducts = query({
   args: {
-    threshold: v.optional(v.number()),
     limit: v.optional(v.number()),
+    threshold: v.optional(v.number()),
   },
-  returns: v.array(v.object({
-    id: v.string(),
-    name: v.string(),
-    stock: v.number(),
-    sku: v.string(),
-  })),
   handler: async (ctx, args) => {
-    const threshold = args.threshold || 10;
-    const limit = args.limit || 10;
+    const threshold = args.threshold ?? 10;
+    const limit = args.limit ?? 10;
     
     const products = await ctx.db
       .query("products")
       .collect();
     
     const lowStock = products
-      .filter(p => p.status === "Active" && p.stock <= threshold)
-      .sort((a, b) => a.stock - b.stock)
+      .filter((product: Doc<"products">) => product.status === "Active" && product.stock <= threshold)
+      .sort((a: Doc<"products">, b: Doc<"products">) => a.stock - b.stock)
       .slice(0, limit);
     
-    return lowStock.map(p => ({
-      id: p._id,
-      name: p.name,
-      stock: p.stock,
-      sku: p.sku,
+    return lowStock.map((product: Doc<"products">) => ({
+      id: product._id,
+      name: product.name,
+      sku: product.sku,
+      stock: product.stock,
     }));
   },
+  returns: v.array(v.object({
+    id: v.string(),
+    name: v.string(),
+    sku: v.string(),
+    stock: v.number(),
+  })),
 });
 
 // Get revenue chart data (daily/weekly aggregation) - OPTIMIZED: filter by status index
@@ -202,18 +203,13 @@ export const getRevenueChartData = query({
   args: {
     period: v.optional(v.string()),
   },
-  returns: v.array(v.object({
-    date: v.string(),
-    revenue: v.number(),
-    orders: v.number(),
-  })),
   handler: async (ctx, args) => {
-    const period = args.period || "30d";
+    const period = args.period ?? "30d";
     const { now, startDate } = getPeriodTimestamps(period);
     
     // OPTIMIZED: Query by status index with limit
     const ordersByStatus = await Promise.all(
-      VALID_ORDER_STATUSES.map(status =>
+      VALID_ORDER_STATUSES.map( async status =>
         ctx.db.query("orders")
           .withIndex("by_status", q => q.eq("status", status))
           .take(2000)
@@ -241,7 +237,7 @@ export const getRevenueChartData = query({
       }
       
       if (!dailyData[key]) {
-        dailyData[key] = { revenue: 0, orders: 0 };
+        dailyData[key] = { orders: 0, revenue: 0 };
       }
       dailyData[key].revenue += order.totalAmount;
       dailyData[key].orders += 1;
@@ -249,7 +245,7 @@ export const getRevenueChartData = query({
     
     // Fill missing dates and sort
     const result: { date: string; revenue: number; orders: number }[] = [];
-    const days = period === "7d" ? 7 : period === "30d" ? 30 : period === "90d" ? 13 : 52; // weeks for longer periods
+    const days = period === "7d" ? 7 : period === "30d" ? 30 : period === "90d" ? 13 : 52; // Weeks for longer periods
     
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(now);
@@ -264,23 +260,23 @@ export const getRevenueChartData = query({
       
       result.push({
         date: displayDate,
-        revenue: dailyData[key]?.revenue || 0,
         orders: dailyData[key]?.orders || 0,
+        revenue: dailyData[key]?.revenue || 0,
       });
     }
     
     return result;
   },
+  returns: v.array(v.object({
+    date: v.string(),
+    orders: v.number(),
+    revenue: v.number(),
+  })),
 });
 
 // Get order status distribution - OPTIMIZED: query by each status index
 export const getOrderStatusDistribution = query({
   args: {},
-  returns: v.array(v.object({
-    status: v.string(),
-    count: v.number(),
-    percentage: v.number(),
-  })),
   handler: async (ctx) => {
     const ALL_STATUSES = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"] as const;
     
@@ -289,22 +285,27 @@ export const getOrderStatusDistribution = query({
       ALL_STATUSES.map(async status => {
         const orders = await ctx.db.query("orders")
           .withIndex("by_status", q => q.eq("status", status))
-          .take(10000);
-        return { status, count: orders.length };
+          .take(10_000);
+        return { count: orders.length, status };
       })
     );
     
     const total = statusCounts.reduce((sum, s) => sum + s.count, 0);
-    if (total === 0) return [];
+    if (total === 0) {return [];}
     
     return statusCounts
       .filter(s => s.count > 0)
       .map(({ status, count }) => ({
-        status,
         count,
         percentage: Math.round((count / total) * 100),
+        status,
       }));
   },
+  returns: v.array(v.object({
+    count: v.number(),
+    percentage: v.number(),
+    status: v.string(),
+  })),
 });
 
 // Get summary stats (for dashboard cards) - OPTIMIZED: parallel queries with indexes
@@ -312,14 +313,8 @@ export const getSummaryStats = query({
   args: {
     period: v.optional(v.string()),
   },
-  returns: v.object({
-    revenue: v.object({ value: v.number(), change: v.number() }),
-    orders: v.object({ value: v.number(), change: v.number() }),
-    customers: v.object({ value: v.number(), change: v.number() }),
-    products: v.object({ value: v.number(), lowStock: v.number() }),
-  }),
   handler: async (ctx, args) => {
-    const period = args.period || "30d";
+    const period = args.period ?? "30d";
     const { startDate, prevStartDate } = getPeriodTimestamps(period);
     
     // OPTIMIZED: Parallel queries with indexes
@@ -370,10 +365,16 @@ export const getSummaryStats = query({
     const lowStockCount = activeProducts.filter(p => p.stock <= 10).length;
     
     return {
-      revenue: { value: currentRevenue, change: revenueChange },
-      orders: { value: currentOrders.length, change: ordersChange },
-      customers: { value: newCustomers, change: customersChange },
-      products: { value: activeProducts.length, lowStock: lowStockCount },
+      customers: { change: customersChange, value: newCustomers },
+      orders: { change: ordersChange, value: currentOrders.length },
+      products: { lowStock: lowStockCount, value: activeProducts.length },
+      revenue: { change: revenueChange, value: currentRevenue },
     };
   },
+  returns: v.object({
+    customers: v.object({ change: v.number(), value: v.number() }),
+    orders: v.object({ change: v.number(), value: v.number() }),
+    products: v.object({ lowStock: v.number(), value: v.number() }),
+    revenue: v.object({ change: v.number(), value: v.number() }),
+  }),
 });

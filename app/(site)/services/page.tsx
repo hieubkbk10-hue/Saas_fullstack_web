@@ -1,17 +1,17 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, Suspense } from 'react';
+import React, { Suspense, useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import {
-  ServicesFilter,
   FullWidthLayout,
-  SidebarLayout,
   MagazineLayout,
   type ServiceSortOption,
+  ServicesFilter,
+  SidebarLayout,
 } from '@/components/site/services';
 
 type ServicesListLayout = 'fullwidth' | 'sidebar' | 'magazine';
@@ -20,9 +20,9 @@ type ServicesListLayout = 'fullwidth' | 'sidebar' | 'magazine';
 function useServicesLayout(): ServicesListLayout {
   const setting = useQuery(api.settings.getByKey, { key: 'services_list_style' });
   const value = setting?.value as string;
-  if (value === 'grid' || value === 'list') return 'fullwidth';
-  if (value === 'sidebar') return 'sidebar';
-  if (value === 'magazine') return 'magazine';
+  if (value === 'grid' || value === 'list') {return 'fullwidth';}
+  if (value === 'sidebar') {return 'sidebar';}
+  if (value === 'magazine') {return 'magazine';}
   return 'fullwidth';
 }
 
@@ -30,7 +30,7 @@ function useServicesLayout(): ServicesListLayout {
 function useEnabledServiceFields(): Set<string> {
   const fields = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'services' });
   return useMemo(() => {
-    if (!fields) return new Set<string>();
+    if (!fields) {return new Set<string>();}
     return new Set(fields.map(f => f.fieldKey));
   }, [fields]);
 }
@@ -98,7 +98,7 @@ function ServicesContent() {
 
   const categoryFromUrl = useMemo(() => {
     const catSlug = searchParams.get('category');
-    if (!catSlug || !stableCategories) return null;
+    if (!catSlug || !stableCategories) {return null;}
     const matchedCategory = stableCategories.find((c) => c.slug === catSlug);
     return matchedCategory?._id ?? null;
   }, [searchParams, stableCategories]);
@@ -106,10 +106,10 @@ function ServicesContent() {
   const activeCategory = selectedCategory ?? categoryFromUrl;
 
   const services = useQuery(api.services.searchPublished, {
-    search: searchQuery || undefined,
     categoryId: activeCategory ?? undefined,
-    sortBy,
     limit: 24,
+    search: searchQuery || undefined,
+    sortBy,
   });
 
   const totalCount = useQuery(api.services.countPublished, {
@@ -145,7 +145,7 @@ function ServicesContent() {
 
   // Build category map for O(1) lookup
   const categoryMap = useMemo(() => {
-    if (!stableCategories) return new Map<string, string>();
+    if (!stableCategories) {return new Map<string, string>();}
     return new Map(stableCategories.map((c) => [c._id, c.name]));
   }, [stableCategories]);
 

@@ -1,34 +1,34 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Users, KeyRound, MapPin, ImageIcon, StickyNote, Loader2, Database, Trash2, RefreshCw, Settings, UserCheck, DollarSign, ShoppingBag } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { Database, DollarSign, ImageIcon, KeyRound, Loader2, MapPin, RefreshCw, Settings, ShoppingBag, StickyNote, Trash2, UserCheck, Users } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus,
+  SettingInput, SettingsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'customers';
 
 const FEATURES_CONFIG = [
-  { key: 'enableLogin', label: 'Đăng nhập KH', icon: KeyRound, linkedField: 'password' },
-  { key: 'enableAddresses', label: 'Sổ địa chỉ', icon: MapPin, linkedField: 'addresses' },
-  { key: 'enableAvatar', label: 'Ảnh đại diện', icon: ImageIcon, linkedField: 'avatar' },
-  { key: 'enableNotes', label: 'Ghi chú', icon: StickyNote, linkedField: 'notes' },
+  { icon: KeyRound, key: 'enableLogin', label: 'Đăng nhập KH', linkedField: 'password' },
+  { icon: MapPin, key: 'enableAddresses', label: 'Sổ địa chỉ', linkedField: 'addresses' },
+  { icon: ImageIcon, key: 'enableAvatar', label: 'Ảnh đại diện', linkedField: 'avatar' },
+  { icon: StickyNote, key: 'enableNotes', label: 'Ghi chú', linkedField: 'notes' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { customersPerPage: number };
+interface SettingsState { customersPerPage: number }
 type TabType = 'config' | 'data';
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+  return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(amount);
 }
 
 export default function CustomersModuleConfigPage() {
@@ -71,14 +71,14 @@ export default function CustomersModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -98,9 +98,7 @@ export default function CustomersModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
   const serverSettings = useMemo(() => {
     const customersPerPage = settingsData?.find(s => s.settingKey === 'customersPerPage')?.value as number ?? 20;
@@ -128,7 +126,7 @@ export default function CustomersModuleConfigPage() {
 
   const handleToggleField = (id: string) => {
     const field = localFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalFields(prev => {
@@ -156,13 +154,13 @@ export default function CustomersModuleConfigPage() {
       const promises: Promise<unknown>[] = [];
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
+          promises.push(toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY }));
         }
       }
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          promises.push(updateField({ id: field.id as Id<"moduleFields">, enabled: field.enabled }));
+          promises.push(updateField({ enabled: field.enabled, id: field.id as Id<"moduleFields"> }));
         }
       }
       if (localSettings.customersPerPage !== serverSettings.customersPerPage) {
@@ -191,7 +189,7 @@ export default function CustomersModuleConfigPage() {
   };
 
   const handleClearData = async () => {
-    if (!confirm('Xóa toàn bộ khách hàng? Thao tác này không thể hoàn tác.')) return;
+    if (!confirm('Xóa toàn bộ khách hàng? Thao tác này không thể hoàn tác.')) {return;}
     try {
       toast.loading('Đang xóa dữ liệu...');
       await clearCustomersData();
@@ -204,7 +202,7 @@ export default function CustomersModuleConfigPage() {
   };
 
   const handleResetAll = async () => {
-    if (!confirm('Reset dữ liệu về mặc định?')) return;
+    if (!confirm('Reset dữ liệu về mặc định?')) {return;}
     try {
       toast.loading('Đang reset dữ liệu...');
       await clearCustomersData();
@@ -242,7 +240,7 @@ export default function CustomersModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-purple-500 text-purple-600 dark:text-purple-400'
@@ -252,7 +250,7 @@ export default function CustomersModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-purple-500 text-purple-600 dark:text-purple-400'
@@ -273,7 +271,7 @@ export default function CustomersModuleConfigPage() {
                 <SettingInput 
                   label="Số KH / trang" 
                   value={localSettings.customersPerPage} 
-                  onChange={(v) => setLocalSettings({...localSettings, customersPerPage: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, customersPerPage: v}); }}
                   focusColor="focus:border-purple-500"
                 />
               </SettingsCard>
@@ -412,7 +410,7 @@ export default function CustomersModuleConfigPage() {
                   <TableRow key={customer._id}>
                     <TableCell className="font-medium">{customer.name}</TableCell>
                     <TableCell className="text-slate-500">{customer.email}</TableCell>
-                    <TableCell>{customer.city || '-'}</TableCell>
+                    <TableCell>{customer.city ?? '-'}</TableCell>
                     <TableCell>
                       <Badge variant={customer.status === 'Active' ? 'default' : 'secondary'}>
                         {customer.status === 'Active' ? 'Hoạt động' : 'Ngừng'}

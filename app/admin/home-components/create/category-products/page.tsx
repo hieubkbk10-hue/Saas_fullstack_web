@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { GripVertical, Plus, Trash2 } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { cn, Card, CardContent, CardHeader, CardTitle, Label, Button, Input } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
 import { CategoryProductsPreview, type CategoryProductsStyle } from '../../previews';
 
 interface CategoryProductItem {
@@ -32,9 +32,9 @@ export default function CategoryProductsCreatePage() {
   const [dragOverId, setDragOverId] = useState<number | null>(null);
 
   const addSection = () => {
-    if (!categoriesData || categoriesData.length === 0) return;
+    if (!categoriesData || categoriesData.length === 0) {return;}
     const newId = Math.max(0, ...sections.map(s => s.id)) + 1;
-    setSections([...sections, { id: newId, categoryId: '', itemCount: 4 }]);
+    setSections([...sections, { categoryId: '', id: newId, itemCount: 4 }]);
   };
 
   const removeSection = (id: number) => {
@@ -64,7 +64,7 @@ export default function CategoryProductsCreatePage() {
 
   const handleDrop = (e: React.DragEvent, targetId: number) => {
     e.preventDefault();
-    if (!draggedId || draggedId === targetId) return;
+    if (!draggedId || draggedId === targetId) {return;}
     
     const newSections = [...sections];
     const draggedIndex = newSections.findIndex(s => s.id === draggedId);
@@ -80,18 +80,18 @@ export default function CategoryProductsCreatePage() {
 
   const onSubmit = (e: React.FormEvent) => {
     void handleSubmit(e, {
+      columnsDesktop,
+      columnsMobile,
       sections: sections.map(s => ({ 
         categoryId: s.categoryId, 
         itemCount: s.itemCount,
       })),
-      style,
       showViewAll,
-      columnsDesktop,
-      columnsMobile,
+      style,
     });
   };
 
-  const availableCategories = categoriesData || [];
+  const availableCategories = categoriesData ?? [];
 
   return (
     <ComponentFormWrapper
@@ -113,7 +113,7 @@ export default function CategoryProductsCreatePage() {
               <Label>Số cột (Desktop)</Label>
               <select
                 value={columnsDesktop}
-                onChange={(e) => setColumnsDesktop(parseInt(e.target.value))}
+                onChange={(e) =>{  setColumnsDesktop(Number.parseInt(e.target.value)); }}
                 className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
               >
                 <option value={3}>3 cột</option>
@@ -125,7 +125,7 @@ export default function CategoryProductsCreatePage() {
               <Label>Số cột (Mobile)</Label>
               <select
                 value={columnsMobile}
-                onChange={(e) => setColumnsMobile(parseInt(e.target.value))}
+                onChange={(e) =>{  setColumnsMobile(Number.parseInt(e.target.value)); }}
                 className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
               >
                 <option value={1}>1 cột</option>
@@ -139,7 +139,7 @@ export default function CategoryProductsCreatePage() {
               type="checkbox"
               id="showViewAll"
               checked={showViewAll}
-              onChange={(e) => setShowViewAll(e.target.checked)}
+              onChange={(e) =>{  setShowViewAll(e.target.checked); }}
               className="w-4 h-4 rounded border-slate-300"
             />
             <Label htmlFor="showViewAll" className="cursor-pointer">Hiển thị nút “Xem danh mục”</Label>
@@ -166,7 +166,7 @@ export default function CategoryProductsCreatePage() {
             <p className="text-sm text-slate-500 text-center py-4">
               Chưa có danh mục sản phẩm. Vui lòng tạo danh mục trước.
             </p>
-          ) : sections.length === 0 ? (
+          ) : (sections.length === 0 ? (
             <p className="text-sm text-slate-500 text-center py-4">
               Chưa có section nào. Nhấn &quot;Thêm&quot; để bắt đầu.
             </p>
@@ -175,10 +175,10 @@ export default function CategoryProductsCreatePage() {
               <div 
                 key={item.id} 
                 draggable
-                onDragStart={() => handleDragStart(item.id)}
+                onDragStart={() =>{  handleDragStart(item.id); }}
                 onDragEnd={handleDragEnd}
-                onDragOver={(e) => handleDragOver(e, item.id)}
-                onDrop={(e) => handleDrop(e, item.id)}
+                onDragOver={(e) =>{  handleDragOver(e, item.id); }}
+                onDrop={(e) =>{  handleDrop(e, item.id); }}
                 className={cn(
                   "p-4 bg-slate-50 dark:bg-slate-800 rounded-lg space-y-3 transition-all",
                   draggedId === item.id && "opacity-50 scale-[0.98]",
@@ -195,7 +195,7 @@ export default function CategoryProductsCreatePage() {
                     variant="ghost" 
                     size="icon" 
                     className="text-red-500 h-8 w-8" 
-                    onClick={() => removeSection(item.id)}
+                    onClick={() =>{  removeSection(item.id); }}
                   >
                     <Trash2 size={14} />
                   </Button>
@@ -206,7 +206,7 @@ export default function CategoryProductsCreatePage() {
                     <Label className="text-xs text-slate-500">Danh mục</Label>
                     <select
                       value={item.categoryId}
-                      onChange={(e) => updateSection(item.id, { categoryId: e.target.value })}
+                      onChange={(e) =>{  updateSection(item.id, { categoryId: e.target.value }); }}
                       className="w-full h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm"
                     >
                       <option value="">-- Chọn danh mục --</option>
@@ -223,13 +223,13 @@ export default function CategoryProductsCreatePage() {
                       min={2}
                       max={12}
                       value={item.itemCount}
-                      onChange={(e) => updateSection(item.id, { itemCount: parseInt(e.target.value) || 4 })}
+                      onChange={(e) =>{  updateSection(item.id, { itemCount: Number.parseInt(e.target.value) || 4 }); }}
                     />
                   </div>
                 </div>
               </div>
             ))
-          )}
+          ))}
           
           <p className="text-xs text-slate-500">
             Tối đa 6 section. Mỗi section là 1 danh mục với các sản phẩm thuộc danh mục đó.
@@ -239,17 +239,17 @@ export default function CategoryProductsCreatePage() {
 
       <CategoryProductsPreview 
         config={{
-          sections,
-          style,
-          showViewAll,
           columnsDesktop,
           columnsMobile,
+          sections,
+          showViewAll,
+          style,
         }}
         brandColor={brandColor}
         selectedStyle={style}
         onStyleChange={setStyle}
         categoriesData={availableCategories}
-        productsData={productsData || []}
+        productsData={productsData ?? []}
       />
     </ComponentFormWrapper>
   );

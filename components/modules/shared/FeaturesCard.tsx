@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { Layers } from 'lucide-react';
-import { ToggleSwitch } from './ToggleSwitch';
-import { FeatureConfig } from '@/types/moduleConfig';
+import { ToggleSwitch } from './toggle-switch';
+import type { FeatureConfig } from '@/types/module-config';
 
 interface FeaturesCardProps {
   features: {
@@ -40,7 +40,7 @@ export const FeaturesCard: React.FC<FeaturesCardProps> = ({
             </div>
             <ToggleSwitch 
               enabled={enabled} 
-              onChange={() => onToggle(config.key)}
+              onChange={() =>{  onToggle(config.key); }}
               color={toggleColor}
             />
           </div>

@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
-import { cn, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { AboutPreview, AboutStyle } from '../../previews';
+import { GripVertical, Plus, Trash2 } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '../../../components/ui';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
+import type { AboutStyle } from '../../previews';
+import { AboutPreview } from '../../previews';
 import { ImageFieldWithUpload } from '../../../components/ImageFieldWithUpload';
 
 export default function AboutCreatePage() {
@@ -19,8 +20,8 @@ export default function AboutCreatePage() {
     image: '',
     imageCaption: '', // Caption for bento style image overlay
     stats: [
-      { id: 1, value: '10+', label: 'Năm kinh nghiệm' },
-      { id: 2, value: '5000+', label: 'Khách hàng tin dùng' }
+      { id: 1, label: 'Năm kinh nghiệm', value: '10+' },
+      { id: 2, label: 'Khách hàng tin dùng', value: '5000+' }
     ],
     buttonText: 'Xem chi tiết',
     buttonLink: '/about'
@@ -30,15 +31,15 @@ export default function AboutCreatePage() {
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
 
-  const handleStatDragStart = (id: number) => setDraggedId(id);
+  const handleStatDragStart = (id: number) =>{  setDraggedId(id); };
   const handleStatDragEnd = () => { setDraggedId(null); setDragOverId(null); };
   const handleStatDragOver = (e: React.DragEvent, id: number) => {
     e.preventDefault();
-    if (draggedId !== id) setDragOverId(id);
+    if (draggedId !== id) {setDragOverId(id);}
   };
   const handleStatDrop = (e: React.DragEvent, targetId: number) => {
     e.preventDefault();
-    if (!draggedId || draggedId === targetId) return;
+    if (!draggedId || draggedId === targetId) {return;}
     const newStats = [...aboutConfig.stats];
     const draggedIdx = newStats.findIndex(s => s.id === draggedId);
     const targetIdx = newStats.findIndex(s => s.id === targetId);
@@ -73,7 +74,7 @@ export default function AboutCreatePage() {
               <Label>Tiêu đề nhỏ (Sub-heading)</Label>
               <Input 
                 value={aboutConfig.subHeading} 
-                onChange={(e) => setAboutConfig({...aboutConfig, subHeading: e.target.value})} 
+                onChange={(e) =>{  setAboutConfig({...aboutConfig, subHeading: e.target.value}); }} 
                 placeholder="Về chúng tôi" 
               />
             </div>
@@ -81,7 +82,7 @@ export default function AboutCreatePage() {
               <Label>Tiêu đề chính (Heading)</Label>
               <Input 
                 value={aboutConfig.heading} 
-                onChange={(e) => setAboutConfig({...aboutConfig, heading: e.target.value})} 
+                onChange={(e) =>{  setAboutConfig({...aboutConfig, heading: e.target.value}); }} 
                 placeholder="Mang đến giá trị thực" 
               />
             </div>
@@ -90,7 +91,7 @@ export default function AboutCreatePage() {
             <Label>Mô tả</Label>
             <textarea 
               value={aboutConfig.description} 
-              onChange={(e) => setAboutConfig({...aboutConfig, description: e.target.value})} 
+              onChange={(e) =>{  setAboutConfig({...aboutConfig, description: e.target.value}); }} 
               placeholder="Mô tả về công ty..."
               className="w-full min-h-[100px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" 
             />
@@ -98,7 +99,7 @@ export default function AboutCreatePage() {
           <ImageFieldWithUpload
             label="Hình ảnh"
             value={aboutConfig.image}
-            onChange={(url) => setAboutConfig({...aboutConfig, image: url})}
+            onChange={(url) =>{  setAboutConfig({...aboutConfig, image: url}); }}
             folder="home-components"
             aspectRatio="video"
             quality={0.85}
@@ -110,7 +111,7 @@ export default function AboutCreatePage() {
               <Label>Caption ảnh (Bento style)</Label>
               <Input 
                 value={aboutConfig.imageCaption} 
-                onChange={(e) => setAboutConfig({...aboutConfig, imageCaption: e.target.value})} 
+                onChange={(e) =>{  setAboutConfig({...aboutConfig, imageCaption: e.target.value}); }} 
                 placeholder="Kiến tạo không gian làm việc hiện đại & bền vững." 
               />
               <p className="text-xs text-slate-500">Text hiển thị overlay trên ảnh trong style Bento Grid</p>
@@ -121,7 +122,7 @@ export default function AboutCreatePage() {
               <Label>Text nút bấm</Label>
               <Input 
                 value={aboutConfig.buttonText} 
-                onChange={(e) => setAboutConfig({...aboutConfig, buttonText: e.target.value})} 
+                onChange={(e) =>{  setAboutConfig({...aboutConfig, buttonText: e.target.value}); }} 
                 placeholder="Xem thêm" 
               />
             </div>
@@ -129,7 +130,7 @@ export default function AboutCreatePage() {
               <Label>Liên kết</Label>
               <Input 
                 value={aboutConfig.buttonLink} 
-                onChange={(e) => setAboutConfig({...aboutConfig, buttonLink: e.target.value})} 
+                onChange={(e) =>{  setAboutConfig({...aboutConfig, buttonLink: e.target.value}); }} 
                 placeholder="/about" 
               />
             </div>
@@ -141,7 +142,7 @@ export default function AboutCreatePage() {
                 type="button" 
                 variant="outline" 
                 size="sm" 
-                onClick={() => setAboutConfig({...aboutConfig, stats: [...aboutConfig.stats, { id: Date.now(), value: '', label: '' }]})} 
+                onClick={() =>{  setAboutConfig({...aboutConfig, stats: [...aboutConfig.stats, { id: Date.now(), label: '', value: '' }]}); }} 
                 className="gap-2"
               >
                 <Plus size={14} /> Thêm
@@ -156,22 +157,22 @@ export default function AboutCreatePage() {
                   dragOverId === stat.id && "ring-2 ring-blue-500"
                 )}
                 draggable
-                onDragStart={() => handleStatDragStart(stat.id)}
+                onDragStart={() =>{  handleStatDragStart(stat.id); }}
                 onDragEnd={handleStatDragEnd}
-                onDragOver={(e) => handleStatDragOver(e, stat.id)}
-                onDrop={(e) => handleStatDrop(e, stat.id)}
+                onDragOver={(e) =>{  handleStatDragOver(e, stat.id); }}
+                onDrop={(e) =>{  handleStatDrop(e, stat.id); }}
               >
                 <GripVertical size={16} className="text-slate-400 flex-shrink-0 cursor-grab" />
                 <Input 
                   placeholder="Số liệu" 
                   value={stat.value} 
-                  onChange={(e) => setAboutConfig({...aboutConfig, stats: aboutConfig.stats.map(s => s.id === stat.id ? {...s, value: e.target.value} : s)})} 
+                  onChange={(e) =>{  setAboutConfig({...aboutConfig, stats: aboutConfig.stats.map(s => s.id === stat.id ? {...s, value: e.target.value} : s)}); }} 
                   className="flex-1" 
                 />
                 <Input 
                   placeholder="Nhãn" 
                   value={stat.label} 
-                  onChange={(e) => setAboutConfig({...aboutConfig, stats: aboutConfig.stats.map(s => s.id === stat.id ? {...s, label: e.target.value} : s)})} 
+                  onChange={(e) =>{  setAboutConfig({...aboutConfig, stats: aboutConfig.stats.map(s => s.id === stat.id ? {...s, label: e.target.value} : s)}); }} 
                   className="flex-1" 
                 />
                 <Button 
@@ -193,7 +194,7 @@ export default function AboutCreatePage() {
         config={aboutConfig} 
         brandColor={brandColor}
         selectedStyle={aboutConfig.style}
-        onStyleChange={(style) => setAboutConfig({...aboutConfig, style})}
+        onStyleChange={(style) =>{  setAboutConfig({...aboutConfig, style}); }}
       />
     </ComponentFormWrapper>
   );

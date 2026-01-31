@@ -1,30 +1,30 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import Image from 'next/image';
-import { UserCog, Shield, Image as ImageIcon, Phone, Clock, Loader2, Database, Trash2, RefreshCw, Settings } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { Clock, Database, Image as ImageIcon, Loader2, Phone, RefreshCw, Settings, Shield, Trash2, UserCog } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus,
+  SettingInput, SettingsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'users';
 
 const FEATURES_CONFIG = [
-  { key: 'enableAvatar', label: 'Ảnh đại diện', icon: ImageIcon, linkedField: 'avatar' },
-  { key: 'enablePhone', label: 'Số điện thoại', icon: Phone, linkedField: 'phone' },
-  { key: 'enableLastLogin', label: 'Đăng nhập cuối', icon: Clock, linkedField: 'lastLogin' },
+  { icon: ImageIcon, key: 'enableAvatar', label: 'Ảnh đại diện', linkedField: 'avatar' },
+  { icon: Phone, key: 'enablePhone', label: 'Số điện thoại', linkedField: 'phone' },
+  { icon: Clock, key: 'enableLastLogin', label: 'Đăng nhập cuối', linkedField: 'lastLogin' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { usersPerPage: number; sessionTimeout: number; maxLoginAttempts: number };
+interface SettingsState { usersPerPage: number; sessionTimeout: number; maxLoginAttempts: number }
 type TabType = 'config' | 'data';
 
 export default function UsersModuleConfigPage() {
@@ -46,7 +46,7 @@ export default function UsersModuleConfigPage() {
 
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ usersPerPage: 20, sessionTimeout: 30, maxLoginAttempts: 5 });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ maxLoginAttempts: 5, sessionTimeout: 30, usersPerPage: 20 });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -65,14 +65,14 @@ export default function UsersModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -83,7 +83,7 @@ export default function UsersModuleConfigPage() {
       const usersPerPage = settingsData.find(s => s.settingKey === 'usersPerPage')?.value as number ?? 20;
       const sessionTimeout = settingsData.find(s => s.settingKey === 'sessionTimeout')?.value as number ?? 30;
       const maxLoginAttempts = settingsData.find(s => s.settingKey === 'maxLoginAttempts')?.value as number ?? 5;
-      setLocalSettings({ usersPerPage, sessionTimeout, maxLoginAttempts });
+      setLocalSettings({ maxLoginAttempts, sessionTimeout, usersPerPage });
     }
   }, [settingsData]);
 
@@ -94,15 +94,13 @@ export default function UsersModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
   const serverSettings = useMemo(() => {
     const usersPerPage = settingsData?.find(s => s.settingKey === 'usersPerPage')?.value as number ?? 20;
     const sessionTimeout = settingsData?.find(s => s.settingKey === 'sessionTimeout')?.value as number ?? 30;
     const maxLoginAttempts = settingsData?.find(s => s.settingKey === 'maxLoginAttempts')?.value as number ?? 5;
-    return { usersPerPage, sessionTimeout, maxLoginAttempts };
+    return { maxLoginAttempts, sessionTimeout, usersPerPage };
   }, [settingsData]);
 
   // Check for changes
@@ -129,7 +127,7 @@ export default function UsersModuleConfigPage() {
 
   const handleToggleField = (id: string) => {
     const field = localFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalFields(prev => {
@@ -159,7 +157,7 @@ export default function UsersModuleConfigPage() {
       // Collect feature updates
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          promises.push(toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] }));
+          promises.push(toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY }));
         }
       }
       
@@ -167,7 +165,7 @@ export default function UsersModuleConfigPage() {
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          promises.push(updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled }));
+          promises.push(updateField({ enabled: field.enabled, id: field.id as Id<'moduleFields'> }));
         }
       }
       
@@ -201,7 +199,7 @@ export default function UsersModuleConfigPage() {
   };
 
   const handleClearAll = async () => {
-    if (!confirm('Xóa toàn bộ users và roles?')) return;
+    if (!confirm('Xóa toàn bộ users và roles?')) {return;}
     toast.loading('Đang xóa dữ liệu...');
     await clearUsersData();
     toast.dismiss();
@@ -209,7 +207,7 @@ export default function UsersModuleConfigPage() {
   };
 
   const handleResetAll = async () => {
-    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
+    if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) {return;}
     toast.loading('Đang reset dữ liệu...');
     await clearUsersData();
     await seedUsersModule();
@@ -227,7 +225,7 @@ export default function UsersModuleConfigPage() {
 
   // Map role id to name
   const roleMap: Record<string, { name: string; color?: string }> = {};
-  rolesData?.forEach(role => { roleMap[role._id] = { name: role.name, color: role.color }; });
+  rolesData?.forEach(role => { roleMap[role._id] = { color: role.color, name: role.name }; });
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -246,7 +244,7 @@ export default function UsersModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-purple-500 text-purple-600 dark:text-purple-400'
@@ -256,7 +254,7 @@ export default function UsersModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-purple-500 text-purple-600 dark:text-purple-400'
@@ -277,19 +275,19 @@ export default function UsersModuleConfigPage() {
                 <SettingInput 
                   label="Session timeout (phút)" 
                   value={localSettings.sessionTimeout} 
-                  onChange={(v) => setLocalSettings({...localSettings, sessionTimeout: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, sessionTimeout: v}); }}
                   focusColor="focus:border-purple-500"
                 />
                 <SettingInput 
                   label="Max đăng nhập sai" 
                   value={localSettings.maxLoginAttempts} 
-                  onChange={(v) => setLocalSettings({...localSettings, maxLoginAttempts: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, maxLoginAttempts: v}); }}
                   focusColor="focus:border-purple-500"
                 />
                 <SettingInput 
                   label="Số users / trang" 
                   value={localSettings.usersPerPage} 
-                  onChange={(v) => setLocalSettings({...localSettings, usersPerPage: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, usersPerPage: v}); }}
                   focusColor="focus:border-purple-500"
                 />
               </SettingsCard>
@@ -415,7 +413,7 @@ export default function UsersModuleConfigPage() {
                       {roleMap[user.roleId]?.color ? (
                         <span 
                           className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
-                          style={{ backgroundColor: roleMap[user.roleId].color, color: '#fff', borderColor: roleMap[user.roleId].color }}
+                          style={{ backgroundColor: roleMap[user.roleId].color, borderColor: roleMap[user.roleId].color, color: '#fff' }}
                         >
                           {roleMap[user.roleId]?.name || 'N/A'}
                         </span>
@@ -424,8 +422,8 @@ export default function UsersModuleConfigPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={user.status === 'Active' ? 'default' : user.status === 'Inactive' ? 'secondary' : 'destructive'}>
-                        {user.status === 'Active' ? 'Hoạt động' : user.status === 'Inactive' ? 'Không HĐ' : 'Bị cấm'}
+                      <Badge variant={user.status === 'Active' ? 'default' : (user.status === 'Inactive' ? 'secondary' : 'destructive')}>
+                        {user.status === 'Active' ? 'Hoạt động' : (user.status === 'Inactive' ? 'Không HĐ' : 'Bị cấm')}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -470,7 +468,7 @@ export default function UsersModuleConfigPage() {
                         <div className="flex items-center gap-2">
                           <div 
                             className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: role.color || '#94a3b8' }}
+                            style={{ backgroundColor: role.color ?? '#94a3b8' }}
                           />
                           <span className="font-medium">{role.name}</span>
                         </div>
@@ -479,11 +477,11 @@ export default function UsersModuleConfigPage() {
                       <TableCell>
                         {role.isSuperAdmin ? (
                           <Badge variant="destructive">Super Admin</Badge>
-                        ) : role.isSystem ? (
+                        ) : (role.isSystem ? (
                           <Badge variant="default">Hệ thống</Badge>
                         ) : (
                           <Badge variant="secondary">Tùy chỉnh</Badge>
-                        )}
+                        ))}
                       </TableCell>
                       <TableCell className="text-right">{userCount}</TableCell>
                     </TableRow>

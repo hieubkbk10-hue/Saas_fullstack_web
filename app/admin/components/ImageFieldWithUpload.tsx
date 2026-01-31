@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Upload, Trash2, Loader2, Link2 } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { Link2, Loader2, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Input, Label, cn } from './ui';
 
@@ -16,11 +16,11 @@ function slugifyFilename(filename: string): string {
   const slugified = name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[đĐ]/g, "d")
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+    .replaceAll(/[\u0300-\u036F]/g, "")
+    .replaceAll(/[đĐ]/g, "d")
+    .replaceAll(/[^a-z0-9\s-]/g, '')
+    .replaceAll(/\s+/g, '-')
+    .replaceAll(/-+/g, '-')
     .trim();
   
   const timestamp = Date.now();
@@ -88,7 +88,7 @@ export function ImageFieldWithUpload({
   const [mode, setMode] = useState<InputMode>(value?.startsWith('http') && !value?.includes('convex') ? 'url' : 'upload');
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [urlInput, setUrlInput] = useState(value || '');
+  const [urlInput, setUrlInput] = useState(value ?? '');
   const [preview, setPreview] = useState<string | undefined>(value);
   const [currentStorageId, setCurrentStorageId] = useState<string | undefined>();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -129,9 +129,9 @@ export function ImageFieldWithUpload({
       
       // Upload to Convex storage
       const response = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'image/webp' },
         body: compressedFile,
+        headers: { 'Content-Type': 'image/webp' },
+        method: 'POST',
       });
       
       if (!response.ok) {
@@ -143,22 +143,22 @@ export function ImageFieldWithUpload({
       // Get image dimensions
       const img = new window.Image();
       const dimensions = await new Promise<{ width: number; height: number }>((resolve) => {
-        img.onload = () => resolve({ width: img.width, height: img.height });
+        img.onload = () =>{  resolve({ height: img.height, width: img.width }); };
         img.src = URL.createObjectURL(compressedFile);
       });
       
       // Save to database with folder for cleanup tracking
       const result = await saveImage({
-        storageId: storageId as Id<"_storage">,
         filename: slugifiedName,
+        folder,
+        height: dimensions.height,
         mimeType: 'image/webp',
         size: compressedFile.size,
+        storageId: storageId as Id<"_storage">,
         width: dimensions.width,
-        height: dimensions.height,
-        folder,
       });
       
-      const imageUrl = result.url || '';
+      const imageUrl = result.url ?? '';
       setPreview(imageUrl);
       setCurrentStorageId(storageId);
       onChange(imageUrl);
@@ -197,7 +197,7 @@ export function ImageFieldWithUpload({
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) void handleFileSelect(file);
+    if (file) {void handleFileSelect(file);}
   }, [handleFileSelect]);
 
   const handleUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -235,10 +235,10 @@ export function ImageFieldWithUpload({
   }, [currentStorageId, deleteImage, onChange, onStorageIdChange]);
 
   const aspectClasses = {
+    auto: 'min-h-[180px]',
+    banner: 'aspect-[21/9]',
     square: 'aspect-square',
     video: 'aspect-video',
-    banner: 'aspect-[21/9]',
-    auto: 'min-h-[180px]',
   };
 
   return (
@@ -249,7 +249,7 @@ export function ImageFieldWithUpload({
         <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
           <button
             type="button"
-            onClick={() => setMode('upload')}
+            onClick={() =>{  setMode('upload'); }}
             className={cn(
               "px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5",
               mode === 'upload' 
@@ -261,7 +261,7 @@ export function ImageFieldWithUpload({
           </button>
           <button
             type="button"
-            onClick={() => setMode('url')}
+            onClick={() =>{  setMode('url'); }}
             className={cn(
               "px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5",
               mode === 'url' 
@@ -345,7 +345,7 @@ export function ImageFieldWithUpload({
           )}
           
         </div>
-      ) : mode === 'upload' ? (
+      ) : (mode === 'upload' ? (
         <div
           onClick={() => inputRef.current?.click()}
           onDrop={handleDrop}
@@ -377,7 +377,7 @@ export function ImageFieldWithUpload({
             </>
           )}
         </div>
-      ) : null}
+      ) : null)}
     </div>
   );
 }

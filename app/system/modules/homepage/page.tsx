@@ -1,59 +1,59 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Home, LayoutGrid, ImageIcon, FileText, Users, Phone, Loader2, Database, Trash2, RefreshCw, Settings, Eye, EyeOff, GripVertical } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { Database, Eye, EyeOff, FileText, GripVertical, Home, ImageIcon, LayoutGrid, Loader2, Phone, RefreshCw, Settings, Trash2, Users } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput, SettingSelect,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus, SettingInput,
+  SettingSelect, SettingsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'homepage';
 
 const FEATURES_CONFIG = [
-  { key: 'enableHero', label: 'Hero Banner', icon: ImageIcon },
-  { key: 'enableAbout', label: 'Giới thiệu', icon: FileText },
-  { key: 'enableProducts', label: 'Sản phẩm nổi bật', icon: LayoutGrid },
-  { key: 'enablePosts', label: 'Bài viết mới', icon: FileText },
-  { key: 'enablePartners', label: 'Đối tác', icon: Users },
-  { key: 'enableContact', label: 'Liên hệ', icon: Phone },
+  { icon: ImageIcon, key: 'enableHero', label: 'Hero Banner' },
+  { icon: FileText, key: 'enableAbout', label: 'Giới thiệu' },
+  { icon: LayoutGrid, key: 'enableProducts', label: 'Sản phẩm nổi bật' },
+  { icon: FileText, key: 'enablePosts', label: 'Bài viết mới' },
+  { icon: Users, key: 'enablePartners', label: 'Đối tác' },
+  { icon: Phone, key: 'enableContact', label: 'Liên hệ' },
 ];
 
 const TYPE_ICONS: Record<string, React.ElementType> = {
-  hero: ImageIcon,
   about: FileText,
-  products: LayoutGrid,
-  posts: FileText,
-  partners: Users,
   contact: Phone,
+  hero: ImageIcon,
+  partners: Users,
+  posts: FileText,
+  products: LayoutGrid,
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  hero: 'bg-blue-500/10 text-blue-600',
   about: 'bg-emerald-500/10 text-emerald-600',
-  products: 'bg-purple-500/10 text-purple-600',
-  posts: 'bg-cyan-500/10 text-cyan-600',
-  partners: 'bg-amber-500/10 text-amber-600',
   contact: 'bg-pink-500/10 text-pink-600',
+  hero: 'bg-blue-500/10 text-blue-600',
+  partners: 'bg-amber-500/10 text-amber-600',
+  posts: 'bg-cyan-500/10 text-cyan-600',
+  products: 'bg-purple-500/10 text-purple-600',
 };
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { maxSections: number; defaultSectionType: string };
+interface SettingsState { maxSections: number; defaultSectionType: string }
 type TabType = 'config' | 'data';
 
 const SECTION_TYPES = [
-  { value: 'hero', label: 'Hero Banner' },
-  { value: 'about', label: 'Giới thiệu' },
-  { value: 'products', label: 'Sản phẩm nổi bật' },
-  { value: 'posts', label: 'Bài viết mới' },
-  { value: 'partners', label: 'Đối tác' },
-  { value: 'contact', label: 'Liên hệ' },
+  { label: 'Hero Banner', value: 'hero' },
+  { label: 'Giới thiệu', value: 'about' },
+  { label: 'Sản phẩm nổi bật', value: 'products' },
+  { label: 'Bài viết mới', value: 'posts' },
+  { label: 'Đối tác', value: 'partners' },
+  { label: 'Liên hệ', value: 'contact' },
 ];
 
 export default function HomepageModuleConfigPage() {
@@ -77,7 +77,7 @@ export default function HomepageModuleConfigPage() {
 
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ maxSections: 10, defaultSectionType: 'hero' });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ defaultSectionType: 'hero', maxSections: 10 });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -96,14 +96,14 @@ export default function HomepageModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -113,7 +113,7 @@ export default function HomepageModuleConfigPage() {
     if (settingsData) {
       const maxSections = settingsData.find(s => s.settingKey === 'maxSections')?.value as number ?? 10;
       const defaultSectionType = settingsData.find(s => s.settingKey === 'defaultSectionType')?.value as string ?? 'hero';
-      setLocalSettings({ maxSections, defaultSectionType });
+      setLocalSettings({ defaultSectionType, maxSections });
     }
   }, [settingsData]);
 
@@ -124,14 +124,12 @@ export default function HomepageModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
   const serverSettings = useMemo(() => {
     const maxSections = settingsData?.find(s => s.settingKey === 'maxSections')?.value as number ?? 10;
     const defaultSectionType = settingsData?.find(s => s.settingKey === 'defaultSectionType')?.value as string ?? 'hero';
-    return { maxSections, defaultSectionType };
+    return { defaultSectionType, maxSections };
   }, [settingsData]);
 
   // Check for changes
@@ -158,7 +156,7 @@ export default function HomepageModuleConfigPage() {
 
   const handleToggleField = (id: string) => {
     const field = localFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalFields(prev => {
@@ -185,14 +183,14 @@ export default function HomepageModuleConfigPage() {
       // Save features
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          await toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY });
         }
       }
       // Save fields
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
+          await updateField({ enabled: field.enabled, id: field.id as Id<'moduleFields'> });
         }
       }
       // Save settings
@@ -219,7 +217,7 @@ export default function HomepageModuleConfigPage() {
   };
 
   const handleClearData = async () => {
-    if (!confirm('Xóa toàn bộ sections trang chủ?')) return;
+    if (!confirm('Xóa toàn bộ sections trang chủ?')) {return;}
     toast.loading('Đang xóa dữ liệu...');
     await clearHomepageData();
     toast.dismiss();
@@ -227,7 +225,7 @@ export default function HomepageModuleConfigPage() {
   };
 
   const handleResetAll = async () => {
-    if (!confirm('Reset dữ liệu về mặc định?')) return;
+    if (!confirm('Reset dữ liệu về mặc định?')) {return;}
     toast.loading('Đang reset dữ liệu...');
     await clearHomepageData();
     await seedHomepageModule();
@@ -249,7 +247,7 @@ export default function HomepageModuleConfigPage() {
   }
 
   // Sort components by order
-  const sortedComponents = [...(componentsData || [])].sort((a, b) => a.order - b.order);
+  const sortedComponents = [...(componentsData ?? [])].sort((a, b) => a.order - b.order);
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -268,7 +266,7 @@ export default function HomepageModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-orange-500 text-orange-600 dark:text-orange-400'
@@ -278,7 +276,7 @@ export default function HomepageModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-orange-500 text-orange-600 dark:text-orange-400'
@@ -299,7 +297,7 @@ export default function HomepageModuleConfigPage() {
                 <SettingInput
                   label="Số section tối đa"
                   value={localSettings.maxSections}
-                  onChange={(v) => setLocalSettings(prev => ({ ...prev, maxSections: Number(v) }))}
+                  onChange={(v) =>{  setLocalSettings(prev => ({ ...prev, maxSections: Number(v) })); }}
                   type="number"
                   min={1}
                   max={20}
@@ -308,7 +306,7 @@ export default function HomepageModuleConfigPage() {
                 <SettingSelect
                   label="Loại section mặc định"
                   value={localSettings.defaultSectionType}
-                  onChange={(v) => setLocalSettings(prev => ({ ...prev, defaultSectionType: v }))}
+                  onChange={(v) =>{  setLocalSettings(prev => ({ ...prev, defaultSectionType: v })); }}
                   options={SECTION_TYPES}
                   focusColor="focus:border-orange-500"
                 />
@@ -477,7 +475,7 @@ export default function HomepageModuleConfigPage() {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => handleToggleComponent(component._id)}
+                          onClick={ async () => handleToggleComponent(component._id)}
                           className="gap-1"
                         >
                           {component.active ? <EyeOff size={14} /> : <Eye size={14} />}

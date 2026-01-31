@@ -1,9 +1,12 @@
 'use client';
 
-import React from 'react';
+import { ChevronRight, Home, Menu as MenuIcon, Moon, Search as SearchIcon, Sun } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu as MenuIcon, Search as SearchIcon, Sun, Moon, ChevronRight, Home } from 'lucide-react';
+import React from 'react';
+
+const FIRST_INDEX = 0;
+const INDEX_OFFSET = 1;
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -14,30 +17,22 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleTheme, setMobileMenuOpen }) => {
   const pathname = usePathname();
 
+  let themeTitle = 'Chế độ tối';
+  let ThemeIcon = Moon;
+  if (isDarkMode) {
+    themeTitle = 'Chế độ sáng';
+    ThemeIcon = Sun;
+  }
+
   return (
     <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 flex items-center justify-between px-4 lg:px-8 transition-colors">
       <div className="flex items-center gap-4">
-        <button className="lg:hidden p-2 -ml-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-md" onClick={() => setMobileMenuOpen(true)}>
+        <button className="lg:hidden p-2 -ml-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-md" onClick={() =>{  setMobileMenuOpen(true); }}>
           <MenuIcon size={24} />
         </button>
         <nav className="hidden md:flex items-center text-sm text-slate-500 dark:text-slate-400">
           <Link href="/admin/dashboard" className="hover:text-blue-600 transition-colors">Home</Link>
-          {pathname.replace('/admin', '').split('/').filter(Boolean).map((segment, index, array) => {
-            if (segment === 'dashboard' && index === 0) return null;
-            const to = `/admin/${array.slice(0, index + 1).join('/')}`;
-            const isLast = index === array.length - 1;
-            return (
-              <React.Fragment key={to}>
-                <ChevronRight size={14} className="mx-2 text-slate-300" />
-                <Link 
-                  href={to} 
-                  className={`capitalize hover:text-blue-600 transition-colors ${isLast ? "font-medium text-slate-900 dark:text-slate-100" : ""}`}
-                >
-                  {segment.replace(/-/g, ' ')}
-                </Link>
-              </React.Fragment>
-            )
-          })}
+          <Breadcrumbs pathname={pathname} />
         </nav>
       </div>
 
@@ -63,11 +58,50 @@ export const Header: React.FC<HeaderProps> = ({ isDarkMode, toggleTheme, setMobi
         <button 
           onClick={toggleTheme}
           className="p-2.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 rounded-full transition-colors focus:outline-none"
-          title={isDarkMode ? "Chế độ sáng" : "Chế độ tối"}
+          title={themeTitle}
         >
-          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+          <ThemeIcon size={20} />
         </button>
       </div>
     </header>
+  );
+};
+
+const Breadcrumbs = ({ pathname }: { pathname: string }): React.ReactElement => {
+  const segments = pathname.replace('/admin', '').split('/').filter(Boolean);
+  const items: Array<{ href: string; label: string; isLast: boolean }> = [];
+
+  segments.forEach((segment, index) => {
+    const isRootDashboard = segment === 'dashboard' && index === FIRST_INDEX;
+    if (isRootDashboard) {
+      return;
+    }
+
+    const href = `/admin/${segments.slice(FIRST_INDEX, index + INDEX_OFFSET).join('/')}`;
+    items.push({
+      href,
+      isLast: index === segments.length - INDEX_OFFSET,
+      label: segment.replaceAll('-', ' '),
+    });
+  });
+
+  return (
+    <>
+      {items.map((item) => {
+        let linkClassName = 'capitalize hover:text-blue-600 transition-colors';
+        if (item.isLast) {
+          linkClassName += ' font-medium text-slate-900 dark:text-slate-100';
+        }
+
+        return (
+          <React.Fragment key={item.href}>
+            <ChevronRight size={14} className="mx-2 text-slate-300" />
+            <Link href={item.href} className={linkClassName}>
+              {item.label}
+            </Link>
+          </React.Fragment>
+        );
+      })}
+    </>
   );
 };

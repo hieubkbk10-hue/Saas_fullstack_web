@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, use, useEffect, useMemo } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, CardContent, Input, Label, Badge, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, cn } from '../../../components/ui';
+import { Badge, Button, Card, CardContent, Input, Label, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from '../../../components/ui';
 import { ImageUploader } from '../../../components/ImageUploader';
 
 const MODULE_KEY = 'postCategories';
@@ -38,15 +38,13 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
     return fields;
   }, [fieldsData]);
 
-  const relatedPosts = useMemo(() => {
-    return postsData?.filter(p => p.categoryId === id) || [];
-  }, [postsData, id]);
+  const relatedPosts = useMemo(() => postsData?.filter(p => p.categoryId === id) ?? [], [postsData, id]);
 
   useEffect(() => {
     if (categoryData) {
       setName(categoryData.name);
       setSlug(categoryData.slug);
-      setDescription(categoryData.description || '');
+      setDescription(categoryData.description ?? '');
       setThumbnail(categoryData.thumbnail);
       setActive(categoryData.active);
     }
@@ -66,17 +64,17 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) {return;}
 
     setIsSubmitting(true);
     try {
       await updateCategory({
+        active,
+        description: description.trim() || undefined,
         id: id as Id<"postCategories">,
         name: name.trim(),
         slug: slug.trim(),
-        description: description.trim() || undefined,
         thumbnail,
-        active,
       });
       toast.success("Đã cập nhật danh mục");
     } catch (error) {
@@ -100,7 +98,7 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
 
       <div className="flex border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('info')}
+          onClick={() =>{  setActiveTab('info'); }}
           className={cn(
             "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
             activeTab === 'info' ? "border-blue-500 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-700"
@@ -109,7 +107,7 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
           Thông tin chung
         </button>
         <button
-          onClick={() => setActiveTab('posts')}
+          onClick={() =>{  setActiveTab('posts'); }}
           className={cn(
             "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
             activeTab === 'posts' ? "border-blue-500 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-700"
@@ -123,44 +121,44 @@ export default function PostCategoryEditPage({ params }: { params: Promise<{ id:
         <Card className="max-w-md mx-auto md:mx-0">
           <form onSubmit={handleSubmit}>
             <CardContent className="p-6 space-y-4">
-              {/* name - always shown (system field) */}
+              {/* Name - always shown (system field) */}
               <div className="space-y-2">
                 <Label>Tên danh mục <span className="text-red-500">*</span></Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Ví dụ: Công nghệ, Đời sống..." autoFocus />
+                <Input value={name} onChange={(e) =>{  setName(e.target.value); }} required placeholder="Ví dụ: Công nghệ, Đời sống..." autoFocus />
               </div>
-              {/* slug - always shown (system field) */}
+              {/* Slug - always shown (system field) */}
               <div className="space-y-2">
                 <Label>Slug</Label>
-                <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="slug-cua-danh-muc" className="font-mono text-sm" />
+                <Input value={slug} onChange={(e) =>{  setSlug(e.target.value); }} placeholder="slug-cua-danh-muc" className="font-mono text-sm" />
               </div>
-              {/* description - conditional */}
+              {/* Description - conditional */}
               {enabledFields.has('description') && (
                 <div className="space-y-2">
                   <Label>Mô tả</Label>
-                  <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Mô tả ngắn về danh mục..." />
+                  <Input value={description} onChange={(e) =>{  setDescription(e.target.value); }} placeholder="Mô tả ngắn về danh mục..." />
                 </div>
               )}
-              {/* thumbnail - conditional */}
+              {/* Thumbnail - conditional */}
               {enabledFields.has('thumbnail') && (
                 <div className="space-y-2">
                   <Label>Ảnh đại diện</Label>
                   <ImageUploader
                     value={thumbnail}
-                    onChange={(url) => setThumbnail(url)}
+                    onChange={(url) =>{  setThumbnail(url); }}
                     folder="post-categories"
                     aspectRatio="video"
                   />
                 </div>
               )}
-              {/* active - always shown (system field) */}
+              {/* Active - always shown (system field) */}
               <div className="flex items-center gap-2">
-                <input type="checkbox" id="active" checked={active} onChange={(e) => setActive(e.target.checked)} className="w-4 h-4" />
+                <input type="checkbox" id="active" checked={active} onChange={(e) =>{  setActive(e.target.checked); }} className="w-4 h-4" />
                 <Label htmlFor="active">Hiển thị danh mục</Label>
               </div>
             </CardContent>
             
             <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex justify-end gap-3">
-              <Button type="button" variant="ghost" onClick={() => router.push('/admin/post-categories')}>Hủy bỏ</Button>
+              <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/post-categories'); }}>Hủy bỏ</Button>
               <Button type="submit" variant="accent" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
                 Lưu thay đổi

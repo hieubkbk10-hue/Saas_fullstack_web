@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { Plus, Edit, Trash2, Shield, Search, Loader2, RefreshCw, ChevronLeft, ChevronRight, Crown } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ChevronLeft, ChevronRight, Crown, Edit, Loader2, Plus, RefreshCw, Search, Shield, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, Badge, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
-import { ColumnToggle, SortableHeader, BulkActionBar, SelectCheckbox, useSortableData } from '../components/TableUtilities';
+import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
+import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'roles';
@@ -33,7 +33,7 @@ function RolesContent() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [visibleColumns, setVisibleColumns] = useState(['select', 'name', 'description', 'usersCount', 'type', 'actions']);
   const [selectedIds, setSelectedIds] = useState<Id<"roles">[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -64,13 +64,11 @@ function RolesContent() {
   }, [userCountByRole]);
 
   // Transform data
-  const roles = useMemo(() => {
-    return rolesData?.map(role => ({
+  const roles = useMemo(() => rolesData?.map(role => ({
       ...role,
       id: role._id,
       usersCount: userCountMap[role._id] ?? 0,
-    })) || [];
-  }, [rolesData, userCountMap]);
+    })) ?? [], [rolesData, userCountMap]);
 
   // Build columns based on features
   const columns = useMemo(() => {
@@ -117,7 +115,7 @@ function RolesContent() {
   const selectableRoles = paginatedData.filter(r => !r.isSystem);
 
   const handleSort = (key: string) => {
-    setSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
+    setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
     setCurrentPage(1);
   };
 
@@ -163,7 +161,7 @@ function RolesContent() {
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} vai trò đã chọn?`)) {
       try {
-        await Promise.all(selectedIds.map(id => deleteRole({ id })));
+        await Promise.all(selectedIds.map( async id => deleteRole({ id })));
         setSelectedIds([]);
         toast.success(`Đã xóa ${selectedIds.length} vai trò`);
       } catch (error) {
@@ -210,7 +208,7 @@ function RolesContent() {
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between">
@@ -221,13 +219,13 @@ function RolesContent() {
                 placeholder="Tìm vai trò..." 
                 className="pl-9 w-48" 
                 value={searchTerm} 
-                onChange={(e) => handleSearchChange(e.target.value)} 
+                onChange={(e) =>{  handleSearchChange(e.target.value); }} 
               />
             </div>
             <select 
               className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
               value={filterType} 
-              onChange={(e) => handleFilterChange(e.target.value)}
+              onChange={(e) =>{  handleFilterChange(e.target.value); }}
             >
               <option value="">Tất cả loại</option>
               <option value="system">Hệ thống</option>
@@ -274,7 +272,7 @@ function RolesContent() {
                     {role.isSystem ? (
                       <span className="w-4 h-4 block" title="Không thể chọn vai trò hệ thống" />
                     ) : (
-                      <SelectCheckbox checked={selectedIds.includes(role._id)} onChange={() => toggleSelectItem(role._id)} />
+                      <SelectCheckbox checked={selectedIds.includes(role._id)} onChange={() =>{  toggleSelectItem(role._id); }} />
                     )}
                   </TableCell>
                 )}
@@ -321,7 +319,7 @@ function RolesContent() {
                         variant="ghost" 
                         size="icon" 
                         className={role.isSystem ? "text-slate-300 cursor-not-allowed" : "text-red-500 hover:text-red-600"} 
-                        onClick={() => handleDelete(role._id)}
+                        onClick={ async () => handleDelete(role._id)}
                         disabled={role.isSystem}
                         title={role.isSystem ? "Không thể xóa vai trò hệ thống" : "Xóa"}
                       >
@@ -353,7 +351,7 @@ function RolesContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
+                  onClick={() =>{  setCurrentPage(p => p - 1); }}
                 >
                   <ChevronLeft size={16} />
                 </Button>
@@ -364,7 +362,7 @@ function RolesContent() {
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
+                  onClick={() =>{  setCurrentPage(p => p + 1); }}
                 >
                   <ChevronRight size={16} />
                 </Button>

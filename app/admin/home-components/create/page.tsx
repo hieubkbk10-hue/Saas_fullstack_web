@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { cn, Card, CardContent, CardHeader, CardTitle } from '../../components/ui';
+import { Card, CardContent, CardHeader, CardTitle, cn } from '../../components/ui';
 import { COMPONENT_TYPES } from './shared';
 
 export default function HomeComponentCreatePage() {

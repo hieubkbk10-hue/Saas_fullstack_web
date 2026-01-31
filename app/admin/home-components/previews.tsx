@@ -3,20 +3,20 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { 
-  Monitor, Tablet, Smartphone, Eye, ChevronLeft, ChevronRight, ChevronDown,
-  Image as ImageIcon, Star, Check, Globe, Mail, HelpCircle,
-  Phone, Package, FileText, Users, MapPin, Tag, ArrowUpRight, Briefcase, Plus, ArrowRight,
-  X, ZoomIn, Maximize2, Building2, Clock, Zap, Shield, Target, Layers, Cpu, Rocket, Settings,
-  Facebook, MessageCircle, Instagram, Twitter, Linkedin, Youtube
+  ArrowRight, ArrowUpRight, Briefcase, Building2, Check, ChevronDown, ChevronLeft,
+  ChevronRight, Clock, Cpu, Eye, Facebook, FileText,
+  Globe, HelpCircle, Image as ImageIcon, Instagram, Layers, Linkedin, Mail, MapPin, Maximize2, MessageCircle,
+  Monitor, Package, Phone, Plus, Rocket, Settings, Shield, Smartphone, Star, Tablet, Tag, Target,
+  Twitter, Users, X, Youtube, Zap, ZoomIn
 } from 'lucide-react';
-import { cn, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
+import { Card, CardContent, CardHeader, CardTitle, cn } from '../components/ui';
 
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
 
 const deviceWidths = {
   desktop: 'w-full max-w-7xl',
-  tablet: 'w-[768px] max-w-full',
-  mobile: 'w-[375px] max-w-full'
+  mobile: 'w-[375px] max-w-full',
+  tablet: 'w-[768px] max-w-full'
 };
 
 type PreviewImageProps = Omit<React.ComponentProps<typeof Image>, 'width' | 'height' | 'src'> & {
@@ -26,7 +26,7 @@ type PreviewImageProps = Omit<React.ComponentProps<typeof Image>, 'width' | 'hei
 };
 
 const PreviewImage = ({ src, alt = '', width = 1200, height = 800, ...rest }: PreviewImageProps) => {
-  if (!src) return null;
+  if (!src) {return null;}
   const normalizedWidth = typeof width === 'string' ? Number.parseInt(width, 10) || 1200 : width;
   const normalizedHeight = typeof height === 'string' ? Number.parseInt(height, 10) || 800 : height;
 
@@ -43,9 +43,9 @@ const PreviewImage = ({ src, alt = '', width = 1200, height = 800, ...rest }: Pr
 };
 
 const devices = [
-  { id: 'desktop' as const, icon: Monitor, label: 'Desktop (max-w-7xl)' },
-  { id: 'tablet' as const, icon: Tablet, label: 'Tablet (768px)' },
-  { id: 'mobile' as const, icon: Smartphone, label: 'Mobile (375px)' }
+  { icon: Monitor, id: 'desktop' as const, label: 'Desktop (max-w-7xl)' },
+  { icon: Tablet, id: 'tablet' as const, label: 'Tablet (768px)' },
+  { icon: Smartphone, id: 'mobile' as const, label: 'Mobile (375px)' }
 ];
 
 // Browser Frame Component
@@ -82,7 +82,7 @@ const PreviewWrapper = ({
   setDevice: (d: PreviewDevice) => void;
   previewStyle: string;
   setPreviewStyle: (s: string) => void;
-  styles: Array<{ id: string; label: string }>;
+  styles: { id: string; label: string }[];
   info?: string;
 }) => (
   <Card className="mt-6">
@@ -94,7 +94,7 @@ const PreviewWrapper = ({
         <div className="flex items-center gap-4">
           <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
             {styles.map((s) => (
-              <button key={s.id} type="button" onClick={() => setPreviewStyle(s.id)}
+              <button key={s.id} type="button" onClick={() =>{  setPreviewStyle(s.id); }}
                 className={cn("px-3 py-1 text-xs font-medium rounded-md transition-all",
                   previewStyle === s.id ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-500 hover:text-slate-700")}>
                 {s.label}
@@ -103,7 +103,7 @@ const PreviewWrapper = ({
           </div>
           <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
             {devices.map((d) => (
-              <button key={d.id} type="button" onClick={() => setDevice(d.id)} title={d.label}
+              <button key={d.id} type="button" onClick={() =>{  setDevice(d.id); }} title={d.label}
                 className={cn("p-1.5 rounded-md transition-all",
                   device === d.id ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-400 hover:text-slate-600")}>
                 <d.icon size={16} />
@@ -150,7 +150,7 @@ export const HeroBannerPreview = ({
   onStyleChange,
   content
 }: { 
-  slides: Array<{ id: number; image: string; link: string }>; 
+  slides: { id: number; image: string; link: string }[]; 
   brandColor: string;
   selectedStyle?: HeroStyle;
   onStyleChange?: (style: HeroStyle) => void;
@@ -168,8 +168,8 @@ export const HeroBannerPreview = ({
     { id: 'parallax' as const, label: 'Parallax' }
   ];
 
-  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
-  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  const nextSlide = () =>{  setCurrentSlide((prev) => (prev + 1) % slides.length); };
+  const prevSlide = () =>{  setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length); };
 
   // Helper: Render slide với blurred background (best practice)
   const renderSlideWithBlur = (slide: { image: string }, idx: number) => (
@@ -179,8 +179,8 @@ export const HeroBannerPreview = ({
         className="absolute inset-0 scale-110"
         style={{
           backgroundImage: `url(${slide.image})`,
-          backgroundSize: 'cover',
           backgroundPosition: 'center',
+          backgroundSize: 'cover',
           filter: 'blur(30px)',
         }}
       />
@@ -211,7 +211,7 @@ export const HeroBannerPreview = ({
     <section className="relative w-full bg-slate-900 overflow-hidden">
       <div className={cn(
         "relative w-full",
-        device === 'mobile' ? 'aspect-[16/9] max-h-[200px]' : device === 'tablet' ? 'aspect-[16/9] max-h-[250px]' : 'aspect-[21/9] max-h-[280px]'
+        device === 'mobile' ? 'aspect-[16/9] max-h-[200px]' : (device === 'tablet' ? 'aspect-[16/9] max-h-[250px]' : 'aspect-[21/9] max-h-[280px]')
       )}>
         {slides.length > 0 ? (
           <>
@@ -230,7 +230,7 @@ export const HeroBannerPreview = ({
                 </button>
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
                   {slides.map((_, idx) => (
-                    <button key={idx} type="button" onClick={() => setCurrentSlide(idx)} className={cn("w-2 h-2 rounded-full transition-all", idx === currentSlide ? "w-6" : "bg-white/50")} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
+                    <button key={idx} type="button" onClick={() =>{  setCurrentSlide(idx); }} className={cn("w-2 h-2 rounded-full transition-all", idx === currentSlide ? "w-6" : "bg-white/50")} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
                   ))}
                 </div>
               </>
@@ -248,7 +248,7 @@ export const HeroBannerPreview = ({
     <section className="relative w-full bg-slate-900 overflow-hidden">
       <div className={cn(
         "relative w-full",
-        device === 'mobile' ? 'aspect-[16/9] max-h-[220px]' : device === 'tablet' ? 'aspect-[16/9] max-h-[270px]' : 'aspect-[21/9] max-h-[300px]'
+        device === 'mobile' ? 'aspect-[16/9] max-h-[220px]' : (device === 'tablet' ? 'aspect-[16/9] max-h-[270px]' : 'aspect-[21/9] max-h-[300px]')
       )}>
         {slides.length > 0 ? (
           <>
@@ -260,7 +260,7 @@ export const HeroBannerPreview = ({
             {slides.length > 1 && (
               <div className="absolute bottom-0 left-0 right-0 p-2 flex justify-center gap-2 bg-gradient-to-t from-black/60 to-transparent z-20">
                 {slides.map((slide, idx) => (
-                  <button key={idx} type="button" onClick={() => setCurrentSlide(idx)}
+                  <button key={idx} type="button" onClick={() =>{  setCurrentSlide(idx); }}
                     className={cn("rounded overflow-hidden transition-all border-2", idx === currentSlide ? "scale-105" : "border-transparent opacity-70 hover:opacity-100", device === 'mobile' ? 'w-10 h-7' : 'w-14 h-9')}
                     style={idx === currentSlide ? { borderColor: brandColor } : {}}>
                     {slide.image ? <PreviewImage src={slide.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ backgroundColor: brandColor }}></div>}
@@ -283,7 +283,7 @@ export const HeroBannerPreview = ({
       <section className="relative w-full bg-slate-900 overflow-hidden p-2">
         <div className={cn(
           "relative w-full",
-          device === 'mobile' ? 'max-h-[240px]' : device === 'tablet' ? 'max-h-[280px]' : 'max-h-[300px]'
+          device === 'mobile' ? 'max-h-[240px]' : (device === 'tablet' ? 'max-h-[280px]' : 'max-h-[300px]')
         )}>
           {device === 'mobile' ? (
             <div className="grid grid-cols-2 gap-2 h-full">
@@ -291,7 +291,7 @@ export const HeroBannerPreview = ({
                 <div key={slide.id} className="relative rounded-xl overflow-hidden aspect-video">
                   {slide.image ? (
                     <div className="w-full h-full relative">
-                      <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px)' }} />
+                      <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${slide.image})`, backgroundPosition: 'center', backgroundSize: 'cover', filter: 'blur(20px)' }} />
                       <div className="absolute inset-0 bg-black/20" />
                       <PreviewImage src={slide.image} alt="" className="relative w-full h-full object-contain z-10" />
                     </div>
@@ -306,7 +306,7 @@ export const HeroBannerPreview = ({
               <div className="col-span-2 row-span-2 relative rounded-xl overflow-hidden ring-2 ring-offset-1 ring-offset-slate-900" style={{ '--tw-ring-color': `${brandColor}60` } as React.CSSProperties}>
                 {bentoSlides[0]?.image ? (
                   <div className="w-full h-full relative">
-                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[0].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(25px)' }} />
+                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[0].image})`, backgroundPosition: 'center', backgroundSize: 'cover', filter: 'blur(25px)' }} />
                     <div className="absolute inset-0 bg-black/20" />
                     <PreviewImage src={bentoSlides[0].image} alt="" className="relative w-full h-full object-contain z-10" />
                   </div>
@@ -319,7 +319,7 @@ export const HeroBannerPreview = ({
               <div className="col-span-2 relative rounded-xl overflow-hidden">
                 {bentoSlides[1]?.image ? (
                   <div className="w-full h-full relative">
-                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[1].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(20px)' }} />
+                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[1].image})`, backgroundPosition: 'center', backgroundSize: 'cover', filter: 'blur(20px)' }} />
                     <div className="absolute inset-0 bg-black/20" />
                     <PreviewImage src={bentoSlides[1].image} alt="" className="relative w-full h-full object-contain z-10" />
                   </div>
@@ -330,7 +330,7 @@ export const HeroBannerPreview = ({
               <div className="relative rounded-xl overflow-hidden">
                 {bentoSlides[2]?.image ? (
                   <div className="w-full h-full relative">
-                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[2].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px)' }} />
+                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[2].image})`, backgroundPosition: 'center', backgroundSize: 'cover', filter: 'blur(15px)' }} />
                     <div className="absolute inset-0 bg-black/20" />
                     <PreviewImage src={bentoSlides[2].image} alt="" className="relative w-full h-full object-contain z-10" />
                   </div>
@@ -341,7 +341,7 @@ export const HeroBannerPreview = ({
               <div className="relative rounded-xl overflow-hidden">
                 {bentoSlides[3]?.image ? (
                   <div className="w-full h-full relative">
-                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[3].image})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(15px)' }} />
+                    <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${bentoSlides[3].image})`, backgroundPosition: 'center', backgroundSize: 'cover', filter: 'blur(15px)' }} />
                     <div className="absolute inset-0 bg-black/20" />
                     <PreviewImage src={bentoSlides[3].image} alt="" className="relative w-full h-full object-contain z-10" />
                   </div>
@@ -359,12 +359,12 @@ export const HeroBannerPreview = ({
   // Style 4: Fullscreen - Hero toàn màn hình với CTA overlay
   const renderFullscreenStyle = () => {
     const mainSlide = slides[currentSlide] || slides[0];
-    const c = content || {};
+    const c = content ?? {};
     return (
       <section className="relative w-full bg-slate-900 overflow-hidden">
         <div className={cn(
           "relative w-full",
-          device === 'mobile' ? 'h-[280px]' : device === 'tablet' ? 'h-[350px]' : 'h-[400px]'
+          device === 'mobile' ? 'h-[280px]' : (device === 'tablet' ? 'h-[350px]' : 'h-[400px]')
         )}>
           {slides.length > 0 && mainSlide ? (
             <>
@@ -390,8 +390,8 @@ export const HeroBannerPreview = ({
                       {c.badge}
                     </div>
                   )}
-                  <h1 className={cn("font-bold text-white leading-tight", device === 'mobile' ? 'text-xl' : device === 'tablet' ? 'text-2xl' : 'text-3xl md:text-4xl')}>
-                    {c.heading || 'Tiêu đề chính'}
+                  <h1 className={cn("font-bold text-white leading-tight", device === 'mobile' ? 'text-xl' : (device === 'tablet' ? 'text-2xl' : 'text-3xl md:text-4xl'))}>
+                    {c.heading ?? 'Tiêu đề chính'}
                   </h1>
                   {c.description && (
                     <p className={cn("text-white/80", device === 'mobile' ? 'text-sm line-clamp-2' : 'text-base')}>
@@ -416,7 +416,7 @@ export const HeroBannerPreview = ({
               {slides.length > 1 && (
                 <div className="absolute bottom-4 right-4 flex gap-2 z-20">
                   {slides.map((_, idx) => (
-                    <button key={idx} type="button" onClick={() => setCurrentSlide(idx)} 
+                    <button key={idx} type="button" onClick={() =>{  setCurrentSlide(idx); }} 
                       className={cn("w-2 h-2 rounded-full transition-all", idx === currentSlide ? "w-6" : "bg-white/50")} 
                       style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
                   ))}
@@ -436,7 +436,7 @@ export const HeroBannerPreview = ({
   // Style 5: Split - Layout chia đôi (Content + Image)
   const renderSplitStyle = () => {
     const mainSlide = slides[currentSlide] || slides[0];
-    const c = content || {};
+    const c = content ?? {};
     return (
       <section className="relative w-full bg-white dark:bg-slate-900 overflow-hidden">
         <div className={cn(
@@ -452,10 +452,10 @@ export const HeroBannerPreview = ({
               )}>
                 <div className={cn("space-y-3", device === 'mobile' ? '' : 'max-w-md')}>
                   <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                    {c.badge || `Banner ${currentSlide + 1}/${slides.length}`}
+                    {c.badge ?? `Banner ${currentSlide + 1}/${slides.length}`}
                   </span>
                   <h2 className={cn("font-bold text-slate-900 dark:text-white leading-tight", device === 'mobile' ? 'text-lg' : 'text-2xl lg:text-3xl')}>
-                    {c.heading || 'Tiêu đề nổi bật'}
+                    {c.heading ?? 'Tiêu đề nổi bật'}
                   </h2>
                   {c.description && (
                     <p className={cn("text-slate-600 dark:text-slate-300", device === 'mobile' ? 'text-sm' : 'text-base')}>
@@ -474,7 +474,7 @@ export const HeroBannerPreview = ({
                 {slides.length > 1 && device !== 'mobile' && (
                   <div className="flex gap-2 mt-6">
                     {slides.map((_, idx) => (
-                      <button key={idx} type="button" onClick={() => setCurrentSlide(idx)}
+                      <button key={idx} type="button" onClick={() =>{  setCurrentSlide(idx); }}
                         className={cn("h-1 rounded-full transition-all", idx === currentSlide ? "w-8" : "w-4 bg-slate-300 dark:bg-slate-600")}
                         style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />
                     ))}
@@ -523,12 +523,12 @@ export const HeroBannerPreview = ({
   // Style 6: Parallax - Hiệu ứng layer với depth
   const renderParallaxStyle = () => {
     const mainSlide = slides[currentSlide] || slides[0];
-    const c = content || {};
+    const c = content ?? {};
     return (
       <section className="relative w-full bg-slate-900 overflow-hidden">
         <div className={cn(
           "relative w-full",
-          device === 'mobile' ? 'h-[260px]' : device === 'tablet' ? 'h-[320px]' : 'h-[380px]'
+          device === 'mobile' ? 'h-[260px]' : (device === 'tablet' ? 'h-[320px]' : 'h-[380px]')
         )}>
           {slides.length > 0 && mainSlide ? (
             <>
@@ -537,7 +537,7 @@ export const HeroBannerPreview = ({
                   {slide.image ? (
                     <div className="w-full h-full relative">
                       {/* Background layer - slight scale for parallax effect */}
-                      <div className="absolute inset-0 scale-110 transform-gpu" style={{ backgroundImage: `url(${slide.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                      <div className="absolute inset-0 scale-110 transform-gpu" style={{ backgroundImage: `url(${slide.image})`, backgroundPosition: 'center', backgroundSize: 'cover' }} />
                       {/* Gradient overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
                     </div>
@@ -560,7 +560,7 @@ export const HeroBannerPreview = ({
                     </div>
                   )}
                   <h3 className={cn("font-bold text-slate-900 dark:text-white", device === 'mobile' ? 'text-base' : 'text-xl')}>
-                    {c.heading || 'Tiêu đề nổi bật'}
+                    {c.heading ?? 'Tiêu đề nổi bật'}
                   </h3>
                   {c.description && (
                     <p className={cn("text-slate-600 dark:text-slate-300 mt-1", device === 'mobile' ? 'text-xs' : 'text-sm')}>
@@ -623,7 +623,7 @@ export const HeroBannerPreview = ({
             {/* Device selector */}
             <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
               {devices.map((d) => (
-                <button key={d.id} type="button" onClick={() => setDevice(d.id)} title={d.label}
+                <button key={d.id} type="button" onClick={() =>{  setDevice(d.id); }} title={d.label}
                   className={cn("p-1.5 rounded-md transition-all",
                     device === d.id ? "bg-white dark:bg-slate-700 shadow-sm" : "text-slate-400 hover:text-slate-600")}>
                   <d.icon size={16} />
@@ -698,11 +698,11 @@ export const HeroBannerPreview = ({
 
 // ============ STATS PREVIEW ============
 // Professional Stats UI/UX - 6 Variants
-type StatsItem = { value: string; label: string };
+interface StatsItem { value: string; label: string }
 export type StatsStyle = 'horizontal' | 'cards' | 'icons' | 'gradient' | 'minimal' | 'counter';
 export const StatsPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: StatsItem[]; brandColor: string; selectedStyle?: StatsStyle; onStyleChange?: (style: StatsStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'horizontal';
+  const previewStyle = selectedStyle ?? 'horizontal';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as StatsStyle);
   const styles = [
     { id: 'horizontal', label: 'Thanh ngang' }, 
@@ -967,12 +967,12 @@ export const StatsPreview = ({ items, brandColor, selectedStyle, onStyleChange }
 };
 
 // ============ FAQ PREVIEW ============
-type FaqItem = { id: number; question: string; answer: string };
+interface FaqItem { id: number; question: string; answer: string }
 export type FaqStyle = 'accordion' | 'cards' | 'two-column' | 'minimal' | 'timeline' | 'tabbed';
-export type FaqConfig = { description?: string; buttonText?: string; buttonLink?: string };
+export interface FaqConfig { description?: string; buttonText?: string; buttonLink?: string }
 export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange, config }: { items: FaqItem[]; brandColor: string; selectedStyle?: FaqStyle; onStyleChange?: (style: FaqStyle) => void; config?: FaqConfig }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'accordion';
+  const previewStyle = selectedStyle ?? 'accordion';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as FaqStyle);
   const [openIndex, setOpenIndex] = useState(0);
   const [activeTab, setActiveTab] = useState(0);
@@ -1029,7 +1029,7 @@ export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange, co
                 id={buttonId}
                 aria-expanded={isOpen}
                 aria-controls={panelId}
-                onClick={() => setOpenIndex(isOpen ? -1 : idx)}
+                onClick={() =>{  setOpenIndex(isOpen ? -1 : idx); }}
                 onKeyDown={(e) => {
                   if (e.key === 'ArrowDown') { e.preventDefault(); setOpenIndex(Math.min(idx + 1, items.length - 1)); }
                   if (e.key === 'ArrowUp') { e.preventDefault(); setOpenIndex(Math.max(idx - 1, 0)); }
@@ -1087,8 +1087,8 @@ export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange, co
             key={item.id} 
             className="bg-white dark:bg-slate-800 rounded-xl transition-all cursor-pointer group"
             style={{ 
-              padding: device === 'mobile' ? '14px' : '20px',
               border: `1px solid ${brandColor}15`,
+              padding: device === 'mobile' ? '14px' : '20px',
             }}
             onMouseEnter={(e) => { 
               e.currentTarget.style.borderColor = `${brandColor}40`; 
@@ -1137,11 +1137,11 @@ export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange, co
             Câu hỏi thường gặp
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-5 leading-relaxed">
-            {config?.description || 'Tìm câu trả lời cho các thắc mắc phổ biến của bạn'}
+            {config?.description ?? 'Tìm câu trả lời cho các thắc mắc phổ biến của bạn'}
           </p>
           {config?.buttonText && (
             <a 
-              href={config?.buttonLink || '#'}
+              href={config?.buttonLink ?? '#'}
               className={cn("inline-block rounded-lg text-white font-medium transition-all", device === 'mobile' ? 'px-4 py-2.5 text-sm min-h-[44px]' : 'px-5 py-2.5')}
               style={{ backgroundColor: brandColor, boxShadow: `0 4px 12px ${brandColor}30` }}
             >
@@ -1259,7 +1259,7 @@ export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange, co
           {visibleItems.slice(0, device === 'mobile' ? 3 : 5).map((item, idx) => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(idx)}
+              onClick={() =>{  setActiveTab(idx); }}
               className={cn(
                 "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0",
                 device === 'mobile' && 'px-3 py-1.5 text-xs min-h-[36px]',
@@ -1312,7 +1312,7 @@ export const FaqPreview = ({ items, brandColor, selectedStyle, onStyleChange, co
 };
 
 // ============ TESTIMONIALS PREVIEW ============
-type TestimonialItem = { id: number; name: string; role: string; content: string; avatar: string; rating: number };
+interface TestimonialItem { id: number; name: string; role: string; content: string; avatar: string; rating: number }
 // ============ TESTIMONIALS PREVIEW ============
 // 6 Professional Styles following Best Practices:
 // - Authenticity: Real customer info (name, role, company)
@@ -1322,7 +1322,7 @@ type TestimonialItem = { id: number; name: string; role: string; content: string
 export type TestimonialsStyle = 'cards' | 'slider' | 'masonry' | 'quote' | 'carousel' | 'minimal';
 export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: TestimonialItem[]; brandColor: string; selectedStyle?: TestimonialsStyle; onStyleChange?: (style: TestimonialsStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'cards';
+  const previewStyle = selectedStyle ?? 'cards';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as TestimonialsStyle);
   const [currentSlide, setCurrentSlide] = useState(0);
   const styles = [
@@ -1344,7 +1344,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
   const getVisibleItems = (maxVisible: number) => {
     const visible = items.slice(0, maxVisible);
     const remaining = items.length - maxVisible;
-    return { visible, remaining };
+    return { remaining, visible };
   };
 
   // Empty State
@@ -1360,16 +1360,16 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
 
   // Style 1: Cards - Grid layout with equal height
   const renderCardsStyle = () => {
-    if (items.length === 0) return renderEmptyState();
-    const maxVisible = device === 'mobile' ? 2 : device === 'tablet' ? 4 : 6;
+    if (items.length === 0) {return renderEmptyState();}
+    const maxVisible = device === 'mobile' ? 2 : (device === 'tablet' ? 4 : 6);
     const { visible, remaining } = getVisibleItems(maxVisible);
     
     // Centered layout for 1-2 items
     const gridClass = items.length === 1 
       ? 'max-w-md mx-auto' 
-      : items.length === 2 
+      : (items.length === 2 
         ? 'max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4'
-        : cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3');
+        : cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')));
     
     return (
       <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
@@ -1403,7 +1403,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
 
   // Style 2: Slider - Single testimonial with navigation
   const renderSliderStyle = () => {
-    if (items.length === 0) return renderEmptyState();
+    if (items.length === 0) {return renderEmptyState();}
     const current = items[currentSlide] || items[0];
     return (
       <div className={cn("py-12 px-4 relative overflow-hidden", device === 'mobile' ? 'py-8' : '')}>
@@ -1422,11 +1422,11 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
           </div>
           {items.length > 1 && (
             <div className="flex items-center justify-center gap-4 mt-6">
-              <button type="button" onClick={() => setCurrentSlide(prev => prev === 0 ? items.length - 1 : prev - 1)} className="w-10 h-10 min-h-[44px] rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center hover:scale-105 transition-transform"><ChevronLeft size={18} /></button>
+              <button type="button" onClick={() =>{  setCurrentSlide(prev => prev === 0 ? items.length - 1 : prev - 1); }} className="w-10 h-10 min-h-[44px] rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center hover:scale-105 transition-transform"><ChevronLeft size={18} /></button>
               <div className="flex gap-2">
-                {items.map((_, idx) => (<button key={idx} type="button" onClick={() => setCurrentSlide(idx)} className={cn("w-2.5 h-2.5 rounded-full transition-all", idx === currentSlide ? "w-8" : "bg-slate-300")} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />))}
+                {items.map((_, idx) => (<button key={idx} type="button" onClick={() =>{  setCurrentSlide(idx); }} className={cn("w-2.5 h-2.5 rounded-full transition-all", idx === currentSlide ? "w-8" : "bg-slate-300")} style={idx === currentSlide ? { backgroundColor: brandColor } : {}} />))}
               </div>
-              <button type="button" onClick={() => setCurrentSlide(prev => (prev + 1) % items.length)} className="w-10 h-10 min-h-[44px] rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center hover:scale-105 transition-transform"><ChevronRight size={18} /></button>
+              <button type="button" onClick={() =>{  setCurrentSlide(prev => (prev + 1) % items.length); }} className="w-10 h-10 min-h-[44px] rounded-full bg-white dark:bg-slate-800 shadow-md flex items-center justify-center hover:scale-105 transition-transform"><ChevronRight size={18} /></button>
             </div>
           )}
         </div>
@@ -1436,7 +1436,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
 
   // Style 3: Masonry - Pinterest-like layout
   const renderMasonryStyle = () => {
-    if (items.length === 0) return renderEmptyState();
+    if (items.length === 0) {return renderEmptyState();}
     const maxVisible = device === 'mobile' ? 3 : 6;
     const { visible, remaining } = getVisibleItems(maxVisible);
     
@@ -1469,7 +1469,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
 
   // Style 4: Quote - Big quote focused, elegant typography
   const renderQuoteStyle = () => {
-    if (items.length === 0) return renderEmptyState();
+    if (items.length === 0) {return renderEmptyState();}
     const current = items[currentSlide] || items[0];
     
     return (
@@ -1501,7 +1501,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
                 <button 
                   key={idx} 
                   type="button" 
-                  onClick={() => setCurrentSlide(idx)} 
+                  onClick={() =>{  setCurrentSlide(idx); }} 
                   className={cn("w-3 h-3 rounded-full transition-all", idx === currentSlide ? "" : "bg-slate-300 hover:bg-slate-400")}
                   style={idx === currentSlide ? { backgroundColor: brandColor } : {}}
                 />
@@ -1515,7 +1515,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
 
   // Style 5: Carousel - Horizontal scroll cards
   const renderCarouselStyle = () => {
-    if (items.length === 0) return renderEmptyState();
+    if (items.length === 0) {return renderEmptyState();}
     
     return (
       <div className={cn("py-8", device === 'mobile' ? 'py-6' : '')}>
@@ -1523,7 +1523,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
         
         <div className="relative">
           {/* Scroll container */}
-          <div className="flex gap-4 overflow-x-auto px-4 pb-4 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="flex gap-4 overflow-x-auto px-4 pb-4 snap-x snap-mandatory scrollbar-hide" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
             {items.map((item) => (
               <div 
                 key={item.id} 
@@ -1567,7 +1567,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
 
   // Style 6: Minimal - Clean list with accent line
   const renderMinimalStyle = () => {
-    if (items.length === 0) return renderEmptyState();
+    if (items.length === 0) {return renderEmptyState();}
     const maxVisible = device === 'mobile' ? 3 : 4;
     const { visible, remaining } = getVisibleItems(maxVisible);
     
@@ -1597,7 +1597,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
           ))}
           {remaining > 0 && (
             <div className="text-center pt-2">
-              <button type="button" className="text-sm font-medium px-4 py-2 rounded-lg transition-colors" style={{ color: brandColor, backgroundColor: `${brandColor}10` }}>
+              <button type="button" className="text-sm font-medium px-4 py-2 rounded-lg transition-colors" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>
                 Xem thêm {remaining} đánh giá
               </button>
             </div>
@@ -1624,7 +1624,7 @@ export const TestimonialsPreview = ({ items, brandColor, selectedStyle, onStyleC
 // ============ PRICING PREVIEW ============
 // 6 Styles: cards, horizontal, minimal, comparison, featured, compact
 // Best Practices: Monthly/Yearly toggle, highlight popular, feature comparison, CTA hierarchy
-type PricingPlan = { 
+interface PricingPlan { 
   id: number; 
   name: string; 
   price: string; 
@@ -1634,14 +1634,14 @@ type PricingPlan = {
   isPopular: boolean; 
   buttonText: string; 
   buttonLink: string;
-};
-export type PricingConfig = {
+}
+export interface PricingConfig {
   subtitle?: string;
   showBillingToggle?: boolean;
   monthlyLabel?: string;
   yearlyLabel?: string;
   yearlySavingText?: string;
-};
+}
 export type PricingStyle = 'cards' | 'horizontal' | 'minimal' | 'comparison' | 'featured' | 'compact';
 
 export const PricingPreview = ({ 
@@ -1659,7 +1659,7 @@ export const PricingPreview = ({
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [isYearly, setIsYearly] = useState(false);
-  const previewStyle = selectedStyle || 'cards';
+  const previewStyle = selectedStyle ?? 'cards';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as PricingStyle);
   
   const styles = [
@@ -1672,15 +1672,15 @@ export const PricingPreview = ({
   ];
 
   // Config defaults
-  const subtitle = config?.subtitle || 'Chọn gói phù hợp với nhu cầu của bạn';
+  const subtitle = config?.subtitle ?? 'Chọn gói phù hợp với nhu cầu của bạn';
   const showBillingToggle = config?.showBillingToggle ?? true;
-  const monthlyLabel = config?.monthlyLabel || 'Hàng tháng';
-  const yearlyLabel = config?.yearlyLabel || 'Hàng năm';
-  const yearlySavingText = config?.yearlySavingText || 'Tiết kiệm 17%';
+  const monthlyLabel = config?.monthlyLabel ?? 'Hàng tháng';
+  const yearlyLabel = config?.yearlyLabel ?? 'Hàng năm';
+  const yearlySavingText = config?.yearlySavingText ?? 'Tiết kiệm 17%';
 
   // Get display price based on billing period
   const getPrice = (plan: PricingPlan) => {
-    if (isYearly && plan.yearlyPrice) return plan.yearlyPrice;
+    if (isYearly && plan.yearlyPrice) {return plan.yearlyPrice;}
     return plan.price || '0';
   };
   const getPeriod = () => isYearly ? '/năm' : '/tháng';
@@ -1706,7 +1706,7 @@ export const PricingPreview = ({
         type="button"
         role="switch"
         aria-checked={isYearly}
-        onClick={() => setIsYearly(!isYearly)}
+        onClick={() =>{  setIsYearly(!isYearly); }}
         className={cn(
           "relative w-12 h-6 rounded-full transition-colors",
           isYearly ? '' : 'bg-slate-200 dark:bg-slate-700'
@@ -1731,16 +1731,16 @@ export const PricingPreview = ({
 
   // Centered layout helper for few items
   const getGridClass = (count: number) => {
-    if (device === 'mobile') return 'grid-cols-1';
-    if (device === 'tablet') return count <= 2 ? 'grid-cols-2' : 'grid-cols-2';
-    if (count === 1) return 'grid-cols-1 max-w-md mx-auto';
-    if (count === 2) return 'grid-cols-2 max-w-2xl mx-auto';
+    if (device === 'mobile') {return 'grid-cols-1';}
+    if (device === 'tablet') {return count <= 2 ? 'grid-cols-2' : 'grid-cols-2';}
+    if (count === 1) {return 'grid-cols-1 max-w-md mx-auto';}
+    if (count === 2) {return 'grid-cols-2 max-w-2xl mx-auto';}
     return 'grid-cols-3';
   };
 
   // Style 1: Cards - Classic pricing cards with feature list
   const renderCardsStyle = () => {
-    if (plans.length === 0) return renderEmptyState();
+    if (plans.length === 0) {return renderEmptyState();}
     const displayPlans = plans.slice(0, 6);
     return (
       <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
@@ -1796,7 +1796,7 @@ export const PricingPreview = ({
 
   // Style 2: Horizontal - Compact horizontal rows
   const renderHorizontalStyle = () => {
-    if (plans.length === 0) return renderEmptyState();
+    if (plans.length === 0) {return renderEmptyState();}
     return (
       <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6' : '')}>
         <h3 className={cn("font-bold text-center mb-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>Bảng giá dịch vụ</h3>
@@ -1840,7 +1840,7 @@ export const PricingPreview = ({
 
   // Style 3: Minimal - Clean list style
   const renderMinimalStyle = () => {
-    if (plans.length === 0) return renderEmptyState();
+    if (plans.length === 0) {return renderEmptyState();}
     return (
       <div className={cn("py-10 px-4", device === 'mobile' ? 'py-6' : '')}>
         <h3 className={cn("font-bold text-center mb-2", device === 'mobile' ? 'text-lg' : 'text-xl')}>Bảng giá dịch vụ</h3>
@@ -1894,7 +1894,7 @@ export const PricingPreview = ({
 
   // Style 4: Comparison - Feature comparison table
   const renderComparisonStyle = () => {
-    if (plans.length === 0) return renderEmptyState();
+    if (plans.length === 0) {return renderEmptyState();}
     const displayPlans = plans.slice(0, device === 'mobile' ? 2 : 4);
     const allFeatures = [...new Set(displayPlans.flatMap(p => p.features))].slice(0, 8);
     
@@ -1970,8 +1970,8 @@ export const PricingPreview = ({
 
   // Style 5: Featured - One plan highlighted large
   const renderFeaturedStyle = () => {
-    if (plans.length === 0) return renderEmptyState();
-    const popularPlan = plans.find(p => p.isPopular) || plans[0];
+    if (plans.length === 0) {return renderEmptyState();}
+    const popularPlan = plans.find(p => p.isPopular) ?? plans[0];
     const otherPlans = plans.filter(p => p.id !== popularPlan.id).slice(0, 2);
     
     return (
@@ -2059,7 +2059,7 @@ export const PricingPreview = ({
 
   // Style 6: Compact - Small dense cards
   const renderCompactStyle = () => {
-    if (plans.length === 0) return renderEmptyState();
+    if (plans.length === 0) {return renderEmptyState();}
     const displayPlans = plans.slice(0, device === 'mobile' ? 4 : 6);
     
     return (
@@ -2070,7 +2070,7 @@ export const PricingPreview = ({
         
         <div className={cn(
           "grid gap-3",
-          device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-3 max-w-3xl mx-auto'
+          device === 'mobile' ? 'grid-cols-2' : (device === 'tablet' ? 'grid-cols-3' : 'grid-cols-3 max-w-3xl mx-auto')
         )}>
           {displayPlans.map((plan) => (
             <div 
@@ -2122,11 +2122,11 @@ export const PricingPreview = ({
   const getStyleHint = () => {
     const hints: Record<PricingStyle, string> = {
       cards: 'Classic cards với feature list đầy đủ, phù hợp 2-4 gói',
-      horizontal: 'Dạng hàng ngang gọn, phù hợp hiển thị nhiều gói',
-      minimal: 'Tối giản dạng list, phù hợp trang đơn giản',
+      compact: 'Cards nhỏ gọn, phù hợp sidebar hoặc nhiều gói',
       comparison: 'Bảng so sánh tính năng chi tiết giữa các gói',
       featured: 'Highlight 1 gói phổ biến, các gói khác nhỏ hơn',
-      compact: 'Cards nhỏ gọn, phù hợp sidebar hoặc nhiều gói'
+      horizontal: 'Dạng hàng ngang gọn, phù hợp hiển thị nhiều gói',
+      minimal: 'Tối giản dạng list, phù hợp trang đơn giản'
     };
     return hints[previewStyle];
   };
@@ -2156,7 +2156,7 @@ export const PricingPreview = ({
 // ============ GALLERY/PARTNERS PREVIEW ============
 // Gallery: 6 Professional Styles (Spotlight, Explore, Stories, Grid, Marquee, Masonry)
 // Partners: 6 Professional Styles (Grid, Marquee, Mono, Badge, Carousel, Featured)
-type GalleryItem = { id: number; url: string; link: string };
+interface GalleryItem { id: number; url: string; link: string }
 export type GalleryStyle = 'spotlight' | 'explore' | 'stories' | 'grid' | 'marquee' | 'masonry' | 'mono' | 'badge' | 'carousel' | 'featured';
 
 // Auto Scroll Slider Component for Marquee/Mono styles
@@ -2170,7 +2170,7 @@ const AutoScrollSlider = ({ children, className, speed = 0.5, isPaused }: {
 
   React.useEffect(() => {
     const scroller = scrollRef.current;
-    if (!scroller) return;
+    if (!scroller) {return;}
 
     let animationId: number;
     let position = scroller.scrollLeft;
@@ -2189,14 +2189,14 @@ const AutoScrollSlider = ({ children, className, speed = 0.5, isPaused }: {
     };
 
     animationId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(animationId);
+    return () =>{  cancelAnimationFrame(animationId); };
   }, [isPaused, speed]);
 
   return (
     <div 
       ref={scrollRef}
       className={cn("flex overflow-x-auto cursor-grab active:cursor-grabbing touch-pan-x", className)}
-      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
     >
       <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
       <div className="flex shrink-0 gap-16 items-center px-4">{children}</div>
@@ -2216,15 +2216,15 @@ const GalleryLightbox = ({
 }: { 
   photo: { url: string } | null; 
   onClose: () => void;
-  photos?: Array<{ url: string }>;
+  photos?: { url: string }[];
   currentIndex?: number;
   onNavigate?: (direction: 'prev' | 'next') => void;
 }) => {
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft' && onNavigate) onNavigate('prev');
-      if (e.key === 'ArrowRight' && onNavigate) onNavigate('next');
+      if (e.key === 'Escape') {onClose();}
+      if (e.key === 'ArrowLeft' && onNavigate) {onNavigate('prev');}
+      if (e.key === 'ArrowRight' && onNavigate) {onNavigate('next');}
     };
     if (photo) {
       document.body.style.overflow = 'hidden';
@@ -2236,7 +2236,7 @@ const GalleryLightbox = ({
     };
   }, [photo, onClose, onNavigate]);
 
-  if (!photo || !photo.url) return null;
+  if (!photo || !photo.url) {return null;}
 
   const hasMultiple = photos && photos.length > 1 && onNavigate;
 
@@ -2280,7 +2280,7 @@ const GalleryLightbox = ({
         </div>
       )}
       
-      <div className="w-full h-full p-4 flex flex-col items-center justify-center" onClick={e => e.stopPropagation()}>
+      <div className="w-full h-full p-4 flex flex-col items-center justify-center" onClick={e =>{  e.stopPropagation(); }}>
         <PreviewImage 
           src={photo.url} 
           alt="Lightbox" 
@@ -2297,62 +2297,82 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
   componentType: 'Partners' | 'Gallery' | 'TrustBadges'; 
   selectedStyle?: GalleryStyle; 
   onStyleChange?: (style: GalleryStyle) => void;
-}) => {
+}): React.ReactElement => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [isPaused, setIsPaused] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryItem | null>(null);
-  const [carouselIndex, setCarouselIndex] = useState(0); // For carousel style pagination
-  const previewStyle = selectedStyle || (componentType === 'Gallery' ? 'spotlight' : 'grid');
-  const setPreviewStyle = (s: string) => onStyleChange?.(s as GalleryStyle);
+  const ZERO = 0;
+  const ONE = 1;
+  const NEGATIVE_ONE = -1;
+  const [carouselIndex, setCarouselIndex] = useState(ZERO);
+  let previewStyle = selectedStyle;
+  if (!previewStyle) {
+    if (componentType === 'Gallery') {
+      previewStyle = 'spotlight';
+    } else {
+      previewStyle = 'grid';
+    }
+  }
+  const setPreviewStyle = (styleKey: string): void => {
+    if (onStyleChange) {
+      onStyleChange(styleKey as GalleryStyle);
+    }
+  };
   
   // Lightbox navigation handler
-  const handleLightboxNavigate = (direction: 'prev' | 'next') => {
-    if (!selectedPhoto) return;
+  const handleLightboxNavigate = (direction: 'prev' | 'next'): void => {
+    if (!selectedPhoto) {return;}
     const currentIdx = items.findIndex(item => item.id === selectedPhoto.id);
-    if (currentIdx === -1) return;
-    const newIdx = direction === 'prev' 
-      ? (currentIdx - 1 + items.length) % items.length 
-      : (currentIdx + 1) % items.length;
-    setSelectedPhoto(items[newIdx]);
+    if (currentIdx === NEGATIVE_ONE) {return;}
+    let newIdx = currentIdx + ONE;
+    if (direction === 'prev') {
+      newIdx = currentIdx - ONE + items.length;
+    }
+    setSelectedPhoto(items[newIdx % items.length]);
   };
 
   // Get current photo index for lightbox
-  const currentPhotoIndex = selectedPhoto ? items.findIndex(item => item.id === selectedPhoto.id) : -1;
+  let currentPhotoIndex = NEGATIVE_ONE;
+  if (selectedPhoto) {
+    currentPhotoIndex = items.findIndex(item => item.id === selectedPhoto.id);
+  }
 
   // Styles phụ thuộc vào componentType - Gallery có 6 styles BẮT BUỘC
-  const styles = componentType === 'Gallery' 
-    ? [
-        { id: 'spotlight', label: 'Tiêu điểm' }, 
-        { id: 'explore', label: 'Khám phá' },
-        { id: 'stories', label: 'Câu chuyện' },
-        { id: 'grid', label: 'Grid' },
-        { id: 'marquee', label: 'Marquee' },
-        { id: 'masonry', label: 'Masonry' }
-      ]
-    : componentType === 'Partners' 
-    ? [
-        { id: 'grid', label: 'Grid' }, 
-        { id: 'marquee', label: 'Marquee' }, 
-        { id: 'mono', label: 'Mono' },
-        { id: 'badge', label: 'Badge' },
-        { id: 'carousel', label: 'Carousel' },
-        { id: 'featured', label: 'Featured' }
-      ]
-    : [
-        { id: 'grid', label: 'Grid' }, 
-        { id: 'marquee', label: 'Marquee' }
-      ];
+  let styles: { id: string; label: string }[] = [
+    { id: 'grid', label: 'Grid' }, 
+    { id: 'marquee', label: 'Marquee' }
+  ];
+  if (componentType === 'Gallery') {
+    styles = [
+      { id: 'spotlight', label: 'Tiêu điểm' }, 
+      { id: 'explore', label: 'Khám phá' },
+      { id: 'stories', label: 'Câu chuyện' },
+      { id: 'grid', label: 'Grid' },
+      { id: 'marquee', label: 'Marquee' },
+      { id: 'masonry', label: 'Masonry' }
+    ];
+  }
+  if (componentType === 'Partners') {
+    styles = [
+      { id: 'grid', label: 'Grid' }, 
+      { id: 'marquee', label: 'Marquee' }, 
+      { id: 'mono', label: 'Mono' },
+      { id: 'badge', label: 'Badge' },
+      { id: 'carousel', label: 'Carousel' },
+      { id: 'featured', label: 'Featured' }
+    ];
+  }
 
   // ============ GALLERY STYLES (Spotlight, Explore, Stories) ============
   
   // Style 1: Tiêu điểm (Spotlight) - Featured image with 3 smaller
   const renderSpotlightStyle = () => {
-    if (items.length === 0) return (
+    if (items.length === 0) {return (
       <div className="flex flex-col items-center justify-center h-64 text-slate-400">
         <ImageIcon size={48} className="opacity-20 mb-4" />
         <p className="text-sm font-light">Chưa có hình ảnh nào.</p>
       </div>
-    );
+    );}
     const featured = items[0];
     const sub = items.slice(1, 4);
 
@@ -2367,7 +2387,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
             device === 'mobile' ? 'aspect-[4/3]' : 'md:col-span-2 aspect-[4/3] md:aspect-auto md:row-span-1'
           )}
           style={device !== 'mobile' ? { minHeight: '300px' } : {}}
-          onClick={() => setSelectedPhoto(featured)}
+          onClick={() =>{  setSelectedPhoto(featured); }}
         >
           {featured.url ? (
             <PreviewImage src={featured.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -2383,7 +2403,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
             <div 
               key={photo.id} 
               className="aspect-square bg-slate-100 dark:bg-slate-800 relative group cursor-pointer overflow-hidden"
-              onClick={() => setSelectedPhoto(photo)}
+              onClick={() =>{  setSelectedPhoto(photo); }}
             >
               {photo.url ? (
                 <PreviewImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -2399,23 +2419,23 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
 
   // Style 2: Khám phá (Explore) - Instagram-like grid
   const renderExploreStyle = () => {
-    if (items.length === 0) return (
+    if (items.length === 0) {return (
       <div className="flex flex-col items-center justify-center h-64 text-slate-400">
         <ImageIcon size={48} className="opacity-20 mb-4" />
         <p className="text-sm font-light">Chưa có hình ảnh nào.</p>
       </div>
-    );
+    );}
 
     return (
       <div className={cn(
         "grid gap-0.5 bg-slate-200 dark:bg-slate-700",
-        device === 'mobile' ? 'grid-cols-3' : device === 'tablet' ? 'grid-cols-4' : 'grid-cols-5'
+        device === 'mobile' ? 'grid-cols-3' : (device === 'tablet' ? 'grid-cols-4' : 'grid-cols-5')
       )}>
         {items.map((photo) => (
           <div 
             key={photo.id} 
             className="aspect-square relative group cursor-pointer overflow-hidden bg-slate-100 dark:bg-slate-800"
-            onClick={() => setSelectedPhoto(photo)}
+            onClick={() =>{  setSelectedPhoto(photo); }}
           >
             {photo.url ? (
               <PreviewImage 
@@ -2434,12 +2454,12 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
 
   // Style 3: Câu chuyện (Stories) - Masonry-like with varying sizes
   const renderStoriesStyle = () => {
-    if (items.length === 0) return (
+    if (items.length === 0) {return (
       <div className="flex flex-col items-center justify-center h-64 text-slate-400">
         <ImageIcon size={48} className="opacity-20 mb-4" />
         <p className="text-sm font-light">Chưa có hình ảnh nào.</p>
       </div>
-    );
+    );}
 
     return (
       <div className={cn(
@@ -2454,7 +2474,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
             <div 
               key={photo.id} 
               className={`${colSpan} relative group cursor-pointer overflow-hidden rounded-sm`}
-              onClick={() => setSelectedPhoto(photo)}
+              onClick={() =>{  setSelectedPhoto(photo); }}
             >
               {photo.url ? (
                 <PreviewImage 
@@ -2490,9 +2510,9 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
 
   // Style 4: Gallery Grid - Clean equal squares grid
   const renderGalleryGridStyle = () => {
-    if (items.length === 0) return renderGalleryEmptyState();
+    if (items.length === 0) {return renderGalleryEmptyState();}
 
-    const MAX_VISIBLE = device === 'mobile' ? 6 : device === 'tablet' ? 9 : 12;
+    const MAX_VISIBLE = device === 'mobile' ? 6 : (device === 'tablet' ? 9 : 12);
     const visibleItems = items.slice(0, MAX_VISIBLE);
     const remainingCount = items.length - MAX_VISIBLE;
 
@@ -2505,7 +2525,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
               <div 
                 key={photo.id} 
                 className="flex-1 aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group"
-                onClick={() => setSelectedPhoto(photo)}
+                onClick={() =>{  setSelectedPhoto(photo); }}
               >
                 {photo.url ? (
                   <PreviewImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -2523,13 +2543,13 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
       <div className="py-8 px-4">
         <div className={cn(
           "grid gap-2",
-          device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4'
+          device === 'mobile' ? 'grid-cols-2' : (device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4')
         )}>
           {visibleItems.map((photo) => (
             <div 
               key={photo.id} 
               className="aspect-square rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group relative"
-              onClick={() => setSelectedPhoto(photo)}
+              onClick={() =>{  setSelectedPhoto(photo); }}
             >
               {photo.url ? (
                 <PreviewImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -2558,11 +2578,11 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
 
   // Style 5: Gallery Marquee - Auto scroll horizontal
   const renderGalleryMarqueeStyle = () => {
-    if (items.length === 0) return renderGalleryEmptyState();
+    if (items.length === 0) {return renderGalleryEmptyState();}
 
     return (
       <div className="py-8">
-        <div className="w-full relative" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
+        <div className="w-full relative" onMouseEnter={() =>{  setIsPaused(true); }} onMouseLeave={() =>{  setIsPaused(false); }}>
           <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none"></div>
           <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none"></div>
           <AutoScrollSlider speed={0.6} isPaused={isPaused}>
@@ -2570,7 +2590,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
               <div 
                 key={`gallery-marquee-${photo.id}`} 
                 className="shrink-0 h-48 md:h-64 aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group"
-                onClick={() => setSelectedPhoto(photo)}
+                onClick={() =>{  setSelectedPhoto(photo); }}
               >
                 {photo.url ? (
                   <PreviewImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -2589,7 +2609,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
 
   // Style 6: Gallery Masonry - Pinterest-like varying heights
   const renderGalleryMasonryStyle = () => {
-    if (items.length === 0) return renderGalleryEmptyState();
+    if (items.length === 0) {return renderGalleryEmptyState();}
 
     const MAX_VISIBLE = device === 'mobile' ? 6 : 10;
     const visibleItems = items.slice(0, MAX_VISIBLE);
@@ -2604,7 +2624,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
               <div 
                 key={photo.id} 
                 className={cn("flex-1 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group", idx % 2 === 0 ? 'aspect-[3/4]' : 'aspect-[4/3]')}
-                onClick={() => setSelectedPhoto(photo)}
+                onClick={() =>{  setSelectedPhoto(photo); }}
               >
                 {photo.url ? (
                   <PreviewImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -2623,7 +2643,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
       <div className="py-8 px-4">
         <div className={cn(
           "gap-3",
-          device === 'mobile' ? 'columns-2' : device === 'tablet' ? 'columns-3' : 'columns-4'
+          device === 'mobile' ? 'columns-2' : (device === 'tablet' ? 'columns-3' : 'columns-4')
         )}>
           {visibleItems.map((photo, idx) => {
             // Varying heights for masonry effect
@@ -2634,7 +2654,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
               <div 
                 key={photo.id} 
                 className={cn("mb-3 break-inside-avoid rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer group relative", heightClass)}
-                onClick={() => setSelectedPhoto(photo)}
+                onClick={() =>{  setSelectedPhoto(photo); }}
               >
                 {photo.url ? (
                   <PreviewImage src={photo.url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -2707,7 +2727,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
           </h2>
           <div className={cn(
             "grid gap-3 items-center justify-items-center",
-            device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-4' : 'grid-cols-4 lg:grid-cols-8'
+            device === 'mobile' ? 'grid-cols-2' : (device === 'tablet' ? 'grid-cols-4' : 'grid-cols-4 lg:grid-cols-8')
           )}>
             {visibleItems.map((item) => (
               <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer"
@@ -2716,7 +2736,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
               </a>
             ))}
             {remainingCount > 0 && (
-              <div className="w-full flex flex-col items-center justify-center p-3 rounded-lg border" style={{ borderColor: `${brandColor}20`, backgroundColor: `${brandColor}05` }}>
+              <div className="w-full flex flex-col items-center justify-center p-3 rounded-lg border" style={{ backgroundColor: `${brandColor}05`, borderColor: `${brandColor}20` }}>
                 <Plus size={20} style={{ color: brandColor }} />
                 <span className="text-xs font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
               </div>
@@ -2750,7 +2770,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
             <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full" style={{ backgroundColor: brandColor }}></span>
             Đối tác
           </h2>
-          <div className="w-full relative py-4" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
+          <div className="w-full relative py-4" onMouseEnter={() =>{  setIsPaused(true); }} onMouseLeave={() =>{  setIsPaused(false); }}>
             <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none"></div>
             <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none"></div>
             <AutoScrollSlider speed={0.8} isPaused={isPaused}>
@@ -2789,7 +2809,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
             <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-full" style={{ backgroundColor: brandColor }}></span>
             Đối tác
           </h2>
-          <div className="w-full relative py-3" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
+          <div className="w-full relative py-3" onMouseEnter={() =>{  setIsPaused(true); }} onMouseLeave={() =>{  setIsPaused(false); }}>
             <AutoScrollSlider speed={0.5} isPaused={isPaused}>
               {items.map((item) => (
                 <a key={`mono-${item.id}`} href={item.link || '#'} target="_blank" rel="noopener noreferrer" className="shrink-0">
@@ -2837,7 +2857,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
                 style={{ backgroundColor: `${brandColor}05`, borderColor: `${brandColor}15` }}>
                 {item.url ? <PreviewImage src={item.url} alt="" className="h-6 w-auto" /> : <ImageIcon size={20} className="text-slate-400" />}
                 <span className="text-xs font-semibold truncate max-w-[100px]" style={{ color: `${brandColor}cc` }}>
-                  {(item as GalleryItem & { name?: string }).name || `Đối tác ${idx + 1}`}
+                  {(item as GalleryItem & { name?: string }).name ?? `Đối tác ${idx + 1}`}
                 </span>
               </a>
             ))}
@@ -2855,7 +2875,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
 
   // Style 5: Carousel - Paginated grid with navigation
   const renderCarouselStyle = () => {
-    const itemsPerPage = device === 'mobile' ? 2 : device === 'tablet' ? 4 : 6;
+    const itemsPerPage = device === 'mobile' ? 2 : (device === 'tablet' ? 4 : 6);
     const totalPages = Math.ceil(items.length / itemsPerPage);
     
     if (items.length === 0) {
@@ -2886,13 +2906,13 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
             </h2>
             {totalPages > 1 && (
               <div className="flex items-center gap-2">
-                <button onClick={() => setCarouselIndex(prev => Math.max(0, prev - 1))} disabled={!canPrev}
+                <button onClick={() =>{  setCarouselIndex(prev => Math.max(0, prev - 1)); }} disabled={!canPrev}
                   className="w-8 h-8 rounded-full border flex items-center justify-center disabled:opacity-30"
                   style={{ borderColor: `${brandColor}30`, color: brandColor }}>
                   <ChevronLeft size={16} />
                 </button>
                 <span className="text-xs font-medium text-slate-500 tabular-nums">{carouselIndex + 1}/{totalPages}</span>
-                <button onClick={() => setCarouselIndex(prev => Math.min(totalPages - 1, prev + 1))} disabled={!canNext}
+                <button onClick={() =>{  setCarouselIndex(prev => Math.min(totalPages - 1, prev + 1)); }} disabled={!canNext}
                   className="w-8 h-8 rounded-full border flex items-center justify-center disabled:opacity-30"
                   style={{ borderColor: `${brandColor}30`, color: brandColor }}>
                   <ChevronRight size={16} />
@@ -2900,11 +2920,11 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
               </div>
             )}
           </div>
-          <div className={cn("grid gap-3 items-center", device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-4' : 'grid-cols-6')}>
+          <div className={cn("grid gap-3 items-center", device === 'mobile' ? 'grid-cols-2' : (device === 'tablet' ? 'grid-cols-4' : 'grid-cols-6'))}>
             {visibleItems.map((item) => (
               <a key={item.id} href={item.link || '#'} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-center p-3 rounded-lg border aspect-[3/2]"
-                style={{ borderColor: `${brandColor}15`, backgroundColor: `${brandColor}03` }}>
+                style={{ backgroundColor: `${brandColor}03`, borderColor: `${brandColor}15` }}>
                 {item.url ? <PreviewImage src={item.url} alt="" className="h-11 w-auto object-contain" /> : <ImageIcon size={32} className="text-slate-300" />}
               </a>
             ))}
@@ -2912,7 +2932,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-1">
               {Array.from({ length: totalPages }).map((_, idx) => (
-                <button key={idx} onClick={() => setCarouselIndex(idx)}
+                <button key={idx} onClick={() =>{  setCarouselIndex(idx); }}
                   className={cn("h-1.5 rounded-full", idx === carouselIndex ? "w-5" : "w-1.5 bg-slate-200 dark:bg-slate-700")}
                   style={idx === carouselIndex ? { backgroundColor: brandColor } : {}} />
               ))}
@@ -2972,7 +2992,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
           <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-1' : 'grid-cols-3')}>
             <a href={featured.link || '#'} target="_blank" rel="noopener noreferrer"
               className={cn("relative rounded-xl border overflow-hidden", device === 'mobile' ? 'aspect-video' : 'row-span-2 aspect-square')}
-              style={{ borderColor: `${brandColor}20`, background: `linear-gradient(135deg, ${brandColor}08 0%, ${brandColor}03 100%)` }}>
+              style={{ background: `linear-gradient(135deg, ${brandColor}08 0%, ${brandColor}03 100%)`, borderColor: `${brandColor}20` }}>
               <div className="absolute top-2 left-2">
                 <span className="px-2 py-0.5 text-[10px] font-bold rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>NỔI BẬT</span>
               </div>
@@ -2988,7 +3008,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
                 </a>
               ))}
               {remainingCount > 0 && (
-                <div className="flex flex-col items-center justify-center rounded-lg border aspect-[3/2]" style={{ borderColor: `${brandColor}20`, backgroundColor: `${brandColor}05` }}>
+                <div className="flex flex-col items-center justify-center rounded-lg border aspect-[3/2]" style={{ backgroundColor: `${brandColor}05`, borderColor: `${brandColor}20` }}>
                   <Plus size={20} style={{ color: brandColor }} />
                   <span className="text-sm font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
                 </div>
@@ -3015,7 +3035,7 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
       </div>
       <GalleryLightbox 
         photo={selectedPhoto} 
-        onClose={() => setSelectedPhoto(null)}
+        onClose={() =>{  setSelectedPhoto(null); }}
         photos={items}
         currentIndex={currentPhotoIndex}
         onNavigate={handleLightboxNavigate}
@@ -3025,30 +3045,37 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
 
   // Generate image size info based on style and item count
   const getGalleryImageSizeInfo = () => {
-    if (componentType !== 'Gallery') return `${items.length} logo`;
+    if (componentType !== 'Gallery') {return `${items.length} logo`;}
     
     const count = items.length;
     switch (previewStyle) {
-      case 'spotlight':
-        if (count === 0) return 'Chưa có ảnh';
-        if (count === 1) return 'Ảnh 1: 1200×800px (3:2)';
-        if (count <= 4) return `Ảnh 1: 1200×800px • Ảnh 2-${count}: 600×600px`;
+      case 'spotlight': {
+        if (count === 0) {return 'Chưa có ảnh';}
+        if (count === 1) {return 'Ảnh 1: 1200×800px (3:2)';}
+        if (count <= 4) {return `Ảnh 1: 1200×800px • Ảnh 2-${count}: 600×600px`;}
         return `Ảnh 1: 1200×800px • Ảnh 2-4: 600×600px (+${count - 4} ảnh)`;
-      case 'explore':
+      }
+      case 'explore': {
         return `${count} ảnh • Tất cả: 600×600px (1:1)`;
-      case 'stories':
-        if (count === 0) return 'Chưa có ảnh';
-        const largeCount = Math.ceil(count / 4) * 2; // ảnh 1,4,5,8... chiếm 2 cột
+      }
+      case 'stories': {
+        if (count === 0) {return 'Chưa có ảnh';}
+        const largeCount = Math.ceil(count / 4) * 2; // Ảnh 1,4,5,8... chiếm 2 cột
         const smallCount = count - largeCount;
         return `${largeCount} ảnh lớn: 1200×600px • ${smallCount} ảnh nhỏ: 800×600px`;
-      case 'grid':
+      }
+      case 'grid': {
         return `${count} ảnh • Tất cả: 800×800px (1:1)`;
-      case 'marquee':
+      }
+      case 'marquee': {
         return `${count} ảnh • Tất cả: 800×600px (4:3)`;
-      case 'masonry':
+      }
+      case 'masonry': {
         return `${count} ảnh • Ngang: 600×400px • Dọc: 600×900px • Vuông: 600×600px`;
-      default:
+      }
+      default: {
         return `${count} ảnh`;
+      }
     }
   };
 
@@ -3082,13 +3109,13 @@ export const GalleryPreview = ({ items, brandColor, componentType, selectedStyle
 
 // ============ SERVICES/BENEFITS PREVIEW ============
 // Professional Services UI/UX - 6 Variants: Elegant Grid, Modern List, Big Number, Cards, Carousel, Timeline
-type ServiceItem = { id: number; icon: string; title: string; description: string };
+interface ServiceItem { id: number; icon: string; title: string; description: string }
 export type ServicesStyle = 'elegantGrid' | 'modernList' | 'bigNumber' | 'cards' | 'carousel' | 'timeline';
 
 // Dynamic Icon component for Services
 const ServiceIcon = ({ name, size = 24, className, style }: { name: string; size?: number; className?: string; style?: React.CSSProperties }) => {
   const icons: Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>> = {
-    Briefcase, Shield, Package, Star, Users, Phone, Target, Zap, Globe, Rocket, Settings, Layers, Cpu, Clock, MapPin, Mail, Building2, Check, HelpCircle, FileText
+    Briefcase, Building2, Check, Clock, Cpu, FileText, Globe, HelpCircle, Layers, Mail, MapPin, Package, Phone, Rocket, Settings, Shield, Star, Target, Users, Zap
   };
   const IconComponent = icons[name] || Star;
   return <IconComponent size={size} className={className} style={style} />;
@@ -3097,7 +3124,7 @@ const ServiceIcon = ({ name, size = 24, className, style }: { name: string; size
 export const ServicesPreview = ({ items, brandColor, componentType, selectedStyle, onStyleChange }: { items: ServiceItem[]; brandColor: string; componentType: 'Services' | 'Benefits'; selectedStyle?: ServicesStyle; onStyleChange?: (style: ServicesStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const previewStyle = selectedStyle || 'elegantGrid';
+  const previewStyle = selectedStyle ?? 'elegantGrid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ServicesStyle);
   const styles = [
     { id: 'elegantGrid', label: 'Elegant Grid' }, 
@@ -3107,7 +3134,7 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
     { id: 'carousel', label: 'Carousel' },
     { id: 'timeline', label: 'Timeline' }
   ];
-  const titles = { Services: 'Dịch vụ của chúng tôi', Benefits: 'Tại sao chọn chúng tôi' };
+  const titles = { Benefits: 'Tại sao chọn chúng tôi', Services: 'Dịch vụ của chúng tôi' };
 
   // Empty State
   const renderEmptyState = () => (
@@ -3121,7 +3148,7 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
   );
 
   // Get visible items with "+N" pattern
-  const MAX_VISIBLE = device === 'mobile' ? 3 : device === 'tablet' ? 4 : 6;
+  const MAX_VISIBLE = device === 'mobile' ? 3 : (device === 'tablet' ? 4 : 6);
   const visibleItems = items.slice(0, MAX_VISIBLE);
   const remainingCount = Math.max(0, items.length - MAX_VISIBLE);
 
@@ -3141,7 +3168,7 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
       {/* Grid */}
       <div className={cn(
         "grid gap-6",
-        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+        device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')
       )}>
         {items.slice(0, device === 'mobile' ? 3 : 6).map((item) => (
           <div 
@@ -3237,7 +3264,7 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
       {/* Grid */}
       <div className={cn(
         "grid gap-3",
-        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+        device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')
       )}>
         {items.slice(0, device === 'mobile' ? 3 : 6).map((item, index) => {
           const isHighlighted = index === 1;
@@ -3290,7 +3317,7 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
 
   // Style 4: Icon Cards - Cards with prominent icon
   const renderCardsStyle = () => {
-    if (items.length === 0) return renderEmptyState();
+    if (items.length === 0) {return renderEmptyState();}
     if (items.length <= 2) {
       return (
         <div className="w-full max-w-4xl mx-auto space-y-6 py-8 px-4">
@@ -3315,7 +3342,7 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
           <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{componentType === 'Services' ? 'Dịch vụ' : 'Lợi ích'}</span>
           <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>{titles[componentType]}</h2>
         </div>
-        <div className={cn("grid gap-5", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+        <div className={cn("grid gap-5", device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'))}>
           {visibleItems.map((item) => (
             <div key={item.id} className="group bg-white dark:bg-slate-800 rounded-2xl p-6 border transition-all hover:shadow-lg" style={{ borderColor: `${brandColor}15` }}
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 8px 30px ${brandColor}15`; }}
@@ -3341,8 +3368,8 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
 
   // Style 5: Carousel - Horizontal scroll with navigation
   const renderCarouselStyle = () => {
-    if (items.length === 0) return renderEmptyState();
-    const itemsPerPage = device === 'mobile' ? 1 : device === 'tablet' ? 2 : 3;
+    if (items.length === 0) {return renderEmptyState();}
+    const itemsPerPage = device === 'mobile' ? 1 : (device === 'tablet' ? 2 : 3);
     const totalPages = Math.ceil(items.length / itemsPerPage);
     const startIdx = carouselIndex * itemsPerPage;
     const pageItems = items.slice(startIdx, startIdx + itemsPerPage);
@@ -3353,12 +3380,12 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
           <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>{titles[componentType]}</h2>
           {totalPages > 1 && (
             <div className="flex items-center gap-2">
-              <button onClick={() => setCarouselIndex(prev => Math.max(0, prev - 1))} disabled={carouselIndex === 0} className="w-9 h-9 rounded-full border flex items-center justify-center disabled:opacity-30" style={{ borderColor: `${brandColor}30`, color: brandColor }}><ChevronLeft size={18} /></button>
-              <button onClick={() => setCarouselIndex(prev => Math.min(totalPages - 1, prev + 1))} disabled={carouselIndex === totalPages - 1} className="w-9 h-9 rounded-full border flex items-center justify-center disabled:opacity-30" style={{ borderColor: `${brandColor}30`, color: brandColor }}><ChevronRight size={18} /></button>
+              <button onClick={() =>{  setCarouselIndex(prev => Math.max(0, prev - 1)); }} disabled={carouselIndex === 0} className="w-9 h-9 rounded-full border flex items-center justify-center disabled:opacity-30" style={{ borderColor: `${brandColor}30`, color: brandColor }}><ChevronLeft size={18} /></button>
+              <button onClick={() =>{  setCarouselIndex(prev => Math.min(totalPages - 1, prev + 1)); }} disabled={carouselIndex === totalPages - 1} className="w-9 h-9 rounded-full border flex items-center justify-center disabled:opacity-30" style={{ borderColor: `${brandColor}30`, color: brandColor }}><ChevronRight size={18} /></button>
             </div>
           )}
         </div>
-        <div className={cn("grid gap-5", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+        <div className={cn("grid gap-5", device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'))}>
           {pageItems.map((item) => (
             <div key={item.id} className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden border shadow-sm" style={{ borderColor: `${brandColor}15` }}>
               <div className="h-2 w-full" style={{ background: `linear-gradient(to right, ${brandColor}66, ${brandColor})` }} />
@@ -3379,7 +3406,7 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
         {totalPages > 1 && (
           <div className="flex justify-center gap-1.5">
             {Array.from({ length: totalPages }).map((_, idx) => (
-              <button key={idx} onClick={() => setCarouselIndex(idx)} className={cn("h-1.5 rounded-full transition-all", idx === carouselIndex ? "w-6" : "w-1.5 bg-slate-200 dark:bg-slate-700")} style={idx === carouselIndex ? { backgroundColor: brandColor } : {}} />
+              <button key={idx} onClick={() =>{  setCarouselIndex(idx); }} className={cn("h-1.5 rounded-full transition-all", idx === carouselIndex ? "w-6" : "w-1.5 bg-slate-200 dark:bg-slate-700")} style={idx === carouselIndex ? { backgroundColor: brandColor } : {}} />
             ))}
           </div>
         )}
@@ -3389,7 +3416,7 @@ export const ServicesPreview = ({ items, brandColor, componentType, selectedStyl
 
   // Style 6: Timeline - Vertical timeline layout
   const renderTimelineStyle = () => {
-    if (items.length === 0) return renderEmptyState();
+    if (items.length === 0) {return renderEmptyState();}
     return (
       <div className="w-full max-w-4xl mx-auto space-y-8 py-8 px-4">
         <div className="text-center space-y-2">
@@ -3471,10 +3498,10 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
   sectionTitle?: string;
 }) => {
   // Use sectionTitle if provided, otherwise use default based on componentType
-  const displayTitle = sectionTitle || (componentType === 'ProductList' ? 'Sản phẩm nổi bật' : 'Dịch vụ nổi bật');
+  const displayTitle = sectionTitle ?? (componentType === 'ProductList' ? 'Sản phẩm nổi bật' : 'Dịch vụ nổi bật');
   const buttonText = 'Xem tất cả';
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'commerce';
+  const previewStyle = selectedStyle ?? 'commerce';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ProductListStyle);
   const styles = [
     { id: 'commerce', label: 'Commerce' },
@@ -3488,24 +3515,24 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
   
   // Mock data with realistic product info
   const mockProducts: ProductListPreviewItem[] = [
-    { id: 1, name: 'iPhone 15 Pro Max', category: 'Smartphone', price: '34.990.000đ', originalPrice: '36.990.000đ', tag: 'new', image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=500&h=500&fit=crop&q=80' },
-    { id: 2, name: 'MacBook Pro M3', category: 'Laptop', price: '45.990.000đ', image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca4?w=500&h=500&fit=crop&q=80' },
-    { id: 3, name: 'Sony WH-1000XM5', category: 'Audio', price: '8.490.000đ', originalPrice: '9.290.000đ', tag: 'sale', image: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=500&h=500&fit=crop&q=80' },
-    { id: 4, name: 'Apple Watch Ultra 2', category: 'Wearable', price: '21.990.000đ', tag: 'new', image: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=500&h=500&fit=crop&q=80' },
-    { id: 5, name: 'iPad Air 5 M1', category: 'Tablet', price: '14.990.000đ', originalPrice: '16.500.000đ', tag: 'sale', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&h=500&fit=crop&q=80' },
-    { id: 6, name: 'Marshall Stanmore III', category: 'Audio', price: '9.890.000đ', image: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&h=500&fit=crop&q=80' },
-    { id: 7, name: 'Logitech MX Master 3S', category: 'Accessories', price: '2.490.000đ', image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&h=500&fit=crop&q=80' },
-    { id: 8, name: 'Fujifilm X-T5', category: 'Camera', price: '42.990.000đ', originalPrice: '45.000.000đ', tag: 'hot', image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=500&h=500&fit=crop&q=80' }
+    { category: 'Smartphone', id: 1, image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=500&h=500&fit=crop&q=80', name: 'iPhone 15 Pro Max', originalPrice: '36.990.000đ', price: '34.990.000đ', tag: 'new' },
+    { category: 'Laptop', id: 2, image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca4?w=500&h=500&fit=crop&q=80', name: 'MacBook Pro M3', price: '45.990.000đ' },
+    { category: 'Audio', id: 3, image: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=500&h=500&fit=crop&q=80', name: 'Sony WH-1000XM5', originalPrice: '9.290.000đ', price: '8.490.000đ', tag: 'sale' },
+    { category: 'Wearable', id: 4, image: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=500&h=500&fit=crop&q=80', name: 'Apple Watch Ultra 2', price: '21.990.000đ', tag: 'new' },
+    { category: 'Tablet', id: 5, image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&h=500&fit=crop&q=80', name: 'iPad Air 5 M1', originalPrice: '16.500.000đ', price: '14.990.000đ', tag: 'sale' },
+    { category: 'Audio', id: 6, image: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&h=500&fit=crop&q=80', name: 'Marshall Stanmore III', price: '9.890.000đ' },
+    { category: 'Accessories', id: 7, image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&h=500&fit=crop&q=80', name: 'Logitech MX Master 3S', price: '2.490.000đ' },
+    { category: 'Camera', id: 8, image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=500&h=500&fit=crop&q=80', name: 'Fujifilm X-T5', originalPrice: '45.000.000đ', price: '42.990.000đ', tag: 'hot' }
   ];
   
   const displayItems: ProductListPreviewItem[] = items && items.length > 0 ? items : mockProducts.slice(0, Math.max(itemCount, 8));
 
   // Calculate discount percentage
   const getDiscount = (price?: string, originalPrice?: string) => {
-    if (!price || !originalPrice) return null;
-    const p = parseInt(price.replace(/\D/g, ''));
-    const op = parseInt(originalPrice.replace(/\D/g, ''));
-    if (op <= p) return null;
+    if (!price || !originalPrice) {return null;}
+    const p = Number.parseInt(price.replaceAll(/\D/g, ''));
+    const op = Number.parseInt(originalPrice.replaceAll(/\D/g, ''));
+    if (op <= p) {return null;}
     return `-${Math.round(((op - p) / op) * 100)}%`;
   };
 
@@ -3538,7 +3565,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
       {/* Grid */}
       <div className={cn(
         "grid gap-x-6 gap-y-10",
-        device === 'mobile' ? 'grid-cols-2 gap-x-3 gap-y-6' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4'
+        device === 'mobile' ? 'grid-cols-2 gap-x-3 gap-y-6' : (device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4')
       )}>
         {displayItems.slice(0, device === 'mobile' ? 4 : 4).map((item) => {
           const discount = getDiscount(item.price, item.originalPrice);
@@ -3628,7 +3655,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
       {/* Grid */}
       <div className={cn(
         "grid gap-6",
-        device === 'mobile' ? 'grid-cols-1 sm:grid-cols-2 gap-4' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-4'
+        device === 'mobile' ? 'grid-cols-1 sm:grid-cols-2 gap-4' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-4')
       )}>
         {displayItems.slice(0, device === 'mobile' ? 4 : 4).map((item) => {
           const discount = getDiscount(item.price, item.originalPrice);
@@ -3636,7 +3663,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
             <div 
               key={item.id} 
               className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
-              style={{ '--hover-shadow': `0 10px 15px -3px ${brandColor}10`, '--hover-border': `${brandColor}30` } as React.CSSProperties}
+              style={{ '--hover-border': `${brandColor}30`, '--hover-shadow': `0 10px 15px -3px ${brandColor}10` } as React.CSSProperties}
             >
               {/* Image */}
               <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-700 overflow-hidden">
@@ -3752,7 +3779,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
             device === 'tablet' ? 'grid-cols-3 grid-rows-2' : 'grid-cols-4 grid-rows-2'
           )}>
             {/* Hero Item (Span 2x2) */}
-            <div className="col-span-2 row-span-2 relative group rounded-2xl overflow-hidden cursor-pointer min-h-[400px] border border-transparent transition-colors" style={{ backgroundColor: `${brandColor}10`, '--hover-border': `${brandColor}50` } as React.CSSProperties}>
+            <div className="col-span-2 row-span-2 relative group rounded-2xl overflow-hidden cursor-pointer min-h-[400px] border border-transparent transition-colors" style={{ '--hover-border': `${brandColor}50`, backgroundColor: `${brandColor}10` } as React.CSSProperties}>
               {featured?.image ? (
                 <PreviewImage 
                   src={featured.image} 
@@ -3894,7 +3921,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
                   key={item.id}
                   className={cn(
                     "flex-shrink-0 group cursor-pointer",
-                    device === 'mobile' ? 'w-[160px]' : device === 'tablet' ? 'w-[220px]' : 'w-[260px]'
+                    device === 'mobile' ? 'w-[160px]' : (device === 'tablet' ? 'w-[220px]' : 'w-[260px]')
                   )}
                 >
                   <div className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800 mb-3 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all">
@@ -3954,7 +3981,7 @@ export const ProductListPreview = ({ brandColor, itemCount, componentType, selec
       {/* Compact Grid - More items, smaller cards */}
       <div className={cn(
         "grid gap-3",
-        device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-4' : 'grid-cols-6'
+        device === 'mobile' ? 'grid-cols-2' : (device === 'tablet' ? 'grid-cols-4' : 'grid-cols-6')
       )}>
         {displayItems.slice(0, device === 'mobile' ? 6 : 6).map((item) => {
           const discount = getDiscount(item.price, item.originalPrice);
@@ -4101,7 +4128,7 @@ export interface ServiceListPreviewItem {
 
 // Badge component for service tags (uses brandColor for hot)
 const ServiceBadge = ({ tag, brandColor }: { tag?: 'new' | 'hot'; brandColor?: string }) => {
-  if (!tag) return null;
+  if (!tag) {return null;}
   if (tag === 'hot' && brandColor) {
     return (
       <span 
@@ -4126,14 +4153,14 @@ const ServiceBadge = ({ tag, brandColor }: { tag?: 'new' | 'hot'; brandColor?: s
 
 // Format price helper
 const formatServicePrice = (price?: string | number) => {
-  if (!price) return 'Liên hệ';
+  if (!price) {return 'Liên hệ';}
   if (typeof price === 'string') {
-    const num = parseInt(price.replace(/\D/g, ''));
-    if (isNaN(num) || num === 0) return 'Liên hệ';
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(num);
+    const num = Number.parseInt(price.replaceAll(/\D/g, ''));
+    if (isNaN(num) || num === 0) {return 'Liên hệ';}
+    return new Intl.NumberFormat('vi-VN', { currency: 'VND', maximumFractionDigits: 0, style: 'currency' }).format(num);
   }
-  if (price === 0) return 'Liên hệ';
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(price);
+  if (price === 0) {return 'Liên hệ';}
+  return new Intl.NumberFormat('vi-VN', { currency: 'VND', maximumFractionDigits: 0, style: 'currency' }).format(price);
 };
 
 export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onStyleChange, items, title: propTitle }: { 
@@ -4145,9 +4172,9 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
   title?: string;
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'grid';
+  const previewStyle = selectedStyle ?? 'grid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ServiceListStyle);
-  const title = propTitle || 'Dịch vụ';
+  const title = propTitle ?? 'Dịch vụ';
   const styles = [
     { id: 'grid', label: 'Grid' }, 
     { id: 'bento', label: 'Bento' }, 
@@ -4159,12 +4186,12 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
   
   // Mock data for preview - always show at least 6 items
   const mockServices: ServiceListPreviewItem[] = [
-    { id: 1, name: 'Thiết kế Nội thất Penthouse', description: 'Phong cách hiện đại, tối giản với vật liệu cao cấp nhập khẩu từ Ý.', price: '0', tag: 'hot' as const },
-    { id: 2, name: 'Kiến trúc Xanh Vertical', description: 'Giải pháp bền vững cho đô thị.', price: '15000000', tag: 'new' as const },
-    { id: 3, name: 'Cảnh quan Sân vườn Zen', description: 'Không gian thiền định tại gia.', price: '8500000' },
-    { id: 4, name: 'Smart Home Hub', description: 'Tự động hóa toàn diện.', price: '25000000' },
-    { id: 5, name: 'Biệt thự Cổ', description: 'Phục dựng di sản.', price: '0' },
-    { id: 6, name: 'Lighting Art', description: 'Nghệ thuật ánh sáng.', price: '12000000', tag: 'new' as const }
+    { description: 'Phong cách hiện đại, tối giản với vật liệu cao cấp nhập khẩu từ Ý.', id: 1, name: 'Thiết kế Nội thất Penthouse', price: '0', tag: 'hot' as const },
+    { description: 'Giải pháp bền vững cho đô thị.', id: 2, name: 'Kiến trúc Xanh Vertical', price: '15000000', tag: 'new' as const },
+    { description: 'Không gian thiền định tại gia.', id: 3, name: 'Cảnh quan Sân vườn Zen', price: '8500000' },
+    { description: 'Tự động hóa toàn diện.', id: 4, name: 'Smart Home Hub', price: '25000000' },
+    { description: 'Phục dựng di sản.', id: 5, name: 'Biệt thự Cổ', price: '0' },
+    { description: 'Nghệ thuật ánh sáng.', id: 6, name: 'Lighting Art', price: '12000000', tag: 'new' as const }
   ];
   
   // Use real items if provided, otherwise fallback to mock (luxury services)
@@ -4190,7 +4217,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
       {/* Grid */}
       <div className={cn(
         "grid gap-4",
-        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+        device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')
       )}>
         {displayItems.slice(0, device === 'mobile' ? 3 : 6).map((item) => (
           <div 
@@ -4458,7 +4485,7 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
       {/* Carousel Container */}
       <div 
         className="flex gap-4 overflow-x-auto pb-4 px-3 md:px-6 snap-x snap-mandatory scroll-smooth"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+        style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }}
       >
         {displayItems.map((item) => (
           <div 
@@ -4535,14 +4562,14 @@ export const ServiceListPreview = ({ brandColor, itemCount, selectedStyle, onSty
       {/* Minimal Grid */}
       <div className={cn(
         "grid gap-6",
-        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+        device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')
       )}>
         {displayItems.slice(0, device === 'mobile' ? 3 : 6).map((item) => (
           <div 
             key={item.id} 
             className="group cursor-pointer"
-            onMouseEnter={(e) => { const img = e.currentTarget.querySelector('.img-wrapper'); if (img) (img as HTMLElement).style.boxShadow = `0 8px 24px ${brandColor}15`; }}
-            onMouseLeave={(e) => { const img = e.currentTarget.querySelector('.img-wrapper'); if (img) (img as HTMLElement).style.boxShadow = 'none'; }}
+            onMouseEnter={(e) => { const img = e.currentTarget.querySelector('.img-wrapper'); if (img) {(img as HTMLElement).style.boxShadow = `0 8px 24px ${brandColor}15`;} }}
+            onMouseLeave={(e) => { const img = e.currentTarget.querySelector('.img-wrapper'); if (img) {(img as HTMLElement).style.boxShadow = 'none';} }}
           >
             {/* Image - More minimal, rounded corners */}
             <div className="img-wrapper relative overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-2xl aspect-[3/2] mb-4 transition-shadow duration-300">
@@ -4721,7 +4748,7 @@ export const BlogPreview = ({
   title?: string;
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'grid';
+  const previewStyle = selectedStyle ?? 'grid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as BlogStyle);
   const styles = [
     { id: 'grid', label: 'Grid' }, 
@@ -4734,12 +4761,12 @@ export const BlogPreview = ({
   
   // Mock data
   const mockPosts: BlogPreviewItem[] = [
-    { id: 1, title: 'Xu hướng thiết kế UI/UX nổi bật năm 2024', excerpt: 'Khám phá những phong cách thiết kế đang thống trị thế giới công nghệ hiện đại và cách áp dụng vào dự án của bạn.', date: '12/05/2024', category: 'Thiết kế', readTime: '5 phút đọc', views: 1250 },
-    { id: 2, title: 'Tối ưu hóa hiệu năng React Application', excerpt: 'Những kỹ thuật và best practices để tối ưu performance cho ứng dụng React của bạn.', date: '11/05/2024', category: 'Lập trình', readTime: '8 phút đọc', views: 980 },
-    { id: 3, title: 'AI và tương lai của thị trường lao động', excerpt: 'Phân tích sâu về tác động của AI đến việc làm và cách thích nghi với xu hướng mới.', date: '10/05/2024', category: 'Công nghệ', readTime: '6 phút đọc', views: 2100 },
-    { id: 4, title: 'Hướng dẫn SEO cho Developers', excerpt: 'Tất cả những gì developer cần biết về SEO để xây dựng website thân thiện với công cụ tìm kiếm.', date: '09/05/2024', category: 'Marketing', readTime: '7 phút đọc', views: 750 },
-    { id: 5, title: 'Bảo mật Web Application 101', excerpt: 'Những lỗ hổng bảo mật phổ biến và cách phòng tránh trong ứng dụng web.', date: '08/05/2024', category: 'Bảo mật', readTime: '10 phút đọc', views: 1500 },
-    { id: 6, title: 'Microservices vs Monolith: Khi nào nên chọn gì?', excerpt: 'So sánh chi tiết giữa hai kiến trúc phổ biến và cách đưa ra quyết định phù hợp.', date: '07/05/2024', category: 'Architecture', readTime: '9 phút đọc', views: 890 }
+    { category: 'Thiết kế', date: '12/05/2024', excerpt: 'Khám phá những phong cách thiết kế đang thống trị thế giới công nghệ hiện đại và cách áp dụng vào dự án của bạn.', id: 1, readTime: '5 phút đọc', title: 'Xu hướng thiết kế UI/UX nổi bật năm 2024', views: 1250 },
+    { category: 'Lập trình', date: '11/05/2024', excerpt: 'Những kỹ thuật và best practices để tối ưu performance cho ứng dụng React của bạn.', id: 2, readTime: '8 phút đọc', title: 'Tối ưu hóa hiệu năng React Application', views: 980 },
+    { category: 'Công nghệ', date: '10/05/2024', excerpt: 'Phân tích sâu về tác động của AI đến việc làm và cách thích nghi với xu hướng mới.', id: 3, readTime: '6 phút đọc', title: 'AI và tương lai của thị trường lao động', views: 2100 },
+    { category: 'Marketing', date: '09/05/2024', excerpt: 'Tất cả những gì developer cần biết về SEO để xây dựng website thân thiện với công cụ tìm kiếm.', id: 4, readTime: '7 phút đọc', title: 'Hướng dẫn SEO cho Developers', views: 750 },
+    { category: 'Bảo mật', date: '08/05/2024', excerpt: 'Những lỗ hổng bảo mật phổ biến và cách phòng tránh trong ứng dụng web.', id: 5, readTime: '10 phút đọc', title: 'Bảo mật Web Application 101', views: 1500 },
+    { category: 'Architecture', date: '07/05/2024', excerpt: 'So sánh chi tiết giữa hai kiến trúc phổ biến và cách đưa ra quyết định phù hợp.', id: 6, readTime: '9 phút đọc', title: 'Microservices vs Monolith: Khi nào nên chọn gì?', views: 890 }
   ];
 
   // Use real posts if provided, otherwise mock
@@ -4771,7 +4798,7 @@ export const BlogPreview = ({
   const MoreItemsCard = ({ count }: { count: number }) => (
     <div 
       className="flex flex-col items-center justify-center rounded-xl aspect-[16/10] border-2 border-dashed cursor-pointer"
-      style={{ borderColor: `${brandColor}30`, backgroundColor: `${brandColor}05` }}
+      style={{ backgroundColor: `${brandColor}05`, borderColor: `${brandColor}30` }}
     >
       <div className="w-12 h-12 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: `${brandColor}15` }}>
         <Plus size={24} style={{ color: brandColor }} />
@@ -4783,7 +4810,7 @@ export const BlogPreview = ({
 
   // Style 1: Grid - Professional card grid với brandColor hover
   const renderGridStyle = () => {
-    if (displayPosts.length === 0) return <EmptyState />;
+    if (displayPosts.length === 0) {return <EmptyState />;}
     const visibleCount = device === 'mobile' ? 2 : 3;
     const visibleItems = displayPosts.slice(0, visibleCount);
     const remaining = displayPosts.length - visibleCount;
@@ -4805,14 +4832,14 @@ export const BlogPreview = ({
                 <div className="relative aspect-[16/10] overflow-hidden">
                   {post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={32} />}
                   <div className="absolute left-3 top-3">
-                    <span className="px-2 py-1 text-xs font-medium rounded shadow-sm backdrop-blur-sm" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category || 'Tin tức'}</span>
+                    <span className="px-2 py-1 text-xs font-medium rounded shadow-sm backdrop-blur-sm" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category ?? 'Tin tức'}</span>
                   </div>
                 </div>
                 <div className="flex flex-1 flex-col p-4">
                   <h3 className="mb-2 text-base md:text-lg font-bold leading-tight text-slate-900 dark:text-slate-100 group-hover:opacity-80 transition-colors line-clamp-2">{post.title || 'Tiêu đề bài viết'}</h3>
                   {post.excerpt && <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-2">{post.excerpt}</p>}
                   <div className="mt-auto pt-2 flex items-center justify-between">
-                    <time className="text-xs text-slate-500">{post.date || 'Hôm nay'}</time>
+                    <time className="text-xs text-slate-500">{post.date ?? 'Hôm nay'}</time>
                     {post.readTime && <span className="text-xs text-slate-400">{post.readTime}</span>}
                   </div>
                 </div>
@@ -4826,7 +4853,7 @@ export const BlogPreview = ({
     return (
       <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
         <h2 className={cn("font-bold tracking-tighter text-left mb-6 md:mb-8", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>{title}</h2>
-        <div className={cn("grid gap-4 md:gap-6", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+        <div className={cn("grid gap-4 md:gap-6", device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'))}>
           {visibleItems.map((post) => (
             <article 
               key={post.id} 
@@ -4838,14 +4865,14 @@ export const BlogPreview = ({
               <div className="relative aspect-[16/10] overflow-hidden">
                 {post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={32} />}
                 <div className="absolute left-3 top-3">
-                  <span className="px-2 py-1 text-xs font-medium rounded shadow-sm backdrop-blur-sm" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category || 'Tin tức'}</span>
+                  <span className="px-2 py-1 text-xs font-medium rounded shadow-sm backdrop-blur-sm" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category ?? 'Tin tức'}</span>
                 </div>
               </div>
               <div className="flex flex-1 flex-col p-4">
                 <h3 className="mb-2 text-base md:text-lg font-bold leading-tight text-slate-900 dark:text-slate-100 group-hover:opacity-80 transition-colors line-clamp-2">{post.title || 'Tiêu đề bài viết'}</h3>
                 {post.excerpt && <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-2">{post.excerpt}</p>}
                 <div className="mt-auto pt-2 flex items-center justify-between">
-                  <time className="text-xs text-slate-500">{post.date || 'Hôm nay'}</time>
+                  <time className="text-xs text-slate-500">{post.date ?? 'Hôm nay'}</time>
                   {post.readTime && <span className="text-xs text-slate-400">{post.readTime}</span>}
                 </div>
               </div>
@@ -4866,7 +4893,7 @@ export const BlogPreview = ({
 
   // Style 2: List - Horizontal cards với brandColor hover
   const renderListStyle = () => {
-    if (displayPosts.length === 0) return <EmptyState />;
+    if (displayPosts.length === 0) {return <EmptyState />;}
     return (
       <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
         <h2 className={cn("font-bold tracking-tighter text-left mb-6 md:mb-8", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>{title}</h2>
@@ -4883,11 +4910,11 @@ export const BlogPreview = ({
                 {post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={24} />}
               </div>
               <div className="flex flex-1 flex-col justify-center p-4 md:px-6">
-                <div className="mb-2"><span className="text-xs font-semibold" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span></div>
+                <div className="mb-2"><span className="text-xs font-semibold" style={{ color: brandColor }}>{post.category ?? 'Tin tức'}</span></div>
                 <h3 className="mb-2 text-base md:text-lg font-bold leading-snug text-slate-900 dark:text-slate-100 group-hover:opacity-80 transition-colors line-clamp-2">{post.title || 'Tiêu đề bài viết'}</h3>
                 {post.excerpt && <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-2">{post.excerpt}</p>}
                 <div className="flex items-center gap-3">
-                  <time className="text-xs text-slate-500">{post.date || 'Hôm nay'}</time>
+                  <time className="text-xs text-slate-500">{post.date ?? 'Hôm nay'}</time>
                   {post.readTime && <span className="text-xs text-slate-400">• {post.readTime}</span>}
                 </div>
               </div>
@@ -4905,7 +4932,7 @@ export const BlogPreview = ({
 
   // Style 3: Featured - Hero card + sidebar with brandColor
   const renderFeaturedStyle = () => {
-    if (displayPosts.length === 0) return <EmptyState />;
+    if (displayPosts.length === 0) {return <EmptyState />;}
     const featuredPost = displayPosts[0];
     const sidebarPosts = displayPosts.slice(1, 5);
     return (
@@ -4923,12 +4950,12 @@ export const BlogPreview = ({
               </div>
               <div className="relative z-10 p-5 md:p-8">
                 <div className="mb-3 flex items-center space-x-3">
-                  <span className="px-2.5 py-1 text-xs font-medium rounded backdrop-blur-md" style={{ backgroundColor: `${brandColor}60`, color: 'white' }}>{featuredPost.category || 'Tin tức'}</span>
+                  <span className="px-2.5 py-1 text-xs font-medium rounded backdrop-blur-md" style={{ backgroundColor: `${brandColor}60`, color: 'white' }}>{featuredPost.category ?? 'Tin tức'}</span>
                   {featuredPost.readTime && <span className="text-xs text-slate-300">{featuredPost.readTime}</span>}
                 </div>
                 <h3 className={cn("mb-2 font-bold leading-tight tracking-tight text-white", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>{featuredPost.title || 'Tiêu đề bài viết'}</h3>
                 {featuredPost.excerpt && <p className="text-sm text-slate-200 line-clamp-2 mb-3">{featuredPost.excerpt}</p>}
-                <time className="text-sm font-medium text-slate-300">{featuredPost.date || 'Hôm nay'}</time>
+                <time className="text-sm font-medium text-slate-300">{featuredPost.date ?? 'Hôm nay'}</time>
               </div>
             </article>
           </div>
@@ -4946,9 +4973,9 @@ export const BlogPreview = ({
                   {post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <ImagePlaceholder size={16} />}
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
-                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: brandColor }}>{post.category ?? 'Tin tức'}</span>
                   <h4 className="text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100 line-clamp-2 group-hover:opacity-80 transition-colors">{post.title || 'Tiêu đề bài viết'}</h4>
-                  <time className="mt-1 text-[10px] text-slate-500">{post.date || 'Hôm nay'}</time>
+                  <time className="mt-1 text-[10px] text-slate-500">{post.date ?? 'Hôm nay'}</time>
                 </div>
               </article>
             ))}
@@ -4960,7 +4987,7 @@ export const BlogPreview = ({
 
   // Style 4: Magazine - Bento grid layout
   const renderMagazineStyle = () => {
-    if (displayPosts.length === 0) return <EmptyState />;
+    if (displayPosts.length === 0) {return <EmptyState />;}
     const featured = displayPosts[0];
     const secondary = displayPosts.slice(1, 3);
     const others = displayPosts.slice(3, 6);
@@ -4979,7 +5006,7 @@ export const BlogPreview = ({
               {featured.thumbnail ? <PreviewImage src={featured.thumbnail} alt={featured.title} className="w-full h-full object-cover" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}30, ${brandColor}60)` }} />}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-4">
-                <span className="px-2 py-1 text-[10px] font-bold rounded mb-2 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{featured.category || 'Tin tức'}</span>
+                <span className="px-2 py-1 text-[10px] font-bold rounded mb-2 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{featured.category ?? 'Tin tức'}</span>
                 <h3 className="text-lg font-bold text-white line-clamp-2">{featured.title || 'Tiêu đề'}</h3>
               </div>
             </article>
@@ -4988,7 +5015,7 @@ export const BlogPreview = ({
                 <article key={post.id} className="group rounded-xl border p-2 cursor-pointer transition-all" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; }}>
                   <div className="aspect-[4/3] rounded-lg overflow-hidden mb-2">{post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" /> : <ImagePlaceholder size={20} />}</div>
                   <h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 line-clamp-2">{post.title || 'Tiêu đề'}</h4>
-                  <time className="text-[10px] text-slate-500 mt-1 block">{post.date || 'Hôm nay'}</time>
+                  <time className="text-[10px] text-slate-500 mt-1 block">{post.date ?? 'Hôm nay'}</time>
                 </article>
               ))}
             </div>
@@ -4999,22 +5026,22 @@ export const BlogPreview = ({
               <div className="h-full min-h-[350px]">{featured.thumbnail ? <PreviewImage src={featured.thumbnail} alt={featured.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" /> : <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${brandColor}40, ${brandColor}80)` }} />}</div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
-                <span className="px-2.5 py-1 text-xs font-bold rounded mb-3 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{featured.category || 'Nổi bật'}</span>
+                <span className="px-2.5 py-1 text-xs font-bold rounded mb-3 inline-block" style={{ backgroundColor: brandColor, color: 'white' }}>{featured.category ?? 'Nổi bật'}</span>
                 <h3 className="text-xl md:text-2xl font-bold text-white leading-tight line-clamp-2 mb-2">{featured.title || 'Tiêu đề'}</h3>
                 {featured.excerpt && <p className="text-sm text-slate-200 line-clamp-2 mb-3">{featured.excerpt}</p>}
-                <div className="flex items-center gap-3 text-sm text-slate-300"><time>{featured.date || 'Hôm nay'}</time>{featured.readTime && <span>• {featured.readTime}</span>}</div>
+                <div className="flex items-center gap-3 text-sm text-slate-300"><time>{featured.date ?? 'Hôm nay'}</time>{featured.readTime && <span>• {featured.readTime}</span>}</div>
               </div>
             </article>
             {secondary.map((post) => (
               <article key={post.id} className="group rounded-xl border overflow-hidden cursor-pointer transition-all" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; }}>
                 <div className="aspect-[16/9] overflow-hidden">{post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={24} />}</div>
-                <div className="p-3"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span><h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 mt-1">{post.title || 'Tiêu đề'}</h4></div>
+                <div className="p-3"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{post.category ?? 'Tin tức'}</span><h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 line-clamp-2 mt-1">{post.title || 'Tiêu đề'}</h4></div>
               </article>
             ))}
             {others.slice(0, device === 'desktop' ? 2 : 1).map((post) => (
               <article key={post.id} className="group flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.backgroundColor = `${brandColor}05`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.backgroundColor = 'transparent'; }}>
                 <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">{post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover" /> : <ImagePlaceholder size={16} />}</div>
-                <div className="flex-1 min-w-0"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span><h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 line-clamp-2">{post.title || 'Tiêu đề'}</h4></div>
+                <div className="flex-1 min-w-0"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{post.category ?? 'Tin tức'}</span><h4 className="text-sm font-medium text-slate-900 dark:text-slate-100 line-clamp-2">{post.title || 'Tiêu đề'}</h4></div>
               </article>
             ))}
           </div>
@@ -5025,7 +5052,7 @@ export const BlogPreview = ({
 
   // Style 5: Carousel - Horizontal scrollable
   const renderCarouselStyle = () => {
-    if (displayPosts.length === 0) return <EmptyState />;
+    if (displayPosts.length === 0) {return <EmptyState />;}
     return (
       <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
         <div className="flex items-center justify-between mb-6 md:mb-8">
@@ -5040,17 +5067,17 @@ export const BlogPreview = ({
             {displayPosts.slice(0, 6).map((post) => (
               <article 
                 key={post.id}
-                className={cn("flex-shrink-0 group cursor-pointer rounded-xl border overflow-hidden transition-all", device === 'mobile' ? 'w-[260px]' : device === 'tablet' ? 'w-[300px]' : 'w-[340px]')}
+                className={cn("flex-shrink-0 group cursor-pointer rounded-xl border overflow-hidden transition-all", device === 'mobile' ? 'w-[260px]' : (device === 'tablet' ? 'w-[300px]' : 'w-[340px]'))}
                 style={{ borderColor: `${brandColor}15` }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; e.currentTarget.style.boxShadow = `0 8px 24px ${brandColor}15`; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; e.currentTarget.style.boxShadow = 'none'; }}
               >
                 <div className="aspect-[16/10] overflow-hidden">{post.thumbnail ? <PreviewImage src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImagePlaceholder size={32} />}</div>
                 <div className="p-4">
-                  <div className="flex items-center gap-2 mb-2"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span>{post.readTime && <span className="text-[10px] text-slate-400">• {post.readTime}</span>}</div>
+                  <div className="flex items-center gap-2 mb-2"><span className="text-[10px] font-bold uppercase" style={{ color: brandColor }}>{post.category ?? 'Tin tức'}</span>{post.readTime && <span className="text-[10px] text-slate-400">• {post.readTime}</span>}</div>
                   <h3 className="font-bold text-slate-900 dark:text-slate-100 line-clamp-2 mb-2 group-hover:opacity-80 transition-colors">{post.title || 'Tiêu đề bài viết'}</h3>
                   {post.excerpt && <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">{post.excerpt}</p>}
-                  <div className="flex items-center justify-between"><time className="text-xs text-slate-500">{post.date || 'Hôm nay'}</time><ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} /></div>
+                  <div className="flex items-center justify-between"><time className="text-xs text-slate-500">{post.date ?? 'Hôm nay'}</time><ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} /></div>
                 </div>
               </article>
             ))}
@@ -5063,7 +5090,7 @@ export const BlogPreview = ({
 
   // Style 6: Minimal - Typography-first, clean design
   const renderMinimalStyle = () => {
-    if (displayPosts.length === 0) return <EmptyState />;
+    if (displayPosts.length === 0) {return <EmptyState />;}
     return (
       <section className={cn("py-8 md:py-12", device === 'mobile' ? 'px-3' : 'px-4')}>
         <div className="flex items-center justify-between border-b pb-4 mb-8" style={{ borderColor: `${brandColor}20` }}>
@@ -5082,9 +5109,9 @@ export const BlogPreview = ({
               <span className={cn("font-bold tabular-nums flex-shrink-0", device === 'mobile' ? 'text-xl w-8' : 'text-2xl w-10')} style={{ color: `${brandColor}60` }}>{String(index + 1).padStart(2, '0')}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: brandColor }}>{post.category || 'Tin tức'}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: brandColor }}>{post.category ?? 'Tin tức'}</span>
                   <span className="text-[10px] text-slate-400">•</span>
-                  <time className="text-[10px] text-slate-500">{post.date || 'Hôm nay'}</time>
+                  <time className="text-[10px] text-slate-500">{post.date ?? 'Hôm nay'}</time>
                 </div>
                 <h3 className={cn("font-semibold text-slate-900 dark:text-slate-100 group-hover:opacity-80 transition-colors line-clamp-2", device === 'mobile' ? 'text-base' : 'text-lg')}>{post.title || 'Tiêu đề bài viết'}</h3>
                 {post.excerpt && <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1 mt-1">{post.excerpt}</p>}
@@ -5134,19 +5161,19 @@ export const BlogPreview = ({
 // ============ FOOTER PREVIEW ============
 // 6 Professional Styles: Classic Dark, Modern Center, Corporate, Minimal, Centered, Stacked
 // Best Practices: Clear navigation hierarchy, Social proof, Contact accessibility, Mobile-first, Brand consistency
-type SocialLinkItem = { id: number; platform: string; url: string; icon: string };
-type FooterConfig = { 
+interface SocialLinkItem { id: number; platform: string; url: string; icon: string }
+interface FooterConfig { 
   logo: string; 
   description: string; 
-  columns: Array<{ id: number; title: string; links: Array<{ label: string; url: string }> }>; 
+  columns: { id: number; title: string; links: { label: string; url: string }[] }[]; 
   socialLinks?: SocialLinkItem[];
   copyright: string; 
   showSocialLinks: boolean 
-};
+}
 export type FooterStyle = 'classic' | 'modern' | 'corporate' | 'minimal' | 'centered' | 'stacked';
 export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange }: { config: FooterConfig; brandColor: string; selectedStyle?: FooterStyle; onStyleChange?: (style: FooterStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'classic';
+  const previewStyle = selectedStyle ?? 'classic';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as FooterStyle);
   const styles = [
     { id: 'classic', label: '1. Classic Dark' }, 
@@ -5160,11 +5187,11 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
   // Best Practice: Dùng brandColor đậm làm nền thay vì màu đen cứng
   // Tạo shade từ brandColor bằng cách blend với đen
   const shadeColor = (hex: string, percent: number): string => {
-    const num = parseInt(hex.replace('#', ''), 16);
+    const num = Number.parseInt(hex.replace('#', ''), 16);
     const R = Math.round((num >> 16) * (1 - percent / 100));
-    const G = Math.round((num >> 8 & 0x00FF) * (1 - percent / 100));
-    const B = Math.round((num & 0x0000FF) * (1 - percent / 100));
-    return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+    const G = Math.round((num >> 8 & 0x00_FF) * (1 - percent / 100));
+    const B = Math.round((num & 0x00_00_FF) * (1 - percent / 100));
+    return `#${(0x1_00_00_00 + R * 0x1_00_00 + G * 0x1_00 + B).toString(16).slice(1)}`;
   };
 
   // Brand-based colors: shade của brandColor thay vì đen cứng
@@ -5175,13 +5202,13 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
   // Social media brand colors
   const socialColors: Record<string, string> = {
     facebook: '#1877F2',
-    instagram: '#E4405F',
-    youtube: '#FF0000',
-    tiktok: '#000000',
-    zalo: '#0084FF',
-    twitter: '#1DA1F2',
-    linkedin: '#0A66C2',
     github: '#181717',
+    instagram: '#E4405F',
+    linkedin: '#0A66C2',
+    tiktok: '#000000',
+    twitter: '#1DA1F2',
+    youtube: '#FF0000',
+    zalo: '#0084FF',
   };
 
   // Custom Facebook icon
@@ -5222,12 +5249,18 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
   // Render social icons based on platform
   const renderSocialIcon = (platform: string, size: number = 18) => {
     switch (platform) {
-      case 'facebook': return <FacebookIcon size={size} />;
-      case 'instagram': return <InstagramIcon size={size} />;
-      case 'youtube': return <YoutubeIcon size={size} />;
-      case 'tiktok': return <TikTokIcon size={size} />;
-      case 'zalo': return <ZaloIcon size={size} />;
-      default: return <Globe size={size} />;
+      case 'facebook': { return <FacebookIcon size={size} />;
+      }
+      case 'instagram': { return <InstagramIcon size={size} />;
+      }
+      case 'youtube': { return <YoutubeIcon size={size} />;
+      }
+      case 'tiktok': { return <TikTokIcon size={size} />;
+      }
+      case 'zalo': { return <ZaloIcon size={size} />;
+      }
+      default: { return <Globe size={size} />;
+      }
     }
   };
 
@@ -5237,9 +5270,9 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
       return config.socialLinks;
     }
     return [
-      { id: 1, platform: 'facebook', url: '#', icon: 'facebook' },
-      { id: 2, platform: 'instagram', url: '#', icon: 'instagram' },
-      { id: 3, platform: 'youtube', url: '#', icon: 'youtube' },
+      { icon: 'facebook', id: 1, platform: 'facebook', url: '#' },
+      { icon: 'instagram', id: 2, platform: 'instagram', url: '#' },
+      { icon: 'youtube', id: 3, platform: 'youtube', url: '#' },
     ];
   };
 
@@ -5249,8 +5282,8 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
       return config.columns;
     }
     return [
-      { id: 1, title: 'Về chúng tôi', links: [{ label: 'Giới thiệu', url: '/about' }, { label: 'Tuyển dụng', url: '/careers' }, { label: 'Đội ngũ', url: '/team' }, { label: 'Tin tức', url: '/blog' }] },
-      { id: 2, title: 'Hỗ trợ', links: [{ label: 'FAQ', url: '/faq' }, { label: 'Liên hệ', url: '/contact' }, { label: 'Chính sách', url: '/policy' }, { label: 'Báo cáo', url: '/report' }] }
+      { id: 1, links: [{ label: 'Giới thiệu', url: '/about' }, { label: 'Tuyển dụng', url: '/careers' }, { label: 'Đội ngũ', url: '/team' }, { label: 'Tin tức', url: '/blog' }], title: 'Về chúng tôi' },
+      { id: 2, links: [{ label: 'FAQ', url: '/faq' }, { label: 'Liên hệ', url: '/contact' }, { label: 'Chính sách', url: '/policy' }, { label: 'Báo cáo', url: '/report' }], title: 'Hỗ trợ' }
     ];
   };
 
@@ -5260,11 +5293,11 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
       <div className={cn("container max-w-7xl mx-auto", device === 'mobile' ? 'px-3' : 'px-4')}>
         <div className={cn(
           "grid gap-6",
-          device === 'mobile' ? 'grid-cols-1 gap-4' : device === 'tablet' ? 'grid-cols-2 gap-5' : 'grid-cols-12 lg:gap-5'
+          device === 'mobile' ? 'grid-cols-1 gap-4' : (device === 'tablet' ? 'grid-cols-2 gap-5' : 'grid-cols-12 lg:gap-5')
         )}>
           
           {/* Brand Column */}
-          <div className={cn(device === 'mobile' ? 'text-center' : device === 'tablet' ? 'col-span-2' : 'lg:col-span-5', "space-y-3")}>
+          <div className={cn(device === 'mobile' ? 'text-center' : (device === 'tablet' ? 'col-span-2' : 'lg:col-span-5'), "space-y-3")}>
             <div className={cn("flex items-center gap-2", device === 'mobile' ? 'justify-center' : '')}>
               <div className="p-1.5 rounded-lg" style={{ backgroundColor: bgMedium, border: `1px solid ${borderColor}` }}>
                 {config.logo ? (
@@ -5292,7 +5325,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
           {/* Dynamic Columns */}
           <div className={cn(
             "grid gap-5",
-            device === 'mobile' ? 'grid-cols-2 text-center' : device === 'tablet' ? 'grid-cols-2' : 'lg:col-span-7 grid-cols-2 md:grid-cols-3'
+            device === 'mobile' ? 'grid-cols-2 text-center' : (device === 'tablet' ? 'grid-cols-2' : 'lg:col-span-7 grid-cols-2 md:grid-cols-3')
           )}>
             {getColumns().slice(0, 2).map((col) => (
               <div key={col.id}>
@@ -5400,7 +5433,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
         {/* Middle Row: Columns */}
         <div className={cn(
           "py-5 grid gap-5",
-          device === 'mobile' ? 'grid-cols-1 text-center' : device === 'tablet' ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-4'
+          device === 'mobile' ? 'grid-cols-1 text-center' : (device === 'tablet' ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-4')
         )}>
           <div className={cn(device === 'mobile' ? '' : 'col-span-2 md:col-span-2 pr-4')}>
             <h4 className="text-[10px] font-bold text-white uppercase tracking-wider mb-2">Về Công Ty</h4>
@@ -5525,7 +5558,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
                 key={s.id} 
                 href={s.url} 
                 className="h-8 w-8 flex items-center justify-center rounded-full transition-all duration-300 hover:scale-110"
-                style={{ backgroundColor: `${brandColor}20`, color: '#fff', border: `1px solid ${brandColor}30` }}
+                style={{ backgroundColor: `${brandColor}20`, border: `1px solid ${brandColor}30`, color: '#fff' }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = brandColor;
                   e.currentTarget.style.borderColor = brandColor;
@@ -5625,11 +5658,11 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 
   // Logo size guidelines
   const logoGuidelines = {
+    centered: '48×48px - Logo nổi bật ở giữa',
     classic: '40×40px - Logo nhỏ trong header box',
-    modern: '48×48px - Logo trong gradient box',
     corporate: '40×40px - Logo inline với brand name',
     minimal: '32×32px - Logo compact',
-    centered: '48×48px - Logo nổi bật ở giữa',
+    modern: '48×48px - Logo trong gradient box',
     stacked: '40×40px - Logo với brandColor background'
   };
 
@@ -5659,7 +5692,7 @@ export const FooterPreview = ({ config, brandColor, selectedStyle, onStyleChange
 // ============ CTA PREVIEW ============
 // 6 Styles: banner, centered, split, floating, gradient, minimal
 // Best Practices: Clear CTA, Urgency indicators, Visual hierarchy, Touch-friendly (44px min), Whitespace, Action-oriented text
-type CTAConfig = { 
+interface CTAConfig { 
   title: string; 
   description: string; 
   buttonText: string; 
@@ -5668,11 +5701,11 @@ type CTAConfig = {
   secondaryButtonLink: string;
   badge?: string;
   backgroundImage?: string;
-};
+}
 export type CTAStyle = 'banner' | 'centered' | 'split' | 'floating' | 'gradient' | 'minimal';
 export const CTAPreview = ({ config, brandColor, selectedStyle, onStyleChange }: { config: CTAConfig; brandColor: string; selectedStyle?: CTAStyle; onStyleChange?: (style: CTAStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'banner';
+  const previewStyle = selectedStyle ?? 'banner';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as CTAStyle);
   const styles = [
     { id: 'banner', label: 'Banner' }, 
@@ -5718,7 +5751,7 @@ export const CTAPreview = ({ config, brandColor, selectedStyle, onStyleChange }:
               "bg-white rounded-lg font-medium whitespace-nowrap transition-all hover:shadow-lg hover:scale-105",
               device === 'mobile' ? 'px-5 py-3 min-h-[44px] text-sm' : 'px-6 py-3'
             )} 
-            style={{ color: brandColor, boxShadow: `0 4px 12px ${brandColor}40` }}
+            style={{ boxShadow: `0 4px 12px ${brandColor}40`, color: brandColor }}
           >
             {config.buttonText || 'Bắt đầu ngay'}
           </button>
@@ -5975,7 +6008,7 @@ export const CTAPreview = ({ config, brandColor, selectedStyle, onStyleChange }:
               "bg-white rounded-full font-semibold whitespace-nowrap transition-all hover:scale-105 hover:shadow-xl",
               device === 'mobile' ? 'px-6 py-3 min-h-[44px] text-sm' : 'px-8 py-4'
             )} 
-            style={{ color: brandColor, boxShadow: `0 8px 24px rgba(0,0,0,0.2)` }}
+            style={{ boxShadow: `0 8px 24px rgba(0,0,0,0.2)`, color: brandColor }}
           >
             {config.buttonText || 'Bắt đầu ngay'}
           </button>
@@ -6065,18 +6098,18 @@ export const CTAPreview = ({ config, brandColor, selectedStyle, onStyleChange }:
 
 // ============ ABOUT PREVIEW ============
 // Brand Story UI/UX - 6 Variants: classic, bento, minimal, split, timeline, showcase
-type AboutConfig = {
+interface AboutConfig {
   layout?: string;
   subHeading: string;
   heading: string;
   description: string;
   image: string;
-  stats: Array<{ id: number; value: string; label: string }>;
+  stats: { id: number; value: string; label: string }[];
   buttonText: string;
   buttonLink: string;
   style?: AboutStyle;
   imageCaption?: string; // Configurable caption for bento style image overlay
-};
+}
 export type AboutStyle = 'classic' | 'bento' | 'minimal' | 'split' | 'timeline' | 'showcase';
 
 // Badge Component for About - Monochromatic with brandColor
@@ -6110,7 +6143,7 @@ const AboutBadge = ({ text, variant = 'default', brandColor }: { text: string; v
   return (
     <div 
       className={cn(baseStyles)}
-      style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderColor: `${brandColor}20` }}
+      style={{ backgroundColor: `${brandColor}10`, borderColor: `${brandColor}20`, color: brandColor }}
     >
       {text}
     </div>
@@ -6162,7 +6195,7 @@ const AboutStatBox = ({ stat, variant = 'classic', brandColor }: {
 
 export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange }: { config: AboutConfig; brandColor: string; selectedStyle?: AboutStyle; onStyleChange?: (style: AboutStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || config.style || 'bento';
+  const previewStyle = (selectedStyle ?? config.style) ?? 'bento';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as AboutStyle);
   const styles = [
     { id: 'classic', label: 'Classic' }, 
@@ -6333,10 +6366,10 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
               <ImageIcon size={48} className="text-slate-300" />
             </div>
           )}
-          {(config.imageCaption || config.image) && (
+          {(config.imageCaption ?? config.image) && (
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6 md:p-8">
               <p className="text-white font-medium text-base md:text-lg">
-                {config.imageCaption || 'Kiến tạo không gian làm việc hiện đại & bền vững.'}
+                {config.imageCaption ?? 'Kiến tạo không gian làm việc hiện đại & bền vững.'}
               </p>
             </div>
           )}
@@ -6505,7 +6538,7 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
           
           <div className="space-y-8">
             {config.stats.slice(0, 4).map((stat, idx) => (
-              <div key={stat.id} className={cn("relative flex", device === 'mobile' ? 'pl-12' : idx % 2 === 0 ? 'md:flex-row-reverse' : '')}>
+              <div key={stat.id} className={cn("relative flex", device === 'mobile' ? 'pl-12' : (idx % 2 === 0 ? 'md:flex-row-reverse' : ''))}>
                 {/* Dot */}
                 <div className={cn(
                   "absolute w-8 h-8 rounded-full border-4 bg-white dark:bg-slate-900 flex items-center justify-center text-xs font-bold",
@@ -6660,12 +6693,12 @@ export const AboutPreview = ({ config, brandColor, selectedStyle, onStyleChange 
 
 // ============ BENEFITS PREVIEW (Why Choose Us) ============
 // 6 Professional Styles: Solid Cards, Accent List, Bold Bento, Icon Row, Carousel, Timeline
-type BenefitItem = { id: number; icon: string; title: string; description: string };
+interface BenefitItem { id: number; icon: string; title: string; description: string }
 export type BenefitsStyle = 'cards' | 'list' | 'bento' | 'row' | 'carousel' | 'timeline';
-export type BenefitsConfig = { subHeading?: string; heading?: string; buttonText?: string; buttonLink?: string };
+export interface BenefitsConfig { subHeading?: string; heading?: string; buttonText?: string; buttonLink?: string }
 export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChange, config }: { items: BenefitItem[]; brandColor: string; selectedStyle?: BenefitsStyle; onStyleChange?: (style: BenefitsStyle) => void; config?: BenefitsConfig }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'cards';
+  const previewStyle = selectedStyle ?? 'cards';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as BenefitsStyle);
   const styles = [
     { id: 'cards', label: 'Solid Cards' }, 
@@ -6675,8 +6708,8 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
     { id: 'carousel', label: 'Carousel' },
     { id: 'timeline', label: 'Timeline' }
   ];
-  const subHeading = config?.subHeading || 'Vì sao chọn chúng tôi?';
-  const heading = config?.heading || 'Giá trị cốt lõi';
+  const subHeading = config?.subHeading ?? 'Vì sao chọn chúng tôi?';
+  const heading = config?.heading ?? 'Giá trị cốt lõi';
 
   // Header Component - reusable
   const BenefitsHeader = () => (
@@ -6715,8 +6748,8 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
       {items.length === 0 ? <EmptyState /> : (
         <div className={cn(
           "grid gap-4 md:gap-6",
-          items.length === 1 ? 'max-w-md mx-auto' : items.length === 2 ? 'max-w-2xl mx-auto grid-cols-2' : '',
-          items.length >= 3 && (device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4')
+          items.length === 1 ? 'max-w-md mx-auto' : (items.length === 2 ? 'max-w-2xl mx-auto grid-cols-2' : ''),
+          items.length >= 3 && (device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'))
         )}>
           {visibleItems.map((item) => (
             <div 
@@ -6808,7 +6841,7 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
                 key={item.id} 
                 className={cn(
                   "flex flex-col justify-between p-5 md:p-6 lg:p-8 rounded-2xl transition-colors min-h-[160px] md:min-h-[180px]",
-                  device !== 'mobile' && isWide ? "md:col-span-2" : device !== 'mobile' ? "md:col-span-1" : "",
+                  device !== 'mobile' && isWide ? "md:col-span-2" : (device !== 'mobile' ? "md:col-span-1" : ""),
                   isPrimary ? "text-white border border-transparent" : "bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700"
                 )}
                 style={isPrimary ? { backgroundColor: brandColor, boxShadow: `0 10px 15px -3px ${brandColor}30` } : {}}
@@ -6843,7 +6876,7 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
           <div className={cn("flex items-stretch", device === 'mobile' ? 'flex-col divide-y' : 'flex-row divide-x')} style={{ borderColor: `${brandColor}15` }}>
             {items.slice(0, 4).map((item) => (
               <div key={item.id} className="flex-1 w-full p-5 md:p-6 lg:p-8 flex flex-col items-center text-center">
-                <div className="mb-3 md:mb-4 p-3 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor, boxShadow: `0 0 0 4px ${brandColor}08` }}>
+                <div className="mb-3 md:mb-4 p-3 rounded-full" style={{ backgroundColor: `${brandColor}15`, boxShadow: `0 0 0 4px ${brandColor}08`, color: brandColor }}>
                   <Check size={22} strokeWidth={3} />
                 </div>
                 <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1.5 md:mb-2 text-sm md:text-base line-clamp-2 min-h-[2.5rem]">{item.title || 'Tiêu đề'}</h3>
@@ -6859,7 +6892,7 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
   // Style 5: Carousel - Horizontal scroll với navigation
   const [carouselIndex, setCarouselIndex] = useState(0);
   const renderCarouselStyle = () => {
-    const itemsPerView = device === 'mobile' ? 1 : device === 'tablet' ? 2 : 3;
+    const itemsPerView = device === 'mobile' ? 1 : (device === 'tablet' ? 2 : 3);
     const maxIndex = Math.max(0, items.length - itemsPerView);
     return (
       <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
@@ -6870,7 +6903,7 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
             {items.length > itemsPerView && (
               <>
                 <button
-                  onClick={() => setCarouselIndex(Math.max(0, carouselIndex - 1))}
+                  onClick={() =>{  setCarouselIndex(Math.max(0, carouselIndex - 1)); }}
                   disabled={carouselIndex === 0}
                   className={cn("absolute -left-2 md:-left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-lg border flex items-center justify-center transition-all", carouselIndex === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110')}
                   style={{ borderColor: `${brandColor}20` }}
@@ -6878,7 +6911,7 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
                   <ChevronLeft size={20} style={{ color: brandColor }} />
                 </button>
                 <button
-                  onClick={() => setCarouselIndex(Math.min(maxIndex, carouselIndex + 1))}
+                  onClick={() =>{  setCarouselIndex(Math.min(maxIndex, carouselIndex + 1)); }}
                   disabled={carouselIndex >= maxIndex}
                   className={cn("absolute -right-2 md:-right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-lg border flex items-center justify-center transition-all", carouselIndex >= maxIndex ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110')}
                   style={{ borderColor: `${brandColor}20` }}
@@ -6894,7 +6927,7 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
                   <div 
                     key={item.id} 
                     className="flex-shrink-0 rounded-xl p-5 md:p-6 border shadow-sm"
-                    style={{ width: `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 16 / itemsPerView}px)`, backgroundColor: idx === 0 ? brandColor : `${brandColor}08`, borderColor: `${brandColor}20` }}
+                    style={{ backgroundColor: idx === 0 ? brandColor : `${brandColor}08`, borderColor: `${brandColor}20`, width: `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 16 / itemsPerView}px)` }}
                   >
                     <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-4", idx === 0 ? 'bg-white/20' : '')} style={idx !== 0 ? { backgroundColor: brandColor } : {}}>
                       <Check size={18} strokeWidth={3} className={idx === 0 ? 'text-white' : ''} style={idx !== 0 ? { color: 'white' } : {}} />
@@ -6909,7 +6942,7 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
             {items.length > itemsPerView && (
               <div className="flex justify-center gap-2 mt-4">
                 {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
-                  <button key={idx} onClick={() => setCarouselIndex(idx)} className={cn("w-2 h-2 rounded-full transition-all", carouselIndex === idx ? 'w-6' : '')} style={{ backgroundColor: carouselIndex === idx ? brandColor : `${brandColor}30` }} />
+                  <button key={idx} onClick={() =>{  setCarouselIndex(idx); }} className={cn("w-2 h-2 rounded-full transition-all", carouselIndex === idx ? 'w-6' : '')} style={{ backgroundColor: carouselIndex === idx ? brandColor : `${brandColor}30` }} />
                 ))}
               </div>
             )}
@@ -6929,7 +6962,7 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
           <div className={cn("absolute top-0 bottom-0 w-0.5", device === 'mobile' ? 'left-4' : 'left-1/2 -translate-x-px')} style={{ backgroundColor: `${brandColor}20` }} />
           <div className="space-y-6 md:space-y-8">
             {visibleItems.map((item, idx) => (
-              <div key={item.id} className={cn("relative flex items-start", device === 'mobile' ? 'pl-12' : idx % 2 === 0 ? 'flex-row' : 'flex-row-reverse')}>
+              <div key={item.id} className={cn("relative flex items-start", device === 'mobile' ? 'pl-12' : (idx % 2 === 0 ? 'flex-row' : 'flex-row-reverse'))}>
                 {/* Dot */}
                 <div className={cn("absolute w-8 h-8 rounded-full border-4 bg-white dark:bg-slate-900 flex items-center justify-center text-xs font-bold z-10", device === 'mobile' ? 'left-0' : 'left-1/2 -translate-x-1/2')} style={{ borderColor: brandColor, color: brandColor }}>
                   {idx + 1}
@@ -6950,7 +6983,7 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
           {/* CTA Button */}
           {config?.buttonText && (
             <div className="text-center mt-8">
-              <a href={config.buttonLink || '#'} className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium text-white" style={{ backgroundColor: brandColor }}>
+              <a href={config.buttonLink ?? '#'} className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium text-white" style={{ backgroundColor: brandColor }}>
                 {config.buttonText}
                 <ArrowRight size={16} />
               </a>
@@ -6976,12 +7009,12 @@ export const BenefitsPreview = ({ items, brandColor, selectedStyle, onStyleChang
 };
 
 // ============ CASE STUDY / PROJECTS PREVIEW ============
-type ProjectItem = { id: number; title: string; category: string; image: string; description: string; link: string };
+interface ProjectItem { id: number; title: string; category: string; image: string; description: string; link: string }
 export type CaseStudyStyle = 'grid' | 'featured' | 'list' | 'masonry' | 'carousel' | 'timeline';
 export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleChange }: { projects: ProjectItem[]; brandColor: string; selectedStyle?: CaseStudyStyle; onStyleChange?: (style: CaseStudyStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const previewStyle = selectedStyle || 'grid';
+  const previewStyle = selectedStyle ?? 'grid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as CaseStudyStyle);
   const styles = [
     { id: 'grid', label: 'Grid' }, 
@@ -6995,23 +7028,30 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
   // Dynamic Image Size Info
   const getImageSizeInfo = () => {
     const count = projects.length;
-    if (count === 0) return 'Chưa có dự án';
+    if (count === 0) {return 'Chưa có dự án';}
     switch (previewStyle) {
-      case 'grid':
+      case 'grid': {
         return `${count} dự án • Tất cả: 1200×800px (3:2)`;
-      case 'featured':
-        if (count === 1) return 'Dự án 1: 1200×800px (3:2)';
+      }
+      case 'featured': {
+        if (count === 1) {return 'Dự án 1: 1200×800px (3:2)';}
         return `Dự án 1: 1200×800px • Dự án 2-${Math.min(count, 3)}: 600×600px (1:1)`;
-      case 'list':
+      }
+      case 'list': {
         return `${count} dự án • Tất cả: 800×500px (16:10)`;
-      case 'masonry':
+      }
+      case 'masonry': {
         return `${count} dự án • Ngang: 800×500px • Dọc: 600×900px • Vuông: 800×800px`;
-      case 'carousel':
+      }
+      case 'carousel': {
         return `${count} dự án • Tất cả: 1000×750px (4:3)`;
-      case 'timeline':
+      }
+      case 'timeline': {
         return `${count} dự án • Tất cả: 800×600px (4:3)`;
-      default:
+      }
+      default: {
         return `${count} dự án`;
+      }
     }
   };
 
@@ -7029,7 +7069,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
 
   // Style 1: Grid - Uniform 3-column grid with equal height cards
   const renderGridStyle = () => {
-    const MAX_VISIBLE = device === 'mobile' ? 4 : device === 'tablet' ? 6 : 9;
+    const MAX_VISIBLE = device === 'mobile' ? 4 : (device === 'tablet' ? 6 : 9);
     const visibleProjects = projects.slice(0, MAX_VISIBLE);
     const remainingCount = projects.length - MAX_VISIBLE;
 
@@ -7038,7 +7078,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
         <h3 className={cn("font-bold text-center mb-6", device === 'mobile' ? 'text-lg' : 'text-xl')}>Dự án tiêu biểu</h3>
         {projects.length === 0 ? <EmptyState /> : (
           <div className="max-w-6xl mx-auto">
-            <div className={cn("grid", device === 'mobile' ? 'grid-cols-1 gap-3' : device === 'tablet' ? 'grid-cols-2 gap-4' : 'grid-cols-3 gap-6')}>
+            <div className={cn("grid", device === 'mobile' ? 'grid-cols-1 gap-3' : (device === 'tablet' ? 'grid-cols-2 gap-4' : 'grid-cols-3 gap-6'))}>
               {visibleProjects.map((project) => (
                 <div 
                   key={project.id} 
@@ -7285,7 +7325,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
 
   // Style 5: Carousel - Horizontal scroll carousel
   const renderCarouselStyle = () => {
-    const itemsPerView = device === 'mobile' ? 1 : device === 'tablet' ? 2 : 3;
+    const itemsPerView = device === 'mobile' ? 1 : (device === 'tablet' ? 2 : 3);
     const maxIndex = Math.max(0, projects.length - itemsPerView);
 
     return (
@@ -7298,7 +7338,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
               <>
                 <button
                   type="button"
-                  onClick={() => setCarouselIndex(Math.max(0, carouselIndex - 1))}
+                  onClick={() =>{  setCarouselIndex(Math.max(0, carouselIndex - 1)); }}
                   disabled={carouselIndex === 0}
                   className="absolute -left-2 md:-left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-lg border flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
                   style={{ borderColor: `${brandColor}20` }}
@@ -7307,7 +7347,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCarouselIndex(Math.min(maxIndex, carouselIndex + 1))}
+                  onClick={() =>{  setCarouselIndex(Math.min(maxIndex, carouselIndex + 1)); }}
                   disabled={carouselIndex >= maxIndex}
                   className="absolute -right-2 md:-right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-lg border flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
                   style={{ borderColor: `${brandColor}20` }}
@@ -7327,8 +7367,8 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
                     key={project.id} 
                     className="flex-shrink-0 bg-white dark:bg-slate-800 rounded-xl overflow-hidden border group transition-all"
                     style={{ 
-                      width: `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 16 / itemsPerView}px)`,
-                      borderColor: `${brandColor}15`
+                      borderColor: `${brandColor}15`,
+                      width: `calc(${100 / itemsPerView}% - ${(itemsPerView - 1) * 16 / itemsPerView}px)`
                     }}
                   >
                     <div className="aspect-[4/3] bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
@@ -7356,7 +7396,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
                   <button 
                     key={idx} 
                     type="button"
-                    onClick={() => setCarouselIndex(idx)} 
+                    onClick={() =>{  setCarouselIndex(idx); }} 
                     className={cn("h-2 rounded-full transition-all", carouselIndex === idx ? 'w-6' : 'w-2')} 
                     style={{ backgroundColor: carouselIndex === idx ? brandColor : `${brandColor}30` }} 
                   />
@@ -7389,7 +7429,7 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
               {visibleProjects.map((project, idx) => (
                 <div 
                   key={project.id} 
-                  className={cn("relative flex items-start", device === 'mobile' ? 'pl-12' : idx % 2 === 0 ? 'flex-row' : 'flex-row-reverse')}
+                  className={cn("relative flex items-start", device === 'mobile' ? 'pl-12' : (idx % 2 === 0 ? 'flex-row' : 'flex-row-reverse'))}
                 >
                   {/* Dot */}
                   <div 
@@ -7488,11 +7528,11 @@ export const CaseStudyPreview = ({ projects, brandColor, selectedStyle, onStyleC
 // ============ CAREER PREVIEW ============
 // 6 Professional Styles: Cards, List, Minimal, Table, Featured, Timeline
 // Best Practices: Accessibility (semantic HTML, ARIA), Equal Height Cards, Line Clamp, Edge Cases
-type JobPosition = { id: number; title: string; department: string; location: string; type: string; salary: string; description: string };
+interface JobPosition { id: number; title: string; department: string; location: string; type: string; salary: string; description: string }
 export type CareerStyle = 'cards' | 'list' | 'minimal' | 'table' | 'featured' | 'timeline';
 export const CareerPreview = ({ jobs, brandColor, selectedStyle, onStyleChange }: { jobs: JobPosition[]; brandColor: string; selectedStyle?: CareerStyle; onStyleChange?: (style: CareerStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'cards';
+  const previewStyle = selectedStyle ?? 'cards';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as CareerStyle);
   
   const styles = [
@@ -7507,13 +7547,13 @@ export const CareerPreview = ({ jobs, brandColor, selectedStyle, onStyleChange }
   // Dynamic info bar - shows job counts by type or department
   const getJobsInfo = () => {
     const count = jobs.length;
-    if (count === 0) return 'Chưa có vị trí';
+    if (count === 0) {return 'Chưa có vị trí';}
     
-    const typeCount = jobs.reduce((acc, job) => {
+    const typeCount = jobs.reduce< Record<string, number>>((acc, job) => {
       const type = job.type || 'Full-time';
       acc[type] = (acc[type] || 0) + 1;
       return acc;
-    }, {} as Record<string, number>);
+    }, {});
     
     const typeSummary = Object.entries(typeCount).slice(0, 3).map(([type, cnt]) => `${type} (${cnt})`).join(', ');
     return count <= 3 ? `${count} vị trí • ${typeSummary}` : `${count} vị trí`;
@@ -7574,7 +7614,7 @@ export const CareerPreview = ({ jobs, brandColor, selectedStyle, onStyleChange }
         <CareerHeader subtitle="Tham gia đội ngũ của chúng tôi" />
         {jobs.length === 0 ? <EmptyState /> : (
           <>
-            <div className={cn("grid gap-4 max-w-6xl mx-auto", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+            <div className={cn("grid gap-4 max-w-6xl mx-auto", device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'))}>
               {visibleJobs.map((job) => <JobCard key={job.id} job={job} brandColor={brandColor} device={device} />)}
             </div>
             {remainingCount > 0 && (
@@ -7848,7 +7888,7 @@ export const CareerPreview = ({ jobs, brandColor, selectedStyle, onStyleChange }
           {otherJobs.length > 0 && (
             <>
               <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-4 text-lg">Vị trí khác</h4>
-              <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')}>
+              <div className={cn("grid gap-4", device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'))}>
                 {otherJobs.map((job) => (
                   <article 
                     key={job.id} 
@@ -7888,12 +7928,12 @@ export const CareerPreview = ({ jobs, brandColor, selectedStyle, onStyleChange }
     }
 
     // Group jobs by department with global index tracking
-    const groupedJobs = jobs.reduce((acc, job, globalIdx) => {
+    const groupedJobs = jobs.reduce< Record<string, (JobPosition & { globalIdx: number })[]>>((acc, job, globalIdx) => {
       const dept = job.department || 'Đang cập nhật';
-      if (!acc[dept]) acc[dept] = [];
+      if (!acc[dept]) {acc[dept] = [];}
       acc[dept].push({ ...job, globalIdx: globalIdx + 1 }); // Track global 1-based index
       return acc;
-    }, {} as Record<string, (JobPosition & { globalIdx: number })[]>);
+    }, {});
 
     return (
       <div className={cn("px-4", device === 'mobile' ? 'py-6' : 'py-10 md:py-16')}>
@@ -7995,7 +8035,7 @@ export const CareerPreview = ({ jobs, brandColor, selectedStyle, onStyleChange }
 // ============ CONTACT PREVIEW ============
 // 6 Professional Styles: Modern Split, Floating Card, Grid Cards, Elegant Clean, Minimal Form, Centered
 // Best Practices: Clear labels, keyboard navigation, inline validation, ARIA attributes, social links, response time expectation
-export type ContactConfig = {
+export interface ContactConfig {
   showMap: boolean;
   mapEmbed: string;
   address: string;
@@ -8003,30 +8043,37 @@ export type ContactConfig = {
   email: string;
   workingHours: string;
   formFields: string[];
-  socialLinks: Array<{ id: number; platform: string; url: string }>;
+  socialLinks: { id: number; platform: string; url: string }[];
   showForm?: boolean;
   formTitle?: string;
   formDescription?: string;
   submitButtonText?: string;
   responseTimeText?: string;
-};
+}
 export type ContactStyle = 'modern' | 'floating' | 'grid' | 'elegant' | 'minimal' | 'centered';
 
 const getSocialIcon = (platform: string) => {
   switch (platform.toLowerCase()) {
-    case 'facebook': return Facebook;
-    case 'zalo': return MessageCircle;
-    case 'instagram': return Instagram;
-    case 'twitter': return Twitter;
-    case 'linkedin': return Linkedin;
-    case 'youtube': return Youtube;
-    default: return Globe;
+    case 'facebook': { return Facebook;
+    }
+    case 'zalo': { return MessageCircle;
+    }
+    case 'instagram': { return Instagram;
+    }
+    case 'twitter': { return Twitter;
+    }
+    case 'linkedin': { return Linkedin;
+    }
+    case 'youtube': { return Youtube;
+    }
+    default: { return Globe;
+    }
   }
 };
 
 export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChange }: { config: ContactConfig; brandColor: string; selectedStyle?: ContactStyle; onStyleChange?: (style: ContactStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'modern';
+  const previewStyle = selectedStyle ?? 'modern';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ContactStyle);
   const styles = [
     { id: 'modern', label: 'Modern Split' }, 
@@ -8041,15 +8088,15 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
 
   const getInfoText = () => {
     const parts: string[] = [];
-    if (config.showMap && config.mapEmbed) parts.push('Có bản đồ');
-    else if (config.showMap) parts.push('Bản đồ (chưa có URL)');
-    if (config.showForm !== false && (previewStyle === 'minimal' || previewStyle === 'centered')) parts.push('Có form liên hệ');
-    if (activeSocials.length > 0) parts.push(`${activeSocials.length} MXH`);
+    if (config.showMap && config.mapEmbed) {parts.push('Có bản đồ');}
+    else if (config.showMap) {parts.push('Bản đồ (chưa có URL)');}
+    if (config.showForm !== false && (previewStyle === 'minimal' || previewStyle === 'centered')) {parts.push('Có form liên hệ');}
+    if (activeSocials.length > 0) {parts.push(`${activeSocials.length} MXH`);}
     return parts.length > 0 ? parts.join(' • ') : 'Thông tin liên hệ cơ bản';
   };
 
   const renderSocialLinks = (size: number = 18, className: string = "") => {
-    if (activeSocials.length === 0) return null;
+    if (activeSocials.length === 0) {return null;}
     return (
       <div className={cn("flex items-center gap-2", className)}>
         {activeSocials.map(social => {
@@ -8392,9 +8439,9 @@ export const ContactPreview = ({ config, brandColor, selectedStyle, onStyleChang
 // ============ TRUST BADGES / CERTIFICATIONS PREVIEW ============
 // 6 Professional Styles: Grid, Cards, Marquee, Wall, Carousel, Featured
 // Best Practices: Grayscale-to-color hover, lightbox/zoom indicator, verification links, alt text accessibility
-type TrustBadgeItem = { id: number; url: string; link: string; name?: string };
+interface TrustBadgeItem { id: number; url: string; link: string; name?: string }
 export type TrustBadgesStyle = 'grid' | 'cards' | 'marquee' | 'wall' | 'carousel' | 'featured';
-export type TrustBadgesConfig = { heading?: string; subHeading?: string; buttonText?: string; buttonLink?: string };
+export interface TrustBadgesConfig { heading?: string; subHeading?: string; buttonText?: string; buttonLink?: string }
 
 // Auto Scroll Slider cho Marquee style
 const TrustBadgesAutoScroll = ({ children, speed = 0.6, isPaused }: { children: React.ReactNode; speed?: number; isPaused?: boolean }) => {
@@ -8402,7 +8449,7 @@ const TrustBadgesAutoScroll = ({ children, speed = 0.6, isPaused }: { children: 
 
   React.useEffect(() => {
     const scroller = scrollRef.current;
-    if (!scroller) return;
+    if (!scroller) {return;}
 
     let animationId: number;
     let position = scroller.scrollLeft;
@@ -8421,7 +8468,7 @@ const TrustBadgesAutoScroll = ({ children, speed = 0.6, isPaused }: { children: 
     };
 
     animationId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(animationId);
+    return () =>{  cancelAnimationFrame(animationId); };
   }, [isPaused, speed]);
 
   return (
@@ -8429,8 +8476,8 @@ const TrustBadgesAutoScroll = ({ children, speed = 0.6, isPaused }: { children: 
       ref={scrollRef}
       className="flex overflow-hidden select-none w-full cursor-grab active:cursor-grabbing"
       style={{ 
-        maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
-        WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
+        WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+        maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
       }}
     >
       <div className="flex shrink-0 gap-16 md:gap-20 items-center px-4">{children}</div>
@@ -8455,7 +8502,7 @@ export const TrustBadgesPreview = ({
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [isPaused, setIsPaused] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const previewStyle = selectedStyle || 'cards';
+  const previewStyle = selectedStyle ?? 'cards';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as TrustBadgesStyle);
   
   const styles = [
@@ -8468,8 +8515,8 @@ export const TrustBadgesPreview = ({
   ];
 
   // Config values with defaults
-  const heading = config?.heading || 'Chứng nhận & Giải thưởng';
-  const subHeading = config?.subHeading || 'Được công nhận bởi các tổ chức uy tín';
+  const heading = config?.heading ?? 'Chứng nhận & Giải thưởng';
+  const subHeading = config?.subHeading ?? 'Được công nhận bởi các tổ chức uy tín';
 
   // Max visible items pattern
   const MAX_VISIBLE = device === 'mobile' ? 4 : 8;
@@ -8523,15 +8570,15 @@ export const TrustBadgesPreview = ({
           <>
             <div className={cn(
               "grid gap-4 md:gap-5",
-              device === 'mobile' ? 'grid-cols-2' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4'
+              device === 'mobile' ? 'grid-cols-2' : (device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4')
             )}>
               {visibleItems.map((item) => (
                 <div 
                   key={item.id} 
                   className="group relative aspect-square bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300"
                   style={{ 
-                    padding: device === 'mobile' ? '16px' : '20px',
-                    border: `1px solid ${brandColor}15`
+                    border: `1px solid ${brandColor}15`,
+                    padding: device === 'mobile' ? '16px' : '20px'
                   }}
                   onMouseEnter={(e) => { 
                     e.currentTarget.style.borderColor = `${brandColor}40`; 
@@ -8545,7 +8592,7 @@ export const TrustBadgesPreview = ({
                   }}
                 >
                   {item.url ? (
-                    <PreviewImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || 'Chứng nhận'} />
+                    <PreviewImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name ?? 'Chứng nhận'} />
                   ) : (
                     <ImageIcon size={device === 'mobile' ? 32 : 40} className="text-slate-300" />
                   )}
@@ -8590,7 +8637,7 @@ export const TrustBadgesPreview = ({
             <>
               <div className={cn(
                 "grid gap-5 md:gap-6",
-                device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+                device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')
               )}>
                 {cardItems.map((item) => (
                   <div 
@@ -8609,7 +8656,7 @@ export const TrustBadgesPreview = ({
                     <div className={cn("bg-slate-50 dark:bg-slate-700/30 flex items-center justify-center relative overflow-hidden", device === 'mobile' ? 'aspect-[4/3] p-6' : 'aspect-[5/4] p-10')}>
                       <div className="absolute inset-0 bg-blue-50/0 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/20 transition-colors duration-300" />
                       {item.url ? (
-                        <PreviewImage src={item.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" alt={item.name || 'Chứng nhận'} />
+                        <PreviewImage src={item.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 z-10" alt={item.name ?? 'Chứng nhận'} />
                       ) : (
                         <ImageIcon size={48} className="text-slate-300" />
                       )}
@@ -8621,7 +8668,7 @@ export const TrustBadgesPreview = ({
                     </div>
                     <div className={cn("bg-white dark:bg-slate-800 border-t flex items-center justify-between group-hover:bg-slate-50 dark:group-hover:bg-slate-700/50 transition-colors", device === 'mobile' ? 'py-3 px-4 min-h-[48px]' : 'py-4 px-5')} style={{ borderColor: `${brandColor}10` }}>
                       <span className="font-semibold truncate text-sm" style={{ color: brandColor }}>
-                        {item.name || 'Chứng nhận'}
+                        {item.name ?? 'Chứng nhận'}
                       </span>
                       <ArrowUpRight size={16} className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: brandColor }} />
                     </div>
@@ -8641,8 +8688,8 @@ export const TrustBadgesPreview = ({
     <section 
       className={cn("w-full border-y", device === 'mobile' ? 'py-10' : 'py-14')}
       style={{ backgroundColor: `${brandColor}05`, borderColor: `${brandColor}15` }}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() =>{  setIsPaused(true); }}
+      onMouseLeave={() =>{  setIsPaused(false); }}
     >
       <div className="container max-w-7xl mx-auto px-4 mb-8 text-center">
         <SectionHeader />
@@ -8655,7 +8702,7 @@ export const TrustBadgesPreview = ({
               className={cn("w-auto flex items-center justify-center px-4 hover:scale-110 transition-all duration-300 cursor-pointer relative group", device === 'mobile' ? 'h-20' : 'h-24 md:h-28')}
             >
               {item.url ? (
-                <PreviewImage src={item.url} className="h-full w-auto object-contain max-w-[200px] transition-transform" alt={item.name || 'Chứng nhận'} />
+                <PreviewImage src={item.url} className="h-full w-auto object-contain max-w-[200px] transition-transform" alt={item.name ?? 'Chứng nhận'} />
               ) : (
                 <div className="h-16 w-28 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
                   <ImageIcon size={28} className="text-slate-400" />
@@ -8708,14 +8755,14 @@ export const TrustBadgesPreview = ({
                     <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full shadow-inner" style={{ backgroundColor: `${brandColor}60` }}></div>
                     <div className="flex-1 flex items-center justify-center p-3 relative overflow-hidden" style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}10` }}>
                       {item.url ? (
-                        <PreviewImage src={item.url} className="w-full h-full object-contain" alt={item.name || 'Chứng nhận'} />
+                        <PreviewImage src={item.url} className="w-full h-full object-contain" alt={item.name ?? 'Chứng nhận'} />
                       ) : (
                         <ImageIcon size={28} className="text-slate-300" />
                       )}
                     </div>
                     <div className={cn("flex items-center justify-center", device === 'mobile' ? 'h-7 mt-1' : 'h-8 mt-1')}>
                       <span className={cn("font-semibold uppercase tracking-wider text-center truncate px-1", device === 'mobile' ? 'text-[8px]' : 'text-[9px]')} style={{ color: `${brandColor}cc` }}>
-                        {item.name ? (item.name.length > 18 ? item.name.substring(0, 16) + '...' : item.name) : 'Certificate'}
+                        {item.name ? (item.name.length > 18 ? item.name.slice(0, 16) + '...' : item.name) : 'Certificate'}
                       </span>
                     </div>
                   </div>
@@ -8731,7 +8778,7 @@ export const TrustBadgesPreview = ({
 
   // Style 5: Carousel - Horizontal scroll với navigation arrows
   const renderCarouselStyle = () => {
-    const itemsPerView = device === 'mobile' ? 2 : device === 'tablet' ? 3 : 4;
+    const itemsPerView = device === 'mobile' ? 2 : (device === 'tablet' ? 3 : 4);
     const maxIndex = Math.max(0, items.length - itemsPerView);
     return (
       <section className={cn("w-full bg-white dark:bg-slate-900", device === 'mobile' ? 'py-8 px-3' : 'py-12 px-6')}>
@@ -8742,18 +8789,18 @@ export const TrustBadgesPreview = ({
               {items.length > itemsPerView && (
                 <>
                   <button
-                    onClick={() => setCarouselIndex(Math.max(0, carouselIndex - 1))}
+                    onClick={() =>{  setCarouselIndex(Math.max(0, carouselIndex - 1)); }}
                     disabled={carouselIndex === 0}
                     className={cn("absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-lg flex items-center justify-center transition-all", carouselIndex === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110')}
-                    style={{ left: device === 'mobile' ? '-4px' : '-16px', border: `1px solid ${brandColor}20` }}
+                    style={{ border: `1px solid ${brandColor}20`, left: device === 'mobile' ? '-4px' : '-16px' }}
                   >
                     <ChevronLeft size={20} style={{ color: brandColor }} />
                   </button>
                   <button
-                    onClick={() => setCarouselIndex(Math.min(maxIndex, carouselIndex + 1))}
+                    onClick={() =>{  setCarouselIndex(Math.min(maxIndex, carouselIndex + 1)); }}
                     disabled={carouselIndex >= maxIndex}
                     className={cn("absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-lg flex items-center justify-center transition-all", carouselIndex >= maxIndex ? 'opacity-40 cursor-not-allowed' : 'hover:scale-110')}
-                    style={{ right: device === 'mobile' ? '-4px' : '-16px', border: `1px solid ${brandColor}20` }}
+                    style={{ border: `1px solid ${brandColor}20`, right: device === 'mobile' ? '-4px' : '-16px' }}
                   >
                     <ChevronRight size={20} style={{ color: brandColor }} />
                   </button>
@@ -8769,7 +8816,7 @@ export const TrustBadgesPreview = ({
                     >
                       <div 
                         className="aspect-square rounded-xl flex items-center justify-center transition-all duration-300"
-                        style={{ padding: device === 'mobile' ? '12px' : '16px', backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
+                        style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15`, padding: device === 'mobile' ? '12px' : '16px' }}
                         onMouseEnter={(e) => { 
                           e.currentTarget.style.borderColor = `${brandColor}40`; 
                           e.currentTarget.style.boxShadow = `0 8px 20px ${brandColor}15`; 
@@ -8782,7 +8829,7 @@ export const TrustBadgesPreview = ({
                         }}
                       >
                         {item.url ? (
-                          <PreviewImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || 'Chứng nhận'} />
+                          <PreviewImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name ?? 'Chứng nhận'} />
                         ) : (
                           <ImageIcon size={32} className="text-slate-300" />
                         )}
@@ -8797,7 +8844,7 @@ export const TrustBadgesPreview = ({
               {items.length > itemsPerView && (
                 <div className="flex justify-center gap-2 mt-6">
                   {Array.from({ length: maxIndex + 1 }).map((_, idx) => (
-                    <button key={idx} onClick={() => setCarouselIndex(idx)} className={cn("h-2 rounded-full transition-all", carouselIndex === idx ? 'w-6' : 'w-2')} style={{ backgroundColor: carouselIndex === idx ? brandColor : `${brandColor}30` }} />
+                    <button key={idx} onClick={() =>{  setCarouselIndex(idx); }} className={cn("h-2 rounded-full transition-all", carouselIndex === idx ? 'w-6' : 'w-2')} style={{ backgroundColor: carouselIndex === idx ? brandColor : `${brandColor}30` }} />
                   ))}
                 </div>
               )}
@@ -8834,7 +8881,7 @@ export const TrustBadgesPreview = ({
                 >
                   <div className={cn("flex items-center justify-center relative", device === 'mobile' ? 'aspect-[4/3] p-6' : 'aspect-[4/3] p-10')}>
                     {featuredItem.url ? (
-                      <PreviewImage src={featuredItem.url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt={featuredItem.name || 'Chứng nhận nổi bật'} />
+                      <PreviewImage src={featuredItem.url} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" alt={featuredItem.name ?? 'Chứng nhận nổi bật'} />
                     ) : (
                       <ImageIcon size={64} className="text-slate-300" />
                     )}
@@ -8851,7 +8898,7 @@ export const TrustBadgesPreview = ({
                   </div>
                   <div className={cn("border-t flex items-center justify-center", device === 'mobile' ? 'py-3 min-h-[48px]' : 'py-4')} style={{ borderColor: `${brandColor}15` }}>
                     <span className="font-bold text-base" style={{ color: brandColor }}>
-                      {featuredItem.name || 'Chứng nhận nổi bật'}
+                      {featuredItem.name ?? 'Chứng nhận nổi bật'}
                     </span>
                   </div>
                 </div>
@@ -8861,7 +8908,7 @@ export const TrustBadgesPreview = ({
                   <div 
                     key={item.id} 
                     className="group aspect-square rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300"
-                    style={{ padding: device === 'mobile' ? '10px' : '12px', backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15` }}
+                    style={{ backgroundColor: `${brandColor}05`, border: `1px solid ${brandColor}15`, padding: device === 'mobile' ? '10px' : '12px' }}
                     onMouseEnter={(e) => { 
                       e.currentTarget.style.borderColor = `${brandColor}40`; 
                       e.currentTarget.style.boxShadow = `0 4px 12px ${brandColor}10`; 
@@ -8872,7 +8919,7 @@ export const TrustBadgesPreview = ({
                     }}
                   >
                     {item.url ? (
-                      <PreviewImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name || 'Chứng nhận'} />
+                      <PreviewImage src={item.url} className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105" alt={item.name ?? 'Chứng nhận'} />
                     ) : (
                       <ImageIcon size={24} className="text-slate-300" />
                     )}
@@ -8950,25 +8997,25 @@ export const TrustBadgesPreview = ({
 };
 
 // ============ SPEED DIAL PREVIEW ============
-type SpeedDialAction = { id: number; icon: string; label: string; url: string; bgColor: string };
+interface SpeedDialAction { id: number; icon: string; label: string; url: string; bgColor: string }
 export type SpeedDialStyle = 'fab' | 'sidebar' | 'pills' | 'stack' | 'dock' | 'minimal';
 
 const SpeedDialIcon = ({ name, size = 20 }: { name: string; size?: number }) => {
   const icons: Record<string, React.ReactNode> = {
-    'phone': <Phone size={size} />,
-    'mail': <Mail size={size} />,
-    'message-circle': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg></span>,
-    'map-pin': <MapPin size={size} />,
-    'facebook': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>,
-    'instagram': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg></span>,
-    'youtube': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg></span>,
-    'zalo': <span className="inline-flex items-center justify-center text-[10px] font-bold">Zalo</span>,
     'calendar': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg></span>,
-    'shopping-cart': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></span>,
+    'facebook': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></span>,
     'headphones': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg></span>,
     'help-circle': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg></span>,
+    'instagram': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg></span>,
+    'mail': <Mail size={size} />,
+    'map-pin': <MapPin size={size} />,
+    'message-circle': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg></span>,
+    'phone': <Phone size={size} />,
+    'shopping-cart': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></span>,
+    'youtube': <span className="inline-flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg></span>,
+    'zalo': <span className="inline-flex items-center justify-center text-[10px] font-bold">Zalo</span>,
   };
-  return <>{icons[name] || <Plus size={size} />}</>;
+  return <>{icons[name] ?? <Plus size={size} />}</>;
 };
 
 export const SpeedDialPreview = ({ 
@@ -8989,7 +9036,7 @@ export const SpeedDialPreview = ({
   onStyleChange?: (style: SpeedDialStyle) => void;
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || config.style || 'fab';
+  const previewStyle = (selectedStyle ?? config.style) || 'fab';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as SpeedDialStyle);
   
   // BẮT BUỘC 6 styles theo Best Practice
@@ -9102,7 +9149,7 @@ export const SpeedDialPreview = ({
     <div className={cn("absolute flex flex-col items-center", isRight ? "right-4 bottom-4" : "left-4 bottom-4")} role="group" aria-label="Liên hệ nhanh">
       <div className="relative" style={{ height: `${Math.min(config.actions.length * 32 + 20, 180)}px` }}>
         {config.actions.map((action, idx) => (
-          <a key={action.id} href={action.url || '#'} className={cn("group absolute left-1/2 -translate-x-1/2 flex items-center justify-center rounded-full shadow-lg text-white hover:scale-110 hover:z-50 transition-all duration-200 cursor-pointer", isMobile ? "w-10 h-10" : "w-11 h-11")} style={{ backgroundColor: action.bgColor || brandColor, bottom: `${idx * (isMobile ? 28 : 32)}px`, zIndex: config.actions.length - idx, boxShadow: `0 4px 12px ${action.bgColor || brandColor}40` }} aria-label={action.label || action.icon}>
+          <a key={action.id} href={action.url || '#'} className={cn("group absolute left-1/2 -translate-x-1/2 flex items-center justify-center rounded-full shadow-lg text-white hover:scale-110 hover:z-50 transition-all duration-200 cursor-pointer", isMobile ? "w-10 h-10" : "w-11 h-11")} style={{ backgroundColor: action.bgColor || brandColor, bottom: `${idx * (isMobile ? 28 : 32)}px`, boxShadow: `0 4px 12px ${action.bgColor || brandColor}40`, zIndex: config.actions.length - idx }} aria-label={action.label || action.icon}>
             <SpeedDialIcon name={action.icon} size={isMobile ? 14 : 16} />
             {action.label && <span className={cn("absolute px-2 py-1 bg-slate-900/90 text-white text-xs font-medium rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap", isRight ? "right-full mr-2" : "left-full ml-2")}>{action.label}</span>}
           </a>
@@ -9113,7 +9160,7 @@ export const SpeedDialPreview = ({
 
   // Style 5: Dock - MacOS dock style
   const renderDockStyle = () => (
-    <div className={cn("absolute bottom-4 left-1/2 -translate-x-1/2 flex items-end justify-center rounded-2xl p-2", isMobile ? "gap-1" : "gap-1.5")} style={{ backgroundColor: `${brandColor}10`, backdropFilter: 'blur(8px)' }} role="group" aria-label="Liên hệ nhanh">
+    <div className={cn("absolute bottom-4 left-1/2 -translate-x-1/2 flex items-end justify-center rounded-2xl p-2", isMobile ? "gap-1" : "gap-1.5")} style={{ backdropFilter: 'blur(8px)', backgroundColor: `${brandColor}10` }} role="group" aria-label="Liên hệ nhanh">
       {config.actions.map((action) => (
         <a key={action.id} href={action.url || '#'} className={cn("group relative flex items-center justify-center rounded-xl text-white transition-all duration-200 cursor-pointer hover:scale-125 hover:-translate-y-2", isMobile ? "w-10 h-10" : "w-11 h-11")} style={{ backgroundColor: action.bgColor || brandColor, boxShadow: `0 4px 12px ${action.bgColor || brandColor}30` }} aria-label={action.label || action.icon}>
           <SpeedDialIcon name={action.icon} size={isMobile ? 14 : 16} />
@@ -9142,15 +9189,15 @@ export const SpeedDialPreview = ({
   // Dynamic info
   const getInfo = () => {
     const count = config.actions.length;
-    if (count === 0) return 'Chưa có hành động';
-    const styleInfo: Record<string, string> = { fab: 'Buttons dọc với tooltip', sidebar: 'Thanh cố định bên cạnh', pills: 'Nhãn luôn hiển thị', stack: 'Buttons xếp chồng', dock: 'Dock style (phóng to hover)', minimal: 'Chỉ icons, gọn nhẹ' };
+    if (count === 0) {return 'Chưa có hành động';}
+    const styleInfo: Record<string, string> = { dock: 'Dock style (phóng to hover)', fab: 'Buttons dọc với tooltip', minimal: 'Chỉ icons, gọn nhẹ', pills: 'Nhãn luôn hiển thị', sidebar: 'Thanh cố định bên cạnh', stack: 'Buttons xếp chồng' };
     return `${count} hành động • ${styleInfo[previewStyle] || ''}`;
   };
 
   return (
     <PreviewWrapper title="Preview Speed Dial" device={device} setDevice={setDevice} previewStyle={previewStyle} setPreviewStyle={setPreviewStyle} styles={styles} info={getInfo()}>
       <BrowserFrame>
-        <div className={cn("relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 overflow-hidden", isMobile ? "h-64" : isTablet ? "h-72" : "h-80")}>
+        <div className={cn("relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 overflow-hidden", isMobile ? "h-64" : (isTablet ? "h-72" : "h-80"))}>
           {/* Sample page content */}
           <div className={cn("space-y-2", isMobile ? "p-3" : "p-4")}>
             <div className={cn("bg-slate-200 dark:bg-slate-700 rounded", isMobile ? "h-4 w-32" : "h-5 w-40")} />
@@ -9183,8 +9230,8 @@ export const SpeedDialPreview = ({
 // ============ PRODUCT CATEGORIES PREVIEW ============
 // Best Practices: Clear navigation, visual appeal, mobile optimization, hover effects
 // 6 styles: grid, carousel, cards, minimal, showcase, marquee
-type CategoryConfigItem = { id: number; categoryId: string; customImage?: string; imageMode?: 'default' | 'icon' | 'upload' | 'url' };
-type CategoryData = { _id: string; name: string; slug: string; image?: string; description?: string };
+interface CategoryConfigItem { id: number; categoryId: string; customImage?: string; imageMode?: 'default' | 'icon' | 'upload' | 'url' }
+interface CategoryData { _id: string; name: string; slug: string; image?: string; description?: string }
 export type ProductCategoriesStyle = 'grid' | 'carousel' | 'cards' | 'minimal' | 'showcase' | 'marquee';
 
 // Import icon render helper
@@ -9212,7 +9259,7 @@ export const ProductCategoriesPreview = ({
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const isMobile = device === 'mobile';
   const isTablet = device === 'tablet';
-  const previewStyle = selectedStyle || config.style || 'grid';
+  const previewStyle = (selectedStyle ?? config.style) || 'grid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ProductCategoriesStyle);
   
   const styles = [
@@ -9235,8 +9282,8 @@ export const ProductCategoriesPreview = ({
   const resolvedCategories = config.categories
     .map((item, idx) => {
       const cat = categoryMap[item.categoryId];
-      if (!cat) return null;
-      const imageMode = item.imageMode || 'default';
+      if (!cat) {return null;}
+      const imageMode = item.imageMode ?? 'default';
       let displayImage = cat.image;
       let displayIcon: string | undefined;
       
@@ -9244,7 +9291,7 @@ export const ProductCategoriesPreview = ({
         displayIcon = item.customImage.replace('icon:', '');
         displayImage = undefined;
       } else if (imageMode === 'upload' || imageMode === 'url') {
-        displayImage = item.customImage || cat.image;
+        displayImage = item.customImage ?? cat.image;
       }
       
       return {
@@ -9258,18 +9305,22 @@ export const ProductCategoriesPreview = ({
     .filter(Boolean) as (CategoryData & { itemId: number; displayImage?: string; displayIcon?: string; imageMode: string })[];
 
   const getGridCols = () => {
-    if (isMobile) return config.columnsMobile === 3 ? 'grid-cols-3' : 'grid-cols-2';
-    if (isTablet) return 'grid-cols-3';
+    if (isMobile) {return config.columnsMobile === 3 ? 'grid-cols-3' : 'grid-cols-2';}
+    if (isTablet) {return 'grid-cols-3';}
     switch (config.columnsDesktop) {
-      case 3: return 'grid-cols-3';
-      case 5: return 'grid-cols-5';
-      case 6: return 'grid-cols-6';
-      default: return 'grid-cols-4';
+      case 3: { return 'grid-cols-3';
+      }
+      case 5: { return 'grid-cols-5';
+      }
+      case 6: { return 'grid-cols-6';
+      }
+      default: { return 'grid-cols-4';
+      }
     }
   };
 
   // Max visible items for "+N" pattern
-  const MAX_VISIBLE = isMobile ? 4 : isTablet ? 6 : 8;
+  const MAX_VISIBLE = isMobile ? 4 : (isTablet ? 6 : 8);
   const visibleCategories = resolvedCategories.slice(0, MAX_VISIBLE);
   const remainingCount = resolvedCategories.length - MAX_VISIBLE;
 
@@ -9290,13 +9341,13 @@ export const ProductCategoriesPreview = ({
   // Render category image/icon helper
   const renderCategoryVisual = (cat: typeof resolvedCategories[0], size: 'sm' | 'md' | 'lg' = 'md') => {
     const iconData = cat.displayIcon ? getCategoryIcon(cat.displayIcon) : null;
-    const iconSizes = { sm: isMobile ? 24 : 28, md: isMobile ? 32 : 40, lg: isMobile ? 40 : 56 };
+    const iconSizes = { lg: isMobile ? 40 : 56, md: isMobile ? 32 : 40, sm: isMobile ? 24 : 28 };
     const iconSize = iconSizes[size];
     
     if (cat.displayIcon && iconData) {
       return (
         <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>
-          {React.createElement(iconData.icon, { size: iconSize, className: 'text-white' })}
+          {React.createElement(iconData.icon, { className: 'text-white', size: iconSize })}
         </div>
       );
     }
@@ -9318,9 +9369,9 @@ export const ProductCategoriesPreview = ({
       : visibleCategories;
     const containerClass = resolvedCategories.length === 1 
       ? 'max-w-xs mx-auto' 
-      : resolvedCategories.length === 2 
+      : (resolvedCategories.length === 2 
         ? 'max-w-lg mx-auto grid grid-cols-2 gap-4'
-        : cn("grid gap-4", getGridCols());
+        : cn("grid gap-4", getGridCols()));
 
     return (
       <section className={cn("w-full", isMobile ? 'py-6 px-3' : 'py-10 px-6')}>
@@ -9437,7 +9488,7 @@ export const ProductCategoriesPreview = ({
           </h2>
           
           {resolvedCategories.length === 0 ? renderEmptyState() : (
-            <div className={cn("grid", isMobile ? 'grid-cols-1 gap-3' : isTablet ? 'grid-cols-2 gap-4' : 'grid-cols-3 gap-4')}>
+            <div className={cn("grid", isMobile ? 'grid-cols-1 gap-3' : (isTablet ? 'grid-cols-2 gap-4' : 'grid-cols-3 gap-4'))}>
               {displayItems.map((cat) => (
                 <div 
                   key={cat.itemId} 
@@ -9510,11 +9561,11 @@ export const ProductCategoriesPreview = ({
                 >
                   {cat.displayIcon && iconData ? (
                     React.createElement(iconData.icon, { size: isMobile ? 14 : 16, style: { color: brandColor } })
-                  ) : cat.displayImage ? (
+                  ) : (cat.displayImage ? (
                     <PreviewImage src={cat.displayImage} alt="" className={cn("rounded-full object-cover", isMobile ? 'w-5 h-5' : 'w-6 h-6')} />
                   ) : (
                     <Package size={isMobile ? 14 : 16} style={{ color: brandColor }} />
-                  )}
+                  ))}
                   <span className={cn("font-medium whitespace-nowrap", isMobile ? 'text-xs' : 'text-sm')}>
                     {cat.name}
                   </span>
@@ -9532,11 +9583,11 @@ export const ProductCategoriesPreview = ({
 
   // Style 5: Showcase - Featured first item + grid of smaller items
   const renderShowcaseStyle = () => {
-    if (resolvedCategories.length === 0) return (
+    if (resolvedCategories.length === 0) {return (
       <section className={cn("w-full", isMobile ? 'py-6 px-3' : 'py-10 px-6')}>
         <div className="max-w-7xl mx-auto">{renderEmptyState()}</div>
       </section>
-    );
+    );}
     
     const [featured, ...others] = resolvedCategories;
     const displayOthers = others.slice(0, isMobile ? 3 : 5);
@@ -9687,15 +9738,15 @@ export const ProductCategoriesPreview = ({
   // Dynamic info bar với image size recommendations
   const getPreviewInfo = () => {
     const count = resolvedCategories.length;
-    if (count === 0) return 'Chưa có danh mục';
+    if (count === 0) {return 'Chưa có danh mục';}
     
     const sizeRecommendations: Record<string, string> = {
-      grid: `${count} danh mục • Ảnh: 400×400px (1:1)`,
-      carousel: `${count} danh mục • Ảnh: 300×300px (1:1)`,
       cards: `${count} danh mục • Ảnh: 200×200px (1:1)`,
+      carousel: `${count} danh mục • Ảnh: 300×300px (1:1)`,
+      grid: `${count} danh mục • Ảnh: 400×400px (1:1)`,
+      marquee: `${count} danh mục • Ảnh: 80×80px (1:1)`,
       minimal: `${count} danh mục • Icon/Ảnh: 48×48px`,
       showcase: `${count} danh mục • Featured: 600×800px (3:4) • Others: 400×300px (4:3)`,
-      marquee: `${count} danh mục • Ảnh: 80×80px (1:1)`,
     };
     return sizeRecommendations[previewStyle] || `${count} danh mục`;
   };
@@ -9783,7 +9834,7 @@ interface CategoryProductsPreviewProps {
   brandColor: string;
   selectedStyle: CategoryProductsStyle;
   onStyleChange: (style: CategoryProductsStyle) => void;
-  categoriesData: Array<{ _id: string; name: string; slug?: string; image?: string }>;
+  categoriesData: { _id: string; name: string; slug?: string; image?: string }[];
   productsData: ProductData[];
 }
 
@@ -9797,7 +9848,7 @@ export const CategoryProductsPreview = ({
 }: CategoryProductsPreviewProps) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const previewStyle = selectedStyle || 'grid';
-  const setPreviewStyle = (s: string) => onStyleChange(s as CategoryProductsStyle);
+  const setPreviewStyle = (s: string) =>{  onStyleChange(s as CategoryProductsStyle); };
   
   const styles = [
     { id: 'grid', label: 'Grid' },
@@ -9812,7 +9863,7 @@ export const CategoryProductsPreview = ({
   const resolvedSections = config.sections
     .map(section => {
       const category = categoriesData.find(c => c._id === section.categoryId);
-      if (!category) return null;
+      if (!category) {return null;}
       
       const products = productsData
         .filter(p => p.categoryId === section.categoryId)
@@ -9824,10 +9875,10 @@ export const CategoryProductsPreview = ({
         products,
       };
     })
-    .filter(Boolean) as Array<CategoryProductsSection & { 
+    .filter(Boolean) as (CategoryProductsSection & { 
       category: { _id: string; name: string; slug?: string; image?: string }; 
       products: ProductData[] 
-    }>;
+    })[];
 
   const getGridCols = () => {
     if (device === 'mobile') {
@@ -9837,14 +9888,17 @@ export const CategoryProductsPreview = ({
       return 'grid-cols-3';
     }
     switch (config.columnsDesktop) {
-      case 3: return 'grid-cols-3';
-      case 5: return 'grid-cols-5';
-      default: return 'grid-cols-4';
+      case 3: { return 'grid-cols-3';
+      }
+      case 5: { return 'grid-cols-5';
+      }
+      default: { return 'grid-cols-4';
+      }
     }
   };
 
   const formatPrice = (price?: number) => {
-    if (!price) return '0đ';
+    if (!price) {return '0đ';}
     return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
   };
 
@@ -9853,23 +9907,30 @@ export const CategoryProductsPreview = ({
     const sectionCount = resolvedSections.length;
     const totalProducts = resolvedSections.reduce((sum, s) => sum + s.products.length, 0);
     
-    if (sectionCount === 0) return 'Chưa có section nào';
+    if (sectionCount === 0) {return 'Chưa có section nào';}
     
     switch (previewStyle) {
-      case 'grid':
+      case 'grid': {
         return `${sectionCount} section • ${totalProducts} SP • Ảnh: 800×800px (1:1)`;
-      case 'carousel':
+      }
+      case 'carousel': {
         return `${sectionCount} section • ${totalProducts} SP • Ảnh: 800×800px (1:1)`;
-      case 'cards':
+      }
+      case 'cards': {
         return `${sectionCount} section • ${totalProducts} SP • Ảnh: 800×800px (1:1)`;
-      case 'bento':
+      }
+      case 'bento': {
         return `${sectionCount} section • Featured: 800×800px • Others: 600×400px`;
-      case 'magazine':
+      }
+      case 'magazine': {
         return `${sectionCount} section • Featured: 800×1000px (4:5) • Grid: 600×600px`;
-      case 'showcase':
+      }
+      case 'showcase': {
         return `${sectionCount} section • Featured: 1200×800px (3:2) • Others: 600×600px`;
-      default:
+      }
+      default: {
         return `${sectionCount} section • ${totalProducts} sản phẩm`;
+      }
     }
   };
 
@@ -9916,7 +9977,7 @@ export const CategoryProductsPreview = ({
         device === 'mobile' ? 'text-xs min-h-[2rem]' : 'text-sm min-h-[2.5rem]'
       )}>{product.name || 'Tên sản phẩm'}</h4>
       <div className="flex flex-col mt-auto">
-        {product.salePrice && product.salePrice < (product.price || 0) ? (
+        {product.salePrice && product.salePrice < (product.price ?? 0) ? (
           <>
             <span className={cn("font-bold", device === 'mobile' ? 'text-xs' : 'text-sm')} style={{ color: brandColor }}>
               {formatPrice(product.salePrice)}
@@ -9951,7 +10012,7 @@ export const CategoryProductsPreview = ({
                 {config.showViewAll && (
                   <button 
                     className="text-sm font-medium flex items-center gap-1 hover:underline px-3 py-1.5 rounded-lg border transition-colors"
-                    style={{ color: brandColor, borderColor: `${brandColor}30` }}
+                    style={{ borderColor: `${brandColor}30`, color: brandColor }}
                   >
                     Xem danh mục <ArrowRight size={16} />
                   </button>
@@ -10033,7 +10094,7 @@ export const CategoryProductsPreview = ({
                           device === 'mobile' ? 'text-xs' : 'text-sm'
                         )}>{product.name}</h4>
                         <span className={cn("font-bold", device === 'mobile' ? 'text-sm' : 'text-base')} style={{ color: brandColor }}>
-                          {formatPrice(product.salePrice || product.price)}
+                          {formatPrice(product.salePrice ?? product.price)}
                         </span>
                       </div>
                     ))}
@@ -10085,7 +10146,7 @@ export const CategoryProductsPreview = ({
                   {config.showViewAll && (
                     <button 
                       className="text-sm font-medium flex items-center gap-1 hover:underline px-3 py-1.5 rounded-lg transition-colors"
-                      style={{ color: brandColor, backgroundColor: `${brandColor}15` }}
+                      style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
                     >
                       Xem danh mục <ArrowRight size={14} />
                     </button>
@@ -10157,7 +10218,7 @@ export const CategoryProductsPreview = ({
                     <Package size={40} className="mx-auto mb-3 opacity-30" />
                     <p className="text-sm">Chưa có sản phẩm</p>
                   </div>
-                ) : device === 'mobile' ? (
+                ) : (device === 'mobile' ? (
                   // Mobile: 2 columns grid
                   <div className="grid grid-cols-2 gap-3">
                     {section.products.slice(0, 4).map((product) => (
@@ -10193,7 +10254,7 @@ export const CategoryProductsPreview = ({
                           </span>
                           <h3 className="font-bold text-base line-clamp-2 mb-1">{featured.name}</h3>
                           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0">
-                            {featured.salePrice && featured.salePrice < (featured.price || 0) ? (
+                            {featured.salePrice && featured.salePrice < (featured.price ?? 0) ? (
                               <>
                                 <span className="font-bold text-base">{formatPrice(featured.salePrice)}</span>
                                 <span className="text-xs text-white/60 line-through">{formatPrice(featured.price)}</span>
@@ -10223,12 +10284,12 @@ export const CategoryProductsPreview = ({
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="absolute bottom-0 left-0 right-0 p-3 text-white transform translate-y-full group-hover:translate-y-0 transition-transform">
                           <h4 className="font-medium text-xs line-clamp-1">{product.name}</h4>
-                          <span className="font-bold text-xs">{formatPrice(product.salePrice || product.price)}</span>
+                          <span className="font-bold text-xs">{formatPrice(product.salePrice ?? product.price)}</span>
                         </div>
                       </div>
                     ))}
                   </div>
-                )}
+                ))}
               </div>
             </section>
           );
@@ -10281,7 +10342,7 @@ export const CategoryProductsPreview = ({
                 
                 {section.products.length === 0 ? (
                   <EmptyState message="Chưa có sản phẩm" size="small" />
-                ) : device === 'mobile' ? (
+                ) : (device === 'mobile' ? (
                   // Mobile: Simple 2-col grid
                   <div className="grid grid-cols-2 gap-3">
                     {section.products.slice(0, 4).map((product) => (
@@ -10317,7 +10378,7 @@ export const CategoryProductsPreview = ({
                           </span>
                           <h3 className="font-bold text-xl md:text-2xl line-clamp-2 mb-2">{featured.name}</h3>
                           <div className="flex items-baseline gap-3">
-                            {featured.salePrice && featured.salePrice < (featured.price || 0) ? (
+                            {featured.salePrice && featured.salePrice < (featured.price ?? 0) ? (
                               <>
                                 <span className="font-bold text-2xl">{formatPrice(featured.salePrice)}</span>
                                 <span className="text-sm text-white/60 line-through">{formatPrice(featured.price)}</span>
@@ -10364,7 +10425,7 @@ export const CategoryProductsPreview = ({
                           </div>
                           <h4 className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{product.name}</h4>
                           <div className="flex items-baseline gap-2 mt-1">
-                            {product.salePrice && product.salePrice < (product.price || 0) ? (
+                            {product.salePrice && product.salePrice < (product.price ?? 0) ? (
                               <>
                                 <span className="font-bold text-sm" style={{ color: brandColor }}>
                                   {formatPrice(product.salePrice)}
@@ -10392,7 +10453,7 @@ export const CategoryProductsPreview = ({
                       ))}
                     </div>
                   </div>
-                )}
+                ))}
               </div>
             </section>
           );
@@ -10497,12 +10558,12 @@ export const CategoryProductsPreview = ({
                         </div>
                         
                         {/* Badge for sale */}
-                        {product.salePrice && product.salePrice < (product.price || 0) && (
+                        {product.salePrice && product.salePrice < (product.price ?? 0) && (
                           <div 
                             className="absolute top-3 left-3 px-2 py-1 rounded-lg text-xs font-bold text-white"
                             style={{ backgroundColor: '#ef4444' }}
                           >
-                            -{Math.round((1 - product.salePrice / (product.price || 1)) * 100)}%
+                            -{Math.round((1 - product.salePrice / (product.price ?? 1)) * 100)}%
                           </div>
                         )}
                       </div>
@@ -10514,7 +10575,7 @@ export const CategoryProductsPreview = ({
                           device === 'mobile' ? 'text-xs' : 'text-sm'
                         )}>{product.name}</h4>
                         <div className="flex flex-col">
-                          {product.salePrice && product.salePrice < (product.price || 0) ? (
+                          {product.salePrice && product.salePrice < (product.price ?? 0) ? (
                             <>
                               <span 
                                 className={cn("font-bold", device === 'mobile' ? 'text-xs' : 'text-sm')} 
@@ -10569,7 +10630,7 @@ export const CategoryProductsPreview = ({
 
 // ============ TEAM PREVIEW ============
 // Professional Team Section UI/UX - 6 Variants: Grid, Cards, Carousel, Hexagon, Timeline, Spotlight
-type TeamMember = { id: number; name: string; role: string; avatar: string; bio: string; facebook: string; linkedin: string; twitter: string; email: string };
+interface TeamMember { id: number; name: string; role: string; avatar: string; bio: string; facebook: string; linkedin: string; twitter: string; email: string }
 export type TeamStyle = 'grid' | 'cards' | 'carousel' | 'hexagon' | 'timeline' | 'spotlight';
 
 export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange }: { 
@@ -10579,7 +10640,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
   onStyleChange?: (style: TeamStyle) => void 
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'grid';
+  const previewStyle = selectedStyle ?? 'grid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as TeamStyle);
   const styles = [
     { id: 'grid', label: 'Grid' }, 
@@ -10593,28 +10654,42 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
   // Dynamic image size info based on style (Best Practice)
   const getImageSizeInfo = () => {
     const count = members.length;
-    if (count === 0) return 'Chưa có thành viên';
+    if (count === 0) {return 'Chưa có thành viên';}
     switch (previewStyle) {
-      case 'grid': return `${count} thành viên • Avatar: 400×400px (1:1)`;
-      case 'cards': return `${count} thành viên • Avatar: 160×160px (1:1)`;
-      case 'carousel': return `${count} thành viên • Avatar: 600×450px (4:3) - Horizontal scroll`;
-      case 'hexagon': return `${count} thành viên • Avatar: 160×160px (1:1) - Marquee scroll`;
-      case 'timeline': return `${count} thành viên • Avatar: 100×100px (1:1)`;
-      case 'spotlight': return `${count} thành viên • Avatar: 400×400px (1:1)`;
-      default: return `${count} thành viên`;
+      case 'grid': { return `${count} thành viên • Avatar: 400×400px (1:1)`;
+      }
+      case 'cards': { return `${count} thành viên • Avatar: 160×160px (1:1)`;
+      }
+      case 'carousel': { return `${count} thành viên • Avatar: 600×450px (4:3) - Horizontal scroll`;
+      }
+      case 'hexagon': { return `${count} thành viên • Avatar: 160×160px (1:1) - Marquee scroll`;
+      }
+      case 'timeline': { return `${count} thành viên • Avatar: 100×100px (1:1)`;
+      }
+      case 'spotlight': { return `${count} thành viên • Avatar: 400×400px (1:1)`;
+      }
+      default: { return `${count} thành viên`;
+      }
     }
   };
 
   // Max visible items per device for +N pattern
   const getMaxVisible = () => {
     switch (previewStyle) {
-      case 'grid': return device === 'mobile' ? 4 : 8;
-      case 'cards': return device === 'mobile' ? 3 : 6;
-      case 'carousel': return members.length; // All members scrollable
-      case 'hexagon': return device === 'mobile' ? 4 : 5; // Overlap style shows 4-5 avatars
-      case 'timeline': return device === 'mobile' ? 3 : 4;
-      case 'spotlight': return device === 'mobile' ? 3 : 6;
-      default: return 6;
+      case 'grid': { return device === 'mobile' ? 4 : 8;
+      }
+      case 'cards': { return device === 'mobile' ? 3 : 6;
+      }
+      case 'carousel': { return members.length;
+      } // All members scrollable
+      case 'hexagon': { return device === 'mobile' ? 4 : 5;
+      } // Overlap style shows 4-5 avatars
+      case 'timeline': { return device === 'mobile' ? 3 : 4;
+      }
+      case 'spotlight': { return device === 'mobile' ? 3 : 6;
+      }
+      default: { return 6;
+      }
     }
   };
 
@@ -10628,7 +10703,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
       return (
         <div className="group relative">
           <div className={cn("relative", device === 'mobile' ? 'w-28 h-32' : 'w-36 h-40')} style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}>
-            <div className="absolute inset-1 flex items-center justify-center" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)', backgroundColor: '#f1f5f9' }}>
+            <div className="absolute inset-1 flex items-center justify-center" style={{ backgroundColor: '#f1f5f9', clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}>
               <div className="text-center">
                 <span className="text-lg font-bold" style={{ color: brandColor }}>+{remainingCount}</span>
                 <p className="text-[10px] text-slate-400">khác</p>
@@ -10649,12 +10724,12 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
   };
 
   const SocialIcon = ({ type, url }: { type: 'facebook' | 'linkedin' | 'twitter' | 'email'; url: string }) => {
-    if (!url) return null;
+    if (!url) {return null;}
     const icons = {
+      email: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
       facebook: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>,
       linkedin: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>,
-      twitter: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
-      email: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      twitter: <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
     };
     return (
       <a 
@@ -10675,7 +10750,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
       <h3 className={cn("font-bold text-center mb-8", device === 'mobile' ? 'text-lg' : 'text-2xl')}>Đội ngũ của chúng tôi</h3>
       <div className={cn(
         "grid gap-6",
-        device === 'mobile' ? 'grid-cols-2 gap-4' : device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4'
+        device === 'mobile' ? 'grid-cols-2 gap-4' : (device === 'tablet' ? 'grid-cols-3' : 'grid-cols-4')
       )}>
         {visibleMembers.map((member) => (
           <div key={member.id} className="group text-center">
@@ -10723,7 +10798,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
       <h3 className={cn("font-bold text-center mb-8", device === 'mobile' ? 'text-lg' : 'text-2xl')}>Đội ngũ của chúng tôi</h3>
       <div className={cn(
         "grid gap-6",
-        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+        device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')
       )}>
         {visibleMembers.map((member) => (
           <div 
@@ -10771,7 +10846,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
 
   // Style 3: Carousel - Horizontal scroll với partial peek (Best Practice: 10-20% của card tiếp theo visible)
   const renderCarouselStyle = () => {
-    const cardWidth = device === 'mobile' ? 280 : device === 'tablet' ? 260 : 280;
+    const cardWidth = device === 'mobile' ? 280 : (device === 'tablet' ? 260 : 280);
     const gap = device === 'mobile' ? 12 : 16;
     
     return (
@@ -10791,7 +10866,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                 type="button"
                 onClick={() => {
                   const container = document.getElementById(`team-carousel-${device}`);
-                  if (container) container.scrollBy({ left: -cardWidth - gap, behavior: 'smooth' });
+                  if (container) {container.scrollBy({ behavior: 'smooth', left: -cardWidth - gap });}
                 }}
                 className="w-9 h-9 rounded-full flex items-center justify-center bg-white dark:bg-slate-800 shadow-md hover:shadow-lg text-slate-700 dark:text-slate-300 transition-all border border-slate-200 dark:border-slate-600"
               >
@@ -10801,7 +10876,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                 type="button"
                 onClick={() => {
                   const container = document.getElementById(`team-carousel-${device}`);
-                  if (container) container.scrollBy({ left: cardWidth + gap, behavior: 'smooth' });
+                  if (container) {container.scrollBy({ behavior: 'smooth', left: cardWidth + gap });}
                 }}
                 className="w-9 h-9 rounded-full flex items-center justify-center text-white shadow-md hover:shadow-lg transition-all"
                 style={{ backgroundColor: brandColor }}
@@ -10841,7 +10916,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
               }}
               onMouseMove={(e) => {
                 const el = e.currentTarget;
-                if (el.dataset.isDown !== 'true') return;
+                if (el.dataset.isDown !== 'true') {return;}
                 e.preventDefault();
                 const x = e.pageX - el.offsetLeft;
                 const walk = (x - Number(el.dataset.startX)) * 1.5;
@@ -10951,8 +11026,8 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
             <div 
               className="flex gap-4 py-3"
               style={{ 
-                width: 'max-content',
-                animation: members.length > 2 ? 'marquee 20s linear infinite' : 'none'
+                animation: members.length > 2 ? 'marquee 20s linear infinite' : 'none',
+                width: 'max-content'
               }}
             >
             {marqueeMembers.map((member, idx) => (
@@ -10964,7 +11039,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                 {/* Avatar */}
                 <div 
                   className="relative mx-auto mb-3 rounded-2xl overflow-hidden shadow-md transition-all duration-300 group-hover:shadow-xl group-hover:scale-105"
-                  style={{ width: cardSize, height: cardSize }}
+                  style={{ height: cardSize, width: cardSize }}
                 >
                   {member.avatar ? (
                     <PreviewImage 
@@ -11099,7 +11174,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                 key={member.id} 
                 className={cn(
                   "relative flex items-center gap-4",
-                  device === 'mobile' ? '' : isEven ? 'flex-row' : 'flex-row-reverse'
+                  device === 'mobile' ? '' : (isEven ? 'flex-row' : 'flex-row-reverse')
                 )}
               >
                 {/* Timeline dot */}
@@ -11114,7 +11189,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
                 {/* Content card */}
                 <div className={cn(
                   "flex-1",
-                  device === 'mobile' ? 'ml-8' : isEven ? 'pr-8 text-right' : 'pl-8'
+                  device === 'mobile' ? 'ml-8' : (isEven ? 'pr-8 text-right' : 'pl-8')
                 )}>
                   <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-md border border-slate-100 dark:border-slate-700">
                     <div className={cn(
@@ -11186,7 +11261,7 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
         
         <div className={cn(
           "grid gap-5",
-          device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3'
+          device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3')
         )}>
           {members.slice(0, device === 'mobile' ? 3 : 6).map((member) => (
             <div key={member.id} className="group relative">
@@ -11289,15 +11364,15 @@ export const TeamPreview = ({ members, brandColor, selectedStyle, onStyleChange 
 
 // ============ FEATURES PREVIEW (Product Features) ============
 // 6 Professional Styles: Icon Grid, Alternating, Compact, Cards, Carousel, Timeline
-type FeatureItem = { id: number; icon: string; title: string; description: string };
+interface FeatureItem { id: number; icon: string; title: string; description: string }
 export type FeaturesStyle = 'iconGrid' | 'alternating' | 'compact' | 'cards' | 'carousel' | 'timeline';
 
-const featureIcons: Record<string, React.ElementType> = { Zap, Shield, Target, Layers, Cpu, Globe, Rocket, Settings, Check, Star };
+const featureIcons: Record<string, React.ElementType> = { Check, Cpu, Globe, Layers, Rocket, Settings, Shield, Star, Target, Zap };
 
 export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChange }: { items: FeatureItem[]; brandColor: string; selectedStyle?: FeaturesStyle; onStyleChange?: (style: FeaturesStyle) => void }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const previewStyle = selectedStyle || 'iconGrid';
+  const previewStyle = selectedStyle ?? 'iconGrid';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as FeaturesStyle);
   const styles = [
     { id: 'iconGrid', label: 'Icon Grid' }, { id: 'alternating', label: 'Alternating' }, { id: 'compact', label: 'Compact' },
@@ -11316,7 +11391,7 @@ export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChang
   );
 
   const renderIconGridStyle = () => {
-    if (items.length === 0) return renderEmptyState();
+    if (items.length === 0) {return renderEmptyState();}
     const visibleItems = items.slice(0, MAX_VISIBLE);
     const remainingCount = items.length - MAX_VISIBLE;
     const gridClass = cn("grid gap-4 md:gap-6", items.length === 1 ? 'max-w-md mx-auto' : items.length === 2 ? 'max-w-2xl mx-auto grid-cols-2' : device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-3');
@@ -11345,7 +11420,7 @@ export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChang
   };
 
   const renderAlternatingStyle = () => {
-    if (items.length === 0) return renderEmptyState();
+    if (items.length === 0) {return renderEmptyState();}
     const maxItems = device === 'mobile' ? 4 : 6;
     const visibleItems = items.slice(0, maxItems);
     const remainingCount = items.length - maxItems;
@@ -11378,7 +11453,7 @@ export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChang
   };
 
   const renderCompactStyle = () => {
-    if (items.length === 0) return renderEmptyState();
+    if (items.length === 0) {return renderEmptyState();}
     const maxItems = device === 'mobile' ? 4 : 8;
     const visibleItems = items.slice(0, maxItems);
     const remainingCount = items.length - maxItems;
@@ -11391,7 +11466,7 @@ export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChang
           </div>
           {remainingCount > 0 && <span className="text-sm text-slate-500">+{remainingCount} tính năng khác</span>}
         </div>
-        <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4')}>
+        <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'))}>
           {visibleItems.map((item) => {
             const IconComponent = getIcon(item.icon);
             return (
@@ -11407,7 +11482,7 @@ export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChang
   };
 
   const renderCardsStyle = () => {
-    if (items.length === 0) return renderEmptyState();
+    if (items.length === 0) {return renderEmptyState();}
     const visibleItems = items.slice(0, MAX_VISIBLE);
     const remainingCount = items.length - MAX_VISIBLE;
     return (
@@ -11441,8 +11516,8 @@ export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChang
   };
 
   const renderCarouselStyle = () => {
-    if (items.length === 0) return renderEmptyState();
-    const itemsPerView = device === 'mobile' ? 1 : device === 'tablet' ? 2 : 3;
+    if (items.length === 0) {return renderEmptyState();}
+    const itemsPerView = device === 'mobile' ? 1 : (device === 'tablet' ? 2 : 3);
     const maxIndex = Math.max(0, items.length - itemsPerView);
     return (
       <div className={cn("py-8 px-4", device === 'mobile' ? 'py-6 px-3' : 'md:py-12 md:px-6')}>
@@ -11452,8 +11527,8 @@ export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChang
             <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-2xl' : 'text-3xl md:text-4xl')}>Tính năng nổi bật</h2>
           </div>
           {items.length > itemsPerView && (<div className="flex gap-2">
-            <button onClick={() => setCarouselIndex(Math.max(0, carouselIndex - 1))} disabled={carouselIndex === 0} className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><ChevronLeft size={20} /></button>
-            <button onClick={() => setCarouselIndex(Math.min(maxIndex, carouselIndex + 1))} disabled={carouselIndex >= maxIndex} className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><ChevronRight size={20} /></button>
+            <button onClick={() =>{  setCarouselIndex(Math.max(0, carouselIndex - 1)); }} disabled={carouselIndex === 0} className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><ChevronLeft size={20} /></button>
+            <button onClick={() =>{  setCarouselIndex(Math.min(maxIndex, carouselIndex + 1)); }} disabled={carouselIndex >= maxIndex} className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><ChevronRight size={20} /></button>
           </div>)}
         </div>
         <div className="overflow-hidden">
@@ -11472,13 +11547,13 @@ export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChang
             })}
           </div>
         </div>
-        {items.length > itemsPerView && (<div className="flex justify-center gap-2 mt-6">{Array.from({ length: maxIndex + 1 }).map((_, idx) => (<button key={idx} onClick={() => setCarouselIndex(idx)} className={cn("w-2 h-2 rounded-full transition-all", idx === carouselIndex ? 'w-6' : 'bg-slate-300 dark:bg-slate-600')} style={idx === carouselIndex ? { backgroundColor: brandColor } : {}} />))}</div>)}
+        {items.length > itemsPerView && (<div className="flex justify-center gap-2 mt-6">{Array.from({ length: maxIndex + 1 }).map((_, idx) => (<button key={idx} onClick={() =>{  setCarouselIndex(idx); }} className={cn("w-2 h-2 rounded-full transition-all", idx === carouselIndex ? 'w-6' : 'bg-slate-300 dark:bg-slate-600')} style={idx === carouselIndex ? { backgroundColor: brandColor } : {}} />))}</div>)}
       </div>
     );
   };
 
   const renderTimelineStyle = () => {
-    if (items.length === 0) return renderEmptyState();
+    if (items.length === 0) {return renderEmptyState();}
     const maxItems = device === 'mobile' ? 4 : 6;
     const visibleItems = items.slice(0, maxItems);
     const remainingCount = items.length - maxItems;
@@ -11530,7 +11605,7 @@ export const FeaturesPreview = ({ items, brandColor, selectedStyle, onStyleChang
 
 // ============ PROCESS/HOW IT WORKS PREVIEW ============
 // 6 Professional Styles: Horizontal, Stepper, Cards, Accordion, Minimal, Grid
-type ProcessStep = { id: number; icon: string; title: string; description: string };
+interface ProcessStep { id: number; icon: string; title: string; description: string }
 export type ProcessStyle = 'horizontal' | 'stepper' | 'cards' | 'accordion' | 'minimal' | 'grid';
 
 export const ProcessPreview = ({ 
@@ -11546,7 +11621,7 @@ export const ProcessPreview = ({
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [activeAccordion, setActiveAccordion] = useState<number>(0);
-  const previewStyle = selectedStyle || 'horizontal';
+  const previewStyle = selectedStyle ?? 'horizontal';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ProcessStyle);
   const styles = [
     { id: 'horizontal', label: 'Horizontal' },
@@ -11562,15 +11637,22 @@ export const ProcessPreview = ({
   // Dynamic info based on style
   const getInfoText = () => {
     const count = steps.length;
-    if (count === 0) return 'Chưa có bước nào';
+    if (count === 0) {return 'Chưa có bước nào';}
     switch (previewStyle) {
-      case 'horizontal': return `${count} bước • Progress bar ngang`;
-      case 'stepper': return `${count} bước • Dot stepper`;
-      case 'cards': return `${Math.min(count, 4)} bước • Grid cards`;
-      case 'accordion': return `${count} bước • Expandable`;
-      case 'minimal': return `${count} bước • Compact list`;
-      case 'grid': return `${count} bước • Grid ${device === 'mobile' ? '1 col' : '2-3 cols'}`;
-      default: return `${count} bước`;
+      case 'horizontal': { return `${count} bước • Progress bar ngang`;
+      }
+      case 'stepper': { return `${count} bước • Dot stepper`;
+      }
+      case 'cards': { return `${Math.min(count, 4)} bước • Grid cards`;
+      }
+      case 'accordion': { return `${count} bước • Expandable`;
+      }
+      case 'minimal': { return `${count} bước • Compact list`;
+      }
+      case 'grid': { return `${count} bước • Grid ${device === 'mobile' ? '1 col' : '2-3 cols'}`;
+      }
+      default: { return `${count} bước`;
+      }
     }
   };
 
@@ -11587,7 +11669,7 @@ export const ProcessPreview = ({
 
   // Style 1: Horizontal - Compact progress bar layout
   const renderHorizontalStyle = () => {
-    if (steps.length === 0) return renderEmptyState();
+    if (steps.length === 0) {return renderEmptyState();}
     const visibleSteps = steps.slice(0, device === 'mobile' ? 4 : 5);
     const remainingCount = steps.length - visibleSteps.length;
     
@@ -11647,7 +11729,7 @@ export const ProcessPreview = ({
 
   // Style 2: Stepper - Dot stepper with expandable content
   const renderStepperStyle = () => {
-    if (steps.length === 0) return renderEmptyState();
+    if (steps.length === 0) {return renderEmptyState();}
     const visibleSteps = steps.slice(0, MAX_VISIBLE);
     const remainingCount = steps.length - MAX_VISIBLE;
     
@@ -11716,7 +11798,7 @@ export const ProcessPreview = ({
       {/* Cards Grid */}
       <div className={cn(
         "grid gap-4 md:gap-6",
-        device === 'mobile' ? 'grid-cols-1' : device === 'tablet' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'
+        device === 'mobile' ? 'grid-cols-1' : (device === 'tablet' ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4')
       )}>
         {steps.slice(0, 4).map((step, idx) => (
           <div 
@@ -11758,7 +11840,7 @@ export const ProcessPreview = ({
 
   // Style 4: Accordion - Interactive expandable style
   const renderAccordionStyle = () => {
-    if (steps.length === 0) return renderEmptyState();
+    if (steps.length === 0) {return renderEmptyState();}
     const visibleSteps = steps.slice(0, MAX_VISIBLE);
     const remainingCount = steps.length - MAX_VISIBLE;
     
@@ -11783,7 +11865,7 @@ export const ProcessPreview = ({
                     : "border-slate-200 dark:border-slate-700 hover:border-slate-300"
                 )}
                 style={isActive ? { borderColor: brandColor, boxShadow: `0 4px 12px ${brandColor}20` } : {}}
-                onClick={() => setActiveAccordion(isActive ? -1 : idx)}
+                onClick={() =>{  setActiveAccordion(isActive ? -1 : idx); }}
               >
                 <div className={cn("flex items-center gap-3 p-3", isActive && "pb-2")}>
                   <div 
@@ -11823,7 +11905,7 @@ export const ProcessPreview = ({
 
   // Style 5: Minimal - Compact list with subtle styling
   const renderMinimalStyle = () => {
-    if (steps.length === 0) return renderEmptyState();
+    if (steps.length === 0) {return renderEmptyState();}
     const visibleSteps = steps.slice(0, MAX_VISIBLE);
     const remainingCount = steps.length - MAX_VISIBLE;
     
@@ -11870,7 +11952,7 @@ export const ProcessPreview = ({
 
   // Style 6: Grid - Compact 2-3 column grid
   const renderGridStyle = () => {
-    if (steps.length === 0) return renderEmptyState();
+    if (steps.length === 0) {return renderEmptyState();}
     const visibleSteps = steps.slice(0, MAX_VISIBLE);
     const remainingCount = steps.length - MAX_VISIBLE;
     
@@ -11887,7 +11969,7 @@ export const ProcessPreview = ({
         
         <div className={cn(
           "grid gap-3 max-w-3xl mx-auto",
-          device === 'mobile' ? 'grid-cols-1' : steps.length <= 2 ? 'grid-cols-2 max-w-lg' : 'grid-cols-2 md:grid-cols-3'
+          device === 'mobile' ? 'grid-cols-1' : (steps.length <= 2 ? 'grid-cols-2 max-w-lg' : 'grid-cols-2 md:grid-cols-3')
         )}>
           {visibleSteps.map((step, idx) => (
             <div 
@@ -11947,7 +12029,7 @@ export const ProcessPreview = ({
 // ============ CLIENTS MARQUEE PREVIEW ============
 // Auto-scroll Logo Marquee - 6 Styles: marquee, dualRow, wave, grid, carousel, featured
 // Best Practices: pause on hover, a11y, prefers-reduced-motion, compact spacing
-type ClientItem = { id: number; url: string; link: string; name?: string };
+interface ClientItem { id: number; url: string; link: string; name?: string }
 export type ClientsStyle = 'marquee' | 'dualRow' | 'wave' | 'grid' | 'carousel' | 'featured';
 
 export const ClientsPreview = ({ 
@@ -11963,7 +12045,7 @@ export const ClientsPreview = ({
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const carouselBaseId = React.useId();
-  const previewStyle = selectedStyle || 'marquee';
+  const previewStyle = selectedStyle ?? 'marquee';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as ClientsStyle);
   const styles = [
     { id: 'marquee', label: 'Marquee' },
@@ -11977,21 +12059,27 @@ export const ClientsPreview = ({
   // Dynamic image size info
   const getImageSizeInfo = () => {
     const count = items.length;
-    if (count === 0) return 'Chưa có logo';
+    if (count === 0) {return 'Chưa có logo';}
     switch (previewStyle) {
       case 'marquee':
-      case 'dualRow':
+      case 'dualRow': {
         return `${count} logo • 240×96px`;
-      case 'wave':
+      }
+      case 'wave': {
         return `${count} logo • 192×72px`;
-      case 'grid':
+      }
+      case 'grid': {
         return `${count} logo • 216×84px`;
-      case 'carousel':
+      }
+      case 'carousel': {
         return `${count} logo • 240×96px`;
-      case 'featured':
+      }
+      case 'featured': {
         return count <= 4 ? `${count} logo • 240×96px` : `4 featured + ${count - 4} khác`;
-      default:
+      }
+      default: {
         return `${count} logo`;
+      }
     }
   };
 
@@ -12039,13 +12127,13 @@ export const ClientsPreview = ({
 
   // Logo item renderer - tăng 20% size, bỏ grayscale hover
   const renderLogoItem = (item: ClientItem, idx: number, options?: { size?: 'sm' | 'md' | 'lg' }) => {
-    const { size = 'md' } = options || {};
+    const { size = 'md' } = options ?? {};
     // Tăng 20%: sm: 10→12, md: 12→14, lg: 14→17
-    const sizeClasses = { sm: 'h-12 md:h-14', md: 'h-14 md:h-16', lg: 'h-16 md:h-[4.5rem]' };
+    const sizeClasses = { lg: 'h-16 md:h-[4.5rem]', md: 'h-14 md:h-16', sm: 'h-12 md:h-14' };
     return (
       <div key={`logo-${item.id}-${idx}`} className="shrink-0 flex items-center" role="listitem">
         {item.url ? (
-          <PreviewImage src={item.url} alt={item.name || `Logo ${item.id}`} className={cn(sizeClasses[size], "w-auto object-contain select-none")} />
+          <PreviewImage src={item.url} alt={item.name ?? `Logo ${item.id}`} className={cn(sizeClasses[size], "w-auto object-contain select-none")} />
         ) : (
           <div className={cn(sizeClasses[size], "w-28 rounded-lg flex items-center justify-center")} style={{ backgroundColor: `${brandColor}15` }}>
             <ImageIcon size={22} style={{ color: brandColor }} className="opacity-40" />
@@ -12067,7 +12155,7 @@ export const ClientsPreview = ({
           </h2>
           <span className="text-[10px] text-slate-400">Di chuột để dừng</span>
         </div>
-        <div className="clients-marquee-container relative py-4 overflow-hidden" role="list" style={{ maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
+        <div className="clients-marquee-container relative py-4 overflow-hidden" role="list" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
           <div className="clients-marquee-track flex items-center gap-10 md:gap-12" style={{ '--duration': `${Math.max(20, items.length * 4)}s`, width: 'max-content' } as React.CSSProperties}>
             {items.map((item, idx) => renderLogoItem(item, idx))}
             {items.map((item, idx) => renderLogoItem(item, idx + items.length))}
@@ -12087,16 +12175,16 @@ export const ClientsPreview = ({
           Khách hàng tin tưởng
         </h2>
         <div className="space-y-2" role="list">
-          <div className="clients-marquee-container relative py-2 overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
+          <div className="clients-marquee-container relative py-2 overflow-hidden" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
             <div className="clients-marquee-track flex items-center gap-10 md:gap-12" style={{ '--duration': `${Math.max(25, items.length * 5)}s`, width: 'max-content' } as React.CSSProperties}>
               {items.map((item, idx) => renderLogoItem(item, idx))}
               {items.map((item, idx) => renderLogoItem(item, idx + items.length))}
             </div>
           </div>
-          <div className="clients-marquee-container relative py-2 overflow-hidden" style={{ maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
+          <div className="clients-marquee-container relative py-2 overflow-hidden" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 6%, black 94%, transparent)' }}>
             <div className="clients-marquee-track-reverse flex items-center gap-10 md:gap-12" style={{ '--duration': `${Math.max(30, items.length * 6)}s`, width: 'max-content' } as React.CSSProperties}>
-              {[...items].reverse().map((item, idx) => renderLogoItem(item, idx))}
-              {[...items].reverse().map((item, idx) => renderLogoItem(item, idx + items.length))}
+              {[...items].toReversed().map((item, idx) => renderLogoItem(item, idx))}
+              {[...items].toReversed().map((item, idx) => renderLogoItem(item, idx + items.length))}
             </div>
           </div>
         </div>
@@ -12113,19 +12201,19 @@ export const ClientsPreview = ({
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>Đối tác & Khách hàng</div>
           <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-base' : 'text-lg md:text-xl')}>Được tin tưởng bởi các thương hiệu hàng đầu</h2>
         </div>
-        <div className="clients-marquee-container relative py-4 overflow-hidden" role="list" style={{ maskImage: 'linear-gradient(to right, transparent, black 4%, black 96%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 4%, black 96%, transparent)' }}>
+        <div className="clients-marquee-container relative py-4 overflow-hidden" role="list" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 4%, black 96%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 4%, black 96%, transparent)' }}>
           <div className="clients-marquee-track flex items-center gap-8 md:gap-10" style={{ '--duration': `${Math.max(35, items.length * 6)}s`, width: 'max-content' } as React.CSSProperties}>
             {items.map((item, idx) => (
               <div key={`wave-${item.id}-${idx}`} className="shrink-0 clients-float" style={{ animationDelay: `${idx * 0.3}s` }} role="listitem">
                 <div className={cn("bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700", device === 'mobile' ? 'p-2.5' : 'p-3')}>
-                  {item.url ? <PreviewImage src={item.url} alt={item.name || `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-10' : 'h-12')} /> : <div className="h-12 w-24 flex items-center justify-center"><ImageIcon size={20} className="text-slate-300" /></div>}
+                  {item.url ? <PreviewImage src={item.url} alt={item.name ?? `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-10' : 'h-12')} /> : <div className="h-12 w-24 flex items-center justify-center"><ImageIcon size={20} className="text-slate-300" /></div>}
                 </div>
               </div>
             ))}
             {items.map((item, idx) => (
               <div key={`wave2-${item.id}-${idx}`} className="shrink-0 clients-float" style={{ animationDelay: `${(idx + items.length) * 0.3}s` }} role="listitem">
                 <div className={cn("bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700", device === 'mobile' ? 'p-2.5' : 'p-3')}>
-                  {item.url ? <PreviewImage src={item.url} alt={item.name || `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-10' : 'h-12')} /> : <div className="h-12 w-24 flex items-center justify-center"><ImageIcon size={20} className="text-slate-300" /></div>}
+                  {item.url ? <PreviewImage src={item.url} alt={item.name ?? `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-10' : 'h-12')} /> : <div className="h-12 w-24 flex items-center justify-center"><ImageIcon size={20} className="text-slate-300" /></div>}
                 </div>
               </div>
             ))}
@@ -12142,9 +12230,9 @@ export const ClientsPreview = ({
     const remainingCount = Math.max(0, items.length - MAX_VISIBLE);
     const getGridClass = () => {
       const count = visibleItems.length;
-      if (count <= 2) return 'flex justify-center gap-6';
-      if (count <= 4) return device === 'mobile' ? 'grid grid-cols-2 gap-3' : 'flex justify-center gap-6';
-      return device === 'mobile' ? 'grid grid-cols-2 gap-3' : device === 'tablet' ? 'grid grid-cols-4 gap-4' : 'grid grid-cols-4 lg:grid-cols-6 gap-4';
+      if (count <= 2) {return 'flex justify-center gap-6';}
+      if (count <= 4) {return device === 'mobile' ? 'grid grid-cols-2 gap-3' : 'flex justify-center gap-6';}
+      return device === 'mobile' ? 'grid grid-cols-2 gap-3' : (device === 'tablet' ? 'grid grid-cols-4 gap-4' : 'grid grid-cols-4 lg:grid-cols-6 gap-4');
     };
     return (
       <section className={cn("w-full bg-white dark:bg-slate-900 border-b border-slate-200/40 dark:border-slate-700/40", device === 'mobile' ? 'py-6 px-3' : 'py-8 px-4')} aria-label="Khách hàng tiêu biểu">
@@ -12159,7 +12247,7 @@ export const ClientsPreview = ({
           <div className={cn(getGridClass(), "py-3")} role="list">
             {visibleItems.map((item) => (
               <div key={`grid-${item.id}`} className="p-3 rounded-lg border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer flex flex-col items-center" role="listitem">
-                {item.url ? <PreviewImage src={item.url} alt={item.name || `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-12' : 'h-14 md:h-16')} /> : <div className={cn("w-24 rounded-lg flex items-center justify-center", device === 'mobile' ? 'h-12' : 'h-14 md:h-16')} style={{ backgroundColor: `${brandColor}10` }}><ImageIcon size={18} className="text-slate-300" /></div>}
+                {item.url ? <PreviewImage src={item.url} alt={item.name ?? `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-12' : 'h-14 md:h-16')} /> : <div className={cn("w-24 rounded-lg flex items-center justify-center", device === 'mobile' ? 'h-12' : 'h-14 md:h-16')} style={{ backgroundColor: `${brandColor}10` }}><ImageIcon size={18} className="text-slate-300" /></div>}
                 {item.name && <span className="text-[10px] text-slate-400 text-center mt-1.5 truncate max-w-full">{item.name}</span>}
               </div>
             ))}
@@ -12195,23 +12283,23 @@ export const ClientsPreview = ({
             </div>
             {items.length > 3 && (
               <div className="flex gap-1.5">
-                <button type="button" onClick={() => { const el = document.getElementById(carouselId); if (el) el.scrollBy({ left: -(cardWidth + gap), behavior: 'smooth' }); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all border border-slate-200 dark:border-slate-700" aria-label="Cuộn trái"><ChevronLeft size={14} /></button>
-                <button type="button" onClick={() => { const el = document.getElementById(carouselId); if (el) el.scrollBy({ left: cardWidth + gap, behavior: 'smooth' }); }} className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-all" style={{ backgroundColor: brandColor }} aria-label="Cuộn phải"><ChevronRight size={14} /></button>
+                <button type="button" onClick={() => { const el = document.querySelector(`#${carouselId}`); if (el) {el.scrollBy({ behavior: 'smooth', left: -(cardWidth + gap) });} }} className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all border border-slate-200 dark:border-slate-700" aria-label="Cuộn trái"><ChevronLeft size={14} /></button>
+                <button type="button" onClick={() => { const el = document.querySelector(`#${carouselId}`); if (el) {el.scrollBy({ behavior: 'smooth', left: cardWidth + gap });} }} className="w-8 h-8 rounded-full flex items-center justify-center text-white transition-all" style={{ backgroundColor: brandColor }} aria-label="Cuộn phải"><ChevronRight size={14} /></button>
               </div>
             )}
           </div>
           <div className={cn("relative overflow-hidden", device === 'mobile' ? 'mx-3' : 'mx-4', "rounded-lg")}>
             <div className="absolute left-0 top-0 bottom-0 w-6 md:w-8 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
             <div className="absolute right-0 top-0 bottom-0 w-6 md:w-8 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 pointer-events-none" />
-            <div id={carouselId} className="flex overflow-x-auto snap-x snap-mandatory gap-2.5 md:gap-3 py-3 px-1.5 cursor-grab active:cursor-grabbing select-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }} role="list"
+            <div id={carouselId} className="flex overflow-x-auto snap-x snap-mandatory gap-2.5 md:gap-3 py-3 px-1.5 cursor-grab active:cursor-grabbing select-none" style={{ WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none' }} role="list"
               onMouseDown={(e) => { const el = e.currentTarget; el.dataset.isDown = 'true'; el.dataset.startX = String(e.pageX - el.offsetLeft); el.dataset.scrollLeft = String(el.scrollLeft); el.style.scrollBehavior = 'auto'; }}
               onMouseLeave={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
               onMouseUp={(e) => { e.currentTarget.dataset.isDown = 'false'; e.currentTarget.style.scrollBehavior = 'smooth'; }}
-              onMouseMove={(e) => { const el = e.currentTarget; if (el.dataset.isDown !== 'true') return; e.preventDefault(); const x = e.pageX - el.offsetLeft; const walk = (x - Number(el.dataset.startX)) * 1.5; el.scrollLeft = Number(el.dataset.scrollLeft) - walk; }}>
+              onMouseMove={(e) => { const el = e.currentTarget; if (el.dataset.isDown !== 'true') {return;} e.preventDefault(); const x = e.pageX - el.offsetLeft; const walk = (x - Number(el.dataset.startX)) * 1.5; el.scrollLeft = Number(el.dataset.scrollLeft) - walk; }}>
               {items.map((item) => (
                 <div key={`carousel-${item.id}`} className="flex-shrink-0 snap-start" style={{ width: cardWidth }} role="listitem">
                   <div className="h-full p-3 rounded-lg border bg-slate-50 dark:bg-slate-800 flex flex-col items-center justify-center transition-all hover:shadow-md" style={{ borderColor: `${brandColor}15` }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${brandColor}40`; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${brandColor}15`; }}>
-                    {item.url ? <PreviewImage src={item.url} alt={item.name || `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-10' : 'h-12')} /> : <div className="h-12 w-full flex items-center justify-center"><ImageIcon size={22} className="text-slate-300" /></div>}
+                    {item.url ? <PreviewImage src={item.url} alt={item.name ?? `Logo ${item.id}`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-10' : 'h-12')} /> : <div className="h-12 w-full flex items-center justify-center"><ImageIcon size={22} className="text-slate-300" /></div>}
                     {item.name && <span className="text-[10px] text-slate-500 dark:text-slate-400 text-center mt-1.5 truncate w-full">{item.name}</span>}
                   </div>
                 </div>
@@ -12238,10 +12326,10 @@ export const ClientsPreview = ({
             <h2 className={cn("font-bold tracking-tight text-slate-900 dark:text-slate-100", device === 'mobile' ? 'text-base' : 'text-lg md:text-xl')}>Đối tác chiến lược</h2>
             <p className={cn("text-slate-500 dark:text-slate-400", device === 'mobile' ? 'text-[10px]' : 'text-xs')}>Được tin tưởng bởi các thương hiệu hàng đầu</p>
           </div>
-          <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-2' : featuredItems.length <= 2 ? 'flex justify-center gap-4' : 'grid-cols-2 md:grid-cols-4')} role="list">
+          <div className={cn("grid gap-3", device === 'mobile' ? 'grid-cols-2' : (featuredItems.length <= 2 ? 'flex justify-center gap-4' : 'grid-cols-2 md:grid-cols-4'))} role="list">
             {featuredItems.map((item, idx) => (
               <div key={`featured-${item.id}`} className={cn("group rounded-xl border bg-white dark:bg-slate-800 flex flex-col items-center justify-center transition-all hover:shadow-lg", device === 'mobile' ? 'p-4' : 'p-5', featuredItems.length <= 2 && 'w-44')} style={{ borderColor: `${brandColor}20`, boxShadow: `0 2px 8px ${brandColor}08` }} role="listitem">
-                {item.url ? <PreviewImage src={item.url} alt={item.name || `Logo ${idx + 1}`} className={cn("w-auto object-contain select-none transition-transform duration-300 group-hover:scale-105", device === 'mobile' ? 'h-12' : 'h-14 md:h-16')} /> : <div className="h-16 w-full flex items-center justify-center"><ImageIcon size={26} className="text-slate-300" /></div>}
+                {item.url ? <PreviewImage src={item.url} alt={item.name ?? `Logo ${idx + 1}`} className={cn("w-auto object-contain select-none transition-transform duration-300 group-hover:scale-105", device === 'mobile' ? 'h-12' : 'h-14 md:h-16')} /> : <div className="h-16 w-full flex items-center justify-center"><ImageIcon size={26} className="text-slate-300" /></div>}
                 {item.name && <span className={cn("font-medium text-slate-600 dark:text-slate-300 text-center mt-2 truncate w-full", device === 'mobile' ? 'text-[10px]' : 'text-xs')}>{item.name}</span>}
               </div>
             ))}
@@ -12252,7 +12340,7 @@ export const ClientsPreview = ({
               <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6" role="list">
                 {visibleOthers.map((item) => (
                   <div key={`other-${item.id}`} role="listitem">
-                    {item.url ? <PreviewImage src={item.url} alt={item.name || `Logo`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-8' : 'h-9 md:h-10')} /> : <div className="h-10 w-16 flex items-center justify-center"><ImageIcon size={16} className="text-slate-300" /></div>}
+                    {item.url ? <PreviewImage src={item.url} alt={item.name ?? `Logo`} className={cn("w-auto object-contain select-none", device === 'mobile' ? 'h-8' : 'h-9 md:h-10')} /> : <div className="h-10 w-16 flex items-center justify-center"><ImageIcon size={16} className="text-slate-300" /></div>}
                   </div>
                 ))}
                 {remainingCount > 0 && <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}10`, color: brandColor }}>+{remainingCount}</span>}
@@ -12315,27 +12403,25 @@ export interface VideoConfig {
 
 // Helper: Extract video ID and type
 const getVideoInfo = (url: string): { type: 'youtube' | 'vimeo' | 'drive' | 'direct'; id?: string } => {
-  if (!url) return { type: 'direct' };
+  if (!url) {return { type: 'direct' };}
   
   // YouTube: regular, shorts, embed, youtu.be
   const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([^&?/]+)/);
-  if (ytMatch) return { type: 'youtube', id: ytMatch[1] };
+  if (ytMatch) {return { id: ytMatch[1], type: 'youtube' };}
   
   // Vimeo
   const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  if (vimeoMatch) return { type: 'vimeo', id: vimeoMatch[1] };
+  if (vimeoMatch) {return { id: vimeoMatch[1], type: 'vimeo' };}
   
   // Google Drive
   const driveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([^/&?]+)/);
-  if (driveMatch) return { type: 'drive', id: driveMatch[1] };
+  if (driveMatch) {return { id: driveMatch[1], type: 'drive' };}
   
   return { type: 'direct' };
 };
 
 // Helper: Get YouTube thumbnail
-const getYouTubeThumbnail = (videoId: string): string => {
-  return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-};
+const getYouTubeThumbnail = (videoId: string): string => `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
 export const VideoPreview = ({ 
   config, 
@@ -12350,7 +12436,7 @@ export const VideoPreview = ({
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [isPlaying, setIsPlaying] = useState(false);
-  const previewStyle = selectedStyle || 'centered';
+  const previewStyle = selectedStyle ?? 'centered';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as VideoStyle);
   
   const styles = [
@@ -12366,14 +12452,14 @@ export const VideoPreview = ({
   const videoInfo = getVideoInfo(videoUrl);
   
   // Determine thumbnail
-  const displayThumbnail = thumbnailUrl || 
+  const displayThumbnail = thumbnailUrl ?? 
     (videoInfo.type === 'youtube' && videoInfo.id ? getYouTubeThumbnail(videoInfo.id) : '');
 
   // Play button component
   const PlayButton = ({ size = 'lg' }: { size?: 'sm' | 'lg' }) => (
     <button 
       type="button"
-      onClick={() => setIsPlaying(true)}
+      onClick={() =>{  setIsPlaying(true); }}
       className={cn(
         "absolute inset-0 flex items-center justify-center group transition-all",
         "bg-black/30 hover:bg-black/40"
@@ -12396,7 +12482,7 @@ export const VideoPreview = ({
 
   // Video embed component
   const VideoEmbed = () => {
-    if (!isPlaying) return null;
+    if (!isPlaying) {return null;}
     
     if (videoInfo.type === 'youtube' && videoInfo.id) {
       return (
@@ -12458,7 +12544,7 @@ export const VideoPreview = ({
     <section className={cn("py-12 px-4", device === 'mobile' ? 'py-8' : 'py-16')}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        {(heading || description) && (
+        {(heading ?? description) && (
           <div className="text-center mb-8">
             {heading && (
               <h2 className={cn(
@@ -12570,7 +12656,7 @@ export const VideoPreview = ({
             )}
             {buttonText && (
               <a 
-                href={buttonLink || '#'}
+                href={buttonLink ?? '#'}
                 className="inline-block px-6 py-2.5 rounded-lg text-white font-medium text-sm transition-opacity hover:opacity-90"
                 style={{ backgroundColor: brandColor }}
               >
@@ -12640,12 +12726,12 @@ export const VideoPreview = ({
                 )}
                 <button 
                   type="button"
-                  onClick={() => setIsPlaying(true)}
+                  onClick={() =>{  setIsPlaying(true); }}
                   className="flex items-center gap-3 px-6 py-3 rounded-lg text-white font-medium transition-transform hover:scale-105"
                   style={{ backgroundColor: brandColor }}
                 >
                   <Play className="w-5 h-5" fill="white" />
-                  {buttonText || 'Xem video'}
+                  {buttonText ?? 'Xem video'}
                 </button>
               </div>
             </div>
@@ -12673,7 +12759,7 @@ export const VideoPreview = ({
   const renderCinemaStyle = () => (
     <section className={cn("py-12 px-4 bg-slate-900", device === 'mobile' ? 'py-8' : 'py-16')}>
       <div className="max-w-5xl mx-auto">
-        {(heading || description) && (
+        {(heading ?? description) && (
           <div className="text-center mb-8">
             {badge && <span className="inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-4" style={{ backgroundColor: `${brandColor}30`, color: brandColor }}>{badge}</span>}
             {heading && <h2 className={cn("font-bold text-white mb-3", device === 'mobile' ? 'text-xl' : 'text-2xl md:text-3xl')}>{heading}</h2>}
@@ -12692,7 +12778,7 @@ export const VideoPreview = ({
             </div>
           </div>
         )}
-        {buttonText && !isPlaying && <div className="text-center mt-8"><a href={buttonLink || '#'} className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90" style={{ backgroundColor: brandColor, boxShadow: `0 4px 14px ${brandColor}40` }}>{buttonText}</a></div>}
+        {buttonText && !isPlaying && <div className="text-center mt-8"><a href={buttonLink ?? '#'} className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium hover:opacity-90" style={{ backgroundColor: brandColor, boxShadow: `0 4px 14px ${brandColor}40` }}>{buttonText}</a></div>}
       </div>
     </section>
   );
@@ -12710,7 +12796,7 @@ export const VideoPreview = ({
               <VideoEmbed />
             </div>
           )}
-          {(heading || description) && (
+          {(heading ?? description) && (
             <div className={cn("p-6 border-t border-slate-100 dark:border-slate-700", device === 'mobile' ? 'p-4' : 'p-8')}>
               <div className={cn("flex gap-4", device === 'mobile' ? 'flex-col' : 'flex-row items-center justify-between')}>
                 <div className="flex-1">
@@ -12718,7 +12804,7 @@ export const VideoPreview = ({
                   {heading && <h3 className={cn("font-bold text-slate-900 dark:text-white", device === 'mobile' ? 'text-lg' : 'text-xl')}>{heading}</h3>}
                   {description && <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{description}</p>}
                 </div>
-                {buttonText && <a href={buttonLink || '#'} className="inline-flex items-center px-5 py-2.5 rounded-lg text-white font-medium text-sm whitespace-nowrap hover:opacity-90" style={{ backgroundColor: brandColor }}>{buttonText}</a>}
+                {buttonText && <a href={buttonLink ?? '#'} className="inline-flex items-center px-5 py-2.5 rounded-lg text-white font-medium text-sm whitespace-nowrap hover:opacity-90" style={{ backgroundColor: brandColor }}>{buttonText}</a>}
               </div>
             </div>
           )}
@@ -12734,7 +12820,7 @@ export const VideoPreview = ({
         <div className={cn("relative overflow-hidden", device === 'mobile' ? 'min-h-[350px]' : 'min-h-[450px] md:min-h-[500px]')}>
           {!isPlaying && displayThumbnail && (
             <>
-              <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${displayThumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(8px)' }} />
+              <div className="absolute inset-0 scale-110" style={{ backgroundImage: `url(${displayThumbnail})`, backgroundPosition: 'center', backgroundSize: 'cover', filter: 'blur(8px)' }} />
               <PreviewImage src={displayThumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
             </>
           )}
@@ -12747,8 +12833,8 @@ export const VideoPreview = ({
                 {heading && <h3 className={cn("font-bold text-slate-900 dark:text-white", device === 'mobile' ? 'text-base' : 'text-xl')}>{heading}</h3>}
                 {description && <p className={cn("text-slate-600 dark:text-slate-300 mt-1", device === 'mobile' ? 'text-xs line-clamp-2' : 'text-sm')}>{description}</p>}
                 <div className="flex items-center gap-3 mt-4">
-                  <button type="button" onClick={() => setIsPlaying(true)} className={cn("flex items-center gap-2 font-medium rounded-lg text-white", device === 'mobile' ? 'px-4 py-2 text-xs' : 'px-5 py-2.5 text-sm')} style={{ backgroundColor: brandColor }}>
-                    <Play className="w-4 h-4" fill="white" />{buttonText || 'Xem video'}
+                  <button type="button" onClick={() =>{  setIsPlaying(true); }} className={cn("flex items-center gap-2 font-medium rounded-lg text-white", device === 'mobile' ? 'px-4 py-2 text-xs' : 'px-5 py-2.5 text-sm')} style={{ backgroundColor: brandColor }}>
+                    <Play className="w-4 h-4" fill="white" />{buttonText ?? 'Xem video'}
                   </button>
                 </div>
               </div>
@@ -12756,7 +12842,7 @@ export const VideoPreview = ({
           )}
           {!isPlaying && device !== 'mobile' && (
             <div className="absolute top-6 right-6 z-20">
-              <button type="button" onClick={() => setIsPlaying(true)} className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
+              <button type="button" onClick={() =>{  setIsPlaying(true); }} className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
                 <Play className="w-5 h-5 text-white ml-0.5" fill="white" />
               </button>
             </div>
@@ -12768,16 +12854,23 @@ export const VideoPreview = ({
   );
 
   const getThumbnailSizeInfo = () => {
-    if (!videoUrl) return 'Chưa có video';
+    if (!videoUrl) {return 'Chưa có video';}
     const vType = videoInfo.type === 'direct' ? 'Direct' : videoInfo.type.charAt(0).toUpperCase() + videoInfo.type.slice(1);
     switch (previewStyle) {
-      case 'centered': return `${vType} • 1280×720px (16:9)`;
-      case 'split': return `${vType} • 1280×720px (16:9)`;
-      case 'fullwidth': return `${vType} • 1920×820px (21:9)`;
-      case 'cinema': return `${vType} • 1920×820px (21:9)`;
-      case 'minimal': return `${vType} • 1280×720px (16:9)`;
-      case 'parallax': return `${vType} • 1920×1080px (16:9)`;
-      default: return vType;
+      case 'centered': { return `${vType} • 1280×720px (16:9)`;
+      }
+      case 'split': { return `${vType} • 1280×720px (16:9)`;
+      }
+      case 'fullwidth': { return `${vType} • 1920×820px (21:9)`;
+      }
+      case 'cinema': { return `${vType} • 1920×820px (21:9)`;
+      }
+      case 'minimal': { return `${vType} • 1280×720px (16:9)`;
+      }
+      case 'parallax': { return `${vType} • 1920×1080px (16:9)`;
+      }
+      default: { return vType;
+      }
     }
   };
 
@@ -12813,7 +12906,7 @@ export const VideoPreview = ({
 // ============ COUNTDOWN / PROMOTION PREVIEW ============
 // 6 Professional Styles: Banner, Floating, Minimal, Split, Sticky, Popup
 // Best Practices: Urgency indicators, expired state handling, accessibility (aria-live)
-type CountdownConfig = {
+interface CountdownConfig {
   heading: string;
   subHeading: string;
   description: string;
@@ -12826,13 +12919,13 @@ type CountdownConfig = {
   showHours: boolean;
   showMinutes: boolean;
   showSeconds: boolean;
-};
+}
 
 export type CountdownStyle = 'banner' | 'floating' | 'minimal' | 'split' | 'sticky' | 'popup';
 
 // Countdown Timer Hook with expired state
 const useCountdown = (endDate: string) => {
-  const [timeLeft, setTimeLeft] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: false });
+  const [timeLeft, setTimeLeft] = React.useState({ days: 0, hours: 0, isExpired: false, minutes: 0, seconds: 0 });
 
   React.useEffect(() => {
     const calculateTime = () => {
@@ -12841,22 +12934,22 @@ const useCountdown = (endDate: string) => {
       const diff = end - now;
       
       if (diff <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true });
+        setTimeLeft({ days: 0, hours: 0, isExpired: true, minutes: 0, seconds: 0 });
         return;
       }
 
       setTimeLeft({
         days: Math.floor(diff / (1000 * 60 * 60 * 24)),
         hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        isExpired: false,
         minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
         seconds: Math.floor((diff % (1000 * 60)) / 1000),
-        isExpired: false,
       });
     };
 
     calculateTime();
     const timer = setInterval(calculateTime, 1000);
-    return () => clearInterval(timer);
+    return () =>{  clearInterval(timer); };
   }, [endDate]);
 
   return timeLeft;
@@ -12874,7 +12967,7 @@ export const CountdownPreview = ({
   onStyleChange?: (style: CountdownStyle) => void;
 }) => {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
-  const previewStyle = selectedStyle || 'banner';
+  const previewStyle = selectedStyle ?? 'banner';
   const setPreviewStyle = (s: string) => onStyleChange?.(s as CountdownStyle);
   const timeLeft = useCountdown(config.endDate);
   
@@ -12889,14 +12982,20 @@ export const CountdownPreview = ({
 
   // Image size guidance per style
   const getImageSizeInfo = () => {
-    if (!config.backgroundImage) return 'Chưa có ảnh nền';
+    if (!config.backgroundImage) {return 'Chưa có ảnh nền';}
     switch (previewStyle) {
-      case 'banner': return 'Ảnh nền: 1920×600px (16:5) - Full width banner';
-      case 'floating': return 'Ảnh nền: 1200×600px (2:1) - Card nổi bật';
-      case 'split': return 'Ảnh nền: 800×600px (4:3) - Cột trái';
-      case 'sticky': return 'Không dùng ảnh - Thanh compact';
-      case 'popup': return 'Ảnh nền: 600×400px (3:2) - Modal center';
-      default: return 'Ảnh nền tùy chọn';
+      case 'banner': { return 'Ảnh nền: 1920×600px (16:5) - Full width banner';
+      }
+      case 'floating': { return 'Ảnh nền: 1200×600px (2:1) - Card nổi bật';
+      }
+      case 'split': { return 'Ảnh nền: 800×600px (4:3) - Cột trái';
+      }
+      case 'sticky': { return 'Không dùng ảnh - Thanh compact';
+      }
+      case 'popup': { return 'Ảnh nền: 600×400px (3:2) - Modal center';
+      }
+      default: { return 'Ảnh nền tùy chọn';
+      }
     }
   };
 

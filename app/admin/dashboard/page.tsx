@@ -1,21 +1,21 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui';
 import { ModuleGuard } from '../components/ModuleGuard';
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Loader2, TrendingUp, Users, Package, AlertTriangle, Eye, Globe } from 'lucide-react';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { AlertTriangle, Eye, Globe, Loader2, Package, TrendingUp, Users } from 'lucide-react';
 import { Badge } from '../components/ui';
 
 type TimeRange = '7d' | '30d' | '90d' | '1y';
 type ChartGroupBy = 'day' | 'month' | 'year';
 
 function formatNumber(num: number): string {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  if (num >= 1_000_000) {return (num / 1_000_000).toFixed(1) + 'M';}
+  if (num >= 1000) {return (num / 1000).toFixed(1) + 'K';}
   return num.toString();
 }
 
@@ -27,9 +27,9 @@ const TIME_TABS: { key: TimeRange; label: string }[] = [
 ];
 
 function formatCurrency(value: number): string {
-  if (value >= 1000000000) return `${(value / 1000000000).toFixed(1)}B`;
-  if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+  if (value >= 1_000_000_000) {return `${(value / 1_000_000_000).toFixed(1)}B`;}
+  if (value >= 1_000_000) {return `${(value / 1_000_000).toFixed(1)}M`;}
+  if (value >= 1000) {return `${(value / 1000).toFixed(1)}K`;}
   return value.toLocaleString('vi-VN');
 }
 
@@ -61,13 +61,13 @@ function DashboardContent() {
   const summaryStats = useQuery(api.analytics.getSummaryStats, { period: timeRange });
   const chartData = useQuery(api.analytics.getRevenueChartData, { period: timeRange });
   const topProducts = useQuery(api.analytics.getTopProducts, { limit: 5 });
-  const lowStockProducts = useQuery(api.analytics.getLowStockProducts, { threshold: 10, limit: 5 });
+  const lowStockProducts = useQuery(api.analytics.getLowStockProducts, { limit: 5, threshold: 10 });
   
   // Traffic data queries
   const trafficStats = useQuery(api.pageViews.getTrafficStats, { period: timeRange });
-  const trafficChartData = useQuery(api.pageViews.getTrafficChartData, { period: timeRange, groupBy: trafficChartGroupBy });
-  const topPages = useQuery(api.pageViews.getTopPages, { period: timeRange, limit: 5 });
-  const trafficSources = useQuery(api.pageViews.getTrafficSources, { period: timeRange, limit: 5 });
+  const trafficChartData = useQuery(api.pageViews.getTrafficChartData, { groupBy: trafficChartGroupBy, period: timeRange });
+  const topPages = useQuery(api.pageViews.getTopPages, { limit: 5, period: timeRange });
+  const trafficSources = useQuery(api.pageViews.getTrafficSources, { limit: 5, period: timeRange });
   const deviceStats = useQuery(api.pageViews.getDeviceStats, { period: timeRange });
   
   const isLoading = featuresData === undefined || settingsData === undefined;
@@ -122,7 +122,7 @@ function DashboardContent() {
           {TIME_TABS.map((tab) => (
             <button 
               key={tab.key}
-              onClick={() => setTimeRange(tab.key)}
+              onClick={() =>{  setTimeRange(tab.key); }}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                 timeRange === tab.key 
                   ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-slate-100' 
@@ -410,7 +410,7 @@ function DashboardContent() {
                   ] as { key: ChartGroupBy; label: string }[]).map((tab) => (
                     <button 
                       key={tab.key}
-                      onClick={() => setTrafficChartGroupBy(tab.key)}
+                      onClick={() =>{  setTrafficChartGroupBy(tab.key); }}
                       className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
                         trafficChartGroupBy === tab.key 
                           ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-slate-100' 

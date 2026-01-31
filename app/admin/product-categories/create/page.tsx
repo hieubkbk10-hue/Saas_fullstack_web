@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -32,24 +32,24 @@ export default function ProductCategoryCreatePage() {
     const val = e.target.value;
     setName(val);
     const generatedSlug = val.toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[đĐ]/g, "d")
-      .replace(/[^a-z0-9\s]/g, '')
-      .replace(/\s+/g, '-');
+      .normalize("NFD").replaceAll(/[\u0300-\u036F]/g, "")
+      .replaceAll(/[đĐ]/g, "d")
+      .replaceAll(/[^a-z0-9\s]/g, '')
+      .replaceAll(/\s+/g, '-');
     setSlug(generatedSlug);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !slug.trim()) return;
+    if (!name.trim() || !slug.trim()) {return;}
 
     setIsSubmitting(true);
     try {
       await createCategory({
+        active,
+        description: description.trim() || undefined,
         name: name.trim(),
         slug: slug.trim(),
-        description: description.trim() || undefined,
-        active,
       });
       toast.success('Tạo danh mục thành công');
       router.push('/admin/product-categories');
@@ -89,7 +89,7 @@ export default function ProductCategoryCreatePage() {
               <Label>Slug</Label>
               <Input 
                 value={slug} 
-                onChange={(e) => setSlug(e.target.value)} 
+                onChange={(e) =>{  setSlug(e.target.value); }} 
                 placeholder="tu-dong-tao-tu-ten" 
                 className="font-mono text-sm" 
               />
@@ -100,7 +100,7 @@ export default function ProductCategoryCreatePage() {
                 <Label>Mô tả</Label>
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) =>{  setDescription(e.target.value); }}
                   placeholder="Mô tả ngắn về danh mục..."
                   className="w-full min-h-[80px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 />
@@ -111,7 +111,7 @@ export default function ProductCategoryCreatePage() {
               <Label>Trạng thái</Label>
               <select 
                 value={active ? 'active' : 'inactive'}
-                onChange={(e) => setActive(e.target.value === 'active')}
+                onChange={(e) =>{  setActive(e.target.value === 'active'); }}
                 className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
               >
                 <option value="active">Hoạt động</option>
@@ -124,7 +124,7 @@ export default function ProductCategoryCreatePage() {
             <Button 
               type="button" 
               variant="ghost" 
-              onClick={() => router.push('/admin/product-categories')}
+              onClick={() =>{  router.push('/admin/product-categories'); }}
             >
               Hủy bỏ
             </Button>

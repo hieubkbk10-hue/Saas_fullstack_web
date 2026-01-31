@@ -4,7 +4,7 @@ import React, { createContext, useContext, useMemo } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
-type AdminModule = {
+interface AdminModule {
   key: string;
   name: string;
   enabled: boolean;
@@ -12,14 +12,14 @@ type AdminModule = {
   category: string;
   dependencies?: string[];
   dependencyType?: 'all' | 'any';
-};
+}
 
-type AdminModulesContextType = {
+interface AdminModulesContextType {
   modules: AdminModule[];
   isLoading: boolean;
   isModuleEnabled: (key: string) => boolean;
   getEnabledModules: () => AdminModule[];
-};
+}
 
 const AdminModulesContext = createContext<AdminModulesContextType | null>(null);
 
@@ -29,27 +29,27 @@ export function AdminModulesProvider({ children }: { children: React.ReactNode }
   const isLoading = modulesData === undefined;
   
   const modules = useMemo(() => {
-    if (!modulesData) return [];
+    if (!modulesData) {return [];}
     return modulesData.map(m => ({
-      key: m.key,
-      name: m.name,
-      enabled: m.enabled,
-      icon: m.icon,
       category: m.category,
       dependencies: m.dependencies,
       dependencyType: m.dependencyType,
+      enabled: m.enabled,
+      icon: m.icon,
+      key: m.key,
+      name: m.name,
     }));
   }, [modulesData]);
 
   // Check if module is enabled AND all its dependencies are satisfied
   const isModuleEnabled = (key: string): boolean => {
     const currentModule = modules.find(m => m.key === key);
-    if (!currentModule) return false;
-    if (!currentModule.enabled) return false;
+    if (!currentModule) {return false;}
+    if (!currentModule.enabled) {return false;}
     
     // Check dependencies
     if (currentModule.dependencies && currentModule.dependencies.length > 0) {
-      const depType = currentModule.dependencyType || 'all';
+      const depType = currentModule.dependencyType ?? 'all';
       
       if (depType === 'all') {
         // ALL dependencies must be enabled
@@ -57,14 +57,14 @@ export function AdminModulesProvider({ children }: { children: React.ReactNode }
           const depModule = modules.find(m => m.key === depKey);
           return depModule?.enabled ?? false;
         });
-        if (!allDepsEnabled) return false;
+        if (!allDepsEnabled) {return false;}
       } else {
         // ANY dependency must be enabled
         const anyDepEnabled = currentModule.dependencies.some(depKey => {
           const depModule = modules.find(m => m.key === depKey);
           return depModule?.enabled ?? false;
         });
-        if (!anyDepEnabled) return false;
+        if (!anyDepEnabled) {return false;}
       }
     }
     
@@ -74,7 +74,7 @@ export function AdminModulesProvider({ children }: { children: React.ReactNode }
   const getEnabledModules = () => modules.filter(m => isModuleEnabled(m.key));
 
   return (
-    <AdminModulesContext.Provider value={{ modules, isLoading, isModuleEnabled, getEnabledModules }}>
+    <AdminModulesContext.Provider value={{ getEnabledModules, isLoading, isModuleEnabled, modules }}>
       {children}
     </AdminModulesContext.Provider>
   );

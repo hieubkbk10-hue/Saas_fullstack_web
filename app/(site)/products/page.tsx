@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, Suspense } from 'react';
+import React, { Suspense, useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from 'convex/react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { LayoutGrid, List, Search, Package, ShoppingCart, X, ChevronDown, SlidersHorizontal } from 'lucide-react';
-import { Id } from '@/convex/_generated/dataModel';
+import { ChevronDown, LayoutGrid, List, Package, Search, ShoppingCart, SlidersHorizontal, X } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
 
 type ProductSortOption = 'newest' | 'oldest' | 'popular' | 'price_asc' | 'price_desc' | 'name';
 type ProductsListLayout = 'grid' | 'list' | 'catalog';
@@ -17,16 +17,16 @@ type ProductsListLayout = 'grid' | 'list' | 'catalog';
 function useProductsLayout(): ProductsListLayout {
   const setting = useQuery(api.settings.getByKey, { key: 'products_list_style' });
   const value = setting?.value as string;
-  if (value === 'grid') return 'grid';
-  if (value === 'list') return 'list';
-  if (value === 'catalog') return 'catalog';
-  return 'grid'; // default
+  if (value === 'grid') {return 'grid';}
+  if (value === 'list') {return 'list';}
+  if (value === 'catalog') {return 'catalog';}
+  return 'grid'; // Default
 }
 
 function useEnabledProductFields(): Set<string> {
   const fields = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'products' });
   return useMemo(() => {
-    if (!fields) return new Set<string>();
+    if (!fields) {return new Set<string>();}
     return new Set(fields.map(f => f.fieldKey));
   }, [fields]);
 }
@@ -89,7 +89,7 @@ function ProductsContent() {
 
   const categoryFromUrl = useMemo(() => {
     const catSlug = searchParams.get('category');
-    if (!catSlug || !categories) return null;
+    if (!catSlug || !categories) {return null;}
     const matchedCategory = categories.find((c) => c.slug === catSlug);
     return matchedCategory?._id ?? null;
   }, [searchParams, categories]);
@@ -97,10 +97,10 @@ function ProductsContent() {
   const activeCategory = selectedCategory ?? categoryFromUrl;
 
   const products = useQuery(api.products.searchPublished, {
-    search: searchQuery || undefined,
     categoryId: activeCategory ?? undefined,
-    sortBy,
     limit: 24,
+    search: searchQuery || undefined,
+    sortBy,
   });
 
   const totalCount = useQuery(api.products.countPublished, {
@@ -108,7 +108,7 @@ function ProductsContent() {
   });
 
   const categoryMap = useMemo(() => {
-    if (!categories) return new Map<string, string>();
+    if (!categories) {return new Map<string, string>();}
     return new Map(categories.map((c) => [c._id, c.name]));
   }, [categories]);
 
@@ -127,9 +127,7 @@ function ProductsContent() {
     router.push(newUrl, { scroll: false });
   }, [searchParams, categories, router]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-  };
+  const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 
   if (products === undefined || categories === undefined) {
     return <ProductsListSkeleton />;
@@ -203,11 +201,11 @@ function ProductsContent() {
                 type="text"
                 placeholder="Tìm kiếm sản phẩm..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) =>{  setSearchQuery(e.target.value); }}
                 className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-colors"
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <button onClick={() =>{  setSearchQuery(''); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                   <X size={16} />
                 </button>
               )}
@@ -215,7 +213,7 @@ function ProductsContent() {
 
             <div className="hidden lg:flex items-center gap-2 flex-wrap">
               <button
-                onClick={() => handleCategoryChange(null)}
+                onClick={() =>{  handleCategoryChange(null); }}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === null ? 'text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 style={selectedCategory === null ? { backgroundColor: brandColor } : undefined}
               >
@@ -224,7 +222,7 @@ function ProductsContent() {
               {categories.slice(0, 5).map((cat) => (
                 <button
                   key={cat._id}
-                  onClick={() => handleCategoryChange(cat._id)}
+                  onClick={() =>{  handleCategoryChange(cat._id); }}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === cat._id ? 'text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                   style={selectedCategory === cat._id ? { backgroundColor: brandColor } : undefined}
                 >
@@ -232,18 +230,18 @@ function ProductsContent() {
                 </button>
               ))}
               {categories.length > 5 && (
-                <button onClick={() => setShowFilters(!showFilters)} className="px-4 py-2 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center gap-1">
+                <button onClick={() =>{  setShowFilters(!showFilters); }} className="px-4 py-2 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center gap-1">
                   +{categories.length - 5} khác <ChevronDown size={14} />
                 </button>
               )}
             </div>
 
-            <button onClick={() => setShowFilters(!showFilters)} className="lg:hidden flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-slate-600">
+            <button onClick={() =>{  setShowFilters(!showFilters); }} className="lg:hidden flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-slate-600">
               <SlidersHorizontal size={18} /> Bộ lọc
             </button>
 
             <div className="flex items-center gap-2 ml-auto">
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as ProductSortOption)} className="h-10 px-3 rounded-lg border border-slate-200 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none">
+              <select value={sortBy} onChange={(e) =>{  setSortBy(e.target.value as ProductSortOption); }} className="h-10 px-3 rounded-lg border border-slate-200 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none">
                 <option value="newest">Mới nhất</option>
                 <option value="popular">Bán chạy</option>
                 <option value="price_asc">Giá thấp → cao</option>
@@ -252,10 +250,10 @@ function ProductsContent() {
               </select>
 
               <div className="flex bg-slate-100 rounded-lg p-1">
-                <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
+                <button onClick={() =>{  setViewMode('grid'); }} className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
                   <LayoutGrid size={18} />
                 </button>
-                <button onClick={() => setViewMode('list')} className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
+                <button onClick={() =>{  setViewMode('list'); }} className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
                   <List size={18} />
                 </button>
               </div>
@@ -266,11 +264,11 @@ function ProductsContent() {
             <div className="lg:hidden mt-4 pt-4 border-t border-slate-100">
               <p className="text-sm font-medium text-slate-700 mb-3">Danh mục</p>
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => handleCategoryChange(null)} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedCategory === null ? 'text-white' : 'bg-slate-100 text-slate-600'}`} style={selectedCategory === null ? { backgroundColor: brandColor } : undefined}>
+                <button onClick={() =>{  handleCategoryChange(null); }} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedCategory === null ? 'text-white' : 'bg-slate-100 text-slate-600'}`} style={selectedCategory === null ? { backgroundColor: brandColor } : undefined}>
                   Tất cả
                 </button>
                 {categories.map((cat) => (
-                  <button key={cat._id} onClick={() => handleCategoryChange(cat._id)} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedCategory === cat._id ? 'text-white' : 'bg-slate-100 text-slate-600'}`} style={selectedCategory === cat._id ? { backgroundColor: brandColor } : undefined}>
+                  <button key={cat._id} onClick={() =>{  handleCategoryChange(cat._id); }} className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedCategory === cat._id ? 'text-white' : 'bg-slate-100 text-slate-600'}`} style={selectedCategory === cat._id ? { backgroundColor: brandColor } : undefined}>
                     {cat.name}
                   </button>
                 ))}
@@ -290,11 +288,11 @@ function ProductsContent() {
         {/* Products Grid/List */}
         {products.length === 0 ? (
           <EmptyState brandColor={brandColor} onReset={() => { setSearchQuery(''); handleCategoryChange(null); }} />
-        ) : viewMode === 'grid' ? (
+        ) : (viewMode === 'grid' ? (
           <ProductGrid products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} />
         ) : (
           <ProductList products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} />
-        )}
+        ))}
 
         {products.length >= 24 && (
           <div className="text-center mt-8">
@@ -346,7 +344,7 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
             )}
           </div>
           <div className="p-4">
-            <p className="text-xs text-slate-500 mb-1">{categoryMap.get(product.categoryId) || 'Sản phẩm'}</p>
+            <p className="text-xs text-slate-500 mb-1">{categoryMap.get(product.categoryId) ?? 'Sản phẩm'}</p>
             <h3 className="font-medium text-slate-900 line-clamp-2 group-hover:text-orange-600 transition-colors mb-2">{product.name}</h3>
             {showPrice && (
               <div className="flex items-center gap-2">
@@ -379,7 +377,7 @@ function ProductList({ products, categoryMap, brandColor, showPrice, showSalePri
             )}
           </div>
           <div className="flex-1 min-w-0 flex flex-col justify-center">
-            <p className="text-xs text-slate-500 mb-1">{categoryMap.get(product.categoryId) || 'Sản phẩm'}</p>
+            <p className="text-xs text-slate-500 mb-1">{categoryMap.get(product.categoryId) ?? 'Sản phẩm'}</p>
             <h3 className="font-semibold text-slate-900 text-lg group-hover:text-orange-600 transition-colors mb-2">{product.name}</h3>
             {product.description && <p className="text-sm text-slate-500 line-clamp-2 mb-3" dangerouslySetInnerHTML={{ __html: product.description.slice(0, 150) }} />}
             <div className="flex items-center gap-4">
@@ -455,18 +453,18 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
               <h3 className="font-semibold text-slate-900 mb-3">Tìm kiếm</h3>
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" placeholder="Tìm sản phẩm..." value={searchQuery} onChange={(e) => onSearchChange(e.target.value)} className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 text-sm focus:border-orange-500 outline-none" />
+                <input type="text" placeholder="Tìm sản phẩm..." value={searchQuery} onChange={(e) =>{  onSearchChange(e.target.value); }} className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 text-sm focus:border-orange-500 outline-none" />
               </div>
             </div>
 
             <div className="bg-white rounded-xl border border-slate-200 p-4">
               <h3 className="font-semibold text-slate-900 mb-3">Danh mục</h3>
               <div className="space-y-1">
-                <button onClick={() => onCategoryChange(null)} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === null ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'}`} style={selectedCategory === null ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}>
+                <button onClick={() =>{  onCategoryChange(null); }} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === null ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'}`} style={selectedCategory === null ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}>
                   Tất cả sản phẩm
                 </button>
                 {categories.map((cat) => (
-                  <button key={cat._id} onClick={() => onCategoryChange(cat._id)} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat._id ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'}`} style={selectedCategory === cat._id ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}>
+                  <button key={cat._id} onClick={() =>{  onCategoryChange(cat._id); }} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${selectedCategory === cat._id ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'}`} style={selectedCategory === cat._id ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}>
                     {cat.name}
                   </button>
                 ))}
@@ -475,7 +473,7 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
 
             <div className="bg-white rounded-xl border border-slate-200 p-4">
               <h3 className="font-semibold text-slate-900 mb-3">Sắp xếp</h3>
-              <select value={sortBy} onChange={(e) => onSortChange(e.target.value as ProductSortOption)} className="w-full h-9 px-3 rounded-lg border border-slate-200 text-sm">
+              <select value={sortBy} onChange={(e) =>{  onSortChange(e.target.value as ProductSortOption); }} className="w-full h-9 px-3 rounded-lg border border-slate-200 text-sm">
                 <option value="newest">Mới nhất</option>
                 <option value="popular">Bán chạy</option>
                 <option value="price_asc">Giá thấp → cao</option>
@@ -541,13 +539,13 @@ function ListLayout({ products, categories, categoryMap, selectedCategory, onCat
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input type="text" placeholder="Tìm kiếm sản phẩm..." value={searchQuery} onChange={(e) => onSearchChange(e.target.value)} className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 focus:border-orange-500 outline-none" />
+              <input type="text" placeholder="Tìm kiếm sản phẩm..." value={searchQuery} onChange={(e) =>{  onSearchChange(e.target.value); }} className="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 focus:border-orange-500 outline-none" />
             </div>
-            <select value={selectedCategory ?? ''} onChange={(e) => onCategoryChange(e.target.value ? e.target.value as Id<"productCategories"> : null)} className="h-10 px-3 rounded-lg border border-slate-200 text-sm">
+            <select value={selectedCategory ?? ''} onChange={(e) =>{  onCategoryChange(e.target.value ? e.target.value as Id<"productCategories"> : null); }} className="h-10 px-3 rounded-lg border border-slate-200 text-sm">
               <option value="">Tất cả danh mục</option>
               {categories.map((cat) => <option key={cat._id} value={cat._id}>{cat.name}</option>)}
             </select>
-            <select value={sortBy} onChange={(e) => onSortChange(e.target.value as ProductSortOption)} className="h-10 px-3 rounded-lg border border-slate-200 text-sm">
+            <select value={sortBy} onChange={(e) =>{  onSortChange(e.target.value as ProductSortOption); }} className="h-10 px-3 rounded-lg border border-slate-200 text-sm">
               <option value="newest">Mới nhất</option>
               <option value="popular">Bán chạy</option>
               <option value="price_asc">Giá thấp → cao</option>

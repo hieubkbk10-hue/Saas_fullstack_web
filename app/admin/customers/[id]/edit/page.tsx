@@ -1,22 +1,22 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, use } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { User as UserIcon, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { ChevronLeft, ChevronRight, Loader2, User as UserIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn, Button, Card, CardHeader, CardTitle, CardContent, Input, Label, Badge, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../../components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from '../../../components/ui';
 
 const MODULE_KEY = 'customers';
 const ORDERS_PER_PAGE = 10; // CUST-010: Add pagination constant
 
 const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 // CUST-005 FIX: Add phone validation for Vietnamese phone numbers
-const isValidPhone = (phone: string) => /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone.replace(/\s|-/g, ''));
+const isValidPhone = (phone: string) => /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/.test(phone.replaceAll(/\s|-/g, ''));
 
 interface FormData {
   name: string;
@@ -64,12 +64,12 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
   useEffect(() => {
     if (customerData && !formData) {
       setFormData({
-        name: customerData.name,
+        address: customerData.address ?? '',
+        city: customerData.city ?? '',
         email: customerData.email,
+        name: customerData.name,
+        notes: customerData.notes ?? '',
         phone: customerData.phone,
-        city: customerData.city || '',
-        address: customerData.address || '',
-        notes: customerData.notes || '',
         status: customerData.status,
       });
     }
@@ -81,7 +81,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData) return;
+    if (!formData) {return;}
 
     // Validation
     if (!formData.name.trim()) {
@@ -105,13 +105,13 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
     setIsSubmitting(true);
     try {
       await updateCustomer({
+        address: formData.address.trim() || undefined,
+        city: formData.city.trim() || undefined,
+        email: formData.email.toLowerCase().trim(),
         id: id as Id<"customers">,
         name: formData.name.trim(),
-        email: formData.email.toLowerCase().trim(),
-        phone: formData.phone.trim(),
-        city: formData.city.trim() || undefined,
-        address: formData.address.trim() || undefined,
         notes: formData.notes.trim() || undefined,
+        phone: formData.phone.trim(),
         status: formData.status,
       });
       toast.success('Đã lưu thông tin khách hàng');
@@ -192,8 +192,8 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
               <CardContent>
                 <textarea
                   className="w-full h-32 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={formData?.notes || ''}
-                  onChange={(e) => handleChange('notes', e.target.value)}
+                  value={formData?.notes ?? ''}
+                  onChange={(e) =>{  handleChange('notes', e.target.value); }}
                   placeholder="Ghi chú về khách hàng..."
                 />
               </CardContent>
@@ -205,7 +205,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
         <div className="flex-1">
           <div className="flex border-b border-slate-200 dark:border-slate-700 mb-6">
             <button
-              onClick={() => setActiveTab('profile')}
+              onClick={() =>{  setActiveTab('profile'); }}
               className={cn(
                 "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
                 activeTab === 'profile' ? "border-purple-500 text-purple-600" : "border-transparent text-slate-500 hover:text-slate-700"
@@ -214,13 +214,13 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
               Hồ sơ & Địa chỉ
             </button>
             <button
-              onClick={() => setActiveTab('orders')}
+              onClick={() =>{  setActiveTab('orders'); }}
               className={cn(
                 "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
                 activeTab === 'orders' ? "border-purple-500 text-purple-600" : "border-transparent text-slate-500 hover:text-slate-700"
               )}
             >
-              Lịch sử mua hàng ({ordersData?.length || 0})
+              Lịch sử mua hàng ({ordersData?.length ?? 0})
             </button>
           </div>
 
@@ -233,7 +233,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                       <Label>Họ và tên <span className="text-red-500">*</span></Label>
                       <Input
                         value={formData.name}
-                        onChange={(e) => handleChange('name', e.target.value)}
+                        onChange={(e) =>{  handleChange('name', e.target.value); }}
                         required
                       />
                     </div>
@@ -241,7 +241,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                       <Label>Số điện thoại <span className="text-red-500">*</span></Label>
                       <Input
                         value={formData.phone}
-                        onChange={(e) => handleChange('phone', e.target.value)}
+                        onChange={(e) =>{  handleChange('phone', e.target.value); }}
                         required
                       />
                     </div>
@@ -251,7 +251,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                     <Input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => handleChange('email', e.target.value)}
+                      onChange={(e) =>{  handleChange('email', e.target.value); }}
                       required
                     />
                   </div>
@@ -262,7 +262,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                         <Label>Địa chỉ</Label>
                         <Input
                           value={formData.address}
-                          onChange={(e) => handleChange('address', e.target.value)}
+                          onChange={(e) =>{  handleChange('address', e.target.value); }}
                           placeholder="Số nhà, tên đường..."
                         />
                       </div>
@@ -271,7 +271,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                           <Label>Thành phố / Tỉnh</Label>
                           <Input
                             value={formData.city}
-                            onChange={(e) => handleChange('city', e.target.value)}
+                            onChange={(e) =>{  handleChange('city', e.target.value); }}
                             placeholder="Nhập thành phố..."
                           />
                         </div>
@@ -280,7 +280,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                           <select
                             className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                             value={formData.status}
-                            onChange={(e) => handleChange('status', e.target.value)}
+                            onChange={(e) =>{  handleChange('status', e.target.value); }}
                           >
                             <option value="Active">Hoạt động</option>
                             <option value="Inactive">Bị khóa</option>
@@ -296,7 +296,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                       <select
                         className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                         value={formData.status}
-                        onChange={(e) => handleChange('status', e.target.value)}
+                        onChange={(e) =>{  handleChange('status', e.target.value); }}
                       >
                         <option value="Active">Hoạt động</option>
                         <option value="Inactive">Bị khóa</option>
@@ -305,7 +305,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                   )}
 
                   <div className="pt-4 flex justify-end gap-3">
-                    <Button type="button" variant="ghost" onClick={() => router.push('/admin/customers')}>
+                    <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/customers'); }}>
                       Hủy
                     </Button>
                     <Button type="submit" variant="accent" disabled={isSubmitting}>
@@ -343,7 +343,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                         {new Date(order._creationTime).toLocaleDateString('vi-VN')}
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount)}
+                        {new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(order.totalAmount)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={
@@ -390,7 +390,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                       variant="outline"
                       size="sm"
                       disabled={ordersPage === 1}
-                      onClick={() => setOrdersPage(p => p - 1)}
+                      onClick={() =>{  setOrdersPage(p => p - 1); }}
                     >
                       <ChevronLeft size={16} />
                     </Button>
@@ -401,7 +401,7 @@ export default function CustomerEditPage({ params }: { params: Promise<{ id: str
                       variant="outline"
                       size="sm"
                       disabled={ordersPage >= Math.ceil(ordersData.length / ORDERS_PER_PAGE)}
-                      onClick={() => setOrdersPage(p => p + 1)}
+                      onClick={() =>{  setOrdersPage(p => p + 1); }}
                     >
                       <ChevronRight size={16} />
                     </Button>

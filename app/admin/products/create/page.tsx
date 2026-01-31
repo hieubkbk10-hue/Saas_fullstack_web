@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { Loader2, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Label } from '../../components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../components/ui';
 import { LexicalEditor } from '../../components/LexicalEditor';
 import { ImageUpload } from '../../components/ImageUpload';
 import { ModuleGuard } from '../../components/ModuleGuard';
@@ -28,20 +28,20 @@ function QuickCreateCategoryModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) {return;}
 
     setIsSubmitting(true);
     try {
       const slug = name.toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/[đĐ]/g, "d")
-        .replace(/[^a-z0-9\s]/g, '')
-        .replace(/\s+/g, '-');
+        .normalize("NFD").replaceAll(/[\u0300-\u036F]/g, "")
+        .replaceAll(/[đĐ]/g, "d")
+        .replaceAll(/[^a-z0-9\s]/g, '')
+        .replaceAll(/\s+/g, '-');
       
       const id = await createCategory({
+        active: true,
         name: name.trim(),
         slug,
-        active: true,
       });
       toast.success('Tạo danh mục thành công');
       onCreated(id);
@@ -54,7 +54,7 @@ function QuickCreateCategoryModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -72,7 +72,7 @@ function QuickCreateCategoryModal({
               <Label>Tên danh mục <span className="text-red-500">*</span></Label>
               <Input 
                 value={name} 
-                onChange={(e) => setName(e.target.value)} 
+                onChange={(e) =>{  setName(e.target.value); }} 
                 required 
                 placeholder="VD: Điện thoại, Laptop..." 
                 autoFocus 
@@ -145,10 +145,10 @@ function ProductCreateContent() {
     const val = e.target.value;
     setName(val);
     const generatedSlug = val.toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[đĐ]/g, "d")
-      .replace(/[^a-z0-9\s]/g, '')
-      .replace(/\s+/g, '-');
+      .normalize("NFD").replaceAll(/[\u0300-\u036F]/g, "")
+      .replaceAll(/[đĐ]/g, "d")
+      .replaceAll(/[^a-z0-9\s]/g, '')
+      .replaceAll(/\s+/g, '-');
     setSlug(generatedSlug);
   };
 
@@ -169,16 +169,16 @@ function ProductCreateContent() {
     setIsSubmitting(true);
     try {
       await createProduct({
-        name: name.trim(),
-        slug: slug.trim() || name.toLowerCase().replace(/\s+/g, '-'),
-        sku: sku.trim() || `SKU-${Date.now()}`,
-        price: parseInt(price) || 0,
-        salePrice: salePrice ? parseInt(salePrice) : undefined,
-        stock: parseInt(stock) || 0,
         categoryId: categoryId as Id<"productCategories">,
         description: description.trim() || undefined,
         image,
+        name: name.trim(),
+        price: Number.parseInt(price) || 0,
+        salePrice: salePrice ? Number.parseInt(salePrice) : undefined,
+        sku: sku.trim() || `SKU-${Date.now()}`,
+        slug: slug.trim() || name.toLowerCase().replaceAll(/\s+/g, '-'),
         status,
+        stock: Number.parseInt(stock) || 0,
       });
       toast.success("Tạo sản phẩm mới thành công");
       router.push('/admin/products');
@@ -193,8 +193,8 @@ function ProductCreateContent() {
     <>
     <QuickCreateCategoryModal 
       isOpen={showCategoryModal} 
-      onClose={() => setShowCategoryModal(false)} 
-      onCreated={(id) => setCategoryId(id)}
+      onClose={() =>{  setShowCategoryModal(false); }} 
+      onCreated={(id) =>{  setCategoryId(id); }}
     />
     <form onSubmit={handleSubmit} className="space-y-6 pb-20">
       <div className="flex justify-between items-center">
@@ -216,12 +216,12 @@ function ProductCreateContent() {
               <div className={enabledFields.has('sku') ? "grid grid-cols-2 gap-4" : ""}>
                 <div className="space-y-2">
                   <Label>Slug</Label>
-                  <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="tu-dong-tao-tu-ten" className="font-mono text-sm" />
+                  <Input value={slug} onChange={(e) =>{  setSlug(e.target.value); }} placeholder="tu-dong-tao-tu-ten" className="font-mono text-sm" />
                 </div>
                 {enabledFields.has('sku') && (
                   <div className="space-y-2">
                     <Label>Mã SKU <span className="text-red-500">*</span></Label>
-                    <Input value={sku} onChange={(e) => setSku(e.target.value)} required placeholder="VD: PROD-001" className="font-mono" />
+                    <Input value={sku} onChange={(e) =>{  setSku(e.target.value); }} required placeholder="VD: PROD-001" className="font-mono" />
                   </div>
                 )}
               </div>
@@ -240,19 +240,19 @@ function ProductCreateContent() {
               <div className={enabledFields.has('salePrice') ? "grid grid-cols-2 gap-4" : ""}>
                 <div className="space-y-2">
                   <Label>Giá bán (VNĐ) <span className="text-red-500">*</span></Label>
-                  <Input type="number" value={price} onChange={(e) => setPrice(e.target.value)} required placeholder="0" min="0" />
+                  <Input type="number" value={price} onChange={(e) =>{  setPrice(e.target.value); }} required placeholder="0" min="0" />
                 </div>
                 {enabledFields.has('salePrice') && (
                   <div className="space-y-2">
                     <Label>Giá khuyến mãi (VNĐ)</Label>
-                    <Input type="number" value={salePrice} onChange={(e) => setSalePrice(e.target.value)} placeholder="Để trống nếu không KM" min="0" />
+                    <Input type="number" value={salePrice} onChange={(e) =>{  setSalePrice(e.target.value); }} placeholder="Để trống nếu không KM" min="0" />
                   </div>
                 )}
               </div>
               {enabledFields.has('stock') && (
                 <div className="space-y-2">
                   <Label>Số lượng tồn kho</Label>
-                  <Input type="number" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="0" min="0" />
+                  <Input type="number" value={stock} onChange={(e) =>{  setStock(e.target.value); }} placeholder="0" min="0" />
                 </div>
               )}
             </CardContent>
@@ -267,7 +267,7 @@ function ProductCreateContent() {
                 <Label>Trạng thái</Label>
                 <select 
                   value={status} 
-                  onChange={(e) => setStatus(e.target.value as 'Draft' | 'Active' | 'Archived')}
+                  onChange={(e) =>{  setStatus(e.target.value as 'Draft' | 'Active' | 'Archived'); }}
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                 >
                   <option value="Draft">Bản nháp</option>
@@ -280,7 +280,7 @@ function ProductCreateContent() {
                 <div className="flex gap-2">
                   <select 
                     value={categoryId} 
-                    onChange={(e) => setCategoryId(e.target.value)}
+                    onChange={(e) =>{  setCategoryId(e.target.value); }}
                     required
                     className="flex-1 h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   >
@@ -293,7 +293,7 @@ function ProductCreateContent() {
                     type="button" 
                     variant="outline" 
                     size="icon"
-                    onClick={() => setShowCategoryModal(true)}
+                    onClick={() =>{  setShowCategoryModal(true); }}
                     title="Tạo danh mục mới"
                   >
                     <Plus size={16} />
@@ -313,9 +313,9 @@ function ProductCreateContent() {
       </div>
 
       <div className="fixed bottom-0 left-0 lg:left-[280px] right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center z-10">
-        <Button type="button" variant="ghost" onClick={() => router.push('/admin/products')}>Hủy bỏ</Button>
+        <Button type="button" variant="ghost" onClick={() =>{  router.push('/admin/products'); }}>Hủy bỏ</Button>
         <div className="flex gap-2">
-          <Button type="button" variant="secondary" onClick={() => setStatus('Draft')}>Lưu nháp</Button>
+          <Button type="button" variant="secondary" onClick={() =>{  setStatus('Draft'); }}>Lưu nháp</Button>
           <Button type="submit" variant="accent" disabled={isSubmitting}>
             {isSubmitting && <Loader2 size={16} className="animate-spin mr-2" />}
             Tạo sản phẩm

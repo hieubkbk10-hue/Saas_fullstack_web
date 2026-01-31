@@ -1,15 +1,15 @@
 'use client';
 
 import React from 'react';
-import { Save, BarChart3, ExternalLink } from 'lucide-react';
+import { BarChart3, ExternalLink, Save } from 'lucide-react';
 
-type IntegrationItemProps = {
+interface IntegrationItemProps {
   title: string;
   desc: string;
   placeholder: string;
   connected: boolean;
   iconColor: string;
-};
+}
 
 const IntegrationItem = ({ title, desc, placeholder, connected, iconColor }: IntegrationItemProps) => (
   <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 hover:border-slate-300 dark:hover:border-slate-700 transition-all">

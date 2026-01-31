@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
 import { ImageFieldWithUpload } from '../../../components/ImageFieldWithUpload';
-import { ComponentFormWrapper, useComponentForm, useBrandColor } from '../shared';
-import { CountdownPreview, CountdownStyle } from '../../previews';
+import { ComponentFormWrapper, useBrandColor, useComponentForm } from '../shared';
+import type { CountdownStyle } from '../../previews';
+import { CountdownPreview } from '../../previews';
 
 const DEFAULT_END_DATE = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
 
@@ -14,18 +15,18 @@ export default function CountdownCreatePage() {
   
   const [countdownStyle, setCountdownStyle] = useState<CountdownStyle>('banner');
   const [countdownConfig, setCountdownConfig] = useState({
-    heading: 'Flash Sale - Giảm giá sốc!',
-    subHeading: 'Ưu đãi có hạn',
-    description: 'Nhanh tay đặt hàng trước khi hết thời gian khuyến mãi',
-    endDate: DEFAULT_END_DATE,
-    buttonText: 'Mua ngay',
-    buttonLink: '/products',
     backgroundImage: '',
+    buttonLink: '/products',
+    buttonText: 'Mua ngay',
+    description: 'Nhanh tay đặt hàng trước khi hết thời gian khuyến mãi',
     discountText: '-50%',
+    endDate: DEFAULT_END_DATE,
+    heading: 'Flash Sale - Giảm giá sốc!',
     showDays: true,
     showHours: true,
     showMinutes: true,
     showSeconds: true,
+    subHeading: 'Ưu đãi có hạn',
   });
 
   const onSubmit = (e: React.FormEvent) => {
@@ -55,7 +56,7 @@ export default function CountdownCreatePage() {
               <Label>Tiêu đề chính</Label>
               <Input 
                 value={countdownConfig.heading} 
-                onChange={(e) => setCountdownConfig({...countdownConfig, heading: e.target.value})} 
+                onChange={(e) =>{  setCountdownConfig({...countdownConfig, heading: e.target.value}); }} 
                 placeholder="Flash Sale - Giảm giá sốc!" 
               />
             </div>
@@ -63,7 +64,7 @@ export default function CountdownCreatePage() {
               <Label>Tiêu đề phụ</Label>
               <Input 
                 value={countdownConfig.subHeading} 
-                onChange={(e) => setCountdownConfig({...countdownConfig, subHeading: e.target.value})} 
+                onChange={(e) =>{  setCountdownConfig({...countdownConfig, subHeading: e.target.value}); }} 
                 placeholder="Ưu đãi có hạn" 
               />
             </div>
@@ -73,7 +74,7 @@ export default function CountdownCreatePage() {
             <Label>Mô tả</Label>
             <textarea 
               value={countdownConfig.description} 
-              onChange={(e) => setCountdownConfig({...countdownConfig, description: e.target.value})} 
+              onChange={(e) =>{  setCountdownConfig({...countdownConfig, description: e.target.value}); }} 
               placeholder="Nhanh tay đặt hàng trước khi hết thời gian khuyến mãi"
               className="w-full min-h-[60px] rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm" 
             />
@@ -85,14 +86,14 @@ export default function CountdownCreatePage() {
               <Input 
                 type="datetime-local"
                 value={countdownConfig.endDate} 
-                onChange={(e) => setCountdownConfig({...countdownConfig, endDate: e.target.value})} 
+                onChange={(e) =>{  setCountdownConfig({...countdownConfig, endDate: e.target.value}); }} 
               />
             </div>
             <div className="space-y-2">
               <Label>Text giảm giá (VD: -50%)</Label>
               <Input 
                 value={countdownConfig.discountText} 
-                onChange={(e) => setCountdownConfig({...countdownConfig, discountText: e.target.value})} 
+                onChange={(e) =>{  setCountdownConfig({...countdownConfig, discountText: e.target.value}); }} 
                 placeholder="-50%" 
               />
             </div>
@@ -103,7 +104,7 @@ export default function CountdownCreatePage() {
               <Label>Text nút bấm</Label>
               <Input 
                 value={countdownConfig.buttonText} 
-                onChange={(e) => setCountdownConfig({...countdownConfig, buttonText: e.target.value})} 
+                onChange={(e) =>{  setCountdownConfig({...countdownConfig, buttonText: e.target.value}); }} 
                 placeholder="Mua ngay" 
               />
             </div>
@@ -111,7 +112,7 @@ export default function CountdownCreatePage() {
               <Label>Liên kết</Label>
               <Input 
                 value={countdownConfig.buttonLink} 
-                onChange={(e) => setCountdownConfig({...countdownConfig, buttonLink: e.target.value})} 
+                onChange={(e) =>{  setCountdownConfig({...countdownConfig, buttonLink: e.target.value}); }} 
                 placeholder="/products" 
               />
             </div>
@@ -120,7 +121,7 @@ export default function CountdownCreatePage() {
           <ImageFieldWithUpload
             label="Ảnh nền (tùy chọn)"
             value={countdownConfig.backgroundImage}
-            onChange={(url) => setCountdownConfig({...countdownConfig, backgroundImage: url})}
+            onChange={(url) =>{  setCountdownConfig({...countdownConfig, backgroundImage: url}); }}
             folder="countdown"
             aspectRatio="banner"
             quality={0.85}
@@ -134,7 +135,7 @@ export default function CountdownCreatePage() {
                 <input 
                   type="checkbox" 
                   checked={countdownConfig.showDays} 
-                  onChange={(e) => setCountdownConfig({...countdownConfig, showDays: e.target.checked})} 
+                  onChange={(e) =>{  setCountdownConfig({...countdownConfig, showDays: e.target.checked}); }} 
                   className="w-4 h-4 rounded" 
                 />
                 Ngày
@@ -143,7 +144,7 @@ export default function CountdownCreatePage() {
                 <input 
                   type="checkbox" 
                   checked={countdownConfig.showHours} 
-                  onChange={(e) => setCountdownConfig({...countdownConfig, showHours: e.target.checked})} 
+                  onChange={(e) =>{  setCountdownConfig({...countdownConfig, showHours: e.target.checked}); }} 
                   className="w-4 h-4 rounded" 
                 />
                 Giờ
@@ -152,7 +153,7 @@ export default function CountdownCreatePage() {
                 <input 
                   type="checkbox" 
                   checked={countdownConfig.showMinutes} 
-                  onChange={(e) => setCountdownConfig({...countdownConfig, showMinutes: e.target.checked})} 
+                  onChange={(e) =>{  setCountdownConfig({...countdownConfig, showMinutes: e.target.checked}); }} 
                   className="w-4 h-4 rounded" 
                 />
                 Phút
@@ -161,7 +162,7 @@ export default function CountdownCreatePage() {
                 <input 
                   type="checkbox" 
                   checked={countdownConfig.showSeconds} 
-                  onChange={(e) => setCountdownConfig({...countdownConfig, showSeconds: e.target.checked})} 
+                  onChange={(e) =>{  setCountdownConfig({...countdownConfig, showSeconds: e.target.checked}); }} 
                   className="w-4 h-4 rounded" 
                 />
                 Giây

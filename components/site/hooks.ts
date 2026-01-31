@@ -28,13 +28,13 @@ export function useSiteSettings() {
   });
   
   return {
-    isLoading: false,
-    settings: settingsMap,
-    siteName: settingsMap.site_name || 'VietAdmin',
-    siteDescription: settingsMap.site_description || '',
     brandColor: settingsMap.site_brand_color || DEFAULT_BRAND_COLOR,
-    logo: settingsMap.site_logo || '',
     favicon: settingsMap.site_favicon || '',
+    isLoading: false,
+    logo: settingsMap.site_logo || '',
+    settings: settingsMap,
+    siteDescription: settingsMap.site_description || '',
+    siteName: settingsMap.site_name || 'VietAdmin',
   };
 }
 
@@ -52,11 +52,11 @@ export function useContactSettings() {
   });
   
   return {
-    isLoading: false,
-    email: settingsMap.contact_email || '',
-    phone: settingsMap.contact_phone || '',
     address: settingsMap.contact_address || '',
+    email: settingsMap.contact_email || '',
     hotline: settingsMap.contact_hotline || '',
+    isLoading: false,
+    phone: settingsMap.contact_phone || '',
   };
 }
 
@@ -74,13 +74,13 @@ export function useSocialLinks() {
   });
   
   return {
-    isLoading: false,
     facebook: settingsMap.social_facebook || '',
     instagram: settingsMap.social_instagram || '',
-    youtube: settingsMap.social_youtube || '',
-    tiktok: settingsMap.social_tiktok || '',
-    zalo: settingsMap.social_zalo || '',
-    twitter: settingsMap.social_twitter || '',
+    isLoading: false,
     linkedin: settingsMap.social_linkedin || '',
+    tiktok: settingsMap.social_tiktok || '',
+    twitter: settingsMap.social_twitter || '',
+    youtube: settingsMap.social_youtube || '',
+    zalo: settingsMap.social_zalo || '',
   };
 }

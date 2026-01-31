@@ -1,26 +1,26 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Settings as SettingsIcon, Globe, Mail, MapPin, Share2, Loader2, Database, Trash2, RefreshCw, SettingsIcon as SettingsTab, Save } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { Database, Globe, Loader2, Mail, MapPin, RefreshCw, Save, Settings as SettingsIcon, SettingsIcon as SettingsTab, Share2, Trash2 } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus,
+  SettingInput, SettingsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Input } from '@/app/admin/components/ui';
+import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'settings';
 
 const FEATURES_CONFIG = [
-  { key: 'enableContact', label: 'Thông tin liên hệ', icon: MapPin },
-  { key: 'enableSEO', label: 'SEO cơ bản', icon: Globe },
-  { key: 'enableSocial', label: 'Mạng xã hội', icon: Share2 },
-  { key: 'enableMail', label: 'Cấu hình Email', icon: Mail },
+  { icon: MapPin, key: 'enableContact', label: 'Thông tin liên hệ' },
+  { icon: Globe, key: 'enableSEO', label: 'SEO cơ bản' },
+  { icon: Share2, key: 'enableSocial', label: 'Mạng xã hội' },
+  { icon: Mail, key: 'enableMail', label: 'Cấu hình Email' },
 ];
 
 type FeaturesState = Record<string, boolean>;
@@ -51,7 +51,7 @@ export default function SettingsModuleConfigPage() {
   // Local state
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
-  const [localModuleSettings, setLocalModuleSettings] = useState({ cacheEnabled: true, cacheDuration: 3600 });
+  const [localModuleSettings, setLocalModuleSettings] = useState({ cacheDuration: 3600, cacheEnabled: true });
   const [isSaving, setIsSaving] = useState(false);
 
   // Editable settings values + dirty tracking
@@ -75,15 +75,15 @@ export default function SettingsModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
-        isSystem: f.isSystem,
-        linkedFeature: f.linkedFeature,
         group: f.group,
+        id: f._id,
+        isSystem: f.isSystem,
+        key: f.fieldKey,
+        linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -93,7 +93,7 @@ export default function SettingsModuleConfigPage() {
     if (moduleSettingsData) {
       const cacheEnabled = moduleSettingsData.find(s => s.settingKey === 'cacheEnabled')?.value as boolean ?? true;
       const cacheDuration = moduleSettingsData.find(s => s.settingKey === 'cacheDuration')?.value as number ?? 3600;
-      setLocalModuleSettings({ cacheEnabled, cacheDuration });
+      setLocalModuleSettings({ cacheDuration, cacheEnabled });
     }
   }, [moduleSettingsData]);
 
@@ -116,14 +116,12 @@ export default function SettingsModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
   const serverModuleSettings = useMemo(() => {
     const cacheEnabled = moduleSettingsData?.find(s => s.settingKey === 'cacheEnabled')?.value as boolean ?? true;
     const cacheDuration = moduleSettingsData?.find(s => s.settingKey === 'cacheDuration')?.value as number ?? 3600;
-    return { cacheEnabled, cacheDuration };
+    return { cacheDuration, cacheEnabled };
   }, [moduleSettingsData]);
 
   // Check for changes
@@ -149,7 +147,7 @@ export default function SettingsModuleConfigPage() {
 
   const handleToggleField = (id: string) => {
     const field = localFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     
@@ -183,14 +181,14 @@ export default function SettingsModuleConfigPage() {
       // Save features
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          await toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY });
         }
       }
       // Save fields
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
+          await updateField({ enabled: field.enabled, id: field.id as Id<'moduleFields'> });
         }
       }
       // Save module settings
@@ -224,21 +222,21 @@ export default function SettingsModuleConfigPage() {
   // Save single setting value
   const handleSaveSetting = async (key: string, group: string) => {
     const value = editingSettings[key];
-    await setSetting({ key, value, group });
+    await setSetting({ group, key, value });
     setOriginalSettings(prev => ({ ...prev, [key]: value }));
     toast.success(`Đã lưu ${key}`);
   };
 
   // Save all dirty settings
   const handleSaveAllDirty = async () => {
-    if (dirtySettings.size === 0) return;
+    if (dirtySettings.size === 0) {return;}
     
     setIsSavingData(true);
     try {
       for (const key of dirtySettings) {
         const setting = settingsData?.find(s => s.key === key);
         if (setting) {
-          await setSetting({ key, value: editingSettings[key], group: setting.group });
+          await setSetting({ group: setting.group, key, value: editingSettings[key] });
         }
       }
       setOriginalSettings({ ...editingSettings });
@@ -260,7 +258,7 @@ export default function SettingsModuleConfigPage() {
   };
 
   const handleClearData = async () => {
-    if (!confirm('Xóa toàn bộ settings?')) return;
+    if (!confirm('Xóa toàn bộ settings?')) {return;}
     toast.loading('Đang xóa dữ liệu...');
     await clearSettingsData();
     toast.dismiss();
@@ -268,7 +266,7 @@ export default function SettingsModuleConfigPage() {
   };
 
   const handleResetAll = async () => {
-    if (!confirm('Reset toàn bộ dữ liệu và cấu hình?')) return;
+    if (!confirm('Reset toàn bộ dữ liệu và cấu hình?')) {return;}
     toast.loading('Đang reset...');
     await clearSettingsData();
     await clearSettingsConfig();
@@ -280,14 +278,14 @@ export default function SettingsModuleConfigPage() {
   // Group fields by group
   const fieldsByGroup = useMemo(() => {
     const groups: Record<string, FieldConfig[]> = {
-      site: [],
       contact: [],
-      seo: [],
-      social: [],
       mail: [],
+      seo: [],
+      site: [],
+      social: [],
     };
     localFields.forEach(f => {
-      const group = f.group || 'site';
+      const group = f.group ?? 'site';
       if (groups[group]) {
         groups[group].push(f);
       }
@@ -299,7 +297,7 @@ export default function SettingsModuleConfigPage() {
   const settingsByGroup = useMemo(() => {
     const groups: Record<string, typeof settingsData> = {};
     settingsData?.forEach(s => {
-      if (!groups[s.group]) groups[s.group] = [];
+      groups[s.group] ??= [];
       groups[s.group]!.push(s);
     });
     return groups;
@@ -310,7 +308,7 @@ export default function SettingsModuleConfigPage() {
     const total = settingsData?.length ?? 0;
     const groups = settingsGroups?.length ?? 0;
     const filled = settingsData?.filter(s => s.value && s.value !== '').length ?? 0;
-    return { total, groups, filled };
+    return { filled, groups, total };
   }, [settingsData, settingsGroups]);
 
   if (isLoading) {
@@ -341,7 +339,7 @@ export default function SettingsModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-orange-500 text-orange-600 dark:text-orange-400'
@@ -351,7 +349,7 @@ export default function SettingsModuleConfigPage() {
           <SettingsTab size={16} /> Cấu hình Module
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-orange-500 text-orange-600 dark:text-orange-400'
@@ -383,13 +381,13 @@ export default function SettingsModuleConfigPage() {
                     <SettingInput 
                       label="Cache duration (s)" 
                       value={localModuleSettings.cacheDuration} 
-                      onChange={(v) => setLocalModuleSettings({...localModuleSettings, cacheDuration: v})}
+                      onChange={(v) =>{  setLocalModuleSettings({...localModuleSettings, cacheDuration: v}); }}
                       focusColor="focus:border-orange-500"
                     />
                     <div className="flex items-center justify-between py-2">
                       <span className="text-sm text-slate-600 dark:text-slate-300">Bật cache</span>
                       <button
-                        onClick={() => setLocalModuleSettings({...localModuleSettings, cacheEnabled: !localModuleSettings.cacheEnabled})}
+                        onClick={() =>{  setLocalModuleSettings({...localModuleSettings, cacheEnabled: !localModuleSettings.cacheEnabled}); }}
                         className={`w-10 h-5 rounded-full transition-colors ${localModuleSettings.cacheEnabled ? 'bg-orange-500' : 'bg-slate-300'}`}
                       >
                         <span className={`block w-4 h-4 rounded-full bg-white transform transition-transform ${localModuleSettings.cacheEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
@@ -540,7 +538,7 @@ export default function SettingsModuleConfigPage() {
                         <TableCell>
                           <Input
                             value={editingSettings[setting.key] ?? ''}
-                            onChange={(e) => setEditingSettings(prev => ({ ...prev, [setting.key]: e.target.value }))}
+                            onChange={(e) =>{  setEditingSettings(prev => ({ ...prev, [setting.key]: e.target.value })); }}
                             className={`h-8 ${isDirty ? 'border-amber-400 dark:border-amber-600' : ''}`}
                           />
                         </TableCell>
@@ -548,7 +546,7 @@ export default function SettingsModuleConfigPage() {
                           <Button 
                             size="sm" 
                             variant={isDirty ? 'default' : 'outline'}
-                            onClick={() => handleSaveSetting(setting.key, setting.group)}
+                            onClick={ async () => handleSaveSetting(setting.key, setting.group)}
                             disabled={!isDirty}
                             className={isDirty ? 'bg-amber-600 hover:bg-amber-500' : ''}
                           >

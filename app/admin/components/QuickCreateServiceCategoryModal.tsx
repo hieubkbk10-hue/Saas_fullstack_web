@@ -24,15 +24,15 @@ export function QuickCreateServiceCategoryModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) {return;}
 
     setIsSubmitting(true);
     try {
       const slug = name.toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/[đĐ]/g, "d")
-        .replace(/[^a-z0-9\s]/g, '')
-        .replace(/\s+/g, '-');
+        .normalize("NFD").replaceAll(/[\u0300-\u036F]/g, "")
+        .replaceAll(/[đĐ]/g, "d")
+        .replaceAll(/[^a-z0-9\s]/g, '')
+        .replaceAll(/\s+/g, '-');
       
       const id = await createCategory({
         name: name.trim(),
@@ -49,7 +49,7 @@ export function QuickCreateServiceCategoryModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -67,7 +67,7 @@ export function QuickCreateServiceCategoryModal({
               <Label>Ten danh muc <span className="text-red-500">*</span></Label>
               <Input 
                 value={name} 
-                onChange={(e) => setName(e.target.value)} 
+                onChange={(e) =>{  setName(e.target.value); }} 
                 required 
                 placeholder="VD: Tu van, Thiet ke..." 
                 autoFocus 

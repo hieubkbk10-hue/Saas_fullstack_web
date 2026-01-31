@@ -1,37 +1,37 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
+import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Image as ImageIcon, FolderTree, Type, Ruler, Loader2, Database, Trash2, RefreshCw, Settings, FileVideo, FileText, HardDrive } from 'lucide-react';
-import { FieldConfig } from '@/types/moduleConfig';
+import { Database, FileText, FileVideo, FolderTree, HardDrive, Image as ImageIcon, Loader2, RefreshCw, Ruler, Settings, Trash2, Type } from 'lucide-react';
+import type { FieldConfig } from '@/types/module-config';
 import { 
-  ModuleHeader, ModuleStatus, ConventionNote, Code,
-  SettingsCard, SettingInput,
-  FeaturesCard, FieldsCard
+  Code, ConventionNote, FeaturesCard, FieldsCard,
+  ModuleHeader, ModuleStatus,
+  SettingInput, SettingsCard
 } from '@/components/modules/shared';
-import { Card, Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/app/admin/components/ui';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 
 const MODULE_KEY = 'media';
 
 const FEATURES_CONFIG = [
-  { key: 'enableFolders', label: 'Thư mục', icon: FolderTree, linkedField: 'folder' },
-  { key: 'enableAltText', label: 'Alt Text', icon: Type, linkedField: 'alt' },
-  { key: 'enableDimensions', label: 'Kích thước ảnh', icon: Ruler, linkedField: 'dimensions' },
+  { icon: FolderTree, key: 'enableFolders', label: 'Thư mục', linkedField: 'folder' },
+  { icon: Type, key: 'enableAltText', label: 'Alt Text', linkedField: 'alt' },
+  { icon: Ruler, key: 'enableDimensions', label: 'Kích thước ảnh', linkedField: 'dimensions' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-type SettingsState = { itemsPerPage: number; maxFileSize: number };
+interface SettingsState { itemsPerPage: number; maxFileSize: number }
 type TabType = 'config' | 'data';
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) {return '0 B';}
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
 export default function MediaModuleConfigPage() {
@@ -75,14 +75,14 @@ export default function MediaModuleConfigPage() {
   useEffect(() => {
     if (fieldsData) {
       setLocalFields(fieldsData.map(f => ({
-        id: f._id,
-        key: f.fieldKey,
-        name: f.name,
-        type: f.type,
-        required: f.required,
         enabled: f.enabled,
+        id: f._id,
         isSystem: f.isSystem,
+        key: f.fieldKey,
         linkedFeature: f.linkedFeature,
+        name: f.name,
+        required: f.required,
+        type: f.type,
       })));
     }
   }, [fieldsData]);
@@ -103,9 +103,7 @@ export default function MediaModuleConfigPage() {
     return result;
   }, [featuresData]);
 
-  const serverFields = useMemo(() => {
-    return fieldsData?.map(f => ({ id: f._id, enabled: f.enabled })) || [];
-  }, [fieldsData]);
+  const serverFields = useMemo(() => fieldsData?.map(f => ({ enabled: f.enabled, id: f._id })) ?? [], [fieldsData]);
 
   const serverSettings = useMemo(() => {
     const itemsPerPage = settingsData?.find(s => s.settingKey === 'itemsPerPage')?.value as number ?? 24;
@@ -135,7 +133,7 @@ export default function MediaModuleConfigPage() {
 
   const handleToggleField = (id: string) => {
     const field = localFields.find(f => f.id === id);
-    if (!field) return;
+    if (!field) {return;}
     
     const newFieldState = !field.enabled;
     setLocalFields(prev => {
@@ -162,14 +160,14 @@ export default function MediaModuleConfigPage() {
       // Save features
       for (const key of Object.keys(localFeatures)) {
         if (localFeatures[key] !== serverFeatures[key]) {
-          await toggleFeature({ moduleKey: MODULE_KEY, featureKey: key, enabled: localFeatures[key] });
+          await toggleFeature({ enabled: localFeatures[key], featureKey: key, moduleKey: MODULE_KEY });
         }
       }
       // Save fields
       for (const field of localFields) {
         const server = serverFields.find(s => s.id === field.id);
         if (server && field.enabled !== server.enabled) {
-          await updateField({ id: field.id as Id<'moduleFields'>, enabled: field.enabled });
+          await updateField({ enabled: field.enabled, id: field.id as Id<'moduleFields'> });
         }
       }
       // Save settings
@@ -201,7 +199,7 @@ export default function MediaModuleConfigPage() {
   };
 
   const handleClearData = async () => {
-    if (!confirm('Xóa toàn bộ media? Thao tác này không thể hoàn tác.')) return;
+    if (!confirm('Xóa toàn bộ media? Thao tác này không thể hoàn tác.')) {return;}
     try {
       toast.loading('Đang xóa dữ liệu...');
       await clearMediaData();
@@ -214,7 +212,7 @@ export default function MediaModuleConfigPage() {
   };
 
   const handleResetAll = async () => {
-    if (!confirm('Reset cấu hình về mặc định?')) return;
+    if (!confirm('Reset cấu hình về mặc định?')) {return;}
     try {
       toast.loading('Đang reset...');
       await seedMediaModule();
@@ -263,7 +261,7 @@ export default function MediaModuleConfigPage() {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <button
-          onClick={() => setActiveTab('config')}
+          onClick={() =>{  setActiveTab('config'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'config'
               ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
@@ -273,7 +271,7 @@ export default function MediaModuleConfigPage() {
           <Settings size={16} /> Cấu hình
         </button>
         <button
-          onClick={() => setActiveTab('data')}
+          onClick={() =>{  setActiveTab('data'); }}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'data'
               ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400'
@@ -294,13 +292,13 @@ export default function MediaModuleConfigPage() {
                 <SettingInput 
                   label="Số file / trang" 
                   value={localSettings.itemsPerPage} 
-                  onChange={(v) => setLocalSettings({...localSettings, itemsPerPage: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, itemsPerPage: v}); }}
                   focusColor="focus:border-cyan-500"
                 />
                 <SettingInput 
                   label="Max file size (MB)" 
                   value={localSettings.maxFileSize} 
-                  onChange={(v) => setLocalSettings({...localSettings, maxFileSize: v})}
+                  onChange={(v) =>{  setLocalSettings({...localSettings, maxFileSize: v}); }}
                   focusColor="focus:border-cyan-500"
                 />
               </SettingsCard>
@@ -440,11 +438,11 @@ export default function MediaModuleConfigPage() {
                   <TableRow key={media._id}>
                     <TableCell className="font-medium max-w-xs truncate">{media.filename}</TableCell>
                     <TableCell>
-                      <Badge variant={media.mimeType.startsWith('image/') ? 'default' : media.mimeType.startsWith('video/') ? 'secondary' : 'outline'}>
+                      <Badge variant={media.mimeType.startsWith('image/') ? 'default' : (media.mimeType.startsWith('video/') ? 'secondary' : 'outline')}>
                         {media.mimeType.split('/')[1]?.toUpperCase() || media.mimeType}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-slate-500">{media.folder || '-'}</TableCell>
+                    <TableCell className="text-slate-500">{media.folder ?? '-'}</TableCell>
                     <TableCell className="text-right">{formatBytes(media.size)}</TableCell>
                   </TableRow>
                 ))}

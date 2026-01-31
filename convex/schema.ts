@@ -8,10 +8,6 @@ export default defineSchema({
 
   // 1. adminModules - Quản lý modules bật/tắt
   adminModules: defineTable({
-    key: v.string(),
-    name: v.string(),
-    description: v.string(),
-    icon: v.string(),
     category: v.union(
       v.literal("content"),
       v.literal("commerce"),
@@ -19,10 +15,14 @@ export default defineSchema({
       v.literal("system"),
       v.literal("marketing")
     ),
-    enabled: v.boolean(),
-    isCore: v.boolean(),
     dependencies: v.optional(v.array(v.string())),
     dependencyType: v.optional(v.union(v.literal("all"), v.literal("any"))),
+    description: v.string(),
+    enabled: v.boolean(),
+    icon: v.string(),
+    isCore: v.boolean(),
+    key: v.string(),
+    name: v.string(),
     order: v.number(),
     updatedBy: v.optional(v.id("users")),
   })
@@ -32,9 +32,15 @@ export default defineSchema({
 
   // 2. moduleFields - Cấu hình fields động cho mỗi module
   moduleFields: defineTable({
-    moduleKey: v.string(),
+    enabled: v.boolean(),
     fieldKey: v.string(),
+    group: v.optional(v.string()),
+    isSystem: v.boolean(),
+    linkedFeature: v.optional(v.string()),
+    moduleKey: v.string(),
     name: v.string(),
+    order: v.number(),
+    required: v.boolean(),
     type: v.union(
       v.literal("text"),
       v.literal("textarea"),
@@ -54,12 +60,6 @@ export default defineSchema({
       v.literal("json"),
       v.literal("color")
     ),
-    required: v.boolean(),
-    enabled: v.boolean(),
-    isSystem: v.boolean(),
-    linkedFeature: v.optional(v.string()),
-    order: v.number(),
-    group: v.optional(v.string()),
   })
     .index("by_module", ["moduleKey"])
     .index("by_module_enabled", ["moduleKey", "enabled"])
@@ -67,12 +67,12 @@ export default defineSchema({
 
   // 3. moduleFeatures - Features bật/tắt cho từng module
   moduleFeatures: defineTable({
-    moduleKey: v.string(),
-    featureKey: v.string(),
-    name: v.string(),
     description: v.optional(v.string()),
     enabled: v.boolean(),
+    featureKey: v.string(),
     linkedFieldKey: v.optional(v.string()),
+    moduleKey: v.string(),
+    name: v.string(),
   })
     .index("by_module", ["moduleKey"])
     .index("by_module_feature", ["moduleKey", "featureKey"]),
@@ -88,19 +88,19 @@ export default defineSchema({
 
   // 5. systemPresets - Preset configurations
   systemPresets: defineTable({
-    key: v.string(),
-    name: v.string(),
     description: v.string(),
     enabledModules: v.array(v.string()),
     isDefault: v.optional(v.boolean()),
+    key: v.string(),
+    name: v.string(),
   }).index("by_key", ["key"]),
 
   // 6. convexDashboard - Link tới Convex Dashboard để xem usage
   convexDashboard: defineTable({
     dashboardUrl: v.string(),
     email: v.optional(v.string()),
-    password: v.optional(v.string()),
     notes: v.optional(v.string()),
+    password: v.optional(v.string()),
   }),
 
   // 6a. usageStats - Track bandwidth usage theo ngày
@@ -116,21 +116,21 @@ export default defineSchema({
 
   // 7. systemSessions - Sessions cho /system login
   systemSessions: defineTable({
-    token: v.string(),
     createdAt: v.number(),
     expiresAt: v.number(),
+    token: v.string(),
   }).index("by_token", ["token"]),
 
   // 8. adminUsers - Tài khoản admin (khác với users table - đây là auth)
   adminUsers: defineTable({
-    name: v.string(),
+    createdAt: v.number(),
     email: v.string(),
+    isSuperAdmin: v.optional(v.boolean()),
+    lastLogin: v.optional(v.number()),
+    name: v.string(),
     passwordHash: v.string(),
     roleId: v.id("roles"),
     status: v.union(v.literal("Active"), v.literal("Inactive")),
-    isSuperAdmin: v.optional(v.boolean()),
-    createdAt: v.number(),
-    lastLogin: v.optional(v.number()),
   })
     .index("by_email", ["email"])
     .index("by_role", ["roleId"])
@@ -138,10 +138,10 @@ export default defineSchema({
 
   // 9. adminSessions - Sessions cho /admin login
   adminSessions: defineTable({
-    token: v.string(),
     adminUserId: v.id("adminUsers"),
     createdAt: v.number(),
     expiresAt: v.number(),
+    token: v.string(),
   })
     .index("by_token", ["token"])
     .index("by_adminUser", ["adminUserId"]),
@@ -159,17 +159,17 @@ export default defineSchema({
 
   // 6. users - Quản trị viên hệ thống
   users: defineTable({
-    name: v.string(),
-    email: v.string(),
-    phone: v.optional(v.string()),
     avatar: v.optional(v.string()),
+    email: v.string(),
+    lastLogin: v.optional(v.number()),
+    name: v.string(),
+    phone: v.optional(v.string()),
     roleId: v.id("roles"),
     status: v.union(
       v.literal("Active"),
       v.literal("Inactive"),
       v.literal("Banned")
     ),
-    lastLogin: v.optional(v.number()),
   })
     .index("by_email", ["email"])
     .index("by_role_status", ["roleId", "status"])
@@ -177,11 +177,11 @@ export default defineSchema({
 
   // 7. roles - RBAC
   roles: defineTable({
-    name: v.string(),
-    description: v.string(),
     color: v.optional(v.string()),
-    isSystem: v.boolean(),
+    description: v.string(),
     isSuperAdmin: v.optional(v.boolean()),
+    isSystem: v.boolean(),
+    name: v.string(),
     permissions: v.record(v.string(), v.array(v.string())),
   })
     .index("by_name", ["name"])
@@ -219,16 +219,16 @@ export default defineSchema({
 
   // 8. customers - Khách hàng
   customers: defineTable({
-    name: v.string(),
-    email: v.string(),
-    phone: v.string(),
-    avatar: v.optional(v.string()),
-    status: v.union(v.literal("Active"), v.literal("Inactive")),
-    ordersCount: v.number(),
-    totalSpent: v.number(),
     address: v.optional(v.string()),
+    avatar: v.optional(v.string()),
     city: v.optional(v.string()),
+    email: v.string(),
+    name: v.string(),
     notes: v.optional(v.string()),
+    ordersCount: v.number(),
+    phone: v.string(),
+    status: v.union(v.literal("Active"), v.literal("Inactive")),
+    totalSpent: v.number(),
   })
     .index("by_email", ["email"])
     .index("by_status", ["status"])
@@ -237,13 +237,13 @@ export default defineSchema({
 
   // 9. productCategories - Danh mục sản phẩm (Hierarchical)
   productCategories: defineTable({
-    name: v.string(),
-    slug: v.string(),
-    parentId: v.optional(v.id("productCategories")),
+    active: v.boolean(),
     description: v.optional(v.string()),
     image: v.optional(v.string()),
+    name: v.string(),
     order: v.number(),
-    active: v.boolean(),
+    parentId: v.optional(v.id("productCategories")),
+    slug: v.string(),
   })
     .index("by_slug", ["slug"])
     .index("by_parent", ["parentId"])
@@ -290,13 +290,13 @@ export default defineSchema({
 
   // 11. postCategories - Danh mục bài viết (Hierarchical)
   postCategories: defineTable({
-    name: v.string(),
-    slug: v.string(),
-    parentId: v.optional(v.id("postCategories")),
-    description: v.optional(v.string()),
-    thumbnail: v.optional(v.string()),
-    order: v.number(),
     active: v.boolean(),
+    description: v.optional(v.string()),
+    name: v.string(),
+    order: v.number(),
+    parentId: v.optional(v.id("postCategories")),
+    slug: v.string(),
+    thumbnail: v.optional(v.string()),
   })
     .index("by_slug", ["slug"])
     .index("by_parent", ["parentId"])
@@ -332,19 +332,19 @@ export default defineSchema({
 
   // 13. comments - Bình luận (Polymorphic) - SVC-011: Added "service" targetType
   comments: defineTable({
-    content: v.string(),
-    authorName: v.string(),
     authorEmail: v.optional(v.string()),
     authorIp: v.optional(v.string()),
-    targetType: v.union(v.literal("post"), v.literal("product"), v.literal("service")),
-    targetId: v.string(),
+    authorName: v.string(),
+    content: v.string(),
+    customerId: v.optional(v.id("customers")),
     parentId: v.optional(v.id("comments")),
     status: v.union(
       v.literal("Pending"),
       v.literal("Approved"),
       v.literal("Spam")
     ),
-    customerId: v.optional(v.id("customers")),
+    targetId: v.string(),
+    targetType: v.union(v.literal("post"), v.literal("product"), v.literal("service")),
   })
     .index("by_target_status", ["targetType", "targetId", "status"])
     .index("by_status", ["status"])
@@ -353,15 +353,15 @@ export default defineSchema({
 
   // 14. images - Thư viện media
   images: defineTable({
-    storageId: v.id("_storage"),
+    alt: v.optional(v.string()),
     filename: v.string(),
+    folder: v.optional(v.string()),
+    height: v.optional(v.number()),
     mimeType: v.string(),
     size: v.number(),
-    width: v.optional(v.number()),
-    height: v.optional(v.number()),
-    alt: v.optional(v.string()),
-    folder: v.optional(v.string()),
+    storageId: v.id("_storage"),
     uploadedBy: v.optional(v.id("users")),
+    width: v.optional(v.number()),
   })
     .index("by_folder", ["folder"])
     .index("by_mimeType", ["mimeType"])
@@ -376,27 +376,27 @@ export default defineSchema({
 
   // 14b. mediaFolders - Track folders riêng (tránh scan ALL images)
   mediaFolders: defineTable({
-    name: v.string(),
     count: v.number(),
+    name: v.string(),
   }).index("by_name", ["name"]),
 
   // 15. menus - Menu động
   menus: defineTable({
-    name: v.string(),
     location: v.string(),
+    name: v.string(),
   }).index("by_location", ["location"]),
 
   // 16. menuItems - Menu items (Hierarchical)
   menuItems: defineTable({
-    menuId: v.id("menus"),
-    label: v.string(),
-    url: v.string(),
-    order: v.number(),
-    depth: v.number(),
-    parentId: v.optional(v.id("menuItems")),
-    icon: v.optional(v.string()),
-    openInNewTab: v.optional(v.boolean()),
     active: v.boolean(),
+    depth: v.number(),
+    icon: v.optional(v.string()),
+    label: v.string(),
+    menuId: v.id("menus"),
+    openInNewTab: v.optional(v.boolean()),
+    order: v.number(),
+    parentId: v.optional(v.id("menuItems")),
+    url: v.string(),
   })
     .index("by_menu_order", ["menuId", "order"])
     .index("by_menu_depth", ["menuId", "depth"])
@@ -405,32 +405,32 @@ export default defineSchema({
 
   // 17. homeComponents - Trang chủ động
   homeComponents: defineTable({
-    type: v.string(),
-    title: v.string(),
     active: v.boolean(),
-    order: v.number(),
     config: v.any(),
+    order: v.number(),
+    title: v.string(),
+    type: v.string(),
   })
     .index("by_active_order", ["active", "order"])
     .index("by_type", ["type"]),
 
   // 18. settings - Cấu hình hệ thống (Key-Value)
   settings: defineTable({
+    group: v.string(),
     key: v.string(),
     value: v.any(),
-    group: v.string(),
   })
     .index("by_key", ["key"])
     .index("by_group", ["group"]),
 
   // 19. activityLogs - Audit Trail
   activityLogs: defineTable({
-    userId: v.id("users"),
     action: v.string(),
-    targetType: v.string(),
-    targetId: v.string(),
     details: v.optional(v.any()),
     ip: v.optional(v.string()),
+    targetId: v.string(),
+    targetType: v.string(),
+    userId: v.id("users"),
   })
     .index("by_user", ["userId"])
     .index("by_targetType", ["targetType"])
@@ -438,26 +438,17 @@ export default defineSchema({
 
   // 20. orders - Đơn hàng
   orders: defineTable({
-    orderNumber: v.string(),
     customerId: v.id("customers"),
     items: v.array(
       v.object({
+        price: v.number(),
         productId: v.id("products"),
         productName: v.string(),
         quantity: v.number(),
-        price: v.number(),
       })
     ),
-    subtotal: v.number(),
-    shippingFee: v.number(),
-    totalAmount: v.number(),
-    status: v.union(
-      v.literal("Pending"),
-      v.literal("Processing"),
-      v.literal("Shipped"),
-      v.literal("Delivered"),
-      v.literal("Cancelled")
-    ),
+    note: v.optional(v.string()),
+    orderNumber: v.string(),
     paymentMethod: v.optional(
       v.union(
         v.literal("COD"),
@@ -475,8 +466,17 @@ export default defineSchema({
       )
     ),
     shippingAddress: v.optional(v.string()),
+    shippingFee: v.number(),
+    status: v.union(
+      v.literal("Pending"),
+      v.literal("Processing"),
+      v.literal("Shipped"),
+      v.literal("Delivered"),
+      v.literal("Cancelled")
+    ),
+    subtotal: v.number(),
+    totalAmount: v.number(),
     trackingNumber: v.optional(v.string()),
-    note: v.optional(v.string()),
   })
     .index("by_orderNumber", ["orderNumber"])
     .index("by_customer", ["customerId"])
@@ -486,8 +486,8 @@ export default defineSchema({
   // 21. wishlist - Sản phẩm yêu thích
   wishlist: defineTable({
     customerId: v.id("customers"),
-    productId: v.id("products"),
     note: v.optional(v.string()),
+    productId: v.id("products"),
   })
     .index("by_customer", ["customerId"])
     .index("by_product", ["productId"])
@@ -496,16 +496,16 @@ export default defineSchema({
   // 22. carts - Giỏ hàng
   carts: defineTable({
     customerId: v.optional(v.id("customers")),
+    expiresAt: v.optional(v.number()),
+    itemsCount: v.number(),
+    note: v.optional(v.string()),
     sessionId: v.optional(v.string()),
     status: v.union(
       v.literal("Active"),
       v.literal("Converted"),
       v.literal("Abandoned")
     ),
-    itemsCount: v.number(),
     totalAmount: v.number(),
-    expiresAt: v.optional(v.number()),
-    note: v.optional(v.string()),
   })
     .index("by_customer", ["customerId"])
     .index("by_session", ["sessionId"])
@@ -518,11 +518,11 @@ export default defineSchema({
   // 23. cartItems - Items trong giỏ hàng
   cartItems: defineTable({
     cartId: v.id("carts"),
-    productId: v.id("products"),
-    productName: v.string(),
-    productImage: v.optional(v.string()),
-    quantity: v.number(),
     price: v.number(),
+    productId: v.id("products"),
+    productImage: v.optional(v.string()),
+    productName: v.string(),
+    quantity: v.number(),
     subtotal: v.number(),
   })
     .index("by_cart", ["cartId"])
@@ -530,32 +530,32 @@ export default defineSchema({
 
   // 24. notifications - Thông báo hệ thống
   notifications: defineTable({
-    title: v.string(),
     content: v.string(),
-    type: v.union(
-      v.literal("info"),
-      v.literal("success"),
-      v.literal("warning"),
-      v.literal("error")
-    ),
-    targetType: v.union(
-      v.literal("all"),
-      v.literal("customers"),
-      v.literal("users"),
-      v.literal("specific")
-    ),
-    targetIds: v.optional(v.array(v.string())),
+    order: v.number(),
+    readCount: v.number(),
+    scheduledAt: v.optional(v.number()),
+    sendEmail: v.optional(v.boolean()),
+    sentAt: v.optional(v.number()),
     status: v.union(
       v.literal("Draft"),
       v.literal("Scheduled"),
       v.literal("Sent"),
       v.literal("Cancelled")
     ),
-    sendEmail: v.optional(v.boolean()),
-    scheduledAt: v.optional(v.number()),
-    sentAt: v.optional(v.number()),
-    readCount: v.number(),
-    order: v.number(),
+    targetIds: v.optional(v.array(v.string())),
+    targetType: v.union(
+      v.literal("all"),
+      v.literal("customers"),
+      v.literal("users"),
+      v.literal("specific")
+    ),
+    title: v.string(),
+    type: v.union(
+      v.literal("info"),
+      v.literal("success"),
+      v.literal("warning"),
+      v.literal("error")
+    ),
   })
     .index("by_status", ["status"])
     .index("by_type", ["type"])
@@ -565,27 +565,27 @@ export default defineSchema({
 
   // 25. pageViews - Tracking lượt truy cập
   pageViews: defineTable({
-    path: v.string(),
-    sessionId: v.string(),
-    referrer: v.optional(v.string()),
-    userAgent: v.optional(v.string()),
+    browser: v.optional(v.string()),
     country: v.optional(v.string()),
     device: v.optional(v.union(v.literal("mobile"), v.literal("desktop"), v.literal("tablet"))),
     os: v.optional(v.string()),
-    browser: v.optional(v.string()),
+    path: v.string(),
+    referrer: v.optional(v.string()),
+    sessionId: v.string(),
+    userAgent: v.optional(v.string()),
   })
     .index("by_path", ["path"])
     .index("by_session", ["sessionId"]),
 
   // 26. serviceCategories - Danh mục dịch vụ (Hierarchical)
   serviceCategories: defineTable({
-    name: v.string(),
-    slug: v.string(),
-    parentId: v.optional(v.id("serviceCategories")),
-    description: v.optional(v.string()),
-    thumbnail: v.optional(v.string()),
-    order: v.number(),
     active: v.boolean(),
+    description: v.optional(v.string()),
+    name: v.string(),
+    order: v.number(),
+    parentId: v.optional(v.id("serviceCategories")),
+    slug: v.string(),
+    thumbnail: v.optional(v.string()),
   })
     .index("by_slug", ["slug"])
     .index("by_parent", ["parentId"])
@@ -624,28 +624,28 @@ export default defineSchema({
 
   // 28. promotions - Khuyến mãi & Voucher
   promotions: defineTable({
-    name: v.string(),
+    applicableIds: v.optional(v.array(v.string())),
+    applicableTo: v.optional(
+      v.union(v.literal("all"), v.literal("products"), v.literal("categories"))
+    ),
     code: v.string(),
     description: v.optional(v.string()),
     discountType: v.union(v.literal("percent"), v.literal("fixed")),
     discountValue: v.number(),
-    minOrderAmount: v.optional(v.number()),
-    maxDiscountAmount: v.optional(v.number()),
-    usageLimit: v.optional(v.number()),
-    usedCount: v.number(),
-    startDate: v.optional(v.number()),
     endDate: v.optional(v.number()),
+    maxDiscountAmount: v.optional(v.number()),
+    minOrderAmount: v.optional(v.number()),
+    name: v.string(),
+    order: v.number(),
+    startDate: v.optional(v.number()),
     status: v.union(
       v.literal("Active"),
       v.literal("Inactive"),
       v.literal("Expired"),
       v.literal("Scheduled")
     ),
-    applicableTo: v.optional(
-      v.union(v.literal("all"), v.literal("products"), v.literal("categories"))
-    ),
-    applicableIds: v.optional(v.array(v.string())),
-    order: v.number(),
+    usageLimit: v.optional(v.number()),
+    usedCount: v.number(),
   })
     .index("by_code", ["code"])
     .index("by_status", ["status"])
