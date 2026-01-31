@@ -375,12 +375,10 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
                 <Calendar className="h-4 w-4" />
                 <time className="font-medium">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
               </div>
-              <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 <span className="font-medium">{readingTime} phút đọc</span>
               </div>
-              <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
               <div className="flex items-center gap-2">
                 <Eye className="h-4 w-4" />
                 <span className="font-medium">{post.views.toLocaleString()} lượt xem</span>
@@ -415,25 +413,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
             <div dangerouslySetInnerHTML={{ __html: post.content }} />
           </div>
 
-          <div className="pt-6 border-t flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-              <span
-                className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-normal"
-                style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderColor: `${brandColor}30` }}
-              >
-                {post.categoryName}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleCopyLink}
-              className="inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-muted px-4 shrink-0"
-            >
-              <LinkIcon className="h-4 w-4" />
-              {isCopied ? 'Đã copy' : 'Copy link bài viết'}
-            </button>
-          </div>
+          <div className="pt-4 border-t" />
 
           <div className="flex flex-col items-center justify-center py-8 gap-4">
             <Link
@@ -448,9 +428,9 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
         </article>
 
         {relatedPosts.length > 0 && (
-          <section className="pt-8 border-t">
+          <section className="pt-6 border-t pb-2">
             <div className="max-w-7xl mx-auto">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl md:text-2xl font-semibold tracking-tight">Bài viết cùng chủ đề</h2>
                 <Link href="/posts" className="text-sm text-muted-foreground hover:text-foreground">
                   Xem thêm
@@ -462,7 +442,8 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
                   <Link
                     key={p._id}
                     href={`/posts/${p.slug}`}
-                    className="group rounded-lg border border-border bg-background p-4 shadow-sm hover:bg-muted/40 transition-colors duration-200"
+                    className="group rounded-lg border bg-background p-4 shadow-sm transition-colors duration-200"
+                    style={{ borderColor: `${brandColor}25` }}
                   >
                     <div className="aspect-[4/3] rounded-md overflow-hidden bg-muted mb-3 relative">
                       {p.thumbnail ? (
@@ -486,6 +467,12 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
                       <Calendar className="h-3 w-3" />
                       <span>{p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
                     </div>
+                    <span
+                      className="mt-3 inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium text-white transition-colors"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      Xem ngay
+                    </span>
                   </Link>
                 ))}
               </div>
