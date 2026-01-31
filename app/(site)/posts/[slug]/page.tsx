@@ -509,103 +509,74 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
         </div>
       </nav>
 
-      <main className="container max-w-7xl mx-auto px-4 py-6 md:py-10">
-        <div className="grid gap-8 md:gap-12 md:grid-cols-[minmax(0,1fr)_280px]">
-          <article className="min-w-0 space-y-6">
-            <header className="space-y-3">
-              <span
-                className="inline-flex items-center text-xs font-medium uppercase tracking-wider"
-                style={{ color: brandColor }}
-              >
-                {post.categoryName}
-              </span>
-              <div className="h-[2px] w-10" style={{ backgroundColor: brandColor }} />
-              <h1 className="text-[clamp(1.75rem,4vw,3rem)] font-semibold leading-[1.2] tracking-tight text-foreground text-balance">
-                {post.title}
-              </h1>
-              {post.excerpt && (
-                <p className="text-[clamp(1rem,2vw,1.25rem)] text-muted-foreground leading-relaxed">
-                  {post.excerpt}
-                </p>
-              )}
-            </header>
-
-            {post.thumbnail && (
-              <div className="relative w-full aspect-[16/9] overflow-hidden rounded-xl bg-muted shadow-sm border">
-                <Image
-                  src={post.thumbnail}
-                  alt={post.title}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 1024px"
-                  className="object-cover transition-transform duration-300 hover:scale-105"
-                />
-              </div>
+      <main className="px-4">
+        <section className="relative w-full overflow-hidden bg-muted">
+          <div className="relative h-[clamp(220px,45vh,520px)] w-full">
+            {post.thumbnail ? (
+              <Image
+                src={post.thumbnail}
+                alt={post.title}
+                fill
+                sizes="100vw"
+                className="object-cover"
+              />
+            ) : (
+              <div className="h-full w-full" style={{ backgroundColor: `${brandColor}10` }} />
             )}
-
-            <div className="prose prose-slate prose-lg max-w-none text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-img:rounded-lg">
-              <div dangerouslySetInnerHTML={{ __html: post.content }} />
-            </div>
-          </article>
-
-          <aside className="space-y-4 md:sticky md:top-24 h-fit">
-            <div className="rounded-lg border bg-background p-4 shadow-sm">
-              <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Thông tin</div>
-              <div className="space-y-3 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <time>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  <span>{readingTime} phút đọc</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4" />
-                  <span>{post.views.toLocaleString()} lượt xem</span>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+            <div className="container max-w-7xl mx-auto h-full px-4 flex items-end pb-6">
+              <div className="max-w-3xl rounded-lg bg-background/90 p-4 shadow-sm backdrop-blur-sm border">
+                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: brandColor }}>
+                  {post.categoryName}
+                </span>
+                <h1 className="mt-2 text-[clamp(1.5rem,4vw,2.75rem)] font-semibold leading-[1.2] text-foreground">
+                  {post.title}
+                </h1>
+                <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <time>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>{readingTime} phút đọc</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>{post.views.toLocaleString()} lượt xem</span>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
+        </section>
 
-            <Link
-              href="/posts"
-              className="inline-flex h-11 items-center justify-center rounded-md border border-input bg-background text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              Quay lại danh sách
-            </Link>
-          </aside>
-        </div>
+        <section className="container max-w-3xl mx-auto py-8 md:py-12 space-y-6">
+          {post.excerpt && (
+            <p className="text-[clamp(1rem,2vw,1.25rem)] text-muted-foreground leading-relaxed">
+              {post.excerpt}
+            </p>
+          )}
+          <div className="prose prose-slate prose-lg max-w-none text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-img:rounded-lg">
+            <div dangerouslySetInnerHTML={{ __html: post.content }} />
+          </div>
+        </section>
 
         {relatedPosts.length > 0 && (
-          <section className="mt-10 md:mt-12">
+          <section className="container max-w-3xl mx-auto pb-12">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg md:text-xl font-semibold text-foreground">Bài viết liên quan</h2>
               <Link href="/posts" className="text-sm font-medium" style={{ color: brandColor }}>
                 Xem thêm
               </Link>
             </div>
-
-            <div className="divide-y rounded-lg border bg-background">
+            <div className="space-y-3">
               {relatedPosts.map((p) => (
                 <Link
                   key={p._id}
                   href={`/posts/${p.slug}`}
-                  className="group flex items-center gap-4 p-4 hover:bg-muted/40 transition-colors"
+                  className="group flex items-center justify-between gap-4 rounded-md border border-input bg-background px-4 py-3 hover:bg-muted/40 transition-colors"
                 >
-                  <div className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-md bg-muted">
-                    {p.thumbnail ? (
-                      <Image
-                        src={p.thumbnail}
-                        alt={p.title}
-                        fill
-                        sizes="96px"
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-                        <FileText className="w-4 h-4" />
-                      </div>
-                    )}
-                  </div>
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
                       {p.title}
@@ -615,6 +586,7 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
                       <span>{p.publishedAt ? new Date(p.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
                     </div>
                   </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </Link>
               ))}
             </div>
