@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Generated `api` utility.
  *
@@ -121,4 +122,4 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: Record<string, never>;
+export declare const components: {};

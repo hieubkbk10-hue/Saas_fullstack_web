@@ -500,6 +500,7 @@ function HeroSection({ config, brandColor }: { config: Record<string, unknown>; 
 // Professional Stats UI/UX - 6 Variants
 type StatsStyle = 'horizontal' | 'cards' | 'icons' | 'gradient' | 'minimal' | 'counter';
 function StatsSection({ config, brandColor, title: _title }: { config: Record<string, unknown>; brandColor: string; title: string }) {
+  void _title;
   const items = (config.items as Array<{ value: string; label: string }>) || [];
   const style = (config.style as StatsStyle) || 'horizontal';
 

@@ -34,6 +34,8 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
     return new Map(categories.map(c => [c._id, c.name]));
   }, [categories]);
 
+  const carouselId = React.useId();
+
   // Loading state
   if (postsData === undefined) {
     return (
@@ -47,7 +49,6 @@ export function BlogSection({ config, brandColor, title }: BlogSectionProps) {
 
   const posts = postsData.page;
   const showViewAll = posts.length > 0;
-  const carouselId = React.useId();
 
   // No posts state
   if (posts.length === 0) {
