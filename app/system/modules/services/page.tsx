@@ -7,6 +7,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { Briefcase, Clock, Database, DollarSign, Eye, FolderTree, Loader2, MessageCircle, Monitor, Palette, Phone, RefreshCw, Settings, Smartphone, Star, Tablet, Trash2 } from 'lucide-react';
 import type { FieldConfig } from '@/types/module-config';
+import { ClassicStyle, MinimalStyle, ModernStyle, type RelatedService, type ServiceDetailData } from '@/components/site/services/detail/ServiceDetailStyles';
 import { 
   Code, ConventionNote, FeaturesCard, FieldsCard,
   ModuleHeader, ModuleStatus, SettingInput,
@@ -375,6 +376,17 @@ export default function ServicesModuleConfigPage() {
   const previewServices = useMemo(() => publishedServices ?? [], [publishedServices]);
   const previewService = previewServices[0];
   const previewCategoryName = previewService ? (categoryMap[previewService.categoryId] ?? 'Dịch vụ') : 'Dịch vụ';
+  const previewDetailService: ServiceDetailData = previewService
+    ? { ...previewService, categoryName: previewCategoryName }
+    : {
+      _id: 'preview' as Id<"services">,
+      categoryId: 'preview' as Id<"serviceCategories">,
+      categoryName: 'Tư vấn',
+      content: '<p>Nội dung dịch vụ sẽ hiển thị tại đây.</p>',
+      slug: 'preview',
+      title: 'Dịch vụ tư vấn chuyên nghiệp',
+      views: 0,
+    };
 
   if (isLoading) {
     return (
@@ -802,7 +814,7 @@ export default function ServicesModuleConfigPage() {
                 <BrowserFrame>
                   {activePreview === 'list' 
                     ? <ListPreview style={listStyle} brandColor={brandColor} device={previewDevice} enabledFields={enabledFields} services={previewServices} categories={categoriesData ?? []} />
-                    : <DetailPreview style={detailStyle} brandColor={brandColor} device={previewDevice} enabledFields={enabledFields} service={previewService} categoryName={previewCategoryName} />
+                    : <DetailPreview style={detailStyle} brandColor={brandColor} enabledFields={enabledFields} service={previewDetailService} />
                   }
                 </BrowserFrame>
               </div>
@@ -842,7 +854,20 @@ function BrowserFrame({ children }: { children: React.ReactNode }) {
 
 const formatPreviewPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 
-type PreviewService = { _id: Id<"services">; categoryId: Id<"serviceCategories">; title: string; price?: number; duration?: string; featured?: boolean; thumbnail?: string };
+type PreviewService = {
+  _id: Id<"services">;
+  categoryId: Id<"serviceCategories">;
+  content: string;
+  duration?: string;
+  excerpt?: string;
+  featured?: boolean;
+  price?: number;
+  publishedAt?: number;
+  slug: string;
+  thumbnail?: string;
+  title: string;
+  views: number;
+};
 type PreviewCategory = { _id: Id<"serviceCategories">; name: string };
 
 // List Preview Component
@@ -1005,108 +1030,13 @@ function ListPreview({ style, brandColor, device, enabledFields, services, categ
 }
 
 // Detail Preview Component
-function DetailPreview({ style, brandColor, device, enabledFields, service, categoryName }: { style: ServicesDetailStyle; brandColor: string; device: PreviewDevice; enabledFields: Set<string>; service?: PreviewService; categoryName: string }) {
-  const showPrice = enabledFields.has('price');
-  const showDuration = enabledFields.has('duration');
-  const showFeatured = enabledFields.has('featured');
-  const detailService = service ?? { title: 'Dịch vụ tư vấn chuyên nghiệp', price: 5_000_000, duration: '2-3 tuần', featured: true, _id: 'preview' as Id<"services">, categoryId: 'preview' as Id<"serviceCategories"> };
-  const detailCategory = service ? categoryName : 'Tư vấn';
-  
+function DetailPreview({ style, brandColor, enabledFields, service }: { style: ServicesDetailStyle; brandColor: string; enabledFields: Set<string>; service: ServiceDetailData }) {
+  const relatedServices: RelatedService[] = [];
   if (style === 'classic') {
-    return (
-      <div className={cn("p-4", device === 'mobile' ? 'p-3' : '')}>
-        <div className="text-xs text-slate-400 mb-3">Trang chủ › Dịch vụ › Chi tiết</div>
-        <div className={cn("flex gap-4", device === 'mobile' ? 'flex-col' : '')}>
-          <div className="flex-1">
-            {showFeatured && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium mr-2">
-                <Star size={12} className="fill-amber-400 text-amber-400" />
-                Nổi bật
-              </span>
-            )}
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{detailCategory}</span>
-            <h1 className="font-bold text-lg mt-2 mb-3">{detailService.title}</h1>
-            <div className="aspect-video bg-slate-100 rounded-lg mb-3 flex items-center justify-center">
-              <Briefcase size={32} className="text-slate-300" />
-            </div>
-            <div className="space-y-2">
-              <div className="h-3 bg-slate-100 rounded w-full"></div>
-              <div className="h-3 bg-slate-100 rounded w-5/6"></div>
-            </div>
-          </div>
-          {device !== 'mobile' && (
-            <div className="w-1/3">
-              <div className="bg-slate-50 rounded-lg p-3 text-center">
-                {showPrice && (
-                  <>
-                    <p className="text-xs text-slate-500 mb-1">Giá dịch vụ</p>
-                    <p className="text-xl font-bold" style={{ color: brandColor }}>{typeof detailService.price === 'number' ? formatPreviewPrice(detailService.price) : 'Liên hệ'}</p>
-                  </>
-                )}
-                {showDuration && detailService.duration && <p className="text-xs text-slate-500 mt-2">Thời gian: {detailService.duration}</p>}
-                <button className="w-full mt-3 py-2 text-white text-xs font-medium rounded-lg" style={{ backgroundColor: brandColor }}>Liên hệ tư vấn</button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    return <ClassicStyle service={service} brandColor={brandColor} relatedServices={relatedServices} enabledFields={enabledFields} />;
   }
-
   if (style === 'modern') {
-    return (
-      <div className="bg-white">
-        <div className={cn("border-b border-slate-100", device === 'mobile' ? 'p-3' : 'p-4')}>
-          {showFeatured && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-400 text-amber-900 text-xs font-semibold rounded-full mr-2">
-              <Star size={12} className="fill-current" />
-              Nổi bật
-            </span>
-          )}
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: brandColor }}>{detailCategory}</span>
-          <h1 className={cn("font-bold text-slate-900 leading-tight mt-1", device === 'mobile' ? 'text-base' : 'text-lg')}>
-            {detailService.title}
-          </h1>
-          {showPrice && typeof detailService.price === 'number' && <p className="text-xl font-bold mt-2" style={{ color: brandColor }}>{formatPreviewPrice(detailService.price)}</p>}
-        </div>
-        <div className="p-4">
-          <div className="aspect-[16/9] bg-slate-100 rounded-lg flex items-center justify-center">
-            <Briefcase size={24} className="text-slate-300" />
-          </div>
-        </div>
-        <div className={cn("space-y-3", device === 'mobile' ? 'px-3 pb-3' : 'px-4 pb-4')}>
-          <div className="h-3 bg-slate-100 rounded w-full"></div>
-          <div className="h-3 bg-slate-100 rounded w-5/6"></div>
-        </div>
-        <div className="border-t border-slate-100 p-3 text-center">
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-white px-3 py-1.5 rounded-full" style={{ backgroundColor: brandColor }}>
-            Liên hệ tư vấn
-          </span>
-        </div>
-      </div>
-    );
+    return <ModernStyle service={service} brandColor={brandColor} relatedServices={relatedServices} enabledFields={enabledFields} />;
   }
-
-  // Minimal
-  return (
-    <div className={cn("p-6", device === 'mobile' ? 'p-4' : '')}>
-      <div className="text-center mb-4">
-        {showFeatured && (
-          <div className="mb-2">
-            <Star size={16} className="inline fill-amber-400 text-amber-400" />
-          </div>
-        )}
-        <span className="text-xs font-medium uppercase tracking-wider" style={{ color: brandColor }}>{detailCategory}</span>
-        <h1 className="font-bold text-lg mt-2">{detailService.title}</h1>
-        {showPrice && typeof detailService.price === 'number' && <p className="text-xl font-bold mt-2" style={{ color: brandColor }}>{formatPreviewPrice(detailService.price)}</p>}
-      </div>
-      <div className="aspect-[2/1] bg-slate-100 rounded-lg mb-4 flex items-center justify-center">
-        <Briefcase size={32} className="text-slate-300" />
-      </div>
-      <div className="space-y-2">
-        <div className="h-3 bg-slate-100 rounded w-full"></div>
-        <div className="h-3 bg-slate-100 rounded w-5/6"></div>
-      </div>
-    </div>
-  );
+  return <MinimalStyle service={service} brandColor={brandColor} relatedServices={relatedServices} enabledFields={enabledFields} />;
 }
