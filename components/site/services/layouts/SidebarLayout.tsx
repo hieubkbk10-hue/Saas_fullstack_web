@@ -35,8 +35,6 @@ interface SidebarLayoutProps {
   onCategoryChange: (categoryId: Id<"serviceCategories"> | null) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  recentServices: Service[];
-  popularServices: Service[];
   enabledFields: Set<string>;
 }
 
@@ -54,8 +52,6 @@ export function SidebarLayout({
   onCategoryChange,
   searchQuery,
   onSearchChange,
-  recentServices,
-  popularServices,
   enabledFields,
 }: SidebarLayoutProps) {
   const ringStyle = (style?: React.CSSProperties) =>
@@ -136,70 +132,6 @@ export function SidebarLayout({
             </ul>
           </div>
 
-          {/* Recent Services Widget */}
-          {recentServices.length > 0 && (
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <h3 className="font-semibold text-slate-900 text-sm mb-3 flex items-center gap-2">
-                <Clock size={16} style={{ color: brandColor }} />
-                Dịch vụ mới
-              </h3>
-              <div className="space-y-3">
-                {recentServices.slice(0, 4).map((service) => (
-                  <Link
-                    key={service._id}
-                    href={`/services/${service.slug}`}
-                    className="flex gap-2 group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                    style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
-                  >
-                    <div className="w-14 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0 relative">
-                        {service.thumbnail ? (
-                          <Image src={service.thumbnail} alt={service.title} fill sizes="64px" className="object-cover" />
-                        ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Briefcase size={14} className="text-slate-300" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-medium text-slate-900 line-clamp-2 group-hover:opacity-70 transition-opacity duration-200">
-                        {service.title}
-                      </h4>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Popular Services Widget */}
-          {popularServices.length > 0 && (
-            <div className="bg-white rounded-lg border border-slate-200 p-4">
-              <h3 className="font-semibold text-slate-900 text-sm mb-3 flex items-center gap-2">
-                <Eye size={16} style={{ color: brandColor }} />
-                Xem nhiều
-              </h3>
-              <div className="space-y-2">
-                {popularServices.slice(0, 4).map((service, index) => (
-                  <Link
-                    key={service._id}
-                    href={`/services/${service.slug}`}
-                    className="flex gap-2 group rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                    style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
-                  >
-                    <span
-                      className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold flex-shrink-0"
-                      style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-                    >
-                      {index + 1}
-                    </span>
-                    <h4 className="text-xs font-medium text-slate-900 line-clamp-2 group-hover:opacity-70 transition-opacity duration-200 flex-1">
-                      {service.title}
-                    </h4>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </aside>
 

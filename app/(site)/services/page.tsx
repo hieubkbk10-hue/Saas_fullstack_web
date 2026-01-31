@@ -117,8 +117,6 @@ function ServicesContent() {
   });
 
   const featuredServices = useQuery(api.services.listFeatured, { limit: 5 });
-  const recentServices = useQuery(api.services.listRecent, { limit: 5 });
-  const popularServices = useQuery(api.services.listPopular, { limit: 5 });
 
   type ServicesResult = NonNullable<typeof services>;
   const [cachedServices, setCachedServices] = useState<ServicesResult | null>(null);
@@ -231,8 +229,6 @@ function ServicesContent() {
             onCategoryChange={handleCategoryChange}
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
-            recentServices={recentServices ?? []}
-            popularServices={popularServices ?? []}
             enabledFields={enabledFields}
           />
         )}
