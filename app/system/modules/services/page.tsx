@@ -217,7 +217,7 @@ export default function ServicesModuleConfigPage() {
                           localContactSettings.zalo !== serverContactSettings.zalo ||
                           localContactSettings.messenger !== serverContactSettings.messenger;
     return featuresChanged || serviceFieldsChanged || categoryFieldsChanged || settingsChanged || contactChanged;
-  }, [localFeatures, serverFeatures, localServiceFields, serverServiceFields, localCategoryFields, serverCategoryFields, localSettings, serverSettings]);
+  }, [localFeatures, serverFeatures, localServiceFields, serverServiceFields, localCategoryFields, serverCategoryFields, localSettings, serverSettings, localContactSettings, serverContactSettings]);
 
   const handleToggleFeature = (key: string) => {
     const newFeatureState = !localFeatures[key];
