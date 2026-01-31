@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { QuickContactButtons, QuickContactCompact } from '@/components/site/QuickContact';
+import { QuickContactButtons } from '@/components/site/QuickContact';
 import { ArrowLeft, ArrowRight, Calendar, ChevronRight, Clock, Copy, Eye, Image as ImageIcon, Star } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
@@ -267,12 +267,12 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
 
   return (
     <div className="min-h-screen bg-white">
-      <section className="relative overflow-hidden" style={{ backgroundColor: `${brandColor}08` }}>
-        <div className="absolute inset-0 opacity-30" style={{ backgroundImage: `radial-gradient(circle at 20% 50%, ${brandColor}20 0%, transparent 50%), radial-gradient(circle at 80% 50%, ${brandColor}15 0%, transparent 50%)` }} />
+      <section className="relative overflow-hidden" style={{ backgroundColor: `${brandColor}06` }}>
+        <div className="absolute inset-0 opacity-25" style={{ backgroundImage: `radial-gradient(circle at 20% 45%, ${brandColor}18 0%, transparent 55%), radial-gradient(circle at 80% 55%, ${brandColor}12 0%, transparent 60%)` }} />
         
-        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
-          <div className="max-w-3xl">
-            <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div className="relative max-w-6xl mx-auto px-4 py-12 md:py-20">
+          <div className="max-w-3xl space-y-6">
+            <div className="flex flex-wrap items-center gap-3">
               {showFeatured && service.featured && (
                 <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-400 text-amber-900 text-sm font-semibold rounded-full shadow-sm">
                   <Star size={14} className="fill-current" />
@@ -284,32 +284,34 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
               </span>
             </div>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight mb-6">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
               {service.title}
             </h1>
 
             {service.excerpt && (
-              <p className="text-xl text-slate-600 leading-relaxed mb-8 max-w-2xl">
+              <p className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-2xl">
                 {service.excerpt}
               </p>
             )}
 
-            <div className="flex flex-wrap items-center gap-6">
+            <div className="flex flex-wrap items-center gap-4">
               {showPrice && (
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">Chỉ từ</p>
-                  <p className="text-4xl font-bold" style={{ color: brandColor }}>
+                <div className="min-w-[160px]">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Chỉ từ</p>
+                  <p className="text-3xl md:text-4xl font-bold" style={{ color: brandColor }}>
                     {formatPrice(service.price)}
                   </p>
                 </div>
               )}
-              <QuickContactButtons 
-                serviceName={service.title}
-                brandColor={brandColor}
-              />
+              <div className="min-w-[220px]">
+                <QuickContactButtons 
+                  serviceName={service.title}
+                  brandColor={brandColor}
+                />
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-8 mt-10 pt-10 border-t border-slate-200/50">
+            <div className="flex flex-wrap items-center gap-6 pt-6 border-t border-slate-200/50">
               <div className="flex items-center gap-2">
                 <Eye size={20} className="text-slate-400" />
                 <span className="text-slate-600"><strong className="text-slate-900">{service.views.toLocaleString()}</strong> lượt xem</span>
@@ -326,8 +328,8 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
       </section>
 
       {service.thumbnail && (
-        <div className="max-w-5xl mx-auto px-4 -mt-8 relative z-10">
-          <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[16/9]">
+        <div className="max-w-5xl mx-auto px-4 -mt-10 relative z-10">
+          <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[16/9]">
             <Image
               src={service.thumbnail}
               alt={service.title}
@@ -339,14 +341,14 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
         </div>
       )}
 
-      <section className="max-w-3xl mx-auto px-4 py-16 md:py-24">
+      <section className="max-w-3xl mx-auto px-4 py-14 md:py-20">
         <article className="prose prose-lg prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:no-underline hover:prose-a:underline prose-img:rounded-2xl prose-strong:text-slate-900" style={{ '--tw-prose-links': brandColor } as React.CSSProperties}>
           <div dangerouslySetInnerHTML={{ __html: service.content }} />
         </article>
 
-        <div className="mt-16 p-8 rounded-3xl text-center" style={{ backgroundColor: `${brandColor}08` }}>
-          <h3 className="text-2xl font-bold text-slate-900 mb-3">Sẵn sàng bắt đầu?</h3>
-          <p className="text-slate-600 mb-6 max-w-md mx-auto">
+        <div className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 text-center">
+          <h3 className="text-xl md:text-2xl font-bold text-slate-900">Sẵn sàng bắt đầu?</h3>
+          <p className="text-slate-600 mt-2 mb-5 max-w-md mx-auto">
             Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết cho dự án của bạn.
           </p>
           <div className="flex justify-center">
@@ -359,7 +361,7 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
       </section>
 
       {relatedServices.length > 0 && (
-        <section className="bg-slate-50 py-16">
+        <section className="bg-slate-50 py-12">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-bold text-slate-900">Dịch vụ liên quan</h2>
@@ -421,57 +423,65 @@ export function MinimalStyle({ service, brandColor, relatedServices, enabledFiel
 
   return (
     <div className="min-h-screen bg-white">
-      <article className="max-w-2xl mx-auto px-4 py-12 md:py-20">
+      <article className="max-w-2xl mx-auto px-4 py-12 md:py-18">
         <Link 
           href="/services"
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-600 text-sm mb-12 transition-colors"
+          className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-600 text-sm mb-10 transition-colors"
         >
           <ArrowLeft size={16} />
           Tất cả dịch vụ
         </Link>
 
-        <header className="mb-12">
-          <div className="flex items-center gap-3 mb-6">
+        <header className="mb-12 space-y-5">
+          <div className="flex flex-wrap items-center gap-3">
             {showFeatured && service.featured && (
-              <Star size={18} className="fill-amber-400 text-amber-400" />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                <Star size={12} className="fill-amber-500 text-amber-500" />
+                Nổi bật
+              </span>
             )}
             <span 
-              className="text-sm font-medium uppercase tracking-wider"
-              style={{ color: brandColor }}
+              className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600"
             >
               {service.categoryName}
             </span>
           </div>
 
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight mb-6">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight">
             {service.title}
           </h1>
 
           {service.excerpt && (
-            <p className="text-xl text-slate-500 leading-relaxed">
+            <p className="text-lg text-slate-600 leading-relaxed">
               {service.excerpt}
             </p>
           )}
 
-          <div className="flex flex-wrap items-center gap-6 mt-8 pt-8 border-t border-slate-100">
+          <div className="flex flex-wrap items-center gap-4 pt-6 border-t border-slate-100">
             {showPrice && (
-              <div className="text-2xl font-bold" style={{ color: brandColor }}>
+              <div className="min-w-[160px]">
+                <p className="text-xs uppercase tracking-wide text-slate-500">Chi phí dự kiến</p>
+                <p className="text-2xl font-bold" style={{ color: brandColor }}>
                 {formatPrice(service.price)}
+                </p>
               </div>
             )}
-            <div className="flex items-center gap-4 text-sm text-slate-400">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
               {showDuration && service.duration && (
-                <>
-                  <span>{service.duration}</span>
-                  <span>·</span>
-                </>
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+                  <Clock size={14} className="text-slate-400" />
+                  {service.duration}
+                </span>
               )}
-              <span>{service.views.toLocaleString()} views</span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+                <Eye size={14} className="text-slate-400" />
+                {service.views.toLocaleString()} lượt xem
+              </span>
               {service.publishedAt && (
-                <>
-                  <span>·</span>
-                  <span>{formatDate(service.publishedAt)}</span>
-                </>
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+                  <Calendar size={14} className="text-slate-400" />
+                  {formatDate(service.publishedAt)}
+                </span>
               )}
             </div>
           </div>
@@ -479,7 +489,7 @@ export function MinimalStyle({ service, brandColor, relatedServices, enabledFiel
 
         {service.thumbnail && (
           <figure className="mb-12">
-            <div className="relative rounded-xl overflow-hidden aspect-[2/1]">
+            <div className="relative rounded-2xl overflow-hidden aspect-[16/9] shadow-sm">
               <Image
                 src={service.thumbnail}
                 alt={service.title}
@@ -492,39 +502,40 @@ export function MinimalStyle({ service, brandColor, relatedServices, enabledFiel
         )}
 
         <div 
-          className="prose prose-slate max-w-none prose-headings:font-semibold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-blockquote:border-l-2 prose-blockquote:not-italic prose-blockquote:text-slate-600"
+          className="prose prose-slate max-w-none prose-headings:font-semibold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:no-underline hover:prose-a:underline prose-img:rounded-2xl prose-blockquote:border-l-2 prose-blockquote:not-italic prose-blockquote:text-slate-600"
           style={{ '--tw-prose-links': brandColor, '--tw-prose-quote-borders': brandColor } as React.CSSProperties}
         >
           <div dangerouslySetInnerHTML={{ __html: service.content }} />
         </div>
 
-        <div className="mt-16 text-center">
-          <div className="inline-flex items-center gap-3 mb-8">
+        <div className="mt-14 rounded-2xl border border-slate-200 bg-white p-6 text-center">
+          <div className="inline-flex items-center gap-3 mb-6">
             <div className="w-16 h-px bg-slate-200" />
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: brandColor }} />
             <div className="w-16 h-px bg-slate-200" />
           </div>
           
-          <p className="text-slate-500 mb-6">Quan tâm đến dịch vụ này?</p>
+          <p className="text-slate-600 mb-5">Quan tâm đến dịch vụ này?</p>
           
-          <QuickContactCompact 
-            serviceName={service.title}
-            brandColor={brandColor}
-            className="max-w-xs mx-auto"
-          />
+          <div className="max-w-xs mx-auto">
+            <QuickContactButtons 
+              serviceName={service.title}
+              brandColor={brandColor}
+            />
+          </div>
         </div>
 
         {relatedServices.length > 0 && (
-          <div className="mt-20 pt-12 border-t border-slate-100">
-            <h3 className="text-xs font-medium uppercase tracking-wider text-slate-400 mb-8 text-center">
+          <div className="mt-16 pt-10 border-t border-slate-100">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-6 text-center">
               Có thể bạn quan tâm
             </h3>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {relatedServices.map((s, index) => (
                 <Link 
                   key={s._id} 
                   href={`/services/${s.slug}`}
-                  className="group flex items-center justify-between py-4 border-b border-slate-100 hover:border-slate-300 transition-colors"
+                  className="group flex items-center justify-between gap-4 rounded-xl border border-slate-100 px-4 py-3 hover:border-slate-200 hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-center gap-4">
                     <span className="text-sm text-slate-300 font-mono">{String(index + 1).padStart(2, '0')}</span>
