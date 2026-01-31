@@ -139,26 +139,26 @@ function PostsContent() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Quản lý bài viết</h1>
-        <div className="flex gap-1.5">
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleReseed} title="Reset dữ liệu mẫu">
-            <RefreshCw size={14}/> Reset
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Quản lý bài viết</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleReseed} title="Reset dữ liệu mẫu">
+            <RefreshCw size={16}/> Reset
           </Button>
-          <Link href="/admin/posts/create"><Button size="sm" className="gap-1.5"><Plus size={14}/> Thêm mới</Button></Link>
+          <Link href="/admin/posts/create"><Button className="gap-2"><Plus size={16}/> Thêm mới</Button></Link>
         </div>
       </div>
 
       <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() => setSelectedIds([])} />
 
       <Card>
-        <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-2">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
           <div className="relative max-w-xs flex-1">
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm bài viết..." className="pl-8 h-9 text-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Input placeholder="Tìm kiếm bài viết..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-          <select className="h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-sm" value={filterStatus} onChange={(e) => handleFilterChange(e.target.value)}>
+          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => handleFilterChange(e.target.value)}>
             <option value="">Tất cả trạng thái</option>
             <option value="Published">Đã xuất bản</option>
             <option value="Draft">Bản nháp</option>
@@ -168,46 +168,46 @@ function PostsContent() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[36px] py-2"><SelectCheckbox checked={selectedIds.length === paginatedPosts.length && paginatedPosts.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedPosts.length} /></TableHead>
-              <TableHead className="w-[70px] py-2">Ảnh</TableHead>
-              <SortableHeader label="Tiêu đề" sortKey="title" sortConfig={sortConfig} onSort={handleSort} className="py-2" />
-              <SortableHeader label="Danh mục" sortKey="category" sortConfig={sortConfig} onSort={handleSort} className="py-2" />
-              <SortableHeader label="Lượt xem" sortKey="views" sortConfig={sortConfig} onSort={handleSort} className="py-2" />
-              <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} className="py-2" />
-              <TableHead className="text-right py-2">Hành động</TableHead>
+              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedPosts.length && paginatedPosts.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedPosts.length} /></TableHead>
+              <TableHead className="w-[80px]">Thumbnail</TableHead>
+              <SortableHeader label="Tiêu đề" sortKey="title" sortConfig={sortConfig} onSort={handleSort} />
+              <SortableHeader label="Danh mục" sortKey="category" sortConfig={sortConfig} onSort={handleSort} />
+              <SortableHeader label="Lượt xem" sortKey="views" sortConfig={sortConfig} onSort={handleSort} />
+              <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
+              <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedPosts.map(post => (
               <TableRow key={post._id} className={selectedIds.includes(post._id) ? 'bg-blue-500/5' : ''}>
-                <TableCell className="py-2.5"><SelectCheckbox checked={selectedIds.includes(post._id)} onChange={() => toggleSelectItem(post._id)} /></TableCell>
-                <TableCell className="py-2.5">
+                <TableCell><SelectCheckbox checked={selectedIds.includes(post._id)} onChange={() => toggleSelectItem(post._id)} /></TableCell>
+                <TableCell>
                   {post.thumbnail ? (
-                    <img src={post.thumbnail} className="w-10 h-7 object-cover rounded" alt="" />
+                    <img src={post.thumbnail} className="w-12 h-8 object-cover rounded" alt="" />
                   ) : (
-                    <div className="w-10 h-7 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-[10px] text-slate-400">No img</div>
+                    <div className="w-12 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-slate-400">No img</div>
                   )}
                 </TableCell>
-                <TableCell className="py-2.5 font-medium max-w-[300px] truncate text-sm">{post.title}</TableCell>
-                <TableCell className="py-2.5 text-sm">{post.category}</TableCell>
-                <TableCell className="py-2.5 text-slate-500 text-sm">{post.views.toLocaleString()}</TableCell>
-                <TableCell className="py-2.5">
-                  <Badge variant={post.status === 'Published' ? 'success' : post.status === 'Draft' ? 'secondary' : 'warning'} className="text-xs">
+                <TableCell className="font-medium max-w-[300px] truncate">{post.title}</TableCell>
+                <TableCell>{post.category}</TableCell>
+                <TableCell className="text-slate-500">{post.views.toLocaleString()}</TableCell>
+                <TableCell>
+                  <Badge variant={post.status === 'Published' ? 'success' : post.status === 'Draft' ? 'secondary' : 'warning'}>
                     {post.status === 'Published' ? 'Đã xuất bản' : post.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ'}
                   </Badge>
                 </TableCell>
-                <TableCell className="py-2.5 text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-600 hover:text-blue-700" title="Xem bài viết" onClick={() => openFrontend(post.slug)}><ExternalLink size={14}/></Button>
-                    <Link href={`/admin/posts/${post._id}/edit`}><Button variant="ghost" size="icon" className="h-7 w-7"><Edit size={14}/></Button></Link>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600" onClick={() => handleDelete(post._id)}><Trash2 size={14}/></Button>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem bài viết" onClick={() => openFrontend(post.slug)}><ExternalLink size={16}/></Button>
+                    <Link href={`/admin/posts/${post._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={() => handleDelete(post._id)}><Trash2 size={16}/></Button>
                   </div>
                 </TableCell>
               </TableRow>
             ))}
             {paginatedPosts.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-6 text-slate-500 text-sm">
+                <TableCell colSpan={7} className="text-center py-8 text-slate-500">
                   {searchTerm || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có bài viết nào'}
                 </TableCell>
               </TableRow>
@@ -215,22 +215,21 @@ function PostsContent() {
           </TableBody>
         </Table>
         {sortedPosts.length > 0 && (
-          <div className="p-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-            <span className="text-slate-500">
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-sm text-slate-500">
               Hiển thị {(currentPage - 1) * postsPerPage + 1} - {Math.min(currentPage * postsPerPage, sortedPosts.length)} / {sortedPosts.length} bài viết
             </span>
             {totalPages > 1 && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <Button 
                   variant="outline" 
                   size="sm" 
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(p => p - 1)}
-                  className="h-7 px-2"
                 >
-                  <ChevronLeft size={14} />
+                  <ChevronLeft size={16} />
                 </Button>
-                <span className="text-slate-600 dark:text-slate-400 px-1">
+                <span className="text-sm text-slate-600 dark:text-slate-400">
                   Trang {currentPage} / {totalPages}
                 </span>
                 <Button 
@@ -238,9 +237,8 @@ function PostsContent() {
                   size="sm" 
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(p => p + 1)}
-                  className="h-7 px-2"
                 >
-                  <ChevronRight size={14} />
+                  <ChevronRight size={16} />
                 </Button>
               </div>
             )}
