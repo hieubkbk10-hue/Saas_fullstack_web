@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Briefcase, Eye, Clock, Star } from 'lucide-react';
+import { Briefcase, Clock, Star } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 
 interface Service {
@@ -51,7 +51,7 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
 
   if (viewMode === 'list') {
     return (
-      <div className="space-y-3">
+      <div className="space-y-2">
         {services.map((service) => (
           <Link
             key={service._id}
@@ -83,7 +83,7 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
                   )}
                 </div>
               </div>
-              <div className="p-4 flex-1 flex flex-col justify-center">
+              <div className="p-3 flex-1 flex flex-col justify-center">
                 <div className="flex items-center gap-2 mb-1.5">
                   <span 
                     className="text-xs font-medium px-2 py-0.5 rounded"
@@ -101,10 +101,6 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
                 )}
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex items-center gap-3 text-xs text-slate-400">
-                    <span className="flex items-center gap-1">
-                      <Eye size={12} />
-                      {service.views.toLocaleString()}
-                    </span>
                     {showDuration && service.duration && (
                       <span className="flex items-center gap-1">
                         <Clock size={12} />
@@ -112,11 +108,19 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
                       </span>
                     )}
                   </div>
-                  {showPrice && (
-                    <span className="text-lg font-bold" style={{ color: brandColor }}>
-                      {formatPrice(service.price)}
+                  <div className="flex items-center gap-3">
+                    {showPrice && (
+                      <span className="text-lg font-bold" style={{ color: brandColor }}>
+                        {formatPrice(service.price)}
+                      </span>
+                    )}
+                    <span
+                      className="inline-flex items-center justify-center px-3 py-2 text-xs font-medium rounded-lg text-white"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      Xem ngay
                     </span>
-                  )}
+                  </div>
                 </div>
               </div>
             </article>
@@ -128,7 +132,7 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
 
   // Grid view
   return (
-    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {services.map((service) => (
         <Link
           key={service._id}
@@ -158,7 +162,7 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
                 </div>
               )}
             </div>
-            <div className="p-4 flex-1 flex flex-col">
+            <div className="p-3 flex-1 flex flex-col">
               <div className="flex items-center gap-2 mb-2">
                 <span 
                   className="text-xs font-medium px-2 py-0.5 rounded"
@@ -175,10 +179,6 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
               )}
               <div className="flex items-center justify-between text-xs text-slate-400 mt-3 pt-3 border-t border-slate-100">
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1">
-                    <Eye size={12} />
-                    {service.views.toLocaleString()}
-                  </span>
                   {showDuration && service.duration && (
                     <span className="flex items-center gap-1">
                       <Clock size={12} />
@@ -186,11 +186,19 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
                     </span>
                   )}
                 </div>
-                {showPrice && (
-                  <span className="text-base font-bold" style={{ color: brandColor }}>
-                    {formatPrice(service.price)}
+                <div className="flex items-center gap-2">
+                  {showPrice && (
+                    <span className="text-base font-bold" style={{ color: brandColor }}>
+                      {formatPrice(service.price)}
+                    </span>
+                  )}
+                  <span
+                    className="inline-flex items-center justify-center px-3 py-2 text-xs font-medium rounded-lg text-white"
+                    style={{ backgroundColor: brandColor }}
+                  >
+                    Xem ngay
                   </span>
-                )}
+                </div>
               </div>
             </div>
           </article>

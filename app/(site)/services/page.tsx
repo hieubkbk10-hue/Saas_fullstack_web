@@ -5,7 +5,6 @@ import { useQuery } from 'convex/react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { LayoutGrid, List } from 'lucide-react';
 import { Id } from '@/convex/_generated/dataModel';
 import {
   ServicesFilter,
@@ -90,18 +89,19 @@ function ServicesContent() {
   const [selectedCategory, setSelectedCategory] = useState<Id<"serviceCategories"> | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<ServiceSortOption>('newest');
-  // SVC-010: View mode toggle
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Queries
   const categories = useQuery(api.serviceCategories.listActive, { limit: 20 });
-  
+  type CategoriesResult = NonNullable<typeof categories>;
+  const [cachedCategories, setCachedCategories] = useState<CategoriesResult | null>(null);
+  const stableCategories = categories ?? cachedCategories;
+
   const categoryFromUrl = useMemo(() => {
     const catSlug = searchParams.get('category');
-    if (!catSlug || !categories) return null;
-    const matchedCategory = categories.find((c) => c.slug === catSlug);
+    if (!catSlug || !stableCategories) return null;
+    const matchedCategory = stableCategories.find((c) => c.slug === catSlug);
     return matchedCategory?._id ?? null;
-  }, [searchParams, categories]);
+  }, [searchParams, stableCategories]);
 
   const activeCategory = selectedCategory ?? categoryFromUrl;
 
@@ -120,19 +120,44 @@ function ServicesContent() {
   const recentServices = useQuery(api.services.listRecent, { limit: 5 });
   const popularServices = useQuery(api.services.listPopular, { limit: 5 });
 
+  type ServicesResult = NonNullable<typeof services>;
+  const [cachedServices, setCachedServices] = useState<ServicesResult | null>(null);
+  const [cachedTotalCount, setCachedTotalCount] = useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (services) {
+      setCachedServices(services);
+    }
+  }, [services]);
+
+  React.useEffect(() => {
+    if (categories) {
+      setCachedCategories(categories);
+    }
+  }, [categories]);
+
+  React.useEffect(() => {
+    if (totalCount !== undefined) {
+      setCachedTotalCount(totalCount ?? null);
+    }
+  }, [totalCount]);
+
+  const displayServices = services ?? cachedServices ?? [];
+  const displayTotalCount = totalCount ?? cachedTotalCount ?? displayServices.length;
+
   // Build category map for O(1) lookup
   const categoryMap = useMemo(() => {
-    if (!categories) return new Map<string, string>();
-    return new Map(categories.map((c) => [c._id, c.name]));
-  }, [categories]);
+    if (!stableCategories) return new Map<string, string>();
+    return new Map(stableCategories.map((c) => [c._id, c.name]));
+  }, [stableCategories]);
 
   // Handlers - SVC-009: Update URL with category
   const handleCategoryChange = useCallback((categoryId: Id<"serviceCategories"> | null) => {
     setSelectedCategory(categoryId);
     
     const params = new URLSearchParams(searchParams.toString());
-    if (categoryId && categories) {
-      const category = categories.find(c => c._id === categoryId);
+    if (categoryId && stableCategories) {
+      const category = stableCategories.find(c => c._id === categoryId);
       if (category) {
         params.set('category', category.slug);
       }
@@ -142,7 +167,7 @@ function ServicesContent() {
     
     const newUrl = params.toString() ? `/services?${params.toString()}` : '/services';
     router.push(newUrl, { scroll: false });
-  }, [searchParams, categories, router]);
+  }, [searchParams, stableCategories, router]);
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
@@ -153,15 +178,15 @@ function ServicesContent() {
   }, []);
 
   // Loading state
-  if (services === undefined || categories === undefined) {
+  if (!stableCategories && displayServices.length === 0) {
     return <ServicesListSkeleton />;
   }
 
   return (
-    <div className="py-8 md:py-12 px-4">
+    <div className="py-6 md:py-10 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
             Dịch vụ của chúng tôi
           </h1>
@@ -173,56 +198,24 @@ function ServicesContent() {
             {/* Filter Bar */}
             <div className="mb-8">
               <ServicesFilter
-                categories={categories}
+                categories={stableCategories ?? []}
                 selectedCategory={selectedCategory}
                 onCategoryChange={handleCategoryChange}
                 searchQuery={searchQuery}
                 onSearchChange={handleSearchChange}
                 sortBy={sortBy}
                 onSortChange={handleSortChange}
-                totalResults={totalCount ?? services.length}
+                totalResults={displayTotalCount}
                 brandColor={brandColor}
               />
             </div>
 
-            {/* SVC-010: View Mode Toggle */}
-            <div className="flex justify-end mb-4">
-              <div className="flex bg-slate-100 rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'grid'
-                      ? 'bg-white shadow-sm text-slate-900'
-                      : 'text-slate-500 hover:text-slate-700'
-                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 min-h-11 min-w-11`}
-                  style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
-                  title="Hiển thị lưới"
-                  aria-label="Chuyển sang hiển thị lưới"
-                >
-                  <LayoutGrid size={18} />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'list'
-                      ? 'bg-white shadow-sm text-slate-900'
-                      : 'text-slate-500 hover:text-slate-700'
-                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 min-h-11 min-w-11`}
-                  style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
-                  title="Hiển thị danh sách"
-                  aria-label="Chuyển sang hiển thị danh sách"
-                >
-                  <List size={18} />
-                </button>
-              </div>
-            </div>
-
             {/* Services */}
             <FullWidthLayout
-              services={services}
+              services={displayServices}
               brandColor={brandColor}
               categoryMap={categoryMap}
-              viewMode={viewMode}
+              viewMode="grid"
               enabledFields={enabledFields}
             />
           </>
@@ -230,10 +223,10 @@ function ServicesContent() {
 
         {layout === 'sidebar' && (
           <SidebarLayout
-            services={services}
+            services={displayServices}
             brandColor={brandColor}
             categoryMap={categoryMap}
-            categories={categories}
+            categories={stableCategories ?? []}
             selectedCategory={selectedCategory}
             onCategoryChange={handleCategoryChange}
             searchQuery={searchQuery}
@@ -246,10 +239,10 @@ function ServicesContent() {
 
         {layout === 'magazine' && (
           <MagazineLayout
-            services={services}
+            services={displayServices}
             brandColor={brandColor}
             categoryMap={categoryMap}
-            categories={categories}
+            categories={stableCategories ?? []}
             selectedCategory={selectedCategory}
             onCategoryChange={handleCategoryChange}
             featuredServices={featuredServices ?? []}
@@ -258,7 +251,7 @@ function ServicesContent() {
         )}
 
         {/* Load More (for all layouts) */}
-        {services.length >= 24 && (
+        {displayServices.length >= 24 && (
           <div className="text-center mt-8">
             <button
               className="px-6 py-3 rounded-lg font-medium transition-colors duration-200 hover:opacity-80"

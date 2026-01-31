@@ -66,10 +66,10 @@ export function ServicesFilter({
   const selectedCategoryName = categories.find(c => c._id === selectedCategory)?.name;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Desktop Filter Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+      <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
           {/* Search Input */}
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -78,7 +78,7 @@ export function ServicesFilter({
               placeholder="Tìm kiếm dịch vụ..."
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 text-sm"
+              className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 text-sm"
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             />
             {localSearch && (
@@ -91,62 +91,33 @@ export function ServicesFilter({
             )}
           </div>
 
-          {/* Category Pills - Desktop */}
-          <div className="hidden lg:flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => onCategoryChange(null)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                !selectedCategory
-                  ? 'text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-              style={!selectedCategory ? { backgroundColor: brandColor } : undefined}
+          {/* Category Dropdown */}
+          <div className="hidden lg:block relative">
+            <select
+              value={selectedCategory ?? ''}
+              onChange={(e) => {
+                const value = e.target.value as Id<"serviceCategories"> | '';
+                onCategoryChange(value ? value : null);
+              }}
+              className="appearance-none px-4 py-2 pr-10 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 cursor-pointer min-w-[200px]"
+              style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             >
-              Tất cả
-            </button>
-            {categories.slice(0, 5).map((category) => (
-              <button
-                key={category._id}
-                onClick={() => onCategoryChange(category._id)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategory === category._id
-                    ? 'text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-                style={selectedCategory === category._id ? { backgroundColor: brandColor } : undefined}
-              >
-                {category.name}
-              </button>
-            ))}
-            {categories.length > 5 && (
-              <div className="relative group">
-                <button className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center gap-1">
-                  +{categories.length - 5} <ChevronDown className="w-3 h-3" />
-                </button>
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-slate-200 py-1 min-w-[150px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                  {categories.slice(5).map((category) => (
-                    <button
-                      key={category._id}
-                      onClick={() => onCategoryChange(category._id)}
-                      className={`w-full px-3 py-2 text-sm text-left hover:bg-slate-50 ${
-                        selectedCategory === category._id ? 'font-medium' : ''
-                      }`}
-                      style={selectedCategory === category._id ? { color: brandColor } : undefined}
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+              <option value="">Tất cả danh mục</option>
+              {categories.map((category) => (
+                <option key={category._id} value={category._id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           </div>
 
           {/* Sort Dropdown */}
-          <div className="hidden lg:block relative">
+          <div className="hidden lg:block relative lg:ml-auto">
             <select
               value={sortBy}
               onChange={(e) => onSortChange(e.target.value as ServiceSortOption)}
-              className="appearance-none px-4 py-2.5 pr-10 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 cursor-pointer"
+              className="appearance-none px-4 py-2 pr-10 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 cursor-pointer"
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             >
               {SORT_OPTIONS.map((option) => (
@@ -161,7 +132,7 @@ export function ServicesFilter({
           {/* Mobile Filter Toggle */}
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="lg:hidden flex items-center gap-2 px-4 py-2.5 border border-slate-200 rounded-lg text-sm"
+            className="lg:hidden flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm"
           >
             <SlidersHorizontal className="w-4 h-4" />
             Bộ lọc
@@ -176,38 +147,30 @@ export function ServicesFilter({
 
         {/* Mobile Filters Panel */}
         {showMobileFilters && (
-          <div className="lg:hidden mt-4 pt-4 border-t border-slate-200 space-y-4">
+          <div className="lg:hidden mt-3 pt-3 border-t border-slate-200 space-y-3">
             {/* Categories */}
             <div>
               <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2 block">
                 Danh mục
               </label>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => onCategoryChange(null)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    !selectedCategory
-                      ? 'text-white'
-                      : 'bg-slate-100 text-slate-600'
-                  }`}
-                  style={!selectedCategory ? { backgroundColor: brandColor } : undefined}
+              <div className="relative">
+                <select
+                  value={selectedCategory ?? ''}
+                  onChange={(e) => {
+                    const value = e.target.value as Id<"serviceCategories"> | '';
+                    onCategoryChange(value ? value : null);
+                  }}
+                  className="w-full appearance-none px-4 py-2 pr-10 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2"
+                  style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
                 >
-                  Tất cả
-                </button>
-                {categories.map((category) => (
-                  <button
-                    key={category._id}
-                    onClick={() => onCategoryChange(category._id)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      selectedCategory === category._id
-                        ? 'text-white'
-                        : 'bg-slate-100 text-slate-600'
-                    }`}
-                    style={selectedCategory === category._id ? { backgroundColor: brandColor } : undefined}
-                  >
-                    {category.name}
-                  </button>
-                ))}
+                  <option value="">Tất cả danh mục</option>
+                  {categories.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               </div>
             </div>
 
@@ -219,7 +182,7 @@ export function ServicesFilter({
               <select
                 value={sortBy}
                 onChange={(e) => onSortChange(e.target.value as ServiceSortOption)}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2"
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2"
                 style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
               >
                 {SORT_OPTIONS.map((option) => (
