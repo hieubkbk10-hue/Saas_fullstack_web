@@ -29,6 +29,17 @@ Skill này tổng hợp các nguyên tắc và checklist UI/UX 2026 để tạo 
 - **Mobile-first**: thiết kế mobile trước rồi scale lên.
 
 ### Step 3: Thiết kế hệ thống (Design System-lite)
+#### Thông số cụ thể (tỉ lệ/khuyến nghị)
+- **Line length**: 45–75 ký tự mỗi dòng (body text) để dễ đọc.
+- **Line height**: 1.4–1.6 cho body text.
+- **Touch target**: tối thiểu 44×44 CSS px (khuyến nghị 44–48px).
+- **Target size (WCAG 2.2 AA)**: tối thiểu 24×24 CSS px, nếu nhỏ hơn phải có khoảng cách bù.
+- **Aspect ratio phổ biến**:
+  - 16:9 cho hero/banner.
+  - 4:3 cho ảnh/card nội dung tổng quan.
+  - 3:2 cho ảnh sản phẩm/ảnh chụp.
+- **Typography scale (modular scale)**: 1.125 / 1.2 / 1.25 (base 16px).
+
 #### Color
 - 1 primary + neutral scale + semantic colors.
 - Contrast: text ≥ 4.5:1, UI ≥ 3:1.
@@ -73,6 +84,8 @@ Skill này tổng hợp các nguyên tắc và checklist UI/UX 2026 để tạo 
 - [ ] 1 font family
 - [ ] 3–4 weights tối đa
 - [ ] line-height 1.4–1.6
+- [ ] line length 45–75 ký tự
+- [ ] modular scale 1.125 / 1.2 / 1.25
 
 ### Spacing
 - [ ] Dùng 4/8/12/16/24/32
@@ -86,11 +99,12 @@ Skill này tổng hợp các nguyên tắc và checklist UI/UX 2026 để tạo 
 - [ ] Shadcn UI cho controls
 - [ ] States đầy đủ
 - [ ] Icon chỉ khi cần, không lạm dụng
+- [ ] Touch target ≥ 44×44px
 
 ### Accessibility
 - [ ] Focus-visible rõ
 - [ ] Keyboard navigation OK
-- [ ] Touch target ≥ 44–48px
+- [ ] Touch target ≥ 44–48px (WCAG 2.2 minimum 24×24px)
 
 ### Motion & Feedback
 - [ ] Transition 150–300ms
@@ -132,6 +146,7 @@ Skill này tổng hợp các nguyên tắc và checklist UI/UX 2026 để tạo 
 
 ### Accessibility & WCAG 2.2
 - https://www.w3.org/TR/WCAG22/
+- https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html
 - https://www.browserstack.com/guide/design-accessibility-checklist-2026
 - https://www.atomica11y.com/accessible-design/
 
@@ -139,6 +154,14 @@ Skill này tổng hợp các nguyên tắc và checklist UI/UX 2026 để tạo 
 - https://www.uxdesigninstitute.com/blog/ux-design-principles-2026/
 - https://webdesignerdepot.com/the-ultimate-guide-to-ui-design-in-2026/
 - https://trymata.com/blog/user-experience-ux-design-principles/
+
+### Typography & layout ratios
+- https://developerux.com/2025/02/12/typography-in-ux-best-practices-guide/
+- https://pimpmytype.com/line-length-line-height/
+- https://typescale.com/
+
+### Aspect ratio guidelines
+- https://www.uxpin.com/studio/blog/aspect-ratio/
 
 ### Design systems / Checklists (GitHub)
 - https://github.com/thedaviddias/Front-End-Design-Checklist
