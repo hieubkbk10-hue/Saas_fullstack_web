@@ -53,7 +53,13 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
     return (
       <div className="space-y-3">
         {services.map((service) => (
-          <Link key={service._id} href={`/services/${service.slug}`} className="group block">
+          <Link
+            key={service._id}
+            href={`/services/${service.slug}`}
+            className="group block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+            style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
+            aria-label={`Xem chi tiết dịch vụ ${service.title}`}
+          >
             <article className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100 flex flex-col sm:flex-row">
               <div className="sm:w-48 md:w-56 flex-shrink-0">
                 <div className="aspect-video sm:aspect-[4/3] sm:h-full bg-slate-100 overflow-hidden relative">
@@ -124,7 +130,13 @@ export function FullWidthLayout({ services, brandColor, categoryMap, viewMode, e
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {services.map((service) => (
-        <Link key={service._id} href={`/services/${service.slug}`} className="group">
+        <Link
+          key={service._id}
+          href={`/services/${service.slug}`}
+          className="group rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+          style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
+          aria-label={`Xem chi tiết dịch vụ ${service.title}`}
+        >
           <article className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100 h-full flex flex-col">
             <div className="aspect-[16/10] bg-slate-100 overflow-hidden relative">
               {service.thumbnail ? (

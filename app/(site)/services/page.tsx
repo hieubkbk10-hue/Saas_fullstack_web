@@ -194,8 +194,10 @@ function ServicesContent() {
                     viewMode === 'grid'
                       ? 'bg-white shadow-sm text-slate-900'
                       : 'text-slate-500 hover:text-slate-700'
-                  }`}
+                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 min-h-11 min-w-11`}
+                  style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
                   title="Hiển thị lưới"
+                  aria-label="Chuyển sang hiển thị lưới"
                 >
                   <LayoutGrid size={18} />
                 </button>
@@ -205,8 +207,10 @@ function ServicesContent() {
                     viewMode === 'list'
                       ? 'bg-white shadow-sm text-slate-900'
                       : 'text-slate-500 hover:text-slate-700'
-                  }`}
+                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 min-h-11 min-w-11`}
+                  style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
                   title="Hiển thị danh sách"
+                  aria-label="Chuyển sang hiển thị danh sách"
                 >
                   <List size={18} />
                 </button>
