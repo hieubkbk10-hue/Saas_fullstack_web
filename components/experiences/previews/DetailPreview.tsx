@@ -302,7 +302,7 @@ function ModernStylePreview({ showAuthor, showRelated, showShare, brandColor = '
                       <span>{new Date(p.publishedAt).toLocaleDateString('vi-VN')}</span>
                     </div>
                     <span
-                      className="mt-auto pt-3 inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium text-white transition-colors"
+                      className="mt-auto pt-3 flex w-full h-10 items-center justify-center rounded-md px-4 text-sm font-medium text-white transition-colors"
                       style={{ backgroundColor: brandColor }}
                     >
                       Xem ngay
