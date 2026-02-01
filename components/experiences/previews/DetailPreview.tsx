@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Eye, FileText, Home, Link as LinkIcon, Share2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, Check, ChevronRight, Clock, Copy, Eye, FileText, Home, Image as ImageIcon, Link as LinkIcon, Phone, Share2, Star } from 'lucide-react';
 import Image from 'next/image';
 
 type DetailLayoutStyle = 'classic' | 'modern' | 'minimal';
@@ -30,6 +30,76 @@ const MOCK_RELATED = [
   { _id: '2', slug: 'post-2', title: 'TypeScript Best Practices cho Next.js', thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=200', publishedAt: new Date('2026-01-08').getTime() },
   { _id: '3', slug: 'post-3', title: 'Tối ưu performance với Image Optimization', thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=200', publishedAt: new Date('2026-01-05').getTime() },
 ];
+
+const MOCK_SERVICE = {
+  title: 'Tư vấn chiến lược kinh doanh',
+  categoryName: 'Tư vấn',
+  publishedAt: new Date('2026-01-18').getTime(),
+  views: 1860,
+  thumbnail: 'https://images.unsplash.com/photo-1507207611509-ec012433ff52?w=1200',
+  excerpt: 'Xây dựng chiến lược tăng trưởng bền vững, tối ưu mô hình vận hành và nâng cao lợi thế cạnh tranh.',
+  content: '<p>Chúng tôi đồng hành cùng doanh nghiệp từ nghiên cứu thị trường, định vị thương hiệu đến xây dựng kế hoạch tăng trưởng dài hạn.</p><p>Quy trình tư vấn tập trung vào dữ liệu, giúp tối ưu hiệu suất vận hành và cải thiện lợi nhuận.</p>',
+  price: 12000000,
+  duration: '6 tuần',
+  featured: true,
+};
+
+const MOCK_RELATED_SERVICES = [
+  { _id: '1', slug: 'service-1', title: 'Tái cấu trúc mô hình vận hành', thumbnail: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400', price: 18000000 },
+  { _id: '2', slug: 'service-2', title: 'Tư vấn chuyển đổi số', thumbnail: undefined, price: 25000000 },
+  { _id: '3', slug: 'service-3', title: 'Thiết kế chiến lược marketing', thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400', price: 14000000 },
+];
+
+const formatPrice = (price?: number): string => {
+  if (!price) {return 'Liên hệ';}
+  return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
+};
+
+const formatDate = (timestamp?: number): string => {
+  if (!timestamp) {return '';}
+  return new Date(timestamp).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+function ServiceThumbFallback({ brandColor }: { brandColor: string }) {
+  return (
+    <div
+      className="w-full h-full flex items-center justify-center text-white"
+      style={{ background: `linear-gradient(135deg, ${brandColor}30, ${brandColor}80)` }}
+    >
+      <ImageIcon size={24} className="text-white/85" />
+    </div>
+  );
+}
+
+function RelatedServiceThumb({ title, thumbnail, brandColor }: { title: string; thumbnail?: string; brandColor: string }) {
+  if (!thumbnail) {
+    return <ServiceThumbFallback brandColor={brandColor} />;
+  }
+  return (
+    <Image
+      src={thumbnail}
+      alt={title}
+      fill
+      sizes="(max-width: 768px) 100vw, 33vw"
+      className="object-cover"
+    />
+  );
+}
+
+function QuickContactButtonsPreview({ brandColor }: { brandColor: string }) {
+  return (
+    <div className="w-full">
+      <button
+        type="button"
+        className="w-full min-h-11 px-6 rounded-xl text-white font-semibold transition-all hover:shadow-lg hover:scale-[1.01] flex items-center justify-center gap-2"
+        style={{ backgroundColor: brandColor }}
+      >
+        <Phone size={18} />
+        Liên hệ tư vấn
+      </button>
+    </div>
+  );
+}
 
 // Classic Style Preview - Extracted from ClassicStyle
 function ClassicStylePreview({ showAuthor, showRelated, showShare, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device'>) {
@@ -507,6 +577,465 @@ export function PostDetailPreview({
   );
 }
 
-export function ServiceDetailPreview(props: PostDetailPreviewProps) {
-  return <PostDetailPreview {...props} />;
+function ClassicServicePreview({ showRelated, showShare, brandColor = '#3b82f6', device = 'desktop' }: PostDetailPreviewProps) {
+  const isDesktop = device === 'desktop';
+  const isMobile = device === 'mobile';
+  const relatedServices = showRelated ? MOCK_RELATED_SERVICES : [];
+  const showPrice = true;
+  const showDuration = true;
+  const showFeatured = true;
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="border-b border-slate-100">
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          <nav className={`flex items-center gap-2 text-slate-400 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+            <div className="hover:text-slate-900 transition-colors">Trang chủ</div>
+            <ChevronRight size={14} />
+            <div className="hover:text-slate-900 transition-colors">Dịch vụ</div>
+            <ChevronRight size={14} />
+            <span className="text-slate-700 font-medium truncate max-w-[200px]">{MOCK_SERVICE.title}</span>
+          </nav>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className={isDesktop ? 'grid grid-cols-4 gap-12' : ''}>
+          <div className={isDesktop ? 'col-span-3' : ''}>
+            <header className="mb-8">
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+              {showFeatured && MOCK_SERVICE.featured && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 text-sm font-medium rounded-full">
+                    <Star size={14} className="fill-amber-400 text-amber-400" />
+                    Dịch vụ nổi bật
+                  </span>
+                )}
+                <div
+                  className="px-3 py-1 text-sm font-medium rounded-full transition-colors hover:opacity-80"
+                  style={{ backgroundColor: `${brandColor}10`, color: brandColor }}
+                >
+                  {MOCK_SERVICE.categoryName}
+                </div>
+              </div>
+
+              <h1 className={`${isMobile ? 'text-3xl' : 'text-4xl'} font-bold text-slate-900 leading-tight mb-4`}>
+                {MOCK_SERVICE.title}
+              </h1>
+
+              {MOCK_SERVICE.excerpt && (
+                <p className="text-lg text-slate-600 leading-relaxed max-w-[60ch]">
+                  {MOCK_SERVICE.excerpt}
+                </p>
+              )}
+
+              <div className="flex flex-wrap items-center gap-4 mt-6 pt-6 border-t border-slate-100">
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <Eye size={16} />
+                  <span>{MOCK_SERVICE.views.toLocaleString()} lượt xem</span>
+                </div>
+                {MOCK_SERVICE.publishedAt && (
+                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <Calendar size={16} />
+                    <span>{formatDate(MOCK_SERVICE.publishedAt)}</span>
+                  </div>
+                )}
+                {showDuration && MOCK_SERVICE.duration && (
+                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <Clock size={16} />
+                    <span>{MOCK_SERVICE.duration}</span>
+                  </div>
+                )}
+              </div>
+            </header>
+
+            {MOCK_SERVICE.thumbnail && (
+              <div className="mb-8 rounded-2xl overflow-hidden bg-slate-100 relative aspect-[16/9]">
+                <Image
+                  src={MOCK_SERVICE.thumbnail}
+                  alt={MOCK_SERVICE.title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 800px"
+                  className="object-cover"
+                />
+              </div>
+            )}
+
+            <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-strong:text-slate-900">
+              <div dangerouslySetInnerHTML={{ __html: MOCK_SERVICE.content }} />
+            </article>
+
+            <div className="mt-12 pt-8 border-t border-slate-200">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                {showShare && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-slate-500">Chia sẻ:</span>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-2 min-h-11 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-sm font-medium text-slate-700 transition-colors"
+                    >
+                      <Copy size={16} />
+                      Copy dịch vụ
+                    </button>
+                  </div>
+                )}
+                <div
+                  className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80"
+                  style={{ color: brandColor }}
+                >
+                  <ArrowLeft size={16} />
+                  Xem tất cả dịch vụ
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={isDesktop ? '' : 'mt-8'}>
+            <div className={`${isDesktop ? 'sticky top-8' : ''} space-y-6`}>
+              {relatedServices.length > 0 && (
+                <div className="bg-slate-50 rounded-2xl p-6">
+                  <h3 className="font-bold text-slate-900 mb-4">Dịch vụ liên quan</h3>
+                  <div className="space-y-4">
+                    {relatedServices.map((s) => (
+                      <div key={s._id} className="flex gap-4 group">
+                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shrink-0 relative">
+                          <RelatedServiceThumb title={s.title} thumbnail={s.thumbnail} brandColor={brandColor} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-slate-900 text-sm line-clamp-2 group-hover:opacity-70 transition-opacity">
+                            {s.title}
+                          </h4>
+                          {showPrice && (
+                            <p className="text-sm font-semibold mt-1" style={{ color: brandColor }}>
+                              {formatPrice(s.price)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-slate-700">Liên hệ nhanh</p>
+                    <p className="text-xs text-slate-500">Tư vấn miễn phí, báo giá trong 24h.</p>
+                  </div>
+                  {showPrice && (
+                    <div className="text-base font-semibold" style={{ color: brandColor }}>
+                      {formatPrice(MOCK_SERVICE.price)}
+                    </div>
+                  )}
+                </div>
+                <div className="mt-3">
+                  <QuickContactButtonsPreview brandColor={brandColor} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ModernServicePreview({ showRelated, brandColor = '#3b82f6', device = 'desktop' }: PostDetailPreviewProps) {
+  const isTablet = device === 'tablet';
+  const isMobile = device === 'mobile';
+  const relatedServices = showRelated ? MOCK_RELATED_SERVICES : [];
+  const showPrice = true;
+  const showDuration = true;
+  const showFeatured = true;
+  const headingSize = isMobile ? 'text-3xl' : isTablet ? 'text-5xl' : 'text-6xl';
+
+  return (
+    <div className="min-h-screen bg-white">
+      <section className="relative overflow-hidden" style={{ backgroundColor: `${brandColor}06` }}>
+        <div
+          className="absolute inset-0 opacity-25"
+          style={{ backgroundImage: `radial-gradient(circle at 20% 45%, ${brandColor}18 0%, transparent 55%), radial-gradient(circle at 80% 55%, ${brandColor}12 0%, transparent 60%)` }}
+        />
+
+        <div className={`relative max-w-6xl mx-auto px-4 ${isMobile ? 'py-12' : 'py-20'}`}>
+          <div className="max-w-3xl space-y-6">
+            <div className="flex flex-wrap items-center gap-3">
+              {showFeatured && MOCK_SERVICE.featured && (
+                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-400 text-amber-900 text-sm font-semibold rounded-full shadow-sm">
+                  <Star size={14} className="fill-current" />
+                  Nổi bật
+                </span>
+              )}
+              <span className="px-4 py-1.5 bg-white/80 backdrop-blur-sm text-sm font-medium rounded-full shadow-sm" style={{ color: brandColor }}>
+                {MOCK_SERVICE.categoryName}
+              </span>
+            </div>
+
+            <h1 className={`${headingSize} font-bold text-slate-900 leading-tight`}>
+              {MOCK_SERVICE.title}
+            </h1>
+
+            {MOCK_SERVICE.excerpt && (
+              <p className={`${isMobile ? 'text-lg' : 'text-xl'} text-slate-600 leading-relaxed max-w-2xl`}>
+                {MOCK_SERVICE.excerpt}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-4">
+              {showPrice && (
+                <div className="min-w-[160px]">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Chỉ từ</p>
+                  <p className={`${isMobile ? 'text-3xl' : 'text-4xl'} font-bold`} style={{ color: brandColor }}>
+                    {formatPrice(MOCK_SERVICE.price)}
+                  </p>
+                </div>
+              )}
+              <div className="min-w-[220px]">
+                <QuickContactButtonsPreview brandColor={brandColor} />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Eye size={20} className="text-slate-400" />
+                <span className="text-slate-600"><strong className="text-slate-900">{MOCK_SERVICE.views.toLocaleString()}</strong> lượt xem</span>
+              </div>
+              {showDuration && MOCK_SERVICE.duration && (
+                <div className="flex items-center gap-2">
+                  <Clock size={20} className="text-slate-400" />
+                  <span className="text-slate-600">Hoàn thành trong <strong className="text-slate-900">{MOCK_SERVICE.duration}</strong></span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {MOCK_SERVICE.thumbnail && (
+        <div className="max-w-5xl mx-auto px-4 -mt-10 relative z-10">
+          <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[16/9]">
+            <Image
+              src={MOCK_SERVICE.thumbnail}
+              alt={MOCK_SERVICE.title}
+              fill
+              sizes="(max-width: 1024px) 100vw, 800px"
+              className="object-cover"
+            />
+          </div>
+        </div>
+      )}
+
+      <section className={`max-w-3xl mx-auto px-4 ${isMobile ? 'py-14' : 'py-20'}`}>
+        <article
+          className="prose prose-lg prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:no-underline hover:prose-a:underline prose-img:rounded-2xl prose-strong:text-slate-900"
+          style={{ '--tw-prose-links': brandColor } as React.CSSProperties}
+        >
+          <div dangerouslySetInnerHTML={{ __html: MOCK_SERVICE.content }} />
+        </article>
+
+        <div className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 text-center">
+          <h3 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-slate-900`}>Sẵn sàng bắt đầu?</h3>
+          <p className="text-slate-600 mt-2 mb-5 max-w-md mx-auto">
+            Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết cho dự án của bạn.
+          </p>
+          <div className="flex justify-center">
+            <QuickContactButtonsPreview brandColor={brandColor} />
+          </div>
+        </div>
+      </section>
+
+      {relatedServices.length > 0 && (
+        <section className="bg-slate-50 py-12">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold text-slate-900">Dịch vụ liên quan</h2>
+              <div className="text-sm font-medium flex items-center gap-1 transition-colors hover:opacity-80" style={{ color: brandColor }}>
+                Xem tất cả
+                <ArrowRight size={16} />
+              </div>
+            </div>
+            <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-3'} gap-6`}>
+              {relatedServices.map((s) => (
+                <div
+                  key={s._id}
+                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+                >
+                  <div className="aspect-[16/10] overflow-hidden bg-slate-100 relative">
+                    <RelatedServiceThumb title={s.title} thumbnail={s.thumbnail} brandColor={brandColor} />
+                  </div>
+                  <div className="p-5">
+                    <h3 className="font-semibold text-slate-900 mb-2 group-hover:opacity-70 transition-opacity">
+                      {s.title}
+                    </h3>
+                    {showPrice && (
+                      <p className="font-bold" style={{ color: brandColor }}>
+                        {formatPrice(s.price)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80" style={{ color: brandColor }}>
+          <ArrowLeft size={16} />
+          Quay lại danh sách dịch vụ
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MinimalServicePreview({ showRelated, brandColor = '#3b82f6', device = 'desktop' }: PostDetailPreviewProps) {
+  const isTablet = device === 'tablet';
+  const isMobile = device === 'mobile';
+  const relatedServices = showRelated ? MOCK_RELATED_SERVICES : [];
+  const showPrice = true;
+  const showDuration = true;
+  const showFeatured = true;
+  const headingSize = isMobile ? 'text-3xl' : isTablet ? 'text-4xl' : 'text-5xl';
+
+  return (
+    <div className="min-h-screen bg-white">
+      <article className={`max-w-7xl mx-auto px-4 ${isMobile ? 'py-12' : 'py-18'}`}>
+        <div className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-600 text-sm mb-10 transition-colors">
+          <ArrowLeft size={16} />
+          Tất cả dịch vụ
+        </div>
+
+        <header className="mb-12 space-y-5">
+          <div className="flex flex-wrap items-center gap-3">
+            {showFeatured && MOCK_SERVICE.featured && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                <Star size={12} className="fill-amber-500 text-amber-500" />
+                Nổi bật
+              </span>
+            )}
+            <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+              {MOCK_SERVICE.categoryName}
+            </span>
+          </div>
+
+          <h1 className={`${headingSize} font-bold text-slate-900 leading-tight`}>
+            {MOCK_SERVICE.title}
+          </h1>
+
+          {MOCK_SERVICE.excerpt && (
+            <p className="text-lg text-slate-600 leading-relaxed">
+              {MOCK_SERVICE.excerpt}
+            </p>
+          )}
+
+          <div className="flex flex-wrap items-center gap-4">
+            {showPrice && (
+              <div className="min-w-[160px]">
+                <p className="text-xs uppercase tracking-wide text-slate-500">Chi phí dự kiến</p>
+                <p className="text-2xl font-bold" style={{ color: brandColor }}>
+                  {formatPrice(MOCK_SERVICE.price)}
+                </p>
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+              {showDuration && MOCK_SERVICE.duration && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+                  <Clock size={14} className="text-slate-400" />
+                  {MOCK_SERVICE.duration}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+                <Eye size={14} className="text-slate-400" />
+                {MOCK_SERVICE.views.toLocaleString()} lượt xem
+              </span>
+              {MOCK_SERVICE.publishedAt && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
+                  <Calendar size={14} className="text-slate-400" />
+                  {formatDate(MOCK_SERVICE.publishedAt)}
+                </span>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {MOCK_SERVICE.thumbnail && (
+          <figure className="mb-12">
+            <div className="relative rounded-2xl overflow-hidden aspect-[16/9] shadow-sm">
+              <Image
+                src={MOCK_SERVICE.thumbnail}
+                alt={MOCK_SERVICE.title}
+                fill
+                sizes="(max-width: 1024px) 100vw, 800px"
+                className="object-cover"
+              />
+            </div>
+          </figure>
+        )}
+
+        <div
+          className="prose prose-slate max-w-none prose-headings:font-semibold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:no-underline hover:prose-a:underline prose-img:rounded-2xl prose-blockquote:border-l-2 prose-blockquote:not-italic prose-blockquote:text-slate-600"
+          style={{ '--tw-prose-links': brandColor, '--tw-prose-quote-borders': brandColor } as React.CSSProperties}
+        >
+          <div dangerouslySetInnerHTML={{ __html: MOCK_SERVICE.content }} />
+        </div>
+
+        <div className="mt-14 rounded-2xl border border-slate-200 bg-white p-6 text-center">
+          <p className="text-slate-600 mb-5">Quan tâm đến dịch vụ này?</p>
+          <div className="max-w-xs mx-auto">
+            <QuickContactButtonsPreview brandColor={brandColor} />
+          </div>
+        </div>
+
+        {relatedServices.length > 0 && (
+          <div className="mt-16">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-6 text-center">
+              Có thể bạn quan tâm
+            </h3>
+            <div className="space-y-2">
+              {relatedServices.map((s, index) => (
+                <div
+                  key={s._id}
+                  className="group flex items-center justify-between gap-4 rounded-xl border border-slate-100 px-4 py-3 hover:border-slate-200 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-slate-300 font-mono">{String(index + 1).padStart(2, '0')}</span>
+                    <h4 className="font-medium text-slate-900 group-hover:opacity-70 transition-opacity">
+                      {s.title}
+                    </h4>
+                  </div>
+                  {showPrice && (
+                    <span className="text-sm font-semibold" style={{ color: brandColor }}>
+                      {formatPrice(s.price)}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </article>
+    </div>
+  );
+}
+
+export function ServiceDetailPreview({
+  layoutStyle,
+  showAuthor,
+  showRelated,
+  showShare,
+  showComments,
+  brandColor = '#3b82f6',
+  device = 'desktop',
+}: PostDetailPreviewProps) {
+  const props = { showAuthor, showRelated, showShare, showComments, brandColor, device, layoutStyle };
+
+  return (
+    <div className="w-full">
+      {layoutStyle === 'classic' && <ClassicServicePreview {...props} />}
+      {layoutStyle === 'modern' && <ModernServicePreview {...props} />}
+      {layoutStyle === 'minimal' && <MinimalServicePreview {...props} />}
+    </div>
+  );
 }
