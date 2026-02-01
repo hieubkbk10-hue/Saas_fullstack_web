@@ -3,9 +3,16 @@ export type ExperienceKey =
   | 'wishlist_ui'
   | 'cart_ui'
   | 'checkout_ui'
-  | 'comments_rating_ui';
+  | 'comments_rating_ui'
+  | 'posts_list_ui'
+  | 'posts_detail_ui'
+  | 'services_list_ui'
+  | 'services_detail_ui'
+  | 'products_list_ui'
+  | 'contact_ui'
+  | 'search_filter_ui';
 
-export type ColorScheme = 'pink' | 'orange' | 'green' | 'purple' | 'cyan';
+export type ColorScheme = 'pink' | 'orange' | 'green' | 'purple' | 'cyan' | 'blue' | 'violet' | 'emerald' | 'indigo' | 'teal';
 
 export const EXPERIENCE_COLORS: Record<ExperienceKey, ColorScheme> = {
   product_detail_ui: 'cyan',
@@ -13,6 +20,13 @@ export const EXPERIENCE_COLORS: Record<ExperienceKey, ColorScheme> = {
   cart_ui: 'orange',
   checkout_ui: 'green',
   comments_rating_ui: 'purple',
+  posts_list_ui: 'blue',
+  posts_detail_ui: 'blue',
+  services_list_ui: 'violet',
+  services_detail_ui: 'violet',
+  products_list_ui: 'emerald',
+  contact_ui: 'indigo',
+  search_filter_ui: 'teal',
 };
 
 export const EXPERIENCE_GROUP = 'experience';
@@ -29,4 +43,11 @@ export const EXPERIENCE_NAMES: Record<ExperienceKey, string> = {
   cart_ui: 'Giỏ hàng',
   checkout_ui: 'Checkout',
   comments_rating_ui: 'Comments & Rating',
+  posts_list_ui: 'Posts List',
+  posts_detail_ui: 'Posts Detail',
+  services_list_ui: 'Services List',
+  services_detail_ui: 'Services Detail',
+  products_list_ui: 'Products List',
+  contact_ui: 'Contact',
+  search_filter_ui: 'Search & Filter',
 };

@@ -11,6 +11,8 @@ import {
   ExperienceSummaryGrid, 
   ExperienceBlockToggle,
   ExperienceHintCard,
+  ExperiencePreview,
+  WishlistPreview,
   type SummaryItem 
 } from '@/components/experiences';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
@@ -96,6 +98,15 @@ export default function WishlistExperiencePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
+          <ExperiencePreview title="Trang Wishlist">
+            <WishlistPreview
+              layoutStyle={config.layoutStyle}
+              showWishlistButton={config.showWishlistButton}
+              showNote={config.showNote}
+              showNotification={config.showNotification}
+            />
+          </ExperiencePreview>
+
           <SettingsCard>
             <SettingSelect
               label="Layout trang Wishlist"

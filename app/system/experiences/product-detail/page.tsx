@@ -11,6 +11,8 @@ import {
   ExperienceSummaryGrid, 
   ExperienceBlockToggle,
   ExperienceHintCard,
+  ExperiencePreview,
+  ProductDetailPreview,
   type SummaryItem 
 } from '@/components/experiences';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
@@ -127,6 +129,16 @@ export default function ProductDetailExperiencePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
+          <ExperiencePreview title="Trang chi tiết sản phẩm">
+            <ProductDetailPreview
+              layoutStyle={config.layoutStyle}
+              showRating={config.showRating}
+              showWishlist={config.showWishlist}
+              showAddToCart={config.showAddToCart}
+              showClassicHighlights={config.showClassicHighlights}
+            />
+          </ExperiencePreview>
+
           <SettingsCard>
             <SettingSelect
               label="Layout chi tiết"

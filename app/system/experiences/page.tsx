@@ -2,16 +2,46 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { CreditCard, Heart, LayoutTemplate, MessageSquare, Package, ShoppingCart } from 'lucide-react';
+import { Briefcase, CreditCard, FileText, Heart, LayoutTemplate, Mail, MessageSquare, Package, Search, ShoppingCart } from 'lucide-react';
 import { Card, CardContent } from '@/app/admin/components/ui';
 import { useI18n } from '../i18n/context';
 
 const experiences = [
   {
-    description: 'Gom cấu hình layout, rating, wishlist, giỏ hàng cho trang chi tiết sản phẩm.',
+    description: 'Layout, filters, search cho danh sách bài viết.',
+    href: '/system/experiences/posts-list',
+    icon: FileText,
+    title: 'Danh sách bài viết',
+  },
+  {
+    description: 'Layout, author info, comments cho chi tiết bài viết.',
+    href: '/system/experiences/posts-detail',
+    icon: FileText,
+    title: 'Chi tiết bài viết',
+  },
+  {
+    description: 'Layout, filters, search cho danh sách dịch vụ.',
+    href: '/system/experiences/services-list',
+    icon: Briefcase,
+    title: 'Danh sách dịch vụ',
+  },
+  {
+    description: 'Layout, author info, comments cho chi tiết dịch vụ.',
+    href: '/system/experiences/services-detail',
+    icon: Briefcase,
+    title: 'Chi tiết dịch vụ',
+  },
+  {
+    description: 'Layout, filters, search cho danh sách sản phẩm.',
+    href: '/system/experiences/products-list',
+    icon: Package,
+    title: 'Danh sách sản phẩm',
+  },
+  {
+    description: 'Layout, rating, wishlist, giỏ hàng cho chi tiết sản phẩm.',
     href: '/system/experiences/product-detail',
     icon: Package,
-    title: 'Trang chi tiết sản phẩm',
+    title: 'Chi tiết sản phẩm',
   },
   {
     description: 'Layout trang wishlist, nút wishlist, note và notification.',
@@ -36,6 +66,18 @@ const experiences = [
     href: '/system/experiences/comments-rating',
     icon: MessageSquare,
     title: 'Bình luận & Đánh giá',
+  },
+  {
+    description: 'Layout form liên hệ, map, contact info và social links.',
+    href: '/system/experiences/contact',
+    icon: Mail,
+    title: 'Trang liên hệ',
+  },
+  {
+    description: 'Search layout, filters, sorting và results display.',
+    href: '/system/experiences/search',
+    icon: Search,
+    title: 'Tìm kiếm & Lọc',
   },
 ];
 
