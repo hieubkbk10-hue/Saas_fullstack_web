@@ -282,7 +282,7 @@ function ModernStylePreview({ showAuthor, showRelated, showShare, brandColor = '
                 {MOCK_RELATED.map((p) => (
                   <div
                     key={p._id}
-                    className="group rounded-lg border bg-background p-4 shadow-sm transition-colors duration-200"
+                    className="group rounded-lg border bg-background p-4 shadow-sm transition-colors duration-200 flex flex-col"
                     style={{ borderColor: `${brandColor}25` }}
                   >
                     <div className="aspect-[4/3] rounded-md overflow-hidden bg-muted mb-3 relative">
@@ -302,7 +302,7 @@ function ModernStylePreview({ showAuthor, showRelated, showShare, brandColor = '
                       <span>{new Date(p.publishedAt).toLocaleDateString('vi-VN')}</span>
                     </div>
                     <span
-                      className="mt-3 inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium text-white transition-colors"
+                      className="mt-auto pt-3 inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium text-white transition-colors"
                       style={{ backgroundColor: brandColor }}
                     >
                       Xem ngay
