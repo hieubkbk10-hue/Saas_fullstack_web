@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, Clock, Eye, Folder, Search, Star, TrendingUp } from 'lucide-react';
+import { Briefcase, ChevronDown, Clock, Eye, Folder, Search, Star, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 
 type ListLayoutStyle = 'grid' | 'sidebar' | 'masonry';
@@ -86,7 +86,13 @@ function FullWidthPreview({ showSearch, showCategories, showPagination, brandCol
           {MOCK_SERVICES.map(service => (
             <article key={service._id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100 h-full flex flex-col">
               <div className="aspect-[16/10] bg-slate-100 overflow-hidden relative">
-                <Image src={service.thumbnail} alt={service.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
+                {service.thumbnail ? (
+                  <Image src={service.thumbnail} alt={service.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Briefcase size={40} className="text-slate-300" />
+                  </div>
+                )}
                 {service.featured && (
                   <div className="absolute top-2 left-2 px-2 py-1 bg-amber-500 text-white text-xs font-medium rounded flex items-center gap-1">
                     <Star size={10} className="fill-current" /> Nổi bật
