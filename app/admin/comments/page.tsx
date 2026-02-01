@@ -193,8 +193,8 @@ function CommentsContent() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Quản lý bình luận</h1>
-          <p className="text-sm text-slate-500">Xem danh sách bình luận mới nhất</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Quản lý bình luận và đánh giá</h1>
+          <p className="text-sm text-slate-500">Xem danh sách bình luận và đánh giá mới nhất</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleReset} className="gap-2"><RefreshCw size={16}/> Reset</Button>
@@ -248,6 +248,7 @@ function CommentsContent() {
               <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedComments.length && paginatedComments.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedComments.length} /></TableHead>
               <SortableHeader label="Người dùng" sortKey="author" sortConfig={sortConfig} onSort={handleSort} className="w-[180px]" />
               <TableHead>Nội dung</TableHead>
+              <TableHead className="w-[90px]">Đánh giá</TableHead>
               <TableHead className="w-[80px]">Loại</TableHead>
               <TableHead className="w-[180px]">Bài viết / Sản phẩm</TableHead>
               <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} className="w-[100px]" />
@@ -264,6 +265,7 @@ function CommentsContent() {
                   <div className="text-xs text-slate-400">IP: {comment.authorIp ?? 'N/A'}</div>
                 </TableCell>
                 <TableCell><p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2">{comment.content}</p></TableCell>
+                <TableCell className="text-sm text-slate-500">{comment.rating ? `${comment.rating}/5` : '—'}</TableCell>
                 <TableCell>
                   <Badge variant={comment.targetType === 'post' ? 'secondary' : 'outline'} className="gap-1 whitespace-nowrap">
                     {comment.targetType === 'post' ? <FileText size={12} /> : <Package size={12} />}
@@ -299,7 +301,7 @@ function CommentsContent() {
             ))}
             {paginatedComments.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center text-slate-500">
+                <TableCell colSpan={9} className="h-24 text-center text-slate-500">
                   {filterType || filterStatus || searchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Không có bình luận nào. Nhấn Reset để tạo dữ liệu mẫu.'}
                 </TableCell>
               </TableRow>

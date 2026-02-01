@@ -13,7 +13,7 @@ export const seedModules = mutation({
 
     const modules = [
       { category: "content" as const, description: "Quản lý bài viết, tin tức, blog và danh mục bài viết", enabled: true, icon: "FileText", isCore: false, key: "posts", name: "Bài viết & Danh mục", order: 1 },
-      { category: "content" as const, dependencies: ["posts", "products"], dependencyType: "any" as const, description: "Bình luận cho bài viết và đánh giá sản phẩm", enabled: true, icon: "MessageSquare", isCore: false, key: "comments", name: "Bình luận", order: 2 },
+      { category: "content" as const, dependencies: ["posts", "products"], dependencyType: "any" as const, description: "Bình luận và đánh giá cho bài viết, sản phẩm", enabled: true, icon: "MessageSquare", isCore: false, key: "comments", name: "Bình luận và đánh giá", order: 2 },
       { category: "content" as const, description: "Quản lý hình ảnh, video, tài liệu", enabled: true, icon: "Image", isCore: false, key: "media", name: "Thư viện Media", order: 3 },
       
       { category: "commerce" as const, description: "Quản lý sản phẩm, danh mục sản phẩm, kho hàng", enabled: true, icon: "Package", isCore: false, key: "products", name: "Sản phẩm & Danh mục", order: 4 },
@@ -323,15 +323,15 @@ export const seedComments = mutation({
     // Product reviews
     if (products.length > 0) {
       const productReviews = [
-        { authorEmail: "tuantran@gmail.com", authorIp: "192.168.1.110", authorName: "Trần Minh Tuấn", content: "Sản phẩm chất lượng, đóng gói cẩn thận. Giao hàng nhanh!", status: "Approved" as const, targetId: products[0]?._id, targetType: "product" as const },
-        { authorEmail: "hoanguyen@gmail.com", authorIp: "192.168.1.111", authorName: "Nguyễn Thị Hoa", content: "Máy đẹp, pin trâu, camera chụp rõ nét. 5 sao!", status: "Approved" as const, targetId: products[0]?._id, targetType: "product" as const },
-        { authorEmail: "hungle@gmail.com", authorIp: "192.168.1.112", authorName: "Lê Văn Hùng", content: "Đã dùng được 2 tuần, rất hài lòng với sản phẩm.", status: "Approved" as const, targetId: products[1]?._id, targetType: "product" as const },
-        { authorEmail: "maipham@gmail.com", authorIp: "192.168.1.113", authorName: "Phạm Thanh Mai", content: "Sản phẩm như mô tả, shop tư vấn nhiệt tình.", status: "Approved" as const, targetId: products[2]?._id, targetType: "product" as const },
-        { authorEmail: "dunghoang@gmail.com", authorIp: "192.168.1.114", authorName: "Hoàng Anh Dũng", content: "Vải đẹp, form chuẩn, mặc thoải mái. Sẽ mua thêm màu khác.", status: "Approved" as const, targetId: products[3]?._id, targetType: "product" as const },
-        { authorEmail: "lanvu@gmail.com", authorIp: "192.168.1.115", authorName: "Vũ Thị Lan", content: "Giao hàng hơi chậm nhưng sản phẩm ok.", status: "Pending" as const, targetId: products[4]?._id, targetType: "product" as const },
-        { authorEmail: "binhdo@gmail.com", authorIp: "192.168.1.116", authorName: "Đỗ Văn Bình", content: "Nồi chiên rất tốt, tiết kiệm dầu. Recommend!", status: "Approved" as const, targetId: products[5]?._id, targetType: "product" as const },
-        { authorEmail: "hanhngo@gmail.com", authorIp: "192.168.1.117", authorName: "Ngô Thị Hạnh", content: "Robot hút sạch, app điều khiển dễ dùng.", status: "Pending" as const, targetId: products[6]?._id, targetType: "product" as const },
-        { authorEmail: "fake@spam.com", authorIp: "10.0.0.2", authorName: "Fake Reviewer", content: "Quảng cáo spam - không liên quan sản phẩm", status: "Spam" as const, targetId: products[0]?._id, targetType: "product" as const },
+        { authorEmail: "tuantran@gmail.com", authorIp: "192.168.1.110", authorName: "Trần Minh Tuấn", content: "Sản phẩm chất lượng, đóng gói cẩn thận. Giao hàng nhanh!", rating: 5, status: "Approved" as const, targetId: products[0]?._id, targetType: "product" as const },
+        { authorEmail: "hoanguyen@gmail.com", authorIp: "192.168.1.111", authorName: "Nguyễn Thị Hoa", content: "Máy đẹp, pin trâu, camera chụp rõ nét. 5 sao!", rating: 5, status: "Approved" as const, targetId: products[0]?._id, targetType: "product" as const },
+        { authorEmail: "hungle@gmail.com", authorIp: "192.168.1.112", authorName: "Lê Văn Hùng", content: "Đã dùng được 2 tuần, rất hài lòng với sản phẩm.", rating: 4, status: "Approved" as const, targetId: products[1]?._id, targetType: "product" as const },
+        { authorEmail: "maipham@gmail.com", authorIp: "192.168.1.113", authorName: "Phạm Thanh Mai", content: "Sản phẩm như mô tả, shop tư vấn nhiệt tình.", rating: 4, status: "Approved" as const, targetId: products[2]?._id, targetType: "product" as const },
+        { authorEmail: "dunghoang@gmail.com", authorIp: "192.168.1.114", authorName: "Hoàng Anh Dũng", content: "Vải đẹp, form chuẩn, mặc thoải mái. Sẽ mua thêm màu khác.", rating: 5, status: "Approved" as const, targetId: products[3]?._id, targetType: "product" as const },
+        { authorEmail: "lanvu@gmail.com", authorIp: "192.168.1.115", authorName: "Vũ Thị Lan", content: "Giao hàng hơi chậm nhưng sản phẩm ok.", rating: 3, status: "Pending" as const, targetId: products[4]?._id, targetType: "product" as const },
+        { authorEmail: "binhdo@gmail.com", authorIp: "192.168.1.116", authorName: "Đỗ Văn Bình", content: "Nồi chiên rất tốt, tiết kiệm dầu. Recommend!", rating: 5, status: "Approved" as const, targetId: products[5]?._id, targetType: "product" as const },
+        { authorEmail: "hanhngo@gmail.com", authorIp: "192.168.1.117", authorName: "Ngô Thị Hạnh", content: "Robot hút sạch, app điều khiển dễ dùng.", rating: 4, status: "Pending" as const, targetId: products[6]?._id, targetType: "product" as const },
+        { authorEmail: "fake@spam.com", authorIp: "10.0.0.2", authorName: "Fake Reviewer", content: "Quảng cáo spam - không liên quan sản phẩm", rating: 1, status: "Spam" as const, targetId: products[0]?._id, targetType: "product" as const },
       ];
       for (const review of productReviews) {
         if (review.targetId) {
@@ -473,7 +473,7 @@ export const seedAll = mutation({
     if (!existingModules) {
       const modules = [
         { category: "content" as const, description: "Quản lý bài viết, tin tức, blog và danh mục bài viết", enabled: true, icon: "FileText", isCore: false, key: "posts", name: "Bài viết & Danh mục", order: 1 },
-        { category: "content" as const, dependencies: ["posts", "products"], dependencyType: "any" as const, description: "Bình luận cho bài viết và đánh giá sản phẩm", enabled: true, icon: "MessageSquare", isCore: false, key: "comments", name: "Bình luận", order: 2 },
+        { category: "content" as const, dependencies: ["posts", "products"], dependencyType: "any" as const, description: "Bình luận và đánh giá cho bài viết, sản phẩm", enabled: true, icon: "MessageSquare", isCore: false, key: "comments", name: "Bình luận và đánh giá", order: 2 },
         { category: "content" as const, description: "Quản lý hình ảnh, video, tài liệu", enabled: true, icon: "Image", isCore: false, key: "media", name: "Thư viện Media", order: 3 },
         { category: "commerce" as const, description: "Quản lý sản phẩm, danh mục sản phẩm, kho hàng", enabled: true, icon: "Package", isCore: false, key: "products", name: "Sản phẩm & Danh mục", order: 4 },
         { category: "commerce" as const, dependencies: ["products", "customers"], dependencyType: "all" as const, description: "Quản lý đơn hàng, vận chuyển", enabled: true, icon: "ShoppingBag", isCore: false, key: "orders", name: "Đơn hàng", order: 5 },
@@ -712,9 +712,10 @@ export const seedCommentsModule = mutation({
         { enabled: true, fieldKey: "targetType", isSystem: true, moduleKey: "comments", name: "Loại đối tượng", order: 3, required: true, type: "select" as const },
         { enabled: true, fieldKey: "targetId", isSystem: true, moduleKey: "comments", name: "ID đối tượng", order: 4, required: true, type: "text" as const },
         { enabled: true, fieldKey: "status", isSystem: true, moduleKey: "comments", name: "Trạng thái", order: 5, required: true, type: "select" as const },
-        { enabled: true, fieldKey: "parentId", isSystem: false, linkedFeature: "enableReplies", moduleKey: "comments", name: "Bình luận cha", order: 6, required: false, type: "select" as const },
-        { enabled: false, fieldKey: "authorIp", isSystem: false, moduleKey: "comments", name: "IP", order: 7, required: false, type: "text" as const },
-        { enabled: false, fieldKey: "likesCount", isSystem: false, linkedFeature: "enableLikes", moduleKey: "comments", name: "Số lượt thích", order: 8, required: false, type: "number" as const },
+        { enabled: true, fieldKey: "rating", isSystem: false, moduleKey: "comments", name: "Đánh giá", order: 6, required: false, type: "number" as const },
+        { enabled: true, fieldKey: "parentId", isSystem: false, linkedFeature: "enableReplies", moduleKey: "comments", name: "Bình luận cha", order: 7, required: false, type: "select" as const },
+        { enabled: false, fieldKey: "authorIp", isSystem: false, moduleKey: "comments", name: "IP", order: 8, required: false, type: "text" as const },
+        { enabled: false, fieldKey: "likesCount", isSystem: false, linkedFeature: "enableLikes", moduleKey: "comments", name: "Số lượt thích", order: 9, required: false, type: "number" as const },
       ];
       for (const field of fields) {
         await ctx.db.insert("moduleFields", field);

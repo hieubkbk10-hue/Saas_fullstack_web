@@ -13,6 +13,7 @@ const commentDoc = v.object({
   content: v.string(),
   customerId: v.optional(v.id("customers")),
   parentId: v.optional(v.id("comments")),
+  rating: v.optional(v.number()),
   status: commentStatus,
   targetId: v.string(),
   targetType: targetType,
@@ -175,6 +176,7 @@ export const create = mutation({
     content: v.string(),
     customerId: v.optional(v.id("customers")),
     parentId: v.optional(v.id("comments")),
+    rating: v.optional(v.number()),
     status: v.optional(commentStatus),
     targetId: v.string(),
     targetType: targetType,
@@ -189,6 +191,7 @@ export const update = mutation({
     authorName: v.optional(v.string()),
     content: v.optional(v.string()),
     id: v.id("comments"),
+    rating: v.optional(v.number()),
     status: v.optional(commentStatus),
   },
   handler: async (ctx, args) => {

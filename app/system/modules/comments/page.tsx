@@ -269,8 +269,8 @@ export default function CommentsModuleConfigPage() {
     <div className="space-y-6 max-w-5xl mx-auto">
       <ModuleHeader
         icon={MessageSquare}
-        title="Module Bình luận"
-        description="Cấu hình bình luận bài viết và đánh giá sản phẩm"
+        title="Module Bình luận và đánh giá"
+        description="Cấu hình bình luận và đánh giá cho bài viết, sản phẩm"
         iconBgClass="bg-cyan-500/10"
         iconTextClass="text-cyan-600 dark:text-cyan-400"
         buttonClass="bg-cyan-600 hover:bg-cyan-500"
@@ -348,7 +348,7 @@ export default function CommentsModuleConfigPage() {
 
                 <div className="lg:col-span-2">
                   <FieldsCard
-                    title="Trường bình luận"
+                    title="Trường bình luận và đánh giá"
                     icon={MessageSquare}
                     iconColorClass="text-cyan-500"
                     fields={localFields}
@@ -439,6 +439,7 @@ export default function CommentsModuleConfigPage() {
                 <TableRow>
                   <TableHead>Người dùng</TableHead>
                   <TableHead>Nội dung</TableHead>
+                  <TableHead>Đánh giá</TableHead>
                   <TableHead>Loại</TableHead>
                   <TableHead>Đối tượng</TableHead>
                   <TableHead>Trạng thái</TableHead>
@@ -449,6 +450,9 @@ export default function CommentsModuleConfigPage() {
                   <TableRow key={comment._id}>
                     <TableCell className="font-medium">{comment.authorName}</TableCell>
                     <TableCell className="text-slate-600 dark:text-slate-400 max-w-xs truncate">{comment.content}</TableCell>
+                    <TableCell className="text-sm text-slate-500">
+                      {comment.rating ? `${comment.rating}/5` : '—'}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={comment.targetType === 'post' ? 'secondary' : 'outline'} className="gap-1">
                         {comment.targetType === 'post' ? <FileText size={12} /> : <Package size={12} />}
@@ -469,7 +473,7 @@ export default function CommentsModuleConfigPage() {
                 ))}
                 {(!commentsData || commentsData.length === 0) && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                       Chưa có bình luận nào. Nhấn &quot;Seed Data&quot; để tạo dữ liệu mẫu.
                     </TableCell>
                   </TableRow>

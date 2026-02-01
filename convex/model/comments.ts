@@ -11,6 +11,13 @@ const MAX_ITEMS_LIMIT = 100;
 type TargetType = "post" | "product" | "service";
 type CommentStatus = "Pending" | "Approved" | "Spam";
 
+function assertValidRating(rating?: number): void {
+  if (rating === undefined) {return;}
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    throw new Error("Rating must be an integer from 1 to 5");
+  }
+}
+
 /**
  * Get comment by ID with null check
  */
@@ -194,9 +201,11 @@ export async function create(
     targetId: string;
     parentId?: Id<"comments">;
     customerId?: Id<"customers">;
+    rating?: number;
     status?: CommentStatus;
   }
 ): Promise<Id<"comments">> {
+  assertValidRating(args.rating);
   const status = args.status ?? (await getDefaultStatus(ctx));
 
   return  ctx.db.insert("comments", {
@@ -206,6 +215,7 @@ export async function create(
     content: args.content,
     customerId: args.customerId,
     parentId: args.parentId,
+    rating: args.rating,
     status,
     targetId: args.targetId,
     targetType: args.targetType,
@@ -222,10 +232,13 @@ export async function update(
     content?: string;
     authorName?: string;
     authorEmail?: string;
+    rating?: number;
     status?: CommentStatus;
   }
 ): Promise<void> {
   await getByIdOrThrow(ctx, { id: args.id });
+
+  assertValidRating(args.rating);
 
   const { id, ...updates } = args;
   const patchData: Record<string, unknown> = {};
@@ -233,6 +246,7 @@ export async function update(
   if (updates.content !== undefined) {patchData.content = updates.content;}
   if (updates.authorName !== undefined) {patchData.authorName = updates.authorName;}
   if (updates.authorEmail !== undefined) {patchData.authorEmail = updates.authorEmail;}
+  if (updates.rating !== undefined) {patchData.rating = updates.rating;}
   if (updates.status !== undefined) {patchData.status = updates.status;}
 
   if (Object.keys(patchData).length > 0) {

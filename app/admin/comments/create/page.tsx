@@ -28,6 +28,7 @@ function CreateCommentContent() {
     authorEmail: '',
     authorName: '',
     content: '',
+    rating: '' as '' | number,
     status: 'Pending' as 'Pending' | 'Approved' | 'Spam',
     targetId: '',
     targetType: 'post' as 'post' | 'product',
@@ -56,6 +57,7 @@ function CreateCommentContent() {
         authorEmail: formData.authorEmail.trim() || undefined,
         authorName: formData.authorName.trim(),
         content: formData.content.trim(),
+        rating: formData.rating === '' ? undefined : formData.rating,
         status: formData.status,
         targetId: formData.targetId,
         targetType: formData.targetType,
@@ -165,6 +167,25 @@ function CreateCommentContent() {
               placeholder="Nhập nội dung bình luận..."
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Đánh giá (1-5)</label>
+            <select
+              className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              value={formData.rating === '' ? '' : String(formData.rating)}
+              onChange={(e) =>{
+                const value = e.target.value;
+                setFormData({ ...formData, rating: value === '' ? '' : Number(value) });
+              }}
+            >
+              <option value="">Không đánh giá</option>
+              <option value="1">1 - Rất tệ</option>
+              <option value="2">2 - Tệ</option>
+              <option value="3">3 - Trung bình</option>
+              <option value="4">4 - Tốt</option>
+              <option value="5">5 - Rất tốt</option>
+            </select>
           </div>
 
           <div className="space-y-2">
