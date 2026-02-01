@@ -47,30 +47,42 @@ export function PostsListPreview({
         <h2 className={`font-bold text-center mb-4 ${isMobile ? 'text-lg' : 'text-xl'}`}>Tin tức & Bài viết</h2>
         {showFilterBar && (
           <div className="bg-white border rounded-lg p-3 mb-4">
-            <div className={`flex gap-2 items-center ${isMobile ? 'flex-col' : ''}`}>
+            <div className={`flex items-center gap-2 ${isMobile ? 'flex-col' : ''}`}>
               {showSearch && (
-                <div className={`relative ${isMobile ? 'w-full' : 'flex-1'}`}>
-                  <input 
-                    type="text" 
-                    placeholder="Tìm kiếm..." 
+                <div className={`relative ${isMobile ? 'w-full' : 'flex-1 max-w-xs'}`}>
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm..."
                     className="w-full px-3 py-1.5 border rounded-lg text-xs bg-slate-50"
                     disabled
                   />
                 </div>
               )}
               {showCategories && (
-                <div className="flex gap-1 flex-wrap">
-                  {categories.map((cat, i) => (
-                    <span 
-                      key={cat} 
-                      className={`px-2 py-1 rounded-full text-xs cursor-pointer ${i === 0 ? 'text-white' : 'bg-slate-100'}`}
-                      style={i === 0 ? { backgroundColor: brandColor } : undefined}
-                    >
-                      {cat}
-                    </span>
-                  ))}
+                <div className={`relative ${isMobile ? 'w-full' : 'min-w-[160px]'}`}>
+                  <select
+                    className="w-full appearance-none px-3 py-1.5 border rounded-lg text-xs bg-white"
+                    disabled
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]">▼</span>
                 </div>
               )}
+              {!isMobile && <div className="flex-1" />}
+              <div className={`relative ${isMobile ? 'w-full' : 'min-w-[140px]'}`}>
+                <select
+                  className="w-full appearance-none px-3 py-1.5 border rounded-lg text-xs bg-white"
+                  disabled
+                >
+                  <option>Mới nhất</option>
+                  <option>Cũ nhất</option>
+                  <option>Xem nhiều</option>
+                </select>
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]">▼</span>
+              </div>
             </div>
           </div>
         )}

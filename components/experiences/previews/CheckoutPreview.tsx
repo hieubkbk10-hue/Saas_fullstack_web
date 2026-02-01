@@ -8,13 +8,18 @@ type CheckoutPreviewProps = {
   showShippingOptions: boolean;
 };
 
-export function CheckoutPreview({
-  flowStyle,
-  orderSummaryPosition,
-  showPaymentMethods,
-  showShippingOptions,
-}: CheckoutPreviewProps) {
-  const OrderSummary = () => (
+type OrderSummaryProps = {
+  orderSummaryPosition: 'right' | 'bottom';
+};
+
+type CheckoutFormProps = {
+  flowStyle: 'single-page' | 'multi-step';
+  showPaymentMethods: boolean;
+  showShippingOptions: boolean;
+};
+
+function OrderSummary({ orderSummaryPosition }: OrderSummaryProps) {
+  return (
     <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-2 space-y-1">
       <div className="font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
         <Package size={10} />
@@ -34,10 +39,15 @@ export function CheckoutPreview({
           <span>530k</span>
         </div>
       </div>
+      {orderSummaryPosition === 'bottom' && (
+        <div className="text-xs text-slate-400">Tóm tắt ở cuối</div>
+      )}
     </div>
   );
+}
 
-  const CheckoutForm = () => (
+function CheckoutForm({ flowStyle, showPaymentMethods, showShippingOptions }: CheckoutFormProps) {
+  return (
     <div className="space-y-2">
       {flowStyle === 'multi-step' && (
         <div className="flex gap-1 mb-2">
@@ -100,7 +110,14 @@ export function CheckoutPreview({
       )}
     </div>
   );
+}
 
+export function CheckoutPreview({
+  flowStyle,
+  orderSummaryPosition,
+  showPaymentMethods,
+  showShippingOptions,
+}: CheckoutPreviewProps) {
   return (
     <div className="space-y-3 text-xs">
       <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded p-2 space-y-1">
@@ -114,15 +131,15 @@ export function CheckoutPreview({
 
       {orderSummaryPosition === 'right' && (
         <div className="grid grid-cols-2 gap-2">
-          <CheckoutForm />
-          <OrderSummary />
+          <CheckoutForm flowStyle={flowStyle} showPaymentMethods={showPaymentMethods} showShippingOptions={showShippingOptions} />
+          <OrderSummary orderSummaryPosition={orderSummaryPosition} />
         </div>
       )}
 
       {orderSummaryPosition === 'bottom' && (
         <div className="space-y-2">
-          <CheckoutForm />
-          <OrderSummary />
+          <CheckoutForm flowStyle={flowStyle} showPaymentMethods={showPaymentMethods} showShippingOptions={showShippingOptions} />
+          <OrderSummary orderSummaryPosition={orderSummaryPosition} />
         </div>
       )}
     </div>

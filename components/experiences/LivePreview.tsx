@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/app/admin/components/ui';
 import { Monitor, RefreshCw, Smartphone, Tablet } from 'lucide-react';
 
@@ -19,26 +19,18 @@ const DEVICE_DIMENSIONS = {
 
 export function LivePreview({ url, title, defaultDevice = 'desktop', refreshKey = 0 }: LivePreviewProps) {
   const [device, setDevice] = useState<DeviceType>(defaultDevice);
-  const [isLoading, setIsLoading] = useState(true);
-  const [iframeKey, setIframeKey] = useState(0);
-
-  // Auto reload when refreshKey changes (from parent after save)
-  useEffect(() => {
-    if (refreshKey > 0) {
-      setIframeKey(prev => prev + 1);
-      setIsLoading(true);
-    }
-  }, [refreshKey]);
+  const [manualReloadKey, setManualReloadKey] = useState(0);
+  const [lastLoadedKey, setLastLoadedKey] = useState('');
 
   const dimensions = DEVICE_DIMENSIONS[device];
 
   const handleRefresh = () => {
-    setIframeKey(prev => prev + 1);
-    setIsLoading(true);
+    setManualReloadKey(prev => prev + 1);
   };
 
-  // Add timestamp to URL to bypass cache
-  const iframeUrl = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+  const iframeKey = `${refreshKey}-${manualReloadKey}`;
+  const iframeUrl = `${url}${url.includes('?') ? '&' : '?'}_t=${iframeKey}`;
+  const isLoading = lastLoadedKey !== iframeKey;
 
   return (
     <Card className="p-4">
@@ -112,7 +104,7 @@ export function LivePreview({ url, title, defaultDevice = 'desktop', refreshKey 
             src={iframeUrl}
             className="w-full h-full border-0"
             title={title}
-            onLoad={() => setIsLoading(false)}
+            onLoad={() => setLastLoadedKey(iframeKey)}
             sandbox="allow-same-origin allow-scripts allow-forms"
           />
         </div>

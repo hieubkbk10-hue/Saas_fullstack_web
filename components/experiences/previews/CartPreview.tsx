@@ -8,13 +8,14 @@ type CartPreviewProps = {
   showNote: boolean;
 };
 
-export function CartPreview({
-  layoutStyle,
-  showExpiry,
-  showNote,
-  showGuestCart,
-}: CartPreviewProps) {
-  const CartContent = () => (
+type CartContentProps = {
+  showGuestCart: boolean;
+  showExpiry: boolean;
+  showNote: boolean;
+};
+
+function CartContent({ showGuestCart, showExpiry, showNote }: CartContentProps) {
+  return (
     <div className="space-y-2">
       {showGuestCart && (
         <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded p-1 text-amber-700 dark:text-amber-400 text-center">
@@ -54,7 +55,14 @@ export function CartPreview({
       </div>
     </div>
   );
+}
 
+export function CartPreview({
+  layoutStyle,
+  showExpiry,
+  showNote,
+  showGuestCart,
+}: CartPreviewProps) {
   return (
     <div className="space-y-3 text-xs">
       <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded p-2">
@@ -71,7 +79,7 @@ export function CartPreview({
               <ShoppingCart size={10} />
               <span className="font-medium">Cart Drawer</span>
             </div>
-            <CartContent />
+            <CartContent showGuestCart={showGuestCart} showExpiry={showExpiry} showNote={showNote} />
           </div>
         </div>
       )}
@@ -82,7 +90,7 @@ export function CartPreview({
             <ShoppingCart size={12} />
             <span className="font-medium">Giỏ hàng của bạn</span>
           </div>
-          <CartContent />
+          <CartContent showGuestCart={showGuestCart} showExpiry={showExpiry} showNote={showNote} />
         </div>
       )}
     </div>

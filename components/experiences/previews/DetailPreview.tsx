@@ -11,14 +11,13 @@ type PostDetailPreviewProps = {
   showComments: boolean;
 };
 
-export function PostDetailPreview({
-  layoutStyle,
-  showAuthor,
-  showRelated,
-  showShare,
-  showComments,
-}: PostDetailPreviewProps) {
-  const ArticleContent = () => (
+type ArticleContentProps = {
+  showAuthor: boolean;
+  showShare: boolean;
+};
+
+function ArticleContent({ showAuthor, showShare }: ArticleContentProps) {
+  return (
     <div className="space-y-2">
       <div className="bg-slate-200 dark:bg-slate-700 rounded h-3 w-3/4" />
       {showAuthor && (
@@ -43,7 +42,15 @@ export function PostDetailPreview({
       </div>
     </div>
   );
+}
 
+export function PostDetailPreview({
+  layoutStyle,
+  showAuthor,
+  showRelated,
+  showShare,
+  showComments,
+}: PostDetailPreviewProps) {
   return (
     <div className="space-y-3 text-xs">
       <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded p-2">
@@ -52,7 +59,7 @@ export function PostDetailPreview({
 
       {layoutStyle === 'classic' && (
         <div className="border border-slate-200 dark:border-slate-700 rounded p-2">
-          <ArticleContent />
+          <ArticleContent showAuthor={showAuthor} showShare={showShare} />
           {showComments && (
             <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
               <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 mb-1">
@@ -85,7 +92,7 @@ export function PostDetailPreview({
             Hero Image
           </div>
           <div className="border border-slate-200 dark:border-slate-700 rounded p-2">
-            <ArticleContent />
+            <ArticleContent showAuthor={showAuthor} showShare={showShare} />
           </div>
           {showComments && (
             <div className="border border-slate-200 dark:border-slate-700 rounded p-2">

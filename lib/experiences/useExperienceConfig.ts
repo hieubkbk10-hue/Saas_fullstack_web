@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 interface UseExperienceConfigResult<T> {
@@ -20,23 +20,32 @@ export function useExperienceConfig<T>(
   defaultConfig: T,
   isLoading: boolean
 ): UseExperienceConfigResult<T> {
-  const [config, setConfig] = useState<T>(defaultConfig);
+  const [draftConfig, setDraftConfig] = useState<T | null>(null);
 
-  // Sync với server config khi load xong
-  useEffect(() => {
-    if (!isLoading) {
-      setConfig(serverConfig);
-    }
-  }, [isLoading, serverConfig]);
+  const resolvedConfig = useMemo(() => {
+    if (draftConfig) {return draftConfig;}
+    if (!isLoading) {return serverConfig;}
+    return defaultConfig;
+  }, [defaultConfig, draftConfig, isLoading, serverConfig]);
+
+  const setConfig: Dispatch<SetStateAction<T>> = useCallback((next) => {
+    setDraftConfig(prevDraft => {
+      const baseConfig = prevDraft ?? (!isLoading ? serverConfig : defaultConfig);
+      if (typeof next === 'function') {
+        return (next as (prevState: T) => T)(baseConfig);
+      }
+      return next;
+    });
+  }, [defaultConfig, isLoading, serverConfig]);
 
   // Detect changes
   const hasChanges = useMemo(
-    () => JSON.stringify(config) !== JSON.stringify(serverConfig),
-    [config, serverConfig]
+    () => JSON.stringify(resolvedConfig) !== JSON.stringify(serverConfig),
+    [resolvedConfig, serverConfig]
   );
 
   return {
-    config,
+    config: resolvedConfig,
     hasChanges,
     isLoading,
     serverConfig,

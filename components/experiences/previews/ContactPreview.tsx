@@ -10,13 +10,12 @@ type ContactPreviewProps = {
   showSocialLinks: boolean;
 };
 
-export function ContactPreview({
-  layoutStyle,
-  showMap,
-  showContactInfo,
-  showSocialLinks,
-}: ContactPreviewProps) {
-  const ContactForm = () => (
+type ContactInfoProps = {
+  showSocialLinks: boolean;
+};
+
+function ContactForm() {
+  return (
     <div className="border border-slate-200 dark:border-slate-700 rounded p-2 space-y-1">
       <div className="font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
         <MessageSquare size={10} />
@@ -45,8 +44,10 @@ export function ContactPreview({
       </button>
     </div>
   );
+}
 
-  const ContactInfo = () => (
+function ContactInfo({ showSocialLinks }: ContactInfoProps) {
+  return (
     <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-2 space-y-1">
       <div className="font-medium text-slate-700 dark:text-slate-300">Thông tin liên hệ</div>
       <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
@@ -74,14 +75,23 @@ export function ContactPreview({
       )}
     </div>
   );
+}
 
-  const MapPreview = () => (
+function MapPreview() {
+  return (
     <div className="bg-slate-200 dark:bg-slate-700 rounded h-20 flex items-center justify-center text-slate-500">
       <MapPin size={16} />
       <span className="ml-1">Map</span>
     </div>
   );
+}
 
+export function ContactPreview({
+  layoutStyle,
+  showMap,
+  showContactInfo,
+  showSocialLinks,
+}: ContactPreviewProps) {
   return (
     <div className="space-y-3 text-xs">
       <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded p-2">
@@ -96,7 +106,7 @@ export function ContactPreview({
         <div className="space-y-2">
           {showMap && <MapPreview />}
           <ContactForm />
-          {showContactInfo && <ContactInfo />}
+          {showContactInfo && <ContactInfo showSocialLinks={showSocialLinks} />}
         </div>
       )}
 
@@ -104,7 +114,7 @@ export function ContactPreview({
         <div className="grid grid-cols-2 gap-2">
           <ContactForm />
           <div className="space-y-2">
-            {showContactInfo && <ContactInfo />}
+            {showContactInfo && <ContactInfo showSocialLinks={showSocialLinks} />}
             {showMap && <MapPreview />}
           </div>
         </div>

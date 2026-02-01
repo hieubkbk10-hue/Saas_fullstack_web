@@ -12,14 +12,13 @@ type SearchFilterPreviewProps = {
   showResultCount: boolean;
 };
 
-export function SearchFilterPreview({
-  layoutStyle,
-  resultsDisplayStyle,
-  showFilters,
-  showSorting,
-  showResultCount,
-}: SearchFilterPreviewProps) {
-  const SearchBar = () => (
+type ResultsHeaderProps = {
+  showResultCount: boolean;
+  showSorting: boolean;
+};
+
+function SearchBar() {
+  return (
     <div className="flex gap-1">
       <div className="flex-1 flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-1 py-0.5">
         <Search size={10} className="text-slate-400" />
@@ -35,8 +34,10 @@ export function SearchFilterPreview({
       </button>
     </div>
   );
+}
 
-  const FilterPanel = () => (
+function FilterPanel() {
+  return (
     <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-2 space-y-1">
       <div className="flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
         <Filter size={10} />
@@ -60,8 +61,10 @@ export function SearchFilterPreview({
       </div>
     </div>
   );
+}
 
-  const ResultsHeader = () => (
+function ResultsHeader({ showResultCount, showSorting }: ResultsHeaderProps) {
+  return (
     <div className="flex items-center justify-between">
       {showResultCount && (
         <div className="text-slate-600 dark:text-slate-400">
@@ -79,14 +82,24 @@ export function SearchFilterPreview({
       )}
     </div>
   );
+}
 
-  const ResultItem = () => (
+function ResultItem() {
+  return (
     <div className="border border-slate-200 dark:border-slate-700 rounded p-2">
       <div className="bg-slate-200 dark:bg-slate-700 rounded aspect-video mb-1" />
       <div className="bg-slate-200 dark:bg-slate-700 rounded h-2 w-3/4" />
     </div>
   );
+}
 
+export function SearchFilterPreview({
+  layoutStyle,
+  resultsDisplayStyle,
+  showFilters,
+  showSorting,
+  showResultCount,
+}: SearchFilterPreviewProps) {
   return (
     <div className="space-y-3 text-xs">
       <div className="bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800 rounded p-2">
@@ -98,7 +111,7 @@ export function SearchFilterPreview({
       {layoutStyle === 'search-only' && (
         <div className="space-y-2">
           <SearchBar />
-          <ResultsHeader />
+          <ResultsHeader showResultCount={showResultCount} showSorting={showSorting} />
           <div className={resultsDisplayStyle === 'grid' ? 'grid grid-cols-2 gap-2' : 'space-y-2'}>
             <ResultItem />
             <ResultItem />
@@ -116,7 +129,7 @@ export function SearchFilterPreview({
               </div>
             )}
             <div className="flex-1 space-y-2">
-              <ResultsHeader />
+              <ResultsHeader showResultCount={showResultCount} showSorting={showSorting} />
               <div className={resultsDisplayStyle === 'grid' ? 'grid grid-cols-2 gap-2' : 'space-y-2'}>
                 <ResultItem />
                 <ResultItem />
@@ -141,7 +154,7 @@ export function SearchFilterPreview({
               </div>
             </div>
           )}
-          <ResultsHeader />
+          <ResultsHeader showResultCount={showResultCount} showSorting={showSorting} />
           <div className={resultsDisplayStyle === 'grid' ? 'grid grid-cols-2 gap-2' : 'space-y-2'}>
             <ResultItem />
             <ResultItem />
