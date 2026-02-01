@@ -6,6 +6,7 @@ const vi = {
       analytics: 'Phân tích',
       collapse: 'Thu gọn',
       control: 'Điều khiển',
+      experiences: 'Trải nghiệm',
       modules: 'Quản lý Module',
       overview: 'Tổng quan',
       platform: 'Nền tảng',
@@ -22,6 +23,7 @@ const vi = {
     pages: {
       analyticsIntegrations: 'Tích hợp Analytics',
       dashboard: 'Bảng điều khiển',
+      experiences: 'Cấu hình Trải nghiệm',
       moduleManagement: 'Quản lý Module',
       seoConfiguration: 'Cấu hình SEO',
     },
@@ -112,6 +114,7 @@ const en: typeof vi = {
       analytics: 'Analytics',
       collapse: 'Collapse',
       control: 'Control',
+      experiences: 'Experiences',
       modules: 'Module Management',
       overview: 'Overview',
       platform: 'Platform',
@@ -128,6 +131,7 @@ const en: typeof vi = {
     pages: {
       analyticsIntegrations: 'Analytics Integrations',
       dashboard: 'Dashboard',
+      experiences: 'Experience Configuration',
       moduleManagement: 'Module Management',
       seoConfiguration: 'SEO Configuration',
     },

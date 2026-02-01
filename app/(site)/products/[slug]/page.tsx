@@ -10,6 +10,13 @@ import { ArrowLeft, Award, BadgeCheck, Bell, Bolt, Calendar, Camera, Check, Chec
 import type { Id } from '@/convex/_generated/dataModel';
 
 type ProductDetailStyle = 'classic' | 'modern' | 'minimal';
+type ProductDetailExperienceConfig = {
+  layoutStyle: ProductDetailStyle;
+  showAddToCart: boolean;
+  showClassicHighlights: boolean;
+  showRating: boolean;
+  showWishlist: boolean;
+};
 type ClassicHighlightIcon =
   | 'Award'
   | 'BadgeCheck'
@@ -64,14 +71,51 @@ const DEFAULT_CLASSIC_HIGHLIGHTS: ClassicHighlightItem[] = [
   { icon: 'RotateCcw', text: 'Đổi trả 30 ngày' },
 ];
 
-function useProductDetailStyle(): ProductDetailStyle {
-  const setting = useQuery(api.settings.getByKey, { key: 'products_detail_style' });
-  return (setting?.value as ProductDetailStyle) || 'classic';
+function useProductDetailExperienceConfig(): ProductDetailExperienceConfig {
+  const experienceSetting = useQuery(api.settings.getByKey, { key: 'product_detail_ui' });
+  const detailStyleSetting = useQuery(api.settings.getByKey, { key: 'products_detail_style' });
+  const highlightsSetting = useQuery(api.settings.getByKey, { key: 'products_detail_classic_highlights_enabled' });
+
+  const legacyStyle = (detailStyleSetting?.value as ProductDetailStyle) || 'classic';
+  const legacyHighlightsEnabled = (highlightsSetting?.value as boolean) ?? true;
+
+  return useMemo(() => {
+    const raw = experienceSetting?.value as Partial<ProductDetailExperienceConfig> | undefined;
+    return {
+      layoutStyle: raw?.layoutStyle ?? legacyStyle,
+      showAddToCart: raw?.showAddToCart ?? true,
+      showClassicHighlights: raw?.showClassicHighlights ?? legacyHighlightsEnabled,
+      showRating: raw?.showRating ?? true,
+      showWishlist: raw?.showWishlist ?? true,
+    };
+  }, [experienceSetting?.value, legacyHighlightsEnabled, legacyStyle]);
 }
 
 function useClassicHighlightsEnabled(): boolean {
   const setting = useQuery(api.settings.getByKey, { key: 'products_detail_classic_highlights_enabled' });
   return (setting?.value as boolean) ?? true;
+}
+
+type RatingSummary = { average: number | null; count: number };
+
+function useProductRatingSummary(productId?: Id<"products">, enabled?: boolean): RatingSummary {
+  const ratingsPage = useQuery(
+    api.comments.listByTarget,
+    productId && enabled
+      ? { paginationOpts: { cursor: null, numItems: 50 }, status: 'Approved', targetId: productId, targetType: 'product' }
+      : 'skip'
+  );
+
+  return useMemo(() => {
+    const ratings = ratingsPage?.page
+      .map(item => item.rating)
+      .filter((value): value is number => typeof value === 'number');
+    if (!ratings || ratings.length === 0) {
+      return { average: null, count: 0 };
+    }
+    const sum = ratings.reduce((acc, value) => acc + value, 0);
+    return { average: sum / ratings.length, count: ratings.length };
+  }, [ratingsPage?.page]);
 }
 
 function normalizeClassicHighlights(value: unknown): ClassicHighlightItem[] {
@@ -113,9 +157,9 @@ interface PageProps {
 export default function ProductDetailPage({ params }: PageProps) {
   const { slug } = use(params);
   const brandColor = useBrandColor();
-  const style = useProductDetailStyle();
+  const experienceConfig = useProductDetailExperienceConfig();
   const classicHighlights = useClassicHighlights();
-  const classicHighlightsEnabled = useClassicHighlightsEnabled();
+  const classicHighlightsEnabled = useClassicHighlightsEnabled() && experienceConfig.showClassicHighlights;
   const enabledFields = useEnabledProductFields();
   
   const product = useQuery(api.products.getBySlug, { slug });
@@ -128,6 +172,8 @@ export default function ProductDetailPage({ params }: PageProps) {
     api.products.searchPublished,
     product?.categoryId ? { categoryId: product.categoryId, limit: 4 } : 'skip'
   );
+
+  const ratingSummary = useProductRatingSummary(product?._id, experienceConfig.showRating);
 
   if (product === undefined) {
     return <ProductDetailSkeleton />;
@@ -160,9 +206,44 @@ export default function ProductDetailPage({ params }: PageProps) {
 
   return (
     <>
-      {style === 'classic' && <ClassicStyle product={productData} brandColor={brandColor} relatedProducts={filteredRelated} enabledFields={enabledFields} highlights={classicHighlights} highlightsEnabled={classicHighlightsEnabled} />}
-      {style === 'modern' && <ModernStyle product={productData} brandColor={brandColor} relatedProducts={filteredRelated} enabledFields={enabledFields} />}
-      {style === 'minimal' && <MinimalStyle product={productData} brandColor={brandColor} relatedProducts={filteredRelated} enabledFields={enabledFields} />}
+      {experienceConfig.layoutStyle === 'classic' && (
+        <ClassicStyle
+          product={productData}
+          brandColor={brandColor}
+          relatedProducts={filteredRelated}
+          enabledFields={enabledFields}
+          highlights={classicHighlights}
+          highlightsEnabled={classicHighlightsEnabled}
+          ratingSummary={ratingSummary}
+          showAddToCart={experienceConfig.showAddToCart}
+          showRating={experienceConfig.showRating}
+          showWishlist={experienceConfig.showWishlist}
+        />
+      )}
+      {experienceConfig.layoutStyle === 'modern' && (
+        <ModernStyle
+          product={productData}
+          brandColor={brandColor}
+          relatedProducts={filteredRelated}
+          enabledFields={enabledFields}
+          ratingSummary={ratingSummary}
+          showAddToCart={experienceConfig.showAddToCart}
+          showRating={experienceConfig.showRating}
+          showWishlist={experienceConfig.showWishlist}
+        />
+      )}
+      {experienceConfig.layoutStyle === 'minimal' && (
+        <MinimalStyle
+          product={productData}
+          brandColor={brandColor}
+          relatedProducts={filteredRelated}
+          enabledFields={enabledFields}
+          ratingSummary={ratingSummary}
+          showAddToCart={experienceConfig.showAddToCart}
+          showRating={experienceConfig.showRating}
+          showWishlist={experienceConfig.showWishlist}
+        />
+      )}
     </>
   );
 }
@@ -199,7 +280,14 @@ interface StyleProps {
   enabledFields: Set<string>;
 }
 
-interface ClassicStyleProps extends StyleProps {
+interface ExperienceBlocksProps {
+  ratingSummary: RatingSummary;
+  showAddToCart: boolean;
+  showRating: boolean;
+  showWishlist: boolean;
+}
+
+interface ClassicStyleProps extends StyleProps, ExperienceBlocksProps {
   highlights: ClassicHighlightItem[];
   highlightsEnabled: boolean;
 }
@@ -208,10 +296,32 @@ function formatPrice(price: number): string {
   return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 }
 
+function RatingInline({ summary }: { summary: RatingSummary }) {
+  const average = summary.average ?? 0;
+  return (
+    <div className="flex items-center gap-2 text-xs text-slate-500">
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            size={14}
+            className={star <= Math.round(average) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-300'}
+          />
+        ))}
+      </div>
+      {summary.average ? (
+        <span>{summary.average.toFixed(1)} ({summary.count})</span>
+      ) : (
+        <span>Chưa có đánh giá</span>
+      )}
+    </div>
+  );
+}
+
 // ====================================================================================
 // STYLE 1: CLASSIC - Standard e-commerce product page
 // ====================================================================================
-function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, highlights, highlightsEnabled }: ClassicStyleProps) {
+function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, highlights, highlightsEnabled, ratingSummary, showAddToCart, showRating, showWishlist }: ClassicStyleProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
 
@@ -281,10 +391,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
 
             <div className="flex flex-wrap items-center gap-4 mb-6">
               {showSku && <span className="text-sm text-slate-500">SKU: <span className="font-mono">{product.sku}</span></span>}
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (<Star key={star} size={16} className="fill-amber-400 text-amber-400" />))}
-                <span className="text-sm text-slate-500 ml-1">(12 đánh giá)</span>
-              </div>
+              {showRating && <RatingInline summary={ratingSummary} />}
             </div>
 
             {showPrice && (
@@ -322,14 +429,18 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
                 </button>
               </div>
 
-              <button className={`flex-1 py-3.5 px-8 rounded-xl text-white font-semibold flex items-center justify-center gap-2 transition-all ${inStock ? 'hover:shadow-lg hover:scale-[1.02]' : 'opacity-50 cursor-not-allowed'}`} style={{ backgroundColor: brandColor }} disabled={!inStock}>
-                <ShoppingCart size={20} />
-                {inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
-              </button>
+              {showAddToCart && (
+                <button className={`flex-1 py-3.5 px-8 rounded-xl text-white font-semibold flex items-center justify-center gap-2 transition-all ${inStock ? 'hover:shadow-lg hover:scale-[1.02]' : 'opacity-50 cursor-not-allowed'}`} style={{ backgroundColor: brandColor }} disabled={!inStock}>
+                  <ShoppingCart size={20} />
+                  {inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
+                </button>
+              )}
 
-              <button className="p-3.5 rounded-xl border border-slate-200 hover:border-red-200 hover:bg-red-50 transition-colors group">
-                <Heart size={20} className="text-slate-400 group-hover:text-red-500 transition-colors" />
-              </button>
+              {showWishlist && (
+                <button className="p-3.5 rounded-xl border border-slate-200 hover:border-red-200 hover:bg-red-50 transition-colors group">
+                  <Heart size={20} className="text-slate-400 group-hover:text-red-500 transition-colors" />
+                </button>
+              )}
               <button className="p-3.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors">
                 <Share2 size={20} className="text-slate-400" />
               </button>
@@ -373,7 +484,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
 // ====================================================================================
 // STYLE 2: MODERN - Landing page style with hero
 // ====================================================================================
-function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: StyleProps) {
+function ModernStyle({ product, brandColor, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist }: StyleProps & ExperienceBlocksProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -461,6 +572,8 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: St
               {product.name}
             </h1>
 
+            {showRating && <RatingInline summary={ratingSummary} />}
+
             {showPrice && (
               <div className="space-y-2">
                 <div className="flex items-baseline gap-3">
@@ -515,24 +628,30 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: St
               </div>
             </div>
 
-            <div className="space-y-3">
-              <button
-                className={`w-full h-12 text-base font-semibold text-white transition-all ${inStock ? 'hover:shadow-lg hover:scale-[1.01]' : 'opacity-50 cursor-not-allowed'}`}
-                style={{ backgroundColor: brandColor }}
-                disabled={!inStock}
-              >
-                <ShoppingBag className="w-5 h-5 mr-2 inline-block" />
-                {inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsWishlisted(prev => !prev)}
-                className="w-full h-12 text-base border border-slate-200 text-slate-700 hover:bg-slate-50"
-              >
-                <Heart className={`w-5 h-5 mr-2 inline-block ${isWishlisted ? 'fill-current' : ''}`} />
-                {isWishlisted ? 'Đã yêu thích' : 'Thêm vào yêu thích'}
-              </button>
-            </div>
+            {(showAddToCart || showWishlist) && (
+              <div className="space-y-3">
+                {showAddToCart && (
+                  <button
+                    className={`w-full h-12 text-base font-semibold text-white transition-all ${inStock ? 'hover:shadow-lg hover:scale-[1.01]' : 'opacity-50 cursor-not-allowed'}`}
+                    style={{ backgroundColor: brandColor }}
+                    disabled={!inStock}
+                  >
+                    <ShoppingBag className="w-5 h-5 mr-2 inline-block" />
+                    {inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
+                  </button>
+                )}
+                {showWishlist && (
+                  <button
+                    type="button"
+                    onClick={() =>{  setIsWishlisted(prev => !prev); }}
+                    className="w-full h-12 text-base border border-slate-200 text-slate-700 hover:bg-slate-50"
+                  >
+                    <Heart className={`w-5 h-5 mr-2 inline-block ${isWishlisted ? 'fill-current' : ''}`} />
+                    {isWishlisted ? 'Đã yêu thích' : 'Thêm vào yêu thích'}
+                  </button>
+                )}
+              </div>
+            )}
 
             {showStock && (
               <div className="grid grid-cols-3 gap-4 pt-2">
@@ -593,7 +712,7 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields }: St
 // ====================================================================================
 // STYLE 3: MINIMAL - Clean, focused design
 // ====================================================================================
-function MinimalStyle({ product, relatedProducts, enabledFields }: StyleProps) {
+function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist }: StyleProps & ExperienceBlocksProps) {
   const [selectedImage, setSelectedImage] = useState(0);
 
   const showPrice = enabledFields.has('price') || enabledFields.size === 0;
@@ -664,6 +783,7 @@ function MinimalStyle({ product, relatedProducts, enabledFields }: StyleProps) {
               <h1 className="text-3xl md:text-5xl font-light text-slate-900 tracking-tight mb-4">
                 {product.name}
               </h1>
+              {showRating && <RatingInline summary={ratingSummary} />}
               {showPrice && (
                 <p className="text-2xl text-slate-600 font-light">
                   {formatPrice(product.salePrice ?? product.price)}
@@ -671,17 +791,23 @@ function MinimalStyle({ product, relatedProducts, enabledFields }: StyleProps) {
               )}
             </div>
 
-            <div className="flex gap-4 mb-8 border-t border-slate-100 pt-6">
-              <button
-                className={`flex-1 bg-black text-white h-14 uppercase tracking-wider text-sm font-medium transition-colors ${inStock ? 'hover:bg-slate-900' : 'opacity-50 cursor-not-allowed'}`}
-                disabled={!inStock}
-              >
-                {inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
-              </button>
-              <button className="w-14 h-14 border border-slate-200 flex items-center justify-center hover:border-black transition-colors text-slate-400 hover:text-black">
-                <Heart size={20} />
-              </button>
-            </div>
+            {(showAddToCart || showWishlist) && (
+              <div className="flex gap-4 mb-8 border-t border-slate-100 pt-6">
+                {showAddToCart && (
+                  <button
+                    className={`flex-1 bg-black text-white h-14 uppercase tracking-wider text-sm font-medium transition-colors ${inStock ? 'hover:bg-slate-900' : 'opacity-50 cursor-not-allowed'}`}
+                    disabled={!inStock}
+                  >
+                    {inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
+                  </button>
+                )}
+                {showWishlist && (
+                  <button className="w-14 h-14 border border-slate-200 flex items-center justify-center hover:border-black transition-colors text-slate-400 hover:text-black">
+                    <Heart size={20} />
+                  </button>
+                )}
+              </div>
+            )}
 
             <div className="space-y-5 pt-0 flex-1">
               {showDescription && product.description && (

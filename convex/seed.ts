@@ -1892,6 +1892,19 @@ export const seedSettingsModule = mutation({
         { group: "mail", key: "mail_host", value: "" },
         { group: "mail", key: "mail_port", value: 587 },
         { group: "mail", key: "mail_encryption", value: "tls" },
+
+        // Experience settings
+        {
+          group: "experience",
+          key: "product_detail_ui",
+          value: {
+            layoutStyle: "classic",
+            showAddToCart: true,
+            showClassicHighlights: true,
+            showRating: true,
+            showWishlist: true,
+          },
+        },
       ];
       for (const s of settingsData) {
         await ctx.db.insert("settings", s);

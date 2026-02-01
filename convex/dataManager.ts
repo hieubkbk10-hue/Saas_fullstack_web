@@ -131,6 +131,17 @@ const SEED_SETTINGS = [
   // SEO settings (key prefix: seo_)
   { group: "seo", key: "seo_title", value: "VietAdmin - Hệ thống quản trị chuyên nghiệp" },
   { group: "seo", key: "seo_description", value: "VietAdmin cung cấp giải pháp quản trị website toàn diện" },
+  {
+    group: "experience",
+    key: "product_detail_ui",
+    value: {
+      layoutStyle: "classic",
+      showAddToCart: true,
+      showClassicHighlights: true,
+      showRating: true,
+      showWishlist: true,
+    },
+  },
 ];
 
 // ============================================================

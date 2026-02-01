@@ -9,6 +9,7 @@ import {
   Globe,
   Languages, 
   LayoutDashboard,
+  LayoutTemplate,
   LogOut,
   type LucideIcon,
   Menu,
@@ -161,6 +162,7 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
     if (pathname === '/system') {return t.pages.dashboard;}
     if (pathname.includes('modules')) {return t.pages.moduleManagement;}
     if (pathname.includes('data')) {return 'Data Manager';}
+    if (pathname.includes('experiences')) {return t.pages.experiences;}
     if (pathname.includes('integrations')) {return t.pages.analyticsIntegrations;}
     if (pathname.includes('seo')) {return t.pages.seoConfiguration;}
     return 'System';
@@ -193,6 +195,7 @@ function SystemLayoutContent({ children }: { children: React.ReactNode }) {
           
           <SidebarGroup label={t.sidebar.control} collapsed={collapsed} />
           <SidebarItem href="/system/modules" icon={Blocks} label={t.sidebar.modules} collapsed={collapsed} />
+          <SidebarItem href="/system/experiences" icon={LayoutTemplate} label={t.sidebar.experiences} collapsed={collapsed} />
           <SidebarItem href="/system/admin-config" icon={Shield} label="SuperAdmin" collapsed={collapsed} />
           <SidebarItem href="/system/data" icon={Database} label="Data Manager" collapsed={collapsed} />
           <SidebarItem href="/system/integrations" icon={BarChart3} label={t.sidebar.analytics} collapsed={collapsed} />
