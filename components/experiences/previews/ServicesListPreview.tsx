@@ -301,7 +301,7 @@ function MagazinePreview({ showCategories, brandColor = '#8b5cf6' }: ServicesLis
             </div>
           </section>
 
-          {/* Search & Sort */}
+          {/* Search + Category + Sort */}
           <section className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <div className="relative flex-1 max-w-md">
@@ -313,7 +313,19 @@ function MagazinePreview({ showCategories, brandColor = '#8b5cf6' }: ServicesLis
                   disabled
                 />
               </div>
-              <div className="relative">
+
+              {showCategories && (
+                <div className="relative">
+                  <select className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white min-w-[200px]" disabled>
+                    {MOCK_CATEGORIES.map((cat, i) => (
+                      <option key={cat} value={i === 0 ? '' : cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                </div>
+              )}
+
+              <div className="relative sm:ml-auto">
                 <select className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white min-w-[180px]" disabled>
                   <option>Mới nhất</option>
                   <option>Cũ nhất</option>
@@ -325,22 +337,6 @@ function MagazinePreview({ showCategories, brandColor = '#8b5cf6' }: ServicesLis
               </div>
             </div>
           </section>
-
-          {/* Category Pills */}
-          {showCategories && (
-            <section className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin border-b border-slate-200">
-              {MOCK_CATEGORIES.map((cat, i) => (
-                <button
-                  key={cat}
-                  className={`px-4 py-2.5 min-h-11 rounded-full text-sm font-medium whitespace-nowrap transition-all ${i === 0 ? 'text-white' : 'bg-transparent text-slate-600 hover:bg-slate-100'}`}
-                  style={i === 0 ? { backgroundColor: brandColor } : undefined}
-                  disabled
-                >
-                  {cat}
-                </button>
-              ))}
-            </section>
-          )}
 
           {/* Trending */}
           <section className="bg-slate-50 -mx-4 px-4 py-6 rounded-xl">
