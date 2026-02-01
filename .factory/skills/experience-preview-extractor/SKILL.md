@@ -119,7 +119,40 @@ Identify form controls và UI state:
 #### Tìm fallback pattern trong UI thật:
 
 ```tsx
-// Tìm pattern này trong code UI thật
+// Pattern 1: Conditional rendering với state tracking
+const [brokenThumbnails, setBrokenThumbnails] = React.useState<Set<string>>(new Set());
+
+const markThumbnailBroken = React.useCallback((id: Id<"services">) => {
+  setBrokenThumbnails((prev) => {
+    const key = String(id);
+    if (prev.has(key)) {return prev;}
+    const next = new Set(prev);
+    next.add(key);
+    return next;
+  });
+}, []);
+
+const showImage = Boolean(service.thumbnail) && !brokenThumbnails.has(String(service._id));
+
+{showImage ? (
+  <Image 
+    src={service.thumbnail as string} 
+    alt={service.title} 
+    fill 
+    ref={(img) => {
+      if (img?.complete && img.naturalWidth === 0) {
+        markThumbnailBroken(service._id);
+      }
+    }}
+    onError={() => markThumbnailBroken(service._id)}
+  />
+) : (
+  <div className="w-full h-full flex items-center justify-center">
+    <Briefcase size={32} className="text-slate-300" />
+  </div>
+)}
+
+// Pattern 2: Simpler conditional (cho related items)
 {thumbnail ? (
   <Image src={thumbnail} alt={title} fill />
 ) : (
@@ -152,21 +185,44 @@ Identify form controls và UI state:
    import { FileText, Briefcase, Package, User } from 'lucide-react';
    ```
 
-4. **Preview PHẢI có fallback tương tự**:
+4. **Kiểm tra xem UI thật có dùng state tracking không**:
    ```tsx
-   // ✅ CORRECT: Preview có fallback như UI thật
+   // Tìm pattern này trong code UI thật
+   const [brokenThumbnails, setBrokenThumbnails] = ...
+   const markThumbnailBroken = React.useCallback(...)
+   
+   // Và check pattern:
+   ref={(img) => { if (img?.complete && img.naturalWidth === 0) ... }}
+   onError={() => markThumbnailBroken(...)}
+   ```
+   
+5. **Preview có thể đơn giản hóa**:
+   ```tsx
+   // ✅ CORRECT: Preview dùng conditional đơn giản
    <div className="aspect-video bg-slate-100 overflow-hidden relative">
-     <Image src={mockImage} alt={title} fill />
-     {/* Hoặc nếu mock data không có image */}
-     <div className="w-full h-full flex items-center justify-center">
-       <FileText size={32} className="text-slate-300" />
-     </div>
+     {mockItem.thumbnail ? (
+       <Image src={mockItem.thumbnail} alt={title} fill />
+     ) : (
+       <div className="w-full h-full flex items-center justify-center">
+         <FileText size={32} className="text-slate-300" />
+       </div>
+     )}
    </div>
    
    // ❌ WRONG: Preview không có fallback
    <div className="aspect-video bg-slate-100">
      <Image src={mockImage} alt={title} fill />
    </div>
+   ```
+
+6. **Mock data nên có mix thumbnail/no-thumbnail**:
+   ```tsx
+   const mockPosts = [
+     { id: 1, title: '...', thumbnail: 'https://...' },  // có ảnh
+     { id: 2, title: '...', thumbnail: undefined },      // không có ảnh
+     { id: 3, title: '...' },                            // không có field
+     { id: 4, title: '...', thumbnail: 'https://...' },  // có ảnh
+   ];
    ```
 
 #### Fallback validation:
@@ -176,6 +232,8 @@ Identify form controls và UI state:
 - [ ] Icon color match (text-slate-300, text-slate-400)
 - [ ] Container classes match (flex, items-center, justify-center)
 - [ ] Background color match khi không có ảnh (bg-slate-100, bg-muted)
+- [ ] Mock data có items với thumbnail undefined/null để test fallback visual
+- [ ] UI thật có state tracking (`brokenThumbnails`) thì ghi chú trong comment preview
 
 ### Bước 5: Extract Spacing & Sizing
 Copy exact values:
@@ -348,6 +406,8 @@ bunx oxlint --type-aware --type-check --fix
 ### ✅ CORRECT: Image fallback như UI thật
 ```tsx
 // Preview có fallback icon giống y UI thật
+// Note: UI thật dùng state tracking với brokenThumbnails Set + ref + onError,
+// nhưng preview đơn giản hóa thành conditional rendering
 {service.thumbnail ? (
   <Image src={service.thumbnail} alt={service.title} fill />
 ) : (
@@ -355,6 +415,13 @@ bunx oxlint --type-aware --type-check --fix
     <Briefcase size={32} className="text-slate-300" />
   </div>
 )}
+
+// Mock data có mix để test fallback visual
+const mockServices = [
+  { id: 1, title: 'Service A', thumbnail: 'https://...' },
+  { id: 2, title: 'Service B' }, // không có thumbnail
+  { id: 3, title: 'Service C', thumbnail: undefined },
+];
 ```
 
 ### ❌ WRONG: Dùng Tailwind breakpoints trong preview
@@ -425,6 +492,8 @@ Khi preview không match UI thật:
    - **Mobile panel không hiện**: Missing `device !== 'desktop'` condition
    - **Grid columns sai**: Sai `gridClass` logic
    - **Image không có fallback**: Missing fallback icon khi thumbnail null/undefined
+   - **Fallback icon sai loại**: Dùng FileText cho services thay vì Briefcase
+   - **Fallback icon sai size/color**: Size 40 trong preview nhưng UI thật dùng 32
 
 5. **Validate spacing**
    - Copy class từ UI thật: `py-6 md:py-10 px-4`
