@@ -5,7 +5,7 @@ import { useMutation, usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Award, BadgeCheck, Bell, Bolt, Box, Calendar, Camera, CheckCircle2, Clock, CreditCard, Database, DollarSign, Eye, FolderTree, Gift, Globe, HeartHandshake, Image, Leaf, Loader2, Lock, MapPin, MessageSquare, Monitor, Package, Palette, Phone, RefreshCw, RotateCcw, Settings, Shield, ShoppingCart, Smartphone, Star, Tablet, Tag, ThumbsUp, Trash2, Truck } from 'lucide-react';
+import { Award, BadgeCheck, Bell, Bolt, Box, Calendar, Camera, CheckCircle2, ChevronDown, Clock, CreditCard, Database, DollarSign, Eye, FolderTree, Gift, Globe, HeartHandshake, Image, Leaf, Loader2, Lock, MapPin, MessageSquare, Monitor, Package, Palette, Phone, RefreshCw, RotateCcw, Settings, Shield, ShoppingCart, Smartphone, Star, Tablet, Tag, ThumbsUp, Trash2, Truck } from 'lucide-react';
 import type { FieldConfig } from '@/types/module-config';
 import { 
   Code, ConventionNote, FeaturesCard, FieldsCard,
@@ -201,6 +201,7 @@ export default function ProductsModuleConfigPage() {
   const [detailStyle, setDetailStyle] = useState<ProductsDetailStyle>('classic');
   const [classicHighlights, setClassicHighlights] = useState<ClassicHighlightItem[]>(DEFAULT_CLASSIC_HIGHLIGHTS);
   const [classicHighlightsEnabled, setClassicHighlightsEnabled] = useState(true);
+  const [openIconPickerIndex, setOpenIconPickerIndex] = useState<number | null>(null);
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
   const [activePreview, setActivePreview] = useState<'list' | 'detail'>('list');
 
@@ -424,6 +425,10 @@ export default function ProductsModuleConfigPage() {
 
   const handleClassicHighlightsToggle = () => {
     setClassicHighlightsEnabled(prev => !prev);
+  };
+
+  const handleToggleIconPicker = (index: number) => {
+    setOpenIconPickerIndex(prev => prev === index ? null : index);
   };
 
   const handleClassicHighlightChange = (index: number, key: keyof ClassicHighlightItem, value: string) => {
@@ -861,21 +866,45 @@ export default function ProductsModuleConfigPage() {
                   {classicHighlights.map((item, index) => {
                     const Icon = CLASSIC_HIGHLIGHT_ICON_MAP[item.icon];
                     return (
-                      <div key={`${item.icon}-${index}`} className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-3 items-end">
-                        <div>
+                      <div key={`${item.icon}-${index}`} className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-3 items-end">
+                        <div className="relative">
                           <label className="text-xs text-slate-500 mb-1 block">Icon</label>
-                          <div className="flex items-center gap-2">
-                            <select
-                              value={item.icon}
-                              onChange={(event) =>{  handleClassicHighlightChange(index, 'icon', event.target.value); }}
-                              className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500"
-                            >
-                              {CLASSIC_HIGHLIGHT_ICON_OPTIONS.map((option) => (
-                                <option key={option.id} value={option.id}>{option.label}</option>
-                              ))}
-                            </select>
-                            <Icon size={16} className="text-slate-500" />
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>{  handleToggleIconPicker(index); }}
+                            className="w-full h-10 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-2 text-slate-600 hover:border-slate-300"
+                            title="Chọn icon"
+                          >
+                            <Icon size={16} />
+                            <ChevronDown size={14} className="text-slate-400" />
+                          </button>
+                          {openIconPickerIndex === index && (
+                            <div className="absolute z-50 mt-2 grid grid-cols-4 gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg">
+                              {CLASSIC_HIGHLIGHT_ICON_OPTIONS.map((option) => {
+                                const OptionIcon = option.icon;
+                                const isActive = option.id === item.icon;
+                                return (
+                                  <button
+                                    key={option.id}
+                                    type="button"
+                                    title={option.label}
+                                    onClick={() =>{
+                                      handleClassicHighlightChange(index, 'icon', option.id);
+                                      setOpenIconPickerIndex(null);
+                                    }}
+                                    className={cn(
+                                      "h-9 w-9 rounded-lg border flex items-center justify-center transition-colors",
+                                      isActive
+                                        ? "border-orange-500 bg-orange-50 text-orange-600"
+                                        : "border-slate-200 text-slate-500 hover:border-slate-300"
+                                    )}
+                                  >
+                                    <OptionIcon size={16} />
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                         <SettingInput
                           type="text"
