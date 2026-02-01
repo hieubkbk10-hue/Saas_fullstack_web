@@ -30,6 +30,9 @@ type PostDetailExperienceConfig = {
 
 const EXPERIENCE_KEY = 'posts_detail_ui';
 
+// Legacy key for backward compatibility
+const LEGACY_DETAIL_STYLE_KEY = 'posts_detail_style';
+
 const LAYOUT_STYLES: { id: DetailLayoutStyle; label: string; description: string }[] = [
   { description: 'Layout truyền thống với sidebar', id: 'classic', label: 'Classic' },
   { description: 'Hero image, full-width', id: 'modern', label: 'Modern' },
@@ -55,22 +58,36 @@ export default function PostDetailExperiencePage() {
   const postsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'posts' });
   const commentsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'comments' });
   const examplePostSlug = useExamplePostSlug();
+  const legacyDetailStyleSetting = useQuery(api.settings.getByKey, { key: LEGACY_DETAIL_STYLE_KEY });
 
   const serverConfig = useMemo<PostDetailExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<PostDetailExperienceConfig> | undefined;
+    const legacyStyle = (legacyDetailStyleSetting?.value as DetailLayoutStyle) ?? 'classic';
+    
     return {
-      layoutStyle: raw?.layoutStyle ?? 'classic',
+      layoutStyle: raw?.layoutStyle ?? legacyStyle,
       showAuthor: raw?.showAuthor ?? true,
       showRelated: raw?.showRelated ?? true,
       showShare: raw?.showShare ?? true,
       showComments: raw?.showComments ?? true,
     };
-  }, [experienceSetting?.value]);
+  }, [experienceSetting?.value, legacyDetailStyleSetting?.value]);
 
   const isLoading = experienceSetting === undefined || postsModule === undefined;
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
-  const { handleSave, isSaving } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
+  
+  // Sync with legacy key
+  const additionalSettings = useMemo(() => [
+    { group: 'posts', key: LEGACY_DETAIL_STYLE_KEY, value: config.layoutStyle }
+  ], [config.layoutStyle]);
+  
+  const { handleSave, isSaving } = useExperienceSave(
+    EXPERIENCE_KEY, 
+    config, 
+    MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]),
+    additionalSettings
+  );
 
   const summaryItems: SummaryItem[] = [
     { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },

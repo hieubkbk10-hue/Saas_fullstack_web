@@ -31,6 +31,9 @@ type PostsListExperienceConfig = {
 
 const EXPERIENCE_KEY = 'posts_list_ui';
 
+// Legacy keys for backward compatibility with /posts page
+const LEGACY_LAYOUT_KEY = 'posts_list_style';
+
 const LAYOUT_STYLES: { id: ListLayoutStyle; label: string; description: string }[] = [
   { description: 'Hiển thị dạng lưới cards', id: 'grid', label: 'Grid' },
   { description: 'Hiển thị dạng danh sách', id: 'list', label: 'List' },
@@ -61,22 +64,52 @@ export default function PostsListExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const postsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'posts' });
   const exampleCategorySlug = useExamplePostCategorySlug();
+  
+  // Read legacy layout setting
+  const legacyLayoutSetting = useQuery(api.settings.getByKey, { key: LEGACY_LAYOUT_KEY });
 
   const serverConfig = useMemo<PostsListExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<PostsListExperienceConfig> | undefined;
+    const legacyLayout = legacyLayoutSetting?.value as string;
+    
+    // Map legacy 'fullwidth'/'sidebar'/'magazine' to grid/list/masonry
+    let defaultLayoutStyle: 'grid' | 'list' | 'masonry' = 'grid';
+    if (legacyLayout === 'fullwidth' || legacyLayout === 'grid') defaultLayoutStyle = 'grid';
+    else if (legacyLayout === 'sidebar' || legacyLayout === 'list') defaultLayoutStyle = 'list';
+    else if (legacyLayout === 'magazine' || legacyLayout === 'masonry') defaultLayoutStyle = 'masonry';
+    
     return {
-      layoutStyle: raw?.layoutStyle ?? 'grid',
+      layoutStyle: raw?.layoutStyle ?? defaultLayoutStyle,
       filterPosition: raw?.filterPosition ?? 'sidebar',
       showPagination: raw?.showPagination ?? true,
       showSearch: raw?.showSearch ?? true,
       showCategories: raw?.showCategories ?? true,
     };
-  }, [experienceSetting?.value]);
+  }, [experienceSetting?.value, legacyLayoutSetting?.value]);
 
   const isLoading = experienceSetting === undefined || postsModule === undefined;
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
-  const { handleSave, isSaving } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
+  
+  // Additional settings to sync with legacy keys
+  const additionalSettings = useMemo(() => {
+    // Map layoutStyle to legacy format for /posts page compatibility
+    let legacyLayoutValue = 'fullwidth';
+    if (config.layoutStyle === 'grid') legacyLayoutValue = 'fullwidth';
+    else if (config.layoutStyle === 'list') legacyLayoutValue = 'sidebar';
+    else if (config.layoutStyle === 'masonry') legacyLayoutValue = 'magazine';
+    
+    return [
+      { group: 'posts', key: LEGACY_LAYOUT_KEY, value: legacyLayoutValue }
+    ];
+  }, [config.layoutStyle]);
+  
+  const { handleSave, isSaving } = useExperienceSave(
+    EXPERIENCE_KEY, 
+    config, 
+    MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]),
+    additionalSettings
+  );
 
   const summaryItems: SummaryItem[] = [
     { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },
