@@ -5,12 +5,12 @@ import { useMutation, usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Box, Database, DollarSign, Eye, FolderTree, Image, Loader2, MessageSquare, Monitor, Package, Palette, RefreshCw, Settings, Shield, ShoppingCart, Smartphone, Tablet, Tag, Trash2, Truck, RotateCcw } from 'lucide-react';
+import { Award, BadgeCheck, Bell, Bolt, Box, Calendar, Camera, CheckCircle2, Clock, CreditCard, Database, DollarSign, Eye, FolderTree, Gift, Globe, HeartHandshake, Image, Leaf, Loader2, Lock, MapPin, MessageSquare, Monitor, Package, Palette, Phone, RefreshCw, RotateCcw, Settings, Shield, ShoppingCart, Smartphone, Star, Tablet, Tag, ThumbsUp, Trash2, Truck } from 'lucide-react';
 import type { FieldConfig } from '@/types/module-config';
 import { 
   Code, ConventionNote, FeaturesCard, FieldsCard,
   ModuleHeader, ModuleStatus, SettingInput,
-  SettingSelect, SettingsCard
+  SettingSelect, SettingsCard, ToggleSwitch
 } from '@/components/modules/shared';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from '@/app/admin/components/ui';
 
@@ -30,7 +30,28 @@ type TabType = 'config' | 'data' | 'appearance';
 type ProductsListStyle = 'grid' | 'list' | 'catalog';
 type ProductsDetailStyle = 'classic' | 'modern' | 'minimal';
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
-type ClassicHighlightIcon = 'Truck' | 'Shield' | 'RotateCcw';
+type ClassicHighlightIcon =
+  | 'Award'
+  | 'BadgeCheck'
+  | 'Bell'
+  | 'Bolt'
+  | 'Calendar'
+  | 'Camera'
+  | 'CheckCircle2'
+  | 'Clock'
+  | 'CreditCard'
+  | 'Gift'
+  | 'Globe'
+  | 'HeartHandshake'
+  | 'Leaf'
+  | 'Lock'
+  | 'MapPin'
+  | 'Phone'
+  | 'RotateCcw'
+  | 'Shield'
+  | 'Star'
+  | 'ThumbsUp'
+  | 'Truck';
 interface ClassicHighlightItem { icon: ClassicHighlightIcon; text: string }
 
 const LIST_STYLES: { id: ProductsListStyle; label: string; description: string }[] = [
@@ -49,11 +70,47 @@ const CLASSIC_HIGHLIGHT_ICON_OPTIONS: { icon: React.ElementType; id: ClassicHigh
   { icon: Truck, id: 'Truck', label: 'Truck' },
   { icon: Shield, id: 'Shield', label: 'Shield' },
   { icon: RotateCcw, id: 'RotateCcw', label: 'RotateCcw' },
+  { icon: Award, id: 'Award', label: 'Award' },
+  { icon: BadgeCheck, id: 'BadgeCheck', label: 'BadgeCheck' },
+  { icon: Bell, id: 'Bell', label: 'Bell' },
+  { icon: Bolt, id: 'Bolt', label: 'Bolt' },
+  { icon: Calendar, id: 'Calendar', label: 'Calendar' },
+  { icon: Camera, id: 'Camera', label: 'Camera' },
+  { icon: CheckCircle2, id: 'CheckCircle2', label: 'CheckCircle2' },
+  { icon: Clock, id: 'Clock', label: 'Clock' },
+  { icon: CreditCard, id: 'CreditCard', label: 'CreditCard' },
+  { icon: Gift, id: 'Gift', label: 'Gift' },
+  { icon: Globe, id: 'Globe', label: 'Globe' },
+  { icon: HeartHandshake, id: 'HeartHandshake', label: 'HeartHandshake' },
+  { icon: Leaf, id: 'Leaf', label: 'Leaf' },
+  { icon: Lock, id: 'Lock', label: 'Lock' },
+  { icon: MapPin, id: 'MapPin', label: 'MapPin' },
+  { icon: Phone, id: 'Phone', label: 'Phone' },
+  { icon: Star, id: 'Star', label: 'Star' },
+  { icon: ThumbsUp, id: 'ThumbsUp', label: 'ThumbsUp' },
 ];
 
 const CLASSIC_HIGHLIGHT_ICON_MAP: Record<ClassicHighlightIcon, React.ElementType> = {
+  Award,
+  BadgeCheck,
+  Bell,
+  Bolt,
+  Calendar,
+  Camera,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Gift,
+  Globe,
+  HeartHandshake,
+  Leaf,
+  Lock,
+  MapPin,
+  Phone,
   RotateCcw,
   Shield,
+  Star,
+  ThumbsUp,
   Truck,
 };
 
@@ -75,7 +132,7 @@ const devices = [
   { icon: Smartphone, id: 'mobile' as const, label: 'Mobile' }
 ];
 
-const CLASSIC_HIGHLIGHT_ICON_IDS = new Set<ClassicHighlightIcon>(['Truck', 'Shield', 'RotateCcw']);
+const CLASSIC_HIGHLIGHT_ICON_IDS = new Set<ClassicHighlightIcon>(CLASSIC_HIGHLIGHT_ICON_OPTIONS.map(option => option.id));
 
 const normalizeClassicHighlights = (value: unknown): ClassicHighlightItem[] => {
   if (!Array.isArray(value)) {
@@ -130,6 +187,7 @@ export default function ProductsModuleConfigPage() {
   const listStyleSetting = useQuery(api.settings.getByKey, { key: 'products_list_style' });
   const detailStyleSetting = useQuery(api.settings.getByKey, { key: 'products_detail_style' });
   const classicHighlightsSetting = useQuery(api.settings.getByKey, { key: 'products_detail_classic_highlights' });
+  const classicHighlightsEnabledSetting = useQuery(api.settings.getByKey, { key: 'products_detail_classic_highlights_enabled' });
   const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
 
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
@@ -142,6 +200,7 @@ export default function ProductsModuleConfigPage() {
   const [listStyle, setListStyle] = useState<ProductsListStyle>('grid');
   const [detailStyle, setDetailStyle] = useState<ProductsDetailStyle>('classic');
   const [classicHighlights, setClassicHighlights] = useState<ClassicHighlightItem[]>(DEFAULT_CLASSIC_HIGHLIGHTS);
+  const [classicHighlightsEnabled, setClassicHighlightsEnabled] = useState(true);
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
   const [activePreview, setActivePreview] = useState<'list' | 'detail'>('list');
 
@@ -152,6 +211,7 @@ export default function ProductsModuleConfigPage() {
     () => normalizeClassicHighlights(classicHighlightsSetting?.value),
     [classicHighlightsSetting?.value]
   );
+  const serverClassicHighlightsEnabled = (classicHighlightsEnabledSetting?.value as boolean) ?? true;
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
                     fieldsData === undefined || categoryFieldsData === undefined || settingsData === undefined;
@@ -207,7 +267,8 @@ export default function ProductsModuleConfigPage() {
     setListStyle(serverListStyle);
     setDetailStyle(serverDetailStyle);
     setClassicHighlights(serverClassicHighlights);
-  }, [serverListStyle, serverDetailStyle, serverClassicHighlights]);
+    setClassicHighlightsEnabled(serverClassicHighlightsEnabled);
+  }, [serverListStyle, serverDetailStyle, serverClassicHighlights, serverClassicHighlightsEnabled]);
 
   const serverFeatures = useMemo(() => {
     const result: FeaturesState = {};
@@ -244,8 +305,8 @@ export default function ProductsModuleConfigPage() {
 
   const appearanceHasChanges = useMemo(() => {
     const classicHighlightsChanged = JSON.stringify(classicHighlights) !== JSON.stringify(serverClassicHighlights);
-    return listStyle !== serverListStyle || detailStyle !== serverDetailStyle || classicHighlightsChanged;
-  }, [listStyle, detailStyle, classicHighlights, serverListStyle, serverDetailStyle, serverClassicHighlights]);
+    return listStyle !== serverListStyle || detailStyle !== serverDetailStyle || classicHighlightsChanged || classicHighlightsEnabled !== serverClassicHighlightsEnabled;
+  }, [listStyle, detailStyle, classicHighlights, classicHighlightsEnabled, serverListStyle, serverDetailStyle, serverClassicHighlights, serverClassicHighlightsEnabled]);
 
   const handleToggleFeature = (key: string) => {
     const newFeatureState = !localFeatures[key];
@@ -361,6 +422,10 @@ export default function ProductsModuleConfigPage() {
     setDetailStyle(style);
   };
 
+  const handleClassicHighlightsToggle = () => {
+    setClassicHighlightsEnabled(prev => !prev);
+  };
+
   const handleClassicHighlightChange = (index: number, key: keyof ClassicHighlightItem, value: string) => {
     setClassicHighlights(prev => prev.map((item, i) => {
       if (i !== index) {return item;}
@@ -381,6 +446,9 @@ export default function ProductsModuleConfigPage() {
       }
       if (JSON.stringify(classicHighlights) !== JSON.stringify(serverClassicHighlights)) {
         settingsToSave.push({ group: 'products', key: 'products_detail_classic_highlights', value: classicHighlights });
+      }
+      if (classicHighlightsEnabled !== serverClassicHighlightsEnabled) {
+        settingsToSave.push({ group: 'products', key: 'products_detail_classic_highlights_enabled', value: classicHighlightsEnabled });
       }
       if (settingsToSave.length > 0) {
         await setMultipleSettings({ settings: settingsToSave });
@@ -779,8 +847,15 @@ export default function ProductsModuleConfigPage() {
             <Card className="p-4">
               <div className="space-y-3">
                 <div>
-                  <h3 className="font-medium text-sm text-slate-900 dark:text-slate-100">Điểm nổi bật (Classic)</h3>
-                  <p className="text-xs text-slate-500">Hiển thị 3 tiện ích dưới phần CTA</p>
+                  <h3 className="font-medium text-sm text-slate-900 dark:text-slate-100">Cấu hình khối thông tin</h3>
+                  <p className="text-xs text-slate-500">Áp dụng cho giao diện Classic (chi tiết sản phẩm)</p>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2">
+                  <div>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Hiển thị khối thông tin</p>
+                    <p className="text-xs text-slate-500">Bật/tắt 3 tiện ích bên dưới CTA</p>
+                  </div>
+                  <ToggleSwitch enabled={classicHighlightsEnabled} onChange={handleClassicHighlightsToggle} color="bg-orange-500" />
                 </div>
                 <div className="space-y-3">
                   {classicHighlights.map((item, index) => {
@@ -868,7 +943,7 @@ export default function ProductsModuleConfigPage() {
                 <BrowserFrame>
                   {activePreview === 'list' 
                     ? <ListPreview style={listStyle} brandColor={brandColor} device={previewDevice} />
-                    : <DetailPreview style={detailStyle} brandColor={brandColor} device={previewDevice} highlights={classicHighlights} />
+                    : <DetailPreview style={detailStyle} brandColor={brandColor} device={previewDevice} highlights={classicHighlights} highlightsEnabled={classicHighlightsEnabled} />
                   }
                 </BrowserFrame>
               </div>
@@ -1050,7 +1125,7 @@ function ListPreview({ style, brandColor, device }: { style: ProductsListStyle; 
 }
 
 // Detail Preview Component
-function DetailPreview({ style, brandColor, device, highlights }: { style: ProductsDetailStyle; brandColor: string; device: PreviewDevice; highlights: ClassicHighlightItem[] }) {
+function DetailPreview({ style, brandColor, device, highlights, highlightsEnabled }: { style: ProductsDetailStyle; brandColor: string; device: PreviewDevice; highlights: ClassicHighlightItem[]; highlightsEnabled: boolean }) {
   const formatPrice = (p: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(p);
 
   if (style === 'classic') {
@@ -1087,7 +1162,7 @@ function DetailPreview({ style, brandColor, device, highlights }: { style: Produ
                 <ShoppingCart size={16} /> Thêm vào giỏ
               </button>
             </div>
-            {highlights.length > 0 && (
+            {highlightsEnabled && highlights.length > 0 && (
               <div className="grid grid-cols-3 gap-3 p-3 bg-slate-50 rounded-lg mt-4">
                 {highlights.map((item, index) => {
                   const Icon = CLASSIC_HIGHLIGHT_ICON_MAP[item.icon];

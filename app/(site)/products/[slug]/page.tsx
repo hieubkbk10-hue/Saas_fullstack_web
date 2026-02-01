@@ -6,16 +6,55 @@ import Image from 'next/image';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { ArrowLeft, Check, ChevronRight, Heart, Minus, Package, Plus, RotateCcw, Share2, Shield, ShoppingBag, ShoppingCart, Star, Truck } from 'lucide-react';
+import { ArrowLeft, Award, BadgeCheck, Bell, Bolt, Calendar, Camera, Check, CheckCircle2, ChevronRight, Clock, CreditCard, Gift, Globe, Heart, HeartHandshake, Leaf, Lock, MapPin, Minus, Package, Phone, Plus, RotateCcw, Share2, Shield, ShoppingBag, ShoppingCart, Star, ThumbsUp, Truck } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
 type ProductDetailStyle = 'classic' | 'modern' | 'minimal';
-type ClassicHighlightIcon = 'Truck' | 'Shield' | 'RotateCcw';
+type ClassicHighlightIcon =
+  | 'Award'
+  | 'BadgeCheck'
+  | 'Bell'
+  | 'Bolt'
+  | 'Calendar'
+  | 'Camera'
+  | 'CheckCircle2'
+  | 'Clock'
+  | 'CreditCard'
+  | 'Gift'
+  | 'Globe'
+  | 'HeartHandshake'
+  | 'Leaf'
+  | 'Lock'
+  | 'MapPin'
+  | 'Phone'
+  | 'RotateCcw'
+  | 'Shield'
+  | 'Star'
+  | 'ThumbsUp'
+  | 'Truck';
 interface ClassicHighlightItem { icon: ClassicHighlightIcon; text: string }
 
 const CLASSIC_HIGHLIGHT_ICON_MAP: Record<ClassicHighlightIcon, React.ElementType> = {
+  Award,
+  BadgeCheck,
+  Bell,
+  Bolt,
+  Calendar,
+  Camera,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Gift,
+  Globe,
+  HeartHandshake,
+  Leaf,
+  Lock,
+  MapPin,
+  Phone,
   RotateCcw,
   Shield,
+  Star,
+  ThumbsUp,
   Truck,
 };
 
@@ -28,6 +67,11 @@ const DEFAULT_CLASSIC_HIGHLIGHTS: ClassicHighlightItem[] = [
 function useProductDetailStyle(): ProductDetailStyle {
   const setting = useQuery(api.settings.getByKey, { key: 'products_detail_style' });
   return (setting?.value as ProductDetailStyle) || 'classic';
+}
+
+function useClassicHighlightsEnabled(): boolean {
+  const setting = useQuery(api.settings.getByKey, { key: 'products_detail_classic_highlights_enabled' });
+  return (setting?.value as boolean) ?? true;
 }
 
 function normalizeClassicHighlights(value: unknown): ClassicHighlightItem[] {
@@ -71,6 +115,7 @@ export default function ProductDetailPage({ params }: PageProps) {
   const brandColor = useBrandColor();
   const style = useProductDetailStyle();
   const classicHighlights = useClassicHighlights();
+  const classicHighlightsEnabled = useClassicHighlightsEnabled();
   const enabledFields = useEnabledProductFields();
   
   const product = useQuery(api.products.getBySlug, { slug });
@@ -115,7 +160,7 @@ export default function ProductDetailPage({ params }: PageProps) {
 
   return (
     <>
-      {style === 'classic' && <ClassicStyle product={productData} brandColor={brandColor} relatedProducts={filteredRelated} enabledFields={enabledFields} highlights={classicHighlights} />}
+      {style === 'classic' && <ClassicStyle product={productData} brandColor={brandColor} relatedProducts={filteredRelated} enabledFields={enabledFields} highlights={classicHighlights} highlightsEnabled={classicHighlightsEnabled} />}
       {style === 'modern' && <ModernStyle product={productData} brandColor={brandColor} relatedProducts={filteredRelated} enabledFields={enabledFields} />}
       {style === 'minimal' && <MinimalStyle product={productData} brandColor={brandColor} relatedProducts={filteredRelated} enabledFields={enabledFields} />}
     </>
@@ -156,6 +201,7 @@ interface StyleProps {
 
 interface ClassicStyleProps extends StyleProps {
   highlights: ClassicHighlightItem[];
+  highlightsEnabled: boolean;
 }
 
 function formatPrice(price: number): string {
@@ -165,7 +211,7 @@ function formatPrice(price: number): string {
 // ====================================================================================
 // STYLE 1: CLASSIC - Standard e-commerce product page
 // ====================================================================================
-function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, highlights }: ClassicStyleProps) {
+function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, highlights, highlightsEnabled }: ClassicStyleProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
 
@@ -289,17 +335,19 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 p-4 bg-slate-50 rounded-xl mb-8">
-              {highlights.map((item, index) => {
-                const Icon = CLASSIC_HIGHLIGHT_ICON_MAP[item.icon];
-                return (
-                  <div key={`${item.icon}-${index}`} className="text-center">
-                    <Icon size={24} className="mx-auto mb-2 text-slate-600" />
-                    <p className="text-xs text-slate-600">{item.text}</p>
-                  </div>
-                );
-              })}
-            </div>
+            {highlightsEnabled && highlights.length > 0 && (
+              <div className="grid grid-cols-3 gap-4 p-4 bg-slate-50 rounded-xl mb-8">
+                {highlights.map((item, index) => {
+                  const Icon = CLASSIC_HIGHLIGHT_ICON_MAP[item.icon];
+                  return (
+                    <div key={`${item.icon}-${index}`} className="text-center">
+                      <Icon size={24} className="mx-auto mb-2 text-slate-600" />
+                      <p className="text-xs text-slate-600">{item.text}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {showDescription && product.description && (
               <div className="border-t border-slate-100 pt-6">
