@@ -2,7 +2,7 @@
 Trả lời bằng Tiếng Việt
 Tuân thủ nghiêm ngặc KISS, YAGNI, DRY
 Tuân thủ Rails Convention Over Configuration
-Mọi thay đổi code khi hoàn thành đều phải commit (nhưng không được push nha). Trước khi commit nhớ chạy bunx oxlint --type-aware --type-check --fix để xem còn lỗi gì k và fix đến khi hết 
+Mọi thay đổi code khi hoàn thành đều phải commit (nhưng không được push nha). Trước khi commit nhớ chạy bunx oxlint --type-aware --type-check --fix để xem còn lỗi gì k và fix đến khi hết . Dĩ nhiên khi code k có gì thay đổi thì k được chạy cái lệnh trên nha
 
 # 7 Nguyên tắc DB Bandwidth Optimization:
 * Filter ở DB, không ở JS - Không .collect()/.findAll() không filter; không fetch ALL rồi filter JS; không fetch ALL để count
