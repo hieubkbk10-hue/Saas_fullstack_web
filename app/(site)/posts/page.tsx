@@ -5,6 +5,7 @@ import { useQuery } from 'convex/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
+import { usePostsListConfig } from '@/lib/experiences';
 import type { Id } from '@/convex/_generated/dataModel';
 import {
   FullWidthLayout,
@@ -79,6 +80,7 @@ function PostsContent() {
   const brandColor = useBrandColor();
   const layout = usePostsLayout();
   const enabledFields = useEnabledPostFields();
+  const listConfig = usePostsListConfig(); // New: Read experience config
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -171,20 +173,22 @@ function PostsContent() {
         {/* Layout based rendering */}
         {layout === 'fullwidth' && (
           <>
-            {/* Filter Bar */}
-            <div className="mb-5">
-              <PostsFilter
-                categories={categories}
-                selectedCategory={selectedCategory}
-                onCategoryChange={handleCategoryChange}
-                searchQuery={searchQuery}
-                onSearchChange={handleSearchChange}
-                sortBy={sortBy}
-                onSortChange={handleSortChange}
-                totalResults={totalCount ?? (posts?.length ?? 0)}
-                brandColor={brandColor}
-              />
-            </div>
+            {/* Filter Bar - Hide based on config */}
+            {(listConfig.showSearch || listConfig.showCategories) && (
+              <div className="mb-5">
+                <PostsFilter
+                  categories={categories}
+                  selectedCategory={selectedCategory}
+                  onCategoryChange={handleCategoryChange}
+                  searchQuery={searchQuery}
+                  onSearchChange={handleSearchChange}
+                  sortBy={sortBy}
+                  onSortChange={handleSortChange}
+                  totalResults={totalCount ?? (posts?.length ?? 0)}
+                  brandColor={brandColor}
+                />
+              </div>
+            )}
 
             {/* Posts */}
             <FullWidthLayout
@@ -229,8 +233,8 @@ function PostsContent() {
           />
         )}
 
-        {/* Load More (for all layouts) */}
-        {(posts?.length ?? 0) >= 24 && (
+        {/* Load More (for all layouts) - Hide based on config */}
+        {listConfig.showPagination && (posts?.length ?? 0) >= 24 && (
           <div className="text-center mt-6">
             <button
               className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 hover:opacity-80"

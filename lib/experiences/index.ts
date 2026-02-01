@@ -13,3 +13,8 @@ export {
   useExampleServiceSlug,
   useExamplePostCategorySlug,
 } from './useExampleSlugs';
+export {
+  usePostsListConfig,
+  useProductsListConfig,
+  useServicesListConfig,
+} from './useSiteConfig';

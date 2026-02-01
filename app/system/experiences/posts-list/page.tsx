@@ -75,7 +75,7 @@ export default function PostsListExperiencePage() {
   const isLoading = experienceSetting === undefined || postsModule === undefined;
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
-  const { handleSave, isSaving } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
+  const { handleSave, isSaving, saveCount } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
 
   const summaryItems: SummaryItem[] = [
     { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },
@@ -110,6 +110,7 @@ export default function PostsListExperiencePage() {
       <LivePreview
         url="/posts"
         title="Danh sách bài viết"
+        refreshKey={saveCount}
       />
 
       {/* Settings Grid */}

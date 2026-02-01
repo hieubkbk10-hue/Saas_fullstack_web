@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/app/admin/components/ui';
-import { Monitor, Smartphone, Tablet } from 'lucide-react';
+import { Monitor, RefreshCw, Smartphone, Tablet } from 'lucide-react';
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
@@ -8,6 +8,7 @@ type LivePreviewProps = {
   url: string;
   title: string;
   defaultDevice?: DeviceType;
+  refreshKey?: number; // Thay đổi key này để force reload iframe
 };
 
 const DEVICE_DIMENSIONS = {
@@ -16,11 +17,28 @@ const DEVICE_DIMENSIONS = {
   mobile: { width: '375px', height: '667px' },
 };
 
-export function LivePreview({ url, title, defaultDevice = 'desktop' }: LivePreviewProps) {
+export function LivePreview({ url, title, defaultDevice = 'desktop', refreshKey = 0 }: LivePreviewProps) {
   const [device, setDevice] = useState<DeviceType>(defaultDevice);
   const [isLoading, setIsLoading] = useState(true);
+  const [iframeKey, setIframeKey] = useState(0);
+
+  // Auto reload when refreshKey changes (from parent after save)
+  useEffect(() => {
+    if (refreshKey > 0) {
+      setIframeKey(prev => prev + 1);
+      setIsLoading(true);
+    }
+  }, [refreshKey]);
 
   const dimensions = DEVICE_DIMENSIONS[device];
+
+  const handleRefresh = () => {
+    setIframeKey(prev => prev + 1);
+    setIsLoading(true);
+  };
+
+  // Add timestamp to URL to bypass cache
+  const iframeUrl = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
 
   return (
     <Card className="p-4">
@@ -29,6 +47,13 @@ export function LivePreview({ url, title, defaultDevice = 'desktop' }: LivePrevi
           Preview: {title}
         </h3>
         <div className="flex gap-1">
+          <button
+            onClick={handleRefresh}
+            className="p-2 rounded transition-colors text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+            title="Refresh preview"
+          >
+            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+          </button>
           <button
             onClick={() => setDevice('desktop')}
             className={`p-2 rounded transition-colors ${
@@ -75,12 +100,16 @@ export function LivePreview({ url, title, defaultDevice = 'desktop' }: LivePrevi
           }}
         >
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-800">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 dark:border-slate-100" />
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-800 z-10">
+              <div className="flex flex-col items-center gap-3">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900 dark:border-slate-100" />
+                <div className="text-sm text-slate-600 dark:text-slate-400">Loading preview...</div>
+              </div>
             </div>
           )}
           <iframe
-            src={url}
+            key={iframeKey}
+            src={iframeUrl}
             className="w-full h-full border-0"
             title={title}
             onLoad={() => setIsLoading(false)}
@@ -89,8 +118,13 @@ export function LivePreview({ url, title, defaultDevice = 'desktop' }: LivePrevi
         </div>
       </div>
       
-      <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-        Preview đang load từ: <span className="font-mono">{url}</span>
+      <div className="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <span>Preview đang load từ: <span className="font-mono">{url}</span></span>
+        {refreshKey > 0 && (
+          <span className="text-green-600 dark:text-green-400">
+            ✓ Updated after save
+          </span>
+        )}
       </div>
     </Card>
   );
