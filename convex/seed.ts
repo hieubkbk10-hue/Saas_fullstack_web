@@ -1905,6 +1905,47 @@ export const seedSettingsModule = mutation({
             showWishlist: true,
           },
         },
+        {
+          group: "experience",
+          key: "wishlist_ui",
+          value: {
+            layoutStyle: "grid",
+            showNote: true,
+            showNotification: true,
+            showWishlistButton: true,
+          },
+        },
+        {
+          group: "experience",
+          key: "cart_ui",
+          value: {
+            layoutStyle: "drawer",
+            showExpiry: false,
+            showGuestCart: true,
+            showNote: false,
+          },
+        },
+        {
+          group: "experience",
+          key: "checkout_ui",
+          value: {
+            flowStyle: "multi-step",
+            orderSummaryPosition: "right",
+            showPaymentMethods: true,
+            showShippingOptions: true,
+          },
+        },
+        {
+          group: "experience",
+          key: "comments_rating_ui",
+          value: {
+            commentsSortOrder: "newest",
+            ratingDisplayStyle: "both",
+            showLikes: true,
+            showModeration: true,
+            showReplies: true,
+          },
+        },
       ];
       for (const s of settingsData) {
         await ctx.db.insert("settings", s);

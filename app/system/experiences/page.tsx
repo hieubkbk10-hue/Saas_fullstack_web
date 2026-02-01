@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { LayoutTemplate, Package } from 'lucide-react';
+import { CreditCard, Heart, LayoutTemplate, MessageSquare, Package, ShoppingCart } from 'lucide-react';
 import { Card, CardContent } from '@/app/admin/components/ui';
 import { useI18n } from '../i18n/context';
 
@@ -12,6 +12,30 @@ const experiences = [
     href: '/system/experiences/product-detail',
     icon: Package,
     title: 'Trang chi tiết sản phẩm',
+  },
+  {
+    description: 'Layout trang wishlist, nút wishlist, note và notification.',
+    href: '/system/experiences/wishlist',
+    icon: Heart,
+    title: 'Sản phẩm yêu thích',
+  },
+  {
+    description: 'Layout giỏ hàng (drawer/page), guest cart, expiry và note.',
+    href: '/system/experiences/cart',
+    icon: ShoppingCart,
+    title: 'Giỏ hàng',
+  },
+  {
+    description: 'Checkout flow, payment methods, shipping và order summary.',
+    href: '/system/experiences/checkout',
+    icon: CreditCard,
+    title: 'Thanh toán & Đặt hàng',
+  },
+  {
+    description: 'Rating display, sort order, likes, replies và moderation.',
+    href: '/system/experiences/comments-rating',
+    icon: MessageSquare,
+    title: 'Bình luận & Đánh giá',
   },
 ];
 
