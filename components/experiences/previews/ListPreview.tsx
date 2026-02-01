@@ -44,6 +44,7 @@ export function PostsListPreview({
   const visiblePosts = device === 'mobile' ? 2 : 4;
   const showCompactPanel = isCompact && (showSearch || showCategories);
   const showAppliedRow = !isCompact;
+  const gridClass = isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3';
 
   if (style === 'fullwidth') {
     return (
@@ -57,7 +58,7 @@ export function PostsListPreview({
             <div className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
               <div className="flex items-center gap-2">
                 {showSearch && (
-                  <div className={`relative flex-1 ${isCompact ? 'max-w-none' : 'max-w-xs'}`}>
+                  <div className={`relative flex-1 min-w-0 ${isCompact ? '' : 'max-w-xs'}`}>
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
@@ -94,9 +95,9 @@ export function PostsListPreview({
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
                 )}
-                {isCompact && (
+                {showCompactPanel && (
                   <button
-                    className="lg:hidden flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                    className="lg:hidden flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm shrink-0"
                   >
                     <SlidersHorizontal className="w-4 h-4" />
                     Bộ lọc
@@ -157,7 +158,7 @@ export function PostsListPreview({
             )}
           </div>
         )}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className={`grid ${gridClass} gap-3`}>
           {mockPosts.slice(0, visiblePosts).map((post) => (
             <div key={post.id} className="bg-white rounded-lg overflow-hidden shadow-sm border border-slate-100 h-full flex flex-col">
               <div className="aspect-video bg-slate-100 flex items-center justify-center">
