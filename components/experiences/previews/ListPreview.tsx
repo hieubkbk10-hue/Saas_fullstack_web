@@ -214,136 +214,275 @@ export function PostsListPreview({
   }
 
   if (style === 'sidebar') {
+    // Sidebar layout: Desktop: sidebar left | Mobile: sidebar bottom
+    const sidebarWidth = isDesktop ? 'lg:w-64' : '';
+    const containerClass = isMobile ? 'flex-col' : (isDesktop ? 'lg:flex-row' : 'flex-col');
+    const sidebarOrder = isMobile ? 'order-2' : (isDesktop ? 'lg:order-1' : 'order-2');
+    const mainOrder = isMobile ? 'order-1' : (isDesktop ? 'lg:order-2' : 'order-1');
+    
     return (
-      <div className={`p-4 flex gap-4 ${isMobile ? 'p-3 flex-col' : ''}`}>
-        <div className={`space-y-3 ${isMobile ? 'order-2' : 'w-1/3'}`}>
-          {showSearch && (
-            <div className="bg-slate-50 rounded-lg p-3">
-              <h4 className="font-medium text-xs mb-2">Tìm kiếm</h4>
-              <input type="text" placeholder="Nhập từ khóa..." className="w-full px-2 py-1.5 border rounded text-xs" disabled />
-            </div>
-          )}
-          {showCategories && (
-            <div className="bg-slate-50 rounded-lg p-3">
-              <h4 className="font-medium text-xs mb-2">Danh mục</h4>
-              <div className="space-y-1">
-                {categories.map((cat, i) => (
-                  <div 
-                    key={cat} 
-                    className={`px-2 py-1 rounded text-xs cursor-pointer ${i === 0 ? '' : 'text-slate-600'}`}
-                    style={i === 0 ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}
-                  >
-                    {cat}
+      <div className={`py-6 md:py-10 px-4`}>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-3">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Tin tức & Bài viết</h2>
+          </div>
+          
+          <div className={`flex ${containerClass} gap-5`}>
+            {/* Sidebar */}
+            <aside className={`${sidebarWidth} flex-shrink-0 ${sidebarOrder}`}>
+              <div className="space-y-3">
+                {/* Search Widget */}
+                {showSearch && (
+                  <div className="bg-white rounded-lg border border-slate-200 p-3">
+                    <h3 className="font-semibold text-slate-900 text-sm mb-2 flex items-center gap-2">
+                      <Search size={14} style={{ color: brandColor }} />
+                      Tìm kiếm
+                    </h3>
+                    <input
+                      type="text"
+                      placeholder="Nhập từ khóa..."
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                      disabled
+                    />
+                  </div>
+                )}
+                
+                {/* Categories Widget */}
+                {showCategories && (
+                  <div className="bg-white rounded-lg border border-slate-200 p-3">
+                    <h3 className="font-semibold text-slate-900 text-sm mb-2 flex items-center gap-2">
+                      <FileText size={14} style={{ color: brandColor }} />
+                      Danh mục
+                    </h3>
+                    <ul className="space-y-0.5">
+                      {categories.map((cat, i) => (
+                        <li key={cat}>
+                          <button
+                            className={`w-full text-left px-2.5 py-1.5 rounded text-sm transition-colors ${
+                              i === 0 ? 'font-medium' : 'text-slate-600'
+                            }`}
+                            style={i === 0 ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}
+                            disabled
+                          >
+                            {cat}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Sort Widget */}
+                <div className="bg-white rounded-lg border border-slate-200 p-3">
+                  <h3 className="font-semibold text-slate-900 text-sm mb-2">Sắp xếp</h3>
+                  <div className="relative">
+                    <select
+                      className="w-full appearance-none px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                      disabled
+                    >
+                      <option>Mới nhất</option>
+                      <option>Cũ nhất</option>
+                      <option>Xem nhiều</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+            </aside>
+            
+            {/* Main Content */}
+            <main className={`flex-1 ${mainOrder}`}>
+              <div className="space-y-2.5">
+                {mockPosts.slice(0, visiblePosts).map((post) => (
+                  <div key={post.id} className="bg-white rounded-lg overflow-hidden border border-slate-200">
+                    <div className="flex flex-col sm:flex-row">
+                      {/* Image */}
+                      <div className={`${isMobile ? '' : 'sm:w-40 md:w-48'} flex-shrink-0`}>
+                        <div className={`${isMobile ? 'aspect-video' : 'aspect-video sm:aspect-[4/3] sm:h-full'} bg-slate-100 flex items-center justify-center relative`}>
+                          <FileText size={28} className="text-slate-300" />
+                        </div>
+                      </div>
+                      
+                      {/* Content */}
+                      <div className="p-3 flex-1 flex flex-col justify-center">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className="text-xs font-medium px-2 py-0.5 rounded"
+                            style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                          >
+                            {post.category}
+                          </span>
+                          <span className="text-xs text-slate-400">{post.date}</span>
+                        </div>
+                        <h2 className="text-sm font-semibold text-slate-900 line-clamp-2 mb-1">
+                          {post.title}
+                        </h2>
+                        <div className="h-3 bg-slate-100 rounded w-4/5 mb-1.5" />
+                        <div className="flex items-center gap-1 text-xs text-slate-400">
+                          <span>👁</span>
+                          <span>{post.views.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-          <div className="bg-slate-50 rounded-lg p-3">
-            <h4 className="font-medium text-xs mb-2">Bài mới nhất</h4>
-            <div className="space-y-2">
-              {mockPosts.slice(0, 2).map((post) => (
-                <div key={post.id} className="flex gap-2">
-                  <div className="w-10 h-8 bg-slate-200 rounded flex-shrink-0"></div>
-                  <div className="text-xs line-clamp-2">{post.title}</div>
-                </div>
-              ))}
-            </div>
+            </main>
           </div>
-        </div>
-        <div className={`flex-1 space-y-3 ${isMobile ? 'order-1' : ''}`}>
-          {mockPosts.slice(0, isMobile ? 2 : 3).map((post) => (
-            <div key={post.id} className="bg-white border rounded-lg overflow-hidden flex">
-              <div className="w-24 h-16 bg-slate-100 flex items-center justify-center flex-shrink-0">
-                <FileText size={16} className="text-slate-300" />
-              </div>
-              <div className="p-2 flex-1">
-                <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category}</span>
-                <h3 className="font-medium text-xs mt-1 line-clamp-1">{post.title}</h3>
-                <span className="text-xs text-slate-400">{post.date}</span>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     );
   }
 
+  // Magazine layout
   return (
-    <div className={`p-4 space-y-4 ${isMobile ? 'p-3' : ''}`}>
-      <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
-        <div className={`relative rounded-xl overflow-hidden bg-slate-900 ${isMobile ? '' : 'col-span-2 row-span-2'}`}>
-          <div className={`bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center ${isMobile ? 'aspect-video' : 'h-full min-h-[180px]'}`}>
-            <FileText size={32} className="text-slate-600" />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-2 py-0.5 rounded text-xs font-medium text-white" style={{ backgroundColor: brandColor }}>Nổi bật</span>
-              <span className="text-xs text-white/60">5 phút đọc</span>
-            </div>
-            <h3 className="font-bold text-sm text-white">{mockPosts[0].title}</h3>
-          </div>
+    <div className="py-6 md:py-10 px-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-3">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Tin tức & Bài viết</h2>
         </div>
-        {!isMobile && mockPosts.slice(1, 3).map((post) => (
-          <div key={post.id} className="relative rounded-lg overflow-hidden bg-slate-800">
-            <div className="aspect-[16/10] bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center">
-              <FileText size={16} className="text-slate-500" />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-2">
-              <span className="text-xs text-white/80 font-medium">{post.category}</span>
-              <h4 className="font-semibold text-xs text-white line-clamp-2">{post.title}</h4>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {showCategories && (
-        <div className="flex gap-2 overflow-x-auto pb-1 border-b border-slate-200">
-          {categories.map((cat, i) => (
-            <span 
-              key={cat} 
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${i === 0 ? 'text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-              style={i === 0 ? { backgroundColor: brandColor } : undefined}
-            >
-              {cat}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {!isMobile && (
-        <div className="bg-slate-50 rounded-lg p-3">
-          <div className="text-xs font-semibold text-slate-700 mb-2">Đang thịnh hành</div>
-          <div className="grid grid-cols-2 gap-3">
-            {mockPosts.slice(0, 2).map((post, i) => (
-              <div key={post.id} className="flex gap-2">
-                <span className="text-lg font-bold opacity-20" style={{ color: brandColor }}>{String(i + 1).padStart(2, '0')}</span>
-                <div>
-                  <div className="text-xs font-medium line-clamp-2">{post.title}</div>
-                  <div className="text-xs text-slate-400 mt-0.5">{post.date}</div>
+        
+        <div className="space-y-5">
+          {/* Hero Section - Featured Stories */}
+          {isDesktop && (
+            <section className={`grid ${isMobile ? 'grid-cols-1' : 'lg:grid-cols-3'} gap-4`}>
+              {/* Main Featured */}
+              <div className={`${isMobile ? '' : 'lg:col-span-2'} group relative rounded-xl overflow-hidden bg-slate-900`}>
+                <div className={`bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center ${isMobile ? 'min-h-[280px]' : 'min-h-[280px] lg:min-h-[360px]'}`}>
+                  <FileText size={48} className="text-slate-600" />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                <div className={`absolute bottom-0 left-0 right-0 ${isMobile ? 'p-4' : 'p-5 lg:p-6'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className="px-2 py-0.5 rounded text-xs font-medium text-white"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      Nổi bật
+                    </span>
+                  </div>
+                  <h2 className={`${isMobile ? 'text-lg' : 'text-xl lg:text-2xl'} font-bold text-white mb-2 leading-tight line-clamp-2`}>
+                    {mockPosts[0].title}
+                  </h2>
+                  <p className="text-white/70 text-sm line-clamp-2 mb-2">Mô tả bài viết nổi bật với nội dung hấp dẫn</p>
+                  <div className="flex items-center gap-3 text-xs text-white/60">
+                    <span>{mockPosts[0].date}</span>
+                    <span>{mockPosts[0].views.toLocaleString()} views</span>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div>
-        <div className="text-xs font-semibold text-slate-700 mb-2">Bài viết mới nhất</div>
-        <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-          {mockPosts.slice(0, isMobile ? 2 : 2).map((post) => (
-            <div key={post.id} className="flex gap-3">
-              <div className="w-16 h-12 rounded bg-slate-100 flex items-center justify-center flex-shrink-0">
-                <FileText size={14} className="text-slate-300" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: brandColor }}>{post.category}</span>
-                <h4 className="font-medium text-xs line-clamp-2 mt-0.5">{post.title}</h4>
+              
+              {/* Secondary Featured - Stacked */}
+              {!isMobile && (
+                <div className="flex flex-col gap-4">
+                  {mockPosts.slice(1, 3).map((post) => (
+                    <div key={post.id} className="group relative flex-1 rounded-lg overflow-hidden bg-slate-900">
+                      <div className="bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center min-h-[140px]">
+                        <FileText size={24} className="text-slate-500" />
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                        <span
+                          className="inline-block px-2 py-0.5 rounded text-xs font-medium text-white mb-1"
+                          style={{ backgroundColor: brandColor }}
+                        >
+                          {post.category}
+                        </span>
+                        <h3 className="text-base font-semibold text-white line-clamp-2">{post.title}</h3>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+          
+          {/* Filter Bar */}
+          <section className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              {/* Search */}
+              {showSearch && (
+                <div className={`relative flex-1 ${isDesktop ? 'max-w-xs' : ''}`}>
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm..."
+                    className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm"
+                    disabled
+                  />
+                </div>
+              )}
+              
+              {/* Category Dropdown */}
+              {showCategories && (
+                <div className="relative">
+                  <select
+                    className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white min-w-[140px]"
+                    disabled
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                </div>
+              )}
+              
+              {/* Spacer - Desktop only */}
+              {isDesktop && <div className="flex-1" />}
+              
+              {/* Sort Dropdown */}
+              <div className="relative">
+                <select
+                  className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                  disabled
+                >
+                  <option>Mới nhất</option>
+                  <option>Cũ nhất</option>
+                  <option>Xem nhiều</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               </div>
             </div>
-          ))}
+          </section>
+          
+          {/* Main Posts Grid */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-bold text-slate-900">Bài viết mới nhất</h2>
+              <span className="text-sm text-slate-500">4 bài viết</span>
+            </div>
+            
+            <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'} gap-3`}>
+              {mockPosts.slice(0, visiblePosts).map((post) => (
+                <div key={post.id} className="h-full flex flex-col bg-white rounded-lg overflow-hidden border border-slate-200">
+                  <div className="relative aspect-video overflow-hidden bg-slate-100">
+                    <div className="w-full h-full flex items-center justify-center">
+                      <FileText size={28} className="text-slate-300" />
+                    </div>
+                  </div>
+                  <div className="flex-1 flex flex-col p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className="text-xs font-medium px-2 py-0.5 rounded"
+                        style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                      >
+                        {post.category}
+                      </span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-xs text-slate-400">{post.date}</span>
+                    </div>
+                    <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 mb-1">{post.title}</h3>
+                    <p className="text-xs text-slate-500 line-clamp-2 mb-2 flex-1">Mô tả ngắn về bài viết</p>
+                    <div className="flex items-center gap-1 text-xs text-slate-400">
+                      <span>👁</span>
+                      <span>{post.views.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
       </div>
     </div>
