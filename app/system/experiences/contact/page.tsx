@@ -94,17 +94,19 @@ export default function ContactExperiencePage() {
         isSaving={isSaving}
       />
 
+      {/* Full-width Preview */}
+      <ExperiencePreview title="Trang liên hệ">
+        <ContactPreview
+          layoutStyle={config.layoutStyle}
+          showMap={config.showMap}
+          showContactInfo={config.showContactInfo}
+          showSocialLinks={config.showSocialLinks}
+        />
+      </ExperiencePreview>
+
+      {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          <ExperiencePreview title="Trang liên hệ">
-            <ContactPreview
-              layoutStyle={config.layoutStyle}
-              showMap={config.showMap}
-              showContactInfo={config.showContactInfo}
-              showSocialLinks={config.showSocialLinks}
-            />
-          </ExperiencePreview>
-
           <SettingsCard>
             <SettingSelect
               label="Layout trang liên hệ"

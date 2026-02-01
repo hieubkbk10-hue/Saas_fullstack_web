@@ -11,8 +11,8 @@ import {
   ExperienceSummaryGrid, 
   ExperienceBlockToggle,
   ExperienceHintCard,
-  ExperiencePreview,
-  ProductsListPreview,
+  LivePreview,
+  ExampleLinks,
   type SummaryItem 
 } from '@/components/experiences';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
@@ -105,18 +105,15 @@ export default function ProductsListExperiencePage() {
         isSaving={isSaving}
       />
 
+      {/* Full-width Preview */}
+      <LivePreview
+        url="/products"
+        title="Danh sách sản phẩm"
+      />
+
+      {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          <ExperiencePreview title="Danh sách sản phẩm">
-            <ProductsListPreview
-              layoutStyle={config.layoutStyle}
-              filterPosition={config.filterPosition}
-              showPagination={config.showPagination}
-              showSearch={config.showSearch}
-              showCategories={config.showCategories}
-            />
-          </ExperiencePreview>
-
           <SettingsCard>
             <SettingSelect
               label="Layout danh sách"
@@ -173,6 +170,13 @@ export default function ProductsListExperiencePage() {
         </div>
 
         <div className="space-y-4">
+          <ExampleLinks
+            links={[
+              { label: 'Trang danh sách sản phẩm', url: '/products', description: 'Xem tất cả sản phẩm' },
+            ]}
+            color="#10b981"
+          />
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Module liên quan</CardTitle>

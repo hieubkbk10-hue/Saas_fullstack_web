@@ -106,13 +106,15 @@ export default function PostsListExperiencePage() {
         isSaving={isSaving}
       />
 
+      {/* Full-width Preview */}
+      <LivePreview
+        url="/posts"
+        title="Danh sách bài viết"
+      />
+
+      {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          <LivePreview
-            url="/posts"
-            title="Danh sách bài viết"
-          />
-
           <SettingsCard>
             <SettingSelect
               label="Layout danh sách"

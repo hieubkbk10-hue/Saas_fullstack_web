@@ -101,17 +101,19 @@ export default function CheckoutExperiencePage() {
         isSaving={isSaving}
       />
 
+      {/* Full-width Preview */}
+      <ExperiencePreview title="Checkout Flow">
+        <CheckoutPreview
+          flowStyle={config.flowStyle}
+          orderSummaryPosition={config.orderSummaryPosition}
+          showPaymentMethods={config.showPaymentMethods}
+          showShippingOptions={config.showShippingOptions}
+        />
+      </ExperiencePreview>
+
+      {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          <ExperiencePreview title="Checkout Flow">
-            <CheckoutPreview
-              flowStyle={config.flowStyle}
-              orderSummaryPosition={config.orderSummaryPosition}
-              showPaymentMethods={config.showPaymentMethods}
-              showShippingOptions={config.showShippingOptions}
-            />
-          </ExperiencePreview>
-
           <SettingsCard>
             <SettingSelect
               label="Checkout flow style"

@@ -11,8 +11,8 @@ import {
   ExperienceSummaryGrid, 
   ExperienceBlockToggle,
   ExperienceHintCard,
-  ExperiencePreview,
-  ServicesListPreview,
+  LivePreview,
+  ExampleLinks,
   type SummaryItem 
 } from '@/components/experiences';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
@@ -105,18 +105,15 @@ export default function ServicesListExperiencePage() {
         isSaving={isSaving}
       />
 
+      {/* Full-width Preview */}
+      <LivePreview
+        url="/services"
+        title="Danh sách dịch vụ"
+      />
+
+      {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          <ExperiencePreview title="Danh sách dịch vụ">
-            <ServicesListPreview
-              layoutStyle={config.layoutStyle}
-              filterPosition={config.filterPosition}
-              showPagination={config.showPagination}
-              showSearch={config.showSearch}
-              showCategories={config.showCategories}
-            />
-          </ExperiencePreview>
-
           <SettingsCard>
             <SettingSelect
               label="Layout danh sách"
@@ -173,6 +170,13 @@ export default function ServicesListExperiencePage() {
         </div>
 
         <div className="space-y-4">
+          <ExampleLinks
+            links={[
+              { label: 'Trang danh sách dịch vụ', url: '/services', description: 'Xem tất cả dịch vụ' },
+            ]}
+            color="#8b5cf6"
+          />
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Module liên quan</CardTitle>

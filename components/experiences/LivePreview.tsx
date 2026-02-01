@@ -11,8 +11,8 @@ type LivePreviewProps = {
 };
 
 const DEVICE_DIMENSIONS = {
-  desktop: { width: '100%', height: '600px' },
-  tablet: { width: '768px', height: '600px' },
+  desktop: { width: '100%', height: '800px' },
+  tablet: { width: '768px', height: '1024px' },
   mobile: { width: '375px', height: '667px' },
 };
 

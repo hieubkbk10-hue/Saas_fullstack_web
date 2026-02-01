@@ -100,15 +100,17 @@ export default function PostDetailExperiencePage() {
         isSaving={isSaving}
       />
 
+      {/* Full-width Preview */}
+      {examplePostSlug && (
+        <LivePreview
+          url={`/posts/${examplePostSlug}`}
+          title="Chi tiết bài viết"
+        />
+      )}
+
+      {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          {examplePostSlug && (
-            <LivePreview
-              url={`/posts/${examplePostSlug}`}
-              title="Chi tiết bài viết"
-            />
-          )}
-
           <SettingsCard>
             <SettingSelect
               label="Layout chi tiết"

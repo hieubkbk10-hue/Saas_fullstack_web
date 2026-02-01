@@ -128,15 +128,17 @@ export default function ProductDetailExperiencePage() {
         isSaving={isSaving}
       />
 
+      {/* Full-width Preview */}
+      {exampleProductSlug && (
+        <LivePreview
+          url={`/products/${exampleProductSlug}`}
+          title="Trang chi tiết sản phẩm"
+        />
+      )}
+
+      {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          {exampleProductSlug && (
-            <LivePreview
-              url={`/products/${exampleProductSlug}`}
-              title="Trang chi tiết sản phẩm"
-            />
-          )}
-
           <SettingsCard>
             <SettingSelect
               label="Layout chi tiết"

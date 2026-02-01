@@ -111,18 +111,20 @@ export default function CommentsRatingExperiencePage() {
         isSaving={isSaving}
       />
 
+      {/* Full-width Preview */}
+      <ExperiencePreview title="Comments & Rating">
+        <CommentsRatingPreview
+          ratingDisplayStyle={config.ratingDisplayStyle}
+          commentsSortOrder={config.commentsSortOrder}
+          showLikes={config.showLikes}
+          showReplies={config.showReplies}
+          showModeration={config.showModeration}
+        />
+      </ExperiencePreview>
+
+      {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          <ExperiencePreview title="Comments & Rating">
-            <CommentsRatingPreview
-              ratingDisplayStyle={config.ratingDisplayStyle}
-              commentsSortOrder={config.commentsSortOrder}
-              showLikes={config.showLikes}
-              showReplies={config.showReplies}
-              showModeration={config.showModeration}
-            />
-          </ExperiencePreview>
-
           <SettingsCard>
             <SettingSelect
               label="Kiểu hiển thị rating"

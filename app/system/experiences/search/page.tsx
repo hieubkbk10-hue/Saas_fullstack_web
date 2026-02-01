@@ -106,18 +106,20 @@ export default function SearchFilterExperiencePage() {
         isSaving={isSaving}
       />
 
+      {/* Full-width Preview */}
+      <ExperiencePreview title="Trang tìm kiếm">
+        <SearchFilterPreview
+          layoutStyle={config.layoutStyle}
+          resultsDisplayStyle={config.resultsDisplayStyle}
+          showFilters={config.showFilters}
+          showSorting={config.showSorting}
+          showResultCount={config.showResultCount}
+        />
+      </ExperiencePreview>
+
+      {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          <ExperiencePreview title="Trang tìm kiếm">
-            <SearchFilterPreview
-              layoutStyle={config.layoutStyle}
-              resultsDisplayStyle={config.resultsDisplayStyle}
-              showFilters={config.showFilters}
-              showSorting={config.showSorting}
-              showResultCount={config.showResultCount}
-            />
-          </ExperiencePreview>
-
           <SettingsCard>
             <SettingSelect
               label="Search layout"

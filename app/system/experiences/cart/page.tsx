@@ -97,17 +97,19 @@ export default function CartExperiencePage() {
         isSaving={isSaving}
       />
 
+      {/* Full-width Preview */}
+      <ExperiencePreview title="Giỏ hàng">
+        <CartPreview
+          layoutStyle={config.layoutStyle}
+          showGuestCart={config.showGuestCart}
+          showExpiry={config.showExpiry}
+          showNote={config.showNote}
+        />
+      </ExperiencePreview>
+
+      {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          <ExperiencePreview title="Giỏ hàng">
-            <CartPreview
-              layoutStyle={config.layoutStyle}
-              showGuestCart={config.showGuestCart}
-              showExpiry={config.showExpiry}
-              showNote={config.showNote}
-            />
-          </ExperiencePreview>
-
           <SettingsCard>
             <SettingSelect
               label="Layout giỏ hàng"

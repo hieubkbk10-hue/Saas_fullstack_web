@@ -11,11 +11,11 @@ import {
   ExperienceSummaryGrid, 
   ExperienceBlockToggle,
   ExperienceHintCard,
-  ExperiencePreview,
-  ServiceDetailPreview,
+  LivePreview,
+  ExampleLinks,
   type SummaryItem 
 } from '@/components/experiences';
-import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
+import { useExperienceConfig, useExperienceSave, useExampleServiceSlug, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type DetailLayoutStyle = 'classic' | 'modern' | 'minimal';
 
@@ -53,6 +53,7 @@ export default function ServiceDetailExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const servicesModule = useQuery(api.admin.modules.getModuleByKey, { key: 'services' });
   const commentsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'comments' });
+  const exampleServiceSlug = useExampleServiceSlug();
 
   const serverConfig = useMemo<ServiceDetailExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<ServiceDetailExperienceConfig> | undefined;
@@ -99,18 +100,17 @@ export default function ServiceDetailExperiencePage() {
         isSaving={isSaving}
       />
 
+      {/* Full-width Preview */}
+      {exampleServiceSlug && (
+        <LivePreview
+          url={`/services/${exampleServiceSlug}`}
+          title="Chi tiết dịch vụ"
+        />
+      )}
+
+      {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          <ExperiencePreview title="Chi tiết dịch vụ">
-            <ServiceDetailPreview
-              layoutStyle={config.layoutStyle}
-              showAuthor={config.showAuthor}
-              showRelated={config.showRelated}
-              showShare={config.showShare}
-              showComments={config.showComments}
-            />
-          </ExperiencePreview>
-
           <SettingsCard>
             <SettingSelect
               label="Layout chi tiết"
@@ -166,6 +166,15 @@ export default function ServiceDetailExperiencePage() {
         </div>
 
         <div className="space-y-4">
+          {exampleServiceSlug && (
+            <ExampleLinks
+              links={[
+                { label: 'Xem dịch vụ mẫu', url: `/services/${exampleServiceSlug}`, description: 'Open in new tab' },
+              ]}
+              color="#8b5cf6"
+            />
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Module liên quan</CardTitle>
