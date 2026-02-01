@@ -1,36 +1,177 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VietAdmin - Next.js Admin System
+
+Hệ thống quản trị website full-stack với Next.js 16, Convex, và Experience-Based Configuration.
+
+## Features
+
+- ✅ Module system với dynamic enable/disable
+- ✅ Experience Hub - Quản lý UX theo user journey
+- ✅ Product Detail với 3 layout styles (Classic, Modern, Minimal)
+- ✅ Wishlist, Cart, Checkout, Comments/Rating experiences
+- ✅ Type-safe với TypeScript
+- ✅ Real-time updates với Convex
+- ✅ Dark mode support
+- ✅ Mobile-first responsive
+
+## Tech Stack
+
+- **Frontend**: Next.js 16 (App Router), React 19, TailwindCSS 4
+- **Backend**: Convex (real-time database + API)
+- **UI Components**: Shadcn/ui
+- **Icons**: Lucide React
+- **Notifications**: Sonner
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 20+
+- Bun (recommended) or npm
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Installation
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+\`\`\`bash
+# Clone repo
+git clone <repo-url>
+cd system-vietadmin-nextjs
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# Install dependencies
+bun install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Setup Convex
+bunx convex dev
 
-## Learn More
+# Run dev server
+bun run dev
+\`\`\`
 
-To learn more about Next.js, take a look at the following resources:
+Visit:
+- Site: http://localhost:3000
+- Admin: http://localhost:3000/system
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Seed Data
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+\`\`\`bash
+# Trong Convex dashboard, chạy mutations:
+- seedSettingsModule
+- seedProductsModule
+- seedPostsModule
+# ... (các modules khác)
+\`\`\`
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+\`\`\`
+├── app/
+│   ├── (site)/              # Public site pages
+│   │   ├── products/        # Product listing & detail
+│   │   ├── posts/           # Blog posts
+│   │   └── services/        # Services
+│   ├── admin/               # Admin panel (legacy, migrating to /system)
+│   └── system/              # System admin
+│       ├── experiences/     # 🆕 Experience Hub
+│       │   ├── product-detail/
+│       │   ├── wishlist/
+│       │   ├── cart/
+│       │   ├── checkout/
+│       │   └── comments-rating/
+│       ├── modules/         # Module management
+│       ├── data/            # Data manager
+│       └── integrations/    # Analytics integrations
+├── components/
+│   ├── modules/shared/      # Shared module components
+│   └── site/                # Site components
+├── convex/                  # Convex backend
+│   ├── schema.ts            # Database schema
+│   ├── seed.ts              # Seed mutations
+│   ├── products.ts          # Products API
+│   ├── settings.ts          # Settings API
+│   └── admin/               # Admin APIs
+├── docs/
+│   ├── MIGRATION_EXPERIENCE_CONFIG.md
+│   └── ARCHITECTURE_EXPERIENCE_HUB.md
+└── types/                   # TypeScript types
+\`\`\`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Experience Hub
+
+Experience Hub là tính năng mới tổ chức config theo user journey:
+
+### Trước (Module-centric):
+- Settings rải rác trong từng module
+- Khó tìm config cho 1 page cụ thể
+- Duplicate toggles
+
+### Sau (Experience-centric):
+- Tất cả config cho 1 page tại 1 chỗ
+- Dễ quan sát và quản lý
+- Cross-module coordination
+
+**Ví dụ**: Product Detail Experience gom:
+- Layout style (Products module)
+- Rating display (Comments module)
+- Wishlist button (Wishlist module)
+- Add-to-cart (Cart + Orders modules)
+
+Chi tiết: [docs/ARCHITECTURE_EXPERIENCE_HUB.md](docs/ARCHITECTURE_EXPERIENCE_HUB.md)
+
+## Development
+
+### Lint & Format
+
+\`\`\`bash
+# Type-aware lint with oxlint
+bunx oxlint --type-aware --type-check --fix
+
+# ESLint (Next.js default)
+bun run lint
+\`\`\`
+
+### Git Workflow
+
+\`\`\`bash
+# Luôn lint trước khi commit
+bunx oxlint --type-aware --type-check --fix
+
+# Commit
+git add .
+git commit -m "feat: your message"
+\`\`\`
+
+## Migration from Legacy Settings
+
+Nếu đang có data cũ, xem: [docs/MIGRATION_EXPERIENCE_CONFIG.md](docs/MIGRATION_EXPERIENCE_CONFIG.md)
+
+## Roadmap
+
+### ✅ Completed (Phase 1-4)
+- Experience Hub với 5 experiences
+- Product Detail full integration
+- Migration guides
+- Architecture docs
+
+### 🚧 Phase 5: Testing & Polish
+- E2E testing
+- Performance optimization
+- Final review
+
+### 🔮 Future (Phase 6+)
+- Admin preview sync (split-screen)
+- A/B testing integration
+- User segmentation
+- Multi-language support
+
+## Contributing
+
+1. Fork repo
+2. Create feature branch
+3. Commit changes (remember to lint!)
+4. Push to branch
+5. Create Pull Request
+
+## License
+
+Private project - All rights reserved.
+
+## Support
+
+Liên hệ: contact@vietadmin.com
