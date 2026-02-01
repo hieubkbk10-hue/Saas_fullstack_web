@@ -3,8 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Briefcase, Clock, Eye, Folder, Search, Star } from 'lucide-react';
+import { Briefcase, ChevronDown, Clock, Eye, Folder, Search, Star } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
+import type { ServiceSortOption } from '../ServicesFilter';
 
 interface Service {
   _id: Id<"services">;
@@ -35,6 +36,8 @@ interface SidebarLayoutProps {
   onCategoryChange: (categoryId: Id<"serviceCategories"> | null) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  sortBy: ServiceSortOption;
+  onSortChange: (sort: ServiceSortOption) => void;
   enabledFields: Set<string>;
 }
 
@@ -42,6 +45,15 @@ function formatPrice(price?: number): string {
   if (!price) {return 'Liên hệ';}
   return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 }
+
+const SORT_OPTIONS: { value: ServiceSortOption; label: string }[] = [
+  { label: 'Mới nhất', value: 'newest' },
+  { label: 'Cũ nhất', value: 'oldest' },
+  { label: 'Xem nhiều', value: 'popular' },
+  { label: 'Theo tên A-Z', value: 'title' },
+  { label: 'Giá: Thấp đến cao', value: 'price_asc' },
+  { label: 'Giá: Cao đến thấp', value: 'price_desc' },
+];
 
 export function SidebarLayout({
   services,
@@ -52,6 +64,8 @@ export function SidebarLayout({
   onCategoryChange,
   searchQuery,
   onSearchChange,
+  sortBy,
+  onSortChange,
   enabledFields,
 }: SidebarLayoutProps) {
   const ringStyle = (style?: React.CSSProperties) =>
@@ -130,6 +144,26 @@ export function SidebarLayout({
                 </li>
               ))}
             </ul>
+          </div>
+
+          {/* Sort Widget */}
+          <div className="bg-white rounded-lg border border-slate-200 p-4">
+            <h3 className="font-semibold text-slate-900 text-sm mb-3">Sắp xếp</h3>
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) =>{  onSortChange(e.target.value as ServiceSortOption); }}
+                className="w-full appearance-none px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2"
+                style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
           </div>
 
         </div>

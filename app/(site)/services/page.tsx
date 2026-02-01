@@ -25,6 +25,7 @@ function useServicesLayout(): ServicesListLayout {
   // Map experience config to actual layout
   if (layoutStyle === 'grid') {return 'fullwidth';}
   if (layoutStyle === 'sidebar') {return 'sidebar';}
+  if (layoutStyle === 'list') {return 'sidebar';}
   if (layoutStyle === 'masonry') {return 'magazine';}
   
   return 'fullwidth';
@@ -233,6 +234,8 @@ function ServicesContent() {
             onCategoryChange={handleCategoryChange}
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
+            sortBy={sortBy}
+            onSortChange={handleSortChange}
             enabledFields={enabledFields}
           />
         )}
@@ -245,6 +248,10 @@ function ServicesContent() {
             categories={stableCategories ?? []}
             selectedCategory={selectedCategory}
             onCategoryChange={handleCategoryChange}
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            sortBy={sortBy}
+            onSortChange={handleSortChange}
             featuredServices={featuredServices ?? []}
             enabledFields={enabledFields}
           />

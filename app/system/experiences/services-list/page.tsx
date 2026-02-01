@@ -46,9 +46,10 @@ export default function ServicesListExperiencePage() {
   const servicesModule = useQuery(api.admin.modules.getModuleByKey, { key: 'services' });
 
   const serverConfig = useMemo<ServicesListExperienceConfig>(() => {
-    const raw = experienceSetting?.value as Partial<ServicesListExperienceConfig> | undefined;
+    const raw = experienceSetting?.value as { layoutStyle?: string } | undefined;
+    const normalizedLayout = raw?.layoutStyle === 'list' ? 'sidebar' : raw?.layoutStyle;
     return {
-      layoutStyle: raw?.layoutStyle ?? 'grid',
+      layoutStyle: (normalizedLayout as ListLayoutStyle | undefined) ?? 'grid',
     };
   }, [experienceSetting?.value]);
 

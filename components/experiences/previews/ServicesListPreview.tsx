@@ -180,6 +180,20 @@ function SidebarPreview({ showSearch, showCategories, brandColor = '#8b5cf6' }: 
                   </ul>
                 </div>
               )}
+
+              <div className="bg-white rounded-lg border border-slate-200 p-4">
+                <h3 className="font-semibold text-slate-900 text-sm mb-3">Sắp xếp</h3>
+                <div className="relative">
+                  <select className="w-full appearance-none px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white" disabled>
+                    <option>Mới nhất</option>
+                    <option>Cũ nhất</option>
+                    <option>Xem nhiều</option>
+                    <option>Giá: Thấp đến cao</option>
+                    <option>Giá: Cao đến thấp</option>
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
             </div>
           </aside>
 
@@ -284,6 +298,31 @@ function MagazinePreview({ showCategories, brandColor = '#8b5cf6' }: ServicesLis
                   </div>
                 </article>
               ))}
+            </div>
+          </section>
+
+          {/* Search & Sort */}
+          <section className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm dịch vụ..."
+                  className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm"
+                  disabled
+                />
+              </div>
+              <div className="relative">
+                <select className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white min-w-[180px]" disabled>
+                  <option>Mới nhất</option>
+                  <option>Cũ nhất</option>
+                  <option>Xem nhiều</option>
+                  <option>Giá: Thấp đến cao</option>
+                  <option>Giá: Cao đến thấp</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              </div>
             </div>
           </section>
 

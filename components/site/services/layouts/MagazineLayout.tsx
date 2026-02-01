@@ -3,8 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Briefcase, Clock, Eye, Star, TrendingUp } from 'lucide-react';
+import { Briefcase, ChevronDown, Clock, Eye, Search, Star, TrendingUp } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
+import type { ServiceSortOption } from '../ServicesFilter';
 
 interface Service {
   _id: Id<"services">;
@@ -33,6 +34,10 @@ interface MagazineLayoutProps {
   categories: Category[];
   selectedCategory: Id<"serviceCategories"> | null;
   onCategoryChange: (categoryId: Id<"serviceCategories"> | null) => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  sortBy: ServiceSortOption;
+  onSortChange: (sort: ServiceSortOption) => void;
   featuredServices: Service[];
   enabledFields: Set<string>;
 }
@@ -42,6 +47,15 @@ function formatPrice(price?: number): string {
   return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 }
 
+const SORT_OPTIONS: { value: ServiceSortOption; label: string }[] = [
+  { label: 'Mới nhất', value: 'newest' },
+  { label: 'Cũ nhất', value: 'oldest' },
+  { label: 'Xem nhiều', value: 'popular' },
+  { label: 'Theo tên A-Z', value: 'title' },
+  { label: 'Giá: Thấp đến cao', value: 'price_asc' },
+  { label: 'Giá: Cao đến thấp', value: 'price_desc' },
+];
+
 export function MagazineLayout({
   services,
   brandColor,
@@ -49,6 +63,10 @@ export function MagazineLayout({
   categories,
   selectedCategory,
   onCategoryChange,
+  searchQuery,
+  onSearchChange,
+  sortBy,
+  onSortChange,
   featuredServices,
   enabledFields,
 }: MagazineLayoutProps) {
@@ -56,6 +74,14 @@ export function MagazineLayout({
   const showExcerpt = enabledFields.has('excerpt');
   const showPrice = enabledFields.has('price');
   const showDuration = enabledFields.has('duration');
+  const [localSearch, setLocalSearch] = React.useState(searchQuery);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      onSearchChange(localSearch);
+    }, 300);
+    return () =>{  clearTimeout(timer); };
+  }, [localSearch, onSearchChange]);
   
   // Separate featured and regular services
   const mainFeatured = featuredServices[0];
@@ -156,6 +182,39 @@ export function MagazineLayout({
           </div>
         </section>
       )}
+
+      {/* Search & Sort Bar */}
+      <section className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm dịch vụ..."
+              value={localSearch}
+              onChange={(e) =>{  setLocalSearch(e.target.value); }}
+              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2"
+              style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
+            />
+          </div>
+
+          <div className="relative">
+            <select
+              value={sortBy}
+              onChange={(e) =>{  onSortChange(e.target.value as ServiceSortOption); }}
+              className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 min-w-[180px]"
+              style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          </div>
+        </div>
+      </section>
 
       {/* Category Navigation - Pill Style */}
       <section className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin border-b border-slate-200">
