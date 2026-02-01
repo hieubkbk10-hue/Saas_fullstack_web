@@ -1,13 +1,19 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { useMutation, useQuery } from 'convex/react';
+import React, { useMemo } from 'react';
+import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { toast } from 'sonner';
 import { LayoutTemplate, MessageSquare } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, cn } from '@/app/admin/components/ui';
-import { ModuleHeader, SettingsCard, SettingSelect, ToggleSwitch } from '@/components/modules/shared';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
+import { ModuleHeader, SettingsCard, SettingSelect } from '@/components/modules/shared';
+import { 
+  ExperienceModuleLink, 
+  ExperienceSummaryGrid, 
+  ExperienceBlockToggle,
+  ExperienceHintCard,
+  type SummaryItem 
+} from '@/components/experiences';
+import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type RatingDisplayStyle = 'stars' | 'numbers' | 'both';
 type CommentsSortOrder = 'newest' | 'oldest' | 'highest-rating' | 'most-liked';
@@ -20,7 +26,6 @@ type CommentsRatingExperienceConfig = {
   showModeration: boolean;
 };
 
-const EXPERIENCE_GROUP = 'experience';
 const EXPERIENCE_KEY = 'comments_rating_ui';
 
 const RATING_STYLES: { id: RatingDisplayStyle; label: string; description: string }[] = [
@@ -44,14 +49,18 @@ const DEFAULT_CONFIG: CommentsRatingExperienceConfig = {
   showReplies: true,
 };
 
+const HINTS = [
+  'Rating style phụ thuộc vào thiết kế tổng thể.',
+  'Most-liked sort khuyến khích tương tác.',
+  'Moderation quan trọng với UGC.',
+];
+
 export default function CommentsRatingExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const commentsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'comments' });
   const likesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableLikes', moduleKey: 'comments' });
   const repliesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableReplies', moduleKey: 'comments' });
   const moderationFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableModeration', moduleKey: 'comments' });
-
-  const setMultipleSettings = useMutation(api.settings.setMultiple);
 
   const serverConfig = useMemo<CommentsRatingExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<CommentsRatingExperienceConfig> | undefined;
@@ -64,38 +73,24 @@ export default function CommentsRatingExperiencePage() {
     };
   }, [experienceSetting?.value, likesFeature?.enabled, repliesFeature?.enabled, moderationFeature?.enabled]);
 
-  const [config, setConfig] = useState<CommentsRatingExperienceConfig>(DEFAULT_CONFIG);
-  const [isSaving, setIsSaving] = useState(false);
-
   const isLoading = experienceSetting === undefined || commentsModule === undefined;
 
-  useEffect(() => {
-    if (!isLoading) {
-      setConfig(serverConfig);
-    }
-  }, [isLoading, serverConfig]);
+  const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
+  const { handleSave, isSaving } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
 
-  const hasChanges = useMemo(() => JSON.stringify(config) !== JSON.stringify(serverConfig), [config, serverConfig]);
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const settingsToSave: Array<{ group: string; key: string; value: unknown }> = [
-        { group: EXPERIENCE_GROUP, key: EXPERIENCE_KEY, value: config }
-      ];
-      await setMultipleSettings({ settings: settingsToSave });
-      toast.success('Đã lưu cấu hình trải nghiệm Comments & Rating');
-    } catch {
-      toast.error('Có lỗi khi lưu cấu hình');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const sortLabel = SORT_OPTIONS.find(o => o.id === config.commentsSortOrder)?.label ?? 'Newest First';
+  
+  const summaryItems: SummaryItem[] = [
+    { label: 'Rating Style', value: config.ratingDisplayStyle, format: 'capitalize' },
+    { label: 'Sort Order', value: sortLabel },
+    { label: 'Likes', value: config.showLikes },
+    { label: 'Replies', value: config.showReplies },
+  ];
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-slate-500">Đang tải...</div>
+        <div className="text-slate-500">{MESSAGES.loading}</div>
       </div>
     );
   }
@@ -139,68 +134,36 @@ export default function CommentsRatingExperiencePage() {
           <Card className="p-4">
             <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Khối hiển thị</h3>
             <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Lượt thích (Likes)</p>
-                  <p className="text-xs text-slate-500">Cho phép like bình luận</p>
-                </div>
-                <ToggleSwitch
-                  enabled={config.showLikes}
-                  onChange={() => setConfig(prev => ({ ...prev, showLikes: !prev.showLikes }))}
-                  color="bg-purple-500"
-                  disabled={!commentsModule?.enabled}
-                />
-              </div>
+              <ExperienceBlockToggle
+                label="Lượt thích (Likes)"
+                description="Cho phép like bình luận"
+                enabled={config.showLikes}
+                onChange={() => setConfig(prev => ({ ...prev, showLikes: !prev.showLikes }))}
+                color="bg-purple-500"
+                disabled={!commentsModule?.enabled}
+              />
 
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Trả lời (Replies)</p>
-                  <p className="text-xs text-slate-500">Cho phép reply bình luận</p>
-                </div>
-                <ToggleSwitch
-                  enabled={config.showReplies}
-                  onChange={() => setConfig(prev => ({ ...prev, showReplies: !prev.showReplies }))}
-                  color="bg-purple-500"
-                  disabled={!commentsModule?.enabled}
-                />
-              </div>
+              <ExperienceBlockToggle
+                label="Trả lời (Replies)"
+                description="Cho phép reply bình luận"
+                enabled={config.showReplies}
+                onChange={() => setConfig(prev => ({ ...prev, showReplies: !prev.showReplies }))}
+                color="bg-purple-500"
+                disabled={!commentsModule?.enabled}
+              />
 
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Kiểm duyệt (Moderation)</p>
-                  <p className="text-xs text-slate-500">Hiển thị trạng thái duyệt trong admin</p>
-                </div>
-                <ToggleSwitch
-                  enabled={config.showModeration}
-                  onChange={() => setConfig(prev => ({ ...prev, showModeration: !prev.showModeration }))}
-                  color="bg-purple-500"
-                  disabled={!commentsModule?.enabled}
-                />
-              </div>
+              <ExperienceBlockToggle
+                label="Kiểm duyệt (Moderation)"
+                description="Hiển thị trạng thái duyệt trong admin"
+                enabled={config.showModeration}
+                onChange={() => setConfig(prev => ({ ...prev, showModeration: !prev.showModeration }))}
+                color="bg-purple-500"
+                disabled={!commentsModule?.enabled}
+              />
             </div>
           </Card>
 
-          <Card className="p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Tóm tắt áp dụng</h3>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Rating Style</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100 capitalize">{config.ratingDisplayStyle}</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Sort Order</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{SORT_OPTIONS.find(o => o.id === config.commentsSortOrder)?.label}</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Likes</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{config.showLikes ? 'Bật' : 'Tắt'}</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Replies</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{config.showReplies ? 'Bật' : 'Tắt'}</p>
-              </div>
-            </div>
-          </Card>
+          <ExperienceSummaryGrid items={summaryItems} />
         </div>
 
         <div className="space-y-4">
@@ -209,50 +172,19 @@ export default function CommentsRatingExperiencePage() {
               <CardTitle className="text-base">Module liên quan</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <ModuleLink
+              <ExperienceModuleLink
                 enabled={commentsModule?.enabled ?? false}
                 href="/system/modules/comments"
                 icon={MessageSquare}
                 title="Bình luận & Đánh giá"
+                colorScheme="purple"
               />
             </CardContent>
           </Card>
 
-          <Card className="p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Gợi ý quan sát</h3>
-            <ul className="text-xs text-slate-500 space-y-1">
-              <li>• Rating style phụ thuộc vào thiết kế tổng thể.</li>
-              <li>• Most-liked sort khuyến khích tương tác.</li>
-              <li>• Moderation quan trọng với UGC.</li>
-            </ul>
-          </Card>
+          <ExperienceHintCard hints={HINTS} />
         </div>
       </div>
     </div>
-  );
-}
-
-function ModuleLink({ enabled, href, icon: Icon, title }: { enabled: boolean; href: string; icon: React.ElementType; title: string }) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        'flex items-center gap-3 p-3 rounded-lg border transition-colors',
-        enabled
-          ? 'border-slate-200 dark:border-slate-700 hover:border-purple-500/60 dark:hover:border-purple-500/60'
-          : 'border-slate-100 dark:border-slate-800 opacity-50'
-      )}
-    >
-      <div className={cn(
-        'w-8 h-8 rounded-lg flex items-center justify-center',
-        enabled ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
-      )}>
-        <Icon size={16} />
-      </div>
-      <div className="flex-1">
-        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{title}</p>
-        <p className="text-xs text-slate-500">{enabled ? 'Đã bật' : 'Chưa bật'}</p>
-      </div>
-    </Link>
   );
 }

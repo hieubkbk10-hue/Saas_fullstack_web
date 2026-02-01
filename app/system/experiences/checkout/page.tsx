@@ -1,13 +1,19 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { useMutation, useQuery } from 'convex/react';
+import React, { useMemo } from 'react';
+import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { toast } from 'sonner';
 import { LayoutTemplate, Package, ShoppingCart } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, cn } from '@/app/admin/components/ui';
-import { ModuleHeader, SettingsCard, SettingSelect, ToggleSwitch } from '@/components/modules/shared';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
+import { ModuleHeader, SettingsCard, SettingSelect } from '@/components/modules/shared';
+import { 
+  ExperienceModuleLink, 
+  ExperienceSummaryGrid, 
+  ExperienceBlockToggle,
+  ExperienceHintCard,
+  type SummaryItem 
+} from '@/components/experiences';
+import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type CheckoutFlowStyle = 'single-page' | 'multi-step';
 type OrderSummaryPosition = 'right' | 'bottom';
@@ -19,7 +25,6 @@ type CheckoutExperienceConfig = {
   showShippingOptions: boolean;
 };
 
-const EXPERIENCE_GROUP = 'experience';
 const EXPERIENCE_KEY = 'checkout_ui';
 
 const FLOW_STYLES: { id: CheckoutFlowStyle; label: string; description: string }[] = [
@@ -39,12 +44,16 @@ const DEFAULT_CONFIG: CheckoutExperienceConfig = {
   showShippingOptions: true,
 };
 
+const HINTS = [
+  'Multi-step dễ theo dõi, single-page nhanh hơn.',
+  'Right sidebar phù hợp desktop, bottom cho mobile.',
+  'Payment/shipping cần bật module Orders trước.',
+];
+
 export default function CheckoutExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
-
-  const setMultipleSettings = useMutation(api.settings.setMultiple);
 
   const serverConfig = useMemo<CheckoutExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<CheckoutExperienceConfig> | undefined;
@@ -56,38 +65,22 @@ export default function CheckoutExperiencePage() {
     };
   }, [experienceSetting?.value]);
 
-  const [config, setConfig] = useState<CheckoutExperienceConfig>(DEFAULT_CONFIG);
-  const [isSaving, setIsSaving] = useState(false);
-
   const isLoading = experienceSetting === undefined || ordersModule === undefined || cartModule === undefined;
 
-  useEffect(() => {
-    if (!isLoading) {
-      setConfig(serverConfig);
-    }
-  }, [isLoading, serverConfig]);
+  const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
+  const { handleSave, isSaving } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
 
-  const hasChanges = useMemo(() => JSON.stringify(config) !== JSON.stringify(serverConfig), [config, serverConfig]);
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const settingsToSave: Array<{ group: string; key: string; value: unknown }> = [
-        { group: EXPERIENCE_GROUP, key: EXPERIENCE_KEY, value: config }
-      ];
-      await setMultipleSettings({ settings: settingsToSave });
-      toast.success('Đã lưu cấu hình trải nghiệm Checkout');
-    } catch {
-      toast.error('Có lỗi khi lưu cấu hình');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const summaryItems: SummaryItem[] = [
+    { label: 'Flow Style', value: config.flowStyle === 'single-page' ? 'Single Page' : 'Multi-Step' },
+    { label: 'Summary Position', value: config.orderSummaryPosition === 'right' ? 'Right' : 'Bottom' },
+    { label: 'Payment Methods', value: config.showPaymentMethods },
+    { label: 'Shipping Options', value: config.showShippingOptions },
+  ];
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-slate-500">Đang tải...</div>
+        <div className="text-slate-500">{MESSAGES.loading}</div>
       </div>
     );
   }
@@ -131,55 +124,27 @@ export default function CheckoutExperiencePage() {
           <Card className="p-4">
             <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Khối hiển thị</h3>
             <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Phương thức thanh toán</p>
-                  <p className="text-xs text-slate-500">Hiển thị options payment methods</p>
-                </div>
-                <ToggleSwitch
-                  enabled={config.showPaymentMethods}
-                  onChange={() => setConfig(prev => ({ ...prev, showPaymentMethods: !prev.showPaymentMethods }))}
-                  color="bg-green-500"
-                  disabled={!ordersModule?.enabled}
-                />
-              </div>
+              <ExperienceBlockToggle
+                label="Phương thức thanh toán"
+                description="Hiển thị options payment methods"
+                enabled={config.showPaymentMethods}
+                onChange={() => setConfig(prev => ({ ...prev, showPaymentMethods: !prev.showPaymentMethods }))}
+                color="bg-green-500"
+                disabled={!ordersModule?.enabled}
+              />
 
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Tùy chọn vận chuyển</p>
-                  <p className="text-xs text-slate-500">Hiển thị shipping options</p>
-                </div>
-                <ToggleSwitch
-                  enabled={config.showShippingOptions}
-                  onChange={() => setConfig(prev => ({ ...prev, showShippingOptions: !prev.showShippingOptions }))}
-                  color="bg-green-500"
-                  disabled={!ordersModule?.enabled}
-                />
-              </div>
+              <ExperienceBlockToggle
+                label="Tùy chọn vận chuyển"
+                description="Hiển thị shipping options"
+                enabled={config.showShippingOptions}
+                onChange={() => setConfig(prev => ({ ...prev, showShippingOptions: !prev.showShippingOptions }))}
+                color="bg-green-500"
+                disabled={!ordersModule?.enabled}
+              />
             </div>
           </Card>
 
-          <Card className="p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Tóm tắt áp dụng</h3>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Flow Style</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{config.flowStyle === 'single-page' ? 'Single Page' : 'Multi-Step'}</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Summary Position</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{config.orderSummaryPosition === 'right' ? 'Right' : 'Bottom'}</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Payment Methods</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{config.showPaymentMethods ? 'Bật' : 'Tắt'}</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Shipping Options</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{config.showShippingOptions ? 'Bật' : 'Tắt'}</p>
-              </div>
-            </div>
-          </Card>
+          <ExperienceSummaryGrid items={summaryItems} />
         </div>
 
         <div className="space-y-4">
@@ -188,56 +153,26 @@ export default function CheckoutExperiencePage() {
               <CardTitle className="text-base">Module liên quan</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <ModuleLink
+              <ExperienceModuleLink
                 enabled={ordersModule?.enabled ?? false}
                 href="/system/modules/orders"
                 icon={Package}
                 title="Đơn hàng"
+                colorScheme="green"
               />
-              <ModuleLink
+              <ExperienceModuleLink
                 enabled={cartModule?.enabled ?? false}
                 href="/system/modules/cart"
                 icon={ShoppingCart}
                 title="Giỏ hàng"
+                colorScheme="green"
               />
             </CardContent>
           </Card>
 
-          <Card className="p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Gợi ý quan sát</h3>
-            <ul className="text-xs text-slate-500 space-y-1">
-              <li>• Multi-step dễ theo dõi, single-page nhanh hơn.</li>
-              <li>• Right sidebar phù hợp desktop, bottom cho mobile.</li>
-              <li>• Payment/shipping cần bật module Orders trước.</li>
-            </ul>
-          </Card>
+          <ExperienceHintCard hints={HINTS} />
         </div>
       </div>
     </div>
-  );
-}
-
-function ModuleLink({ enabled, href, icon: Icon, title }: { enabled: boolean; href: string; icon: React.ElementType; title: string }) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        'flex items-center gap-3 p-3 rounded-lg border transition-colors',
-        enabled
-          ? 'border-slate-200 dark:border-slate-700 hover:border-green-500/60 dark:hover:border-green-500/60'
-          : 'border-slate-100 dark:border-slate-800 opacity-50'
-      )}
-    >
-      <div className={cn(
-        'w-8 h-8 rounded-lg flex items-center justify-center',
-        enabled ? 'bg-green-500/10 text-green-600 dark:text-green-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
-      )}>
-        <Icon size={16} />
-      </div>
-      <div className="flex-1">
-        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{title}</p>
-        <p className="text-xs text-slate-500">{enabled ? 'Đã bật' : 'Chưa bật'}</p>
-      </div>
-    </Link>
   );
 }

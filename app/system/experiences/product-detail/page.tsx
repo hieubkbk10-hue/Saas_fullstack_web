@@ -1,13 +1,19 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { useMutation, useQuery } from 'convex/react';
+import React, { useMemo } from 'react';
+import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { toast } from 'sonner';
-import { ExternalLink, MessageSquare, Package, ShoppingCart, Heart, LayoutTemplate } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, cn } from '@/app/admin/components/ui';
-import { ModuleHeader, SettingsCard, SettingSelect, ToggleSwitch } from '@/components/modules/shared';
+import { Heart, LayoutTemplate, MessageSquare, Package, ShoppingCart } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
+import { ModuleHeader, SettingsCard, SettingSelect } from '@/components/modules/shared';
+import { 
+  ExperienceModuleLink, 
+  ExperienceSummaryGrid, 
+  ExperienceBlockToggle,
+  ExperienceHintCard,
+  type SummaryItem 
+} from '@/components/experiences';
+import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type ProductsDetailStyle = 'classic' | 'modern' | 'minimal';
 
@@ -19,7 +25,6 @@ type ProductDetailExperienceConfig = {
   showWishlist: boolean;
 };
 
-const EXPERIENCE_GROUP = 'experience';
 const EXPERIENCE_KEY = 'product_detail_ui';
 
 const DETAIL_STYLES: { id: ProductsDetailStyle; label: string; description: string }[] = [
@@ -36,6 +41,12 @@ const DEFAULT_CONFIG: ProductDetailExperienceConfig = {
   showWishlist: true,
 };
 
+const HINTS = [
+  'Ưu tiên bật module trước khi bật toggle liên quan.',
+  'Layout Classic sẽ dùng Highlights theo toggle ở đây.',
+  'Có thể kiểm tra UI tại đường dẫn sản phẩm thật.',
+];
+
 export default function ProductDetailExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const detailStyleSetting = useQuery(api.settings.getByKey, { key: 'products_detail_style' });
@@ -44,8 +55,6 @@ export default function ProductDetailExperiencePage() {
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
-
-  const setMultipleSettings = useMutation(api.settings.setMultiple);
 
   const serverDetailStyle = (detailStyleSetting?.value as ProductsDetailStyle) || 'classic';
   const serverClassicHighlightsEnabled = (classicHighlightsEnabledSetting?.value as boolean) ?? true;
@@ -61,44 +70,43 @@ export default function ProductDetailExperiencePage() {
     };
   }, [experienceSetting?.value, serverDetailStyle, serverClassicHighlightsEnabled]);
 
-  const [config, setConfig] = useState<ProductDetailExperienceConfig>(DEFAULT_CONFIG);
-  const [isSaving, setIsSaving] = useState(false);
-
   const isLoading = experienceSetting === undefined || detailStyleSetting === undefined || classicHighlightsEnabledSetting === undefined;
 
-  useEffect(() => {
-    if (!isLoading) {
-      setConfig(serverConfig);
-    }
-  }, [isLoading, serverConfig]);
+  const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
 
-  const hasChanges = useMemo(() => JSON.stringify(config) !== JSON.stringify(serverConfig), [config, serverConfig]);
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const settingsToSave: Array<{ group: string; key: string; value: unknown }> = [
-        { group: EXPERIENCE_GROUP, key: EXPERIENCE_KEY, value: config }
-      ];
-      if (config.layoutStyle !== serverDetailStyle) {
-        settingsToSave.push({ group: 'products', key: 'products_detail_style', value: config.layoutStyle });
-      }
-      if (config.showClassicHighlights !== serverClassicHighlightsEnabled) {
-        settingsToSave.push({ group: 'products', key: 'products_detail_classic_highlights_enabled', value: config.showClassicHighlights });
-      }
-      await setMultipleSettings({ settings: settingsToSave });
-      toast.success('Đã lưu cấu hình trải nghiệm');
-    } catch {
-      toast.error('Có lỗi khi lưu cấu hình');
-    } finally {
-      setIsSaving(false);
+  // Additional legacy settings to save
+  const additionalSettings = useMemo(() => {
+    const settings: Array<{ group: string; key: string; value: unknown }> = [];
+    
+    if (config.layoutStyle !== serverDetailStyle) {
+      settings.push({ group: 'products', key: 'products_detail_style', value: config.layoutStyle });
     }
-  };
+    
+    if (config.showClassicHighlights !== serverClassicHighlightsEnabled) {
+      settings.push({ group: 'products', key: 'products_detail_classic_highlights_enabled', value: config.showClassicHighlights });
+    }
+    
+    return settings.length > 0 ? settings : undefined;
+  }, [config, serverDetailStyle, serverClassicHighlightsEnabled]);
+
+  const { handleSave, isSaving } = useExperienceSave(
+    EXPERIENCE_KEY, 
+    config, 
+    MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]),
+    additionalSettings
+  );
+
+  const summaryItems: SummaryItem[] = [
+    { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },
+    { label: 'Hiển thị rating', value: config.showRating },
+    { label: 'Wishlist', value: config.showWishlist },
+    { label: 'CTA giỏ hàng', value: config.showAddToCart },
+  ];
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-slate-500">Đang tải...</div>
+        <div className="text-slate-500">{MESSAGES.loading}</div>
       </div>
     );
   }
@@ -123,7 +131,7 @@ export default function ProductDetailExperiencePage() {
             <SettingSelect
               label="Layout chi tiết"
               value={config.layoutStyle}
-              onChange={(value) =>{  setConfig(prev => ({ ...prev, layoutStyle: value as ProductsDetailStyle })); }}
+              onChange={(value) => setConfig(prev => ({ ...prev, layoutStyle: value as ProductsDetailStyle }))}
               options={DETAIL_STYLES.map(style => ({ label: `${style.label} - ${style.description}`, value: style.id }))}
               focusColor="focus:border-cyan-500"
             />
@@ -132,80 +140,44 @@ export default function ProductDetailExperiencePage() {
           <Card className="p-4">
             <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Khối hiển thị</h3>
             <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Đánh giá & bình luận</p>
-                  <p className="text-xs text-slate-500">Nguồn: Module Bình luận và đánh giá</p>
-                </div>
-                <ToggleSwitch
-                  enabled={config.showRating}
-                  onChange={() =>{  setConfig(prev => ({ ...prev, showRating: !prev.showRating })); }}
-                  color="bg-cyan-500"
-                  disabled={!commentsModule?.enabled}
-                />
-              </div>
+              <ExperienceBlockToggle
+                label="Đánh giá & bình luận"
+                description="Nguồn: Module Bình luận và đánh giá"
+                enabled={config.showRating}
+                onChange={() => setConfig(prev => ({ ...prev, showRating: !prev.showRating }))}
+                color="bg-cyan-500"
+                disabled={!commentsModule?.enabled}
+              />
 
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Nút yêu thích (Wishlist)</p>
-                  <p className="text-xs text-slate-500">Nguồn: Module Sản phẩm yêu thích</p>
-                </div>
-                <ToggleSwitch
-                  enabled={config.showWishlist}
-                  onChange={() =>{  setConfig(prev => ({ ...prev, showWishlist: !prev.showWishlist })); }}
-                  color="bg-cyan-500"
-                  disabled={!wishlistModule?.enabled}
-                />
-              </div>
+              <ExperienceBlockToggle
+                label="Nút yêu thích (Wishlist)"
+                description="Nguồn: Module Sản phẩm yêu thích"
+                enabled={config.showWishlist}
+                onChange={() => setConfig(prev => ({ ...prev, showWishlist: !prev.showWishlist }))}
+                color="bg-cyan-500"
+                disabled={!wishlistModule?.enabled}
+              />
 
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">CTA Thêm vào giỏ</p>
-                  <p className="text-xs text-slate-500">Nguồn: Module Giỏ hàng & Đơn hàng</p>
-                </div>
-                <ToggleSwitch
-                  enabled={config.showAddToCart}
-                  onChange={() =>{  setConfig(prev => ({ ...prev, showAddToCart: !prev.showAddToCart })); }}
-                  color="bg-cyan-500"
-                  disabled={!cartModule?.enabled || !ordersModule?.enabled}
-                />
-              </div>
+              <ExperienceBlockToggle
+                label="CTA Thêm vào giỏ"
+                description="Nguồn: Module Giỏ hàng & Đơn hàng"
+                enabled={config.showAddToCart}
+                onChange={() => setConfig(prev => ({ ...prev, showAddToCart: !prev.showAddToCart }))}
+                color="bg-cyan-500"
+                disabled={!cartModule?.enabled || !ordersModule?.enabled}
+              />
 
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Tiện ích Classic Highlights</p>
-                  <p className="text-xs text-slate-500">Áp dụng cho layout Classic</p>
-                </div>
-                <ToggleSwitch
-                  enabled={config.showClassicHighlights}
-                  onChange={() =>{  setConfig(prev => ({ ...prev, showClassicHighlights: !prev.showClassicHighlights })); }}
-                  color="bg-cyan-500"
-                />
-              </div>
+              <ExperienceBlockToggle
+                label="Tiện ích Classic Highlights"
+                description="Áp dụng cho layout Classic"
+                enabled={config.showClassicHighlights}
+                onChange={() => setConfig(prev => ({ ...prev, showClassicHighlights: !prev.showClassicHighlights }))}
+                color="bg-cyan-500"
+              />
             </div>
           </Card>
 
-          <Card className="p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Tóm tắt áp dụng</h3>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Layout</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100 capitalize">{config.layoutStyle}</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Hiển thị rating</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{config.showRating ? 'Bật' : 'Tắt'}</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Wishlist</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{config.showWishlist ? 'Bật' : 'Tắt'}</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">CTA giỏ hàng</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{config.showAddToCart ? 'Bật' : 'Tắt'}</p>
-              </div>
-            </div>
-          </Card>
+          <ExperienceSummaryGrid items={summaryItems} />
         </div>
 
         <div className="space-y-4">
@@ -214,64 +186,40 @@ export default function ProductDetailExperiencePage() {
               <CardTitle className="text-base">Module liên quan</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <ModuleLink
+              <ExperienceModuleLink
                 enabled={commentsModule?.enabled ?? false}
                 href="/system/modules/comments"
                 icon={MessageSquare}
                 title="Bình luận & đánh giá"
+                colorScheme="cyan"
               />
-              <ModuleLink
+              <ExperienceModuleLink
                 enabled={wishlistModule?.enabled ?? false}
                 href="/system/modules/wishlist"
                 icon={Heart}
                 title="Sản phẩm yêu thích"
+                colorScheme="cyan"
               />
-              <ModuleLink
+              <ExperienceModuleLink
                 enabled={cartModule?.enabled ?? false}
                 href="/system/modules/cart"
                 icon={ShoppingCart}
                 title="Giỏ hàng"
+                colorScheme="cyan"
               />
-              <ModuleLink
+              <ExperienceModuleLink
                 enabled={ordersModule?.enabled ?? false}
                 href="/system/modules/orders"
                 icon={Package}
                 title="Đơn hàng"
+                colorScheme="cyan"
               />
             </CardContent>
           </Card>
 
-          <Card className="p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Gợi ý quan sát</h3>
-            <ul className="text-xs text-slate-500 space-y-1">
-              <li>• Ưu tiên bật module trước khi bật toggle liên quan.</li>
-              <li>• Layout Classic sẽ dùng Highlights theo toggle ở đây.</li>
-              <li>• Có thể kiểm tra UI tại đường dẫn sản phẩm thật.</li>
-            </ul>
-          </Card>
+          <ExperienceHintCard hints={HINTS} />
         </div>
       </div>
     </div>
-  );
-}
-
-function ModuleLink({ enabled, href, icon: Icon, title }: { enabled: boolean; href: string; icon: React.ElementType; title: string }) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        'flex items-center justify-between gap-3 rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm transition-colors',
-        enabled
-          ? 'hover:border-cyan-500/60 hover:text-cyan-600 dark:hover:text-cyan-400'
-          : 'opacity-60'
-      )}
-    >
-      <div className="flex items-center gap-2">
-        <Icon size={16} />
-        <span>{title}</span>
-      </div>
-      <span className={cn('text-[10px] px-2 py-0.5 rounded-full', enabled ? 'bg-emerald-500/10 text-emerald-600' : 'bg-slate-200 text-slate-500')}>{enabled ? 'Đang bật' : 'Đang tắt'}</span>
-      <ExternalLink size={14} className="text-slate-400" />
-    </Link>
   );
 }

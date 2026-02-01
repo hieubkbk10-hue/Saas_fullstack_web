@@ -1,13 +1,19 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { useMutation, useQuery } from 'convex/react';
+import React, { useMemo } from 'react';
+import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { toast } from 'sonner';
 import { LayoutTemplate, ShoppingCart } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, cn } from '@/app/admin/components/ui';
-import { ModuleHeader, SettingsCard, SettingSelect, ToggleSwitch } from '@/components/modules/shared';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
+import { ModuleHeader, SettingsCard, SettingSelect } from '@/components/modules/shared';
+import { 
+  ExperienceModuleLink, 
+  ExperienceSummaryGrid, 
+  ExperienceBlockToggle,
+  ExperienceHintCard,
+  type SummaryItem 
+} from '@/components/experiences';
+import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type CartLayoutStyle = 'drawer' | 'page';
 
@@ -18,7 +24,6 @@ type CartExperienceConfig = {
   showNote: boolean;
 };
 
-const EXPERIENCE_GROUP = 'experience';
 const EXPERIENCE_KEY = 'cart_ui';
 
 const LAYOUT_STYLES: { id: CartLayoutStyle; label: string; description: string }[] = [
@@ -33,14 +38,18 @@ const DEFAULT_CONFIG: CartExperienceConfig = {
   showNote: false,
 };
 
+const HINTS = [
+  'Drawer phù hợp cho quick checkout.',
+  'Page layout cho cart phức tạp với nhiều options.',
+  'Guest cart cần session management.',
+];
+
 export default function CartExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
   const expiryFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableExpiry', moduleKey: 'cart' });
   const guestCartFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableGuestCart', moduleKey: 'cart' });
   const noteFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableNote', moduleKey: 'cart' });
-
-  const setMultipleSettings = useMutation(api.settings.setMultiple);
 
   const serverConfig = useMemo<CartExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<CartExperienceConfig> | undefined;
@@ -52,38 +61,22 @@ export default function CartExperiencePage() {
     };
   }, [experienceSetting?.value, expiryFeature?.enabled, guestCartFeature?.enabled, noteFeature?.enabled]);
 
-  const [config, setConfig] = useState<CartExperienceConfig>(DEFAULT_CONFIG);
-  const [isSaving, setIsSaving] = useState(false);
-
   const isLoading = experienceSetting === undefined || cartModule === undefined;
 
-  useEffect(() => {
-    if (!isLoading) {
-      setConfig(serverConfig);
-    }
-  }, [isLoading, serverConfig]);
+  const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
+  const { handleSave, isSaving } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
 
-  const hasChanges = useMemo(() => JSON.stringify(config) !== JSON.stringify(serverConfig), [config, serverConfig]);
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const settingsToSave: Array<{ group: string; key: string; value: unknown }> = [
-        { group: EXPERIENCE_GROUP, key: EXPERIENCE_KEY, value: config }
-      ];
-      await setMultipleSettings({ settings: settingsToSave });
-      toast.success('Đã lưu cấu hình trải nghiệm Giỏ hàng');
-    } catch {
-      toast.error('Có lỗi khi lưu cấu hình');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const summaryItems: SummaryItem[] = [
+    { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },
+    { label: 'Guest Cart', value: config.showGuestCart },
+    { label: 'Hết hạn', value: config.showExpiry },
+    { label: 'Ghi chú', value: config.showNote },
+  ];
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-slate-500">Đang tải...</div>
+        <div className="text-slate-500">{MESSAGES.loading}</div>
       </div>
     );
   }
@@ -117,68 +110,36 @@ export default function CartExperiencePage() {
           <Card className="p-4">
             <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Khối hiển thị</h3>
             <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Giỏ hàng khách (Guest Cart)</p>
-                  <p className="text-xs text-slate-500">Cho phép khách chưa đăng nhập sử dụng giỏ</p>
-                </div>
-                <ToggleSwitch
-                  enabled={config.showGuestCart}
-                  onChange={() => setConfig(prev => ({ ...prev, showGuestCart: !prev.showGuestCart }))}
-                  color="bg-orange-500"
-                  disabled={!cartModule?.enabled}
-                />
-              </div>
+              <ExperienceBlockToggle
+                label="Giỏ hàng khách (Guest Cart)"
+                description="Cho phép khách chưa đăng nhập sử dụng giỏ"
+                enabled={config.showGuestCart}
+                onChange={() => setConfig(prev => ({ ...prev, showGuestCart: !prev.showGuestCart }))}
+                color="bg-orange-500"
+                disabled={!cartModule?.enabled}
+              />
 
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Hết hạn giỏ hàng</p>
-                  <p className="text-xs text-slate-500">Hiển thị thời gian hết hạn và tự xóa</p>
-                </div>
-                <ToggleSwitch
-                  enabled={config.showExpiry}
-                  onChange={() => setConfig(prev => ({ ...prev, showExpiry: !prev.showExpiry }))}
-                  color="bg-orange-500"
-                  disabled={!cartModule?.enabled}
-                />
-              </div>
+              <ExperienceBlockToggle
+                label="Hết hạn giỏ hàng"
+                description="Hiển thị thời gian hết hạn và tự xóa"
+                enabled={config.showExpiry}
+                onChange={() => setConfig(prev => ({ ...prev, showExpiry: !prev.showExpiry }))}
+                color="bg-orange-500"
+                disabled={!cartModule?.enabled}
+              />
 
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Ghi chú đơn hàng</p>
-                  <p className="text-xs text-slate-500">Cho phép user thêm note cho đơn</p>
-                </div>
-                <ToggleSwitch
-                  enabled={config.showNote}
-                  onChange={() => setConfig(prev => ({ ...prev, showNote: !prev.showNote }))}
-                  color="bg-orange-500"
-                  disabled={!cartModule?.enabled}
-                />
-              </div>
+              <ExperienceBlockToggle
+                label="Ghi chú đơn hàng"
+                description="Cho phép user thêm note cho đơn"
+                enabled={config.showNote}
+                onChange={() => setConfig(prev => ({ ...prev, showNote: !prev.showNote }))}
+                color="bg-orange-500"
+                disabled={!cartModule?.enabled}
+              />
             </div>
           </Card>
 
-          <Card className="p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Tóm tắt áp dụng</h3>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Layout</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100 capitalize">{config.layoutStyle}</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Guest Cart</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{config.showGuestCart ? 'Bật' : 'Tắt'}</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Hết hạn</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{config.showExpiry ? 'Bật' : 'Tắt'}</p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
-                <p className="text-slate-500">Ghi chú</p>
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{config.showNote ? 'Bật' : 'Tắt'}</p>
-              </div>
-            </div>
-          </Card>
+          <ExperienceSummaryGrid items={summaryItems} />
         </div>
 
         <div className="space-y-4">
@@ -187,50 +148,19 @@ export default function CartExperiencePage() {
               <CardTitle className="text-base">Module liên quan</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <ModuleLink
+              <ExperienceModuleLink
                 enabled={cartModule?.enabled ?? false}
                 href="/system/modules/cart"
                 icon={ShoppingCart}
                 title="Giỏ hàng"
+                colorScheme="orange"
               />
             </CardContent>
           </Card>
 
-          <Card className="p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Gợi ý quan sát</h3>
-            <ul className="text-xs text-slate-500 space-y-1">
-              <li>• Drawer phù hợp cho quick checkout.</li>
-              <li>• Page layout cho cart phức tạp với nhiều options.</li>
-              <li>• Guest cart cần session management.</li>
-            </ul>
-          </Card>
+          <ExperienceHintCard hints={HINTS} />
         </div>
       </div>
     </div>
-  );
-}
-
-function ModuleLink({ enabled, href, icon: Icon, title }: { enabled: boolean; href: string; icon: React.ElementType; title: string }) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        'flex items-center gap-3 p-3 rounded-lg border transition-colors',
-        enabled
-          ? 'border-slate-200 dark:border-slate-700 hover:border-orange-500/60 dark:hover:border-orange-500/60'
-          : 'border-slate-100 dark:border-slate-800 opacity-50'
-      )}
-    >
-      <div className={cn(
-        'w-8 h-8 rounded-lg flex items-center justify-center',
-        enabled ? 'bg-orange-500/10 text-orange-600 dark:text-orange-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
-      )}>
-        <Icon size={16} />
-      </div>
-      <div className="flex-1">
-        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{title}</p>
-        <p className="text-xs text-slate-500">{enabled ? 'Đã bật' : 'Chưa bật'}</p>
-      </div>
-    </Link>
   );
 }
