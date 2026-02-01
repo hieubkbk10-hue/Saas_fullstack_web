@@ -112,6 +112,71 @@ Identify form controls và UI state:
 
 **Best Practice**: Preview KHÔNG có event handlers. Chỉ visual representation.
 
+### Bước 4.5: Extract Image Fallback (CRITICAL)
+
+**Image Fallback Principle**: UI thật PHẢI có fallback khi ảnh bị lỗi/không load được.
+
+#### Tìm fallback pattern trong UI thật:
+
+```tsx
+// Tìm pattern này trong code UI thật
+{thumbnail ? (
+  <Image src={thumbnail} alt={title} fill />
+) : (
+  <div className="w-full h-full flex items-center justify-center">
+    <Briefcase size={32} className="text-slate-300" />  // ← Icon fallback
+  </div>
+)}
+```
+
+#### Checklist trích xuất fallback:
+
+1. **Xác định icon fallback**: 
+   - Posts → `FileText` 
+   - Services → `Briefcase`
+   - Products → `Package` hoặc `ShoppingBag`
+   - Users → `User`
+   
+2. **Copy exact styling**:
+   ```tsx
+   // Container
+   className="w-full h-full flex items-center justify-center"
+   
+   // Icon
+   size={32}            // hoặc 40, 48 tùy layout
+   className="text-slate-300"  // màu icon
+   ```
+
+3. **Import icon từ Lucide React**:
+   ```tsx
+   import { FileText, Briefcase, Package, User } from 'lucide-react';
+   ```
+
+4. **Preview PHẢI có fallback tương tự**:
+   ```tsx
+   // ✅ CORRECT: Preview có fallback như UI thật
+   <div className="aspect-video bg-slate-100 overflow-hidden relative">
+     <Image src={mockImage} alt={title} fill />
+     {/* Hoặc nếu mock data không có image */}
+     <div className="w-full h-full flex items-center justify-center">
+       <FileText size={32} className="text-slate-300" />
+     </div>
+   </div>
+   
+   // ❌ WRONG: Preview không có fallback
+   <div className="aspect-video bg-slate-100">
+     <Image src={mockImage} alt={title} fill />
+   </div>
+   ```
+
+#### Fallback validation:
+
+- [ ] Icon type match (FileText, Briefcase, Package, etc.)
+- [ ] Icon size match (32, 40, 48)
+- [ ] Icon color match (text-slate-300, text-slate-400)
+- [ ] Container classes match (flex, items-center, justify-center)
+- [ ] Background color match khi không có ảnh (bg-slate-100, bg-muted)
+
 ### Bước 5: Extract Spacing & Sizing
 Copy exact values:
 
@@ -266,8 +331,31 @@ bunx oxlint --type-aware --type-check --fix
 - [ ] Empty state shown when `mockItems.length === 0`
 - [ ] Long text truncated (line-clamp-2)
 - [ ] Missing images handled (placeholder icon)
+- [ ] Image fallback icon type match UI thật
+- [ ] Image fallback icon size và color match
+- [ ] Image fallback container styling match
 
 ## Common Mistakes (TRÁNH)
+
+### ❌ WRONG: Missing image fallback
+```tsx
+// Preview không có fallback khi ảnh lỗi
+<div className="aspect-video bg-slate-100">
+  <Image src={mockImage} alt={title} fill />
+</div>
+```
+
+### ✅ CORRECT: Image fallback như UI thật
+```tsx
+// Preview có fallback icon giống y UI thật
+{service.thumbnail ? (
+  <Image src={service.thumbnail} alt={service.title} fill />
+) : (
+  <div className="w-full h-full flex items-center justify-center">
+    <Briefcase size={32} className="text-slate-300" />
+  </div>
+)}
+```
 
 ### ❌ WRONG: Dùng Tailwind breakpoints trong preview
 ```tsx
@@ -336,6 +424,7 @@ Khi preview không match UI thật:
    - **Search quá rộng**: Missing `max-w-xs` trên desktop
    - **Mobile panel không hiện**: Missing `device !== 'desktop'` condition
    - **Grid columns sai**: Sai `gridClass` logic
+   - **Image không có fallback**: Missing fallback icon khi thumbnail null/undefined
 
 5. **Validate spacing**
    - Copy class từ UI thật: `py-6 md:py-10 px-4`
@@ -362,3 +451,5 @@ Trước khi hoàn thành:
 - [ ] Visual comparison OK cho cả 3 devices
 - [ ] No console errors
 - [ ] Preview renders trong < 100ms
+- [ ] Image fallback icons imported và render đúng
+- [ ] Fallback styling match UI thật (size, color, container)
