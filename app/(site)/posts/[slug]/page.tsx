@@ -32,6 +32,19 @@ function useEnabledPostFields(): Set<string> {
   }, [fields]);
 }
 
+function useImageFallback() {
+  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
+
+  const markBroken = React.useCallback((src?: string | null) => {
+    if (!src) {return;}
+    setBrokenImages((prev) => (prev[src] ? prev : { ...prev, [src]: true }));
+  }, []);
+
+  const isBroken = React.useCallback((src?: string | null) => Boolean(src && brokenImages[src]), [brokenImages]);
+
+  return { isBroken, markBroken };
+}
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
@@ -137,6 +150,7 @@ interface StyleProps {
 function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isCopied, setIsCopied] = useState(false);
+  const { isBroken, markBroken } = useImageFallback();
   const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
 
   useEffect(() => {
@@ -220,7 +234,7 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
             </header>
 
             <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted/60 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
-              {post.thumbnail ? (
+              {post.thumbnail && !isBroken(post.thumbnail) ? (
                 <Image
                   src={post.thumbnail}
                   alt={post.title}
@@ -228,6 +242,12 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
                   priority
                   sizes="100vw"
                   className="object-cover transition-transform duration-700 hover:scale-105"
+                  ref={(img) => {
+                    if (img?.complete && img.naturalWidth === 0) {
+                      markBroken(post.thumbnail);
+                    }
+                  }}
+                  onError={() =>{  markBroken(post.thumbnail); }}
                 />
               ) : (
                 <div className="h-full w-full flex items-center justify-center text-muted-foreground">
@@ -275,13 +295,19 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
                   {relatedPosts.map((p) => (
                     <Link key={p._id} href={`/posts/${p.slug}`} className="group flex gap-3 items-start">
                       <div className="relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-md bg-muted/60">
-                        {p.thumbnail ? (
+                        {p.thumbnail && !isBroken(p.thumbnail) ? (
                           <Image
                             src={p.thumbnail}
                             alt={p.title}
                             fill
                             sizes="80px"
                             className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            ref={(img) => {
+                              if (img?.complete && img.naturalWidth === 0) {
+                                markBroken(p.thumbnail);
+                              }
+                            }}
+                            onError={() =>{  markBroken(p.thumbnail); }}
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-muted-foreground">
@@ -314,6 +340,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
   const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
   const showExcerpt = enabledFields.has('excerpt');
   const [isCopied, setIsCopied] = useState(false);
+  const { isBroken, markBroken } = useImageFallback();
 
   const handleCopyLink = async () => {
     if (navigator?.clipboard) {
@@ -389,13 +416,19 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
         </div>
 
         <section className="relative overflow-hidden rounded-2xl bg-muted aspect-[16/9] md:aspect-[21/9] max-w-7xl mx-auto">
-          {post.thumbnail ? (
+          {post.thumbnail && !isBroken(post.thumbnail) ? (
             <Image
               src={post.thumbnail}
               alt={post.title}
               fill
               sizes="(max-width: 1024px) 100vw, 1024px"
               className="object-cover transition-transform duration-300 hover:scale-105"
+              ref={(img) => {
+                if (img?.complete && img.naturalWidth === 0) {
+                  markBroken(post.thumbnail);
+                }
+              }}
+              onError={() =>{  markBroken(post.thumbnail); }}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
@@ -439,13 +472,19 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
                     style={{ borderColor: `${brandColor}25` }}
                   >
                     <div className="aspect-[4/3] rounded-md overflow-hidden bg-muted mb-3 relative">
-                      {p.thumbnail ? (
+                      {p.thumbnail && !isBroken(p.thumbnail) ? (
                         <Image
                           src={p.thumbnail}
                           alt={p.title}
                           fill
                           sizes="(max-width: 768px) 100vw, 33vw"
                           className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          ref={(img) => {
+                            if (img?.complete && img.naturalWidth === 0) {
+                              markBroken(p.thumbnail);
+                            }
+                          }}
+                          onError={() =>{  markBroken(p.thumbnail); }}
                         />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center text-muted-foreground">
@@ -481,6 +520,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
 function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
   const [isCopied, setIsCopied] = useState(false);
   const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
+  const { isBroken, markBroken } = useImageFallback();
 
   const handleShare = async () => {
     if (navigator?.clipboard) {
@@ -495,13 +535,19 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
       <main className="pb-16">
         <section className="relative w-full overflow-hidden bg-muted">
           <div className="relative h-[clamp(220px,45vh,520px)] w-full">
-            {post.thumbnail ? (
+            {post.thumbnail && !isBroken(post.thumbnail) ? (
               <Image
                 src={post.thumbnail}
                 alt={post.title}
                 fill
                 sizes="100vw"
                 className="object-cover"
+                ref={(img) => {
+                  if (img?.complete && img.naturalWidth === 0) {
+                    markBroken(post.thumbnail);
+                  }
+                }}
+                onError={() =>{  markBroken(post.thumbnail); }}
               />
             ) : (
               <div className="h-full w-full" style={{ backgroundColor: `${brandColor}10` }} />
@@ -595,13 +641,19 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
                     <CardContent className="flex items-center justify-between gap-4 px-4 py-4">
                       <div className="flex min-w-0 items-center gap-4">
                         <div className="relative h-14 w-20 flex-shrink-0 overflow-hidden rounded-md bg-muted">
-                          {p.thumbnail ? (
+                          {p.thumbnail && !isBroken(p.thumbnail) ? (
                             <Image
                               src={p.thumbnail}
                               alt={p.title}
                               fill
                               sizes="80px"
                               className="object-cover"
+                              ref={(img) => {
+                                if (img?.complete && img.naturalWidth === 0) {
+                                  markBroken(p.thumbnail);
+                                }
+                              }}
+                              onError={() =>{  markBroken(p.thumbnail); }}
                             />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-muted-foreground">

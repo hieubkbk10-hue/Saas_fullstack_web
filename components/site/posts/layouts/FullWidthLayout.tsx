@@ -26,6 +26,17 @@ interface FullWidthLayoutProps {
 
 export function FullWidthLayout({ posts, brandColor, categoryMap, enabledFields }: FullWidthLayoutProps) {
   const showExcerpt = enabledFields.has('excerpt');
+  const [brokenThumbnails, setBrokenThumbnails] = React.useState<Set<string>>(new Set());
+
+  const markThumbnailBroken = React.useCallback((id: Id<"posts">) => {
+    setBrokenThumbnails((prev) => {
+      const key = String(id);
+      if (prev.has(key)) {return prev;}
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  }, []);
   if (posts.length === 0) {
     return (
       <div className="text-center py-12">
@@ -38,50 +49,60 @@ export function FullWidthLayout({ posts, brandColor, categoryMap, enabledFields 
 
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {posts.map((post) => (
-        <Link key={post._id} href={`/posts/${post.slug}`} className="group">
-          <article className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100 h-full flex flex-col">
-            <div className="relative aspect-video bg-slate-100 overflow-hidden">
-              {post.thumbnail ? (
-                <Image
-                  src={post.thumbnail}
-                  alt={post.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <FileText size={32} className="text-slate-300" />
+      {posts.map((post) => {
+        const showImage = Boolean(post.thumbnail) && !brokenThumbnails.has(String(post._id));
+
+        return (
+          <Link key={post._id} href={`/posts/${post.slug}`} className="group">
+            <article className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100 h-full flex flex-col">
+              <div className="relative aspect-video bg-slate-100 overflow-hidden">
+                {showImage ? (
+                  <Image
+                    src={post.thumbnail as string}
+                    alt={post.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  ref={(img) => {
+                    if (img?.complete && img.naturalWidth === 0) {
+                      markThumbnailBroken(post._id);
+                    }
+                  }}
+                    onError={() =>{  markThumbnailBroken(post._id); }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <FileText size={32} className="text-slate-300" />
+                  </div>
+                )}
+              </div>
+              <div className="p-3 flex-1 flex flex-col">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span
+                    className="text-xs font-medium px-1.5 py-0.5 rounded"
+                    style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                  >
+                    {categoryMap.get(post.categoryId) ?? 'Tin tức'}
+                  </span>
                 </div>
-              )}
-            </div>
-            <div className="p-3 flex-1 flex flex-col">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <span 
-                  className="text-xs font-medium px-1.5 py-0.5 rounded"
-                  style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-                >
-                  {categoryMap.get(post.categoryId) ?? 'Tin tức'}
-                </span>
+                <h2 className="text-sm font-semibold text-slate-900 line-clamp-2 group-hover:opacity-70 transition-opacity duration-200 flex-1">
+                  {post.title}
+                </h2>
+                {showExcerpt && post.excerpt && (
+                  <p className="text-xs text-slate-500 line-clamp-2 mt-1.5">{post.excerpt}</p>
+                )}
+                <div className="flex items-center justify-between text-xs text-slate-400 mt-2.5 pt-2.5 border-t border-slate-100">
+                  <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
+                  <span className="flex items-center gap-1">
+                    <Eye size={11} />
+                    {post.views.toLocaleString()}
+                  </span>
+                </div>
               </div>
-              <h2 className="text-sm font-semibold text-slate-900 line-clamp-2 group-hover:opacity-70 transition-opacity duration-200 flex-1">
-                {post.title}
-              </h2>
-              {showExcerpt && post.excerpt && (
-                <p className="text-xs text-slate-500 line-clamp-2 mt-1.5">{post.excerpt}</p>
-              )}
-              <div className="flex items-center justify-between text-xs text-slate-400 mt-2.5 pt-2.5 border-t border-slate-100">
-                <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
-                <span className="flex items-center gap-1">
-                  <Eye size={11} />
-                  {post.views.toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </article>
-        </Link>
-      ))}
+            </article>
+          </Link>
+        );
+      })}
     </div>
   );
 }

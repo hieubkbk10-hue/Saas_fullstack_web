@@ -63,6 +63,17 @@ export function SidebarLayout({
   showCategories = true,
 }: SidebarLayoutProps) {
   const showExcerpt = enabledFields.has('excerpt');
+  const [brokenThumbnails, setBrokenThumbnails] = React.useState<Set<string>>(new Set());
+
+  const markThumbnailBroken = React.useCallback((id: Id<"posts">) => {
+    setBrokenThumbnails((prev) => {
+      const key = String(id);
+      if (prev.has(key)) {return prev;}
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  }, []);
 
   return (
     <div className="flex flex-col lg:flex-row gap-5">
@@ -155,53 +166,63 @@ export function SidebarLayout({
           </div>
         ) : (
           <div className="space-y-2.5">
-            {posts.map((post) => (
-              <Link key={post._id} href={`/posts/${post.slug}`} className="group block">
-                <article className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-all duration-200 border border-slate-200">
-                  <div className="flex flex-col sm:flex-row">
-                    <div className="sm:w-40 md:w-48 flex-shrink-0">
-                      <div className="aspect-video sm:aspect-[4/3] sm:h-full bg-slate-100 overflow-hidden relative">
-                      {post.thumbnail ? (
-                        <Image
-                          src={post.thumbnail}
-                          alt={post.title}
-                          fill
-                          sizes="96px"
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <FileText size={28} className="text-slate-300" />
-                          </div>
-                        )}
+            {posts.map((post) => {
+              const showImage = Boolean(post.thumbnail) && !brokenThumbnails.has(String(post._id));
+
+              return (
+                <Link key={post._id} href={`/posts/${post.slug}`} className="group block">
+                  <article className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-all duration-200 border border-slate-200">
+                    <div className="flex flex-col sm:flex-row">
+                      <div className="sm:w-40 md:w-48 flex-shrink-0">
+                        <div className="aspect-video sm:aspect-[4/3] sm:h-full bg-slate-100 overflow-hidden relative">
+                          {showImage ? (
+                            <Image
+                              src={post.thumbnail as string}
+                              alt={post.title}
+                              fill
+                              sizes="96px"
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
+                              ref={(img) => {
+                                if (img?.complete && img.naturalWidth === 0) {
+                                  markThumbnailBroken(post._id);
+                                }
+                              }}
+                              onError={() =>{  markThumbnailBroken(post._id); }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <FileText size={28} className="text-slate-300" />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    <div className="p-3 flex-1 flex flex-col justify-center">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                          {categoryMap.get(post.categoryId) ?? 'Tin tức'}
-                        </span>
-                        {post.publishedAt && (
-                          <span className="text-xs text-slate-400">
-                            {new Date(post.publishedAt).toLocaleDateString('vi-VN')}
+                      <div className="p-3 flex-1 flex flex-col justify-center">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                            {categoryMap.get(post.categoryId) ?? 'Tin tức'}
                           </span>
+                          {post.publishedAt && (
+                            <span className="text-xs text-slate-400">
+                              {new Date(post.publishedAt).toLocaleDateString('vi-VN')}
+                            </span>
+                          )}
+                        </div>
+                        <h2 className="text-sm font-semibold text-slate-900 group-hover:text-opacity-70 transition-colors duration-200 line-clamp-2 mb-1">
+                          {post.title}
+                        </h2>
+                        {showExcerpt && post.excerpt && (
+                          <p className="text-xs text-slate-500 line-clamp-2 mb-1.5">{post.excerpt}</p>
                         )}
-                      </div>
-                      <h2 className="text-sm font-semibold text-slate-900 group-hover:text-opacity-70 transition-colors duration-200 line-clamp-2 mb-1">
-                        {post.title}
-                      </h2>
-                      {showExcerpt && post.excerpt && (
-                        <p className="text-xs text-slate-500 line-clamp-2 mb-1.5">{post.excerpt}</p>
-                      )}
-                      <div className="flex items-center gap-1 text-xs text-slate-400">
-                        <Eye size={12} />
-                        <span>{post.views.toLocaleString()}</span>
+                        <div className="flex items-center gap-1 text-xs text-slate-400">
+                          <Eye size={12} />
+                          <span>{post.views.toLocaleString()}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </article>
-              </Link>
-            ))}
+                  </article>
+                </Link>
+              );
+            })}
           </div>
         )}
       </main>

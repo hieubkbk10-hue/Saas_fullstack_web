@@ -40,7 +40,6 @@ export function PostsListPreview({
   const showFilterBar = showSearch || showCategories;
 
   const isMobile = device === 'mobile';
-  const _isTablet = device === 'tablet';
   const isDesktop = device === 'desktop';
   const isCompact = device !== 'desktop';
   const visiblePosts = device === 'mobile' ? 2 : 4;

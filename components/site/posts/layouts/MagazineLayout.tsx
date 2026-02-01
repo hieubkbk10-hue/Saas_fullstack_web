@@ -65,6 +65,17 @@ export function MagazineLayout({
   showCategories = true,
 }: MagazineLayoutProps) {
   const showExcerpt = enabledFields.has('excerpt');
+  const [brokenThumbnails, setBrokenThumbnails] = React.useState<Set<string>>(new Set());
+
+  const markThumbnailBroken = React.useCallback((id: Id<"posts">) => {
+    setBrokenThumbnails((prev) => {
+      const key = String(id);
+      if (prev.has(key)) {return prev;}
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  }, []);
   // Separate featured and regular posts
   const mainFeatured = featuredPosts[0];
   const secondaryFeatured = featuredPosts.slice(1, 3);
@@ -77,16 +88,24 @@ export function MagazineLayout({
           {/* Main Featured - Large Card */}
           <Link href={`/posts/${mainFeatured.slug}`} className="lg:col-span-2 group">
             <article className="relative h-full min-h-[280px] lg:min-h-[360px] rounded-xl overflow-hidden bg-slate-900">
-                {mainFeatured.thumbnail ? (
-                  <Image
-                    src={mainFeatured.thumbnail}
-                    alt={mainFeatured.title}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 66vw"
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900" />
+              {mainFeatured.thumbnail && !brokenThumbnails.has(String(mainFeatured._id)) ? (
+                <Image
+                  src={mainFeatured.thumbnail}
+                  alt={mainFeatured.title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 66vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  ref={(img) => {
+                    if (img?.complete && img.naturalWidth === 0) {
+                      markThumbnailBroken(mainFeatured._id);
+                    }
+                  }}
+                  onError={() =>{  markThumbnailBroken(mainFeatured._id); }}
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
+                  <FileText size={56} className="text-slate-500" />
+                </div>
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-6">
@@ -114,16 +133,24 @@ export function MagazineLayout({
             {secondaryFeatured.map((post) => (
               <Link key={post._id} href={`/posts/${post.slug}`} className="group flex-1">
                 <article className="relative h-full min-h-[140px] lg:min-h-0 rounded-lg overflow-hidden bg-slate-900">
-                    {post.thumbnail ? (
-                      <Image
-                        src={post.thumbnail}
-                        alt={post.title}
-                        fill
-                        sizes="(max-width: 1024px) 100vw, 33vw"
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-600 to-slate-800" />
+                  {post.thumbnail && !brokenThumbnails.has(String(post._id)) ? (
+                    <Image
+                      src={post.thumbnail}
+                      alt={post.title}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 33vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      ref={(img) => {
+                        if (img?.complete && img.naturalWidth === 0) {
+                          markThumbnailBroken(post._id);
+                        }
+                      }}
+                      onError={() =>{  markThumbnailBroken(post._id); }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center">
+                      <FileText size={28} className="text-slate-500" />
+                    </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -219,16 +246,24 @@ export function MagazineLayout({
               <Link key={post._id} href={`/posts/${post.slug}`} className="group">
                 <article className="h-full flex flex-col bg-white rounded-lg overflow-hidden border border-slate-200 hover:shadow-md transition-shadow duration-200">
                   <div className="relative aspect-video overflow-hidden bg-slate-100">
-                    {post.thumbnail ? (
+                    {post.thumbnail && !brokenThumbnails.has(String(post._id)) ? (
                       <Image
                         src={post.thumbnail}
                         alt={post.title}
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        ref={(img) => {
+                          if (img?.complete && img.naturalWidth === 0) {
+                            markThumbnailBroken(post._id);
+                          }
+                        }}
+                        onError={() =>{  markThumbnailBroken(post._id); }}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center"><FileText size={28} className="text-slate-300" /></div>
+                      <div className="w-full h-full flex items-center justify-center">
+                        <FileText size={28} className="text-slate-300" />
+                      </div>
                     )}
                   </div>
                   <div className="flex-1 flex flex-col p-3">

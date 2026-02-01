@@ -75,6 +75,17 @@ export function MagazineLayout({
   const showPrice = enabledFields.has('price');
   const showDuration = enabledFields.has('duration');
   const [localSearch, setLocalSearch] = React.useState(searchQuery);
+  const [brokenThumbnails, setBrokenThumbnails] = React.useState<Set<string>>(new Set());
+
+  const markThumbnailBroken = React.useCallback((id: Id<"services">) => {
+    setBrokenThumbnails((prev) => {
+      const key = String(id);
+      if (prev.has(key)) {return prev;}
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  }, []);
 
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -100,16 +111,24 @@ export function MagazineLayout({
             style={ringStyle}
           >
             <article className="relative h-full min-h-[280px] lg:min-h-[360px] rounded-xl overflow-hidden bg-slate-900">
-                {mainFeatured.thumbnail ? (
-                  <Image
-                    src={mainFeatured.thumbnail}
-                    alt={mainFeatured.title}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 66vw"
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900" />
+              {mainFeatured.thumbnail && !brokenThumbnails.has(String(mainFeatured._id)) ? (
+                <Image
+                  src={mainFeatured.thumbnail}
+                  alt={mainFeatured.title}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 66vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  ref={(img) => {
+                    if (img?.complete && img.naturalWidth === 0) {
+                      markThumbnailBroken(mainFeatured._id);
+                    }
+                  }}
+                  onError={() =>{  markThumbnailBroken(mainFeatured._id); }}
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
+                  <Briefcase size={56} className="text-slate-500" />
+                </div>
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-6">
@@ -155,16 +174,24 @@ export function MagazineLayout({
                 style={ringStyle}
               >
                 <article className="relative h-full min-h-[140px] lg:min-h-0 rounded-lg overflow-hidden bg-slate-900">
-                    {service.thumbnail ? (
-                      <Image
-                        src={service.thumbnail}
-                        alt={service.title}
-                        fill
-                        sizes="(max-width: 1024px) 100vw, 33vw"
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-600 to-slate-800" />
+                  {service.thumbnail && !brokenThumbnails.has(String(service._id)) ? (
+                    <Image
+                      src={service.thumbnail}
+                      alt={service.title}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 33vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      ref={(img) => {
+                        if (img?.complete && img.naturalWidth === 0) {
+                          markThumbnailBroken(service._id);
+                        }
+                      }}
+                      onError={() =>{  markThumbnailBroken(service._id); }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center">
+                      <Briefcase size={32} className="text-slate-500" />
+                    </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -293,16 +320,24 @@ export function MagazineLayout({
               >
                 <article className="h-full flex flex-col">
                   <div className="aspect-[16/10] rounded-lg overflow-hidden bg-slate-100 mb-3 relative">
-                      {service.thumbnail ? (
-                        <Image
-                          src={service.thumbnail}
-                          alt={service.title}
-                          fill
-                          sizes="(max-width: 768px) 100vw, 33vw"
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                      <div className="w-full h-full flex items-center justify-center"><Briefcase size={32} className="text-slate-300" /></div>
+                    {service.thumbnail && !brokenThumbnails.has(String(service._id)) ? (
+                      <Image
+                        src={service.thumbnail}
+                        alt={service.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        ref={(img) => {
+                          if (img?.complete && img.naturalWidth === 0) {
+                            markThumbnailBroken(service._id);
+                          }
+                        }}
+                        onError={() =>{  markThumbnailBroken(service._id); }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Briefcase size={32} className="text-slate-300" />
+                      </div>
                     )}
                     {service.featured && (
                       <div className="absolute top-2 left-2 px-2 py-1 bg-amber-500 text-white text-xs font-medium rounded flex items-center gap-1">
