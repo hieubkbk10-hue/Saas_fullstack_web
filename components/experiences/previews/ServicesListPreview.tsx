@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronDown, Clock, Eye, Folder, Search, Star, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 
-type ListLayoutStyle = 'grid' | 'list' | 'masonry';
+type ListLayoutStyle = 'grid' | 'sidebar' | 'masonry';
 type FilterPosition = 'sidebar' | 'top' | 'none';
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
@@ -29,9 +29,8 @@ const formatPrice = (price: number): string => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
 
-// FullWidth Layout (Grid/List view)
-function FullWidthPreview({ layoutStyle, showSearch, showCategories, showPagination, brandColor = '#8b5cf6' }: ServicesListPreviewProps) {
-  const isGridView = layoutStyle === 'grid';
+// FullWidth Layout (Grid view only)
+function FullWidthPreview({ showSearch, showCategories, showPagination, brandColor = '#8b5cf6' }: ServicesListPreviewProps) {
 
   return (
     <div className="py-6 md:py-10 px-4">
@@ -82,92 +81,47 @@ function FullWidthPreview({ layoutStyle, showSearch, showCategories, showPaginat
           </div>
         )}
 
-        {/* Services Grid/List */}
-        {isGridView ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {MOCK_SERVICES.map(service => (
-              <article key={service._id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100 h-full flex flex-col">
-                <div className="aspect-[16/10] bg-slate-100 overflow-hidden relative">
-                  <Image src={service.thumbnail} alt={service.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
-                  {service.featured && (
-                    <div className="absolute top-2 left-2 px-2 py-1 bg-amber-500 text-white text-xs font-medium rounded flex items-center gap-1">
-                      <Star size={10} className="fill-current" /> Nổi bật
-                    </div>
-                  )}
+        {/* Services Grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {MOCK_SERVICES.map(service => (
+            <article key={service._id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100 h-full flex flex-col">
+              <div className="aspect-[16/10] bg-slate-100 overflow-hidden relative">
+                <Image src={service.thumbnail} alt={service.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
+                {service.featured && (
+                  <div className="absolute top-2 left-2 px-2 py-1 bg-amber-500 text-white text-xs font-medium rounded flex items-center gap-1">
+                    <Star size={10} className="fill-current" /> Nổi bật
+                  </div>
+                )}
+              </div>
+              <div className="p-3 flex-1 flex flex-col">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                    {service.category}
+                  </span>
                 </div>
-                <div className="p-3 flex-1 flex flex-col">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                      {service.category}
+                <h2 className="text-base font-semibold text-slate-900 line-clamp-2 flex-1">
+                  {service.title}
+                </h2>
+                <div className="flex items-center justify-between text-xs text-slate-400 mt-3 pt-3 border-t border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1">
+                      <Clock size={12} />
+                      {service.duration}
                     </span>
                   </div>
-                  <h2 className="text-base font-semibold text-slate-900 line-clamp-2 flex-1">
-                    {service.title}
-                  </h2>
-                  <div className="flex items-center justify-between text-xs text-slate-400 mt-3 pt-3 border-t border-slate-100">
-                    <div className="flex items-center gap-2">
-                      <span className="flex items-center gap-1">
-                        <Clock size={12} />
-                        {service.duration}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-bold" style={{ color: brandColor }}>
-                        {formatPrice(service.price)}
-                      </span>
-                      <span className="inline-flex items-center justify-center px-3 py-2 text-xs font-medium rounded-lg text-white" style={{ backgroundColor: brandColor }}>
-                        Xem ngay
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {MOCK_SERVICES.map(service => (
-              <article key={service._id} className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-100 flex flex-col sm:flex-row">
-                <div className="sm:w-48 md:w-56 flex-shrink-0">
-                  <div className="aspect-video sm:aspect-[4/3] sm:h-full bg-slate-100 overflow-hidden relative">
-                    <Image src={service.thumbnail} alt={service.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
-                    {service.featured && (
-                      <div className="absolute top-2 left-2 px-2 py-1 bg-amber-500 text-white text-xs font-medium rounded flex items-center gap-1">
-                        <Star size={10} className="fill-current" /> Nổi bật
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="p-3 flex-1 flex flex-col justify-center">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                      {service.category}
+                  <div className="flex items-center gap-2">
+                    <span className="text-base font-bold" style={{ color: brandColor }}>
+                      {formatPrice(service.price)}
+                    </span>
+                    <span className="inline-flex items-center justify-center px-3 py-2 text-xs font-medium rounded-lg text-white" style={{ backgroundColor: brandColor }}>
+                      Xem ngay
                     </span>
                   </div>
-                  <h2 className="text-base font-semibold text-slate-900 line-clamp-2">
-                    {service.title}
-                  </h2>
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center gap-3 text-xs text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <Clock size={12} />
-                        {service.duration}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg font-bold" style={{ color: brandColor }}>
-                        {formatPrice(service.price)}
-                      </span>
-                      <span className="inline-flex items-center justify-center px-3 py-2 text-xs font-medium rounded-lg text-white" style={{ backgroundColor: brandColor }}>
-                        Xem ngay
-                      </span>
-                    </div>
-                  </div>
                 </div>
-              </article>
-            ))}
-          </div>
-        )}
+              </div>
+            </article>
+          ))}
+        </div>
 
         {/* Load More */}
         {showPagination && (
@@ -428,9 +382,10 @@ export function ServicesListPreview({
     return <MagazinePreview {...props} />;
   }
   
-  if (filterPosition === 'sidebar' || layoutStyle === 'list') {
+  if (layoutStyle === 'sidebar') {
     return <SidebarPreview {...props} />;
   }
 
+  // Default: grid
   return <FullWidthPreview {...props} />;
 }

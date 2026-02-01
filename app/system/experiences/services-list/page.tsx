@@ -17,7 +17,7 @@ import {
 } from '@/components/experiences';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
-type ListLayoutStyle = 'grid' | 'list' | 'masonry';
+type ListLayoutStyle = 'grid' | 'sidebar' | 'masonry';
 
 type ServicesListExperienceConfig = {
   layoutStyle: ListLayoutStyle;
@@ -27,8 +27,8 @@ const EXPERIENCE_KEY = 'services_list_ui';
 
 const LAYOUT_STYLES: { id: ListLayoutStyle; label: string; description: string }[] = [
   { description: 'Hiển thị dạng lưới cards', id: 'grid', label: 'Grid' },
-  { description: 'Hiển thị dạng danh sách', id: 'list', label: 'List' },
-  { description: 'Hiển thị dạng masonry', id: 'masonry', label: 'Masonry' },
+  { description: 'Hiển thị với sidebar bên trái', id: 'sidebar', label: 'Sidebar' },
+  { description: 'Hiển thị dạng magazine chuyên nghiệp', id: 'masonry', label: 'Magazine' },
 ];
 
 const DEFAULT_CONFIG: ServicesListExperienceConfig = {
@@ -36,9 +36,9 @@ const DEFAULT_CONFIG: ServicesListExperienceConfig = {
 };
 
 const HINTS = [
-  'Grid layout phù hợp cho service cards.',
-  'List layout tốt cho services có nhiều thông tin.',
-  'Masonry layout tạo cảm giác magazine chuyên nghiệp.',
+  'Grid layout hiển thị cards dạng lưới gọn gàng.',
+  'Sidebar layout có sidebar trái với search và categories.',
+  'Magazine layout tạo cảm giác chuyên nghiệp với hero featured.',
 ];
 
 export default function ServicesListExperiencePage() {
