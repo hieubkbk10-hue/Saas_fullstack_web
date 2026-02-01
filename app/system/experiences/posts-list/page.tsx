@@ -11,7 +11,8 @@ import {
   ExperienceSummaryGrid, 
   ExperienceBlockToggle,
   ExperienceHintCard,
-  LivePreview,
+  ExperiencePreview,
+  PostsListPreview,
   ExampleLinks,
   type SummaryItem 
 } from '@/components/experiences';
@@ -75,7 +76,7 @@ export default function PostsListExperiencePage() {
   const isLoading = experienceSetting === undefined || postsModule === undefined;
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
-  const { handleSave, isSaving, saveCount } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
+  const { handleSave, isSaving } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
 
   const summaryItems: SummaryItem[] = [
     { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },
@@ -106,12 +107,16 @@ export default function PostsListExperiencePage() {
         isSaving={isSaving}
       />
 
-      {/* Full-width Preview */}
-      <LivePreview
-        url="/posts"
-        title="Danh sách bài viết"
-        refreshKey={saveCount}
-      />
+      {/* Full-width Preview - Realtime khi config thay đổi */}
+      <ExperiencePreview title="Danh sách bài viết">
+        <PostsListPreview
+          layoutStyle={config.layoutStyle}
+          filterPosition={config.filterPosition}
+          showPagination={config.showPagination}
+          showSearch={config.showSearch}
+          showCategories={config.showCategories}
+        />
+      </ExperiencePreview>
 
       {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

@@ -11,7 +11,8 @@ import {
   ExperienceSummaryGrid, 
   ExperienceBlockToggle,
   ExperienceHintCard,
-  LivePreview,
+  ExperiencePreview,
+  PostDetailPreview,
   ExampleLinks,
   type SummaryItem 
 } from '@/components/experiences';
@@ -100,13 +101,16 @@ export default function PostDetailExperiencePage() {
         isSaving={isSaving}
       />
 
-      {/* Full-width Preview */}
-      {examplePostSlug && (
-        <LivePreview
-          url={`/posts/${examplePostSlug}`}
-          title="Chi tiết bài viết"
+      {/* Full-width Preview - Realtime */}
+      <ExperiencePreview title="Chi tiết bài viết">
+        <PostDetailPreview
+          layoutStyle={config.layoutStyle}
+          showAuthor={config.showAuthor}
+          showRelated={config.showRelated}
+          showShare={config.showShare}
+          showComments={config.showComments}
         />
-      )}
+      </ExperiencePreview>
 
       {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

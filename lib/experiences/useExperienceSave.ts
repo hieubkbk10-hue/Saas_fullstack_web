@@ -7,7 +7,6 @@ import { EXPERIENCE_GROUP, MESSAGES } from './constants';
 interface UseExperienceSaveResult {
   handleSave: () => Promise<void>;
   isSaving: boolean;
-  saveCount: number; // Số lần save thành công, dùng để trigger reload
 }
 
 /**
@@ -24,7 +23,6 @@ export function useExperienceSave(
   additionalSettings?: Array<{ group: string; key: string; value: unknown }>
 ): UseExperienceSaveResult {
   const [isSaving, setIsSaving] = useState(false);
-  const [saveCount, setSaveCount] = useState(0);
   const setMultipleSettings = useMutation(api.settings.setMultiple);
 
   const handleSave = async () => {
@@ -40,7 +38,6 @@ export function useExperienceSave(
 
       await setMultipleSettings({ settings: settingsToSave });
       toast.success(successMessage);
-      setSaveCount(prev => prev + 1); // Increment để trigger reload
     } catch {
       toast.error(MESSAGES.saveError);
     } finally {
@@ -51,6 +48,5 @@ export function useExperienceSave(
   return {
     handleSave,
     isSaving,
-    saveCount,
   };
 }

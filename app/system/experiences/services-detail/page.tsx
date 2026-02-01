@@ -11,7 +11,8 @@ import {
   ExperienceSummaryGrid, 
   ExperienceBlockToggle,
   ExperienceHintCard,
-  LivePreview,
+  ExperiencePreview,
+  ServiceDetailPreview,
   ExampleLinks,
   type SummaryItem 
 } from '@/components/experiences';
@@ -100,13 +101,16 @@ export default function ServiceDetailExperiencePage() {
         isSaving={isSaving}
       />
 
-      {/* Full-width Preview */}
-      {exampleServiceSlug && (
-        <LivePreview
-          url={`/services/${exampleServiceSlug}`}
-          title="Chi tiết dịch vụ"
+      {/* Full-width Preview - Realtime */}
+      <ExperiencePreview title="Chi tiết dịch vụ">
+        <ServiceDetailPreview
+          layoutStyle={config.layoutStyle}
+          showAuthor={config.showAuthor}
+          showRelated={config.showRelated}
+          showShare={config.showShare}
+          showComments={config.showComments}
         />
-      )}
+      </ExperiencePreview>
 
       {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

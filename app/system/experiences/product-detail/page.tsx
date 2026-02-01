@@ -11,7 +11,8 @@ import {
   ExperienceSummaryGrid, 
   ExperienceBlockToggle,
   ExperienceHintCard,
-  LivePreview,
+  ExperiencePreview,
+  ProductDetailPreview,
   ExampleLinks,
   type SummaryItem 
 } from '@/components/experiences';
@@ -128,13 +129,16 @@ export default function ProductDetailExperiencePage() {
         isSaving={isSaving}
       />
 
-      {/* Full-width Preview */}
-      {exampleProductSlug && (
-        <LivePreview
-          url={`/products/${exampleProductSlug}`}
-          title="Trang chi tiết sản phẩm"
+      {/* Full-width Preview - Realtime */}
+      <ExperiencePreview title="Trang chi tiết sản phẩm">
+        <ProductDetailPreview
+          layoutStyle={config.layoutStyle}
+          showRating={config.showRating}
+          showWishlist={config.showWishlist}
+          showAddToCart={config.showAddToCart}
+          showClassicHighlights={config.showClassicHighlights}
         />
-      )}
+      </ExperiencePreview>
 
       {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
