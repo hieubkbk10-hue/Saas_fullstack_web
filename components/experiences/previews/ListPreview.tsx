@@ -40,10 +40,11 @@ export function PostsListPreview({
   const showFilterBar = showSearch || showCategories;
 
   const isMobile = device === 'mobile';
+  const _isTablet = device === 'tablet';
+  const isDesktop = device === 'desktop';
   const isCompact = device !== 'desktop';
   const visiblePosts = device === 'mobile' ? 2 : 4;
-  const showCompactPanel = isCompact && (showSearch || showCategories);
-  const showAppliedRow = !isCompact;
+  const showMobilePanel = isCompact && (showSearch || showCategories);
   const gridClass = isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3';
 
   if (style === 'fullwidth') {
@@ -57,8 +58,9 @@ export function PostsListPreview({
           <div className="mb-5 space-y-2.5">
             <div className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
               <div className="flex items-center gap-2">
+                {/* Search - Responsive width: max-w-xs on desktop, full width on mobile/tablet */}
                 {showSearch && (
-                  <div className={`relative flex-1 min-w-0 ${isCompact ? '' : 'max-w-xs'}`}>
+                  <div className={`relative flex-1 min-w-0 ${isDesktop ? 'max-w-xs' : ''}`}>
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
@@ -68,8 +70,10 @@ export function PostsListPreview({
                     />
                   </div>
                 )}
-                {showCategories && !isCompact && (
-                  <div className="hidden lg:block relative">
+                
+                {/* Category Dropdown - Desktop only */}
+                {showCategories && isDesktop && (
+                  <div className="relative">
                     <select
                       className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white min-w-[140px]"
                       disabled
@@ -81,9 +85,13 @@ export function PostsListPreview({
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
                 )}
-                {!isCompact && <div className="hidden lg:block flex-1" />}
-                {!isCompact && (
-                  <div className="hidden lg:block relative">
+                
+                {/* Spacer - Desktop only (pushes Sort to right) */}
+                {isDesktop && <div className="flex-1" />}
+                
+                {/* Sort Dropdown - Desktop only, right-aligned */}
+                {isDesktop && (
+                  <div className="relative">
                     <select
                       className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white"
                       disabled
@@ -95,17 +103,19 @@ export function PostsListPreview({
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
                 )}
-                {showCompactPanel && (
-                  <button
-                    className="lg:hidden flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm shrink-0"
-                  >
+                
+                {/* Mobile Filter Toggle - Mobile/Tablet only */}
+                {showMobilePanel && (
+                  <button className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm shrink-0">
                     <SlidersHorizontal className="w-4 h-4" />
                     Bộ lọc
                   </button>
                 )}
               </div>
-              {showCompactPanel && (
-                <div className="lg:hidden mt-3 pt-3 border-t border-slate-200 space-y-3">
+              
+              {/* Mobile Filter Panel - Mobile/Tablet only, always visible */}
+              {showMobilePanel && (
+                <div className="mt-3 pt-3 border-t border-slate-200 space-y-3">
                   {showCategories && (
                     <div>
                       <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">
@@ -138,7 +148,8 @@ export function PostsListPreview({
               )}
             </div>
 
-            {showAppliedRow ? (
+            {/* Applied Filters Row - Desktop full layout */}
+            {isDesktop ? (
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm text-slate-500">4 bài viết</span>
@@ -158,6 +169,8 @@ export function PostsListPreview({
             )}
           </div>
         )}
+        
+        {/* Grid - Explicit device-based columns */}
         <div className={`grid ${gridClass} gap-3`}>
           {mockPosts.slice(0, visiblePosts).map((post) => (
             <div key={post.id} className="bg-white rounded-lg overflow-hidden shadow-sm border border-slate-100 h-full flex flex-col">
@@ -183,6 +196,8 @@ export function PostsListPreview({
             </div>
           ))}
         </div>
+        
+        {/* Pagination */}
         {showPagination && (
           <div className="text-center mt-6">
             <button

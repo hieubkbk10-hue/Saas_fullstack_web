@@ -1,78 +1,364 @@
 ---
 name: experience-preview-extractor
-description: Trích “xương” (layout/structure/state chính) từ code UI thật để tạo preview giống giao diện tương ứng. Dùng khi cần đồng bộ UI preview với UI thật, hoặc khi user nói “preview phải giống giao diện thực”, “tạo preview từ code thật”, “trích xương giao diện”.
-allowed-tools: Read, Grep, Glob, Execute, ApplyPatch
+description: Trích "xương" (layout/structure/state chính) từ code UI thật để tạo preview giống giao diện tương ứng. Dùng khi cần đồng bộ UI preview với UI thật, hoặc khi user nói "preview phải giống giao diện thực", "tạo preview từ code thật", "trích xương giao diện".
+allowed-tools: Read, Grep, Glob, Execute, Edit
 ---
 
 # Experience Preview Extractor
 
-Giúp phân rã UI thật thành “xương” preview (layout, vùng filter/sort/category, list item, header/footer) để preview giống giao diện thật nhưng nhẹ và tĩnh.
+Skill này áp dụng **Visual Regression Best Practices 2026** để trích xuất UI skeleton từ code thật và tạo preview component có **structural similarity** cao với UI production.
 
-## Quick start
-Khi user báo preview lệch UI thật:
-1) Xác định page thật và layout tương ứng.
-2) Trích “xương” từ layout thật.
-3) Áp vào component preview cho **từng breakpoint** (desktop/tablet/mobile).
-4) Chạy validator của dự án.
+## Core Principles (từ Web Search Research)
 
-## Quy trình chuẩn (bắt cá lấy xương)
-1. **Tìm UI thật**
-   - Dùng `Glob`/`Grep` để tìm layout/page thật (ví dụ `app/(site)/posts/page.tsx`, `components/site/posts/layouts/*`).
-   - Đọc layout để hiểu cấu trúc DOM và thứ tự các khối.
+### 1. Structural Similarity Principle
+> "Skeleton screens should closely resemble the final content layout" - Frontend Best Practices 2026
 
-2. **Trích xương (Skeleton Map)**
-   - Ghi lại các khối chính theo thứ tự: `Header`, `Filter Bar`, `Sort`, `Category`, `List/Grid`, `Pagination`.
-   - Ghi vị trí tương đối (flex, grid, sidebar), kích thước tương đối (max-w, min-w), và breakpoint quan trọng (mobile/tablet/desktop).
-   - Ghi UI tương tác quan trọng nhưng chỉ cần dạng “tĩnh” trong preview (dropdown/select, chip, toggle).
+Preview phải match:
+- **DOM hierarchy** (thứ tự các khối)
+- **Visual spacing** (padding, gap, margin)
+- **Layout patterns** (flex, grid, absolute positioning)
+- **Responsive breakpoints** (sm:, md:, lg:, xl:)
+- **Component states** (empty, loading, error)
 
-3. **Trích xương responsive**
-   - Đọc các class breakpoint (`sm:`, `md:`, `lg:`) và map thành 3 trạng thái preview: desktop/tablet/mobile.
-   - Xác định các phần **ẩn/hiện theo breakpoint** (ví dụ category + sort chỉ `lg` mới hiện).
-   - Ghi số cột grid theo breakpoint (ví dụ `sm:grid-cols-2`, `lg:grid-cols-3`).
+### 2. Component Isolation Principle
+> "Test components in isolation to maintain UI consistency" - Vitest Component Testing Guide
 
-4. **Chuẩn hoá preview**
-   - Preview chỉ tái hiện **structure + spacing + alignment**; nội dung mock đơn giản.
-   - Ưu tiên dùng cùng class utility (Tailwind) và cùng thứ tự khối với UI thật.
-   - Những phần động: dùng `select/option`, `button` disabled, hoặc placeholder.
+Preview component phải:
+- Tách biệt khỏi business logic
+- Không phụ thuộc API/database
+- Render được standalone
+- Mock data đơn giản, predictable
+- Không có side effects
 
-5. **So khớp**
-   - So sánh 1-1 giữa “xương” và preview: vị trí sort, kiểu category (dropdown vs chip), độ rộng filter, v.v.
-   - Nếu có device preview (desktop/tablet/mobile), đảm bảo rule phản chiếu breakpoint UI thật (ví dụ `lg` => chỉ desktop).
+### 3. Visual Regression Coverage
+> "Capture baseline screenshots for pixel-perfect comparison" - Chromatic Best Practices
 
-6. **Validate**
-   - Chạy lint/validator theo project.
-   - Nếu thất bại, sửa và chạy lại.
+Preview phải cover:
+- **All breakpoints**: desktop (1920px), tablet (768px), mobile (375px)
+- **All layout variants**: fullwidth, sidebar, magazine, etc.
+- **Interactive states**: default, hover, active, disabled
+- **Edge cases**: empty state, long text, missing images
 
-## Checklist trích xương
-- [ ] Filter bar có bao gồm search?
-- [ ] Category là dropdown hay chip list?
-- [ ] Sort nằm bên phải hay bên trái?
-- [ ] Grid columns giống UI thật?
-- [ ] Mobile layout đổi thứ tự khối?
-- [ ] Tablet layout có giống rule breakpoint thật?
-- [ ] Spacing/padding lớn tương tự?
+## Quy trình chuẩn (8 bước)
 
-## Ví dụ áp dụng (posts list)
-**UI thật**: `components/site/posts/PostsFilter.tsx` + `components/site/posts/layouts/FullWidthLayout.tsx`
+### Bước 1: Discovery & Mapping
+```bash
+# Tìm UI thật
+Glob: app/**/[feature]/page.tsx
+Glob: components/site/[feature]/**/*.tsx
 
-**Xương trích**:
-1) Hàng filter: Search (left), Category dropdown (middle), Spacer, Sort dropdown (right).
-2) Grid card 2-3 cột theo breakpoint.
-3) Pagination dưới cùng.
+# Đọc toàn bộ file liên quan
+Read: page.tsx (container logic)
+Read: layouts/*.tsx (layout components)
+Read: Filter.tsx (filter bar)
+```
 
-**Preview tương ứng**:
-- Dùng `select` cho category và sort.
-- `flex-1` spacer để sort sát phải.
-- Card mock với `aspect-video`.
+**Output**: Component dependency graph
 
-## Best practices
-- Không kéo logic business vào preview.
-- Không thêm dữ liệu thật; chỉ mock tối thiểu.
-- Ưu tiên đồng bộ layout hơn là chi tiết UI nhỏ.
+### Bước 2: Extract DOM Structure
+Phân tích JSX và ghi lại:
+```
+1. Container: py-6 md:py-10 px-4
+   └─ max-w-7xl mx-auto
+      ├─ Header: text-center mb-3
+      │  └─ h1: text-2xl md:text-3xl font-bold
+      ├─ Filter Bar: mb-5 (conditional: showSearch || showCategories)
+      │  ├─ Search: flex-1 max-w-xs (desktop)
+      │  ├─ Category: hidden lg:block (dropdown)
+      │  ├─ Spacer: flex-1 (desktop only)
+      │  ├─ Sort: hidden lg:block (right aligned)
+      │  └─ Mobile Toggle: lg:hidden (mobile/tablet)
+      ├─ Applied Filters Row: flex justify-between
+      └─ Grid: grid sm:grid-cols-2 lg:grid-cols-3 gap-3
+```
+
+**CRITICAL**: Copy exact:
+- Class names (including responsive variants)
+- HTML structure order
+- Conditional rendering logic
+
+### Bước 3: Extract Responsive Rules
+Map breakpoints theo device preview:
+
+| Class | Desktop | Tablet | Mobile |
+|-------|---------|--------|--------|
+| `hidden lg:block` | ✅ Show | ❌ Hide | ❌ Hide |
+| `lg:hidden` | ❌ Hide | ✅ Show | ✅ Show |
+| `sm:grid-cols-2` | ✅ 2 cols | ✅ 2 cols | ❌ 1 col |
+| `lg:grid-cols-3` | ✅ 3 cols | ❌ 2 cols | ❌ 1 col |
+| `max-w-xs` (search) | ✅ Limited | ❌ Flex-1 | ❌ Flex-1 |
+
+**Rule**: Device preview KHÔNG dùng `@media` CSS. Dùng `device` prop để render conditional JSX:
+
+```tsx
+// ❌ WRONG: Tailwind breakpoints sẽ responsive theo window size
+<div className="hidden lg:block">...</div>
+
+// ✅ CORRECT: Explicit device prop
+{device === 'desktop' && <div>...</div>}
+{device !== 'desktop' && <div>...</div>}
+```
+
+### Bước 4: Extract Interactive Elements
+Identify form controls và UI state:
+
+| Element | UI Thật | Preview |
+|---------|---------|---------|
+| Search input | Controlled state | `<input disabled />` |
+| Category dropdown | Dynamic options | `<select disabled>{mockOptions}</select>` |
+| Sort dropdown | Event handler | `<select disabled>{mockSorts}</select>` |
+| Mobile filter toggle | State + panel | Static panel (always open) hoặc button disabled |
+| Category chips (mobile) | Click handler | Static spans với active state |
+
+**Best Practice**: Preview KHÔNG có event handlers. Chỉ visual representation.
+
+### Bước 5: Extract Spacing & Sizing
+Copy exact values:
+
+```tsx
+// Container
+py-6 md:py-10 px-4
+max-w-7xl mx-auto
+
+// Filter bar
+mb-5 space-y-2.5
+p-3 gap-2
+
+// Grid
+gap-3
+sm:grid-cols-2 lg:grid-cols-3
+
+// Card
+p-3
+mb-1.5, mt-1.5, mt-2.5, pt-2.5
+```
+
+**CRITICAL**: Không làm tròn hoặc "tối ưu" spacing. Copy y hệt.
+
+### Bước 6: Create Preview Component
+Template structure:
+
+```tsx
+export function [Feature]ListPreview({
+  layoutStyle,
+  showSearch = true,
+  showCategories = true,
+  showPagination = true,
+  brandColor = '#3b82f6',
+  device = 'desktop',
+}: PreviewProps) {
+  // Device helpers
+  const isMobile = device === 'mobile';
+  const isTablet = device === 'tablet';
+  const isDesktop = device === 'desktop';
+  const isCompact = device !== 'desktop';
+  
+  // Mock data (simple, predictable)
+  const mockItems = [
+    { id: 1, title: '...', category: '...' },
+    // ...
+  ];
+  
+  // Conditional rendering based on device
+  const showDesktopDropdowns = isDesktop;
+  const showMobilePanel = isCompact;
+  const visibleItems = isMobile ? 2 : 4;
+  const gridClass = isMobile ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3';
+  
+  return (
+    {/* Copy exact structure from UI thật */}
+  );
+}
+```
+
+### Bước 7: Implement Responsive Variants
+Với mỗi breakpoint, tạo explicit conditions:
+
+```tsx
+{/* Desktop: Full filter bar */}
+{showDesktopDropdowns && (
+  <div className="relative">
+    <select disabled>...</select>
+  </div>
+)}
+
+{/* Desktop: Spacer */}
+{isDesktop && <div className="flex-1" />}
+
+{/* Mobile/Tablet: Compact panel */}
+{showMobilePanel && (
+  <div className="mt-3 pt-3 border-t">
+    {/* Mobile filter UI */}
+  </div>
+)}
+
+{/* Grid columns by device */}
+<div className={`grid ${gridClass} gap-3`}>
+  {mockItems.slice(0, visibleItems).map(...)}
+</div>
+```
+
+### Bước 8: Validate & Test
+```bash
+# 1. Typecheck
+npm run typecheck
+
+# 2. Lint
+bunx oxlint --type-aware --type-check --fix
+
+# 3. Visual comparison (manual)
+# Mở side-by-side:
+# - http://localhost:3000/[feature] (UI thật)
+# - http://localhost:3000/system/experiences/[feature]-list (Preview)
+
+# 4. Check responsive
+# Toggle device preview: desktop → tablet → mobile
+# So sánh với resize browser window trên UI thật
+```
+
+## Checklist chi tiết
+
+### Structure Matching
+- [ ] Container classes match (py, px, max-w)
+- [ ] Header structure match (h1, position, margin)
+- [ ] Filter bar structure match (search, category, sort order)
+- [ ] Grid structure match (cols, gap, aspect ratio)
+- [ ] Card structure match (image, content, footer sections)
+- [ ] Pagination/Load more match (position, styling)
+
+### Responsive Matching (Desktop)
+- [ ] Category dropdown visible
+- [ ] Sort dropdown visible và right-aligned
+- [ ] Spacer `flex-1` between category và sort
+- [ ] Search input có `max-w-xs` constraint
+- [ ] Mobile filter toggle ẩn
+- [ ] Applied filters row visible với full layout
+- [ ] Grid: 3 columns (`lg:grid-cols-3`)
+
+### Responsive Matching (Tablet)
+- [ ] Category dropdown ẩn
+- [ ] Sort dropdown ẩn
+- [ ] Mobile filter toggle hiện
+- [ ] Mobile filter panel always visible hoặc expandable
+- [ ] Search input full width (không có max-w constraint)
+- [ ] Grid: 2 columns (`sm:grid-cols-2`)
+
+### Responsive Matching (Mobile)
+- [ ] Tương tự tablet nhưng:
+- [ ] Grid: 1 column
+- [ ] Visible items reduced (2 thay vì 4)
+- [ ] Applied filters row simplified hoặc chỉ show count
+
+### Spacing & Sizing
+- [ ] All py, px, my, mx values match
+- [ ] Gap values match (gap-2, gap-3, etc.)
+- [ ] Border radius match (rounded-lg, rounded-xl)
+- [ ] Font sizes match (text-xs, text-sm, text-2xl)
+- [ ] Aspect ratios match (aspect-video)
+
+### Interactive Elements
+- [ ] All inputs/selects disabled
+- [ ] No event handlers attached
+- [ ] Static mock data used
+- [ ] Active states shown visually (selected category, etc.)
+
+### Edge Cases
+- [ ] Empty state shown when `mockItems.length === 0`
+- [ ] Long text truncated (line-clamp-2)
+- [ ] Missing images handled (placeholder icon)
+
+## Common Mistakes (TRÁNH)
+
+### ❌ WRONG: Dùng Tailwind breakpoints trong preview
+```tsx
+// Preview sẽ responsive theo window size, không theo device prop
+<div className="hidden lg:block">...</div>
+```
+
+### ✅ CORRECT: Explicit device conditions
+```tsx
+{device === 'desktop' && <div>...</div>}
+{device !== 'desktop' && <div>...</div>}
+```
+
+### ❌ WRONG: Simplified layout "cho gọn"
+```tsx
+// Thiếu spacer => Sort không right-aligned
+<div className="flex gap-2">
+  <input />
+  <select /> {/* Category */}
+  <select /> {/* Sort - sẽ sát category, không về bên phải */}
+</div>
+```
+
+### ✅ CORRECT: Preserve spacer
+```tsx
+<div className="flex gap-2">
+  <input />
+  <select /> {/* Category */}
+  <div className="flex-1" /> {/* Spacer */}
+  <select /> {/* Sort - về bên phải */}
+</div>
+```
+
+### ❌ WRONG: Hardcode visible items
+```tsx
+// Luôn show 4 items, kể cả mobile
+{mockPosts.map(...)}
+```
+
+### ✅ CORRECT: Responsive item count
+```tsx
+const visibleItems = device === 'mobile' ? 2 : 4;
+{mockPosts.slice(0, visibleItems).map(...)}
+```
+
+## Debug Process
+
+Khi preview không match UI thật:
+
+1. **Open DevTools side-by-side**
+   - Tab 1: `http://localhost:3000/[feature]` (UI thật)
+   - Tab 2: `http://localhost:3000/system/experiences/[feature]-list` (Preview)
+
+2. **Inspect DOM structure**
+   - Right-click element → Inspect
+   - So sánh tree structure
+   - Check class names
+
+3. **Toggle device preview**
+   - Desktop → Tablet → Mobile
+   - Resize UI thật window để compare
+
+4. **Check specific issues**
+   - **Sort không về phải**: Missing spacer `flex-1`
+   - **Dropdown không ẩn**: Missing `device === 'desktop'` condition
+   - **Search quá rộng**: Missing `max-w-xs` trên desktop
+   - **Mobile panel không hiện**: Missing `device !== 'desktop'` condition
+   - **Grid columns sai**: Sai `gridClass` logic
+
+5. **Validate spacing**
+   - Copy class từ UI thật: `py-6 md:py-10 px-4`
+   - Paste vào preview: exact same
 
 ## Khi KHÔNG dùng skill
-- Preview chỉ cần minh hoạ chung, không yêu cầu khớp UI thật.
-- UI thật chưa có code/thiết kế rõ ràng.
 
-## Kiểm thử
-- Dùng scripts lint/typecheck của dự án trước khi hoàn tất.
+- Preview chỉ cần minh hoạ chung (không cần pixel-perfect)
+- UI thật chưa có code rõ ràng
+- Feature đang trong giai đoạn prototype
+
+## Performance Tips
+
+- Mock data tối đa 10 items
+- Không fetch API trong preview
+- Không include analytics/tracking
+- Disable all event handlers
+
+## Validation Checklist
+
+Trước khi hoàn thành:
+- [ ] `npm run typecheck` passes
+- [ ] `bunx oxlint --type-aware --type-check --fix` passes  
+- [ ] Visual comparison OK cho cả 3 devices
+- [ ] No console errors
+- [ ] Preview renders trong < 100ms
