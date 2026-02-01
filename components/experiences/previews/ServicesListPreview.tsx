@@ -211,7 +211,13 @@ function SidebarPreview({ showSearch, showCategories, brandColor = '#8b5cf6' }: 
                   <div className="flex flex-col sm:flex-row">
                     <div className="sm:w-44 md:w-52 flex-shrink-0">
                       <div className="aspect-video sm:aspect-[4/3] sm:h-full bg-slate-100 overflow-hidden relative">
-                        <Image src={service.thumbnail} alt={service.title} fill sizes="96px" className="object-cover" />
+                        {service.thumbnail ? (
+                          <Image src={service.thumbnail} alt={service.title} fill sizes="96px" className="object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Briefcase size={32} className="text-slate-300" />
+                          </div>
+                        )}
                         {service.featured && (
                           <div className="absolute top-2 left-2 px-2 py-1 bg-amber-500 text-white text-xs font-medium rounded flex items-center gap-1">
                             <Star size={10} className="fill-current" /> Nổi bật
@@ -266,7 +272,13 @@ function MagazinePreview({ showCategories, brandColor = '#8b5cf6' }: ServicesLis
           {/* Hero Section */}
           <section className="grid lg:grid-cols-3 gap-4">
             <article className="lg:col-span-2 relative h-full min-h-[280px] lg:min-h-[360px] rounded-xl overflow-hidden bg-slate-900">
-              <Image src={mainFeatured.thumbnail} alt={mainFeatured.title} fill sizes="(max-width: 1024px) 100vw, 66vw" className="object-cover" />
+              {mainFeatured.thumbnail ? (
+                <Image src={mainFeatured.thumbnail} alt={mainFeatured.title} fill sizes="(max-width: 1024px) 100vw, 66vw" className="object-cover" />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
+                  <Briefcase size={64} className="text-slate-600" />
+                </div>
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-6">
                 <div className="flex items-center gap-2 mb-2">
@@ -293,7 +305,13 @@ function MagazinePreview({ showCategories, brandColor = '#8b5cf6' }: ServicesLis
             <div className="flex flex-col gap-4">
               {secondaryFeatured.map(service => (
                 <article key={service._id} className="relative flex-1 min-h-[140px] lg:min-h-0 rounded-lg overflow-hidden bg-slate-900">
-                  <Image src={service.thumbnail} alt={service.title} fill sizes="(max-width: 1024px) 100vw, 33vw" className="object-cover" />
+                  {service.thumbnail ? (
+                    <Image src={service.thumbnail} alt={service.title} fill sizes="(max-width: 1024px) 100vw, 33vw" className="object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center">
+                      <Briefcase size={32} className="text-slate-500" />
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold text-white mb-1 bg-black/60 backdrop-blur-sm ring-1 ring-black/30">
@@ -376,7 +394,13 @@ function MagazinePreview({ showCategories, brandColor = '#8b5cf6' }: ServicesLis
               {MOCK_SERVICES.map(service => (
                 <article key={service._id} className="h-full flex flex-col">
                   <div className="aspect-[16/10] rounded-lg overflow-hidden bg-slate-100 mb-3 relative">
-                    <Image src={service.thumbnail} alt={service.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
+                    {service.thumbnail ? (
+                      <Image src={service.thumbnail} alt={service.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Briefcase size={32} className="text-slate-300" />
+                      </div>
+                    )}
                     {service.featured && (
                       <div className="absolute top-2 left-2 px-2 py-1 bg-amber-500 text-white text-xs font-medium rounded flex items-center gap-1">
                         <Star size={10} className="fill-current" />

@@ -388,8 +388,8 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
           </section>
         </div>
 
-        {post.thumbnail && (
-          <section className="relative overflow-hidden rounded-2xl bg-muted aspect-[16/9] md:aspect-[21/9] max-w-7xl mx-auto">
+        <section className="relative overflow-hidden rounded-2xl bg-muted aspect-[16/9] md:aspect-[21/9] max-w-7xl mx-auto">
+          {post.thumbnail ? (
             <Image
               src={post.thumbnail}
               alt={post.title}
@@ -397,8 +397,12 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
               sizes="(max-width: 1024px) 100vw, 1024px"
               className="object-cover transition-transform duration-300 hover:scale-105"
             />
-          </section>
-        )}
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+              <FileText className="h-14 w-14" />
+            </div>
+          )}
+        </section>
 
         <article className="max-w-7xl mx-auto space-y-6">
           {showExcerpt && post.excerpt && (

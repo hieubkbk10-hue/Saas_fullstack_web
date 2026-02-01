@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Eye, Home, Link as LinkIcon, Share2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Eye, FileText, Home, Link as LinkIcon, Share2 } from 'lucide-react';
 import Image from 'next/image';
 
 type DetailLayoutStyle = 'classic' | 'modern' | 'minimal';
@@ -99,13 +99,19 @@ function ClassicStylePreview({ showAuthor, showRelated, showShare, brandColor = 
             </header>
 
             <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted/60 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
-              <Image
-                src={MOCK_POST.thumbnail}
-                alt={MOCK_POST.title}
-                fill
-                sizes="100vw"
-                className="object-cover transition-transform duration-700 hover:scale-105"
-              />
+              {MOCK_POST.thumbnail ? (
+                <Image
+                  src={MOCK_POST.thumbnail}
+                  alt={MOCK_POST.title}
+                  fill
+                  sizes="100vw"
+                  className="object-cover transition-transform duration-700 hover:scale-105"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <FileText size={48} className="text-muted-foreground/40" />
+                </div>
+              )}
             </div>
 
             <div className="prose prose-zinc prose-lg max-w-none lg:max-w-[640px] dark:prose-invert">
@@ -145,13 +151,19 @@ function ClassicStylePreview({ showAuthor, showRelated, showShare, brandColor = 
                   {MOCK_RELATED.map((p) => (
                     <div key={p._id} className="group flex gap-3 items-start">
                       <div className="relative h-16 w-20 flex-shrink-0 overflow-hidden rounded-md bg-muted/60">
-                        <Image
-                          src={p.thumbnail}
-                          alt={p.title}
-                          fill
-                          sizes="80px"
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
+                        {p.thumbnail ? (
+                          <Image
+                            src={p.thumbnail}
+                            alt={p.title}
+                            fill
+                            sizes="80px"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <FileText size={20} className="text-muted-foreground/40" />
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-col gap-1">
                         <h4 className="text-sm font-medium leading-snug line-clamp-2 group-hover:opacity-80 transition-colors">
@@ -244,13 +256,19 @@ function ModernStylePreview({ showAuthor, showRelated, showShare, brandColor = '
         </div>
 
         <section className="relative overflow-hidden rounded-2xl bg-muted aspect-[16/9] md:aspect-[21/9] max-w-7xl mx-auto">
-          <Image
-            src={MOCK_POST.thumbnail}
-            alt={MOCK_POST.title}
-            fill
-            sizes="(max-width: 1024px) 100vw, 1024px"
-            className="object-cover transition-transform duration-300 hover:scale-105"
-          />
+          {MOCK_POST.thumbnail ? (
+            <Image
+              src={MOCK_POST.thumbnail}
+              alt={MOCK_POST.title}
+              fill
+              sizes="(max-width: 1024px) 100vw, 1024px"
+              className="object-cover transition-transform duration-300 hover:scale-105"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <FileText size={56} className="text-muted-foreground/40" />
+            </div>
+          )}
         </section>
 
         <article className="max-w-7xl mx-auto space-y-6">
@@ -286,13 +304,19 @@ function ModernStylePreview({ showAuthor, showRelated, showShare, brandColor = '
                     style={{ borderColor: `${brandColor}25` }}
                   >
                     <div className="aspect-[4/3] rounded-md overflow-hidden bg-muted mb-3 relative">
-                      <Image
-                        src={p.thumbnail}
-                        alt={p.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
+                      {p.thumbnail ? (
+                        <Image
+                          src={p.thumbnail}
+                          alt={p.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <FileText size={28} className="text-muted-foreground/40" />
+                        </div>
+                      )}
                     </div>
                     <h3 className="text-base font-semibold text-foreground leading-snug line-clamp-2">
                       {p.title}
@@ -328,13 +352,19 @@ function MinimalStylePreview({ showAuthor, showRelated, showShare, brandColor = 
       <main className="pb-16">
         <section className="relative w-full overflow-hidden bg-muted">
           <div className="relative h-[clamp(220px,45vh,520px)] w-full">
-            <Image
-              src={MOCK_POST.thumbnail}
-              alt={MOCK_POST.title}
-              fill
-              sizes="100vw"
-              className="object-cover"
-            />
+            {MOCK_POST.thumbnail ? (
+              <Image
+                src={MOCK_POST.thumbnail}
+                alt={MOCK_POST.title}
+                fill
+                sizes="100vw"
+                className="object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <FileText size={56} className="text-muted-foreground/40" />
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
             <div className="absolute inset-x-0 top-0 z-10">
               <div className="container max-w-6xl mx-auto px-4 md:px-6">
@@ -419,13 +449,19 @@ function MinimalStylePreview({ showAuthor, showRelated, showShare, brandColor = 
                     <div className="flex items-center justify-between gap-4 px-4 py-4">
                       <div className="flex min-w-0 items-center gap-4">
                         <div className="relative h-14 w-20 flex-shrink-0 overflow-hidden rounded-md bg-muted">
-                          <Image
-                            src={p.thumbnail}
-                            alt={p.title}
-                            fill
-                            sizes="80px"
-                            className="object-cover"
-                          />
+                          {p.thumbnail ? (
+                            <Image
+                              src={p.thumbnail}
+                              alt={p.title}
+                              fill
+                              sizes="80px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <FileText size={20} className="text-muted-foreground/40" />
+                            </div>
+                          )}
                         </div>
                         <div>
                           <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
