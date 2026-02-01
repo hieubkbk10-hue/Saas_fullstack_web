@@ -703,8 +703,8 @@ export const seedCommentsModule = mutation({
     }
 
     // 2. Seed module fields
-    const existingFields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "comments")).first();
-    if (!existingFields) {
+    const existingFields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "comments")).collect();
+    if (existingFields.length === 0) {
       const fields = [
         { enabled: true, fieldKey: "content", isSystem: true, moduleKey: "comments", name: "Nội dung", order: 0, required: true, type: "textarea" as const },
         { enabled: true, fieldKey: "authorName", isSystem: true, moduleKey: "comments", name: "Tên người bình luận", order: 1, required: true, type: "text" as const },
@@ -719,6 +719,20 @@ export const seedCommentsModule = mutation({
       ];
       for (const field of fields) {
         await ctx.db.insert("moduleFields", field);
+      }
+    } else {
+      const hasRating = existingFields.some(f => f.fieldKey === "rating");
+      if (!hasRating) {
+        await ctx.db.insert("moduleFields", {
+          enabled: true,
+          fieldKey: "rating",
+          isSystem: false,
+          moduleKey: "comments",
+          name: "Đánh giá",
+          order: 6,
+          required: false,
+          type: "number" as const,
+        });
       }
     }
 
