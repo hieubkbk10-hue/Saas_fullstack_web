@@ -16,17 +16,21 @@ import {
 
 type ServicesListLayout = 'fullwidth' | 'sidebar' | 'magazine';
 
-// SVC-007: Hook to get services layout from settings
+// Hook to get services layout from experience settings
 function useServicesLayout(): ServicesListLayout {
-  const setting = useQuery(api.settings.getByKey, { key: 'services_list_style' });
-  const value = setting?.value as string;
-  if (value === 'grid' || value === 'list') {return 'fullwidth';}
-  if (value === 'sidebar') {return 'sidebar';}
-  if (value === 'magazine') {return 'magazine';}
+  const setting = useQuery(api.settings.getByKey, { key: 'services_list_ui' });
+  const config = setting?.value as { layoutStyle?: string } | undefined;
+  const layoutStyle = config?.layoutStyle;
+  
+  // Map experience config to actual layout
+  if (layoutStyle === 'grid') {return 'fullwidth';}
+  if (layoutStyle === 'sidebar') {return 'sidebar';}
+  if (layoutStyle === 'masonry') {return 'magazine';}
+  
   return 'fullwidth';
 }
 
-// SVC-008: Hook to get enabled service fields
+// Hook to get enabled service fields
 function useEnabledServiceFields(): Set<string> {
   const fields = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'services' });
   return useMemo(() => {
