@@ -879,7 +879,7 @@ export default function ProductsModuleConfigPage() {
                             <ChevronDown size={14} className="text-slate-400" />
                           </button>
                           {openIconPickerIndex === index && (
-                            <div className="absolute z-50 mt-2 grid grid-cols-4 gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg">
+                            <div className="absolute z-50 mt-2 w-[220px] max-h-56 overflow-y-auto grid grid-cols-5 gap-2 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl">
                               {CLASSIC_HIGHLIGHT_ICON_OPTIONS.map((option) => {
                                 const OptionIcon = option.icon;
                                 const isActive = option.id === item.icon;
