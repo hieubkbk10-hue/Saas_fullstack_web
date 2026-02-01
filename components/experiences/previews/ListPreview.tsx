@@ -3,6 +3,7 @@ import { FileText } from 'lucide-react';
 
 type ListLayoutStyle = 'fullwidth' | 'sidebar' | 'magazine' | 'grid' | 'list' | 'masonry';
 type FilterPosition = 'sidebar' | 'top' | 'none';
+type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
 
 type PostsListPreviewProps = {
   layoutStyle: ListLayoutStyle;
@@ -10,6 +11,8 @@ type PostsListPreviewProps = {
   showPagination?: boolean;
   showSearch?: boolean;
   showCategories?: boolean;
+  brandColor?: string;
+  device?: PreviewDevice;
 };
 
 const normalizeLayoutStyle = (style: ListLayoutStyle): 'fullwidth' | 'sidebar' | 'magazine' => {
@@ -23,6 +26,8 @@ export function PostsListPreview({
   showPagination = true,
   showSearch = true,
   showCategories = true,
+  brandColor = '#3b82f6',
+  device = 'desktop',
 }: PostsListPreviewProps) {
   const style = normalizeLayoutStyle(layoutStyle);
   const mockPosts = [
@@ -34,15 +39,17 @@ export function PostsListPreview({
   const categories = ['Tất cả', 'Tin tức', 'Hướng dẫn', 'Tips'];
   const showFilterBar = showSearch || showCategories;
 
+  const isMobile = device === 'mobile';
+
   if (style === 'fullwidth') {
     return (
-      <div className="p-4">
-        <h2 className="font-bold text-center mb-4 text-xl">Tin tức & Bài viết</h2>
+      <div className={`p-4 ${isMobile ? 'p-3' : ''}`}>
+        <h2 className={`font-bold text-center mb-4 ${isMobile ? 'text-lg' : 'text-xl'}`}>Tin tức & Bài viết</h2>
         {showFilterBar && (
           <div className="bg-white border rounded-lg p-3 mb-4">
-            <div className="flex gap-2 items-center">
+            <div className={`flex gap-2 items-center ${isMobile ? 'flex-col' : ''}`}>
               {showSearch && (
-                <div className="flex-1 relative">
+                <div className={`relative ${isMobile ? 'w-full' : 'flex-1'}`}>
                   <input 
                     type="text" 
                     placeholder="Tìm kiếm..." 
@@ -57,7 +64,7 @@ export function PostsListPreview({
                     <span 
                       key={cat} 
                       className={`px-2 py-1 rounded-full text-xs cursor-pointer ${i === 0 ? 'text-white' : 'bg-slate-100'}`}
-                      style={i === 0 ? { backgroundColor: '#3b82f6' } : undefined}
+                      style={i === 0 ? { backgroundColor: brandColor } : undefined}
                     >
                       {cat}
                     </span>
@@ -68,14 +75,14 @@ export function PostsListPreview({
           </div>
         )}
         <div className="text-xs text-slate-500 mb-3">4 bài viết</div>
-        <div className="grid gap-3 grid-cols-2">
-          {mockPosts.slice(0, 4).map((post) => (
+        <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+          {mockPosts.slice(0, isMobile ? 2 : 4).map((post) => (
             <div key={post.id} className="bg-white border rounded-lg overflow-hidden">
               <div className="aspect-video bg-slate-100 flex items-center justify-center">
                 <FileText size={24} className="text-slate-300" />
               </div>
               <div className="p-3">
-                <span className="text-xs font-medium" style={{ color: '#3b82f6' }}>{post.category}</span>
+                <span className="text-xs font-medium" style={{ color: brandColor }}>{post.category}</span>
                 <h3 className="font-medium text-sm mt-1 line-clamp-2">{post.title}</h3>
                 <div className="flex items-center justify-between mt-2 text-xs text-slate-400">
                   <span>{post.date}</span>
@@ -98,8 +105,8 @@ export function PostsListPreview({
 
   if (style === 'sidebar') {
     return (
-      <div className="p-4 flex gap-4">
-        <div className="space-y-3 w-1/3">
+      <div className={`p-4 flex gap-4 ${isMobile ? 'p-3 flex-col' : ''}`}>
+        <div className={`space-y-3 ${isMobile ? 'order-2' : 'w-1/3'}`}>
           {showSearch && (
             <div className="bg-slate-50 rounded-lg p-3">
               <h4 className="font-medium text-xs mb-2">Tìm kiếm</h4>
@@ -114,7 +121,7 @@ export function PostsListPreview({
                   <div 
                     key={cat} 
                     className={`px-2 py-1 rounded text-xs cursor-pointer ${i === 0 ? '' : 'text-slate-600'}`}
-                    style={i === 0 ? { backgroundColor: '#3b82f615', color: '#3b82f6' } : undefined}
+                    style={i === 0 ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}
                   >
                     {cat}
                   </div>
@@ -134,14 +141,14 @@ export function PostsListPreview({
             </div>
           </div>
         </div>
-        <div className="flex-1 space-y-3">
-          {mockPosts.slice(0, 3).map((post) => (
+        <div className={`flex-1 space-y-3 ${isMobile ? 'order-1' : ''}`}>
+          {mockPosts.slice(0, isMobile ? 2 : 3).map((post) => (
             <div key={post.id} className="bg-white border rounded-lg overflow-hidden flex">
               <div className="w-24 h-16 bg-slate-100 flex items-center justify-center flex-shrink-0">
                 <FileText size={16} className="text-slate-300" />
               </div>
               <div className="p-2 flex-1">
-                <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: '#3b82f615', color: '#3b82f6' }}>{post.category}</span>
+                <span className="text-xs font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>{post.category}</span>
                 <h3 className="font-medium text-xs mt-1 line-clamp-1">{post.title}</h3>
                 <span className="text-xs text-slate-400">{post.date}</span>
               </div>
@@ -153,22 +160,22 @@ export function PostsListPreview({
   }
 
   return (
-    <div className="p-4 space-y-4">
-      <div className="grid gap-3 grid-cols-3">
-        <div className="relative rounded-xl overflow-hidden bg-slate-900 col-span-2 row-span-2">
-          <div className="bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center h-full min-h-[180px]">
+    <div className={`p-4 space-y-4 ${isMobile ? 'p-3' : ''}`}>
+      <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
+        <div className={`relative rounded-xl overflow-hidden bg-slate-900 ${isMobile ? '' : 'col-span-2 row-span-2'}`}>
+          <div className={`bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center ${isMobile ? 'aspect-video' : 'h-full min-h-[180px]'}`}>
             <FileText size={32} className="text-slate-600" />
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-3">
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-2 py-0.5 rounded text-xs font-medium text-white" style={{ backgroundColor: '#3b82f6' }}>Nổi bật</span>
+              <span className="px-2 py-0.5 rounded text-xs font-medium text-white" style={{ backgroundColor: brandColor }}>Nổi bật</span>
               <span className="text-xs text-white/60">5 phút đọc</span>
             </div>
             <h3 className="font-bold text-sm text-white">{mockPosts[0].title}</h3>
           </div>
         </div>
-        {mockPosts.slice(1, 3).map((post) => (
+        {!isMobile && mockPosts.slice(1, 3).map((post) => (
           <div key={post.id} className="relative rounded-lg overflow-hidden bg-slate-800">
             <div className="aspect-[16/10] bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center">
               <FileText size={16} className="text-slate-500" />
@@ -188,7 +195,7 @@ export function PostsListPreview({
             <span 
               key={cat} 
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${i === 0 ? 'text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-              style={i === 0 ? { backgroundColor: '#3b82f6' } : undefined}
+              style={i === 0 ? { backgroundColor: brandColor } : undefined}
             >
               {cat}
             </span>
@@ -196,31 +203,33 @@ export function PostsListPreview({
         </div>
       )}
 
-      <div className="bg-slate-50 rounded-lg p-3">
-        <div className="text-xs font-semibold text-slate-700 mb-2">Đang thịnh hành</div>
-        <div className="grid grid-cols-2 gap-3">
-          {mockPosts.slice(0, 2).map((post, i) => (
-            <div key={post.id} className="flex gap-2">
-              <span className="text-lg font-bold opacity-20" style={{ color: '#3b82f6' }}>{String(i + 1).padStart(2, '0')}</span>
-              <div>
-                <div className="text-xs font-medium line-clamp-2">{post.title}</div>
-                <div className="text-xs text-slate-400 mt-0.5">{post.date}</div>
+      {!isMobile && (
+        <div className="bg-slate-50 rounded-lg p-3">
+          <div className="text-xs font-semibold text-slate-700 mb-2">Đang thịnh hành</div>
+          <div className="grid grid-cols-2 gap-3">
+            {mockPosts.slice(0, 2).map((post, i) => (
+              <div key={post.id} className="flex gap-2">
+                <span className="text-lg font-bold opacity-20" style={{ color: brandColor }}>{String(i + 1).padStart(2, '0')}</span>
+                <div>
+                  <div className="text-xs font-medium line-clamp-2">{post.title}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{post.date}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div>
         <div className="text-xs font-semibold text-slate-700 mb-2">Bài viết mới nhất</div>
-        <div className="grid gap-3 grid-cols-2">
-          {mockPosts.slice(0, 2).map((post) => (
+        <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+          {mockPosts.slice(0, isMobile ? 2 : 2).map((post) => (
             <div key={post.id} className="flex gap-3">
               <div className="w-16 h-12 rounded bg-slate-100 flex items-center justify-center flex-shrink-0">
                 <FileText size={14} className="text-slate-300" />
               </div>
               <div className="flex-1 min-w-0">
-                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#3b82f6' }}>{post.category}</span>
+                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: brandColor }}>{post.category}</span>
                 <h4 className="font-medium text-xs line-clamp-2 mt-0.5">{post.title}</h4>
               </div>
             </div>

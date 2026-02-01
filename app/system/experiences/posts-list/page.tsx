@@ -3,14 +3,13 @@
 import React, { useMemo } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { FileText, LayoutTemplate } from 'lucide-react';
+import { FileText, LayoutTemplate, Monitor, Smartphone, Tablet } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
 import { ModuleHeader } from '@/components/modules/shared';
 import { 
   ExperienceModuleLink, 
   ExperienceSummaryGrid, 
   ExperienceHintCard,
-  ExperiencePreview,
   PostsListPreview,
   ExampleLinks,
   type SummaryItem 
@@ -22,6 +21,8 @@ type ListLayoutStyle = 'fullwidth' | 'sidebar' | 'magazine';
 type PostsListExperienceConfig = {
   layoutStyle: ListLayoutStyle;
 };
+
+type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
 
 const EXPERIENCE_KEY = 'posts_list_ui';
 
@@ -39,15 +40,29 @@ const DEFAULT_CONFIG: PostsListExperienceConfig = {
 };
 
 const HINTS = [
-  'Grid layout phù hợp với blog có nhiều hình ảnh.',
-  'Masonry layout tạo giao diện độc đáo nhưng phức tạp hơn.',
-  'Sidebar filters giúp user dễ lọc content.',
+  'Full Width phù hợp blog có nhiều bài viết, filter rõ ràng.',
+  'Sidebar giúp nhấn mạnh bộ lọc và bài viết mới.',
+  'Magazine tạo cảm giác editorial, phù hợp nội dung nổi bật.',
+];
+
+const deviceWidths: Record<PreviewDevice, string> = {
+  desktop: 'w-full',
+  tablet: 'w-[768px] max-w-full',
+  mobile: 'w-[375px] max-w-full',
+};
+
+const devices = [
+  { icon: Monitor, id: 'desktop' as const, label: 'Desktop' },
+  { icon: Tablet, id: 'tablet' as const, label: 'Tablet' },
+  { icon: Smartphone, id: 'mobile' as const, label: 'Mobile' },
 ];
 
 export default function PostsListExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const postsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'posts' });
+  const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
   const exampleCategorySlug = useExamplePostCategorySlug();
+  const [previewDevice, setPreviewDevice] = React.useState<PreviewDevice>('desktop');
   
   // Read legacy layout setting
   const legacyLayoutSetting = useQuery(api.settings.getByKey, { key: LEGACY_LAYOUT_KEY });
@@ -70,6 +85,7 @@ export default function PostsListExperiencePage() {
   }, [experienceSetting?.value, legacyLayoutSetting?.value]);
 
   const isLoading = experienceSetting === undefined || postsModule === undefined;
+  const brandColor = (brandColorSetting?.value as string) || '#3b82f6';
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
   
@@ -112,11 +128,44 @@ export default function PostsListExperiencePage() {
       />
 
       {/* Full-width Preview - Realtime khi config thay đổi */}
-      <ExperiencePreview title="Danh sách bài viết">
-        <PostsListPreview
-          layoutStyle={config.layoutStyle}
-        />
-      </ExperiencePreview>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <CardTitle className="text-base flex items-center gap-2">Preview: Danh sách bài viết</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                {devices.map((device) => (
+                  <button
+                    key={device.id}
+                    onClick={() =>{  setPreviewDevice(device.id); }}
+                    title={device.label}
+                    className={`p-1.5 rounded-md transition-all ${
+                      previewDevice === device.id ? 'bg-white dark:bg-slate-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                  >
+                    <device.icon size={16} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
+            <BrowserFrame>
+              <PostsListPreview
+                layoutStyle={config.layoutStyle}
+                brandColor={brandColor}
+                device={previewDevice}
+              />
+            </BrowserFrame>
+          </div>
+          <div className="mt-3 text-xs text-slate-500 text-center">
+            Trang /posts • Style: <strong>{LAYOUT_STYLES.find((style) => style.id === config.layoutStyle)?.label}</strong>
+            {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -178,6 +227,26 @@ export default function PostsListExperiencePage() {
 
           <ExperienceHintCard hints={HINTS} />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function BrowserFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="border rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-lg">
+      <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 flex items-center gap-2 border-b">
+        <div className="flex gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-red-400" />
+          <div className="w-3 h-3 rounded-full bg-yellow-400" />
+          <div className="w-3 h-3 rounded-full bg-green-400" />
+        </div>
+        <div className="flex-1 ml-4">
+          <div className="bg-white dark:bg-slate-700 rounded-md px-3 py-1 text-xs text-slate-400 max-w-xs">yoursite.com/posts</div>
+        </div>
+      </div>
+      <div className="max-h-[520px] overflow-y-auto">
+        {children}
       </div>
     </div>
   );
