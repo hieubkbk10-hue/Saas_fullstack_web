@@ -12,7 +12,7 @@ Giúp phân rã UI thật thành “xương” preview (layout, vùng filter/sor
 Khi user báo preview lệch UI thật:
 1) Xác định page thật và layout tương ứng.
 2) Trích “xương” từ layout thật.
-3) Áp vào component preview.
+3) Áp vào component preview cho **từng breakpoint** (desktop/tablet/mobile).
 4) Chạy validator của dự án.
 
 ## Quy trình chuẩn (bắt cá lấy xương)
@@ -22,19 +22,24 @@ Khi user báo preview lệch UI thật:
 
 2. **Trích xương (Skeleton Map)**
    - Ghi lại các khối chính theo thứ tự: `Header`, `Filter Bar`, `Sort`, `Category`, `List/Grid`, `Pagination`.
-   - Ghi vị trí tương đối (flex, grid, sidebar), kích thước tương đối (max-w, min-w), và breakpoint quan trọng (mobile/desktop).
+   - Ghi vị trí tương đối (flex, grid, sidebar), kích thước tương đối (max-w, min-w), và breakpoint quan trọng (mobile/tablet/desktop).
    - Ghi UI tương tác quan trọng nhưng chỉ cần dạng “tĩnh” trong preview (dropdown/select, chip, toggle).
 
-3. **Chuẩn hoá preview**
+3. **Trích xương responsive**
+   - Đọc các class breakpoint (`sm:`, `md:`, `lg:`) và map thành 3 trạng thái preview: desktop/tablet/mobile.
+   - Xác định các phần **ẩn/hiện theo breakpoint** (ví dụ category + sort chỉ `lg` mới hiện).
+   - Ghi số cột grid theo breakpoint (ví dụ `sm:grid-cols-2`, `lg:grid-cols-3`).
+
+4. **Chuẩn hoá preview**
    - Preview chỉ tái hiện **structure + spacing + alignment**; nội dung mock đơn giản.
    - Ưu tiên dùng cùng class utility (Tailwind) và cùng thứ tự khối với UI thật.
    - Những phần động: dùng `select/option`, `button` disabled, hoặc placeholder.
 
-4. **So khớp**
+5. **So khớp**
    - So sánh 1-1 giữa “xương” và preview: vị trí sort, kiểu category (dropdown vs chip), độ rộng filter, v.v.
-   - Nếu có device preview (desktop/tablet/mobile), đảm bảo rule `isMobile` phản chiếu breakpoint UI thật.
+   - Nếu có device preview (desktop/tablet/mobile), đảm bảo rule phản chiếu breakpoint UI thật (ví dụ `lg` => chỉ desktop).
 
-5. **Validate**
+6. **Validate**
    - Chạy lint/validator theo project.
    - Nếu thất bại, sửa và chạy lại.
 
@@ -44,6 +49,7 @@ Khi user báo preview lệch UI thật:
 - [ ] Sort nằm bên phải hay bên trái?
 - [ ] Grid columns giống UI thật?
 - [ ] Mobile layout đổi thứ tự khối?
+- [ ] Tablet layout có giống rule breakpoint thật?
 - [ ] Spacing/padding lớn tương tự?
 
 ## Ví dụ áp dụng (posts list)

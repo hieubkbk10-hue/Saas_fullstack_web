@@ -40,6 +40,8 @@ export function PostsListPreview({
   const showFilterBar = showSearch || showCategories;
 
   const isMobile = device === 'mobile';
+  const isCompact = device !== 'desktop';
+  const visiblePosts = device === 'mobile' ? 2 : 4;
 
   if (style === 'fullwidth') {
     return (
@@ -63,7 +65,7 @@ export function PostsListPreview({
                     />
                   </div>
                 )}
-                {showCategories && !isMobile && (
+                {showCategories && !isCompact && (
                   <div className="hidden lg:block relative">
                     <select
                       className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white min-w-[140px]"
@@ -76,8 +78,8 @@ export function PostsListPreview({
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
                 )}
-                {!isMobile && <div className="hidden lg:block flex-1" />}
-                {!isMobile && (
+                {!isCompact && <div className="hidden lg:block flex-1" />}
+                {!isCompact && (
                   <div className="hidden lg:block relative">
                     <select
                       className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white"
@@ -90,7 +92,7 @@ export function PostsListPreview({
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
                 )}
-                {isMobile && (
+                {isCompact && (
                   <button
                     className="lg:hidden flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm"
                   >
@@ -99,7 +101,7 @@ export function PostsListPreview({
                   </button>
                 )}
               </div>
-              {isMobile && (showSearch || showCategories) && (
+              {isCompact && (showSearch || showCategories) && (
                 <div className="lg:hidden mt-3 pt-3 border-t border-slate-200 space-y-3">
                   {showCategories && (
                     <div>
@@ -150,7 +152,7 @@ export function PostsListPreview({
           </div>
         )}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {mockPosts.slice(0, isMobile ? 2 : 4).map((post) => (
+          {mockPosts.slice(0, visiblePosts).map((post) => (
             <div key={post.id} className="bg-white rounded-lg overflow-hidden shadow-sm border border-slate-100 h-full flex flex-col">
               <div className="aspect-video bg-slate-100 flex items-center justify-center">
                 <FileText size={24} className="text-slate-300" />
