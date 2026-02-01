@@ -42,6 +42,7 @@ export function PostsListPreview({
   const isMobile = device === 'mobile';
   const isCompact = device !== 'desktop';
   const visiblePosts = device === 'mobile' ? 2 : 4;
+  const showCompactPanel = isCompact && (showSearch || showCategories);
 
   if (style === 'fullwidth') {
     return (
@@ -101,7 +102,7 @@ export function PostsListPreview({
                   </button>
                 )}
               </div>
-              {isCompact && (showSearch || showCategories) && (
+              {showCompactPanel && (
                 <div className="lg:hidden mt-3 pt-3 border-t border-slate-200 space-y-3">
                   {showCategories && (
                     <div>
