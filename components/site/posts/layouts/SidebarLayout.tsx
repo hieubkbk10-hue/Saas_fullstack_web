@@ -36,6 +36,8 @@ interface SidebarLayoutProps {
   sortBy: SortOption;
   onSortChange: (sort: SortOption) => void;
   enabledFields: Set<string>;
+  showSearch?: boolean;
+  showCategories?: boolean;
 }
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -57,6 +59,8 @@ export function SidebarLayout({
   sortBy,
   onSortChange,
   enabledFields,
+  showSearch = true,
+  showCategories = true,
 }: SidebarLayoutProps) {
   const showExcerpt = enabledFields.has('excerpt');
 
@@ -66,54 +70,58 @@ export function SidebarLayout({
       <aside className="lg:w-64 flex-shrink-0 order-2 lg:order-1">
         <div className="lg:sticky lg:top-24 space-y-3">
           {/* Search Widget */}
-          <div className="bg-white rounded-lg border border-slate-200 p-3">
-            <h3 className="font-semibold text-slate-900 text-sm mb-2 flex items-center gap-2">
-              <Search size={14} style={{ color: brandColor }} />
-              Tìm kiếm
-            </h3>
-            <input
-              type="text"
-              placeholder="Nhập từ khóa..."
-              value={searchQuery}
-              onChange={(e) =>{  onSearchChange(e.target.value); }}
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2"
-              style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
-            />
-          </div>
+          {showSearch && (
+            <div className="bg-white rounded-lg border border-slate-200 p-3">
+              <h3 className="font-semibold text-slate-900 text-sm mb-2 flex items-center gap-2">
+                <Search size={14} style={{ color: brandColor }} />
+                Tìm kiếm
+              </h3>
+              <input
+                type="text"
+                placeholder="Nhập từ khóa..."
+                value={searchQuery}
+                onChange={(e) =>{  onSearchChange(e.target.value); }}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2"
+                style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
+              />
+            </div>
+          )}
 
           {/* Categories Widget */}
-          <div className="bg-white rounded-lg border border-slate-200 p-3">
-            <h3 className="font-semibold text-slate-900 text-sm mb-2 flex items-center gap-2">
-              <Folder size={14} style={{ color: brandColor }} />
-              Danh mục
-            </h3>
-            <ul className="space-y-0.5">
-              <li>
-                <button
-                  onClick={() =>{  onCategoryChange(null); }}
-                  className={`w-full text-left px-2.5 py-1.5 rounded text-sm transition-colors ${
-                    !selectedCategory ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                  style={!selectedCategory ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}
-                >
-                  Tất cả
-                </button>
-              </li>
-              {categories.map((category) => (
-                <li key={category._id}>
+          {showCategories && (
+            <div className="bg-white rounded-lg border border-slate-200 p-3">
+              <h3 className="font-semibold text-slate-900 text-sm mb-2 flex items-center gap-2">
+                <Folder size={14} style={{ color: brandColor }} />
+                Danh mục
+              </h3>
+              <ul className="space-y-0.5">
+                <li>
                   <button
-                    onClick={() =>{  onCategoryChange(category._id); }}
+                    onClick={() =>{  onCategoryChange(null); }}
                     className={`w-full text-left px-2.5 py-1.5 rounded text-sm transition-colors ${
-                      selectedCategory === category._id ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'
+                      !selectedCategory ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'
                     }`}
-                    style={selectedCategory === category._id ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}
+                    style={!selectedCategory ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}
                   >
-                    {category.name}
+                    Tất cả
                   </button>
                 </li>
-              ))}
-            </ul>
-          </div>
+                {categories.map((category) => (
+                  <li key={category._id}>
+                    <button
+                      onClick={() =>{  onCategoryChange(category._id); }}
+                      className={`w-full text-left px-2.5 py-1.5 rounded text-sm transition-colors ${
+                        selectedCategory === category._id ? 'font-medium' : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                      style={selectedCategory === category._id ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined}
+                    >
+                      {category.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Sort Widget */}
           <div className="bg-white rounded-lg border border-slate-200 p-3">

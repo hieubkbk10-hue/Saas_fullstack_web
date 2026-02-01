@@ -22,6 +22,8 @@ interface PostsFilterProps {
   onSortChange: (sort: SortOption) => void;
   totalResults: number;
   brandColor: string;
+  showSearch?: boolean;
+  showCategories?: boolean;
 }
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -41,6 +43,8 @@ export function PostsFilter({
   onSortChange,
   totalResults,
   brandColor,
+  showSearch = true,
+  showCategories = true,
 }: PostsFilterProps) {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
@@ -50,8 +54,12 @@ export function PostsFilter({
     onSortChange('newest');
   }, [onSearchChange, onCategoryChange, onSortChange]);
 
-  const hasActiveFilters = (selectedCategory ?? searchQuery) || sortBy !== 'newest';
-  const selectedCategoryName = categories.find(c => c._id === selectedCategory)?.name;
+  const hasActiveFilters =
+    ((showCategories && selectedCategory) || (showSearch && searchQuery)) ||
+    sortBy !== 'newest';
+  const selectedCategoryName = showCategories
+    ? categories.find(c => c._id === selectedCategory)?.name
+    : undefined;
 
   return (
     <div className="space-y-2.5">
@@ -59,43 +67,47 @@ export function PostsFilter({
       <div className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
         <div className="flex items-center gap-2">
           {/* Search Input */}
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm..."
-              value={searchQuery}
-              onChange={(e) =>{  onSearchChange(e.target.value); }}
-              className="w-full pl-9 pr-9 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 text-sm"
-              style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
-            />
-            {searchQuery && (
-              <button
-                onClick={() =>{  onSearchChange(''); }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100"
-              >
-                <X className="w-4 h-4 text-slate-400" />
-              </button>
-            )}
-          </div>
+          {showSearch && (
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm..."
+                value={searchQuery}
+                onChange={(e) =>{  onSearchChange(e.target.value); }}
+                className="w-full pl-9 pr-9 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 text-sm"
+                style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() =>{  onSearchChange(''); }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-slate-100"
+                >
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Category Dropdown - Desktop */}
-          <div className="hidden lg:block relative">
-            <select
-              value={selectedCategory ?? ''}
-              onChange={(e) =>{  onCategoryChange(e.target.value ? e.target.value as Id<"postCategories"> : null); }}
-              className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 cursor-pointer min-w-[140px]"
-              style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
-            >
-              <option value="">Tất cả danh mục</option>
-              {categories.map((category) => (
-                <option key={category._id} value={category._id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          </div>
+          {showCategories && (
+            <div className="hidden lg:block relative">
+              <select
+                value={selectedCategory ?? ''}
+                onChange={(e) =>{  onCategoryChange(e.target.value ? e.target.value as Id<"postCategories"> : null); }}
+                className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 cursor-pointer min-w-[140px]"
+                style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
+              >
+                <option value="">Tất cả danh mục</option>
+                {categories.map((category) => (
+                  <option key={category._id} value={category._id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
+          )}
 
           {/* Spacer */}
           <div className="hidden lg:block flex-1" />
@@ -118,57 +130,61 @@ export function PostsFilter({
           </div>
 
           {/* Mobile Filter Toggle */}
-          <button
-            onClick={() =>{  setShowMobileFilters(!showMobileFilters); }}
-            className="lg:hidden flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm"
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            Bộ lọc
-            {hasActiveFilters && (
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: brandColor }}
-              />
-            )}
-          </button>
+          {(showSearch || showCategories) && (
+            <button
+              onClick={() =>{  setShowMobileFilters(!showMobileFilters); }}
+              className="lg:hidden flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Bộ lọc
+              {hasActiveFilters && (
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: brandColor }}
+                />
+              )}
+            </button>
+          )}
         </div>
 
         {/* Mobile Filters Panel */}
-        {showMobileFilters && (
+        {showMobileFilters && (showSearch || showCategories) && (
           <div className="lg:hidden mt-3 pt-3 border-t border-slate-200 space-y-3">
             {/* Categories */}
-            <div>
-              <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">
-                Danh mục
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  onClick={() =>{  onCategoryChange(null); }}
-                  className={`px-2.5 py-1 rounded-full text-sm font-medium transition-colors ${
-                    !selectedCategory
-                      ? 'text-white'
-                      : 'bg-slate-100 text-slate-600'
-                  }`}
-                  style={!selectedCategory ? { backgroundColor: brandColor } : undefined}
-                >
-                  Tất cả
-                </button>
-                {categories.map((category) => (
+            {showCategories && (
+              <div>
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">
+                  Danh mục
+                </label>
+                <div className="flex flex-wrap gap-1.5">
                   <button
-                    key={category._id}
-                    onClick={() =>{  onCategoryChange(category._id); }}
+                    onClick={() =>{  onCategoryChange(null); }}
                     className={`px-2.5 py-1 rounded-full text-sm font-medium transition-colors ${
-                      selectedCategory === category._id
+                      !selectedCategory
                         ? 'text-white'
                         : 'bg-slate-100 text-slate-600'
                     }`}
-                    style={selectedCategory === category._id ? { backgroundColor: brandColor } : undefined}
+                    style={!selectedCategory ? { backgroundColor: brandColor } : undefined}
                   >
-                    {category.name}
+                    Tất cả
                   </button>
-                ))}
+                  {categories.map((category) => (
+                    <button
+                      key={category._id}
+                      onClick={() =>{  onCategoryChange(category._id); }}
+                      className={`px-2.5 py-1 rounded-full text-sm font-medium transition-colors ${
+                        selectedCategory === category._id
+                          ? 'text-white'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
+                      style={selectedCategory === category._id ? { backgroundColor: brandColor } : undefined}
+                    >
+                      {category.name}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Sort */}
             <div>
@@ -215,7 +231,7 @@ export function PostsFilter({
               </button>
             </span>
           )}
-          {searchQuery && (
+          {showSearch && searchQuery && (
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
               &quot;{searchQuery}&quot;
               <button

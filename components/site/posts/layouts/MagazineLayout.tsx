@@ -37,6 +37,8 @@ interface MagazineLayoutProps {
   onSortChange: (sort: SortOption) => void;
   featuredPosts: Post[];
   enabledFields: Set<string>;
+  showSearch?: boolean;
+  showCategories?: boolean;
 }
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -59,6 +61,8 @@ export function MagazineLayout({
   onSortChange,
   featuredPosts,
   enabledFields,
+  showSearch = true,
+  showCategories = true,
 }: MagazineLayoutProps) {
   const showExcerpt = enabledFields.has('excerpt');
   // Separate featured and regular posts
@@ -139,35 +143,39 @@ export function MagazineLayout({
       <section className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           {/* Search Input */}
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm..."
-              value={searchQuery}
-              onChange={(e) =>{  onSearchChange(e.target.value); }}
-              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 text-sm"
-              style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
-            />
-          </div>
+          {showSearch && (
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm..."
+                value={searchQuery}
+                onChange={(e) =>{  onSearchChange(e.target.value); }}
+                className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 text-sm"
+                style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
+              />
+            </div>
+          )}
 
           {/* Category Dropdown */}
-          <div className="relative">
-            <select
-              value={selectedCategory ?? ''}
-              onChange={(e) =>{  onCategoryChange(e.target.value ? e.target.value as Id<"postCategories"> : null); }}
-              className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 cursor-pointer min-w-[140px]"
-              style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
-            >
-              <option value="">Tất cả danh mục</option>
-              {categories.map((category) => (
-                <option key={category._id} value={category._id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          </div>
+          {showCategories && (
+            <div className="relative">
+              <select
+                value={selectedCategory ?? ''}
+                onChange={(e) =>{  onCategoryChange(e.target.value ? e.target.value as Id<"postCategories"> : null); }}
+                className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 cursor-pointer min-w-[140px]"
+                style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
+              >
+                <option value="">Tất cả danh mục</option>
+                {categories.map((category) => (
+                  <option key={category._id} value={category._id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            </div>
+          )}
 
           {/* Spacer */}
           <div className="hidden sm:block flex-1" />

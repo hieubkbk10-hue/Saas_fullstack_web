@@ -20,7 +20,7 @@ type PostsListLayout = 'fullwidth' | 'sidebar' | 'magazine';
 function usePostsLayout(): PostsListLayout {
   const setting = useQuery(api.settings.getByKey, { key: 'posts_list_style' });
   const value = setting?.value as string;
-  if (value === 'grid' || value === 'list') {return 'fullwidth';}
+  if (value === 'fullwidth' || value === 'grid' || value === 'list') {return 'fullwidth';}
   if (value === 'sidebar') {return 'sidebar';}
   if (value === 'magazine') {return 'magazine';}
   return 'fullwidth';
@@ -186,6 +186,8 @@ function PostsContent() {
                   onSortChange={handleSortChange}
                   totalResults={totalCount ?? (posts?.length ?? 0)}
                   brandColor={brandColor}
+                  showSearch={listConfig.showSearch}
+                  showCategories={listConfig.showCategories}
                 />
               </div>
             )}
@@ -213,6 +215,8 @@ function PostsContent() {
             sortBy={sortBy}
             onSortChange={handleSortChange}
             enabledFields={enabledFields}
+            showSearch={listConfig.showSearch}
+            showCategories={listConfig.showCategories}
           />
         )}
 
@@ -230,6 +234,8 @@ function PostsContent() {
             onSortChange={handleSortChange}
             featuredPosts={featuredPosts ?? []}
             enabledFields={enabledFields}
+            showSearch={listConfig.showSearch}
+            showCategories={listConfig.showCategories}
           />
         )}
 
