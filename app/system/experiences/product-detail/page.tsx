@@ -11,11 +11,11 @@ import {
   ExperienceSummaryGrid, 
   ExperienceBlockToggle,
   ExperienceHintCard,
-  ExperiencePreview,
-  ProductDetailPreview,
+  LivePreview,
+  ExampleLinks,
   type SummaryItem 
 } from '@/components/experiences';
-import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
+import { useExperienceConfig, useExperienceSave, useExampleProductSlug, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type ProductsDetailStyle = 'classic' | 'modern' | 'minimal';
 
@@ -57,6 +57,7 @@ export default function ProductDetailExperiencePage() {
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
+  const exampleProductSlug = useExampleProductSlug();
 
   const serverDetailStyle = (detailStyleSetting?.value as ProductsDetailStyle) || 'classic';
   const serverClassicHighlightsEnabled = (classicHighlightsEnabledSetting?.value as boolean) ?? true;
@@ -129,15 +130,12 @@ export default function ProductDetailExperiencePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          <ExperiencePreview title="Trang chi tiết sản phẩm">
-            <ProductDetailPreview
-              layoutStyle={config.layoutStyle}
-              showRating={config.showRating}
-              showWishlist={config.showWishlist}
-              showAddToCart={config.showAddToCart}
-              showClassicHighlights={config.showClassicHighlights}
+          {exampleProductSlug && (
+            <LivePreview
+              url={`/products/${exampleProductSlug}`}
+              title="Trang chi tiết sản phẩm"
             />
-          </ExperiencePreview>
+          )}
 
           <SettingsCard>
             <SettingSelect
@@ -193,6 +191,16 @@ export default function ProductDetailExperiencePage() {
         </div>
 
         <div className="space-y-4">
+          {exampleProductSlug && (
+            <ExampleLinks
+              links={[
+                { label: 'Xem sản phẩm mẫu', url: `/products/${exampleProductSlug}`, description: 'Open in new tab để test' },
+                { label: 'Danh sách sản phẩm', url: '/products', description: 'Xem tất cả' },
+              ]}
+              color="#06b6d4"
+            />
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Module liên quan</CardTitle>

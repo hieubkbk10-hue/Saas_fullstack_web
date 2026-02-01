@@ -11,11 +11,11 @@ import {
   ExperienceSummaryGrid, 
   ExperienceBlockToggle,
   ExperienceHintCard,
-  ExperiencePreview,
-  PostsListPreview,
+  LivePreview,
+  ExampleLinks,
   type SummaryItem 
 } from '@/components/experiences';
-import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
+import { useExperienceConfig, useExperienceSave, useExamplePostCategorySlug, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type ListLayoutStyle = 'grid' | 'list' | 'masonry';
 type FilterPosition = 'sidebar' | 'top' | 'none';
@@ -59,6 +59,7 @@ const HINTS = [
 export default function PostsListExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const postsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'posts' });
+  const exampleCategorySlug = useExamplePostCategorySlug();
 
   const serverConfig = useMemo<PostsListExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<PostsListExperienceConfig> | undefined;
@@ -107,15 +108,10 @@ export default function PostsListExperiencePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          <ExperiencePreview title="Danh sách bài viết">
-            <PostsListPreview
-              layoutStyle={config.layoutStyle}
-              filterPosition={config.filterPosition}
-              showPagination={config.showPagination}
-              showSearch={config.showSearch}
-              showCategories={config.showCategories}
-            />
-          </ExperiencePreview>
+          <LivePreview
+            url="/posts"
+            title="Danh sách bài viết"
+          />
 
           <SettingsCard>
             <SettingSelect
@@ -173,6 +169,14 @@ export default function PostsListExperiencePage() {
         </div>
 
         <div className="space-y-4">
+          <ExampleLinks
+            links={[
+              { label: 'Trang danh sách bài viết', url: '/posts', description: 'Xem tất cả bài viết' },
+              ...(exampleCategorySlug ? [{ label: 'Lọc theo category', url: `/posts?catpost=${exampleCategorySlug}`, description: 'Ví dụ filter' }] : []),
+            ]}
+            color="#3b82f6"
+          />
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Module liên quan</CardTitle>

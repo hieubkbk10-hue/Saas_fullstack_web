@@ -7,3 +7,9 @@ export {
   MESSAGES,
 } from './constants';
 export type { ColorScheme, ExperienceKey } from './constants';
+export { 
+  useExamplePostSlug,
+  useExampleProductSlug,
+  useExampleServiceSlug,
+  useExamplePostCategorySlug,
+} from './useExampleSlugs';

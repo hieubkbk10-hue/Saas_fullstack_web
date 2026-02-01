@@ -11,11 +11,11 @@ import {
   ExperienceSummaryGrid, 
   ExperienceBlockToggle,
   ExperienceHintCard,
-  ExperiencePreview,
-  PostDetailPreview,
+  LivePreview,
+  ExampleLinks,
   type SummaryItem 
 } from '@/components/experiences';
-import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
+import { useExperienceConfig, useExperienceSave, useExamplePostSlug, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type DetailLayoutStyle = 'classic' | 'modern' | 'minimal';
 
@@ -53,6 +53,7 @@ export default function PostDetailExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const postsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'posts' });
   const commentsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'comments' });
+  const examplePostSlug = useExamplePostSlug();
 
   const serverConfig = useMemo<PostDetailExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<PostDetailExperienceConfig> | undefined;
@@ -101,15 +102,12 @@ export default function PostDetailExperiencePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          <ExperiencePreview title="Chi tiết bài viết">
-            <PostDetailPreview
-              layoutStyle={config.layoutStyle}
-              showAuthor={config.showAuthor}
-              showRelated={config.showRelated}
-              showShare={config.showShare}
-              showComments={config.showComments}
+          {examplePostSlug && (
+            <LivePreview
+              url={`/posts/${examplePostSlug}`}
+              title="Chi tiết bài viết"
             />
-          </ExperiencePreview>
+          )}
 
           <SettingsCard>
             <SettingSelect
@@ -166,6 +164,15 @@ export default function PostDetailExperiencePage() {
         </div>
 
         <div className="space-y-4">
+          {examplePostSlug && (
+            <ExampleLinks
+              links={[
+                { label: 'Xem bài viết mẫu', url: `/posts/${examplePostSlug}`, description: 'Open in new tab để test' },
+              ]}
+              color="#3b82f6"
+            />
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Module liên quan</CardTitle>
