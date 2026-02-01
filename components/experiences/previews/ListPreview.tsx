@@ -43,6 +43,7 @@ export function PostsListPreview({
   const isCompact = device !== 'desktop';
   const visiblePosts = device === 'mobile' ? 2 : 4;
   const showCompactPanel = isCompact && (showSearch || showCategories);
+  const showAppliedRow = !isCompact;
 
   if (style === 'fullwidth') {
     return (
@@ -56,7 +57,7 @@ export function PostsListPreview({
             <div className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
               <div className="flex items-center gap-2">
                 {showSearch && (
-                  <div className="relative flex-1 max-w-xs">
+                  <div className={`relative flex-1 ${isCompact ? 'max-w-none' : 'max-w-xs'}`}>
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
@@ -136,20 +137,24 @@ export function PostsListPreview({
               )}
             </div>
 
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-slate-500">4 bài viết</span>
-                <span
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
-                  style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-                >
-                  Tin tức
-                </span>
+            {showAppliedRow ? (
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm text-slate-500">4 bài viết</span>
+                  <span
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+                    style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                  >
+                    Tin tức
+                  </span>
+                </div>
+                <button className="text-sm hover:underline" style={{ color: brandColor }}>
+                  Xóa bộ lọc
+                </button>
               </div>
-              <button className="text-sm hover:underline" style={{ color: brandColor }}>
-                Xóa bộ lọc
-              </button>
-            </div>
+            ) : (
+              <div className="text-sm text-slate-500">4 bài viết</div>
+            )}
           </div>
         )}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
