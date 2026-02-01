@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText } from 'lucide-react';
+import { ChevronDown, FileText, Search, SlidersHorizontal } from 'lucide-react';
 
 type ListLayoutStyle = 'fullwidth' | 'sidebar' | 'magazine' | 'grid' | 'list' | 'masonry';
 type FilterPosition = 'sidebar' | 'top' | 'none';
@@ -43,60 +43,130 @@ export function PostsListPreview({
 
   if (style === 'fullwidth') {
     return (
-      <div className={`p-4 ${isMobile ? 'p-3' : ''}`}>
-        <h2 className={`font-bold text-center mb-4 ${isMobile ? 'text-lg' : 'text-xl'}`}>Tin tức & Bài viết</h2>
+      <div className="py-6 md:py-10 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-3">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Tin tức & Bài viết</h2>
+          </div>
         {showFilterBar && (
-          <div className="bg-white border rounded-lg p-3 mb-4">
-            <div className={`flex items-center gap-2 ${isMobile ? 'flex-col' : ''}`}>
-              {showSearch && (
-                <div className={`relative ${isMobile ? 'w-full' : 'flex-1 max-w-xs'}`}>
-                  <input
-                    type="text"
-                    placeholder="Tìm kiếm..."
-                    className="w-full px-3 py-1.5 border rounded-lg text-xs bg-slate-50"
-                    disabled
-                  />
-                </div>
-              )}
-              {showCategories && (
-                <div className={`relative ${isMobile ? 'w-full' : 'min-w-[160px]'}`}>
-                  <select
-                    className="w-full appearance-none px-3 py-1.5 border rounded-lg text-xs bg-white"
-                    disabled
+          <div className="mb-5 space-y-2.5">
+            <div className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
+              <div className="flex items-center gap-2">
+                {showSearch && (
+                  <div className="relative flex-1 max-w-xs">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Tìm kiếm..."
+                      className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                      disabled
+                    />
+                  </div>
+                )}
+                {showCategories && !isMobile && (
+                  <div className="hidden lg:block relative">
+                    <select
+                      className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white min-w-[140px]"
+                      disabled
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  </div>
+                )}
+                {!isMobile && <div className="hidden lg:block flex-1" />}
+                {!isMobile && (
+                  <div className="hidden lg:block relative">
+                    <select
+                      className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white"
+                      disabled
+                    >
+                      <option>Mới nhất</option>
+                      <option>Cũ nhất</option>
+                      <option>Xem nhiều</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  </div>
+                )}
+                {isMobile && (
+                  <button
+                    className="lg:hidden flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm"
                   >
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]">▼</span>
+                    <SlidersHorizontal className="w-4 h-4" />
+                    Bộ lọc
+                  </button>
+                )}
+              </div>
+              {isMobile && (showSearch || showCategories) && (
+                <div className="lg:hidden mt-3 pt-3 border-t border-slate-200 space-y-3">
+                  {showCategories && (
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">
+                        Danh mục
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {categories.map((cat, i) => (
+                          <span
+                            key={cat}
+                            className={`px-2.5 py-1 rounded-full text-sm font-medium ${i === 0 ? 'text-white' : 'bg-slate-100 text-slate-600'}`}
+                            style={i === 0 ? { backgroundColor: brandColor } : undefined}
+                          >
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">
+                      Sắp xếp
+                    </label>
+                    <select className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white" disabled>
+                      <option>Mới nhất</option>
+                      <option>Cũ nhất</option>
+                      <option>Xem nhiều</option>
+                    </select>
+                  </div>
                 </div>
               )}
-              {!isMobile && <div className="flex-1" />}
-              <div className={`relative ${isMobile ? 'w-full' : 'min-w-[140px]'}`}>
-                <select
-                  className="w-full appearance-none px-3 py-1.5 border rounded-lg text-xs bg-white"
-                  disabled
+            </div>
+
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-slate-500">4 bài viết</span>
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+                  style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
                 >
-                  <option>Mới nhất</option>
-                  <option>Cũ nhất</option>
-                  <option>Xem nhiều</option>
-                </select>
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]">▼</span>
+                  Tin tức
+                </span>
               </div>
+              <button className="text-sm hover:underline" style={{ color: brandColor }}>
+                Xóa bộ lọc
+              </button>
             </div>
           </div>
         )}
-        <div className="text-xs text-slate-500 mb-3">4 bài viết</div>
-        <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {mockPosts.slice(0, isMobile ? 2 : 4).map((post) => (
-            <div key={post.id} className="bg-white border rounded-lg overflow-hidden">
+            <div key={post.id} className="bg-white rounded-lg overflow-hidden shadow-sm border border-slate-100 h-full flex flex-col">
               <div className="aspect-video bg-slate-100 flex items-center justify-center">
                 <FileText size={24} className="text-slate-300" />
               </div>
-              <div className="p-3">
-                <span className="text-xs font-medium" style={{ color: brandColor }}>{post.category}</span>
-                <h3 className="font-medium text-sm mt-1 line-clamp-2">{post.title}</h3>
-                <div className="flex items-center justify-between mt-2 text-xs text-slate-400">
+              <div className="p-3 flex-1 flex flex-col">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span
+                    className="text-xs font-medium px-1.5 py-0.5 rounded"
+                    style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                  >
+                    {post.category}
+                  </span>
+                </div>
+                <h3 className="text-sm font-semibold text-slate-900 line-clamp-2 flex-1">{post.title}</h3>
+                <div className="h-3 bg-slate-100 rounded mt-1.5 w-4/5" />
+                <div className="flex items-center justify-between text-xs text-slate-400 mt-2.5 pt-2.5 border-t border-slate-100">
                   <span>{post.date}</span>
                   <span>{post.views} views</span>
                 </div>
@@ -105,12 +175,16 @@ export function PostsListPreview({
           ))}
         </div>
         {showPagination && (
-          <div className="text-center mt-4">
-            <button className="px-4 py-2 text-xs rounded-lg bg-slate-100 text-slate-600">
+          <div className="text-center mt-6">
+            <button
+              className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 hover:opacity-80"
+              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+            >
               Xem thêm bài viết
             </button>
           </div>
         )}
+        </div>
       </div>
     );
   }
