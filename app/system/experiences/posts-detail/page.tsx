@@ -5,7 +5,7 @@ import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { FileText, LayoutTemplate, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
-import { ModuleHeader, SettingsCard, SettingSelect } from '@/components/modules/shared';
+import { ModuleHeader, SettingsCard } from '@/components/modules/shared';
 import { 
   ExperienceModuleLink, 
   ExperienceSummaryGrid, 
@@ -132,19 +132,36 @@ export default function PostDetailExperiencePage() {
       {/* Settings Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="space-y-4 lg:col-span-2">
-          <SettingsCard>
-            <SettingSelect
-              label="Layout chi tiết"
-              value={config.layoutStyle}
-              onChange={(value) => setConfig(prev => ({ ...prev, layoutStyle: value as DetailLayoutStyle }))}
-              options={LAYOUT_STYLES.map(style => ({ label: `${style.label} - ${style.description}`, value: style.id }))}
-              focusColor="focus:border-blue-500"
-            />
-          </SettingsCard>
-
           <Card className="p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Khối hiển thị</h3>
-            <div className="space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-shrink-0">
+                <h3 className="font-medium text-sm text-slate-900 dark:text-slate-100">Trang chi tiết</h3>
+                <p className="text-xs text-slate-500">/posts/[slug]</p>
+              </div>
+              <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                {LAYOUT_STYLES.map((style) => (
+                  <button
+                    key={style.id}
+                    onClick={() =>{  setConfig(prev => ({ ...prev, layoutStyle: style.id })); }}
+                    title={style.description}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                      config.layoutStyle === style.id 
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    {style.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 mt-2">
+              {LAYOUT_STYLES.find((style) => style.id === config.layoutStyle)?.description}
+            </p>
+          </Card>
+
+          {config.layoutStyle === 'classic' && (
+            <SettingsCard title="Cấu hình thêm cho Classic">
               <ExperienceBlockToggle
                 label="Thông tin tác giả"
                 description="Hiển thị author và ngày đăng"
@@ -180,8 +197,8 @@ export default function PostDetailExperiencePage() {
                 color="bg-blue-500"
                 disabled={!postsModule?.enabled}
               />
-            </div>
-          </Card>
+            </SettingsCard>
+          )}
 
           <ExperienceSummaryGrid items={summaryItems} />
         </div>
