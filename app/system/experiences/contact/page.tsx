@@ -124,34 +124,30 @@ export default function ContactExperiencePage() {
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col">
-      {/* Header */}
-      <header className="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-500/10 rounded-lg">
-            <LayoutTemplate className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Trải nghiệm: Trang liên hệ</h1>
-            <p className="text-xs text-slate-500">/contact • Layout-specific config</p>
-          </div>
+      {/* Compact Header - 48px */}
+      <header className="h-12 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-2">
+          <LayoutTemplate className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+          <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">Trang liên hệ</span>
         </div>
-        <Button
-          onClick={handleSave}
-          disabled={!hasChanges || isSaving}
-          className="bg-indigo-600 hover:bg-indigo-500 gap-2"
-        >
-          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {hasChanges ? 'Lưu thay đổi' : 'Đã lưu'}
-        </Button>
+        <div className="flex items-center gap-3">
+          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={!hasChanges || isSaving}
+            className="bg-indigo-600 hover:bg-indigo-500 gap-1.5"
+          >
+            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
+          </Button>
+        </div>
       </header>
 
       {/* Preview Area */}
-      <main className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-950">
-        <div className="flex justify-center mb-4">
-          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} />
-        </div>
+      <main className="flex-1 overflow-auto p-4 bg-slate-50 dark:bg-slate-950">
         <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
-          <BrowserFrame url="yoursite.com/contact" maxHeight="calc(100vh - 380px)">
+          <BrowserFrame url="yoursite.com/contact" maxHeight="calc(100vh - 320px)">
             <ContactPreview
               layoutStyle={config.layoutStyle}
               showMap={currentLayoutConfig.showMap}
@@ -160,17 +156,13 @@ export default function ContactExperiencePage() {
             />
           </BrowserFrame>
         </div>
-        <div className="mt-3 text-xs text-slate-500 text-center">
-          Layout: <strong>{LAYOUT_STYLES.find(s => s.id === config.layoutStyle)?.label}</strong>
-          {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
-        </div>
       </main>
 
       {/* Bottom Panel */}
       <ConfigPanel
         isExpanded={isPanelExpanded}
         onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
-        expandedHeight="280px"
+        expandedHeight="220px"
         leftContent={
           <LayoutTabs
             layouts={LAYOUT_STYLES}
@@ -180,11 +172,11 @@ export default function ContactExperiencePage() {
           />
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <ControlCard title="Khối hiển thị">
-            <ToggleRow label="Bản đồ (Map)" description="Google Maps hoặc map service" checked={currentLayoutConfig.showMap} onChange={(v) => updateLayoutConfig('showMap', v)} accentColor="#6366f1" />
-            <ToggleRow label="Thông tin liên hệ" description="Địa chỉ, phone, email" checked={currentLayoutConfig.showContactInfo} onChange={(v) => updateLayoutConfig('showContactInfo', v)} accentColor="#6366f1" />
-            <ToggleRow label="Social media" description="FB, Twitter, Instagram..." checked={currentLayoutConfig.showSocialLinks} onChange={(v) => updateLayoutConfig('showSocialLinks', v)} accentColor="#6366f1" />
+            <ToggleRow label="Bản đồ (Map)" checked={currentLayoutConfig.showMap} onChange={(v) => updateLayoutConfig('showMap', v)} accentColor="#6366f1" />
+            <ToggleRow label="Thông tin liên hệ" checked={currentLayoutConfig.showContactInfo} onChange={(v) => updateLayoutConfig('showContactInfo', v)} accentColor="#6366f1" />
+            <ToggleRow label="Social media" checked={currentLayoutConfig.showSocialLinks} onChange={(v) => updateLayoutConfig('showSocialLinks', v)} accentColor="#6366f1" />
           </ControlCard>
 
           <ControlCard title="Module liên quan">
@@ -197,7 +189,7 @@ export default function ContactExperiencePage() {
             />
           </ControlCard>
 
-          <Card className="p-3 lg:col-span-2">
+          <Card className="p-2 lg:col-span-2">
             <ExperienceHintCard hints={HINTS} />
           </Card>
         </div>

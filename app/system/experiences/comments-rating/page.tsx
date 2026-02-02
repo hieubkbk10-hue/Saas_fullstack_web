@@ -101,34 +101,30 @@ export default function CommentsRatingExperiencePage() {
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col">
-      {/* Header */}
-      <header className="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-500/10 rounded-lg">
-            <LayoutTemplate className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Trải nghiệm: Bình luận & Đánh giá</h1>
-            <p className="text-xs text-slate-500">Comments & Rating section trên product/post pages</p>
-          </div>
+      {/* Compact Header - 48px */}
+      <header className="h-12 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-2">
+          <LayoutTemplate className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">Bình luận & Đánh giá</span>
         </div>
-        <Button
-          onClick={handleSave}
-          disabled={!hasChanges || isSaving}
-          className="bg-purple-600 hover:bg-purple-500 gap-2"
-        >
-          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {hasChanges ? 'Lưu thay đổi' : 'Đã lưu'}
-        </Button>
+        <div className="flex items-center gap-3">
+          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={!hasChanges || isSaving}
+            className="bg-purple-600 hover:bg-purple-500 gap-1.5"
+          >
+            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
+          </Button>
+        </div>
       </header>
 
       {/* Preview Area */}
-      <main className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-950">
-        <div className="flex justify-center mb-4">
-          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} />
-        </div>
+      <main className="flex-1 overflow-auto p-4 bg-slate-50 dark:bg-slate-950">
         <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
-          <BrowserFrame url="yoursite.com/products/example#comments" maxHeight="calc(100vh - 380px)">
+          <BrowserFrame url="yoursite.com/products/example#comments" maxHeight="calc(100vh - 320px)">
             <CommentsRatingPreview
               ratingDisplayStyle={config.ratingDisplayStyle}
               commentsSortOrder={config.commentsSortOrder}
@@ -138,19 +134,15 @@ export default function CommentsRatingExperiencePage() {
             />
           </BrowserFrame>
         </div>
-        <div className="mt-3 text-xs text-slate-500 text-center">
-          Rating: <strong>{RATING_STYLES.find(s => s.id === config.ratingDisplayStyle)?.label}</strong>
-          {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
-        </div>
       </main>
 
       {/* Bottom Panel */}
       <ConfigPanel
         isExpanded={isPanelExpanded}
         onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
-        expandedHeight="280px"
+        expandedHeight="220px"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <ControlCard title="Hiển thị">
             <SelectRow
               label="Kiểu rating"
@@ -167,9 +159,9 @@ export default function CommentsRatingExperiencePage() {
           </ControlCard>
 
           <ControlCard title="Tính năng">
-            <ToggleRow label="Likes" description="Cho phép like bình luận" checked={config.showLikes} onChange={(v) => setConfig(prev => ({ ...prev, showLikes: v }))} accentColor="#a855f7" disabled={!commentsModule?.enabled} />
-            <ToggleRow label="Replies" description="Cho phép reply bình luận" checked={config.showReplies} onChange={(v) => setConfig(prev => ({ ...prev, showReplies: v }))} accentColor="#a855f7" disabled={!commentsModule?.enabled} />
-            <ToggleRow label="Moderation" description="Trạng thái duyệt trong admin" checked={config.showModeration} onChange={(v) => setConfig(prev => ({ ...prev, showModeration: v }))} accentColor="#a855f7" disabled={!commentsModule?.enabled} />
+            <ToggleRow label="Likes" checked={config.showLikes} onChange={(v) => setConfig(prev => ({ ...prev, showLikes: v }))} accentColor="#a855f7" disabled={!commentsModule?.enabled} />
+            <ToggleRow label="Replies" checked={config.showReplies} onChange={(v) => setConfig(prev => ({ ...prev, showReplies: v }))} accentColor="#a855f7" disabled={!commentsModule?.enabled} />
+            <ToggleRow label="Moderation" checked={config.showModeration} onChange={(v) => setConfig(prev => ({ ...prev, showModeration: v }))} accentColor="#a855f7" disabled={!commentsModule?.enabled} />
           </ControlCard>
 
           <ControlCard title="Module liên quan">
@@ -182,7 +174,7 @@ export default function CommentsRatingExperiencePage() {
             />
           </ControlCard>
 
-          <Card className="p-3">
+          <Card className="p-2">
             <ExperienceHintCard hints={HINTS} />
           </Card>
         </div>

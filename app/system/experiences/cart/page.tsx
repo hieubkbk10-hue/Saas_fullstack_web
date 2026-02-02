@@ -129,34 +129,30 @@ export default function CartExperiencePage() {
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col">
-      {/* Header */}
-      <header className="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-orange-500/10 rounded-lg">
-            <LayoutTemplate className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Trải nghiệm: Giỏ hàng</h1>
-            <p className="text-xs text-slate-500">/cart • Layout-specific config</p>
-          </div>
+      {/* Compact Header - 48px */}
+      <header className="h-12 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-2">
+          <LayoutTemplate className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+          <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">Giỏ hàng</span>
         </div>
-        <Button
-          onClick={handleSave}
-          disabled={!hasChanges || isSaving}
-          className="bg-orange-600 hover:bg-orange-500 gap-2"
-        >
-          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {hasChanges ? 'Lưu thay đổi' : 'Đã lưu'}
-        </Button>
+        <div className="flex items-center gap-3">
+          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={!hasChanges || isSaving}
+            className="bg-orange-600 hover:bg-orange-500 gap-1.5"
+          >
+            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
+          </Button>
+        </div>
       </header>
 
       {/* Preview Area */}
-      <main className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-950">
-        <div className="flex justify-center mb-4">
-          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} />
-        </div>
+      <main className="flex-1 overflow-auto p-4 bg-slate-50 dark:bg-slate-950">
         <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
-          <BrowserFrame url="yoursite.com/cart" maxHeight="calc(100vh - 380px)">
+          <BrowserFrame url="yoursite.com/cart" maxHeight="calc(100vh - 320px)">
             <CartPreview
               layoutStyle={config.layoutStyle}
               showGuestCart={currentLayoutConfig.showGuestCart}
@@ -165,17 +161,13 @@ export default function CartExperiencePage() {
             />
           </BrowserFrame>
         </div>
-        <div className="mt-3 text-xs text-slate-500 text-center">
-          Layout: <strong>{LAYOUT_STYLES.find(s => s.id === config.layoutStyle)?.label}</strong>
-          {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
-        </div>
       </main>
 
       {/* Bottom Panel */}
       <ConfigPanel
         isExpanded={isPanelExpanded}
         onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
-        expandedHeight="280px"
+        expandedHeight="220px"
         leftContent={
           <LayoutTabs
             layouts={LAYOUT_STYLES}
@@ -185,11 +177,10 @@ export default function CartExperiencePage() {
           />
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <ControlCard title="Khối hiển thị">
             <ToggleRow
               label="Guest Cart"
-              description="Khách chưa đăng nhập"
               checked={currentLayoutConfig.showGuestCart}
               onChange={(v) => updateLayoutConfig('showGuestCart', v)}
               accentColor="#f97316"
@@ -197,7 +188,6 @@ export default function CartExperiencePage() {
             />
             <ToggleRow
               label="Hết hạn giỏ"
-              description="Thời gian hết hạn và tự xóa"
               checked={currentLayoutConfig.showExpiry}
               onChange={(v) => updateLayoutConfig('showExpiry', v)}
               accentColor="#f97316"
@@ -205,7 +195,6 @@ export default function CartExperiencePage() {
             />
             <ToggleRow
               label="Ghi chú"
-              description="Note cho đơn hàng"
               checked={currentLayoutConfig.showNote}
               onChange={(v) => updateLayoutConfig('showNote', v)}
               accentColor="#f97316"
@@ -223,7 +212,7 @@ export default function CartExperiencePage() {
             />
           </ControlCard>
 
-          <Card className="p-3 lg:col-span-2">
+          <Card className="p-2 lg:col-span-2">
             <ExperienceHintCard hints={HINTS} />
           </Card>
         </div>

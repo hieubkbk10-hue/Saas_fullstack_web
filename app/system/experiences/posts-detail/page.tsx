@@ -213,34 +213,30 @@ export default function PostDetailExperiencePage() {
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col">
-      {/* Header */}
-      <header className="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-500/10 rounded-lg">
-            <LayoutTemplate className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Trải nghiệm: Chi tiết bài viết</h1>
-            <p className="text-xs text-slate-500">/posts/[slug] • Layout-specific config</p>
-          </div>
+      {/* Compact Header - 48px */}
+      <header className="h-12 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-2">
+          <LayoutTemplate className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">Chi tiết bài viết</span>
         </div>
-        <Button 
-          onClick={handleSave} 
-          disabled={!hasChanges || isSaving}
-          className="bg-blue-600 hover:bg-blue-500 gap-2"
-        >
-          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {hasChanges ? 'Lưu thay đổi' : 'Đã lưu'}
-        </Button>
+        <div className="flex items-center gap-3">
+          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+          <Button 
+            size="sm"
+            onClick={handleSave} 
+            disabled={!hasChanges || isSaving}
+            className="bg-blue-600 hover:bg-blue-500 gap-1.5"
+          >
+            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
+          </Button>
+        </div>
       </header>
       
       {/* Preview Area */}
-      <main className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-950">
-        <div className="flex justify-center mb-4">
-          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} />
-        </div>
+      <main className="flex-1 overflow-auto p-4 bg-slate-50 dark:bg-slate-950">
         <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
-          <BrowserFrame url={`yoursite.com/posts/${examplePostSlug || 'example-post'}`} maxHeight="calc(100vh - 380px)">
+          <BrowserFrame url={`yoursite.com/posts/${examplePostSlug || 'example-post'}`} maxHeight="calc(100vh - 320px)">
             <PostDetailPreview
               layoutStyle={config.layoutStyle}
               showAuthor={currentLayoutConfig.showAuthor}
@@ -254,17 +250,13 @@ export default function PostDetailExperiencePage() {
             />
           </BrowserFrame>
         </div>
-        <div className="mt-3 text-xs text-slate-500 text-center">
-          Layout: <strong>{LAYOUT_STYLES.find(s => s.id === config.layoutStyle)?.label}</strong>
-          {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
-        </div>
       </main>
       
       {/* Bottom Panel */}
       <ConfigPanel
         isExpanded={isPanelExpanded}
         onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
-        expandedHeight="320px"
+        expandedHeight="220px"
         leftContent={
           <LayoutTabs
             layouts={LAYOUT_STYLES}
@@ -274,12 +266,11 @@ export default function PostDetailExperiencePage() {
           />
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Common controls for all layouts */}
           <ControlCard title="Thông tin bài viết">
             <ToggleRow 
               label="Thông tin tác giả" 
-              description="Tên, avatar, ngày đăng"
               checked={currentLayoutConfig.showAuthor} 
               onChange={(v) => updateLayoutConfig('showAuthor', v)} 
               accentColor="#3b82f6"
@@ -329,7 +320,7 @@ export default function PostDetailExperiencePage() {
             {(isAuthorSyncPending || isCommentsSyncPending || isCommentLikesSyncPending || isCommentRepliesSyncPending) && (
               <div className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-xs text-amber-700 dark:text-amber-300 mb-2">
                 <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
-                <span>Có thay đổi cần đồng bộ. Bấm Lưu để cập nhật modules.</span>
+                <span>Bấm Lưu để đồng bộ modules.</span>
               </div>
             )}
             <ExperienceModuleLink
@@ -349,9 +340,9 @@ export default function PostDetailExperiencePage() {
           </ControlCard>
           
           {/* Links & hints */}
-          <Card className="p-3">
+          <Card className="p-2">
             {examplePostSlug && (
-              <div className="mb-3">
+              <div className="mb-2">
                 <ExampleLinks
                   links={[{ label: 'Xem bài viết mẫu', url: `/posts/${examplePostSlug}` }]}
                   color="#3b82f6"

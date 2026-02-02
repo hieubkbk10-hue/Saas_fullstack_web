@@ -25,21 +25,21 @@ import { cn } from '@/app/admin/components/ui';
    className
  }: LayoutTabsProps<T>) {
    return (
-     <div className={cn("flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1", className)}>
+     <div className={cn("flex bg-slate-100 dark:bg-slate-800 rounded-md p-0.5", className)}>
        {layouts.map(layout => (
          <button
            key={layout.id}
            onClick={() => onChange(layout.id)}
            title={layout.description}
            className={cn(
-             "px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2",
+             "px-3 py-1.5 text-xs font-medium rounded transition-all flex items-center gap-1.5",
              activeLayout === layout.id 
                ? "text-white shadow-sm"
                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
            )}
            style={activeLayout === layout.id ? { backgroundColor: accentColor } : undefined}
          >
-           {layout.icon && <layout.icon size={16} />}
+           {layout.icon && <layout.icon size={14} />}
            {layout.label}
          </button>
        ))}

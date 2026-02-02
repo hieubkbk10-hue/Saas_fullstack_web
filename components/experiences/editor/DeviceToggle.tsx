@@ -8,6 +8,7 @@ import { cn } from '@/app/admin/components/ui';
    value: DeviceType;
    onChange: (device: DeviceType) => void;
    className?: string;
+   size?: 'sm' | 'default';
  };
  
  const devices = [
@@ -22,22 +23,27 @@ import { cn } from '@/app/admin/components/ui';
    mobile: 'w-[375px] max-w-full',
  };
  
- export function DeviceToggle({ value, onChange, className }: DeviceToggleProps) {
+ export function DeviceToggle({ value, onChange, className, size = 'default' }: DeviceToggleProps) {
+   const iconSize = size === 'sm' ? 14 : 16;
+   const padding = size === 'sm' ? 'p-1.5' : 'p-2';
+   const containerPadding = size === 'sm' ? 'p-0.5' : 'p-1';
+   const rounded = size === 'sm' ? 'rounded' : 'rounded-md';
+   
    return (
-     <div className={cn("flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1", className)}>
+     <div className={cn("flex bg-slate-100 dark:bg-slate-800 rounded-lg", containerPadding, className)}>
        {devices.map(device => (
          <button
            key={device.id}
            onClick={() => onChange(device.id)}
            title={`${device.label} (${device.width})`}
            className={cn(
-             "p-2 rounded-md transition-all",
+             padding, rounded, "transition-all",
              value === device.id 
                ? "bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-slate-100" 
                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
            )}
          >
-           <device.icon size={16} />
+           <device.icon size={iconSize} />
          </button>
        ))}
      </div>

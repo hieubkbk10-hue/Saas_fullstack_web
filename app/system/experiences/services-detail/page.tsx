@@ -307,40 +307,32 @@ export default function ServiceDetailExperiencePage() {
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col">
-      {/* Header */}
-      <header className="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-violet-500/10 rounded-lg">
-            <LayoutTemplate className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Trải nghiệm: Chi tiết dịch vụ</h1>
-            <p className="text-xs text-slate-500">/services/[slug] • Layout-specific config</p>
-          </div>
+      {/* Compact Header - 48px */}
+      <header className="h-12 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-2">
+          <LayoutTemplate className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+          <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">Chi tiết dịch vụ</span>
         </div>
-        <Button
-          onClick={handleSave}
-          disabled={!hasChanges || isSaving}
-          className="bg-violet-600 hover:bg-violet-500 gap-2"
-        >
-          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {hasChanges ? 'Lưu thay đổi' : 'Đã lưu'}
-        </Button>
+        <div className="flex items-center gap-3">
+          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={!hasChanges || isSaving}
+            className="bg-violet-600 hover:bg-violet-500 gap-1.5"
+          >
+            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
+          </Button>
+        </div>
       </header>
 
       {/* Preview Area */}
-      <main className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-950">
-        <div className="flex justify-center mb-4">
-          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} />
-        </div>
+      <main className="flex-1 overflow-auto p-4 bg-slate-50 dark:bg-slate-950">
         <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
-          <BrowserFrame url={`yoursite.com/services/${exampleServiceSlug || 'example-service'}`} maxHeight="calc(100vh - 380px)">
+          <BrowserFrame url={`yoursite.com/services/${exampleServiceSlug || 'example-service'}`} maxHeight="calc(100vh - 320px)">
             <ServiceDetailPreview {...getPreviewProps()} />
           </BrowserFrame>
-        </div>
-        <div className="mt-3 text-xs text-slate-500 text-center">
-          Layout: <strong>{LAYOUT_STYLES.find(s => s.id === config.layoutStyle)?.label}</strong>
-          {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
         </div>
       </main>
 
@@ -348,7 +340,7 @@ export default function ServiceDetailExperiencePage() {
       <ConfigPanel
         isExpanded={isPanelExpanded}
         onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
-        expandedHeight="320px"
+        expandedHeight="220px"
         leftContent={
           <LayoutTabs
             layouts={LAYOUT_STYLES}
@@ -358,11 +350,10 @@ export default function ServiceDetailExperiencePage() {
           />
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <ControlCard title="Khối hiển thị">
             <ToggleRow
               label="Dịch vụ liên quan"
-              description="Related services"
               checked={currentLayoutConfig.showRelated}
               onChange={(v) => updateLayoutConfig('showRelated', v)}
               accentColor="#8b5cf6"
@@ -383,9 +374,9 @@ export default function ServiceDetailExperiencePage() {
             />
           </ControlCard>
 
-          <Card className="p-3">
+          <Card className="p-2">
             {exampleServiceSlug && (
-              <div className="mb-3">
+              <div className="mb-2">
                 <ExampleLinks
                   links={[{ label: 'Xem dịch vụ mẫu', url: `/services/${exampleServiceSlug}` }]}
                   color="#8b5cf6"

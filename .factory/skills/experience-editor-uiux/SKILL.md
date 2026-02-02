@@ -1,31 +1,30 @@
  ---
  name: experience-editor-uiux
  description: "Thiết kế UI/UX cho Experience pages với Full Preview + Floating Bottom Panel pattern. Sử dụng khi: (1) Tạo hoặc refactor Experience pages, (2) Cần preview full-width responsive, (3) Config theo layout-specific (mỗi layout có config riêng), (4) Cross-module sync (1 experience điều khiển nhiều modules). Pattern này dựa trên Shopify Theme Editor, WordPress Customizer, và Webflow Designer."
- version: 1.0.0
+ version: 1.1.0
  ---
  
  # Experience Editor UI/UX
  
  Skill này cung cấp guidelines và patterns để thiết kế Experience pages với **Full Preview + Floating Bottom Panel** pattern.
  
+ **Tối ưu chiều cao - tối đa hóa preview area:**
+ 
  ## Problem Statement
- 
- Experience pages trong admin cần:
- 1. **Preview full-width** để test responsive breakpoints chính xác
- 2. **Layout-specific config** - mỗi layout (Classic/Modern/Minimal) có config riêng
- 3. **Cross-module sync** - một experience có thể điều khiển features từ nhiều modules
- 4. **Controls không che preview** - user vẫn thấy preview khi điều chỉnh settings
- 
- ## Solution: Full Preview + Floating Bottom Panel
- 
- ### Core Pattern
- 
- ```
- ┌─────────────────────────────────────────────────────────────────┐
- │  Header: Title + Save Button                                    │
- ├─────────────────────────────────────────────────────────────────┤
- │                                                                 │
- │                                                                 │
+ ┌───────────────────────────────────────────────────────────────────────┐
+ │ 🎨 Title                    [Desktop][Tablet][Mobile]    [Lưu thay đổi] │  ← 48px max
+ ├───────────────────────────────────────────────────────────────────────┤
+ │                                                                       │
+ │                         FULL-WIDTH PREVIEW                            │
+ │                    (height: calc(100vh - 48px - panel))               │
+ │                                                                       │
+ │                         [BrowserFrame content]                        │
+ │                                                                       │
+ ├─ [Grid][List][Masonry] ──────────────────────────────────────── [∨] ──┤  ← 40px (tabs bar)
+ │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐      │
+ │  │ Control 1   │ │ Control 2   │ │ Control 3   │ │ Hints       │      │  ← ~180px expanded
+ │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘      │
+ └───────────────────────────────────────────────────────────────────────┘
  │                   FULL-WIDTH PREVIEW                           │
  │                   (height: calc(100vh - header - panel))        │
  │                                                                 │
@@ -50,6 +49,31 @@
  2. **Device Toggle**: Desktop (1920px) / Tablet (768px) / Mobile (375px)
  3. **Layout Tabs**: Chuyển đổi giữa các layouts, mỗi layout có config riêng
  4. **Config Panel**: Collapsible, chứa settings cho layout đang active
+ 
+ ### Height Optimization Rules
+ 
+ | Component | Max Height | Notes |
+ |-----------|-----------|-------|
+ | Header | 48px | Icon + Title inline, DeviceToggle inline, Save button |
+ | Preview | flex-1 | Chiếm toàn bộ space còn lại |
+ | Panel tabs bar | 40px | LayoutTabs + collapse button |
+ | Panel content | 180px | Grid of ControlCards khi expanded |
+ | **Total overhead** | ~88px collapsed, ~268px expanded | Còn lại cho preview |
+ 
+ ### Compact Header Pattern
+ 
+ ```tsx
+ <header className="h-12 px-4 flex items-center justify-between border-b">
+   <div className="flex items-center gap-2">
+     <Icon className="w-4 h-4 text-{color}" />
+     <span className="font-semibold text-sm">Title</span>
+   </div>
+   <div className="flex items-center gap-3">
+     <DeviceToggle value={device} onChange={setDevice} size="sm" />
+     <Button size="sm" onClick={handleSave}>Lưu</Button>
+   </div>
+ </header>
+ ```
  
  ## Data Structure
  
@@ -257,177 +281,50 @@
  ### Basic Experience Page Structure
  
  ```typescript
- 'use client';
- 
- import React, { useMemo } from 'react';
- import { useQuery } from 'convex/react';
- import { api } from '@/convex/_generated/api';
- import { 
-   useExperienceConfig, 
-   useExperienceSave,
-   EXPERIENCE_NAMES 
- } from '@/lib/experiences';
- 
- type LayoutType = 'classic' | 'modern' | 'minimal';
- 
- type ExperienceConfig = {
-   activeLayout: LayoutType;
-   layouts: {
-     classic: ClassicConfig;
-     modern: ModernConfig;
-     minimal: MinimalConfig;
-   };
- };
- 
- const EXPERIENCE_KEY = 'post_detail_ui';
- 
- const LAYOUTS: LayoutOption[] = [
-   { id: 'classic', label: 'Classic', description: 'Sidebar layout với widgets' },
-   { id: 'modern', label: 'Modern', description: 'Hero image với typography đẹp' },
-   { id: 'minimal', label: 'Minimal', description: 'Focus vào content, không clutter' },
- ];
- 
- const DEFAULT_CONFIG: ExperienceConfig = {
-   activeLayout: 'classic',
-   layouts: {
-     classic: { showAuthor: true, showDate: true, sidebarPosition: 'right' },
-     modern: { showAuthor: true, heroStyle: 'full', showExcerpt: true },
-     minimal: { showAuthor: false, contentWidth: 'narrow' },
-   },
- };
- 
- export default function PostDetailExperiencePage() {
-   const [previewDevice, setPreviewDevice] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
-   const [isPanelExpanded, setIsPanelExpanded] = React.useState(true);
-   
-   // Load saved config
-   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
-   
-   const serverConfig = useMemo<ExperienceConfig>(() => {
-     const raw = experienceSetting?.value as Partial<ExperienceConfig> | undefined;
-     return {
-       activeLayout: raw?.activeLayout ?? DEFAULT_CONFIG.activeLayout,
-       layouts: {
-         classic: { ...DEFAULT_CONFIG.layouts.classic, ...raw?.layouts?.classic },
-         modern: { ...DEFAULT_CONFIG.layouts.modern, ...raw?.layouts?.modern },
-         minimal: { ...DEFAULT_CONFIG.layouts.minimal, ...raw?.layouts?.minimal },
-       },
-     };
-   }, [experienceSetting?.value]);
-   
-   const { config, setConfig, hasChanges } = useExperienceConfig(
-     serverConfig, 
-     DEFAULT_CONFIG, 
-     experienceSetting === undefined
-   );
-   
-   const { handleSave, isSaving } = useExperienceSave(EXPERIENCE_KEY, config);
-   
-   // Get current layout config
-   const currentLayoutConfig = config.layouts[config.activeLayout];
-   
-   // Update active layout
-   const handleLayoutChange = (layout: LayoutType) => {
-     setConfig(prev => ({ ...prev, activeLayout: layout }));
-   };
-   
-   // Update current layout's config
-   const updateLayoutConfig = <K extends keyof typeof currentLayoutConfig>(
-     key: K, 
-     value: typeof currentLayoutConfig[K]
-   ) => {
-     setConfig(prev => ({
-       ...prev,
-       layouts: {
-         ...prev.layouts,
-         [prev.activeLayout]: {
-           ...prev.layouts[prev.activeLayout],
-           [key]: value,
-         },
-       },
-     }));
-   };
-   
-   return (
-     <div className="h-screen flex flex-col">
-       {/* Header */}
-       <header className="flex-shrink-0 px-6 py-4 border-b flex justify-between items-center">
-         <div>
-           <h1 className="text-xl font-bold">Trải nghiệm: Chi tiết bài viết</h1>
-           <p className="text-sm text-slate-500">Cấu hình layout và hiển thị</p>
-         </div>
-         <Button 
-           onClick={handleSave} 
-           disabled={!hasChanges || isSaving}
-           className="bg-blue-600"
-         >
-           {isSaving ? <Loader2 className="animate-spin mr-2" /> : null}
-           Lưu thay đổi
-         </Button>
-       </header>
-       
-       {/* Preview Area */}
-       <main className="flex-1 overflow-auto p-6">
-         <div className="flex justify-center mb-4">
-           <DeviceToggle value={previewDevice} onChange={setPreviewDevice} />
-         </div>
-         <div className={`mx-auto transition-all ${deviceWidths[previewDevice]}`}>
-           <PreviewFrame device={previewDevice} url="/posts/example-post">
-             <PostDetailPreview 
-               layoutType={config.activeLayout}
-               config={currentLayoutConfig}
-             />
-           </PreviewFrame>
-         </div>
-       </main>
-       
-       {/* Bottom Panel */}
-       <div className={cn(
-         "flex-shrink-0 border-t bg-white dark:bg-slate-900 transition-all",
-         isPanelExpanded ? "h-[280px]" : "h-[52px]"
-       )}>
-         {/* Layout Tabs - Always Visible */}
-         <div className="flex items-center justify-between px-4 h-[52px] border-b">
-           <LayoutTabs 
-             layouts={LAYOUTS}
-             activeLayout={config.activeLayout}
-             onChange={handleLayoutChange}
-           />
-           <button 
-             onClick={() => setIsPanelExpanded(!isPanelExpanded)}
-             className="p-2 hover:bg-slate-100 rounded-lg"
-           >
-             {isPanelExpanded ? <ChevronDown /> : <ChevronUp />}
-           </button>
-         </div>
-         
-         {/* Config Controls - Collapsible */}
-         {isPanelExpanded && (
-           <div className="p-4 overflow-auto" style={{ height: 'calc(280px - 52px)' }}>
-             {config.activeLayout === 'classic' && (
-               <ClassicLayoutControls 
-                 config={config.layouts.classic}
-                 onChange={(key, value) => updateLayoutConfig(key, value)}
-               />
-             )}
-             {config.activeLayout === 'modern' && (
-               <ModernLayoutControls 
-                 config={config.layouts.modern}
-                 onChange={(key, value) => updateLayoutConfig(key, value)}
-               />
-             )}
-             {config.activeLayout === 'minimal' && (
-               <MinimalLayoutControls 
-                 config={config.layouts.minimal}
-                 onChange={(key, value) => updateLayoutConfig(key, value)}
-               />
-             )}
-           </div>
-         )}
+ return (
+   <div className="h-[calc(100vh-64px)] flex flex-col">
+     {/* Compact Header - 48px */}
+     <header className="h-12 px-4 flex items-center justify-between border-b bg-white dark:bg-slate-900">
+       <div className="flex items-center gap-2">
+         <LayoutTemplate className="w-4 h-4 text-blue-600" />
+         <span className="font-semibold text-sm">Chi tiết bài viết</span>
        </div>
-     </div>
-   );
- }
+       <div className="flex items-center gap-3">
+         <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+         <Button size="sm" onClick={handleSave} disabled={!hasChanges || isSaving}>
+           {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+           <span className="ml-1.5">{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
+         </Button>
+       </div>
+     </header>
+     
+     {/* Preview Area - flex-1 */}
+     <main className="flex-1 overflow-auto p-4 bg-slate-50 dark:bg-slate-950">
+       <div className={`mx-auto transition-all ${deviceWidths[previewDevice]}`}>
+         <BrowserFrame url="yoursite.com/posts/example">
+           <PostDetailPreview {...getPreviewProps()} />
+         </BrowserFrame>
+       </div>
+     </main>
+     
+     {/* Bottom Panel - Compact tabs bar 40px + content 180px */}
+     <ConfigPanel
+       isExpanded={isPanelExpanded}
+       onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
+       expandedHeight="220px"
+       leftContent={
+         <LayoutTabs layouts={LAYOUTS} activeLayout={config.layoutStyle} onChange={...} />
+       }
+     >
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+         <ControlCard title="Khối hiển thị">...</ControlCard>
+         <ControlCard title="Cấu hình">...</ControlCard>
+         <ControlCard title="Module">...</ControlCard>
+         <Card className="p-2"><ExperienceHintCard hints={HINTS} /></Card>
+       </div>
+     </ConfigPanel>
+   </div>
+ );
  ```
  
  ### Layout Controls Component
@@ -469,7 +366,7 @@
  }
  ```
  
- ### Device Toggle Component
+ ### Compact Device Toggle (size="sm")
  
  ```typescript
  const devices = [
@@ -480,60 +377,34 @@
  
  function DeviceToggle({ 
    value, 
-   onChange 
+   onChange,
+   size = 'default'
  }: { 
    value: 'desktop' | 'tablet' | 'mobile';
    onChange: (device: 'desktop' | 'tablet' | 'mobile') => void;
+   size?: 'sm' | 'default';
  }) {
+   const iconSize = size === 'sm' ? 14 : 16;
+   const padding = size === 'sm' ? 'p-1.5' : 'p-2';
+   
    return (
-     <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+     <div className="flex bg-slate-100 dark:bg-slate-800 rounded-md p-0.5">
        {devices.map(device => (
          <button
            key={device.id}
            onClick={() => onChange(device.id)}
            title={`${device.label} (${device.width})`}
            className={cn(
-             "p-2 rounded-md transition-all",
+             padding,
+             "rounded transition-all",
              value === device.id 
                ? "bg-white dark:bg-slate-700 shadow-sm" 
                : "text-slate-400 hover:text-slate-600"
            )}
          >
-           <device.icon size={16} />
+           <device.icon size={iconSize} />
          </button>
        ))}
-     </div>
-   );
- }
- ```
- 
- ### BrowserFrame Component
- 
- ```typescript
- function BrowserFrame({ 
-   children, 
-   device, 
-   url = 'yoursite.com/page' 
- }: PreviewFrameProps) {
-   return (
-     <div className="border rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-lg">
-       {/* Browser Chrome */}
-       <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 flex items-center gap-2 border-b">
-         <div className="flex gap-1.5">
-           <div className="w-3 h-3 rounded-full bg-red-400" />
-           <div className="w-3 h-3 rounded-full bg-yellow-400" />
-           <div className="w-3 h-3 rounded-full bg-green-400" />
-         </div>
-         <div className="flex-1 ml-4">
-           <div className="bg-white dark:bg-slate-700 rounded-md px-3 py-1 text-xs text-slate-400 max-w-xs">
-             {url}
-           </div>
-         </div>
-       </div>
-       {/* Content */}
-       <div className="max-h-[520px] overflow-y-auto">
-         {children}
-       </div>
      </div>
    );
  }
@@ -543,10 +414,19 @@
  
  ### Layout Constraints
  
- - Preview area: `flex-1` (fills remaining space)
- - Bottom panel expanded: 250-300px
- - Bottom panel collapsed: 50-52px
- - Minimum preview height: 400px
+ - **Header**: Max 48px (h-12), compact với icon + title + controls inline
+ - **Preview area**: `flex-1` (fills remaining space), padding 16px (p-4)
+ - **Bottom panel tabs bar**: 40px (h-10)
+ - **Bottom panel content**: 180px khi expanded
+ - **Total panel height**: 220px expanded, 40px collapsed
+ - **Minimum preview height**: 300px
+ 
+ ### Compact ControlCard
+ 
+ - Padding: p-2 thay vì p-3 hoặc p-4
+ - Title: text-xs font-medium, mb-1.5
+ - ToggleRow: py-1 thay vì py-1.5 hoặc py-2
+ - Gap giữa cards: gap-3 thay vì gap-4
  
  ### Responsive Behavior
  
@@ -565,6 +445,18 @@
  - Panel expand/collapse: 200ms ease-out
  - Device switch: 300ms transition
  - Layout tab switch: instant (không animation)
+ 
+ ## Component Size Variants
+ 
+ | Component | Default | Compact (sm) |
+ |-----------|---------|--------------|
+ | Header height | 64px | 48px |
+ | Button padding | px-4 py-2 | px-3 py-1.5 |
+ | Icon size | 20px | 14-16px |
+ | DeviceToggle padding | p-2 | p-1.5 |
+ | ControlCard padding | p-4 | p-2 |
+ | ToggleRow padding | py-2 | py-1 |
+ | Panel expanded | 280px | 220px |
  
  ## Cross-Module Sync Guidelines
  
