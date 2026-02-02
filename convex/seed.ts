@@ -259,9 +259,10 @@ export const seedPostsModule = mutation({
         { enabled: true, fieldKey: "excerpt", isSystem: false, moduleKey: "posts", name: "Mô tả ngắn", order: 4, required: false, type: "textarea" as const },
         { enabled: true, fieldKey: "thumbnail", isSystem: false, moduleKey: "posts", name: "Ảnh đại diện", order: 5, required: false, type: "image" as const },
         { enabled: true, fieldKey: "category_id", isSystem: false, moduleKey: "posts", name: "Danh mục", order: 6, required: false, type: "select" as const },
-        { enabled: true, fieldKey: "tags", isSystem: false, linkedFeature: "enableTags", moduleKey: "posts", name: "Tags", order: 7, required: false, type: "tags" as const },
-        { enabled: true, fieldKey: "featured", isSystem: false, linkedFeature: "enableFeatured", moduleKey: "posts", name: "Nổi bật", order: 8, required: false, type: "boolean" as const },
-        { enabled: true, fieldKey: "publish_date", isSystem: false, linkedFeature: "enableScheduling", moduleKey: "posts", name: "Ngày xuất bản", order: 9, required: false, type: "date" as const },
+        { enabled: true, fieldKey: "author_id", isSystem: false, moduleKey: "posts", name: "Tác giả", order: 7, required: false, type: "select" as const },
+        { enabled: true, fieldKey: "tags", isSystem: false, linkedFeature: "enableTags", moduleKey: "posts", name: "Tags", order: 8, required: false, type: "tags" as const },
+        { enabled: true, fieldKey: "featured", isSystem: false, linkedFeature: "enableFeatured", moduleKey: "posts", name: "Nổi bật", order: 9, required: false, type: "boolean" as const },
+        { enabled: true, fieldKey: "publish_date", isSystem: false, linkedFeature: "enableScheduling", moduleKey: "posts", name: "Ngày xuất bản", order: 10, required: false, type: "date" as const },
       ];
       for (const field of fields) {
         await ctx.db.insert("moduleFields", field);

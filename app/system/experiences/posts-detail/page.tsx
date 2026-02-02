@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
+import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
+import type { Id } from '@/convex/_generated/dataModel';
+import Link from 'next/link';
 import { FileText, LayoutTemplate, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
 import { ModuleHeader, SettingsCard } from '@/components/modules/shared';
@@ -16,7 +19,7 @@ import {
   ExampleLinks,
   type SummaryItem 
 } from '@/components/experiences';
-import { useExperienceConfig, useExperienceSave, useExamplePostSlug, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
+import { useExperienceConfig, useExamplePostSlug, EXPERIENCE_GROUP, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type DetailLayoutStyle = 'classic' | 'modern' | 'minimal';
 
@@ -29,6 +32,7 @@ type PostDetailExperienceConfig = {
 };
 
 const EXPERIENCE_KEY = 'posts_detail_ui';
+const AUTHOR_FIELD_KEY = 'author_id';
 
 // Legacy key for backward compatibility
 const LEGACY_DETAIL_STYLE_KEY = 'posts_detail_style';
@@ -57,8 +61,11 @@ export default function PostDetailExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const postsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'posts' });
   const commentsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'comments' });
+  const postFields = useQuery(api.admin.modules.listModuleFields, { moduleKey: 'posts' });
   const examplePostSlug = useExamplePostSlug();
   const legacyDetailStyleSetting = useQuery(api.settings.getByKey, { key: LEGACY_DETAIL_STYLE_KEY });
+  const setMultipleSettings = useMutation(api.settings.setMultiple);
+  const updateField = useMutation(api.admin.modules.updateModuleField);
 
   const serverConfig = useMemo<PostDetailExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<PostDetailExperienceConfig> | undefined;
@@ -73,21 +80,42 @@ export default function PostDetailExperiencePage() {
     };
   }, [experienceSetting?.value, legacyDetailStyleSetting?.value]);
 
-  const isLoading = experienceSetting === undefined || postsModule === undefined;
+  const isLoading = experienceSetting === undefined || postsModule === undefined || postFields === undefined;
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
+  const authorField = useMemo(() => postFields?.find(field => field.fieldKey === AUTHOR_FIELD_KEY), [postFields]);
+  const authorFieldEnabled = authorField?.enabled ?? false;
+  const isAuthorSyncPending = Boolean(authorField) && authorFieldEnabled !== config.showAuthor;
   
   // Sync with legacy key
   const additionalSettings = useMemo(() => [
     { group: 'posts', key: LEGACY_DETAIL_STYLE_KEY, value: config.layoutStyle }
   ], [config.layoutStyle]);
   
-  const { handleSave, isSaving } = useExperienceSave(
-    EXPERIENCE_KEY, 
-    config, 
-    MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]),
-    additionalSettings
-  );
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const settingsToSave: Array<{ group: string; key: string; value: unknown }> = [
+        { group: EXPERIENCE_GROUP, key: EXPERIENCE_KEY, value: config },
+        ...additionalSettings,
+      ];
+
+      const tasks: Promise<unknown>[] = [setMultipleSettings({ settings: settingsToSave })];
+
+      if (authorField && authorFieldEnabled !== config.showAuthor) {
+        tasks.push(updateField({ enabled: config.showAuthor, id: authorField._id as Id<'moduleFields'> }));
+      }
+
+      await Promise.all(tasks);
+      toast.success(MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
+    } catch {
+      toast.error(MESSAGES.saveError);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const summaryItems: SummaryItem[] = [
     { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },
@@ -162,14 +190,41 @@ export default function PostDetailExperiencePage() {
 
           {config.layoutStyle === 'classic' && (
             <SettingsCard title="Cấu hình thêm cho Classic">
-              <ExperienceBlockToggle
-                label="Thông tin tác giả"
-                description="Hiển thị author và ngày đăng"
-                enabled={config.showAuthor}
-                onChange={() => setConfig(prev => ({ ...prev, showAuthor: !prev.showAuthor }))}
-                color="bg-blue-500"
-                disabled={!postsModule?.enabled}
-              />
+              <div className="space-y-2">
+                <ExperienceBlockToggle
+                  label="Thông tin tác giả"
+                  description="Hiển thị author và ngày đăng"
+                  enabled={config.showAuthor}
+                  onChange={() => setConfig(prev => ({ ...prev, showAuthor: !prev.showAuthor }))}
+                  color="bg-blue-500"
+                  disabled={!postsModule?.enabled || !authorField}
+                />
+
+                {authorField ? (
+                  <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2 text-xs text-slate-600 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-slate-300">
+                    <div className="flex items-center justify-between gap-3">
+                      <span>
+                        Đồng bộ với <Link href="/system/modules/posts" className="text-blue-600 hover:text-blue-700 dark:text-blue-400">Module Bài viết</Link>
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          authorFieldEnabled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200'
+                            : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        Tác giả: {authorFieldEnabled ? 'Bật' : 'Tắt'}
+                      </span>
+                    </div>
+                    <p className="mt-1">
+                      {isAuthorSyncPending ? 'Trạng thái đang lệch, bấm Lưu để đồng bộ module.' : 'Trạng thái đã đồng bộ với module.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+                    Chưa có trường Tác giả trong Module Bài viết. Vui lòng kiểm tra mục <Link href="/system/modules/posts" className="font-medium underline">/system/modules/posts</Link>.
+                  </div>
+                )}
+              </div>
 
               <ExperienceBlockToggle
                 label="Chia sẻ mạng xã hội"
