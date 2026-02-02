@@ -259,7 +259,7 @@ export default function ServiceDetailExperiencePage() {
             <SettingsCard title="Cấu hình thêm cho Modern">
               <SettingInput
                 type="text"
-                label="Text nút CTA Hero"
+                label="Text nút liên hệ"
                 value={config.modernHeroCtaText}
                 onChange={(value) => setConfig(prev => ({ ...prev, modernHeroCtaText: value }))}
                 focusColor="focus:border-violet-500"
@@ -268,44 +268,9 @@ export default function ServiceDetailExperiencePage() {
               <div className="space-y-1">
                 <SettingInput
                   type="text"
-                  label="Link nút CTA Hero"
+                  label="Link nút liên hệ"
                   value={config.modernHeroCtaLink}
                   onChange={(value) => setConfig(prev => ({ ...prev, modernHeroCtaLink: value }))}
-                  focusColor="focus:border-violet-500"
-                />
-                <p className="text-xs text-slate-500">VD: https://zalo.me/ hoặc https://m.me/yourpage</p>
-              </div>
-
-              <SettingInput
-                type="text"
-                label="Tiêu đề CTA Section"
-                value={config.modernCtaSectionTitle}
-                onChange={(value) => setConfig(prev => ({ ...prev, modernCtaSectionTitle: value }))}
-                focusColor="focus:border-violet-500"
-              />
-
-              <SettingInput
-                type="text"
-                label="Mô tả CTA Section"
-                value={config.modernCtaSectionDescription}
-                onChange={(value) => setConfig(prev => ({ ...prev, modernCtaSectionDescription: value }))}
-                focusColor="focus:border-violet-500"
-              />
-
-              <SettingInput
-                type="text"
-                label="Text nút CTA Section"
-                value={config.modernCtaButtonText}
-                onChange={(value) => setConfig(prev => ({ ...prev, modernCtaButtonText: value }))}
-                focusColor="focus:border-violet-500"
-              />
-
-              <div className="space-y-1">
-                <SettingInput
-                  type="text"
-                  label="Link nút CTA Section"
-                  value={config.modernCtaButtonLink}
-                  onChange={(value) => setConfig(prev => ({ ...prev, modernCtaButtonLink: value }))}
                   focusColor="focus:border-violet-500"
                 />
                 <p className="text-xs text-slate-500">VD: https://zalo.me/ hoặc https://m.me/yourpage</p>
