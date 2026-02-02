@@ -187,15 +187,6 @@ async function getDefaultStatus(ctx: QueryCtx): Promise<CommentStatus> {
   return (setting?.value as CommentStatus) || "Pending";
 }
 
-async function getAutoApprove(ctx: QueryCtx): Promise<boolean> {
-  const setting = await ctx.db
-    .query("moduleSettings")
-    .withIndex("by_module_setting", (q) =>
-      q.eq("moduleKey", "comments").eq("settingKey", "autoApprove")
-    )
-    .unique();
-  return (setting?.value as boolean) ?? false;
-}
 
 /**
  * Create comment
@@ -216,8 +207,7 @@ export async function create(
   }
 ): Promise<Id<"comments">> {
   assertValidRating(args.rating);
-  const autoApprove = await getAutoApprove(ctx);
-  const status = args.status ?? (autoApprove ? "Approved" : await getDefaultStatus(ctx));
+  const status = args.status ?? (await getDefaultStatus(ctx));
 
   return  ctx.db.insert("comments", {
     authorEmail: args.authorEmail,

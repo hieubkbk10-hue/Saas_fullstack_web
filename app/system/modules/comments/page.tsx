@@ -5,7 +5,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { Database, FileText, Loader2, MessageSquare, Package, RefreshCw, Reply, Settings, Shield, ThumbsUp, Trash2 } from 'lucide-react';
+import { Database, FileText, Loader2, MessageSquare, Package, RefreshCw, Reply, Settings, ThumbsUp, Trash2 } from 'lucide-react';
 import type { FieldConfig } from '@/types/module-config';
 import { 
   Code, ConventionNote, FeaturesCard, FieldsCard,
@@ -19,11 +19,10 @@ const MODULE_KEY = 'comments';
 const FEATURES_CONFIG = [
   { icon: ThumbsUp, key: 'enableLikes', label: 'Lượt thích', linkedField: 'likesCount' },
   { icon: Reply, key: 'enableReplies', label: 'Trả lời', linkedField: 'parentId' },
-  { icon: Shield, key: 'enableModeration', label: 'Kiểm duyệt' },
 ];
 
 type FeaturesState = Record<string, boolean>;
-interface SettingsState { commentsPerPage: number; defaultStatus: string; autoApprove: boolean }
+interface SettingsState { commentsPerPage: number; defaultStatus: string }
 type TabType = 'config' | 'data';
 
 export default function CommentsModuleConfigPage() {
@@ -54,7 +53,7 @@ export default function CommentsModuleConfigPage() {
   // Local state
   const [localFeatures, setLocalFeatures] = useState<FeaturesState>({});
   const [localFields, setLocalFields] = useState<FieldConfig[]>([]);
-  const [localSettings, setLocalSettings] = useState<SettingsState>({ autoApprove: false, commentsPerPage: 20, defaultStatus: 'Pending' });
+  const [localSettings, setLocalSettings] = useState<SettingsState>({ commentsPerPage: 20, defaultStatus: 'Pending' });
   const [isSaving, setIsSaving] = useState(false);
 
   const isLoading = moduleData === undefined || featuresData === undefined || 
@@ -90,8 +89,7 @@ export default function CommentsModuleConfigPage() {
     if (settingsData) {
       const commentsPerPage = settingsData.find(s => s.settingKey === 'commentsPerPage')?.value as number ?? 20;
       const defaultStatus = settingsData.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'Pending';
-      const autoApprove = settingsData.find(s => s.settingKey === 'autoApprove')?.value as boolean ?? false;
-      setLocalSettings({ autoApprove, commentsPerPage, defaultStatus });
+      setLocalSettings({ commentsPerPage, defaultStatus });
     }
   }, [settingsData]);
 
@@ -107,8 +105,7 @@ export default function CommentsModuleConfigPage() {
   const serverSettings = useMemo(() => {
     const commentsPerPage = settingsData?.find(s => s.settingKey === 'commentsPerPage')?.value as number ?? 20;
     const defaultStatus = settingsData?.find(s => s.settingKey === 'defaultStatus')?.value as string ?? 'Pending';
-    const autoApprove = settingsData?.find(s => s.settingKey === 'autoApprove')?.value as boolean ?? false;
-    return { autoApprove, commentsPerPage, defaultStatus };
+    return { commentsPerPage, defaultStatus };
   }, [settingsData]);
 
   // Check for changes
@@ -119,8 +116,7 @@ export default function CommentsModuleConfigPage() {
       return server && f.enabled !== server.enabled;
     });
     const settingsChanged = localSettings.commentsPerPage !== serverSettings.commentsPerPage ||
-                           localSettings.defaultStatus !== serverSettings.defaultStatus ||
-                           localSettings.autoApprove !== serverSettings.autoApprove;
+                           localSettings.defaultStatus !== serverSettings.defaultStatus;
     return featuresChanged || fieldsChanged || settingsChanged;
   }, [localFeatures, serverFeatures, localFields, serverFields, localSettings, serverSettings]);
 
@@ -179,9 +175,6 @@ export default function CommentsModuleConfigPage() {
       }
       if (localSettings.defaultStatus !== serverSettings.defaultStatus) {
         promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'defaultStatus', value: localSettings.defaultStatus }));
-      }
-      if (localSettings.autoApprove !== serverSettings.autoApprove) {
-        promises.push(setSetting({ moduleKey: MODULE_KEY, settingKey: 'autoApprove', value: localSettings.autoApprove }));
       }
       await Promise.all(promises);
       toast.success('Đã lưu cấu hình thành công!');

@@ -86,9 +86,9 @@ export default function PostDetailPage({ params }: PageProps) {
     const perPage = commentsSettings?.find(setting => setting.settingKey === 'commentsPerPage')?.value as number | undefined;
     return perPage ?? 20;
   }, [commentsSettings]);
-  const autoApprove = useMemo(() => {
-    const setting = commentsSettings?.find(setting => setting.settingKey === 'autoApprove')?.value as boolean | undefined;
-    return setting ?? false;
+  const defaultStatus = useMemo(() => {
+    const setting = commentsSettings?.find(setting => setting.settingKey === 'defaultStatus')?.value as string | undefined;
+    return (setting === 'Approved' ? 'Approved' : 'Pending') as 'Approved' | 'Pending';
   }, [commentsSettings]);
   const commentsPage = useQuery(
     api.comments.listByTarget,
@@ -178,14 +178,13 @@ export default function PostDetailPage({ params }: PageProps) {
         authorEmail: commentEmail.trim() || undefined,
         authorName: commentName.trim(),
         content: commentContent.trim(),
-        status: autoApprove ? 'Approved' : 'Pending',
         targetId: post._id,
         targetType: 'post',
       });
       setCommentName('');
       setCommentEmail('');
       setCommentContent('');
-      setCommentMessage(autoApprove ? 'Bình luận đã được đăng.' : 'Bình luận đã được gửi, vui lòng chờ duyệt.');
+      setCommentMessage(defaultStatus === 'Approved' ? 'Bình luận đã được đăng.' : 'Bình luận đã được gửi, vui lòng chờ duyệt.');
     } catch {
       setCommentMessage('Không thể gửi bình luận. Vui lòng thử lại.');
     } finally {
@@ -204,7 +203,6 @@ export default function PostDetailPage({ params }: PageProps) {
         authorName: draft.name.trim(),
         content: draft.content.trim(),
         parentId,
-        status: autoApprove ? 'Approved' : 'Pending',
         targetId: post._id,
         targetType: 'post',
       });

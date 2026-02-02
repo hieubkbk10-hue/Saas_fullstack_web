@@ -715,7 +715,6 @@ export const seedCommentsModule = mutation({
       const features = [
         { description: "Cho phép like/dislike bình luận", enabled: false, featureKey: "enableLikes", linkedFieldKey: "likesCount", moduleKey: "comments", name: "Lượt thích" },
         { description: "Cho phép reply bình luận", enabled: true, featureKey: "enableReplies", linkedFieldKey: "parentId", moduleKey: "comments", name: "Trả lời" },
-        { description: "Yêu cầu duyệt bình luận trước khi hiển thị", enabled: true, featureKey: "enableModeration", moduleKey: "comments", name: "Kiểm duyệt" },
       ];
       for (const feature of features) {
         await ctx.db.insert("moduleFeatures", feature);
@@ -761,7 +760,6 @@ export const seedCommentsModule = mutation({
     if (!existingSettings) {
       await ctx.db.insert("moduleSettings", { moduleKey: "comments", settingKey: "commentsPerPage", value: 20 });
       await ctx.db.insert("moduleSettings", { moduleKey: "comments", settingKey: "defaultStatus", value: "Pending" });
-      await ctx.db.insert("moduleSettings", { moduleKey: "comments", settingKey: "autoApprove", value: false });
     }
 
     return null;
