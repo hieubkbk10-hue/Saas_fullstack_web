@@ -120,6 +120,7 @@ export default function PostDetailPage({ params }: PageProps) {
   const [replySubmittingId, setReplySubmittingId] = useState<string | null>(null);
   const [likingIds, setLikingIds] = useState<Set<string>>(new Set());
   const incrementLike = useMutation(api.comments.incrementLike);
+  const decrementLike = useMutation(api.comments.decrementLike);
   
   // Related posts - lấy cùng category
   const relatedPosts = useQuery(
@@ -225,11 +226,25 @@ export default function PostDetailPage({ params }: PageProps) {
   };
 
   const handleLike = async (id: Id<'comments'>) => {
-    if (likingIds.has(id)) {return;}
-    setLikingIds(prev => new Set([...prev, id]));
+    if (likingIds.has(id)) return;
+    setLikingIds(prev => new Set(prev).add(id));
     try {
       await incrementLike({ id });
-    } finally {
+    } finally  {
+      setLikingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  const handleUnlike = async (id: Id<'comments'>) => {
+    if (likingIds.has(id)) return;
+    setLikingIds(prev => new Set(prev).add(id));
+    try {
+      await decrementLike({ id });
+    } finally  {
       setLikingIds(prev => {
         const next = new Set(prev);
         next.delete(id);
@@ -257,6 +272,7 @@ export default function PostDetailPage({ params }: PageProps) {
       onNameChange={setCommentName}
       onSubmit={handleSubmitComment}
       onLike={handleLike}
+      onUnlike={handleUnlike}
       onReplyDraftChange={handleReplyDraftChange}
       onReplySubmit={handleSubmitReply}
     />
@@ -924,6 +940,7 @@ type CommentsSectionProps = {
   onContentChange: (value: string) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   onLike: (id: Id<'comments'>) => void;
+  onUnlike: (id: Id<'comments'>) => void;
   onReplyDraftChange: (parentId: Id<'comments'>, key: 'name' | 'email' | 'content', value: string) => void;
   onReplySubmit: (parentId: Id<'comments'>) => void;
 };
@@ -946,6 +963,7 @@ function CommentsSection({
   onContentChange,
   onSubmit,
   onLike,
+  onUnlike,
   onReplyDraftChange,
   onReplySubmit,
 }: CommentsSectionProps) {
@@ -953,16 +971,37 @@ function CommentsSection({
   const [showForm, setShowForm] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [showRepliesIds, setShowRepliesIds] = useState<Set<string>>(new Set());
 
   const avatarColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#14b8a6'];
   const getAvatarColor = (id: string) => avatarColors[id.charCodeAt(1) % avatarColors.length];
 
   const visibleComments = showAllComments ? comments : comments.slice(0, 3);
 
-  const handleLikeWithTracking = (id: Id<'comments'>) => {
-    if (likedIds.has(id)) return;
-    setLikedIds(prev => new Set([...prev, id]));
-    onLike(id);
+  const handleToggleLike = (id: Id<'comments'>) => {
+    if (likedIds.has(id)) {
+      setLikedIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      onUnlike(id);
+    } else {
+      setLikedIds(prev => new Set(prev).add(id));
+      onLike(id);
+    }
+  };
+
+  const toggleShowReplies = (id: Id<'comments'>) => {
+    setShowRepliesIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   const toggleReplyForm = (id: Id<'comments'>) => {
@@ -1038,13 +1077,22 @@ function CommentsSection({
                     {showLikes && (
                       <button
                         type="button"
-                        onClick={() => handleLikeWithTracking(comment._id)}
-                        disabled={likedIds.has(comment._id)}
-                        className={`inline-flex items-center gap-1 text-xs font-medium transition-colors ${likedIds.has(comment._id) ? 'cursor-not-allowed' : 'hover:opacity-80'}`}
+                        onClick={() => handleToggleLike(comment._id)}
+                        className="inline-flex items-center gap-1 text-xs font-medium transition-colors hover:opacity-80"
                         style={{ color: likedIds.has(comment._id) ? brandColor : undefined }}
                       >
                         <ThumbsUp className={`h-3 w-3 ${likedIds.has(comment._id) ? 'fill-current' : ''}`} />
                         {(comment.likesCount ?? 0) + (likedIds.has(comment._id) ? 1 : 0) > 0 ? (comment.likesCount ?? 0) + (likedIds.has(comment._id) ? 1 : 0) : 'Thích'}
+                      </button>
+                    )}
+                    {showReplies && (replyMap.get(comment._id) ?? []).length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => toggleShowReplies(comment._id)}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <MessageSquare className="h-3 w-3" />
+                        {showRepliesIds.has(comment._id) ? 'Ẩn' : `${(replyMap.get(comment._id) ?? []).length} phản hồi`}
                       </button>
                     )}
                     {showReplies && (
@@ -1060,30 +1108,32 @@ function CommentsSection({
                   </div>
                 )}
 
+                {/* Replies section - show when toggled */}
+                {showReplies && showRepliesIds.has(comment._id) && (replyMap.get(comment._id) ?? []).length > 0 && (
+                  <div className="space-y-2 mt-2 ml-4 pl-3 border-l-2" style={{ borderColor: `${brandColor}30` }}>
+                    {(replyMap.get(comment._id) ?? []).map((reply) => (
+                      <div key={reply._id} className="flex gap-2">
+                        <div
+                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+                          style={{ backgroundColor: brandColor }}
+                        >
+                          {reply.authorName.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1 text-xs flex-wrap">
+                            <span className="font-medium">{reply.authorName}</span>
+                            <span className="text-muted-foreground">• {new Date(reply._creationTime).toLocaleDateString('vi-VN')}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">{reply.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Reply form */}
                 {showReplies && openReplyIds.has(comment._id) && (
                   <div className="space-y-2 mt-2">
-                    {(replyMap.get(comment._id) ?? []).length > 0 && (
-                      <div className="space-y-2">
-                        {(replyMap.get(comment._id) ?? []).map((reply) => (
-                          <div key={reply._id} className="flex gap-2 ml-4 pl-3 border-l-2" style={{ borderColor: `${brandColor}30` }}>
-                            <div
-                              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
-                              style={{ backgroundColor: brandColor }}
-                            >
-                              {reply.authorName.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase()}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1 text-xs flex-wrap">
-                                <span className="font-medium">{reply.authorName}</span>
-                                <span className="text-muted-foreground">• {new Date(reply._creationTime).toLocaleDateString('vi-VN')}</span>
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-0.5">{reply.content}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
                     <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-2 ml-4">
                       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                         <input value={replyDrafts[comment._id]?.name ?? ''} onChange={(e) => onReplyDraftChange(comment._id, 'name', e.target.value)} placeholder="Họ và tên *" className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" required />

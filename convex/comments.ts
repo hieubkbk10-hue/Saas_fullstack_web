@@ -256,6 +256,15 @@ export const incrementLike = mutation({
   returns: v.null(),
 });
 
+export const decrementLike = mutation({
+  args: { id: v.id("comments") },
+  handler: async (ctx, args) => {
+    await CommentsModel.decrementLike(ctx, args);
+    return null;
+  },
+  returns: v.null(),
+});
+
 // Efficient count pending using take()
 export const countPending = query({
   args: {},

@@ -322,3 +322,12 @@ export async function incrementLike(
   const current = comment.likesCount ?? 0;
   await ctx.db.patch(id, { likesCount: current + 1 });
 }
+
+export async function decrementLike(
+  ctx: MutationCtx,
+  { id }: { id: Id<"comments"> }
+): Promise<void> {
+  const comment = await getByIdOrThrow(ctx, { id });
+  const current = comment.likesCount ?? 0;
+  await ctx.db.patch(id, { likesCount: Math.max(0, current - 1) });
+}
