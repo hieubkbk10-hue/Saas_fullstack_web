@@ -1,11 +1,17 @@
+export { analyticsModule } from './analytics.config';
+export { cartModule } from './cart.config';
  export { commentsModule } from './comments.config';
  export { customersModule } from './customers.config';
  export { homepageModule } from './homepage.config';
+export { mediaModule } from './media.config';
  export { menusModule } from './menus.config';
+export { notificationsModule } from './notifications.config';
  export { ordersModule } from './orders.config';
  export { postsModule } from './posts.config';
 export { productsModule } from './products.config';
+export { promotionsModule } from './promotions.config';
  export { rolesModule } from './roles.config';
 export { servicesModule } from './services.config';
+export { settingsModule } from './settings.config';
  export { usersModule } from './users.config';
  export { wishlistModule } from './wishlist.config';
