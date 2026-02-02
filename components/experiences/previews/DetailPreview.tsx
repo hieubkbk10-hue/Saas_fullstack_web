@@ -7,10 +7,24 @@ type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
 type PostDetailPreviewProps = {
   layoutStyle: DetailLayoutStyle;
-  showAuthor: boolean;
+  showAuthor?: boolean;
   showRelated: boolean;
   showShare: boolean;
-  showComments: boolean;
+  showComments?: boolean;
+  quickContactEnabled?: boolean;
+  quickContactTitle?: string;
+  quickContactDescription?: string;
+  quickContactShowPrice?: boolean;
+  quickContactButtonText?: string;
+  quickContactButtonLink?: string;
+  device?: DeviceType;
+  brandColor?: string;
+};
+
+type ServiceDetailPreviewProps = {
+  layoutStyle: DetailLayoutStyle;
+  showRelated: boolean;
+  showShare: boolean;
   quickContactEnabled?: boolean;
   quickContactTitle?: string;
   quickContactDescription?: string;
@@ -108,8 +122,9 @@ function QuickContactButtonsPreview({ brandColor, label }: { brandColor: string;
 }
 
 // Classic Style Preview - Extracted from ClassicStyle
-function ClassicStylePreview({ showAuthor, showRelated, showShare, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device'>) {
+function ClassicStylePreview({ showRelated, showShare, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const readingTime = 5;
+  const showAuthor = true;
   const [isCopied] = React.useState(false);
 
   return (
@@ -262,8 +277,9 @@ function ClassicStylePreview({ showAuthor, showRelated, showShare, brandColor = 
 }
 
 // Modern Style Preview - Extracted from ModernStyle
-function ModernStylePreview({ showAuthor, showRelated, showShare, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device'>) {
+function ModernStylePreview({ showRelated, showShare, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const readingTime = 5;
+  const showAuthor = true;
   const [isCopied] = React.useState(false);
 
   return (
@@ -419,8 +435,9 @@ function ModernStylePreview({ showAuthor, showRelated, showShare, brandColor = '
 }
 
 // Minimal Style Preview - Extracted from MinimalStyle
-function MinimalStylePreview({ showAuthor, showRelated, showShare, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device'>) {
+function MinimalStylePreview({ showRelated, showShare, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const [isCopied] = React.useState(false);
+  const showAuthor = true;
   const readingTime = 5;
 
   return (
@@ -565,13 +582,13 @@ function MinimalStylePreview({ showAuthor, showRelated, showShare, brandColor = 
 // Main Preview Component
 export function PostDetailPreview({
   layoutStyle,
-  showAuthor,
   showRelated,
   showShare,
-  showComments,
   device = 'desktop',
   brandColor = '#3b82f6',
 }: PostDetailPreviewProps) {
+  const showAuthor = true;
+  const showComments = true;
   const props = { showAuthor, showRelated, showShare, showComments, brandColor, device };
 
   return (
@@ -594,7 +611,7 @@ function ClassicServicePreview({
   quickContactShowPrice,
   quickContactButtonText,
   quickContactButtonLink,
-}: PostDetailPreviewProps) {
+}: ServiceDetailPreviewProps) {
   const isDesktop = device === 'desktop';
   const isMobile = device === 'mobile';
   const relatedServices = showRelated ? MOCK_RELATED_SERVICES : [];
@@ -769,7 +786,7 @@ function ClassicServicePreview({
   );
 }
 
-function ModernServicePreview({ showRelated, brandColor = '#3b82f6', device = 'desktop' }: PostDetailPreviewProps) {
+function ModernServicePreview({ showRelated, brandColor = '#3b82f6', device = 'desktop' }: ServiceDetailPreviewProps) {
   const isTablet = device === 'tablet';
   const isMobile = device === 'mobile';
   const relatedServices = showRelated ? MOCK_RELATED_SERVICES : [];
@@ -919,7 +936,7 @@ function ModernServicePreview({ showRelated, brandColor = '#3b82f6', device = 'd
   );
 }
 
-function MinimalServicePreview({ showRelated, brandColor = '#3b82f6', device = 'desktop' }: PostDetailPreviewProps) {
+function MinimalServicePreview({ showRelated, brandColor = '#3b82f6', device = 'desktop' }: ServiceDetailPreviewProps) {
   const isTablet = device === 'tablet';
   const isMobile = device === 'mobile';
   const relatedServices = showRelated ? MOCK_RELATED_SERVICES : [];
@@ -1051,10 +1068,8 @@ function MinimalServicePreview({ showRelated, brandColor = '#3b82f6', device = '
 
 export function ServiceDetailPreview({
   layoutStyle,
-  showAuthor,
   showRelated,
   showShare,
-  showComments,
   quickContactEnabled,
   quickContactTitle,
   quickContactDescription,
@@ -1063,12 +1078,10 @@ export function ServiceDetailPreview({
   quickContactButtonLink,
   brandColor = '#3b82f6',
   device = 'desktop',
-}: PostDetailPreviewProps) {
+}: ServiceDetailPreviewProps) {
   const props = {
-    showAuthor,
     showRelated,
     showShare,
-    showComments,
     brandColor,
     device,
     layoutStyle,

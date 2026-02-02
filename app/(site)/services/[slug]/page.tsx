@@ -12,10 +12,8 @@ type ServiceDetailStyle = 'classic' | 'modern' | 'minimal';
 
 type ServiceDetailExperienceConfig = {
   layoutStyle: ServiceDetailStyle;
-  showAuthor: boolean;
   showRelated: boolean;
   showShare: boolean;
-  showComments: boolean;
   quickContactEnabled: boolean;
   quickContactTitle: string;
   quickContactDescription: string;
@@ -30,10 +28,8 @@ function useServiceDetailExperienceConfig(): ServiceDetailExperienceConfig {
     const raw = setting?.value as Partial<ServiceDetailExperienceConfig> | undefined;
     return {
       layoutStyle: raw?.layoutStyle ?? 'classic',
-      showAuthor: raw?.showAuthor ?? true,
       showRelated: raw?.showRelated ?? true,
       showShare: raw?.showShare ?? true,
-      showComments: raw?.showComments ?? true,
       quickContactEnabled: raw?.quickContactEnabled ?? true,
       quickContactTitle: raw?.quickContactTitle ?? 'Liên hệ nhanh',
       quickContactDescription: raw?.quickContactDescription ?? 'Tư vấn miễn phí, báo giá trong 24h.',

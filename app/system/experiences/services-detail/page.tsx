@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Briefcase, LayoutTemplate, MessageSquare } from 'lucide-react';
+import { Briefcase, LayoutTemplate } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
 import { ModuleHeader, SettingsCard, SettingInput, SettingSelect } from '@/components/modules/shared';
 import { 
@@ -22,10 +22,8 @@ type DetailLayoutStyle = 'classic' | 'modern' | 'minimal';
 
 type ServiceDetailExperienceConfig = {
   layoutStyle: DetailLayoutStyle;
-  showAuthor: boolean;
   showRelated: boolean;
   showShare: boolean;
-  showComments: boolean;
   quickContactEnabled: boolean;
   quickContactTitle: string;
   quickContactDescription: string;
@@ -44,10 +42,8 @@ const LAYOUT_STYLES: { id: DetailLayoutStyle; label: string; description: string
 
 const DEFAULT_CONFIG: ServiceDetailExperienceConfig = {
   layoutStyle: 'classic',
-  showAuthor: true,
   showRelated: true,
   showShare: true,
-  showComments: true,
   quickContactEnabled: true,
   quickContactTitle: 'Liên hệ nhanh',
   quickContactDescription: 'Tư vấn miễn phí, báo giá trong 24h.',
@@ -65,17 +61,14 @@ const HINTS = [
 export default function ServiceDetailExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const servicesModule = useQuery(api.admin.modules.getModuleByKey, { key: 'services' });
-  const commentsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'comments' });
   const exampleServiceSlug = useExampleServiceSlug();
 
   const serverConfig = useMemo<ServiceDetailExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<ServiceDetailExperienceConfig> | undefined;
     return {
       layoutStyle: raw?.layoutStyle ?? 'classic',
-      showAuthor: raw?.showAuthor ?? true,
       showRelated: raw?.showRelated ?? true,
       showShare: raw?.showShare ?? true,
-      showComments: raw?.showComments ?? true,
       quickContactEnabled: raw?.quickContactEnabled ?? true,
       quickContactTitle: raw?.quickContactTitle ?? 'Liên hệ nhanh',
       quickContactDescription: raw?.quickContactDescription ?? 'Tư vấn miễn phí, báo giá trong 24h.',
@@ -92,9 +85,8 @@ export default function ServiceDetailExperiencePage() {
 
   const summaryItems: SummaryItem[] = [
     { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },
-    { label: 'Author Info', value: config.showAuthor },
-    { label: 'Comments', value: config.showComments },
     { label: 'Related Services', value: config.showRelated },
+    { label: 'Share Buttons', value: config.showShare },
   ];
 
   if (isLoading) {
@@ -110,7 +102,7 @@ export default function ServiceDetailExperiencePage() {
       <ModuleHeader
         icon={LayoutTemplate}
         title="Trải nghiệm: Chi tiết dịch vụ"
-        description="Cấu hình layout, author info, comments và related services."
+        description="Cấu hình layout và các khối hiển thị cho trang chi tiết dịch vụ."
         iconBgClass="bg-violet-500/10"
         iconTextClass="text-violet-600 dark:text-violet-400"
         buttonClass="bg-violet-600 hover:bg-violet-500"
@@ -123,10 +115,8 @@ export default function ServiceDetailExperiencePage() {
       <ExperiencePreview title="Chi tiết dịch vụ">
         <ServiceDetailPreview
           layoutStyle={config.layoutStyle}
-          showAuthor={config.showAuthor}
           showRelated={config.showRelated}
           showShare={config.showShare}
-          showComments={config.showComments}
           quickContactEnabled={config.quickContactEnabled}
           quickContactTitle={config.quickContactTitle}
           quickContactDescription={config.quickContactDescription}
@@ -201,37 +191,13 @@ export default function ServiceDetailExperiencePage() {
                 />
                 <p className="text-xs text-slate-500">VD: https://zalo.me/ hoặc https://m.me/yourpage</p>
               </div>
-            </SettingsCard>
-          )}
-
-          <Card className="p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Khối hiển thị</h3>
-            <div className="space-y-3">
-              <ExperienceBlockToggle
-                label="Thông tin tác giả"
-                description="Hiển thị author và ngày đăng"
-                enabled={config.showAuthor}
-                onChange={() => setConfig(prev => ({ ...prev, showAuthor: !prev.showAuthor }))}
-                color="bg-violet-500"
-                disabled={!servicesModule?.enabled}
-              />
 
               <ExperienceBlockToggle
                 label="Chia sẻ mạng xã hội"
-                description="Nút share Facebook, Twitter..."
+                description="Nút copy link dịch vụ"
                 enabled={config.showShare}
                 onChange={() => setConfig(prev => ({ ...prev, showShare: !prev.showShare }))}
                 color="bg-violet-500"
-                disabled={!servicesModule?.enabled}
-              />
-
-              <ExperienceBlockToggle
-                label="Bình luận & đánh giá"
-                description="Nguồn: Module Comments"
-                enabled={config.showComments}
-                onChange={() => setConfig(prev => ({ ...prev, showComments: !prev.showComments }))}
-                color="bg-violet-500"
-                disabled={!commentsModule?.enabled}
               />
 
               <ExperienceBlockToggle
@@ -240,10 +206,9 @@ export default function ServiceDetailExperiencePage() {
                 enabled={config.showRelated}
                 onChange={() => setConfig(prev => ({ ...prev, showRelated: !prev.showRelated }))}
                 color="bg-violet-500"
-                disabled={!servicesModule?.enabled}
               />
-            </div>
-          </Card>
+            </SettingsCard>
+          )}
 
           <ExperienceSummaryGrid items={summaryItems} />
         </div>
@@ -268,13 +233,6 @@ export default function ServiceDetailExperiencePage() {
                 href="/system/modules/services"
                 icon={Briefcase}
                 title="Dịch vụ"
-                colorScheme="cyan"
-              />
-              <ExperienceModuleLink
-                enabled={commentsModule?.enabled ?? false}
-                href="/system/modules/comments"
-                icon={MessageSquare}
-                title="Comments"
                 colorScheme="cyan"
               />
             </CardContent>
