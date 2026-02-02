@@ -1,0 +1,1 @@
+ export { PromotionsDataTab } from './PromotionsDataTab';

@@ -1,6 +1,6 @@
  'use client';
  
- import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
  import Image from 'next/image';
  import { useQuery } from 'convex/react';
  import { api } from '@/convex/_generated/api';
@@ -10,13 +10,10 @@
  
  interface AnalyticsDataTabProps {
    colorClasses: { button: string };
-   featuresEnabled: Record<string, boolean>;
-   settings: { defaultPeriod: string; autoRefresh: boolean; refreshInterval: number };
-   onSeedData: () => Promise<void>;
-   onClearConfig: () => Promise<void>;
-   onResetConfig: () => Promise<void>;
  }
  
+const MODULE_KEY = 'analytics';
+
  function formatCurrency(value: number): string {
    if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`;
    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
@@ -24,16 +21,42 @@
    return value.toLocaleString('vi-VN');
  }
  
-export function AnalyticsDataTab({ colorClasses: _colorClasses, featuresEnabled, settings, onSeedData, onClearConfig, onResetConfig }: AnalyticsDataTabProps) {
-   const [selectedPeriod, setSelectedPeriod] = useState(settings.defaultPeriod);
+export function AnalyticsDataTab({ colorClasses: _colorClasses }: AnalyticsDataTabProps) {
+  // Query features and settings from Convex
+  const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+
+  // Derive featuresEnabled from query
+  const featuresEnabled = useMemo(() => {
+    const result: Record<string, boolean> = {};
+    featuresData?.forEach(f => { result[f.featureKey] = f.enabled; });
+    return result;
+  }, [featuresData]);
+
+  // Derive settings from query
+  const settings = useMemo(() => {
+    const defaultPeriod = settingsData?.find(s => s.settingKey === 'defaultPeriod')?.value as string ?? '30d';
+    const autoRefresh = settingsData?.find(s => s.settingKey === 'autoRefresh')?.value as boolean ?? true;
+    const refreshInterval = settingsData?.find(s => s.settingKey === 'refreshInterval')?.value as number ?? 300;
+    return { autoRefresh, defaultPeriod, refreshInterval };
+  }, [settingsData]);
+
+  const [selectedPeriod, setSelectedPeriod] = useState('30d');
    const [lastRefresh, setLastRefresh] = useState(() => Date.now());
  
+  // Update selectedPeriod when settings load
+  useEffect(() => {
+    if (settings.defaultPeriod) {
+      setSelectedPeriod(settings.defaultPeriod);
+    }
+  }, [settings.defaultPeriod]);
+
    const summaryStats = useQuery(api.analytics.getSummaryStats, { period: selectedPeriod });
    const chartData = useQuery(api.analytics.getRevenueChartData, { period: selectedPeriod });
    const topProducts = useQuery(api.analytics.getTopProducts, { limit: 5 });
    const lowStockProducts = useQuery(api.analytics.getLowStockProducts, { limit: 5, threshold: 10 });
  
-   const isLoading = summaryStats === undefined;
+  const isLoading = summaryStats === undefined || featuresData === undefined;
  
    const handleManualRefresh = useCallback(() => setLastRefresh(Date.now()), []);
  
@@ -169,15 +192,7 @@ export function AnalyticsDataTab({ colorClasses: _colorClasses, featuresEnabled,
          </Card>
        )}
  
-       <Card className="p-4">
-         <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Quản lý cấu hình</h4>
-         <div className="flex flex-wrap gap-2">
-           <Button onClick={onSeedData} variant="outline" size="sm" className="gap-2">Seed Config</Button>
-           <Button onClick={onClearConfig} variant="outline" size="sm" className="gap-2 text-red-600 border-red-300 hover:bg-red-50">Xóa Config</Button>
-           <Button onClick={onResetConfig} variant="outline" size="sm" className="gap-2">Reset Config</Button>
-         </div>
-         <p className="text-xs text-slate-500 mt-2">Last refresh: {new Date(lastRefresh).toLocaleTimeString('vi-VN')}</p>
-       </Card>
+      <p className="text-xs text-slate-500 text-center">Last refresh: {new Date(lastRefresh).toLocaleTimeString('vi-VN')}</p>
      </div>
    );
  }

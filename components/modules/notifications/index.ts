@@ -1,0 +1,1 @@
+ export { NotificationsDataTab } from './NotificationsDataTab';
