@@ -238,8 +238,8 @@ export function ClassicStyle({ service, brandColor, relatedServices, enabledFiel
               <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-slate-700">Liên hệ nhanh</p>
-                    <p className="text-xs text-slate-500">Tư vấn miễn phí, báo giá trong 24h.</p>
+                    <p className="text-sm font-semibold text-slate-700">Liên hệ nhanh</p>
+                    <p className="text-sm text-slate-500">Tư vấn miễn phí, báo giá trong 24h.</p>
                   </div>
                   {showPrice && (
                     <div className="text-base font-semibold" style={{ color: brandColor }}>
