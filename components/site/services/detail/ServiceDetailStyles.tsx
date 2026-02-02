@@ -323,8 +323,8 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
   return (
     <div className="min-h-screen bg-background">
       {/* Breadcrumb */}
-      <div className="border-b border-border bg-background">
-        <div className="max-w-6xl mx-auto px-4 py-3">
+      <div className="bg-background">
+        <div className="max-w-6xl mx-auto px-4 pt-4 pb-2">
           <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
             <Link href="/" className="hover:text-foreground transition-colors">Trang chủ</Link>
             <ChevronRight size={14} className="text-muted-foreground/50" />
