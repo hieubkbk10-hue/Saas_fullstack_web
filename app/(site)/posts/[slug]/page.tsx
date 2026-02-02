@@ -8,7 +8,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { Button, Card, CardContent } from '@/app/admin/components/ui';
-import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Eye, FileText, Home, Link as LinkIcon, Share2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Eye, FileText, Home, Link as LinkIcon, Share2, User } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
 const notoSans = Noto_Sans({
@@ -54,12 +54,25 @@ export default function PostDetailPage({ params }: PageProps) {
   const brandColor = useBrandColor();
   const style = usePostDetailStyle();
   const enabledFields = useEnabledPostFields();
+  const experienceSetting = useQuery(api.settings.getByKey, { key: 'posts_detail_ui' });
   const post = useQuery(api.posts.getBySlug, { slug });
   const category = useQuery(
     api.postCategories.getById, 
     post?.categoryId ? { id: post.categoryId } : 'skip'
   );
   const incrementViews = useMutation(api.posts.incrementViews);
+  const experienceConfig = useMemo(() => {
+    const raw = experienceSetting?.value as Partial<{ showAuthor?: boolean }> | undefined;
+    return {
+      showAuthor: raw?.showAuthor ?? true,
+    };
+  }, [experienceSetting?.value]);
+
+  const shouldShowAuthor = enabledFields.has('author_id') && experienceConfig.showAuthor;
+  const author = useQuery(
+    api.users.getById,
+    post && shouldShowAuthor ? { id: post.authorId } : 'skip'
+  );
   
   // Related posts - lấy cùng category
   const relatedPosts = useQuery(
@@ -110,15 +123,43 @@ export default function PostDetailPage({ params }: PageProps) {
 
   return (
     <>
-      {style === 'classic' && <ClassicStyle post={postData} brandColor={brandColor} relatedPosts={filteredRelated} enabledFields={enabledFields} />}
-      {style === 'modern' && <ModernStyle post={postData} brandColor={brandColor} relatedPosts={filteredRelated} enabledFields={enabledFields} />}
-      {style === 'minimal' && <MinimalStyle post={postData} brandColor={brandColor} relatedPosts={filteredRelated} enabledFields={enabledFields} />}
+      {style === 'classic' && (
+        <ClassicStyle
+          post={postData}
+          brandColor={brandColor}
+          relatedPosts={filteredRelated}
+          enabledFields={enabledFields}
+          showAuthor={shouldShowAuthor}
+          authorName={author?.name ?? ''}
+        />
+      )}
+      {style === 'modern' && (
+        <ModernStyle
+          post={postData}
+          brandColor={brandColor}
+          relatedPosts={filteredRelated}
+          enabledFields={enabledFields}
+          showAuthor={shouldShowAuthor}
+          authorName={author?.name ?? ''}
+        />
+      )}
+      {style === 'minimal' && (
+        <MinimalStyle
+          post={postData}
+          brandColor={brandColor}
+          relatedPosts={filteredRelated}
+          enabledFields={enabledFields}
+          showAuthor={shouldShowAuthor}
+          authorName={author?.name ?? ''}
+        />
+      )}
     </>
   );
 }
 
 interface PostData {
   _id: Id<"posts">;
+  authorId: Id<"users">;
   title: string;
   slug: string;
   content: string;
@@ -144,10 +185,12 @@ interface StyleProps {
   brandColor: string;
   relatedPosts: RelatedPost[];
   enabledFields: Set<string>;
+  showAuthor: boolean;
+  authorName: string;
 }
 
 // Style 1: Classic - Truyền thống với sidebar
-function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
+function ClassicStyle({ post, brandColor, relatedPosts, showAuthor, authorName }: StyleProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isCopied, setIsCopied] = useState(false);
   const { isBroken, markBroken } = useImageFallback();
@@ -216,6 +259,15 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
               </h1>
 
               <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground pt-2">
+                {showAuthor && authorName && (
+                  <>
+                    <div className="flex items-center gap-1.5">
+                      <User className="h-4 w-4" />
+                      <span>{authorName}</span>
+                    </div>
+                    <span className="text-muted-foreground/40">•</span>
+                  </>
+                )}
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-4 w-4" />
                   <span>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</span>
@@ -336,7 +388,7 @@ function ClassicStyle({ post, brandColor, relatedPosts }: StyleProps) {
 }
 
 // Style 2: Modern - Medium/Substack inspired - Focus on typography and reading experience
-function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StyleProps) {
+function ModernStyle({ post, brandColor, relatedPosts, enabledFields, showAuthor, authorName }: StyleProps) {
   const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
   const showExcerpt = enabledFields.has('excerpt');
   const [isCopied, setIsCopied] = useState(false);
@@ -399,6 +451,12 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
             </h1>
 
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+              {showAuthor && authorName && (
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <span className="font-medium">{authorName}</span>
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 <time className="font-medium">{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>
@@ -517,7 +575,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields }: StylePro
 }
 
 // Style 3: Minimal - Tối giản, tập trung nội dung
-function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
+function MinimalStyle({ post, brandColor, relatedPosts, showAuthor, authorName }: StyleProps) {
   const [isCopied, setIsCopied] = useState(false);
   const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
   const { isBroken, markBroken } = useImageFallback();
@@ -588,6 +646,12 @@ function MinimalStyle({ post, brandColor, relatedPosts }: StyleProps) {
                     {post.title}
                   </h1>
                   <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                    {showAuthor && authorName && (
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        <span>{authorName}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
                       <time>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('vi-VN') : ''}</time>

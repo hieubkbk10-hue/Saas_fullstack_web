@@ -186,6 +186,7 @@ export async function update(
   ctx: MutationCtx,
   args: {
     id: Id<"posts">;
+    authorId?: Id<"users">;
     title?: string;
     slug?: string;
     content?: string;

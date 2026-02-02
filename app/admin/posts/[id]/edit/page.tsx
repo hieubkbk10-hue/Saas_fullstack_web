@@ -21,6 +21,7 @@ export default function PostEditPage({ params }: { params: Promise<{ id: string 
 
   const postData = useQuery(api.posts.getById, { id: id as Id<"posts"> });
   const categoriesData = useQuery(api.postCategories.listAll, {});
+  const usersData = useQuery(api.users.listAll);
   const updatePost = useMutation(api.posts.update);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
 
@@ -30,6 +31,7 @@ export default function PostEditPage({ params }: { params: Promise<{ id: string 
   const [excerpt, setExcerpt] = useState('');
   const [thumbnail, setThumbnail] = useState<string | undefined>();
   const [categoryId, setCategoryId] = useState('');
+  const [authorId, setAuthorId] = useState('');
   const [status, setStatus] = useState<'Draft' | 'Published' | 'Archived'>('Draft');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -66,6 +68,7 @@ export default function PostEditPage({ params }: { params: Promise<{ id: string 
       setExcerpt(postData.excerpt ?? '');
       setThumbnail(postData.thumbnail);
       setCategoryId(postData.categoryId);
+      setAuthorId(postData.authorId);
       setStatus(postData.status);
     }
   }, [postData]);
@@ -77,6 +80,7 @@ export default function PostEditPage({ params }: { params: Promise<{ id: string 
     setIsSubmitting(true);
     try {
       await updatePost({
+        authorId: enabledFields.has('author_id') && authorId ? (authorId as Id<"users">) : undefined,
         categoryId: categoryId as Id<"postCategories">,
         content,
         excerpt: excerpt.trim() || undefined,
@@ -190,6 +194,20 @@ export default function PostEditPage({ params }: { params: Promise<{ id: string 
                   </Button>
                 </div>
               </div>
+              {enabledFields.has('author_id') && (
+                <div className="space-y-2">
+                  <Label>Tác giả</Label>
+                  <select
+                    value={authorId}
+                    onChange={(e) =>{  setAuthorId(e.target.value); }}
+                    className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                  >
+                    {usersData?.map((user) => (
+                      <option key={user._id} value={user._id}>{user.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </CardContent>
           </Card>
           

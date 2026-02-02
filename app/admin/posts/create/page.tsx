@@ -30,6 +30,7 @@ export default function PostCreatePage() {
   const [excerpt, setExcerpt] = useState('');
   const [thumbnail, setThumbnail] = useState<string | undefined>();
   const [categoryId, setCategoryId] = useState('');
+  const [authorId, setAuthorId] = useState('');
   const [status, setStatus] = useState<'Draft' | 'Published'>('Draft');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -43,6 +44,12 @@ export default function PostCreatePage() {
       }
     }
   }, [settingsData]);
+
+  useEffect(() => {
+    if (usersData?.length && !authorId) {
+      setAuthorId(usersData[0]._id);
+    }
+  }, [authorId, usersData]);
 
   // FIX LOW-002: Keyboard shortcuts
   const handleSaveShortcut = useCallback(() => {
@@ -86,7 +93,7 @@ export default function PostCreatePage() {
     setIsSubmitting(true);
     try {
       await createPost({
-        authorId: usersData[0]._id,
+        authorId: (enabledFields.has('author_id') ? authorId : usersData[0]._id) as Id<"users">,
         categoryId: categoryId as Id<"postCategories">,
         content,
         excerpt: excerpt.trim() || undefined,
@@ -189,6 +196,20 @@ export default function PostCreatePage() {
                   </Button>
                 </div>
               </div>
+              {enabledFields.has('author_id') && (
+                <div className="space-y-2">
+                  <Label>Tác giả</Label>
+                  <select
+                    value={authorId}
+                    onChange={(e) =>{  setAuthorId(e.target.value); }}
+                    className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+                  >
+                    {usersData?.map((user) => (
+                      <option key={user._id} value={user._id}>{user.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </CardContent>
           </Card>
           

@@ -279,6 +279,7 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
+    authorId: v.optional(v.id("users")),
     categoryId: v.optional(v.id("postCategories")),
     content: v.optional(v.string()),
     excerpt: v.optional(v.string()),
