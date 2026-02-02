@@ -950,6 +950,21 @@ function CommentsSection({
   onReplySubmit,
 }: CommentsSectionProps) {
   const [openReplyIds, setOpenReplyIds] = useState<Set<string>>(new Set());
+  const [showForm, setShowForm] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+
+  const avatarColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#14b8a6'];
+  const getAvatarColor = (id: string) => avatarColors[id.charCodeAt(1) % avatarColors.length];
+
+  const visibleComments = showAllComments ? comments : comments.slice(0, 3);
+
+  const handleLikeWithTracking = (id: Id<'comments'>) => {
+    if (likedIds.has(id)) return;
+    setLikedIds(prev => new Set([...prev, id]));
+    onLike(id);
+  };
+
   const toggleReplyForm = (id: Id<'comments'>) => {
     setOpenReplyIds(prev => {
       const next = new Set(prev);
@@ -963,172 +978,124 @@ function CommentsSection({
   };
 
   return (
-    <section className="space-y-8">
-      <div className="flex items-center gap-2 border-b border-border pb-4">
-        <MessageSquare className="h-5 w-5 text-primary" />
-        <h3 className="text-xl font-semibold tracking-tight">
-          Bình luận <span className="text-base font-normal text-muted-foreground">({comments.length})</span>
-        </h3>
+    <section className="mt-10 space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-3 border-b border-border/60">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-4 w-4" style={{ color: brandColor }} />
+          <h3 className="text-base font-semibold">
+            Bình luận <span className="text-sm font-normal text-muted-foreground">({comments.length})</span>
+          </h3>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+          style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+        >
+          {showForm ? 'Đóng' : 'Viết bình luận'}
+        </button>
       </div>
 
-      <form onSubmit={onSubmit} className="rounded-xl border border-border/50 bg-muted/30 p-4 sm:p-6 shadow-sm">
-        <h4 className="mb-4 text-sm font-medium">Để lại bình luận của bạn</h4>
-        <div className="flex gap-4">
-          <div className="hidden h-10 w-10 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground sm:flex">
-            ME
+      {/* Comment Form - Collapsible */}
+      {showForm && (
+        <form onSubmit={onSubmit} className="rounded-xl border border-border/50 bg-muted/30 p-4 shadow-sm space-y-3">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <input value={commentName} onChange={(e) => onNameChange(e.target.value)} placeholder="Họ và tên *" className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" required />
+            <input value={commentEmail} onChange={(e) => onEmailChange(e.target.value)} placeholder="Email (không bắt buộc)" className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" type="email" />
           </div>
-          <div className="flex-1 space-y-3">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <input
-                value={commentName}
-                onChange={(event) =>{  onNameChange(event.target.value); }}
-                placeholder="Họ và tên"
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                required
-              />
-              <input
-                value={commentEmail}
-                onChange={(event) =>{  onEmailChange(event.target.value); }}
-                placeholder="Email (không bắt buộc)"
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                type="email"
-              />
-            </div>
-            <textarea
-              value={commentContent}
-              onChange={(event) =>{  onContentChange(event.target.value); }}
-              placeholder="Chia sẻ ý kiến của bạn..."
-              className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            />
-            {commentMessage && (
-              <p className="text-sm text-muted-foreground">{commentMessage}</p>
-            )}
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isSubmitting} style={{ backgroundColor: brandColor }} className="h-9 rounded-full px-4 text-sm text-white">
-                {isSubmitting ? 'Đang gửi...' : 'Gửi bình luận'}
-              </Button>
-            </div>
+          <textarea value={commentContent} onChange={(e) => onContentChange(e.target.value)} placeholder="Chia sẻ ý kiến của bạn..." className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" required />
+          {commentMessage && <p className="text-xs text-muted-foreground">{commentMessage}</p>}
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isSubmitting} style={{ backgroundColor: brandColor }} className="h-8 rounded-full px-4 text-xs text-white">
+              {isSubmitting ? 'Đang gửi...' : 'Gửi bình luận'}
+            </Button>
           </div>
-        </div>
-      </form>
+        </form>
+      )}
 
-      <div className="space-y-2">
+      {/* Comments List */}
+      <div className="space-y-1">
         {comments.length > 0 ? (
-          comments.map((comment) => (
-            <div key={comment._id} className="flex gap-4 pt-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground ring-2 ring-background shadow-sm">
+          visibleComments.map((comment) => (
+            <div key={comment._id} className="flex gap-3 py-3">
+              <div
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white shadow-sm"
+                style={{ backgroundColor: getAvatarColor(comment._id) }}
+              >
                 {comment.authorName.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase()}
               </div>
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-foreground">{comment.authorName}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(comment._creationTime).toLocaleDateString('vi-VN')}
-                    </span>
-                  </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-foreground">{comment.authorName}</span>
+                  <span className="text-xs text-muted-foreground">• {new Date(comment._creationTime).toLocaleDateString('vi-VN')}</span>
                 </div>
 
-                <div className="text-sm leading-relaxed text-foreground/90">{comment.content}</div>
+                <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">{comment.content}</p>
 
                 {(showLikes || showReplies) && (
-                  <div className="flex items-center gap-4 pt-1">
+                  <div className="flex items-center gap-3 mt-1.5">
                     {showLikes && (
-                      <Button
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onLike(comment._id)}
-                        className="h-8 gap-1.5 px-2 text-muted-foreground hover:text-primary"
+                        onClick={() => handleLikeWithTracking(comment._id)}
+                        disabled={likedIds.has(comment._id)}
+                        className={`inline-flex items-center gap-1 text-xs font-medium transition-colors ${likedIds.has(comment._id) ? 'cursor-not-allowed' : 'hover:opacity-80'}`}
+                        style={{ color: likedIds.has(comment._id) ? brandColor : undefined }}
                       >
-                        <ThumbsUp className="h-3.5 w-3.5" />
-                        <span className="text-xs font-medium">{comment.likesCount && comment.likesCount > 0 ? comment.likesCount : 'Thích'}</span>
-                      </Button>
+                        <ThumbsUp className={`h-3 w-3 ${likedIds.has(comment._id) ? 'fill-current' : ''}`} />
+                        {(comment.likesCount ?? 0) + (likedIds.has(comment._id) ? 1 : 0) > 0 ? (comment.likesCount ?? 0) + (likedIds.has(comment._id) ? 1 : 0) : 'Thích'}
+                      </button>
                     )}
                     {showReplies && (
-                      <Button
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="sm"
                         onClick={() => toggleReplyForm(comment._id)}
-                        className="h-8 gap-1.5 px-2 text-muted-foreground hover:text-primary"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
                       >
-                        <Reply className="h-3.5 w-3.5" />
-                        <span className="text-xs font-medium">Trả lời</span>
-                      </Button>
+                        <Reply className="h-3 w-3" />
+                        Trả lời
+                      </button>
                     )}
                   </div>
                 )}
 
                 {showReplies && openReplyIds.has(comment._id) && (
-                  <div className="space-y-3 pt-3">
+                  <div className="space-y-2 mt-2">
                     {(replyMap.get(comment._id) ?? []).length > 0 && (
-                      <div className="space-y-4">
+                      <div className="space-y-2">
                         {(replyMap.get(comment._id) ?? []).map((reply) => (
-                          <div key={reply._id} className="flex gap-3 border-l-2 border-muted pl-4">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground ring-2 ring-background shadow-sm">
+                          <div key={reply._id} className="flex gap-2 ml-4 pl-3 border-l-2" style={{ borderColor: `${brandColor}30` }}>
+                            <div
+                              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+                              style={{ backgroundColor: brandColor }}
+                            >
                               {reply.authorName.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase()}
                             </div>
-                            <div className="flex-1 space-y-1">
-                              <div className="flex items-center gap-2 text-xs">
-                                <span className="font-medium text-foreground">{reply.authorName}</span>
-                                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">↳ Trả lời {comment.authorName}</span>
-                                <span className="text-[10px] text-muted-foreground">
-                                  {new Date(reply._creationTime).toLocaleDateString('vi-VN')}
-                                </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1 text-xs flex-wrap">
+                                <span className="font-medium">{reply.authorName}</span>
+                                <span className="text-muted-foreground">• {new Date(reply._creationTime).toLocaleDateString('vi-VN')}</span>
                               </div>
-                              <p className="text-xs text-muted-foreground">{reply.content}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{reply.content}</p>
                             </div>
                           </div>
                         ))}
                       </div>
                     )}
 
-                    <div className="space-y-2 rounded-lg border border-border/50 bg-muted/30 p-3">
+                    <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-2 ml-4">
                       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                        <input
-                          value={replyDrafts[comment._id]?.name ?? ''}
-                          onChange={(event) =>{  onReplyDraftChange(comment._id, 'name', event.target.value); }}
-                          placeholder="Họ và tên"
-                          className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                          required
-                        />
-                        <input
-                          value={replyDrafts[comment._id]?.email ?? ''}
-                          onChange={(event) =>{  onReplyDraftChange(comment._id, 'email', event.target.value); }}
-                          placeholder="Email (không bắt buộc)"
-                          className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                          type="email"
-                        />
+                        <input value={replyDrafts[comment._id]?.name ?? ''} onChange={(e) => onReplyDraftChange(comment._id, 'name', e.target.value)} placeholder="Họ và tên *" className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" required />
+                        <input value={replyDrafts[comment._id]?.email ?? ''} onChange={(e) => onReplyDraftChange(comment._id, 'email', e.target.value)} placeholder="Email" className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" type="email" />
                       </div>
-                      <textarea
-                        value={replyDrafts[comment._id]?.content ?? ''}
-                        onChange={(event) =>{  onReplyDraftChange(comment._id, 'content', event.target.value); }}
-                        placeholder={`Trả lời ${comment.authorName}...`}
-                        className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        required
-                      />
+                      <textarea value={replyDrafts[comment._id]?.content ?? ''} onChange={(e) => onReplyDraftChange(comment._id, 'content', e.target.value)} placeholder={`Trả lời ${comment.authorName}...`} className="min-h-[60px] w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" required />
                       <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleReplyForm(comment._id)}
-                          className="h-8 px-3"
-                        >
-                          Hủy
-                        </Button>
-                        <Button
-                          type="button"
-                          disabled={replySubmittingId === comment._id}
-                          onClick={() => onReplySubmit(comment._id)}
-                          style={{ backgroundColor: brandColor }}
-                          className="h-8 rounded-full px-3 text-xs text-white"
-                        >
-                          <Send className="mr-1 h-3 w-3" />
+                        <button type="button" onClick={() => toggleReplyForm(comment._id)} className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground">Hủy</button>
+                        <button type="button" disabled={replySubmittingId === comment._id} onClick={() => onReplySubmit(comment._id)} style={{ backgroundColor: brandColor }} className="h-7 rounded-full px-3 text-xs text-white inline-flex items-center gap-1">
+                          <Send className="h-2.5 w-2.5" />
                           {replySubmittingId === comment._id ? 'Đang gửi...' : 'Gửi'}
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1137,11 +1104,18 @@ function CommentsSection({
             </div>
           ))
         ) : (
-          <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
+          <div className="rounded-lg border border-dashed border-border/60 bg-muted/10 px-4 py-4 text-center text-sm text-muted-foreground">
             Chưa có bình luận nào. Hãy để lại bình luận đầu tiên.
           </div>
         )}
       </div>
+
+      {/* Show more */}
+      {comments.length > 3 && !showAllComments && (
+        <button type="button" onClick={() => setShowAllComments(true)} className="w-full text-center text-sm font-medium py-2 rounded-lg border border-dashed border-border/60 text-muted-foreground hover:text-foreground hover:border-border transition-colors">
+          Xem thêm {comments.length - 3} bình luận
+        </button>
+      )}
     </section>
   );
 }
