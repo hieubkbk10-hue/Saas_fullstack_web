@@ -311,6 +311,7 @@ export default defineSchema({
     excerpt: v.optional(v.string()),
     thumbnail: v.optional(v.string()),
     categoryId: v.id("postCategories"),
+    authorId: v.optional(v.id("users")),
     authorName: v.optional(v.string()),
     status: v.union(
       v.literal("Published"),

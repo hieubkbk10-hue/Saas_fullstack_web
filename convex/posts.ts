@@ -8,6 +8,7 @@ import type { Doc } from "./_generated/dataModel";
 const postDoc = v.object({
   _creationTime: v.number(),
   _id: v.id("posts"),
+  authorId: v.optional(v.id("users")),
   authorName: v.optional(v.string()),
   categoryId: v.id("postCategories"),
   content: v.string(),
