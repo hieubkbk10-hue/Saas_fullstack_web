@@ -22,12 +22,30 @@ import type { FieldConfig } from '@/types/module-config';
  
  type TabType = 'config' | 'data' | 'appearance';
  
+export interface ModuleConfigPageRenderProps {
+  config: ModuleDefinition;
+  colorClasses: ReturnType<typeof getColorClasses>;
+  isSaving: boolean;
+  setIsSaving: (v: boolean) => void;
+}
+
  interface ModuleConfigPageProps {
    config: ModuleDefinition;
+  renderDataTab?: (props: ModuleConfigPageRenderProps) => React.ReactNode;
+  renderAppearanceTab?: (props: ModuleConfigPageRenderProps) => React.ReactNode;
+  onAppearanceSave?: () => Promise<void>;
+  appearanceHasChanges?: boolean;
  }
  
- export function ModuleConfigPage({ config }: ModuleConfigPageProps) {
+export function ModuleConfigPage({ 
+  config, 
+  renderDataTab, 
+  renderAppearanceTab,
+  onAppearanceSave,
+  appearanceHasChanges = false,
+}: ModuleConfigPageProps) {
    const [activeTab, setActiveTab] = useState<TabType>('config');
+  const [isSaving, setIsSaving] = useState(false);
    
    const {
      moduleData,
@@ -36,7 +54,7 @@ import type { FieldConfig } from '@/types/module-config';
      localCategoryFields,
      localSettings,
      isLoading,
-     isSaving,
+    isSaving: isConfigSaving,
      hasChanges,
      handleToggleFeature,
      handleToggleField,
@@ -47,6 +65,23 @@ import type { FieldConfig } from '@/types/module-config';
    
    const colorClasses = getColorClasses(config.color);
    const tabs = config.tabs ?? ['config', 'data'];
+  
+  const renderProps: ModuleConfigPageRenderProps = {
+    config,
+    colorClasses,
+    isSaving,
+    setIsSaving,
+  };
+  
+  const handleAppearanceSave = async () => {
+    if (!onAppearanceSave) return;
+    setIsSaving(true);
+    try {
+      await onAppearanceSave();
+    } finally {
+      setIsSaving(false);
+    }
+  };
    
    if (isLoading) {
      return (
@@ -65,9 +100,9 @@ import type { FieldConfig } from '@/types/module-config';
          iconBgClass={colorClasses.iconBg}
          iconTextClass={colorClasses.iconText}
          buttonClass={colorClasses.button}
-         onSave={activeTab === 'config' ? handleSave : undefined}
-         hasChanges={activeTab === 'config' ? hasChanges : false}
-         isSaving={isSaving}
+        onSave={activeTab === 'config' ? handleSave : (activeTab === 'appearance' && onAppearanceSave ? handleAppearanceSave : undefined)}
+        hasChanges={activeTab === 'config' ? hasChanges : (activeTab === 'appearance' ? appearanceHasChanges : false)}
+        isSaving={isConfigSaving || isSaving}
        />
        
        {tabs.length > 1 && (
@@ -119,11 +154,11 @@ import type { FieldConfig } from '@/types/module-config';
        )}
        
        {activeTab === 'data' && (
-         <DataTab config={config} colorClasses={colorClasses} />
+        renderDataTab ? renderDataTab(renderProps) : <DataTab config={config} colorClasses={colorClasses} />
        )}
        
        {activeTab === 'appearance' && (
-         <AppearanceTab />
+        renderAppearanceTab ? renderAppearanceTab(renderProps) : <AppearanceTab />
        )}
      </div>
    );
