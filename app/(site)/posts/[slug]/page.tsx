@@ -8,7 +8,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { Button, Card, CardContent } from '@/app/admin/components/ui';
-import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Eye, FileText, Heart, Home, Link as LinkIcon, Reply, Share2, User } from 'lucide-react';
+import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Eye, FileText, Home, Link as LinkIcon, MessageSquare, Reply, Share2, ThumbsUp, User } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
 const notoSans = Noto_Sans({
@@ -963,105 +963,175 @@ function CommentsSection({
   };
 
   return (
-    <section className="rounded-2xl border border-border/40 bg-card/60 p-5 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-base font-semibold text-foreground">Bình luận</h3>
-        <span className="text-[11px] text-muted-foreground">{comments.length} bình luận</span>
+    <section className="space-y-6">
+      <div className="flex items-center gap-2 border-b border-border/60 pb-3">
+        <MessageSquare className="h-5 w-5 text-primary" />
+        <h3 className="text-lg font-semibold tracking-tight">
+          Bình luận <span className="text-sm font-normal text-muted-foreground">({comments.length})</span>
+        </h3>
       </div>
 
-      <div className="mt-4 space-y-2">
+      <form onSubmit={onSubmit} className="rounded-xl border border-border/50 bg-muted/30 p-4">
+        <div className="flex gap-4">
+          <div className="hidden h-10 w-10 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground sm:flex">
+            ME
+          </div>
+          <div className="flex-1 space-y-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <input
+                value={commentName}
+                onChange={(event) =>{  onNameChange(event.target.value); }}
+                placeholder="Họ và tên"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                required
+              />
+              <input
+                value={commentEmail}
+                onChange={(event) =>{  onEmailChange(event.target.value); }}
+                placeholder="Email (không bắt buộc)"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                type="email"
+              />
+            </div>
+            <textarea
+              value={commentContent}
+              onChange={(event) =>{  onContentChange(event.target.value); }}
+              placeholder="Chia sẻ ý kiến của bạn..."
+              className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              required
+            />
+            {commentMessage && (
+              <p className="text-sm text-muted-foreground">{commentMessage}</p>
+            )}
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isSubmitting} style={{ backgroundColor: brandColor }} className="h-9 rounded-full px-4 text-sm text-white">
+                {isSubmitting ? 'Đang gửi...' : 'Gửi bình luận'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <div className="space-y-6">
         {comments.length > 0 ? (
           comments.map((comment) => (
-            <div key={comment._id} className="rounded-xl border border-border/40 bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
-                    {comment.authorName.slice(0, 1).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-foreground">{comment.authorName}</div>
-                    <div className="text-[11px] text-muted-foreground">
+            <div key={comment._id} className="flex gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
+                {comment.authorName.slice(0, 2).toUpperCase()}
+              </div>
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-foreground">{comment.authorName}</span>
+                    <span className="text-xs text-muted-foreground">
                       {new Date(comment._creationTime).toLocaleDateString('vi-VN')}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-sm leading-relaxed text-foreground/90">{comment.content}</div>
+
+                {(showLikes || showReplies) && (
+                  <div className="flex items-center gap-4 pt-1">
+                    {showLikes && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onLike(comment._id)}
+                        className="h-8 px-2 text-muted-foreground hover:text-primary"
+                      >
+                        <ThumbsUp className="h-3.5 w-3.5" />
+                        <span className="ml-1 text-xs font-medium">{comment.likesCount ?? 0}</span>
+                      </Button>
+                    )}
+                    {showReplies && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleReplyForm(comment._id)}
+                        className="h-8 px-2 text-muted-foreground hover:text-primary"
+                      >
+                        <Reply className="h-3.5 w-3.5" />
+                        <span className="ml-1 text-xs font-medium">Trả lời</span>
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {showReplies && openReplyIds.has(comment._id) && (
+                  <div className="space-y-3 rounded-lg border border-border/50 bg-muted/30 p-3">
+                    {(replyMap.get(comment._id) ?? []).length > 0 && (
+                      <div className="space-y-3">
+                        {(replyMap.get(comment._id) ?? []).map((reply) => (
+                          <div key={reply._id} className="flex gap-3 border-l border-muted pl-4">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
+                              {reply.authorName.slice(0, 2).toUpperCase()}
+                            </div>
+                            <div className="flex-1 space-y-1">
+                              <div className="flex items-center gap-2 text-xs">
+                                <span className="font-medium text-foreground">{reply.authorName}</span>
+                                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">↳ Trả lời {comment.authorName}</span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {new Date(reply._creationTime).toLocaleDateString('vi-VN')}
+                                </span>
+                              </div>
+                              <p className="text-xs text-muted-foreground">{reply.content}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                        <input
+                          value={replyDrafts[comment._id]?.name ?? ''}
+                          onChange={(event) =>{  onReplyDraftChange(comment._id, 'name', event.target.value); }}
+                          placeholder="Họ và tên"
+                          className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs"
+                          required
+                        />
+                        <input
+                          value={replyDrafts[comment._id]?.email ?? ''}
+                          onChange={(event) =>{  onReplyDraftChange(comment._id, 'email', event.target.value); }}
+                          placeholder="Email (không bắt buộc)"
+                          className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs"
+                          type="email"
+                        />
+                      </div>
+                      <textarea
+                        value={replyDrafts[comment._id]?.content ?? ''}
+                        onChange={(event) =>{  onReplyDraftChange(comment._id, 'content', event.target.value); }}
+                        placeholder={`Trả lời ${comment.authorName}...`}
+                        className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs"
+                        required
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleReplyForm(comment._id)}
+                          className="h-8 px-3"
+                        >
+                          Hủy
+                        </Button>
+                        <Button
+                          type="button"
+                          disabled={replySubmittingId === comment._id}
+                          onClick={() => onReplySubmit(comment._id)}
+                          style={{ backgroundColor: brandColor }}
+                          className="h-8 rounded-full px-3 text-xs text-white"
+                        >
+                          {replySubmittingId === comment._id ? 'Đang gửi...' : 'Gửi'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
-              <p className="mt-3 text-sm text-muted-foreground">{comment.content}</p>
-              {(showLikes || showReplies) && (
-                <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
-                  {showLikes && (
-                    <button type="button" onClick={() => onLike(comment._id)} className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-2.5 py-1 hover:text-foreground">
-                      <Heart className="h-3.5 w-3.5" />
-                      Thích
-                      <span className="text-[11px] text-muted-foreground">{comment.likesCount ?? 0}</span>
-                    </button>
-                  )}
-                  {showReplies && (
-                    <button type="button" onClick={() => toggleReplyForm(comment._id)} className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-2.5 py-1 hover:text-foreground">
-                      <Reply className="h-3.5 w-3.5" />
-                      Trả lời
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {showReplies && openReplyIds.has(comment._id) && (
-                <div className="mt-4 space-y-3 rounded-xl border border-border/50 bg-muted/30 p-3">
-                  <div className="space-y-2">
-                    {(replyMap.get(comment._id) ?? []).map((reply) => (
-                      <div key={reply._id} className="ml-5 border-l border-border/60 pl-3">
-                        <div className="rounded-lg border border-border/40 bg-card px-3 py-2">
-                          <div className="flex items-center justify-between gap-2 text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-foreground">{reply.authorName}</span>
-                              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">↳ Trả lời {comment.authorName}</span>
-                            </div>
-                            <span className="text-[10px] text-muted-foreground">
-                              {new Date(reply._creationTime).toLocaleDateString('vi-VN')}
-                            </span>
-                          </div>
-                          <p className="mt-1 text-xs text-muted-foreground">{reply.content}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                    <input
-                      value={replyDrafts[comment._id]?.name ?? ''}
-                      onChange={(event) =>{  onReplyDraftChange(comment._id, 'name', event.target.value); }}
-                      placeholder="Họ và tên"
-                      className="h-9 w-full rounded-lg border border-border/60 bg-card px-3 text-xs"
-                      required
-                    />
-                    <input
-                      value={replyDrafts[comment._id]?.email ?? ''}
-                      onChange={(event) =>{  onReplyDraftChange(comment._id, 'email', event.target.value); }}
-                      placeholder="Email (không bắt buộc)"
-                      className="h-9 w-full rounded-lg border border-border/60 bg-card px-3 text-xs"
-                      type="email"
-                    />
-                  </div>
-                  <textarea
-                    value={replyDrafts[comment._id]?.content ?? ''}
-                    onChange={(event) =>{  onReplyDraftChange(comment._id, 'content', event.target.value); }}
-                    placeholder="Nội dung trả lời..."
-                    className="min-h-[80px] w-full rounded-lg border border-border/60 bg-card px-3 py-2 text-xs"
-                    required
-                  />
-                  <div className="flex items-center justify-end">
-                    <Button
-                      type="button"
-                      disabled={replySubmittingId === comment._id}
-                      onClick={() => onReplySubmit(comment._id)}
-                      style={{ backgroundColor: brandColor }}
-                      className="h-8 rounded-full px-3 text-xs text-white shadow-sm"
-                    >
-                      {replySubmittingId === comment._id ? 'Đang gửi...' : 'Gửi trả lời'}
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           ))
         ) : (
@@ -1070,40 +1140,6 @@ function CommentsSection({
           </div>
         )}
       </div>
-
-      <form onSubmit={onSubmit} className="mt-5 space-y-3">
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          <input
-            value={commentName}
-            onChange={(event) =>{  onNameChange(event.target.value); }}
-            placeholder="Họ và tên"
-            className="h-9 w-full rounded-lg border border-border/60 bg-card px-3 text-sm"
-            required
-          />
-          <input
-            value={commentEmail}
-            onChange={(event) =>{  onEmailChange(event.target.value); }}
-            placeholder="Email (không bắt buộc)"
-            className="h-9 w-full rounded-lg border border-border/60 bg-card px-3 text-sm"
-            type="email"
-          />
-        </div>
-        <textarea
-          value={commentContent}
-          onChange={(event) =>{  onContentChange(event.target.value); }}
-          placeholder="Nội dung bình luận..."
-          className="min-h-[100px] w-full rounded-lg border border-border/60 bg-card px-3 py-2 text-sm"
-          required
-        />
-        {commentMessage && (
-          <p className="text-sm text-muted-foreground">{commentMessage}</p>
-        )}
-        <div className="flex items-center justify-end">
-          <Button type="submit" disabled={isSubmitting} style={{ backgroundColor: brandColor }} className="rounded-full text-white">
-            {isSubmitting ? 'Đang gửi...' : 'Gửi bình luận'}
-          </Button>
-        </div>
-      </form>
     </section>
   );
 }
