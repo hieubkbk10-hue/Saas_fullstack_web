@@ -1082,7 +1082,7 @@ function CommentsSection({
                         style={{ color: likedIds.has(comment._id) ? brandColor : undefined }}
                       >
                         <ThumbsUp className={`h-3 w-3 ${likedIds.has(comment._id) ? 'fill-current' : ''}`} />
-                        {(comment.likesCount ?? 0) + (likedIds.has(comment._id) ? 1 : 0) > 0 ? (comment.likesCount ?? 0) + (likedIds.has(comment._id) ? 1 : 0) : 'Thích'}
+                        {(comment.likesCount ?? 0) > 0 ? comment.likesCount : 'Thích'}
                       </button>
                     )}
                     {showReplies && (replyMap.get(comment._id) ?? []).length > 0 && (
