@@ -322,6 +322,19 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Breadcrumb */}
+      <div className="border-b border-border bg-background">
+        <div className="max-w-6xl mx-auto px-4 py-3">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+            <Link href="/" className="hover:text-foreground transition-colors">Trang chủ</Link>
+            <ChevronRight size={14} className="text-muted-foreground/50" />
+            <Link href="/services" className="hover:text-foreground transition-colors">Dịch vụ</Link>
+            <ChevronRight size={14} className="text-muted-foreground/50" />
+            <span className="text-foreground font-medium truncate max-w-[200px]">{service.title}</span>
+          </nav>
+        </div>
+      </div>
+
       {/* Hero Section - Clean & Minimal */}
       <section className="relative overflow-hidden bg-muted/30">
         <div className="absolute inset-0 opacity-15" style={{ backgroundImage: `radial-gradient(circle at 20% 45%, ${brandColor}10 0%, transparent 55%), radial-gradient(circle at 80% 55%, ${brandColor}08 0%, transparent 60%)` }} />
