@@ -66,6 +66,7 @@ export default function PostDetailExperiencePage() {
   const legacyDetailStyleSetting = useQuery(api.settings.getByKey, { key: LEGACY_DETAIL_STYLE_KEY });
   const setMultipleSettings = useMutation(api.settings.setMultiple);
   const updateField = useMutation(api.admin.modules.updateModuleField);
+  const toggleModule = useMutation(api.admin.modules.toggleModule);
 
   const serverConfig = useMemo<PostDetailExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<PostDetailExperienceConfig> | undefined;
@@ -86,6 +87,8 @@ export default function PostDetailExperiencePage() {
   const authorField = useMemo(() => postFields?.find(field => field.fieldKey === AUTHOR_FIELD_KEY), [postFields]);
   const authorFieldEnabled = authorField?.enabled ?? false;
   const isAuthorSyncPending = Boolean(authorField) && authorFieldEnabled !== config.showAuthor;
+  const commentsModuleEnabled = commentsModule?.enabled ?? false;
+  const isCommentsSyncPending = Boolean(commentsModule) && commentsModuleEnabled !== config.showComments;
   
   // Sync with legacy key
   const additionalSettings = useMemo(() => [
@@ -106,6 +109,10 @@ export default function PostDetailExperiencePage() {
 
       if (authorField && authorFieldEnabled !== config.showAuthor) {
         tasks.push(updateField({ enabled: config.showAuthor, id: authorField._id as Id<'moduleFields'> }));
+      }
+
+      if (commentsModule && commentsModuleEnabled !== config.showComments) {
+        tasks.push(toggleModule({ enabled: config.showComments, key: 'comments' }));
       }
 
       await Promise.all(tasks);
@@ -241,8 +248,33 @@ export default function PostDetailExperiencePage() {
                 enabled={config.showComments}
                 onChange={() => setConfig(prev => ({ ...prev, showComments: !prev.showComments }))}
                 color="bg-blue-500"
-                disabled={!commentsModule?.enabled}
+                disabled={!commentsModule}
               />
+
+              {commentsModule ? (
+                <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2 text-xs text-slate-600 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-slate-300">
+                  <div className="flex items-center justify-between gap-3">
+                    <span>
+                      Đồng bộ với <Link href="/system/modules/comments" className="text-blue-600 hover:text-blue-700 dark:text-blue-400">Module Bình luận</Link>
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        commentsModuleEnabled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200'
+                          : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      Bình luận: {commentsModuleEnabled ? 'Bật' : 'Tắt'}
+                    </span>
+                  </div>
+                  <p className="mt-1">
+                    {isCommentsSyncPending ? 'Trạng thái đang lệch, bấm Lưu để đồng bộ module.' : 'Trạng thái đã đồng bộ với module.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+                  Chưa có Module Bình luận. Vui lòng kiểm tra mục <Link href="/system/modules" className="font-medium underline">/system/modules</Link>.
+                </div>
+              )}
 
               <ExperienceBlockToggle
                 label="Bài viết liên quan"

@@ -63,6 +63,11 @@ const MOCK_RELATED = [
   { _id: '3', slug: 'post-3', title: 'Tối ưu performance với Image Optimization', thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=200', publishedAt: new Date('2026-01-05').getTime() },
 ];
 
+const MOCK_COMMENTS = [
+  { _id: 'c1', authorName: 'Thuỳ Anh', content: 'Bài viết rất dễ hiểu, cảm ơn admin!', createdAt: new Date('2026-01-16').getTime() },
+  { _id: 'c2', authorName: 'Minh Khoa', content: 'Mong thêm ví dụ thực tế hơn nữa.', createdAt: new Date('2026-01-17').getTime() },
+];
+
 const MOCK_SERVICE = {
   title: 'Tư vấn chiến lược kinh doanh',
   categoryName: 'Tư vấn',
@@ -133,8 +138,38 @@ function QuickContactButtonsPreview({ brandColor, label }: { brandColor: string;
   );
 }
 
+function CommentsPreview({ showComments, brandColor = '#3b82f6' }: { showComments?: boolean; brandColor?: string }) {
+  if (!showComments) {return null;}
+
+  return (
+    <section className="mt-10 rounded-xl border bg-white/60 p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-semibold">Bình luận</h3>
+        <span className="text-sm text-muted-foreground">{MOCK_COMMENTS.length} bình luận</span>
+      </div>
+
+      <div className="mt-4 space-y-4">
+        {MOCK_COMMENTS.map((comment) => (
+          <div key={comment._id} className="rounded-lg border border-slate-200/80 bg-white p-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-slate-900">{comment.authorName}</span>
+              <span className="text-xs text-slate-500">{new Date(comment.createdAt).toLocaleDateString('vi-VN')}</span>
+            </div>
+            <p className="mt-2 text-sm text-slate-700">{comment.content}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-5 flex items-center justify-between rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+        <span>Form bình luận sẽ hiển thị ở frontend.</span>
+        <span className="font-medium" style={{ color: brandColor }}>Đang bật</span>
+      </div>
+    </section>
+  );
+}
+
 // Classic Style Preview - Extracted from ClassicStyle
-function ClassicStylePreview({ showRelated, showShare, showAuthor = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
+function ClassicStylePreview({ showRelated, showShare, showAuthor = true, showComments = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const readingTime = 5;
   const [isCopied] = React.useState(false);
 
@@ -246,6 +281,8 @@ function ClassicStylePreview({ showRelated, showShare, showAuthor = true, brandC
                 </div>
               )}
             </div>
+
+            <CommentsPreview showComments={showComments} brandColor={brandColor} />
           </article>
 
           {showRelated && MOCK_RELATED.length > 0 && (
@@ -293,7 +330,7 @@ function ClassicStylePreview({ showRelated, showShare, showAuthor = true, brandC
 }
 
 // Modern Style Preview - Extracted from ModernStyle
-function ModernStylePreview({ showRelated, showShare, showAuthor = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
+function ModernStylePreview({ showRelated, showShare, showAuthor = true, showComments = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const readingTime = 5;
   const [isCopied] = React.useState(false);
 
@@ -397,6 +434,8 @@ function ModernStylePreview({ showRelated, showShare, showAuthor = true, brandCo
           </div>
         </article>
 
+        <CommentsPreview showComments={showComments} brandColor={brandColor} />
+
         {showRelated && MOCK_RELATED.length > 0 && (
           <section className="pt-6 pb-2">
             <div className="max-w-7xl mx-auto">
@@ -454,7 +493,7 @@ function ModernStylePreview({ showRelated, showShare, showAuthor = true, brandCo
 }
 
 // Minimal Style Preview - Extracted from MinimalStyle
-function MinimalStylePreview({ showRelated, showShare, showAuthor = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
+function MinimalStylePreview({ showRelated, showShare, showAuthor = true, showComments = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const [isCopied] = React.useState(false);
   const readingTime = 5;
 
@@ -541,6 +580,8 @@ function MinimalStylePreview({ showRelated, showShare, showAuthor = true, brandC
           <div className="prose prose-slate prose-lg max-w-none text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-img:rounded-lg">
             <div dangerouslySetInnerHTML={{ __html: MOCK_POST.content }} />
           </div>
+
+          <CommentsPreview showComments={showComments} brandColor={brandColor} />
         </section>
 
         {showRelated && MOCK_RELATED.length > 0 && (
@@ -605,12 +646,13 @@ function MinimalStylePreview({ showRelated, showShare, showAuthor = true, brandC
 export function PostDetailPreview({
   layoutStyle,
   showAuthor = true,
+  showComments = true,
   showRelated,
   showShare,
   device = 'desktop',
   brandColor = '#3b82f6',
 }: PostDetailPreviewProps) {
-  const props = { showAuthor, showRelated, showShare, brandColor, device };
+  const props = { showAuthor, showComments, showRelated, showShare, brandColor, device };
 
   return (
     <div className="w-full">

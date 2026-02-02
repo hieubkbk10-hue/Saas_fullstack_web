@@ -55,21 +55,38 @@ export default function PostDetailPage({ params }: PageProps) {
   const style = usePostDetailStyle();
   const enabledFields = useEnabledPostFields();
   const experienceSetting = useQuery(api.settings.getByKey, { key: 'posts_detail_ui' });
+  const commentsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'comments' });
   const post = useQuery(api.posts.getBySlug, { slug });
   const category = useQuery(
     api.postCategories.getById, 
     post?.categoryId ? { id: post.categoryId } : 'skip'
   );
   const incrementViews = useMutation(api.posts.incrementViews);
+  const createComment = useMutation(api.comments.create);
   const experienceConfig = useMemo(() => {
-    const raw = experienceSetting?.value as Partial<{ showAuthor?: boolean }> | undefined;
+    const raw = experienceSetting?.value as Partial<{ showAuthor?: boolean; showComments?: boolean }> | undefined;
     return {
       showAuthor: raw?.showAuthor ?? true,
+      showComments: raw?.showComments ?? true,
     };
   }, [experienceSetting?.value]);
 
   const shouldShowAuthor = enabledFields.has('author_name') && experienceConfig.showAuthor;
   const authorName = post?.authorName ?? '';
+  const commentsEnabled = commentsModule?.enabled ?? false;
+  const shouldShowComments = commentsEnabled && experienceConfig.showComments;
+  const commentsPage = useQuery(
+    api.comments.listByTarget,
+    post && shouldShowComments
+      ? { paginationOpts: { cursor: null, numItems: 20 }, status: 'Approved', targetId: post._id, targetType: 'post' }
+      : 'skip'
+  );
+  const comments = commentsPage?.page ?? [];
+  const [commentName, setCommentName] = useState('');
+  const [commentEmail, setCommentEmail] = useState('');
+  const [commentContent, setCommentContent] = useState('');
+  const [commentMessage, setCommentMessage] = useState<string | null>(null);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   
   // Related posts - lấy cùng category
   const relatedPosts = useQuery(
@@ -118,6 +135,47 @@ export default function PostDetailPage({ params }: PageProps) {
     categoryName: category?.name ?? 'Tin tức',
   };
 
+  const handleSubmitComment = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!post || !commentName.trim() || !commentContent.trim()) {return;}
+    setIsSubmittingComment(true);
+    setCommentMessage(null);
+    try {
+      await createComment({
+        authorEmail: commentEmail.trim() || undefined,
+        authorName: commentName.trim(),
+        content: commentContent.trim(),
+        status: 'Pending',
+        targetId: post._id,
+        targetType: 'post',
+      });
+      setCommentName('');
+      setCommentEmail('');
+      setCommentContent('');
+      setCommentMessage('Bình luận đã được gửi, vui lòng chờ duyệt.');
+    } catch {
+      setCommentMessage('Không thể gửi bình luận. Vui lòng thử lại.');
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  const commentsSection = shouldShowComments ? (
+    <CommentsSection
+      brandColor={brandColor}
+      comments={comments}
+      commentContent={commentContent}
+      commentEmail={commentEmail}
+      commentMessage={commentMessage}
+      commentName={commentName}
+      isSubmitting={isSubmittingComment}
+      onContentChange={setCommentContent}
+      onEmailChange={setCommentEmail}
+      onNameChange={setCommentName}
+      onSubmit={handleSubmitComment}
+    />
+  ) : null;
+
   return (
     <>
       {style === 'classic' && (
@@ -128,6 +186,7 @@ export default function PostDetailPage({ params }: PageProps) {
           enabledFields={enabledFields}
           showAuthor={shouldShowAuthor}
           authorName={authorName}
+          commentsSection={commentsSection}
         />
       )}
       {style === 'modern' && (
@@ -138,6 +197,7 @@ export default function PostDetailPage({ params }: PageProps) {
           enabledFields={enabledFields}
           showAuthor={shouldShowAuthor}
           authorName={authorName}
+          commentsSection={commentsSection}
         />
       )}
       {style === 'minimal' && (
@@ -148,6 +208,7 @@ export default function PostDetailPage({ params }: PageProps) {
           enabledFields={enabledFields}
           showAuthor={shouldShowAuthor}
           authorName={authorName}
+          commentsSection={commentsSection}
         />
       )}
     </>
@@ -168,6 +229,13 @@ interface PostData {
   publishedAt?: number;
 }
 
+interface CommentData {
+  _id: Id<"comments">;
+  _creationTime: number;
+  authorName: string;
+  content: string;
+}
+
 interface RelatedPost {
   _id: Id<"posts">;
   title: string;
@@ -184,10 +252,11 @@ interface StyleProps {
   enabledFields: Set<string>;
   showAuthor: boolean;
   authorName: string;
+  commentsSection?: React.ReactNode;
 }
 
 // Style 1: Classic - Truyền thống với sidebar
-function ClassicStyle({ post, brandColor, relatedPosts, showAuthor, authorName }: StyleProps) {
+function ClassicStyle({ post, brandColor, relatedPosts, showAuthor, authorName, commentsSection }: StyleProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isCopied, setIsCopied] = useState(false);
   const { isBroken, markBroken } = useImageFallback();
@@ -332,6 +401,8 @@ function ClassicStyle({ post, brandColor, relatedPosts, showAuthor, authorName }
                 </button>
               </div>
             </div>
+
+            {commentsSection}
           </article>
 
           <aside className="lg:col-span-3 space-y-6">
@@ -385,7 +456,7 @@ function ClassicStyle({ post, brandColor, relatedPosts, showAuthor, authorName }
 }
 
 // Style 2: Modern - Medium/Substack inspired - Focus on typography and reading experience
-function ModernStyle({ post, brandColor, relatedPosts, enabledFields, showAuthor, authorName }: StyleProps) {
+function ModernStyle({ post, brandColor, relatedPosts, enabledFields, showAuthor, authorName, commentsSection }: StyleProps) {
   const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
   const showExcerpt = enabledFields.has('excerpt');
   const [isCopied, setIsCopied] = useState(false);
@@ -506,6 +577,8 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields, showAuthor
             <div dangerouslySetInnerHTML={{ __html: post.content }} />
           </div>
 
+          {commentsSection}
+
         </article>
 
         {relatedPosts.length > 0 && (
@@ -572,7 +645,7 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields, showAuthor
 }
 
 // Style 3: Minimal - Tối giản, tập trung nội dung
-function MinimalStyle({ post, brandColor, relatedPosts, showAuthor, authorName }: StyleProps) {
+function MinimalStyle({ post, brandColor, relatedPosts, showAuthor, authorName, commentsSection }: StyleProps) {
   const [isCopied, setIsCopied] = useState(false);
   const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
   const { isBroken, markBroken } = useImageFallback();
@@ -677,6 +750,8 @@ function MinimalStyle({ post, brandColor, relatedPosts, showAuthor, authorName }
           <div className="prose prose-slate prose-lg max-w-none text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground prose-img:rounded-lg">
             <div dangerouslySetInnerHTML={{ __html: post.content }} />
           </div>
+
+          {commentsSection}
         </section>
 
         {relatedPosts.length > 0 && (
@@ -740,6 +815,97 @@ function MinimalStyle({ post, brandColor, relatedPosts, showAuthor, authorName }
         )}
       </main>
     </div>
+  );
+}
+
+type CommentsSectionProps = {
+  brandColor: string;
+  comments: CommentData[];
+  commentName: string;
+  commentEmail: string;
+  commentContent: string;
+  commentMessage: string | null;
+  isSubmitting: boolean;
+  onNameChange: (value: string) => void;
+  onEmailChange: (value: string) => void;
+  onContentChange: (value: string) => void;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+};
+
+function CommentsSection({
+  brandColor,
+  comments,
+  commentName,
+  commentEmail,
+  commentContent,
+  commentMessage,
+  isSubmitting,
+  onNameChange,
+  onEmailChange,
+  onContentChange,
+  onSubmit,
+}: CommentsSectionProps) {
+  return (
+    <section className="rounded-xl border bg-background p-6 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-lg font-semibold text-foreground">Bình luận</h3>
+        <span className="text-sm text-muted-foreground">{comments.length} bình luận</span>
+      </div>
+
+      <div className="mt-4 space-y-4">
+        {comments.length > 0 ? (
+          comments.map((comment) => (
+            <div key={comment._id} className="rounded-lg border border-border/60 bg-muted/30 p-4">
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="font-medium text-foreground">{comment.authorName}</span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(comment._creationTime).toLocaleDateString('vi-VN')}
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{comment.content}</p>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
+            Chưa có bình luận nào. Hãy để lại bình luận đầu tiên.
+          </div>
+        )}
+      </div>
+
+      <form onSubmit={onSubmit} className="mt-6 space-y-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <input
+            value={commentName}
+            onChange={(event) =>{  onNameChange(event.target.value); }}
+            placeholder="Họ và tên"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            required
+          />
+          <input
+            value={commentEmail}
+            onChange={(event) =>{  onEmailChange(event.target.value); }}
+            placeholder="Email (không bắt buộc)"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            type="email"
+          />
+        </div>
+        <textarea
+          value={commentContent}
+          onChange={(event) =>{  onContentChange(event.target.value); }}
+          placeholder="Nội dung bình luận..."
+          className="min-h-[110px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          required
+        />
+        {commentMessage && (
+          <p className="text-sm text-muted-foreground">{commentMessage}</p>
+        )}
+        <div className="flex items-center justify-end">
+          <Button type="submit" disabled={isSubmitting} style={{ backgroundColor: brandColor }} className="text-white">
+            {isSubmitting ? 'Đang gửi...' : 'Gửi bình luận'}
+          </Button>
+        </div>
+      </form>
+    </section>
   );
 }
 
