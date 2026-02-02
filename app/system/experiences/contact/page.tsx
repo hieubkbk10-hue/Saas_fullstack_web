@@ -1,26 +1,40 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { LayoutTemplate, Mail } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
-import { ModuleHeader, SettingsCard, SettingSelect } from '@/components/modules/shared';
+import { LayoutTemplate, Loader2, Mail, Save } from 'lucide-react';
+import { Button, Card } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
-  ExperienceSummaryGrid, 
-  ExperienceBlockToggle,
   ExperienceHintCard,
-  ExperiencePreview,
   ContactPreview,
-  type SummaryItem 
 } from '@/components/experiences';
+import {
+  BrowserFrame,
+  DeviceToggle,
+  deviceWidths,
+  LayoutTabs,
+  ConfigPanel,
+  ControlCard,
+  ToggleRow,
+  type DeviceType,
+  type LayoutOption,
+} from '@/components/experiences/editor';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type ContactLayoutStyle = 'form-only' | 'with-map' | 'with-info';
 
 type ContactExperienceConfig = {
   layoutStyle: ContactLayoutStyle;
+  layouts: {
+    'form-only': LayoutConfig;
+    'with-map': LayoutConfig;
+    'with-info': LayoutConfig;
+  };
+};
+
+type LayoutConfig = {
   showMap: boolean;
   showContactInfo: boolean;
   showSocialLinks: boolean;
@@ -28,49 +42,77 @@ type ContactExperienceConfig = {
 
 const EXPERIENCE_KEY = 'contact_ui';
 
-const LAYOUT_STYLES: { id: ContactLayoutStyle; label: string; description: string }[] = [
+const LAYOUT_STYLES: LayoutOption<ContactLayoutStyle>[] = [
   { description: 'Chỉ có form liên hệ', id: 'form-only', label: 'Form Only' },
   { description: 'Form + Map', id: 'with-map', label: 'With Map' },
   { description: 'Form + Contact Info sidebar', id: 'with-info', label: 'With Info' },
 ];
 
-const DEFAULT_CONFIG: ContactExperienceConfig = {
-  layoutStyle: 'with-info',
+const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   showMap: true,
   showContactInfo: true,
   showSocialLinks: true,
+};
+
+const DEFAULT_CONFIG: ContactExperienceConfig = {
+  layoutStyle: 'with-info',
+  layouts: {
+    'form-only': { ...DEFAULT_LAYOUT_CONFIG, showMap: false, showContactInfo: false },
+    'with-map': { ...DEFAULT_LAYOUT_CONFIG, showContactInfo: false },
+    'with-info': { ...DEFAULT_LAYOUT_CONFIG, showMap: false },
+  },
 };
 
 const HINTS = [
   'With-info layout tốt cho business contact page.',
   'Map giúp khách hàng tìm địa chỉ dễ dàng.',
   'Social links tăng kết nối với khách hàng.',
+  'Mỗi layout có config riêng - chuyển tab để chỉnh.',
 ];
 
 export default function ContactExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
+  const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
+  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
 
   const serverConfig = useMemo<ContactExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<ContactExperienceConfig> | undefined;
     return {
       layoutStyle: raw?.layoutStyle ?? 'with-info',
-      showMap: raw?.showMap ?? true,
-      showContactInfo: raw?.showContactInfo ?? true,
-      showSocialLinks: raw?.showSocialLinks ?? true,
+      layouts: {
+        'form-only': { ...DEFAULT_CONFIG.layouts['form-only'], ...raw?.layouts?.['form-only'] },
+        'with-map': { ...DEFAULT_CONFIG.layouts['with-map'], ...raw?.layouts?.['with-map'] },
+        'with-info': { ...DEFAULT_CONFIG.layouts['with-info'], ...raw?.layouts?.['with-info'] },
+      },
     };
   }, [experienceSetting?.value]);
 
   const isLoading = experienceSetting === undefined;
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
-  const { handleSave, isSaving } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
+  const { handleSave, isSaving } = useExperienceSave(
+    EXPERIENCE_KEY,
+    config,
+    MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY])
+  );
 
-  const summaryItems: SummaryItem[] = [
-    { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },
-    { label: 'Map', value: config.showMap },
-    { label: 'Contact Info', value: config.showContactInfo },
-    { label: 'Social Links', value: config.showSocialLinks },
-  ];
+  const currentLayoutConfig = config.layouts[config.layoutStyle];
+
+  const updateLayoutConfig = <K extends keyof LayoutConfig>(
+    key: K,
+    value: LayoutConfig[K]
+  ) => {
+    setConfig(prev => ({
+      ...prev,
+      layouts: {
+        ...prev.layouts,
+        [prev.layoutStyle]: {
+          ...prev.layouts[prev.layoutStyle],
+          [key]: value,
+        },
+      },
+    }));
+  };
 
   if (isLoading) {
     return (
@@ -81,93 +123,85 @@ export default function ContactExperiencePage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <ModuleHeader
-        icon={LayoutTemplate}
-        title="Trải nghiệm: Trang liên hệ"
-        description="Cấu hình layout, map, contact info và social links cho trang liên hệ."
-        iconBgClass="bg-indigo-500/10"
-        iconTextClass="text-indigo-600 dark:text-indigo-400"
-        buttonClass="bg-indigo-600 hover:bg-indigo-500"
-        onSave={handleSave}
-        hasChanges={hasChanges}
-        isSaving={isSaving}
-      />
+    <div className="h-[calc(100vh-64px)] flex flex-col">
+      {/* Header */}
+      <header className="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-500/10 rounded-lg">
+            <LayoutTemplate className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Trải nghiệm: Trang liên hệ</h1>
+            <p className="text-xs text-slate-500">/contact • Layout-specific config</p>
+          </div>
+        </div>
+        <Button
+          onClick={handleSave}
+          disabled={!hasChanges || isSaving}
+          className="bg-indigo-600 hover:bg-indigo-500 gap-2"
+        >
+          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {hasChanges ? 'Lưu thay đổi' : 'Đã lưu'}
+        </Button>
+      </header>
 
-      {/* Full-width Preview */}
-      <ExperiencePreview title="Trang liên hệ">
-        <ContactPreview
-          layoutStyle={config.layoutStyle}
-          showMap={config.showMap}
-          showContactInfo={config.showContactInfo}
-          showSocialLinks={config.showSocialLinks}
-        />
-      </ExperiencePreview>
-
-      {/* Settings Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="space-y-4 lg:col-span-2">
-          <SettingsCard>
-            <SettingSelect
-              label="Layout trang liên hệ"
-              value={config.layoutStyle}
-              onChange={(value) => setConfig(prev => ({ ...prev, layoutStyle: value as ContactLayoutStyle }))}
-              options={LAYOUT_STYLES.map(style => ({ label: `${style.label} - ${style.description}`, value: style.id }))}
-              focusColor="focus:border-indigo-500"
+      {/* Preview Area */}
+      <main className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-950">
+        <div className="flex justify-center mb-4">
+          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} />
+        </div>
+        <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
+          <BrowserFrame url="yoursite.com/contact" maxHeight="calc(100vh - 380px)">
+            <ContactPreview
+              layoutStyle={config.layoutStyle}
+              showMap={currentLayoutConfig.showMap}
+              showContactInfo={currentLayoutConfig.showContactInfo}
+              showSocialLinks={currentLayoutConfig.showSocialLinks}
             />
-          </SettingsCard>
-
-          <Card className="p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Khối hiển thị</h3>
-            <div className="space-y-3">
-              <ExperienceBlockToggle
-                label="Bản đồ (Map)"
-                description="Google Maps hoặc map service"
-                enabled={config.showMap}
-                onChange={() => setConfig(prev => ({ ...prev, showMap: !prev.showMap }))}
-                color="bg-indigo-500"
-              />
-
-              <ExperienceBlockToggle
-                label="Thông tin liên hệ"
-                description="Địa chỉ, phone, email"
-                enabled={config.showContactInfo}
-                onChange={() => setConfig(prev => ({ ...prev, showContactInfo: !prev.showContactInfo }))}
-                color="bg-indigo-500"
-              />
-
-              <ExperienceBlockToggle
-                label="Social media links"
-                description="FB, Twitter, Instagram..."
-                enabled={config.showSocialLinks}
-                onChange={() => setConfig(prev => ({ ...prev, showSocialLinks: !prev.showSocialLinks }))}
-                color="bg-indigo-500"
-              />
-            </div>
-          </Card>
-
-          <ExperienceSummaryGrid items={summaryItems} />
+          </BrowserFrame>
         </div>
-
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Module liên quan</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <ExperienceModuleLink
-                enabled={true}
-                href="/system/settings"
-                icon={Mail}
-                title="System Settings"
-                colorScheme="cyan"
-              />
-            </CardContent>
-          </Card>
-
-          <ExperienceHintCard hints={HINTS} />
+        <div className="mt-3 text-xs text-slate-500 text-center">
+          Layout: <strong>{LAYOUT_STYLES.find(s => s.id === config.layoutStyle)?.label}</strong>
+          {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
         </div>
-      </div>
+      </main>
+
+      {/* Bottom Panel */}
+      <ConfigPanel
+        isExpanded={isPanelExpanded}
+        onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
+        expandedHeight="280px"
+        leftContent={
+          <LayoutTabs
+            layouts={LAYOUT_STYLES}
+            activeLayout={config.layoutStyle}
+            onChange={(layout) => setConfig(prev => ({ ...prev, layoutStyle: layout }))}
+            accentColor="#6366f1"
+          />
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ControlCard title="Khối hiển thị">
+            <ToggleRow label="Bản đồ (Map)" description="Google Maps hoặc map service" checked={currentLayoutConfig.showMap} onChange={(v) => updateLayoutConfig('showMap', v)} accentColor="#6366f1" />
+            <ToggleRow label="Thông tin liên hệ" description="Địa chỉ, phone, email" checked={currentLayoutConfig.showContactInfo} onChange={(v) => updateLayoutConfig('showContactInfo', v)} accentColor="#6366f1" />
+            <ToggleRow label="Social media" description="FB, Twitter, Instagram..." checked={currentLayoutConfig.showSocialLinks} onChange={(v) => updateLayoutConfig('showSocialLinks', v)} accentColor="#6366f1" />
+          </ControlCard>
+
+          <ControlCard title="Module liên quan">
+            <ExperienceModuleLink
+              enabled={true}
+              href="/system/settings"
+              icon={Mail}
+              title="System Settings"
+              colorScheme="cyan"
+            />
+          </ControlCard>
+
+          <Card className="p-3 lg:col-span-2">
+            <ExperienceHintCard hints={HINTS} />
+          </Card>
+        </div>
+      </ConfigPanel>
     </div>
   );
 }

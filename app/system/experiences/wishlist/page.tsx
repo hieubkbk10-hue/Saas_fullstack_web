@@ -1,26 +1,39 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Heart, LayoutTemplate } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
-import { ModuleHeader, SettingsCard, SettingSelect } from '@/components/modules/shared';
+import { Heart, LayoutTemplate, Loader2, Save } from 'lucide-react';
+import { Button, Card } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
-  ExperienceSummaryGrid, 
-  ExperienceBlockToggle,
   ExperienceHintCard,
-  ExperiencePreview,
   WishlistPreview,
-  type SummaryItem 
 } from '@/components/experiences';
+import {
+  BrowserFrame,
+  DeviceToggle,
+  deviceWidths,
+  LayoutTabs,
+  ConfigPanel,
+  ControlCard,
+  ToggleRow,
+  type DeviceType,
+  type LayoutOption,
+} from '@/components/experiences/editor';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type WishlistLayoutStyle = 'grid' | 'list';
 
 type WishlistExperienceConfig = {
   layoutStyle: WishlistLayoutStyle;
+  layouts: {
+    grid: LayoutConfig;
+    list: LayoutConfig;
+  };
+};
+
+type LayoutConfig = {
   showWishlistButton: boolean;
   showNote: boolean;
   showNotification: boolean;
@@ -28,22 +41,30 @@ type WishlistExperienceConfig = {
 
 const EXPERIENCE_KEY = 'wishlist_ui';
 
-const LAYOUT_STYLES: { id: WishlistLayoutStyle; label: string; description: string }[] = [
+const LAYOUT_STYLES: LayoutOption<WishlistLayoutStyle>[] = [
   { description: 'Hiển thị dạng lưới cards', id: 'grid', label: 'Grid' },
   { description: 'Hiển thị dạng danh sách chi tiết', id: 'list', label: 'List' },
 ];
 
-const DEFAULT_CONFIG: WishlistExperienceConfig = {
-  layoutStyle: 'grid',
+const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
+  showWishlistButton: true,
   showNote: true,
   showNotification: true,
-  showWishlistButton: true,
+};
+
+const DEFAULT_CONFIG: WishlistExperienceConfig = {
+  layoutStyle: 'grid',
+  layouts: {
+    grid: { ...DEFAULT_LAYOUT_CONFIG },
+    list: { ...DEFAULT_LAYOUT_CONFIG },
+  },
 };
 
 const HINTS = [
   'Bật module Wishlist trước khi cấu hình UX.',
   'Nút wishlist sẽ xuất hiện trên product cards và detail.',
   'Note và notification tùy chọn theo nhu cầu.',
+  'Mỗi layout có config riêng - chuyển tab để chỉnh.',
 ];
 
 export default function WishlistExperiencePage() {
@@ -51,28 +72,46 @@ export default function WishlistExperiencePage() {
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const noteFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableNote', moduleKey: 'wishlist' });
   const notificationFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableNotification', moduleKey: 'wishlist' });
+  const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
+  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
 
   const serverConfig = useMemo<WishlistExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<WishlistExperienceConfig> | undefined;
     return {
       layoutStyle: raw?.layoutStyle ?? 'grid',
-      showNote: raw?.showNote ?? (noteFeature?.enabled ?? true),
-      showNotification: raw?.showNotification ?? (notificationFeature?.enabled ?? true),
-      showWishlistButton: raw?.showWishlistButton ?? true,
+      layouts: {
+        grid: { ...DEFAULT_LAYOUT_CONFIG, showNote: noteFeature?.enabled ?? true, showNotification: notificationFeature?.enabled ?? true, ...raw?.layouts?.grid },
+        list: { ...DEFAULT_LAYOUT_CONFIG, showNote: noteFeature?.enabled ?? true, showNotification: notificationFeature?.enabled ?? true, ...raw?.layouts?.list },
+      },
     };
   }, [experienceSetting?.value, noteFeature?.enabled, notificationFeature?.enabled]);
 
   const isLoading = experienceSetting === undefined || wishlistModule === undefined;
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
-  const { handleSave, isSaving } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
+  const { handleSave, isSaving } = useExperienceSave(
+    EXPERIENCE_KEY,
+    config,
+    MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY])
+  );
 
-  const summaryItems: SummaryItem[] = [
-    { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },
-    { label: 'Nút Wishlist', value: config.showWishlistButton },
-    { label: 'Ghi chú', value: config.showNote },
-    { label: 'Thông báo', value: config.showNotification },
-  ];
+  const currentLayoutConfig = config.layouts[config.layoutStyle];
+
+  const updateLayoutConfig = <K extends keyof LayoutConfig>(
+    key: K,
+    value: LayoutConfig[K]
+  ) => {
+    setConfig(prev => ({
+      ...prev,
+      layouts: {
+        ...prev.layouts,
+        [prev.layoutStyle]: {
+          ...prev.layouts[prev.layoutStyle],
+          [key]: value,
+        },
+      },
+    }));
+  };
 
   if (isLoading) {
     return (
@@ -83,96 +122,106 @@ export default function WishlistExperiencePage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <ModuleHeader
-        icon={LayoutTemplate}
-        title="Trải nghiệm: Sản phẩm yêu thích"
-        description="Cấu hình layout, nút wishlist, note và notification."
-        iconBgClass="bg-pink-500/10"
-        iconTextClass="text-pink-600 dark:text-pink-400"
-        buttonClass="bg-pink-600 hover:bg-pink-500"
-        onSave={handleSave}
-        hasChanges={hasChanges}
-        isSaving={isSaving}
-      />
+    <div className="h-[calc(100vh-64px)] flex flex-col">
+      {/* Header */}
+      <header className="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-pink-500/10 rounded-lg">
+            <LayoutTemplate className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Trải nghiệm: Sản phẩm yêu thích</h1>
+            <p className="text-xs text-slate-500">/wishlist • Layout-specific config</p>
+          </div>
+        </div>
+        <Button
+          onClick={handleSave}
+          disabled={!hasChanges || isSaving}
+          className="bg-pink-600 hover:bg-pink-500 gap-2"
+        >
+          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {hasChanges ? 'Lưu thay đổi' : 'Đã lưu'}
+        </Button>
+      </header>
 
-      {/* Full-width Preview */}
-      <ExperiencePreview title="Trang Wishlist">
-        <WishlistPreview
-          layoutStyle={config.layoutStyle}
-          showWishlistButton={config.showWishlistButton}
-          showNote={config.showNote}
-          showNotification={config.showNotification}
-        />
-      </ExperiencePreview>
-
-      {/* Settings Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="space-y-4 lg:col-span-2">
-          <SettingsCard>
-            <SettingSelect
-              label="Layout trang Wishlist"
-              value={config.layoutStyle}
-              onChange={(value) => setConfig(prev => ({ ...prev, layoutStyle: value as WishlistLayoutStyle }))}
-              options={LAYOUT_STYLES.map(style => ({ label: `${style.label} - ${style.description}`, value: style.id }))}
-              focusColor="focus:border-pink-500"
+      {/* Preview Area */}
+      <main className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-950">
+        <div className="flex justify-center mb-4">
+          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} />
+        </div>
+        <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
+          <BrowserFrame url="yoursite.com/wishlist" maxHeight="calc(100vh - 380px)">
+            <WishlistPreview
+              layoutStyle={config.layoutStyle}
+              showWishlistButton={currentLayoutConfig.showWishlistButton}
+              showNote={currentLayoutConfig.showNote}
+              showNotification={currentLayoutConfig.showNotification}
             />
-          </SettingsCard>
-
-          <Card className="p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Khối hiển thị</h3>
-            <div className="space-y-3">
-              <ExperienceBlockToggle
-                label="Nút Wishlist trên product cards"
-                description="Hiển thị icon Heart trên listing/detail"
-                enabled={config.showWishlistButton}
-                onChange={() => setConfig(prev => ({ ...prev, showWishlistButton: !prev.showWishlistButton }))}
-                color="bg-pink-500"
-                disabled={!wishlistModule?.enabled}
-              />
-
-              <ExperienceBlockToggle
-                label="Ghi chú sản phẩm"
-                description="Cho phép user thêm note cho SP yêu thích"
-                enabled={config.showNote}
-                onChange={() => setConfig(prev => ({ ...prev, showNote: !prev.showNote }))}
-                color="bg-pink-500"
-                disabled={!wishlistModule?.enabled}
-              />
-
-              <ExperienceBlockToggle
-                label="Thông báo giá/hàng"
-                description="Thông báo khi SP giảm giá hoặc có hàng"
-                enabled={config.showNotification}
-                onChange={() => setConfig(prev => ({ ...prev, showNotification: !prev.showNotification }))}
-                color="bg-pink-500"
-                disabled={!wishlistModule?.enabled}
-              />
-            </div>
-          </Card>
-
-          <ExperienceSummaryGrid items={summaryItems} />
+          </BrowserFrame>
         </div>
-
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Module liên quan</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <ExperienceModuleLink
-                enabled={wishlistModule?.enabled ?? false}
-                href="/system/modules/wishlist"
-                icon={Heart}
-                title="Sản phẩm yêu thích"
-                colorScheme="pink"
-              />
-            </CardContent>
-          </Card>
-
-          <ExperienceHintCard hints={HINTS} />
+        <div className="mt-3 text-xs text-slate-500 text-center">
+          Layout: <strong>{LAYOUT_STYLES.find(s => s.id === config.layoutStyle)?.label}</strong>
+          {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
         </div>
-      </div>
+      </main>
+
+      {/* Bottom Panel */}
+      <ConfigPanel
+        isExpanded={isPanelExpanded}
+        onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
+        expandedHeight="280px"
+        leftContent={
+          <LayoutTabs
+            layouts={LAYOUT_STYLES}
+            activeLayout={config.layoutStyle}
+            onChange={(layout) => setConfig(prev => ({ ...prev, layoutStyle: layout }))}
+            accentColor="#ec4899"
+          />
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ControlCard title="Khối hiển thị">
+            <ToggleRow
+              label="Nút Wishlist"
+              description="Hiện trên product cards"
+              checked={currentLayoutConfig.showWishlistButton}
+              onChange={(v) => updateLayoutConfig('showWishlistButton', v)}
+              accentColor="#ec4899"
+              disabled={!wishlistModule?.enabled}
+            />
+            <ToggleRow
+              label="Ghi chú SP"
+              description="Note cho sản phẩm yêu thích"
+              checked={currentLayoutConfig.showNote}
+              onChange={(v) => updateLayoutConfig('showNote', v)}
+              accentColor="#ec4899"
+              disabled={!wishlistModule?.enabled}
+            />
+            <ToggleRow
+              label="Thông báo"
+              description="Khi SP giảm giá/có hàng"
+              checked={currentLayoutConfig.showNotification}
+              onChange={(v) => updateLayoutConfig('showNotification', v)}
+              accentColor="#ec4899"
+              disabled={!wishlistModule?.enabled}
+            />
+          </ControlCard>
+
+          <ControlCard title="Module liên quan">
+            <ExperienceModuleLink
+              enabled={wishlistModule?.enabled ?? false}
+              href="/system/modules/wishlist"
+              icon={Heart}
+              title="Sản phẩm yêu thích"
+              colorScheme="pink"
+            />
+          </ControlCard>
+
+          <Card className="p-3 lg:col-span-2">
+            <ExperienceHintCard hints={HINTS} />
+          </Card>
+        </div>
+      </ConfigPanel>
     </div>
   );
 }

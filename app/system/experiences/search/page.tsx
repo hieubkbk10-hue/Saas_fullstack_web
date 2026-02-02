@@ -1,20 +1,27 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Briefcase, FileText, LayoutTemplate, Package } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
-import { ModuleHeader, SettingsCard, SettingSelect } from '@/components/modules/shared';
+import { Briefcase, FileText, LayoutTemplate, Loader2, Package, Save } from 'lucide-react';
+import { Button, Card } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
-  ExperienceSummaryGrid, 
-  ExperienceBlockToggle,
   ExperienceHintCard,
-  ExperiencePreview,
   SearchFilterPreview,
-  type SummaryItem 
 } from '@/components/experiences';
+import {
+  BrowserFrame,
+  DeviceToggle,
+  deviceWidths,
+  LayoutTabs,
+  ConfigPanel,
+  ControlCard,
+  ToggleRow,
+  SelectRow,
+  type DeviceType,
+  type LayoutOption,
+} from '@/components/experiences/editor';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type SearchLayoutStyle = 'search-only' | 'with-filters' | 'advanced';
@@ -22,6 +29,14 @@ type ResultsDisplayStyle = 'grid' | 'list';
 
 type SearchFilterExperienceConfig = {
   layoutStyle: SearchLayoutStyle;
+  layouts: {
+    'search-only': LayoutConfig;
+    'with-filters': LayoutConfig;
+    'advanced': LayoutConfig;
+  };
+};
+
+type LayoutConfig = {
   resultsDisplayStyle: ResultsDisplayStyle;
   showFilters: boolean;
   showSorting: boolean;
@@ -30,29 +45,38 @@ type SearchFilterExperienceConfig = {
 
 const EXPERIENCE_KEY = 'search_filter_ui';
 
-const LAYOUT_STYLES: { id: SearchLayoutStyle; label: string; description: string }[] = [
+const LAYOUT_STYLES: LayoutOption<SearchLayoutStyle>[] = [
   { description: 'Chỉ có search bar và results', id: 'search-only', label: 'Search Only' },
   { description: 'Search + sidebar filters', id: 'with-filters', label: 'With Filters' },
   { description: 'Advanced với filter chips', id: 'advanced', label: 'Advanced' },
 ];
 
-const DISPLAY_STYLES: { id: ResultsDisplayStyle; label: string; description: string }[] = [
-  { description: 'Hiển thị dạng lưới', id: 'grid', label: 'Grid' },
-  { description: 'Hiển thị dạng list', id: 'list', label: 'List' },
+const DISPLAY_STYLES: { id: ResultsDisplayStyle; label: string }[] = [
+  { id: 'grid', label: 'Grid' },
+  { id: 'list', label: 'List' },
 ];
 
-const DEFAULT_CONFIG: SearchFilterExperienceConfig = {
-  layoutStyle: 'with-filters',
+const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   resultsDisplayStyle: 'grid',
   showFilters: true,
   showSorting: true,
   showResultCount: true,
 };
 
+const DEFAULT_CONFIG: SearchFilterExperienceConfig = {
+  layoutStyle: 'with-filters',
+  layouts: {
+    'search-only': { ...DEFAULT_LAYOUT_CONFIG, showFilters: false },
+    'with-filters': { ...DEFAULT_LAYOUT_CONFIG },
+    'advanced': { ...DEFAULT_LAYOUT_CONFIG },
+  },
+};
+
 const HINTS = [
   'Advanced layout tốt cho search phức tạp.',
   'Filters giúp users tìm kết quả chính xác.',
   'Result count giúp users biết được số lượng.',
+  'Mỗi layout có config riêng - chuyển tab để chỉnh.',
 ];
 
 export default function SearchFilterExperiencePage() {
@@ -60,29 +84,47 @@ export default function SearchFilterExperiencePage() {
   const postsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'posts' });
   const productsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'products' });
   const servicesModule = useQuery(api.admin.modules.getModuleByKey, { key: 'services' });
+  const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
+  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
 
   const serverConfig = useMemo<SearchFilterExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<SearchFilterExperienceConfig> | undefined;
     return {
       layoutStyle: raw?.layoutStyle ?? 'with-filters',
-      resultsDisplayStyle: raw?.resultsDisplayStyle ?? 'grid',
-      showFilters: raw?.showFilters ?? true,
-      showSorting: raw?.showSorting ?? true,
-      showResultCount: raw?.showResultCount ?? true,
+      layouts: {
+        'search-only': { ...DEFAULT_CONFIG.layouts['search-only'], ...raw?.layouts?.['search-only'] },
+        'with-filters': { ...DEFAULT_CONFIG.layouts['with-filters'], ...raw?.layouts?.['with-filters'] },
+        'advanced': { ...DEFAULT_CONFIG.layouts['advanced'], ...raw?.layouts?.['advanced'] },
+      },
     };
   }, [experienceSetting?.value]);
 
   const isLoading = experienceSetting === undefined;
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
-  const { handleSave, isSaving } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
+  const { handleSave, isSaving } = useExperienceSave(
+    EXPERIENCE_KEY,
+    config,
+    MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY])
+  );
 
-  const summaryItems: SummaryItem[] = [
-    { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },
-    { label: 'Results Display', value: config.resultsDisplayStyle, format: 'capitalize' },
-    { label: 'Filters', value: config.showFilters },
-    { label: 'Sorting', value: config.showSorting },
-  ];
+  const currentLayoutConfig = config.layouts[config.layoutStyle];
+
+  const updateLayoutConfig = <K extends keyof LayoutConfig>(
+    key: K,
+    value: LayoutConfig[K]
+  ) => {
+    setConfig(prev => ({
+      ...prev,
+      layouts: {
+        ...prev.layouts,
+        [prev.layoutStyle]: {
+          ...prev.layouts[prev.layoutStyle],
+          [key]: value,
+        },
+      },
+    }));
+  };
 
   if (isLoading) {
     return (
@@ -93,118 +135,109 @@ export default function SearchFilterExperiencePage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <ModuleHeader
-        icon={LayoutTemplate}
-        title="Trải nghiệm: Tìm kiếm & Lọc"
-        description="Cấu hình search layout, filters, sorting và results display."
-        iconBgClass="bg-teal-500/10"
-        iconTextClass="text-teal-600 dark:text-teal-400"
-        buttonClass="bg-teal-600 hover:bg-teal-500"
-        onSave={handleSave}
-        hasChanges={hasChanges}
-        isSaving={isSaving}
-      />
-
-      {/* Full-width Preview */}
-      <ExperiencePreview title="Trang tìm kiếm">
-        <SearchFilterPreview
-          layoutStyle={config.layoutStyle}
-          resultsDisplayStyle={config.resultsDisplayStyle}
-          showFilters={config.showFilters}
-          showSorting={config.showSorting}
-          showResultCount={config.showResultCount}
-        />
-      </ExperiencePreview>
-
-      {/* Settings Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="space-y-4 lg:col-span-2">
-          <SettingsCard>
-            <SettingSelect
-              label="Search layout"
-              value={config.layoutStyle}
-              onChange={(value) => setConfig(prev => ({ ...prev, layoutStyle: value as SearchLayoutStyle }))}
-              options={LAYOUT_STYLES.map(style => ({ label: `${style.label} - ${style.description}`, value: style.id }))}
-              focusColor="focus:border-teal-500"
-            />
-          </SettingsCard>
-
-          <SettingsCard>
-            <SettingSelect
-              label="Results display style"
-              value={config.resultsDisplayStyle}
-              onChange={(value) => setConfig(prev => ({ ...prev, resultsDisplayStyle: value as ResultsDisplayStyle }))}
-              options={DISPLAY_STYLES.map(style => ({ label: `${style.label} - ${style.description}`, value: style.id }))}
-              focusColor="focus:border-teal-500"
-            />
-          </SettingsCard>
-
-          <Card className="p-4">
-            <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Khối hiển thị</h3>
-            <div className="space-y-3">
-              <ExperienceBlockToggle
-                label="Advanced Filters"
-                description="Filters theo categories, price, etc."
-                enabled={config.showFilters}
-                onChange={() => setConfig(prev => ({ ...prev, showFilters: !prev.showFilters }))}
-                color="bg-teal-500"
-              />
-
-              <ExperienceBlockToggle
-                label="Sorting options"
-                description="Sắp xếp kết quả (newest, price...)"
-                enabled={config.showSorting}
-                onChange={() => setConfig(prev => ({ ...prev, showSorting: !prev.showSorting }))}
-                color="bg-teal-500"
-              />
-
-              <ExperienceBlockToggle
-                label="Result count"
-                description="Hiển thị số lượng kết quả"
-                enabled={config.showResultCount}
-                onChange={() => setConfig(prev => ({ ...prev, showResultCount: !prev.showResultCount }))}
-                color="bg-teal-500"
-              />
-            </div>
-          </Card>
-
-          <ExperienceSummaryGrid items={summaryItems} />
+    <div className="h-[calc(100vh-64px)] flex flex-col">
+      {/* Header */}
+      <header className="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-teal-500/10 rounded-lg">
+            <LayoutTemplate className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Trải nghiệm: Tìm kiếm & Lọc</h1>
+            <p className="text-xs text-slate-500">/search • Layout-specific config</p>
+          </div>
         </div>
+        <Button
+          onClick={handleSave}
+          disabled={!hasChanges || isSaving}
+          className="bg-teal-600 hover:bg-teal-500 gap-2"
+        >
+          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {hasChanges ? 'Lưu thay đổi' : 'Đã lưu'}
+        </Button>
+      </header>
 
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Module liên quan</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <ExperienceModuleLink
-                enabled={postsModule?.enabled ?? false}
-                href="/system/modules/posts"
-                icon={FileText}
-                title="Bài viết"
-                colorScheme="cyan"
-              />
-              <ExperienceModuleLink
-                enabled={productsModule?.enabled ?? false}
-                href="/system/modules/products"
-                icon={Package}
-                title="Sản phẩm"
-                colorScheme="cyan"
-              />
-              <ExperienceModuleLink
-                enabled={servicesModule?.enabled ?? false}
-                href="/system/modules/services"
-                icon={Briefcase}
-                title="Dịch vụ"
-                colorScheme="cyan"
-              />
-            </CardContent>
-          </Card>
-
-          <ExperienceHintCard hints={HINTS} />
+      {/* Preview Area */}
+      <main className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-950">
+        <div className="flex justify-center mb-4">
+          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} />
         </div>
-      </div>
+        <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
+          <BrowserFrame url="yoursite.com/search?q=keyword" maxHeight="calc(100vh - 380px)">
+            <SearchFilterPreview
+              layoutStyle={config.layoutStyle}
+              resultsDisplayStyle={currentLayoutConfig.resultsDisplayStyle}
+              showFilters={currentLayoutConfig.showFilters}
+              showSorting={currentLayoutConfig.showSorting}
+              showResultCount={currentLayoutConfig.showResultCount}
+            />
+          </BrowserFrame>
+        </div>
+        <div className="mt-3 text-xs text-slate-500 text-center">
+          Layout: <strong>{LAYOUT_STYLES.find(s => s.id === config.layoutStyle)?.label}</strong>
+          {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
+        </div>
+      </main>
+
+      {/* Bottom Panel */}
+      <ConfigPanel
+        isExpanded={isPanelExpanded}
+        onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
+        expandedHeight="280px"
+        leftContent={
+          <LayoutTabs
+            layouts={LAYOUT_STYLES}
+            activeLayout={config.layoutStyle}
+            onChange={(layout) => setConfig(prev => ({ ...prev, layoutStyle: layout }))}
+            accentColor="#14b8a6"
+          />
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ControlCard title="Khối hiển thị">
+            <ToggleRow label="Filters" description="Categories, price, etc." checked={currentLayoutConfig.showFilters} onChange={(v) => updateLayoutConfig('showFilters', v)} accentColor="#14b8a6" />
+            <ToggleRow label="Sorting" description="Sắp xếp kết quả" checked={currentLayoutConfig.showSorting} onChange={(v) => updateLayoutConfig('showSorting', v)} accentColor="#14b8a6" />
+            <ToggleRow label="Result count" description="Số lượng kết quả" checked={currentLayoutConfig.showResultCount} onChange={(v) => updateLayoutConfig('showResultCount', v)} accentColor="#14b8a6" />
+          </ControlCard>
+
+          <ControlCard title={`Cấu hình ${config.layoutStyle}`}>
+            <SelectRow
+              label="Kiểu hiển thị kết quả"
+              value={currentLayoutConfig.resultsDisplayStyle}
+              onChange={(v) => updateLayoutConfig('resultsDisplayStyle', v as ResultsDisplayStyle)}
+              options={DISPLAY_STYLES.map(s => ({ label: s.label, value: s.id }))}
+            />
+          </ControlCard>
+
+          <ControlCard title="Module liên quan">
+            <ExperienceModuleLink
+              enabled={postsModule?.enabled ?? false}
+              href="/system/modules/posts"
+              icon={FileText}
+              title="Bài viết"
+              colorScheme="cyan"
+            />
+            <ExperienceModuleLink
+              enabled={productsModule?.enabled ?? false}
+              href="/system/modules/products"
+              icon={Package}
+              title="Sản phẩm"
+              colorScheme="cyan"
+            />
+            <ExperienceModuleLink
+              enabled={servicesModule?.enabled ?? false}
+              href="/system/modules/services"
+              icon={Briefcase}
+              title="Dịch vụ"
+              colorScheme="cyan"
+            />
+          </ControlCard>
+
+          <Card className="p-3">
+            <ExperienceHintCard hints={HINTS} />
+          </Card>
+        </div>
+      </ConfigPanel>
     </div>
   );
 }

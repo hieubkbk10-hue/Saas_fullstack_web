@@ -1,46 +1,62 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Briefcase, LayoutTemplate } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
-import { ModuleHeader, SettingsCard, SettingInput, SettingSelect } from '@/components/modules/shared';
+import { Briefcase, LayoutTemplate, Loader2, Save } from 'lucide-react';
+import { Button, Card } from '@/app/admin/components/ui';
+import { SettingInput } from '@/components/modules/shared';
 import { 
   ExperienceModuleLink, 
-  ExperienceSummaryGrid, 
-  ExperienceBlockToggle,
   ExperienceHintCard,
-  ExperiencePreview,
   ServiceDetailPreview,
   ExampleLinks,
-  type SummaryItem 
 } from '@/components/experiences';
+import {
+  BrowserFrame,
+  DeviceToggle,
+  deviceWidths,
+  LayoutTabs,
+  ConfigPanel,
+  ControlCard,
+  ToggleRow,
+  type DeviceType,
+  type LayoutOption,
+} from '@/components/experiences/editor';
 import { useExperienceConfig, useExperienceSave, useExampleServiceSlug, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type DetailLayoutStyle = 'classic' | 'modern' | 'minimal';
 
 type ServiceDetailExperienceConfig = {
   layoutStyle: DetailLayoutStyle;
+  layouts: {
+    classic: ClassicLayoutConfig;
+    modern: ModernLayoutConfig;
+    minimal: MinimalLayoutConfig;
+  };
+};
+
+type ClassicLayoutConfig = {
   showRelated: boolean;
   showShare: boolean;
-  // Classic config
   quickContactEnabled: boolean;
   quickContactTitle: string;
   quickContactDescription: string;
   quickContactShowPrice: boolean;
   quickContactButtonText: string;
   quickContactButtonLink: string;
-  // Modern config
+};
+
+type ModernLayoutConfig = {
+  showRelated: boolean;
   modernContactEnabled: boolean;
   modernContactShowPrice: boolean;
   modernHeroCtaText: string;
   modernHeroCtaLink: string;
-  modernCtaSectionTitle: string;
-  modernCtaSectionDescription: string;
-  modernCtaButtonText: string;
-  modernCtaButtonLink: string;
-  // Minimal config
+};
+
+type MinimalLayoutConfig = {
+  showRelated: boolean;
   minimalCtaText: string;
   minimalCtaButtonText: string;
   minimalCtaButtonLink: string;
@@ -48,7 +64,7 @@ type ServiceDetailExperienceConfig = {
 
 const EXPERIENCE_KEY = 'services_detail_ui';
 
-const LAYOUT_STYLES: { id: DetailLayoutStyle; label: string; description: string }[] = [
+const LAYOUT_STYLES: LayoutOption<DetailLayoutStyle>[] = [
   { description: 'Layout truyền thống với sidebar', id: 'classic', label: 'Classic' },
   { description: 'Hero image, full-width', id: 'modern', label: 'Modern' },
   { description: 'Tối giản, tập trung nội dung', id: 'minimal', label: 'Minimal' },
@@ -56,80 +72,230 @@ const LAYOUT_STYLES: { id: DetailLayoutStyle; label: string; description: string
 
 const DEFAULT_CONFIG: ServiceDetailExperienceConfig = {
   layoutStyle: 'classic',
-  showRelated: true,
-  showShare: true,
-  // Classic
-  quickContactEnabled: true,
-  quickContactTitle: 'Liên hệ nhanh',
-  quickContactDescription: 'Tư vấn miễn phí, báo giá trong 24h.',
-  quickContactShowPrice: true,
-  quickContactButtonText: 'Liên hệ tư vấn',
-  quickContactButtonLink: '',
-  // Modern
-  modernContactEnabled: true,
-  modernContactShowPrice: true,
-  modernHeroCtaText: 'Liên hệ tư vấn',
-  modernHeroCtaLink: '',
-  modernCtaSectionTitle: 'Sẵn sàng bắt đầu?',
-  modernCtaSectionDescription: 'Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết cho dự án của bạn.',
-  modernCtaButtonText: 'Liên hệ tư vấn',
-  modernCtaButtonLink: '',
-  // Minimal
-  minimalCtaText: 'Quan tâm đến dịch vụ này?',
-  minimalCtaButtonText: 'Liên hệ tư vấn',
-  minimalCtaButtonLink: '',
+  layouts: {
+    classic: {
+      showRelated: true,
+      showShare: true,
+      quickContactEnabled: true,
+      quickContactTitle: 'Liên hệ nhanh',
+      quickContactDescription: 'Tư vấn miễn phí, báo giá trong 24h.',
+      quickContactShowPrice: true,
+      quickContactButtonText: 'Liên hệ tư vấn',
+      quickContactButtonLink: '',
+    },
+    modern: {
+      showRelated: true,
+      modernContactEnabled: true,
+      modernContactShowPrice: true,
+      modernHeroCtaText: 'Liên hệ tư vấn',
+      modernHeroCtaLink: '',
+    },
+    minimal: {
+      showRelated: true,
+      minimalCtaText: 'Quan tâm đến dịch vụ này?',
+      minimalCtaButtonText: 'Liên hệ tư vấn',
+      minimalCtaButtonLink: '',
+    },
+  },
 };
 
 const HINTS = [
   'Classic layout phù hợp cho service pages.',
   'Modern layout tốt cho dịch vụ cao cấp.',
   'Related services giúp upsell.',
+  'Mỗi layout có config riêng - chuyển tab để chỉnh.',
 ];
 
 export default function ServiceDetailExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const servicesModule = useQuery(api.admin.modules.getModuleByKey, { key: 'services' });
+  const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
   const exampleServiceSlug = useExampleServiceSlug();
+  const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
+  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
 
   const serverConfig = useMemo<ServiceDetailExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<ServiceDetailExperienceConfig> | undefined;
     return {
       layoutStyle: raw?.layoutStyle ?? 'classic',
-      showRelated: raw?.showRelated ?? true,
-      showShare: raw?.showShare ?? true,
-      // Classic
-      quickContactEnabled: raw?.quickContactEnabled ?? true,
-      quickContactTitle: raw?.quickContactTitle ?? 'Liên hệ nhanh',
-      quickContactDescription: raw?.quickContactDescription ?? 'Tư vấn miễn phí, báo giá trong 24h.',
-      quickContactShowPrice: raw?.quickContactShowPrice ?? true,
-      quickContactButtonText: raw?.quickContactButtonText ?? 'Liên hệ tư vấn',
-      quickContactButtonLink: raw?.quickContactButtonLink ?? '',
-      // Modern
-      modernContactEnabled: raw?.modernContactEnabled ?? true,
-      modernContactShowPrice: raw?.modernContactShowPrice ?? true,
-      modernHeroCtaText: raw?.modernHeroCtaText ?? 'Liên hệ tư vấn',
-      modernHeroCtaLink: raw?.modernHeroCtaLink ?? '',
-      modernCtaSectionTitle: raw?.modernCtaSectionTitle ?? 'Sẵn sàng bắt đầu?',
-      modernCtaSectionDescription: raw?.modernCtaSectionDescription ?? 'Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết cho dự án của bạn.',
-      modernCtaButtonText: raw?.modernCtaButtonText ?? 'Liên hệ tư vấn',
-      modernCtaButtonLink: raw?.modernCtaButtonLink ?? '',
-      // Minimal
-      minimalCtaText: raw?.minimalCtaText ?? 'Quan tâm đến dịch vụ này?',
-      minimalCtaButtonText: raw?.minimalCtaButtonText ?? 'Liên hệ tư vấn',
-      minimalCtaButtonLink: raw?.minimalCtaButtonLink ?? '',
+      layouts: {
+        classic: { ...DEFAULT_CONFIG.layouts.classic, ...raw?.layouts?.classic },
+        modern: { ...DEFAULT_CONFIG.layouts.modern, ...raw?.layouts?.modern },
+        minimal: { ...DEFAULT_CONFIG.layouts.minimal, ...raw?.layouts?.minimal },
+      },
     };
   }, [experienceSetting?.value]);
 
   const isLoading = experienceSetting === undefined || servicesModule === undefined;
+  const brandColor = (brandColorSetting?.value as string) || '#8b5cf6';
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
-  const { handleSave, isSaving } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
+  const { handleSave, isSaving } = useExperienceSave(
+    EXPERIENCE_KEY,
+    config,
+    MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY])
+  );
 
-  const summaryItems: SummaryItem[] = [
-    { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },
-    { label: 'Related Services', value: config.showRelated },
-    { label: 'Share Buttons', value: config.showShare },
-  ];
+  const currentLayoutConfig = config.layouts[config.layoutStyle];
+
+  const updateLayoutConfig = <K extends keyof typeof currentLayoutConfig>(
+    key: K,
+    value: (typeof currentLayoutConfig)[K]
+  ) => {
+    setConfig(prev => ({
+      ...prev,
+      layouts: {
+        ...prev.layouts,
+        [prev.layoutStyle]: {
+          ...prev.layouts[prev.layoutStyle],
+          [key]: value,
+        },
+      },
+    }));
+  };
+
+  const getPreviewProps = () => {
+    const layoutConfig = currentLayoutConfig;
+    if (config.layoutStyle === 'classic') {
+      const c = layoutConfig as ClassicLayoutConfig;
+      return {
+        layoutStyle: config.layoutStyle,
+        showRelated: c.showRelated,
+        showShare: c.showShare,
+        quickContactEnabled: c.quickContactEnabled,
+        quickContactTitle: c.quickContactTitle,
+        quickContactDescription: c.quickContactDescription,
+        quickContactShowPrice: c.quickContactShowPrice,
+        quickContactButtonText: c.quickContactButtonText,
+        quickContactButtonLink: c.quickContactButtonLink,
+        brandColor,
+        device: previewDevice,
+      };
+    }
+    if (config.layoutStyle === 'modern') {
+      const c = layoutConfig as ModernLayoutConfig;
+      return {
+        layoutStyle: config.layoutStyle,
+        showRelated: c.showRelated,
+        showShare: false,
+        modernContactEnabled: c.modernContactEnabled,
+        modernContactShowPrice: c.modernContactShowPrice,
+        modernHeroCtaText: c.modernHeroCtaText,
+        modernHeroCtaLink: c.modernHeroCtaLink,
+        brandColor,
+        device: previewDevice,
+      };
+    }
+    const c = layoutConfig as MinimalLayoutConfig;
+    return {
+      layoutStyle: config.layoutStyle,
+      showRelated: c.showRelated,
+      showShare: false,
+      minimalCtaText: c.minimalCtaText,
+      minimalCtaButtonText: c.minimalCtaButtonText,
+      minimalCtaButtonLink: c.minimalCtaButtonLink,
+      brandColor,
+      device: previewDevice,
+    };
+  };
+
+  const renderLayoutSpecificControls = () => {
+    if (config.layoutStyle === 'classic') {
+      const c = currentLayoutConfig as ClassicLayoutConfig;
+      return (
+        <>
+          <ToggleRow
+            label="Khối liên hệ nhanh"
+            description="Hiện/ẩn sidebar liên hệ"
+            checked={c.quickContactEnabled}
+            onChange={(v) => updateLayoutConfig('quickContactEnabled' as keyof typeof currentLayoutConfig, v as never)}
+            accentColor="#8b5cf6"
+          />
+          <ToggleRow
+            label="Hiện giá dịch vụ"
+            description="Hiển thị giá trong khối"
+            checked={c.quickContactShowPrice}
+            onChange={(v) => updateLayoutConfig('quickContactShowPrice' as keyof typeof currentLayoutConfig, v as never)}
+            accentColor="#8b5cf6"
+          />
+          <ToggleRow
+            label="Nút chia sẻ"
+            description="Copy link dịch vụ"
+            checked={c.showShare}
+            onChange={(v) => updateLayoutConfig('showShare' as keyof typeof currentLayoutConfig, v as never)}
+            accentColor="#8b5cf6"
+          />
+          <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-2">
+            <SettingInput
+              type="text"
+              label="Tiêu đề khối liên hệ"
+              value={c.quickContactTitle}
+              onChange={(v) => updateLayoutConfig('quickContactTitle' as keyof typeof currentLayoutConfig, v as never)}
+              focusColor="focus:border-violet-500"
+            />
+            <SettingInput
+              type="text"
+              label="Text nút liên hệ"
+              value={c.quickContactButtonText}
+              onChange={(v) => updateLayoutConfig('quickContactButtonText' as keyof typeof currentLayoutConfig, v as never)}
+              focusColor="focus:border-violet-500"
+            />
+          </div>
+        </>
+      );
+    }
+    if (config.layoutStyle === 'modern') {
+      const c = currentLayoutConfig as ModernLayoutConfig;
+      return (
+        <>
+          <ToggleRow
+            label="Cụm liên hệ Hero"
+            description="Giá và nút trong Hero"
+            checked={c.modernContactEnabled}
+            onChange={(v) => updateLayoutConfig('modernContactEnabled' as keyof typeof currentLayoutConfig, v as never)}
+            accentColor="#8b5cf6"
+          />
+          <ToggleRow
+            label="Hiện giá trong Hero"
+            description="Hiển thị giá dịch vụ"
+            checked={c.modernContactShowPrice}
+            onChange={(v) => updateLayoutConfig('modernContactShowPrice' as keyof typeof currentLayoutConfig, v as never)}
+            accentColor="#8b5cf6"
+          />
+          <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+            <SettingInput
+              type="text"
+              label="Text nút Hero"
+              value={c.modernHeroCtaText}
+              onChange={(v) => updateLayoutConfig('modernHeroCtaText' as keyof typeof currentLayoutConfig, v as never)}
+              focusColor="focus:border-violet-500"
+            />
+          </div>
+        </>
+      );
+    }
+    const c = currentLayoutConfig as MinimalLayoutConfig;
+    return (
+      <>
+        <div className="space-y-2">
+          <SettingInput
+            type="text"
+            label="Text CTA Section"
+            value={c.minimalCtaText}
+            onChange={(v) => updateLayoutConfig('minimalCtaText' as keyof typeof currentLayoutConfig, v as never)}
+            focusColor="focus:border-violet-500"
+          />
+          <SettingInput
+            type="text"
+            label="Text nút CTA"
+            value={c.minimalCtaButtonText}
+            onChange={(v) => updateLayoutConfig('minimalCtaButtonText' as keyof typeof currentLayoutConfig, v as never)}
+            focusColor="focus:border-violet-500"
+          />
+        </div>
+      </>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -140,250 +306,97 @@ export default function ServiceDetailExperiencePage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <ModuleHeader
-        icon={LayoutTemplate}
-        title="Trải nghiệm: Chi tiết dịch vụ"
-        description="Cấu hình layout và các khối hiển thị cho trang chi tiết dịch vụ."
-        iconBgClass="bg-violet-500/10"
-        iconTextClass="text-violet-600 dark:text-violet-400"
-        buttonClass="bg-violet-600 hover:bg-violet-500"
-        onSave={handleSave}
-        hasChanges={hasChanges}
-        isSaving={isSaving}
-      />
-
-      {/* Full-width Preview - Realtime */}
-      <ExperiencePreview title="Chi tiết dịch vụ">
-        <ServiceDetailPreview
-          layoutStyle={config.layoutStyle}
-          showRelated={config.showRelated}
-          showShare={config.showShare}
-          quickContactEnabled={config.quickContactEnabled}
-          quickContactTitle={config.quickContactTitle}
-          quickContactDescription={config.quickContactDescription}
-          quickContactShowPrice={config.quickContactShowPrice}
-          quickContactButtonText={config.quickContactButtonText}
-          quickContactButtonLink={config.quickContactButtonLink}
-          modernContactEnabled={config.modernContactEnabled}
-          modernContactShowPrice={config.modernContactShowPrice}
-          modernHeroCtaText={config.modernHeroCtaText}
-          modernHeroCtaLink={config.modernHeroCtaLink}
-          modernCtaSectionTitle={config.modernCtaSectionTitle}
-          modernCtaSectionDescription={config.modernCtaSectionDescription}
-          modernCtaButtonText={config.modernCtaButtonText}
-          modernCtaButtonLink={config.modernCtaButtonLink}
-          minimalCtaText={config.minimalCtaText}
-          minimalCtaButtonText={config.minimalCtaButtonText}
-          minimalCtaButtonLink={config.minimalCtaButtonLink}
-        />
-      </ExperiencePreview>
-
-      {/* Settings Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="space-y-4 lg:col-span-2">
-          <SettingsCard>
-            <SettingSelect
-              label="Layout chi tiết"
-              value={config.layoutStyle}
-              onChange={(value) => setConfig(prev => ({ ...prev, layoutStyle: value as DetailLayoutStyle }))}
-              options={LAYOUT_STYLES.map(style => ({ label: `${style.label} - ${style.description}`, value: style.id }))}
-              focusColor="focus:border-violet-500"
-            />
-          </SettingsCard>
-
-          {config.layoutStyle === 'classic' && (
-            <SettingsCard title="Cấu hình thêm cho Classic">
-              <ExperienceBlockToggle
-                label="Hiển thị khối liên hệ nhanh"
-                description="Hiện/ẩn cục liên hệ nhanh ở sidebar"
-                enabled={config.quickContactEnabled}
-                onChange={() => setConfig(prev => ({ ...prev, quickContactEnabled: !prev.quickContactEnabled }))}
-                color="bg-violet-500"
-              />
-
-              <SettingInput
-                type="text"
-                label="Tiêu đề"
-                value={config.quickContactTitle}
-                onChange={(value) => setConfig(prev => ({ ...prev, quickContactTitle: value }))}
-                focusColor="focus:border-violet-500"
-              />
-
-              <SettingInput
-                type="text"
-                label="Mô tả"
-                value={config.quickContactDescription}
-                onChange={(value) => setConfig(prev => ({ ...prev, quickContactDescription: value }))}
-                focusColor="focus:border-violet-500"
-              />
-
-              <ExperienceBlockToggle
-                label="Hiển thị giá trong khối"
-                description="Ẩn/hiện giá ở phần liên hệ nhanh"
-                enabled={config.quickContactShowPrice}
-                onChange={() => setConfig(prev => ({ ...prev, quickContactShowPrice: !prev.quickContactShowPrice }))}
-                color="bg-violet-500"
-              />
-
-              <SettingInput
-                type="text"
-                label="Text nút liên hệ"
-                value={config.quickContactButtonText}
-                onChange={(value) => setConfig(prev => ({ ...prev, quickContactButtonText: value }))}
-                focusColor="focus:border-violet-500"
-              />
-
-              <div className="space-y-1">
-                <SettingInput
-                  type="text"
-                  label="Link nút liên hệ"
-                  value={config.quickContactButtonLink}
-                  onChange={(value) => setConfig(prev => ({ ...prev, quickContactButtonLink: value }))}
-                  focusColor="focus:border-violet-500"
-                />
-                <p className="text-xs text-slate-500">VD: https://zalo.me/ hoặc https://m.me/yourpage</p>
-              </div>
-
-              <ExperienceBlockToggle
-                label="Chia sẻ mạng xã hội"
-                description="Nút copy link dịch vụ"
-                enabled={config.showShare}
-                onChange={() => setConfig(prev => ({ ...prev, showShare: !prev.showShare }))}
-                color="bg-violet-500"
-              />
-
-              <ExperienceBlockToggle
-                label="Dịch vụ liên quan"
-                description="Hiển thị related services"
-                enabled={config.showRelated}
-                onChange={() => setConfig(prev => ({ ...prev, showRelated: !prev.showRelated }))}
-                color="bg-violet-500"
-              />
-            </SettingsCard>
-          )}
-
-          {config.layoutStyle === 'modern' && (
-            <SettingsCard title="Cấu hình thêm cho Modern">
-              <ExperienceBlockToggle
-                label="Hiển thị cụm liên hệ"
-                description="Hiện/ẩn giá và nút liên hệ trong Hero"
-                enabled={config.modernContactEnabled}
-                onChange={() => setConfig(prev => ({ ...prev, modernContactEnabled: !prev.modernContactEnabled }))}
-                color="bg-violet-500"
-              />
-
-              {config.modernContactEnabled && (
-                <>
-                  <ExperienceBlockToggle
-                    label="Hiển thị giá trong Hero"
-                    description="Hiện/ẩn giá dịch vụ"
-                    enabled={config.modernContactShowPrice}
-                    onChange={() => setConfig(prev => ({ ...prev, modernContactShowPrice: !prev.modernContactShowPrice }))}
-                    color="bg-violet-500"
-                  />
-
-                  <SettingInput
-                    type="text"
-                    label="Text nút liên hệ"
-                    value={config.modernHeroCtaText}
-                    onChange={(value) => setConfig(prev => ({ ...prev, modernHeroCtaText: value }))}
-                    focusColor="focus:border-violet-500"
-                  />
-
-                  <div className="space-y-1">
-                    <SettingInput
-                      type="text"
-                      label="Link nút liên hệ"
-                      value={config.modernHeroCtaLink}
-                      onChange={(value) => setConfig(prev => ({ ...prev, modernHeroCtaLink: value }))}
-                      focusColor="focus:border-violet-500"
-                    />
-                    <p className="text-xs text-slate-500">VD: https://zalo.me/ hoặc https://m.me/yourpage</p>
-                  </div>
-                </>
-              )}
-
-              <ExperienceBlockToggle
-                label="Dịch vụ liên quan"
-                description="Hiển thị related services"
-                enabled={config.showRelated}
-                onChange={() => setConfig(prev => ({ ...prev, showRelated: !prev.showRelated }))}
-                color="bg-violet-500"
-              />
-            </SettingsCard>
-          )}
-
-          {config.layoutStyle === 'minimal' && (
-            <SettingsCard title="Cấu hình thêm cho Minimal">
-              <SettingInput
-                type="text"
-                label="Text CTA Section"
-                value={config.minimalCtaText}
-                onChange={(value) => setConfig(prev => ({ ...prev, minimalCtaText: value }))}
-                focusColor="focus:border-violet-500"
-              />
-
-              <SettingInput
-                type="text"
-                label="Text nút CTA"
-                value={config.minimalCtaButtonText}
-                onChange={(value) => setConfig(prev => ({ ...prev, minimalCtaButtonText: value }))}
-                focusColor="focus:border-violet-500"
-              />
-
-              <div className="space-y-1">
-                <SettingInput
-                  type="text"
-                  label="Link nút CTA"
-                  value={config.minimalCtaButtonLink}
-                  onChange={(value) => setConfig(prev => ({ ...prev, minimalCtaButtonLink: value }))}
-                  focusColor="focus:border-violet-500"
-                />
-                <p className="text-xs text-slate-500">VD: https://zalo.me/ hoặc https://m.me/yourpage</p>
-              </div>
-
-              <ExperienceBlockToggle
-                label="Dịch vụ liên quan"
-                description="Hiển thị related services"
-                enabled={config.showRelated}
-                onChange={() => setConfig(prev => ({ ...prev, showRelated: !prev.showRelated }))}
-                color="bg-violet-500"
-              />
-            </SettingsCard>
-          )}
-
-          <ExperienceSummaryGrid items={summaryItems} />
+    <div className="h-[calc(100vh-64px)] flex flex-col">
+      {/* Header */}
+      <header className="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-violet-500/10 rounded-lg">
+            <LayoutTemplate className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Trải nghiệm: Chi tiết dịch vụ</h1>
+            <p className="text-xs text-slate-500">/services/[slug] • Layout-specific config</p>
+          </div>
         </div>
+        <Button
+          onClick={handleSave}
+          disabled={!hasChanges || isSaving}
+          className="bg-violet-600 hover:bg-violet-500 gap-2"
+        >
+          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {hasChanges ? 'Lưu thay đổi' : 'Đã lưu'}
+        </Button>
+      </header>
 
-        <div className="space-y-4">
-          {exampleServiceSlug && (
-            <ExampleLinks
-              links={[
-                { label: 'Xem dịch vụ mẫu', url: `/services/${exampleServiceSlug}`, description: 'Open in new tab' },
-              ]}
-              color="#8b5cf6"
+      {/* Preview Area */}
+      <main className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-950">
+        <div className="flex justify-center mb-4">
+          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} />
+        </div>
+        <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
+          <BrowserFrame url={`yoursite.com/services/${exampleServiceSlug || 'example-service'}`} maxHeight="calc(100vh - 380px)">
+            <ServiceDetailPreview {...getPreviewProps()} />
+          </BrowserFrame>
+        </div>
+        <div className="mt-3 text-xs text-slate-500 text-center">
+          Layout: <strong>{LAYOUT_STYLES.find(s => s.id === config.layoutStyle)?.label}</strong>
+          {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
+        </div>
+      </main>
+
+      {/* Bottom Panel */}
+      <ConfigPanel
+        isExpanded={isPanelExpanded}
+        onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
+        expandedHeight="320px"
+        leftContent={
+          <LayoutTabs
+            layouts={LAYOUT_STYLES}
+            activeLayout={config.layoutStyle}
+            onChange={(layout) => setConfig(prev => ({ ...prev, layoutStyle: layout }))}
+            accentColor="#8b5cf6"
+          />
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ControlCard title="Khối hiển thị">
+            <ToggleRow
+              label="Dịch vụ liên quan"
+              description="Related services"
+              checked={currentLayoutConfig.showRelated}
+              onChange={(v) => updateLayoutConfig('showRelated', v)}
+              accentColor="#8b5cf6"
             />
-          )}
+          </ControlCard>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Module liên quan</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <ExperienceModuleLink
-                enabled={servicesModule?.enabled ?? false}
-                href="/system/modules/services"
-                icon={Briefcase}
-                title="Dịch vụ"
-                colorScheme="cyan"
-              />
-            </CardContent>
+          <ControlCard title={`Cấu hình ${config.layoutStyle}`}>
+            {renderLayoutSpecificControls()}
+          </ControlCard>
+
+          <ControlCard title="Module liên quan">
+            <ExperienceModuleLink
+              enabled={servicesModule?.enabled ?? false}
+              href="/system/modules/services"
+              icon={Briefcase}
+              title="Dịch vụ"
+              colorScheme="cyan"
+            />
+          </ControlCard>
+
+          <Card className="p-3">
+            {exampleServiceSlug && (
+              <div className="mb-3">
+                <ExampleLinks
+                  links={[{ label: 'Xem dịch vụ mẫu', url: `/services/${exampleServiceSlug}` }]}
+                  color="#8b5cf6"
+                  compact
+                />
+              </div>
+            )}
+            <ExperienceHintCard hints={HINTS} />
           </Card>
-
-          <ExperienceHintCard hints={HINTS} />
         </div>
-      </div>
+      </ConfigPanel>
     </div>
   );
 }

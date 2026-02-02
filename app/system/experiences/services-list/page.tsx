@@ -1,66 +1,125 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Briefcase, LayoutTemplate } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
-import { ModuleHeader, SettingsCard, SettingSelect } from '@/components/modules/shared';
+import { Briefcase, LayoutTemplate, Loader2, Save } from 'lucide-react';
+import { Button, Card } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
-  ExperienceSummaryGrid, 
   ExperienceHintCard,
-  ExperiencePreview,
   ServicesListPreview,
   ExampleLinks,
-  type SummaryItem 
 } from '@/components/experiences';
+import {
+  BrowserFrame,
+  DeviceToggle,
+  deviceWidths,
+  LayoutTabs,
+  ConfigPanel,
+  ControlCard,
+  ToggleRow,
+  type DeviceType,
+  type LayoutOption,
+} from '@/components/experiences/editor';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type ListLayoutStyle = 'grid' | 'sidebar' | 'masonry';
 
 type ServicesListExperienceConfig = {
   layoutStyle: ListLayoutStyle;
+  layouts: {
+    grid: LayoutConfig;
+    sidebar: LayoutConfig;
+    masonry: LayoutConfig;
+  };
+};
+
+type LayoutConfig = {
+  showSearch: boolean;
+  showCategories: boolean;
+  showPagination: boolean;
 };
 
 const EXPERIENCE_KEY = 'services_list_ui';
 
-const LAYOUT_STYLES: { id: ListLayoutStyle; label: string; description: string }[] = [
+const LAYOUT_STYLES: LayoutOption<ListLayoutStyle>[] = [
   { description: 'Hiển thị dạng lưới cards', id: 'grid', label: 'Grid' },
   { description: 'Hiển thị với sidebar bên trái', id: 'sidebar', label: 'Sidebar' },
   { description: 'Hiển thị dạng magazine chuyên nghiệp', id: 'masonry', label: 'Magazine' },
 ];
 
+const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
+  showSearch: true,
+  showCategories: true,
+  showPagination: true,
+};
+
 const DEFAULT_CONFIG: ServicesListExperienceConfig = {
   layoutStyle: 'grid',
+  layouts: {
+    grid: { ...DEFAULT_LAYOUT_CONFIG },
+    sidebar: { ...DEFAULT_LAYOUT_CONFIG },
+    masonry: { ...DEFAULT_LAYOUT_CONFIG },
+  },
 };
 
 const HINTS = [
   'Grid layout hiển thị cards dạng lưới gọn gàng.',
   'Sidebar layout có sidebar trái với search và categories.',
   'Magazine layout tạo cảm giác chuyên nghiệp với hero featured.',
+  'Mỗi layout có config riêng - chuyển tab để chỉnh.',
 ];
 
 export default function ServicesListExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const servicesModule = useQuery(api.admin.modules.getModuleByKey, { key: 'services' });
+  const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
+  const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
+  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
 
   const serverConfig = useMemo<ServicesListExperienceConfig>(() => {
-    const raw = experienceSetting?.value as { layoutStyle?: string } | undefined;
-    const normalizedLayout = raw?.layoutStyle === 'list' ? 'sidebar' : raw?.layoutStyle;
+    const raw = experienceSetting?.value as Partial<ServicesListExperienceConfig> | undefined;
+    // Migrate legacy 'list' layout to 'sidebar'
+    const rawLayout = raw?.layoutStyle as string | undefined;
+    const normalizedLayout = rawLayout === 'list' ? 'sidebar' : rawLayout;
     return {
       layoutStyle: (normalizedLayout as ListLayoutStyle | undefined) ?? 'grid',
+      layouts: {
+        grid: { ...DEFAULT_LAYOUT_CONFIG, ...raw?.layouts?.grid },
+        sidebar: { ...DEFAULT_LAYOUT_CONFIG, ...raw?.layouts?.sidebar },
+        masonry: { ...DEFAULT_LAYOUT_CONFIG, ...raw?.layouts?.masonry },
+      },
     };
   }, [experienceSetting?.value]);
 
   const isLoading = experienceSetting === undefined || servicesModule === undefined;
+  const brandColor = (brandColorSetting?.value as string) || '#8b5cf6';
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
-  const { handleSave, isSaving } = useExperienceSave(EXPERIENCE_KEY, config, MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
+  const { handleSave, isSaving } = useExperienceSave(
+    EXPERIENCE_KEY,
+    config,
+    MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY])
+  );
 
-  const summaryItems: SummaryItem[] = [
-    { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },
-  ];
+  const currentLayoutConfig = config.layouts[config.layoutStyle];
+
+  const updateLayoutConfig = <K extends keyof LayoutConfig>(
+    key: K,
+    value: LayoutConfig[K]
+  ) => {
+    setConfig(prev => ({
+      ...prev,
+      layouts: {
+        ...prev.layouts,
+        [prev.layoutStyle]: {
+          ...prev.layouts[prev.layoutStyle],
+          [key]: value,
+        },
+      },
+    }));
+  };
 
   if (isLoading) {
     return (
@@ -71,66 +130,116 @@ export default function ServicesListExperiencePage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <ModuleHeader
-        icon={LayoutTemplate}
-        title="Trải nghiệm: Danh sách dịch vụ"
-        description="Cấu hình layout cho trang danh sách dịch vụ."
-        iconBgClass="bg-violet-500/10"
-        iconTextClass="text-violet-600 dark:text-violet-400"
-        buttonClass="bg-violet-600 hover:bg-violet-500"
-        onSave={handleSave}
-        hasChanges={hasChanges}
-        isSaving={isSaving}
-      />
+    <div className="h-[calc(100vh-64px)] flex flex-col">
+      {/* Header */}
+      <header className="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-violet-500/10 rounded-lg">
+            <LayoutTemplate className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Trải nghiệm: Danh sách dịch vụ</h1>
+            <p className="text-xs text-slate-500">/services • Layout-specific config</p>
+          </div>
+        </div>
+        <Button
+          onClick={handleSave}
+          disabled={!hasChanges || isSaving}
+          className="bg-violet-600 hover:bg-violet-500 gap-2"
+        >
+          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {hasChanges ? 'Lưu thay đổi' : 'Đã lưu'}
+        </Button>
+      </header>
 
-      {/* Full-width Preview - Realtime */}
-      <ExperiencePreview title="Danh sách dịch vụ">
-        <ServicesListPreview layoutStyle={config.layoutStyle} />
-      </ExperiencePreview>
-
-      {/* Settings Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="space-y-4 lg:col-span-2">
-          <SettingsCard>
-            <SettingSelect
-              label="Layout danh sách"
-              value={config.layoutStyle}
-              onChange={(value) => setConfig(prev => ({ ...prev, layoutStyle: value as ListLayoutStyle }))}
-              options={LAYOUT_STYLES.map(style => ({ label: `${style.label} - ${style.description}`, value: style.id }))}
-              focusColor="focus:border-violet-500"
+      {/* Preview Area */}
+      <main className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-950">
+        <div className="flex justify-center mb-4">
+          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} />
+        </div>
+        <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
+          <BrowserFrame url="yoursite.com/services" maxHeight="calc(100vh - 380px)">
+            <ServicesListPreview
+              layoutStyle={config.layoutStyle}
+              showSearch={currentLayoutConfig.showSearch}
+              showCategories={currentLayoutConfig.showCategories}
+              showPagination={currentLayoutConfig.showPagination}
+              brandColor={brandColor}
+              device={previewDevice}
             />
-          </SettingsCard>
-
-          <ExperienceSummaryGrid items={summaryItems} />
+          </BrowserFrame>
         </div>
+        <div className="mt-3 text-xs text-slate-500 text-center">
+          Layout: <strong>{LAYOUT_STYLES.find(s => s.id === config.layoutStyle)?.label}</strong>
+          {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
+        </div>
+      </main>
 
-        <div className="space-y-4">
-          <ExampleLinks
-            links={[
-              { label: 'Trang danh sách dịch vụ', url: '/services', description: 'Xem tất cả dịch vụ' },
-            ]}
-            color="#8b5cf6"
+      {/* Bottom Panel */}
+      <ConfigPanel
+        isExpanded={isPanelExpanded}
+        onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
+        expandedHeight="280px"
+        leftContent={
+          <LayoutTabs
+            layouts={LAYOUT_STYLES}
+            activeLayout={config.layoutStyle}
+            onChange={(layout) => setConfig(prev => ({ ...prev, layoutStyle: layout }))}
+            accentColor="#8b5cf6"
           />
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ControlCard title="Khối hiển thị">
+            <ToggleRow
+              label="Tìm kiếm"
+              description="Thanh search cho dịch vụ"
+              checked={currentLayoutConfig.showSearch}
+              onChange={(v) => updateLayoutConfig('showSearch', v)}
+              accentColor="#8b5cf6"
+              disabled={!servicesModule?.enabled}
+            />
+            <ToggleRow
+              label="Danh mục"
+              description="Filter theo category"
+              checked={currentLayoutConfig.showCategories}
+              onChange={(v) => updateLayoutConfig('showCategories', v)}
+              accentColor="#8b5cf6"
+              disabled={!servicesModule?.enabled}
+            />
+            <ToggleRow
+              label="Phân trang"
+              description="Pagination kết quả"
+              checked={currentLayoutConfig.showPagination}
+              onChange={(v) => updateLayoutConfig('showPagination', v)}
+              accentColor="#8b5cf6"
+              disabled={!servicesModule?.enabled}
+            />
+          </ControlCard>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Module liên quan</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <ExperienceModuleLink
-                enabled={servicesModule?.enabled ?? false}
-                href="/system/modules/services"
-                icon={Briefcase}
-                title="Dịch vụ"
-                colorScheme="cyan"
-              />
-            </CardContent>
+          <ControlCard title="Module liên quan">
+            <ExperienceModuleLink
+              enabled={servicesModule?.enabled ?? false}
+              href="/system/modules/services"
+              icon={Briefcase}
+              title="Dịch vụ"
+              colorScheme="cyan"
+            />
+          </ControlCard>
+
+          <ControlCard title="Link xem thử">
+            <ExampleLinks
+              links={[{ label: 'Trang danh sách', url: '/services' }]}
+              color="#8b5cf6"
+              compact
+            />
+          </ControlCard>
+
+          <Card className="p-3">
+            <ExperienceHintCard hints={HINTS} />
           </Card>
-
-          <ExperienceHintCard hints={HINTS} />
         </div>
-      </div>
+      </ConfigPanel>
     </div>
   );
 }
