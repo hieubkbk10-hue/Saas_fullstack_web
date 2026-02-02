@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ArrowRight, Calendar, Check, ChevronRight, Clock, Copy, Eye, FileText, Home, Image as ImageIcon, Link as LinkIcon, Phone, Share2, Star } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, Check, ChevronRight, Clock, Copy, Eye, FileText, Home, Image as ImageIcon, Link as LinkIcon, Phone, Share2, Star, User } from 'lucide-react';
 import Image from 'next/image';
 
 type DetailLayoutStyle = 'classic' | 'modern' | 'minimal';
@@ -49,6 +49,7 @@ type ServiceDetailPreviewProps = {
 const MOCK_POST = {
   title: 'Hướng dẫn sử dụng Next.js App Router trong dự án thực tế',
   categoryName: 'Technology',
+  authorName: 'Nguyễn Minh Đức',
   publishedAt: new Date('2026-01-15').getTime(),
   views: 1234,
   thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800',
@@ -133,9 +134,8 @@ function QuickContactButtonsPreview({ brandColor, label }: { brandColor: string;
 }
 
 // Classic Style Preview - Extracted from ClassicStyle
-function ClassicStylePreview({ showRelated, showShare, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
+function ClassicStylePreview({ showRelated, showShare, showAuthor = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const readingTime = 5;
-  const showAuthor = true;
   const [isCopied] = React.useState(false);
 
   return (
@@ -182,6 +182,11 @@ function ClassicStylePreview({ showRelated, showShare, brandColor = '#3b82f6' }:
 
               {showAuthor && (
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground pt-2">
+                  <div className="flex items-center gap-1.5">
+                    <User className="h-4 w-4" />
+                    <span>{MOCK_POST.authorName}</span>
+                  </div>
+                  <span className="text-muted-foreground/40">•</span>
                   <div className="flex items-center gap-1.5">
                     <Calendar className="h-4 w-4" />
                     <span>{new Date(MOCK_POST.publishedAt).toLocaleDateString('vi-VN')}</span>
@@ -288,9 +293,8 @@ function ClassicStylePreview({ showRelated, showShare, brandColor = '#3b82f6' }:
 }
 
 // Modern Style Preview - Extracted from ModernStyle
-function ModernStylePreview({ showRelated, showShare, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
+function ModernStylePreview({ showRelated, showShare, showAuthor = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const readingTime = 5;
-  const showAuthor = true;
   const [isCopied] = React.useState(false);
 
   return (
@@ -341,6 +345,10 @@ function ModernStylePreview({ showRelated, showShare, brandColor = '#3b82f6' }: 
 
             {showAuthor && (
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <span className="font-medium">{MOCK_POST.authorName}</span>
+                </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   <time className="font-medium">{new Date(MOCK_POST.publishedAt).toLocaleDateString('vi-VN')}</time>
@@ -446,9 +454,8 @@ function ModernStylePreview({ showRelated, showShare, brandColor = '#3b82f6' }: 
 }
 
 // Minimal Style Preview - Extracted from MinimalStyle
-function MinimalStylePreview({ showRelated, showShare, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
+function MinimalStylePreview({ showRelated, showShare, showAuthor = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const [isCopied] = React.useState(false);
-  const showAuthor = true;
   const readingTime = 5;
 
   return (
@@ -501,6 +508,10 @@ function MinimalStylePreview({ showRelated, showShare, brandColor = '#3b82f6' }:
                   </h1>
                   {showAuthor && (
                     <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <User className="h-3.5 w-3.5" />
+                        <span>{MOCK_POST.authorName}</span>
+                      </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         <time>{new Date(MOCK_POST.publishedAt).toLocaleDateString('vi-VN')}</time>
@@ -593,14 +604,13 @@ function MinimalStylePreview({ showRelated, showShare, brandColor = '#3b82f6' }:
 // Main Preview Component
 export function PostDetailPreview({
   layoutStyle,
+  showAuthor = true,
   showRelated,
   showShare,
   device = 'desktop',
   brandColor = '#3b82f6',
 }: PostDetailPreviewProps) {
-  const showAuthor = true;
-  const showComments = true;
-  const props = { showAuthor, showRelated, showShare, showComments, brandColor, device };
+  const props = { showAuthor, showRelated, showShare, brandColor, device };
 
   return (
     <div className="w-full">
