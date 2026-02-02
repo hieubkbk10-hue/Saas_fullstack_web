@@ -80,8 +80,8 @@ export default function PostDetailPage({ params }: PageProps) {
   const authorName = post?.authorName ?? '';
   const commentsEnabled = commentsModule?.enabled ?? false;
   const shouldShowComments = commentsEnabled && experienceConfig.showComments;
-  const shouldShowCommentLikes = shouldShowComments && style === 'classic' && (commentsLikesFeature?.enabled ?? false) && experienceConfig.showCommentLikes;
-  const shouldShowCommentReplies = shouldShowComments && style === 'classic' && (commentsRepliesFeature?.enabled ?? false) && experienceConfig.showCommentReplies;
+  const shouldShowCommentLikes = shouldShowComments && (commentsLikesFeature?.enabled ?? false) && experienceConfig.showCommentLikes;
+  const shouldShowCommentReplies = shouldShowComments && (commentsRepliesFeature?.enabled ?? false) && experienceConfig.showCommentReplies;
   const commentsPerPageSetting = useMemo(() => {
     const perPage = commentsSettings?.find(setting => setting.settingKey === 'commentsPerPage')?.value as number | undefined;
     return perPage ?? 20;

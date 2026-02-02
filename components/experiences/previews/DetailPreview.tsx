@@ -470,7 +470,7 @@ function ClassicStylePreview({
 }
 
 // Modern Style Preview - Extracted from ModernStyle
-function ModernStylePreview({ showRelated, showShare, showAuthor = true, showComments = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
+function ModernStylePreview({ showRelated, showShare, showAuthor = true, showComments = true, showCommentLikes = true, showCommentReplies = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const readingTime = 5;
   const [isCopied] = React.useState(false);
 
@@ -574,7 +574,7 @@ function ModernStylePreview({ showRelated, showShare, showAuthor = true, showCom
           </div>
         </article>
 
-        <CommentsPreview showComments={showComments} brandColor={brandColor} />
+        <CommentsPreview showComments={showComments} showLikes={showCommentLikes} showReplies={showCommentReplies} brandColor={brandColor} />
 
         {showRelated && MOCK_RELATED.length > 0 && (
           <section className="pt-6 pb-2">
@@ -633,7 +633,7 @@ function ModernStylePreview({ showRelated, showShare, showAuthor = true, showCom
 }
 
 // Minimal Style Preview - Extracted from MinimalStyle
-function MinimalStylePreview({ showRelated, showShare, showAuthor = true, showComments = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
+function MinimalStylePreview({ showRelated, showShare, showAuthor = true, showComments = true, showCommentLikes = true, showCommentReplies = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const [isCopied] = React.useState(false);
   const readingTime = 5;
 
@@ -721,7 +721,7 @@ function MinimalStylePreview({ showRelated, showShare, showAuthor = true, showCo
             <div dangerouslySetInnerHTML={{ __html: MOCK_POST.content }} />
           </div>
 
-          <CommentsPreview showComments={showComments} brandColor={brandColor} />
+          <CommentsPreview showComments={showComments} showLikes={showCommentLikes} showReplies={showCommentReplies} brandColor={brandColor} />
         </section>
 
         {showRelated && MOCK_RELATED.length > 0 && (
