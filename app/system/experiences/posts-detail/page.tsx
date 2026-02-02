@@ -29,6 +29,8 @@ type PostDetailExperienceConfig = {
   showRelated: boolean;
   showShare: boolean;
   showComments: boolean;
+  showCommentLikes: boolean;
+  showCommentReplies: boolean;
 };
 
 const EXPERIENCE_KEY = 'posts_detail_ui';
@@ -49,6 +51,8 @@ const DEFAULT_CONFIG: PostDetailExperienceConfig = {
   showRelated: true,
   showShare: true,
   showComments: true,
+  showCommentLikes: true,
+  showCommentReplies: true,
 };
 
 const HINTS = [
@@ -67,6 +71,9 @@ export default function PostDetailExperiencePage() {
   const setMultipleSettings = useMutation(api.settings.setMultiple);
   const updateField = useMutation(api.admin.modules.updateModuleField);
   const toggleModule = useMutation(api.admin.modules.toggleModule);
+  const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
+  const commentsLikesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableLikes', moduleKey: 'comments' });
+  const commentsRepliesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableReplies', moduleKey: 'comments' });
 
   const serverConfig = useMemo<PostDetailExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<PostDetailExperienceConfig> | undefined;
@@ -78,8 +85,10 @@ export default function PostDetailExperiencePage() {
       showRelated: raw?.showRelated ?? true,
       showShare: raw?.showShare ?? true,
       showComments: raw?.showComments ?? true,
+      showCommentLikes: raw?.showCommentLikes ?? (commentsLikesFeature?.enabled ?? false),
+      showCommentReplies: raw?.showCommentReplies ?? (commentsRepliesFeature?.enabled ?? true),
     };
-  }, [experienceSetting?.value, legacyDetailStyleSetting?.value]);
+  }, [commentsLikesFeature?.enabled, commentsRepliesFeature?.enabled, experienceSetting?.value, legacyDetailStyleSetting?.value]);
 
   const isLoading = experienceSetting === undefined || postsModule === undefined || postFields === undefined;
 
@@ -89,6 +98,10 @@ export default function PostDetailExperiencePage() {
   const isAuthorSyncPending = Boolean(authorField) && authorFieldEnabled !== config.showAuthor;
   const commentsModuleEnabled = commentsModule?.enabled ?? false;
   const isCommentsSyncPending = Boolean(commentsModule) && commentsModuleEnabled !== config.showComments;
+  const commentsLikesEnabled = commentsLikesFeature?.enabled ?? false;
+  const commentsRepliesEnabled = commentsRepliesFeature?.enabled ?? false;
+  const isCommentLikesSyncPending = Boolean(commentsLikesFeature) && commentsLikesEnabled !== config.showCommentLikes;
+  const isCommentRepliesSyncPending = Boolean(commentsRepliesFeature) && commentsRepliesEnabled !== config.showCommentReplies;
   
   // Sync with legacy key
   const additionalSettings = useMemo(() => [
@@ -113,6 +126,14 @@ export default function PostDetailExperiencePage() {
 
       if (commentsModule && commentsModuleEnabled !== config.showComments) {
         tasks.push(toggleModule({ enabled: config.showComments, key: 'comments' }));
+      }
+
+      if (commentsLikesFeature && commentsLikesEnabled !== config.showCommentLikes) {
+        tasks.push(toggleFeature({ enabled: config.showCommentLikes, featureKey: 'enableLikes', moduleKey: 'comments' }));
+      }
+
+      if (commentsRepliesFeature && commentsRepliesEnabled !== config.showCommentReplies) {
+        tasks.push(toggleFeature({ enabled: config.showCommentReplies, featureKey: 'enableReplies', moduleKey: 'comments' }));
       }
 
       await Promise.all(tasks);
@@ -161,6 +182,8 @@ export default function PostDetailExperiencePage() {
           showRelated={config.showRelated}
           showShare={config.showShare}
           showComments={config.showComments}
+          showCommentLikes={config.showCommentLikes}
+          showCommentReplies={config.showCommentReplies}
         />
       </ExperiencePreview>
 
@@ -275,6 +298,55 @@ export default function PostDetailExperiencePage() {
                   Chưa có Module Bình luận. Vui lòng kiểm tra mục <Link href="/system/modules" className="font-medium underline">/system/modules</Link>.
                 </div>
               )}
+
+              <ExperienceBlockToggle
+                label="Lượt thích"
+                description="Cho phép nút like bình luận"
+                enabled={config.showCommentLikes}
+                onChange={() => setConfig(prev => ({ ...prev, showCommentLikes: !prev.showCommentLikes }))}
+                color="bg-blue-500"
+                disabled={!commentsLikesFeature}
+              />
+
+              <ExperienceBlockToggle
+                label="Trả lời bình luận"
+                description="Cho phép hiển thị nút trả lời"
+                enabled={config.showCommentReplies}
+                onChange={() => setConfig(prev => ({ ...prev, showCommentReplies: !prev.showCommentReplies }))}
+                color="bg-blue-500"
+                disabled={!commentsRepliesFeature}
+              />
+
+              <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2 text-xs text-slate-600 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-slate-300">
+                <div className="flex items-center justify-between gap-3">
+                  <span>
+                    Đồng bộ với <Link href="/system/modules/comments" className="text-blue-600 hover:text-blue-700 dark:text-blue-400">Module Bình luận</Link>
+                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        commentsLikesEnabled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200'
+                          : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      Lượt thích: {commentsLikesEnabled ? 'Bật' : 'Tắt'}
+                    </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        commentsRepliesEnabled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200'
+                          : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      Trả lời: {commentsRepliesEnabled ? 'Bật' : 'Tắt'}
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-1">
+                  {isCommentLikesSyncPending || isCommentRepliesSyncPending
+                    ? 'Trạng thái đang lệch, bấm Lưu để đồng bộ module.'
+                    : 'Trạng thái đã đồng bộ với module.'}
+                </p>
+              </div>
 
               <ExperienceBlockToggle
                 label="Bài viết liên quan"

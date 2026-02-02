@@ -8,7 +8,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { Button, Card, CardContent } from '@/app/admin/components/ui';
-import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Eye, FileText, Home, Link as LinkIcon, Share2, User } from 'lucide-react';
+import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Eye, FileText, Heart, Home, Link as LinkIcon, Reply, Share2, User } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
 const notoSans = Noto_Sans({
@@ -56,6 +56,8 @@ export default function PostDetailPage({ params }: PageProps) {
   const enabledFields = useEnabledPostFields();
   const experienceSetting = useQuery(api.settings.getByKey, { key: 'posts_detail_ui' });
   const commentsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'comments' });
+  const commentsLikesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableLikes', moduleKey: 'comments' });
+  const commentsRepliesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableReplies', moduleKey: 'comments' });
   const post = useQuery(api.posts.getBySlug, { slug });
   const category = useQuery(
     api.postCategories.getById, 
@@ -64,17 +66,21 @@ export default function PostDetailPage({ params }: PageProps) {
   const incrementViews = useMutation(api.posts.incrementViews);
   const createComment = useMutation(api.comments.create);
   const experienceConfig = useMemo(() => {
-    const raw = experienceSetting?.value as Partial<{ showAuthor?: boolean; showComments?: boolean }> | undefined;
+    const raw = experienceSetting?.value as Partial<{ showAuthor?: boolean; showComments?: boolean; showCommentLikes?: boolean; showCommentReplies?: boolean }> | undefined;
     return {
       showAuthor: raw?.showAuthor ?? true,
       showComments: raw?.showComments ?? true,
+      showCommentLikes: raw?.showCommentLikes ?? (commentsLikesFeature?.enabled ?? false),
+      showCommentReplies: raw?.showCommentReplies ?? (commentsRepliesFeature?.enabled ?? true),
     };
-  }, [experienceSetting?.value]);
+  }, [commentsLikesFeature?.enabled, commentsRepliesFeature?.enabled, experienceSetting?.value]);
 
   const shouldShowAuthor = enabledFields.has('author_name') && experienceConfig.showAuthor;
   const authorName = post?.authorName ?? '';
   const commentsEnabled = commentsModule?.enabled ?? false;
   const shouldShowComments = commentsEnabled && experienceConfig.showComments;
+  const shouldShowCommentLikes = shouldShowComments && style === 'classic' && (commentsLikesFeature?.enabled ?? false) && experienceConfig.showCommentLikes;
+  const shouldShowCommentReplies = shouldShowComments && style === 'classic' && (commentsRepliesFeature?.enabled ?? false) && experienceConfig.showCommentReplies;
   const commentsPage = useQuery(
     api.comments.listByTarget,
     post && shouldShowComments
@@ -169,6 +175,8 @@ export default function PostDetailPage({ params }: PageProps) {
       commentMessage={commentMessage}
       commentName={commentName}
       isSubmitting={isSubmittingComment}
+      showLikes={shouldShowCommentLikes}
+      showReplies={shouldShowCommentReplies}
       onContentChange={setCommentContent}
       onEmailChange={setCommentEmail}
       onNameChange={setCommentName}
@@ -826,6 +834,8 @@ type CommentsSectionProps = {
   commentContent: string;
   commentMessage: string | null;
   isSubmitting: boolean;
+  showLikes: boolean;
+  showReplies: boolean;
   onNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
   onContentChange: (value: string) => void;
@@ -840,33 +850,51 @@ function CommentsSection({
   commentContent,
   commentMessage,
   isSubmitting,
+  showLikes,
+  showReplies,
   onNameChange,
   onEmailChange,
   onContentChange,
   onSubmit,
 }: CommentsSectionProps) {
   return (
-    <section className="rounded-xl border bg-background p-6 shadow-sm">
+    <section className="rounded-2xl border border-border/50 bg-background/70 p-6 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-semibold text-foreground">Bình luận</h3>
-        <span className="text-sm text-muted-foreground">{comments.length} bình luận</span>
+        <span className="text-xs text-muted-foreground">{comments.length} bình luận</span>
       </div>
 
-      <div className="mt-4 space-y-4">
+      <div className="mt-4 space-y-3">
         {comments.length > 0 ? (
           comments.map((comment) => (
-            <div key={comment._id} className="rounded-lg border border-border/60 bg-muted/30 p-4">
+            <div key={comment._id} className="rounded-xl border border-border/40 bg-background p-4 shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
               <div className="flex items-center justify-between gap-2 text-sm">
                 <span className="font-medium text-foreground">{comment.authorName}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-[11px] text-muted-foreground">
                   {new Date(comment._creationTime).toLocaleDateString('vi-VN')}
                 </span>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">{comment.content}</p>
+              {(showLikes || showReplies) && (
+                <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+                  {showLikes && (
+                    <button type="button" className="inline-flex items-center gap-1.5 hover:text-foreground">
+                      <Heart className="h-3.5 w-3.5" />
+                      Thích
+                    </button>
+                  )}
+                  {showReplies && (
+                    <button type="button" className="inline-flex items-center gap-1.5 hover:text-foreground">
+                      <Reply className="h-3.5 w-3.5" />
+                      Trả lời
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           ))
         ) : (
-          <div className="rounded-lg border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
+          <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
             Chưa có bình luận nào. Hãy để lại bình luận đầu tiên.
           </div>
         )}
@@ -878,14 +906,14 @@ function CommentsSection({
             value={commentName}
             onChange={(event) =>{  onNameChange(event.target.value); }}
             placeholder="Họ và tên"
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            className="h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm"
             required
           />
           <input
             value={commentEmail}
             onChange={(event) =>{  onEmailChange(event.target.value); }}
             placeholder="Email (không bắt buộc)"
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            className="h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm"
             type="email"
           />
         </div>
@@ -893,14 +921,14 @@ function CommentsSection({
           value={commentContent}
           onChange={(event) =>{  onContentChange(event.target.value); }}
           placeholder="Nội dung bình luận..."
-          className="min-h-[110px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className="min-h-[110px] w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm"
           required
         />
         {commentMessage && (
           <p className="text-sm text-muted-foreground">{commentMessage}</p>
         )}
         <div className="flex items-center justify-end">
-          <Button type="submit" disabled={isSubmitting} style={{ backgroundColor: brandColor }} className="text-white">
+          <Button type="submit" disabled={isSubmitting} style={{ backgroundColor: brandColor }} className="rounded-full text-white">
             {isSubmitting ? 'Đang gửi...' : 'Gửi bình luận'}
           </Button>
         </div>

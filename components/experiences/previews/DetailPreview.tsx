@@ -11,6 +11,8 @@ type PostDetailPreviewProps = {
   showRelated: boolean;
   showShare: boolean;
   showComments?: boolean;
+  showCommentLikes?: boolean;
+  showCommentReplies?: boolean;
   quickContactEnabled?: boolean;
   quickContactTitle?: string;
   quickContactDescription?: string;
@@ -138,29 +140,54 @@ function QuickContactButtonsPreview({ brandColor, label }: { brandColor: string;
   );
 }
 
-function CommentsPreview({ showComments, brandColor = '#3b82f6' }: { showComments?: boolean; brandColor?: string }) {
+function CommentsPreview({
+  showComments,
+  showLikes,
+  showReplies,
+  brandColor = '#3b82f6',
+}: {
+  showComments?: boolean;
+  showLikes?: boolean;
+  showReplies?: boolean;
+  brandColor?: string;
+}) {
   if (!showComments) {return null;}
 
   return (
-    <section className="mt-10 rounded-xl border bg-white/60 p-6 shadow-sm">
+    <section className="mt-10 rounded-xl border border-border/50 bg-background/70 p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold">Bình luận</h3>
-        <span className="text-sm text-muted-foreground">{MOCK_COMMENTS.length} bình luận</span>
+        <span className="text-xs text-muted-foreground">{MOCK_COMMENTS.length} bình luận</span>
       </div>
 
-      <div className="mt-4 space-y-4">
+      <div className="mt-4 space-y-3">
         {MOCK_COMMENTS.map((comment) => (
-          <div key={comment._id} className="rounded-lg border border-slate-200/80 bg-white p-4">
+          <div key={comment._id} className="rounded-lg border border-border/40 bg-background p-4 shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-slate-900">{comment.authorName}</span>
-              <span className="text-xs text-slate-500">{new Date(comment.createdAt).toLocaleDateString('vi-VN')}</span>
+              <span className="font-medium text-foreground">{comment.authorName}</span>
+              <span className="text-[11px] text-muted-foreground">{new Date(comment.createdAt).toLocaleDateString('vi-VN')}</span>
             </div>
-            <p className="mt-2 text-sm text-slate-700">{comment.content}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{comment.content}</p>
+            {(showLikes || showReplies) && (
+              <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+                {showLikes && (
+                  <button type="button" className="inline-flex items-center gap-1.5 hover:text-foreground">
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: brandColor }} />
+                    Thích
+                  </button>
+                )}
+                {showReplies && (
+                  <button type="button" className="inline-flex items-center gap-1.5 hover:text-foreground">
+                    Trả lời
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
 
-      <div className="mt-5 flex items-center justify-between rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+      <div className="mt-5 flex items-center justify-between rounded-lg border border-dashed border-border/60 bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
         <span>Form bình luận sẽ hiển thị ở frontend.</span>
         <span className="font-medium" style={{ color: brandColor }}>Đang bật</span>
       </div>
@@ -169,7 +196,15 @@ function CommentsPreview({ showComments, brandColor = '#3b82f6' }: { showComment
 }
 
 // Classic Style Preview - Extracted from ClassicStyle
-function ClassicStylePreview({ showRelated, showShare, showAuthor = true, showComments = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
+function ClassicStylePreview({
+  showRelated,
+  showShare,
+  showAuthor = true,
+  showComments = true,
+  showCommentLikes = true,
+  showCommentReplies = true,
+  brandColor = '#3b82f6',
+}: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const readingTime = 5;
   const [isCopied] = React.useState(false);
 
@@ -282,7 +317,12 @@ function ClassicStylePreview({ showRelated, showShare, showAuthor = true, showCo
               )}
             </div>
 
-            <CommentsPreview showComments={showComments} brandColor={brandColor} />
+            <CommentsPreview
+              showComments={showComments}
+              showLikes={showCommentLikes}
+              showReplies={showCommentReplies}
+              brandColor={brandColor}
+            />
           </article>
 
           {showRelated && MOCK_RELATED.length > 0 && (
@@ -647,12 +687,14 @@ export function PostDetailPreview({
   layoutStyle,
   showAuthor = true,
   showComments = true,
+  showCommentLikes = true,
+  showCommentReplies = true,
   showRelated,
   showShare,
   device = 'desktop',
   brandColor = '#3b82f6',
 }: PostDetailPreviewProps) {
-  const props = { showAuthor, showComments, showRelated, showShare, brandColor, device };
+  const props = { showAuthor, showComments, showCommentLikes, showCommentReplies, showRelated, showShare, brandColor, device };
 
   return (
     <div className="w-full">
