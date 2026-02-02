@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ArrowRight, Calendar, Check, ChevronRight, Clock, Copy, Eye, FileText, Home, Image as ImageIcon, Link as LinkIcon, MessageSquare, MoreHorizontal, Phone, Reply, Share2, Star, ThumbsUp, User } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, Check, ChevronRight, Clock, Copy, Eye, FileText, Home, Image as ImageIcon, Link as LinkIcon, MessageSquare, Phone, Reply, Share2, Star, ThumbsUp, User } from 'lucide-react';
 import Image from 'next/image';
 
 type DetailLayoutStyle = 'classic' | 'modern' | 'minimal';
@@ -198,112 +198,95 @@ function CommentsPreview({
 }) {
   if (!showComments) {return null;}
 
+  const visibleComments = MOCK_COMMENTS.slice(0, 2);
+
   return (
-    <section className="mt-10 space-y-8">
+    <section className="mt-10 space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-2 pb-4 border-b">
-        <MessageSquare className="h-5 w-5" style={{ color: brandColor }} />
-        <h3 className="text-xl font-semibold tracking-tight">
-          Bình luận <span className="text-muted-foreground text-base font-normal">({MOCK_COMMENTS.length})</span>
-        </h3>
-      </div>
-
-      {/* Comment Form */}
-      <div className="bg-muted/30 rounded-xl p-4 sm:p-6 border border-border/50 shadow-sm">
-        <h4 className="text-sm font-medium mb-4">Để lại bình luận của bạn</h4>
-        <div className="flex gap-4">
-          <div className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-medium text-white hidden sm:flex" style={{ backgroundColor: brandColor }}>
-            ME
-          </div>
-          <div className="flex-1 space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <input
-                type="text"
-                placeholder="Họ và tên"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                readOnly
-              />
-              <input
-                type="email"
-                placeholder="Email (không bắt buộc)"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                readOnly
-              />
-            </div>
-            <textarea
-              className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
-              placeholder="Chia sẻ ý kiến của bạn..."
-              readOnly
-            />
-            <div className="flex justify-end">
-              <button
-                type="button"
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 text-white w-full sm:w-auto"
-                style={{ backgroundColor: brandColor }}
-              >
-                Gửi bình luận
-              </button>
-            </div>
-          </div>
+      <div className="flex items-center justify-between pb-3 border-b border-border/60">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-4 w-4" style={{ color: brandColor }} />
+          <h3 className="text-base font-semibold">
+            Bình luận <span className="text-muted-foreground text-sm font-normal">({MOCK_COMMENTS.length})</span>
+          </h3>
         </div>
+        <button 
+          type="button" 
+          className="text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+          style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+        >
+          Viết bình luận
+        </button>
       </div>
 
-      {/* Comments List */}
-      <div className="space-y-2">
-        {MOCK_COMMENTS.map((comment) => (
-          <CommentItem key={comment._id} comment={comment} showLikes={showLikes} showReplies={showReplies} brandColor={brandColor} />
+      {/* Comments List - Compact */}
+      <div className="space-y-3">
+        {visibleComments.map((comment) => (
+          <CommentItem key={comment._id} comment={comment} showLikes={showLikes} showReplies={showReplies} brandColor={brandColor} isCompact />
         ))}
       </div>
+
+      {/* Show more */}
+      {MOCK_COMMENTS.length > 2 && (
+        <button 
+          type="button" 
+          className="w-full text-center text-sm font-medium py-2 rounded-lg border border-dashed border-border/60 text-muted-foreground hover:text-foreground hover:border-border transition-colors"
+        >
+          Xem thêm {MOCK_COMMENTS.length - 2} bình luận
+        </button>
+      )}
     </section>
   );
 }
 
-function CommentItem({ comment, isReply = false, showLikes, showReplies, brandColor }: { comment: MockComment; isReply?: boolean; showLikes?: boolean; showReplies?: boolean; brandColor: string }) {
+function CommentItem({ comment, isReply = false, showLikes, showReplies, brandColor, isCompact = false }: { comment: MockComment; isReply?: boolean; showLikes?: boolean; showReplies?: boolean; brandColor: string; isCompact?: boolean }) {
   const initials = comment.authorName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  const avatarColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
+  const avatarColor = avatarColors[comment._id.charCodeAt(1) % avatarColors.length];
   
   return (
-    <div className={`flex gap-4 ${isReply ? 'mt-4 ml-8 pl-4 border-l-2 border-muted' : 'mt-6'}`}>
-      <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-background shadow-sm">
-        <div className="flex h-full w-full items-center justify-center rounded-full bg-muted text-muted-foreground text-sm font-medium">
-          {initials}
-        </div>
+    <div className={`flex gap-3 ${isReply ? 'mt-3 ml-6 pl-3 border-l-2' : ''} ${isCompact ? 'py-2' : 'py-3'}`} style={isReply ? { borderColor: `${brandColor}30` } : undefined}>
+      <div 
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white shadow-sm"
+        style={{ backgroundColor: isReply ? brandColor : avatarColor }}
+      >
+        {initials}
       </div>
-      <div className="flex-1 space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-foreground">{comment.authorName}</span>
-            <span className="text-xs text-muted-foreground">{comment.timestamp}</span>
-          </div>
-          <button type="button" className="h-8 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground">
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-foreground">{comment.authorName}</span>
+          <span className="text-xs text-muted-foreground">• {comment.timestamp}</span>
         </div>
 
-        <div className="text-sm leading-relaxed text-foreground/90">
+        <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
           {comment.content}
-        </div>
+        </p>
 
         {(showLikes || showReplies) && (
-          <div className="flex items-center gap-4 pt-1">
+          <div className="flex items-center gap-3 mt-1.5">
             {showLikes && (
-              <button type="button" className={`h-8 px-2 gap-1.5 inline-flex items-center rounded-md text-sm font-medium hover:text-red-500 ${comment.isLiked ? 'text-red-500' : 'text-muted-foreground'}`}>
-                <ThumbsUp className={`h-3.5 w-3.5 ${comment.isLiked ? 'fill-current' : ''}`} />
-                <span className="text-xs font-medium">{comment.likes > 0 ? comment.likes : 'Thích'}</span>
+              <button 
+                type="button" 
+                className={`inline-flex items-center gap-1 text-xs font-medium transition-colors ${comment.isLiked ? '' : 'text-muted-foreground hover:text-foreground'}`}
+                style={comment.isLiked ? { color: brandColor } : undefined}
+              >
+                <ThumbsUp className={`h-3 w-3 ${comment.isLiked ? 'fill-current' : ''}`} />
+                {comment.likes > 0 ? comment.likes : 'Thích'}
               </button>
             )}
             {showReplies && (
-              <button type="button" className="h-8 px-2 gap-1.5 inline-flex items-center rounded-md text-sm font-medium text-muted-foreground hover:opacity-80" style={{ ['--hover-color' as string]: brandColor }}>
-                <Reply className="h-3.5 w-3.5" />
-                <span className="text-xs font-medium">Trả lời</span>
+              <button type="button" className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <Reply className="h-3 w-3" />
+                Trả lời
               </button>
             )}
           </div>
         )}
 
         {showReplies && comment.replies && comment.replies.length > 0 && (
-          <div className="pt-2">
+          <div className="mt-2">
             {comment.replies.map(reply => (
-              <CommentItem key={reply._id} comment={reply} isReply showLikes={showLikes} showReplies={showReplies} brandColor={brandColor} />
+              <CommentItem key={reply._id} comment={reply} isReply showLikes={showLikes} showReplies={showReplies} brandColor={brandColor} isCompact />
             ))}
           </div>
         )}
