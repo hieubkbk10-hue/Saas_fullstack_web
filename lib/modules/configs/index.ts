@@ -1,4 +1,9 @@
  export { commentsModule } from './comments.config';
+ export { customersModule } from './customers.config';
  export { homepageModule } from './homepage.config';
+ export { menusModule } from './menus.config';
+ export { ordersModule } from './orders.config';
  export { postsModule } from './posts.config';
+ export { rolesModule } from './roles.config';
+ export { usersModule } from './users.config';
  export { wishlistModule } from './wishlist.config';

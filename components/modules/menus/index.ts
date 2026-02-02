@@ -1,0 +1,1 @@
+ export { MenusDataTab } from './MenusDataTab';
