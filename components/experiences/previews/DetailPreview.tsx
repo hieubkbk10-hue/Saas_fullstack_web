@@ -812,7 +812,7 @@ function ModernServicePreview({
   const showPrice = true;
   const showDuration = true;
   const showFeatured = true;
-  const headingSize = isMobile ? 'text-2xl' : isTablet ? 'text-4xl' : 'text-5xl';
+  const headingSize = isMobile ? 'text-xl' : isTablet ? 'text-3xl' : 'text-4xl';
   
   const modernConfig = {
     heroCtaText: modernHeroCtaText ?? 'Liên hệ tư vấn',
@@ -831,8 +831,8 @@ function ModernServicePreview({
           style={{ backgroundImage: `radial-gradient(circle at 20% 45%, ${brandColor}15 0%, transparent 55%), radial-gradient(circle at 80% 55%, ${brandColor}10 0%, transparent 60%)` }}
         />
 
-        <div className={`relative max-w-6xl mx-auto px-4 ${isMobile ? 'py-8' : 'py-12'}`}>
-          <div className="max-w-4xl space-y-5">
+        <div className={`relative max-w-6xl mx-auto px-4 ${isMobile ? 'py-6' : 'py-10'}`}>
+          <div className="max-w-4xl space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               {showFeatured && MOCK_SERVICE.featured && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-400 text-amber-900 text-xs font-semibold rounded-full shadow-sm">
@@ -888,7 +888,7 @@ function ModernServicePreview({
       </section>
 
       {MOCK_SERVICE.thumbnail && (
-        <div className="max-w-6xl mx-auto px-4 -mt-6 relative z-10">
+        <div className="max-w-6xl mx-auto px-4 -mt-4 relative z-10">
           <div className="relative rounded-xl overflow-hidden shadow-2xl aspect-[16/9]">
             <Image
               src={MOCK_SERVICE.thumbnail}
@@ -901,23 +901,13 @@ function ModernServicePreview({
         </div>
       )}
 
-      <section className={`max-w-4xl mx-auto px-4 ${isMobile ? 'py-10' : 'py-16'}`}>
+      <section className={`max-w-4xl mx-auto px-4 ${isMobile ? 'py-8' : 'py-12'}`}>
         <article
           className="prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-strong:text-slate-900"
           style={{ '--tw-prose-links': brandColor } as React.CSSProperties}
         >
           <div dangerouslySetInnerHTML={{ __html: MOCK_SERVICE.content }} />
         </article>
-
-        <div className="mt-10 rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
-          <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900`}>{modernConfig.ctaSectionTitle}</h3>
-          <p className="text-sm text-slate-600 mt-2 mb-4 max-w-md mx-auto">
-            {modernConfig.ctaSectionDescription}
-          </p>
-          <div className="flex justify-center max-w-xs mx-auto">
-            <QuickContactButtonsPreview brandColor={brandColor} label={modernConfig.ctaButtonText} />
-          </div>
-        </div>
       </section>
 
       {relatedServices.length > 0 && (
