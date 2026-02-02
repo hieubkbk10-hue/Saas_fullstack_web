@@ -1,35 +1,45 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { FileText, LayoutTemplate, Monitor, Smartphone, Tablet } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
-import { ModuleHeader } from '@/components/modules/shared';
-import { 
+import { FileText, LayoutTemplate, Loader2, Save } from 'lucide-react';
+import { Button, Card } from '@/app/admin/components/ui';
+import {
   ExperienceModuleLink, 
-  ExperienceSummaryGrid, 
   ExperienceHintCard,
   PostsListPreview,
   ExampleLinks,
-  type SummaryItem 
 } from '@/components/experiences';
+import {
+  BrowserFrame,
+  DeviceToggle,
+  deviceWidths,
+  LayoutTabs,
+  ConfigPanel,
+  ControlCard,
+  ToggleRow,
+  type DeviceType,
+  type LayoutOption,
+} from '@/components/experiences/editor';
 import { useExperienceConfig, useExperienceSave, useExamplePostCategorySlug, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type ListLayoutStyle = 'fullwidth' | 'sidebar' | 'magazine';
 
 type PostsListExperienceConfig = {
   layoutStyle: ListLayoutStyle;
+  showSearch: boolean;
+  showCategories: boolean;
+  showPagination: boolean;
+  postsPerPage: number;
 };
-
-type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
 
 const EXPERIENCE_KEY = 'posts_list_ui';
 
 // Legacy keys for backward compatibility with /posts page
 const LEGACY_LAYOUT_KEY = 'posts_list_style';
 
-const LAYOUT_STYLES: { id: ListLayoutStyle; label: string; description: string }[] = [
+const LAYOUT_STYLES: LayoutOption<ListLayoutStyle>[] = [
   { description: 'Horizontal filter bar + grid/list toggle, tối ưu mobile', id: 'fullwidth', label: 'Full Width' },
   { description: 'Classic blog với sidebar filters, categories, recent posts', id: 'sidebar', label: 'Sidebar' },
   { description: 'Hero slider + category tabs, phong cách editorial', id: 'magazine', label: 'Magazine' },
@@ -37,24 +47,17 @@ const LAYOUT_STYLES: { id: ListLayoutStyle; label: string; description: string }
 
 const DEFAULT_CONFIG: PostsListExperienceConfig = {
   layoutStyle: 'fullwidth',
+  showSearch: true,
+  showCategories: true,
+  showPagination: true,
+  postsPerPage: 12,
 };
 
 const HINTS = [
   'Full Width phù hợp blog có nhiều bài viết, filter rõ ràng.',
   'Sidebar giúp nhấn mạnh bộ lọc và bài viết mới.',
   'Magazine tạo cảm giác editorial, phù hợp nội dung nổi bật.',
-];
-
-const deviceWidths: Record<PreviewDevice, string> = {
-  desktop: 'w-full',
-  tablet: 'w-[768px] max-w-full',
-  mobile: 'w-[375px] max-w-full',
-};
-
-const devices = [
-  { icon: Monitor, id: 'desktop' as const, label: 'Desktop' },
-  { icon: Tablet, id: 'tablet' as const, label: 'Tablet' },
-  { icon: Smartphone, id: 'mobile' as const, label: 'Mobile' },
+  'Real-time preview hiển thị chính xác với giao diện thực.',
 ];
 
 export default function PostsListExperiencePage() {
@@ -62,7 +65,8 @@ export default function PostsListExperiencePage() {
   const postsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'posts' });
   const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
   const exampleCategorySlug = useExamplePostCategorySlug();
-  const [previewDevice, setPreviewDevice] = React.useState<PreviewDevice>('desktop');
+  const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
+  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
   
   // Read legacy layout setting
   const legacyLayoutSetting = useQuery(api.settings.getByKey, { key: LEGACY_LAYOUT_KEY });
@@ -81,6 +85,10 @@ export default function PostsListExperiencePage() {
     
     return {
       layoutStyle: normalizeLayoutStyle(rawLayout ?? legacyLayout),
+      showSearch: raw?.showSearch ?? true,
+      showCategories: raw?.showCategories ?? true,
+      showPagination: raw?.showPagination ?? true,
+      postsPerPage: raw?.postsPerPage ?? 12,
     };
   }, [experienceSetting?.value, legacyLayoutSetting?.value]);
 
@@ -101,10 +109,6 @@ export default function PostsListExperiencePage() {
     additionalSettings
   );
 
-  const summaryItems: SummaryItem[] = [
-    { label: 'Layout', value: config.layoutStyle, format: 'capitalize' },
-  ];
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -114,140 +118,98 @@ export default function PostsListExperiencePage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <ModuleHeader
-        icon={LayoutTemplate}
-        title="Trải nghiệm: Danh sách bài viết"
-        description="Cấu hình layout, filters, search và pagination cho trang danh sách bài viết."
-        iconBgClass="bg-blue-500/10"
-        iconTextClass="text-blue-600 dark:text-blue-400"
-        buttonClass="bg-blue-600 hover:bg-blue-500"
-        onSave={handleSave}
-        hasChanges={hasChanges}
-        isSaving={isSaving}
-      />
-
-      {/* Full-width Preview - Realtime khi config thay đổi */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <CardTitle className="text-base flex items-center gap-2">Preview: Danh sách bài viết</CardTitle>
-            <div className="flex items-center gap-2">
-              <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
-                {devices.map((device) => (
-                  <button
-                    key={device.id}
-                    onClick={() =>{  setPreviewDevice(device.id); }}
-                    title={device.label}
-                    className={`p-1.5 rounded-md transition-all ${
-                      previewDevice === device.id ? 'bg-white dark:bg-slate-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'
-                    }`}
-                  >
-                    <device.icon size={16} />
-                  </button>
-                ))}
-              </div>
-            </div>
+    <div className="h-[calc(100vh-64px)] flex flex-col">
+      {/* Header */}
+      <header className="flex-shrink-0 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-500/10 rounded-lg">
+            <LayoutTemplate className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
-            <BrowserFrame>
-              <PostsListPreview
-                layoutStyle={config.layoutStyle}
-                brandColor={brandColor}
-                device={previewDevice}
-              />
-            </BrowserFrame>
+          <div>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Trải nghiệm: Danh sách bài viết</h1>
+            <p className="text-xs text-slate-500">/posts • Real-time preview</p>
           </div>
-          <div className="mt-3 text-xs text-slate-500 text-center">
-            Trang /posts • Style: <strong>{LAYOUT_STYLES.find((style) => style.id === config.layoutStyle)?.label}</strong>
-            {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Settings Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="space-y-4 lg:col-span-2">
-          <Card className="p-4">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex-shrink-0">
-                <h3 className="font-medium text-sm text-slate-900 dark:text-slate-100">Trang danh sách</h3>
-                <p className="text-xs text-slate-500">/posts</p>
-              </div>
-              <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
-                {LAYOUT_STYLES.map((style) => (
-                  <button
-                    key={style.id}
-                    onClick={() =>{  setConfig(prev => ({ ...prev, layoutStyle: style.id })); }}
-                    title={style.description}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                      config.layoutStyle === style.id 
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                    }`}
-                  >
-                    {style.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className="text-xs text-slate-500 mt-2">
-              {LAYOUT_STYLES.find((style) => style.id === config.layoutStyle)?.description}
-            </p>
-          </Card>
-
-          <ExperienceSummaryGrid items={summaryItems} />
         </div>
-
-        <div className="space-y-4">
-          <ExampleLinks
-            links={[
-              { label: 'Trang danh sách bài viết', url: '/posts', description: 'Xem tất cả bài viết' },
-              ...(exampleCategorySlug ? [{ label: 'Lọc theo category', url: `/posts?catpost=${exampleCategorySlug}`, description: 'Ví dụ filter' }] : []),
-            ]}
-            color="#3b82f6"
+        <Button 
+          onClick={handleSave} 
+          disabled={!hasChanges || isSaving}
+          className="bg-blue-600 hover:bg-blue-500 gap-2"
+        >
+          {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {hasChanges ? 'Lưu thay đổi' : 'Đã lưu'}
+        </Button>
+      </header>
+      
+      {/* Preview Area */}
+      <main className="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-slate-950">
+        <div className="flex justify-center mb-4">
+          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} />
+        </div>
+        <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
+          <BrowserFrame url="yoursite.com/posts" maxHeight="calc(100vh - 340px)">
+            <PostsListPreview
+              layoutStyle={config.layoutStyle}
+              brandColor={brandColor}
+              device={previewDevice}
+              showSearch={config.showSearch}
+              showCategories={config.showCategories}
+              showPagination={config.showPagination}
+            />
+          </BrowserFrame>
+        </div>
+        <div className="mt-3 text-xs text-slate-500 text-center">
+          Style: <strong>{LAYOUT_STYLES.find(s => s.id === config.layoutStyle)?.label}</strong>
+          {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
+        </div>
+      </main>
+      
+      {/* Bottom Panel */}
+      <ConfigPanel
+        isExpanded={isPanelExpanded}
+        onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
+        expandedHeight="280px"
+        leftContent={
+          <LayoutTabs
+            layouts={LAYOUT_STYLES}
+            activeLayout={config.layoutStyle}
+            onChange={(layout) => setConfig(prev => ({ ...prev, layoutStyle: layout }))}
+            accentColor="#3b82f6"
           />
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Module liên quan</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <ExperienceModuleLink
-                enabled={postsModule?.enabled ?? false}
-                href="/system/modules/posts"
-                icon={FileText}
-                title="Bài viết"
-                colorScheme="cyan"
-              />
-            </CardContent>
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ControlCard title="Hiển thị">
+            <ToggleRow label="Tìm kiếm" checked={config.showSearch} onChange={(v) => setConfig(prev => ({ ...prev, showSearch: v }))} accentColor="#3b82f6" />
+            <ToggleRow label="Danh mục" checked={config.showCategories} onChange={(v) => setConfig(prev => ({ ...prev, showCategories: v }))} accentColor="#3b82f6" />
+            <ToggleRow label="Phân trang" checked={config.showPagination} onChange={(v) => setConfig(prev => ({ ...prev, showPagination: v }))} accentColor="#3b82f6" />
+          </ControlCard>
+          
+          <ControlCard title="Module liên quan">
+            <ExperienceModuleLink
+              enabled={postsModule?.enabled ?? false}
+              href="/system/modules/posts"
+              icon={FileText}
+              title="Bài viết"
+              colorScheme="cyan"
+            />
+          </ControlCard>
+          
+          <ControlCard title="Link xem thử">
+            <ExampleLinks
+              links={[
+                { label: 'Trang danh sách', url: '/posts', description: 'Xem tất cả bài viết' },
+                ...(exampleCategorySlug ? [{ label: 'Lọc theo category', url: `/posts?catpost=${exampleCategorySlug}`, description: 'Ví dụ filter' }] : []),
+              ]}
+              color="#3b82f6"
+              compact
+            />
+          </ControlCard>
+          
+          <Card className="p-3">
+            <ExperienceHintCard hints={HINTS} />
           </Card>
-
-          <ExperienceHintCard hints={HINTS} />
         </div>
-      </div>
-    </div>
-  );
-}
-
-function BrowserFrame({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="border rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-lg">
-      <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 flex items-center gap-2 border-b">
-        <div className="flex gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-red-400" />
-          <div className="w-3 h-3 rounded-full bg-yellow-400" />
-          <div className="w-3 h-3 rounded-full bg-green-400" />
-        </div>
-        <div className="flex-1 ml-4">
-          <div className="bg-white dark:bg-slate-700 rounded-md px-3 py-1 text-xs text-slate-400 max-w-xs">yoursite.com/posts</div>
-        </div>
-      </div>
-      <div className="max-h-[520px] overflow-y-auto">
-        {children}
-      </div>
+      </ConfigPanel>
     </div>
   );
 }

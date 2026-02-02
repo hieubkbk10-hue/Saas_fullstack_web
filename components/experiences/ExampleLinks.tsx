@@ -13,9 +13,30 @@ type ExampleLinksProps = {
   title?: string;
   links: ExampleLink[];
   color?: string;
+  compact?: boolean;
 };
 
-export function ExampleLinks({ title = 'Xem ví dụ thực tế', links, color = '#0ea5e9' }: ExampleLinksProps) {
+export function ExampleLinks({ title = 'Xem ví dụ thực tế', links, color = '#0ea5e9', compact = false }: ExampleLinksProps) {
+  if (compact) {
+    return (
+      <div className="space-y-1">
+        {links.map((link) => (
+          <a
+            key={link.url}
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-sm hover:underline"
+            style={{ color }}
+          >
+            <ExternalLink size={12} />
+            {link.label}
+          </a>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <Card className="p-4">
       <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm mb-3">
