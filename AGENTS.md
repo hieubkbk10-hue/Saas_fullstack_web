@@ -4,6 +4,13 @@ Tuân thủ nghiêm ngặc KISS, YAGNI, DRY
 Tuân thủ Rails Convention Over Configuration
 Mọi thay đổi code khi hoàn thành đều phải commit (nhưng không được push nha). Trước khi commit nhớ chạy bunx oxlint --type-aware --type-check --fix để xem còn lỗi gì k và fix đến khi hết . Dĩ nhiên khi code k có gì thay đổi thì k được chạy cái lệnh trên nha
 
+# Prompt Best Practices (để tăng độ chính xác)
+* Nêu rõ yêu cầu + phạm vi; không mở rộng tính năng ngoài yêu cầu.
+* Tách bạch: yêu cầu, ngữ cảnh, đầu vào, định dạng đầu ra.
+* Ép ngắn gọn + cấu trúc rõ (ưu tiên bullet ngắn).
+* Nếu mơ hồ: hỏi 1–3 câu làm rõ; không tự bịa số liệu/link.
+* Khi cần dữ liệu cụ thể: ưu tiên dùng tool thay vì đoán.
+
 # 7 Nguyên tắc DB Bandwidth Optimization:
 * Filter ở DB, không ở JS - Không .collect()/.findAll() không filter; không fetch ALL rồi filter JS; không fetch ALL để count
 * Không N+1 - Không gọi DB trong loop; batch load bằng Promise.all(); dùng Map thay .find() (O(1) vs O(n²))
