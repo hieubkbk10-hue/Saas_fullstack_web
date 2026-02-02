@@ -24,12 +24,24 @@ type ServiceDetailExperienceConfig = {
   layoutStyle: DetailLayoutStyle;
   showRelated: boolean;
   showShare: boolean;
+  // Classic config
   quickContactEnabled: boolean;
   quickContactTitle: string;
   quickContactDescription: string;
   quickContactShowPrice: boolean;
   quickContactButtonText: string;
   quickContactButtonLink: string;
+  // Modern config
+  modernHeroCtaText: string;
+  modernHeroCtaLink: string;
+  modernCtaSectionTitle: string;
+  modernCtaSectionDescription: string;
+  modernCtaButtonText: string;
+  modernCtaButtonLink: string;
+  // Minimal config
+  minimalCtaText: string;
+  minimalCtaButtonText: string;
+  minimalCtaButtonLink: string;
 };
 
 const EXPERIENCE_KEY = 'services_detail_ui';
@@ -44,12 +56,24 @@ const DEFAULT_CONFIG: ServiceDetailExperienceConfig = {
   layoutStyle: 'classic',
   showRelated: true,
   showShare: true,
+  // Classic
   quickContactEnabled: true,
   quickContactTitle: 'Liên hệ nhanh',
   quickContactDescription: 'Tư vấn miễn phí, báo giá trong 24h.',
   quickContactShowPrice: true,
   quickContactButtonText: 'Liên hệ tư vấn',
   quickContactButtonLink: '',
+  // Modern
+  modernHeroCtaText: 'Liên hệ tư vấn',
+  modernHeroCtaLink: '',
+  modernCtaSectionTitle: 'Sẵn sàng bắt đầu?',
+  modernCtaSectionDescription: 'Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết cho dự án của bạn.',
+  modernCtaButtonText: 'Liên hệ tư vấn',
+  modernCtaButtonLink: '',
+  // Minimal
+  minimalCtaText: 'Quan tâm đến dịch vụ này?',
+  minimalCtaButtonText: 'Liên hệ tư vấn',
+  minimalCtaButtonLink: '',
 };
 
 const HINTS = [
@@ -69,12 +93,24 @@ export default function ServiceDetailExperiencePage() {
       layoutStyle: raw?.layoutStyle ?? 'classic',
       showRelated: raw?.showRelated ?? true,
       showShare: raw?.showShare ?? true,
+      // Classic
       quickContactEnabled: raw?.quickContactEnabled ?? true,
       quickContactTitle: raw?.quickContactTitle ?? 'Liên hệ nhanh',
       quickContactDescription: raw?.quickContactDescription ?? 'Tư vấn miễn phí, báo giá trong 24h.',
       quickContactShowPrice: raw?.quickContactShowPrice ?? true,
       quickContactButtonText: raw?.quickContactButtonText ?? 'Liên hệ tư vấn',
       quickContactButtonLink: raw?.quickContactButtonLink ?? '',
+      // Modern
+      modernHeroCtaText: raw?.modernHeroCtaText ?? 'Liên hệ tư vấn',
+      modernHeroCtaLink: raw?.modernHeroCtaLink ?? '',
+      modernCtaSectionTitle: raw?.modernCtaSectionTitle ?? 'Sẵn sàng bắt đầu?',
+      modernCtaSectionDescription: raw?.modernCtaSectionDescription ?? 'Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết cho dự án của bạn.',
+      modernCtaButtonText: raw?.modernCtaButtonText ?? 'Liên hệ tư vấn',
+      modernCtaButtonLink: raw?.modernCtaButtonLink ?? '',
+      // Minimal
+      minimalCtaText: raw?.minimalCtaText ?? 'Quan tâm đến dịch vụ này?',
+      minimalCtaButtonText: raw?.minimalCtaButtonText ?? 'Liên hệ tư vấn',
+      minimalCtaButtonLink: raw?.minimalCtaButtonLink ?? '',
     };
   }, [experienceSetting?.value]);
 
@@ -123,6 +159,15 @@ export default function ServiceDetailExperiencePage() {
           quickContactShowPrice={config.quickContactShowPrice}
           quickContactButtonText={config.quickContactButtonText}
           quickContactButtonLink={config.quickContactButtonLink}
+          modernHeroCtaText={config.modernHeroCtaText}
+          modernHeroCtaLink={config.modernHeroCtaLink}
+          modernCtaSectionTitle={config.modernCtaSectionTitle}
+          modernCtaSectionDescription={config.modernCtaSectionDescription}
+          modernCtaButtonText={config.modernCtaButtonText}
+          modernCtaButtonLink={config.modernCtaButtonLink}
+          minimalCtaText={config.minimalCtaText}
+          minimalCtaButtonText={config.minimalCtaButtonText}
+          minimalCtaButtonLink={config.minimalCtaButtonLink}
         />
       </ExperiencePreview>
 
@@ -199,6 +244,111 @@ export default function ServiceDetailExperiencePage() {
                 onChange={() => setConfig(prev => ({ ...prev, showShare: !prev.showShare }))}
                 color="bg-violet-500"
               />
+
+              <ExperienceBlockToggle
+                label="Dịch vụ liên quan"
+                description="Hiển thị related services"
+                enabled={config.showRelated}
+                onChange={() => setConfig(prev => ({ ...prev, showRelated: !prev.showRelated }))}
+                color="bg-violet-500"
+              />
+            </SettingsCard>
+          )}
+
+          {config.layoutStyle === 'modern' && (
+            <SettingsCard title="Cấu hình thêm cho Modern">
+              <SettingInput
+                type="text"
+                label="Text nút CTA Hero"
+                value={config.modernHeroCtaText}
+                onChange={(value) => setConfig(prev => ({ ...prev, modernHeroCtaText: value }))}
+                focusColor="focus:border-violet-500"
+              />
+
+              <div className="space-y-1">
+                <SettingInput
+                  type="text"
+                  label="Link nút CTA Hero"
+                  value={config.modernHeroCtaLink}
+                  onChange={(value) => setConfig(prev => ({ ...prev, modernHeroCtaLink: value }))}
+                  focusColor="focus:border-violet-500"
+                />
+                <p className="text-xs text-slate-500">VD: https://zalo.me/ hoặc https://m.me/yourpage</p>
+              </div>
+
+              <SettingInput
+                type="text"
+                label="Tiêu đề CTA Section"
+                value={config.modernCtaSectionTitle}
+                onChange={(value) => setConfig(prev => ({ ...prev, modernCtaSectionTitle: value }))}
+                focusColor="focus:border-violet-500"
+              />
+
+              <SettingInput
+                type="text"
+                label="Mô tả CTA Section"
+                value={config.modernCtaSectionDescription}
+                onChange={(value) => setConfig(prev => ({ ...prev, modernCtaSectionDescription: value }))}
+                focusColor="focus:border-violet-500"
+              />
+
+              <SettingInput
+                type="text"
+                label="Text nút CTA Section"
+                value={config.modernCtaButtonText}
+                onChange={(value) => setConfig(prev => ({ ...prev, modernCtaButtonText: value }))}
+                focusColor="focus:border-violet-500"
+              />
+
+              <div className="space-y-1">
+                <SettingInput
+                  type="text"
+                  label="Link nút CTA Section"
+                  value={config.modernCtaButtonLink}
+                  onChange={(value) => setConfig(prev => ({ ...prev, modernCtaButtonLink: value }))}
+                  focusColor="focus:border-violet-500"
+                />
+                <p className="text-xs text-slate-500">VD: https://zalo.me/ hoặc https://m.me/yourpage</p>
+              </div>
+
+              <ExperienceBlockToggle
+                label="Dịch vụ liên quan"
+                description="Hiển thị related services"
+                enabled={config.showRelated}
+                onChange={() => setConfig(prev => ({ ...prev, showRelated: !prev.showRelated }))}
+                color="bg-violet-500"
+              />
+            </SettingsCard>
+          )}
+
+          {config.layoutStyle === 'minimal' && (
+            <SettingsCard title="Cấu hình thêm cho Minimal">
+              <SettingInput
+                type="text"
+                label="Text CTA Section"
+                value={config.minimalCtaText}
+                onChange={(value) => setConfig(prev => ({ ...prev, minimalCtaText: value }))}
+                focusColor="focus:border-violet-500"
+              />
+
+              <SettingInput
+                type="text"
+                label="Text nút CTA"
+                value={config.minimalCtaButtonText}
+                onChange={(value) => setConfig(prev => ({ ...prev, minimalCtaButtonText: value }))}
+                focusColor="focus:border-violet-500"
+              />
+
+              <div className="space-y-1">
+                <SettingInput
+                  type="text"
+                  label="Link nút CTA"
+                  value={config.minimalCtaButtonLink}
+                  onChange={(value) => setConfig(prev => ({ ...prev, minimalCtaButtonLink: value }))}
+                  focusColor="focus:border-violet-500"
+                />
+                <p className="text-xs text-slate-500">VD: https://zalo.me/ hoặc https://m.me/yourpage</p>
+              </div>
 
               <ExperienceBlockToggle
                 label="Dịch vụ liên quan"

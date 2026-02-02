@@ -31,6 +31,15 @@ type ServiceDetailPreviewProps = {
   quickContactShowPrice?: boolean;
   quickContactButtonText?: string;
   quickContactButtonLink?: string;
+  modernHeroCtaText?: string;
+  modernHeroCtaLink?: string;
+  modernCtaSectionTitle?: string;
+  modernCtaSectionDescription?: string;
+  modernCtaButtonText?: string;
+  modernCtaButtonLink?: string;
+  minimalCtaText?: string;
+  minimalCtaButtonText?: string;
+  minimalCtaButtonLink?: string;
   device?: DeviceType;
   brandColor?: string;
 };
@@ -786,7 +795,17 @@ function ClassicServicePreview({
   );
 }
 
-function ModernServicePreview({ showRelated, brandColor = '#3b82f6', device = 'desktop' }: ServiceDetailPreviewProps) {
+function ModernServicePreview({
+  showRelated,
+  brandColor = '#3b82f6',
+  device = 'desktop',
+  modernHeroCtaText,
+  modernHeroCtaLink,
+  modernCtaSectionTitle,
+  modernCtaSectionDescription,
+  modernCtaButtonText,
+  modernCtaButtonLink,
+}: ServiceDetailPreviewProps) {
   const isTablet = device === 'tablet';
   const isMobile = device === 'mobile';
   const relatedServices = showRelated ? MOCK_RELATED_SERVICES : [];
@@ -794,6 +813,15 @@ function ModernServicePreview({ showRelated, brandColor = '#3b82f6', device = 'd
   const showDuration = true;
   const showFeatured = true;
   const headingSize = isMobile ? 'text-3xl' : isTablet ? 'text-5xl' : 'text-6xl';
+  
+  const modernConfig = {
+    heroCtaText: modernHeroCtaText ?? 'Liên hệ tư vấn',
+    heroCtaLink: modernHeroCtaLink ?? '',
+    ctaSectionTitle: modernCtaSectionTitle ?? 'Sẵn sàng bắt đầu?',
+    ctaSectionDescription: modernCtaSectionDescription ?? 'Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết cho dự án của bạn.',
+    ctaButtonText: modernCtaButtonText ?? 'Liên hệ tư vấn',
+    ctaButtonLink: modernCtaButtonLink ?? '',
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -837,7 +865,7 @@ function ModernServicePreview({ showRelated, brandColor = '#3b82f6', device = 'd
                 </div>
               )}
               <div className="min-w-[220px]">
-                <QuickContactButtonsPreview brandColor={brandColor} label="Liên hệ tư vấn" />
+                <QuickContactButtonsPreview brandColor={brandColor} label={modernConfig.heroCtaText} />
               </div>
             </div>
 
@@ -880,12 +908,12 @@ function ModernServicePreview({ showRelated, brandColor = '#3b82f6', device = 'd
         </article>
 
         <div className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 text-center">
-          <h3 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-slate-900`}>Sẵn sàng bắt đầu?</h3>
+          <h3 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-slate-900`}>{modernConfig.ctaSectionTitle}</h3>
           <p className="text-slate-600 mt-2 mb-5 max-w-md mx-auto">
-            Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết cho dự án của bạn.
+            {modernConfig.ctaSectionDescription}
           </p>
           <div className="flex justify-center">
-            <QuickContactButtonsPreview brandColor={brandColor} label="Liên hệ tư vấn" />
+            <QuickContactButtonsPreview brandColor={brandColor} label={modernConfig.ctaButtonText} />
           </div>
         </div>
       </section>
@@ -936,13 +964,26 @@ function ModernServicePreview({ showRelated, brandColor = '#3b82f6', device = 'd
   );
 }
 
-function MinimalServicePreview({ showRelated, brandColor = '#3b82f6', device = 'desktop' }: ServiceDetailPreviewProps) {
+function MinimalServicePreview({
+  showRelated,
+  brandColor = '#3b82f6',
+  device = 'desktop',
+  minimalCtaText,
+  minimalCtaButtonText,
+  minimalCtaButtonLink,
+}: ServiceDetailPreviewProps) {
   const isTablet = device === 'tablet';
   const isMobile = device === 'mobile';
   const relatedServices = showRelated ? MOCK_RELATED_SERVICES : [];
   const showPrice = true;
   const showDuration = true;
   const showFeatured = true;
+  
+  const minimalConfig = {
+    ctaText: minimalCtaText ?? 'Quan tâm đến dịch vụ này?',
+    ctaButtonText: minimalCtaButtonText ?? 'Liên hệ tư vấn',
+    ctaButtonLink: minimalCtaButtonLink ?? '',
+  };
   const headingSize = isMobile ? 'text-3xl' : isTablet ? 'text-4xl' : 'text-5xl';
 
   return (
@@ -1028,9 +1069,9 @@ function MinimalServicePreview({ showRelated, brandColor = '#3b82f6', device = '
         </div>
 
         <div className="mt-14 rounded-2xl border border-slate-200 bg-white p-6 text-center">
-          <p className="text-slate-600 mb-5">Quan tâm đến dịch vụ này?</p>
+          <p className="text-slate-600 mb-5">{minimalConfig.ctaText}</p>
           <div className="max-w-xs mx-auto">
-            <QuickContactButtonsPreview brandColor={brandColor} label="Liên hệ tư vấn" />
+            <QuickContactButtonsPreview brandColor={brandColor} label={minimalConfig.ctaButtonText} />
           </div>
         </div>
 
@@ -1076,6 +1117,15 @@ export function ServiceDetailPreview({
   quickContactShowPrice,
   quickContactButtonText,
   quickContactButtonLink,
+  modernHeroCtaText,
+  modernHeroCtaLink,
+  modernCtaSectionTitle,
+  modernCtaSectionDescription,
+  modernCtaButtonText,
+  modernCtaButtonLink,
+  minimalCtaText,
+  minimalCtaButtonText,
+  minimalCtaButtonLink,
   brandColor = '#3b82f6',
   device = 'desktop',
 }: ServiceDetailPreviewProps) {
@@ -1091,6 +1141,15 @@ export function ServiceDetailPreview({
     quickContactShowPrice,
     quickContactButtonText,
     quickContactButtonLink,
+    modernHeroCtaText,
+    modernHeroCtaLink,
+    modernCtaSectionTitle,
+    modernCtaSectionDescription,
+    modernCtaButtonText,
+    modernCtaButtonLink,
+    minimalCtaText,
+    minimalCtaButtonText,
+    minimalCtaButtonLink,
   };
 
   return (

@@ -40,6 +40,21 @@ type QuickContactConfig = {
   buttonLink: string;
 };
 
+type ModernConfig = {
+  heroCtaText: string;
+  heroCtaLink: string;
+  ctaSectionTitle: string;
+  ctaSectionDescription: string;
+  ctaButtonText: string;
+  ctaButtonLink: string;
+};
+
+type MinimalConfig = {
+  ctaText: string;
+  ctaButtonText: string;
+  ctaButtonLink: string;
+};
+
 export interface StyleProps {
   service: ServiceDetailData;
   brandColor: string;
@@ -47,6 +62,8 @@ export interface StyleProps {
   enabledFields: Set<string>;
   showShare?: boolean;
   quickContact?: QuickContactConfig;
+  modernConfig?: ModernConfig;
+  minimalConfig?: MinimalConfig;
 }
 
 function formatPrice(price?: number): string {
@@ -288,10 +305,20 @@ export function ClassicStyle({ service, brandColor, relatedServices, enabledFiel
 }
 
 // STYLE 2: MODERN - Landing page style with full-width hero and floating CTA
-export function ModernStyle({ service, brandColor, relatedServices, enabledFields }: StyleProps) {
+export function ModernStyle({ service, brandColor, relatedServices, enabledFields, modernConfig }: StyleProps) {
   const showPrice = enabledFields.has('price');
   const showDuration = enabledFields.has('duration');
   const showFeatured = enabledFields.has('featured');
+  
+  const config: ModernConfig = {
+    heroCtaText: 'Liên hệ tư vấn',
+    heroCtaLink: '',
+    ctaSectionTitle: 'Sẵn sàng bắt đầu?',
+    ctaSectionDescription: 'Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết cho dự án của bạn.',
+    ctaButtonText: 'Liên hệ tư vấn',
+    ctaButtonLink: '',
+    ...modernConfig,
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -335,6 +362,8 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
                 <QuickContactButtons 
                   serviceName={service.title}
                   brandColor={brandColor}
+                  buttonLabel={config.heroCtaText}
+                  buttonHref={config.heroCtaLink}
                 />
               </div>
             </div>
@@ -375,14 +404,16 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
         </article>
 
         <div className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 text-center">
-          <h3 className="text-xl md:text-2xl font-bold text-slate-900">Sẵn sàng bắt đầu?</h3>
+          <h3 className="text-xl md:text-2xl font-bold text-slate-900">{config.ctaSectionTitle}</h3>
           <p className="text-slate-600 mt-2 mb-5 max-w-md mx-auto">
-            Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết cho dự án của bạn.
+            {config.ctaSectionDescription}
           </p>
           <div className="flex justify-center">
             <QuickContactButtons 
               serviceName={service.title}
               brandColor={brandColor}
+              buttonLabel={config.ctaButtonText}
+              buttonHref={config.ctaButtonLink}
             />
           </div>
         </div>
@@ -444,10 +475,17 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
 }
 
 // STYLE 3: MINIMAL - Clean, distraction-free reading experience
-export function MinimalStyle({ service, brandColor, relatedServices, enabledFields }: StyleProps) {
+export function MinimalStyle({ service, brandColor, relatedServices, enabledFields, minimalConfig }: StyleProps) {
   const showPrice = enabledFields.has('price');
   const showDuration = enabledFields.has('duration');
   const showFeatured = enabledFields.has('featured');
+
+  const config: MinimalConfig = {
+    ctaText: 'Quan tâm đến dịch vụ này?',
+    ctaButtonText: 'Liên hệ tư vấn',
+    ctaButtonLink: '',
+    ...minimalConfig,
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -537,12 +575,14 @@ export function MinimalStyle({ service, brandColor, relatedServices, enabledFiel
         </div>
 
         <div className="mt-14 rounded-2xl border border-slate-200 bg-white p-6 text-center">
-          <p className="text-slate-600 mb-5">Quan tâm đến dịch vụ này?</p>
+          <p className="text-slate-600 mb-5">{config.ctaText}</p>
           
           <div className="max-w-xs mx-auto">
             <QuickContactButtons 
               serviceName={service.title}
               brandColor={brandColor}
+              buttonLabel={config.ctaButtonText}
+              buttonHref={config.ctaButtonLink}
             />
           </div>
         </div>

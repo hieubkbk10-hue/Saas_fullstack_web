@@ -14,12 +14,24 @@ type ServiceDetailExperienceConfig = {
   layoutStyle: ServiceDetailStyle;
   showRelated: boolean;
   showShare: boolean;
+  // Classic
   quickContactEnabled: boolean;
   quickContactTitle: string;
   quickContactDescription: string;
   quickContactShowPrice: boolean;
   quickContactButtonText: string;
   quickContactButtonLink: string;
+  // Modern
+  modernHeroCtaText: string;
+  modernHeroCtaLink: string;
+  modernCtaSectionTitle: string;
+  modernCtaSectionDescription: string;
+  modernCtaButtonText: string;
+  modernCtaButtonLink: string;
+  // Minimal
+  minimalCtaText: string;
+  minimalCtaButtonText: string;
+  minimalCtaButtonLink: string;
 };
 
 function useServiceDetailExperienceConfig(): ServiceDetailExperienceConfig {
@@ -30,12 +42,24 @@ function useServiceDetailExperienceConfig(): ServiceDetailExperienceConfig {
       layoutStyle: raw?.layoutStyle ?? 'classic',
       showRelated: raw?.showRelated ?? true,
       showShare: raw?.showShare ?? true,
+      // Classic
       quickContactEnabled: raw?.quickContactEnabled ?? true,
       quickContactTitle: raw?.quickContactTitle ?? 'Liên hệ nhanh',
       quickContactDescription: raw?.quickContactDescription ?? 'Tư vấn miễn phí, báo giá trong 24h.',
       quickContactShowPrice: raw?.quickContactShowPrice ?? true,
       quickContactButtonText: raw?.quickContactButtonText ?? 'Liên hệ tư vấn',
       quickContactButtonLink: raw?.quickContactButtonLink ?? '',
+      // Modern
+      modernHeroCtaText: raw?.modernHeroCtaText ?? 'Liên hệ tư vấn',
+      modernHeroCtaLink: raw?.modernHeroCtaLink ?? '',
+      modernCtaSectionTitle: raw?.modernCtaSectionTitle ?? 'Sẵn sàng bắt đầu?',
+      modernCtaSectionDescription: raw?.modernCtaSectionDescription ?? 'Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết cho dự án của bạn.',
+      modernCtaButtonText: raw?.modernCtaButtonText ?? 'Liên hệ tư vấn',
+      modernCtaButtonLink: raw?.modernCtaButtonLink ?? '',
+      // Minimal
+      minimalCtaText: raw?.minimalCtaText ?? 'Quan tâm đến dịch vụ này?',
+      minimalCtaButtonText: raw?.minimalCtaButtonText ?? 'Liên hệ tư vấn',
+      minimalCtaButtonLink: raw?.minimalCtaButtonLink ?? '',
     };
   }, [setting?.value]);
 }
@@ -123,11 +147,26 @@ export default function ServiceDetailPage({ params }: PageProps) {
     buttonLink: experienceConfig.quickContactButtonLink,
   };
 
+  const modernConfig = {
+    heroCtaText: experienceConfig.modernHeroCtaText,
+    heroCtaLink: experienceConfig.modernHeroCtaLink,
+    ctaSectionTitle: experienceConfig.modernCtaSectionTitle,
+    ctaSectionDescription: experienceConfig.modernCtaSectionDescription,
+    ctaButtonText: experienceConfig.modernCtaButtonText,
+    ctaButtonLink: experienceConfig.modernCtaButtonLink,
+  };
+
+  const minimalConfig = {
+    ctaText: experienceConfig.minimalCtaText,
+    ctaButtonText: experienceConfig.minimalCtaButtonText,
+    ctaButtonLink: experienceConfig.minimalCtaButtonLink,
+  };
+
   return (
     <>
       {experienceConfig.layoutStyle === 'classic' && <ClassicStyle {...styleProps} quickContact={quickContactConfig} />}
-      {experienceConfig.layoutStyle === 'modern' && <ModernStyle {...styleProps} />}
-      {experienceConfig.layoutStyle === 'minimal' && <MinimalStyle {...styleProps} />}
+      {experienceConfig.layoutStyle === 'modern' && <ModernStyle {...styleProps} modernConfig={modernConfig} />}
+      {experienceConfig.layoutStyle === 'minimal' && <MinimalStyle {...styleProps} minimalConfig={minimalConfig} />}
     </>
   );
 }
