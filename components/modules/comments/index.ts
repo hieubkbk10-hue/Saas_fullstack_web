@@ -1,0 +1,1 @@
+ export { CommentsDataTab } from './CommentsDataTab';
