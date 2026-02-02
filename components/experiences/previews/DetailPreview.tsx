@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ArrowRight, Calendar, Check, ChevronRight, Clock, Copy, Eye, FileText, Home, Image as ImageIcon, Link as LinkIcon, Phone, Share2, Star, User } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, Check, ChevronRight, Clock, Copy, Eye, FileText, Home, Image as ImageIcon, Link as LinkIcon, MessageSquare, MoreHorizontal, Phone, Reply, Share2, Star, ThumbsUp, User } from 'lucide-react';
 import Image from 'next/image';
 
 type DetailLayoutStyle = 'classic' | 'modern' | 'minimal';
@@ -65,9 +65,54 @@ const MOCK_RELATED = [
   { _id: '3', slug: 'post-3', title: 'Tối ưu performance với Image Optimization', thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=200', publishedAt: new Date('2026-01-05').getTime() },
 ];
 
-const MOCK_COMMENTS = [
-  { _id: 'c1', authorName: 'Thuỳ Anh', content: 'Bài viết rất dễ hiểu, cảm ơn admin!', createdAt: new Date('2026-01-16').getTime() },
-  { _id: 'c2', authorName: 'Minh Khoa', content: 'Mong thêm ví dụ thực tế hơn nữa.', createdAt: new Date('2026-01-17').getTime() },
+type MockComment = {
+  _id: string;
+  authorName: string;
+  avatarUrl?: string;
+  content: string;
+  createdAt: number;
+  timestamp: string;
+  likes: number;
+  isLiked?: boolean;
+  replies?: MockComment[];
+};
+
+const MOCK_COMMENTS: MockComment[] = [
+  { 
+    _id: 'c1', 
+    authorName: 'Nguyễn Văn A', 
+    content: 'Bài viết rất hay và hữu ích! Cảm ơn admin đã chia sẻ thông tin chi tiết.', 
+    createdAt: new Date('2026-01-16').getTime(),
+    timestamp: '2 giờ trước',
+    likes: 12,
+    isLiked: true,
+  },
+  { 
+    _id: 'c2', 
+    authorName: 'Trần Thị B', 
+    content: 'Mình đã áp dụng và thấy hiệu quả ngay. Tuyệt vời! Hóng thêm bài viết mới.', 
+    createdAt: new Date('2026-01-17').getTime(),
+    timestamp: '5 giờ trước',
+    likes: 5,
+    replies: [
+      {
+        _id: 'c2-r1',
+        authorName: 'Support Team',
+        content: 'Cảm ơn bạn đã ủng hộ! Chúng tôi sẽ tiếp tục chia sẻ thêm nhiều nội dung hữu ích.',
+        createdAt: new Date('2026-01-17').getTime(),
+        timestamp: '1 giờ trước',
+        likes: 2,
+      }
+    ]
+  },
+  {
+    _id: 'c3',
+    authorName: 'Hoàng Minh',
+    content: 'Có thể chia sẻ thêm về phần nâng cao không ạ?',
+    createdAt: new Date('2026-01-18').getTime(),
+    timestamp: '1 ngày trước',
+    likes: 0,
+  }
 ];
 
 const MOCK_SERVICE = {
@@ -154,44 +199,116 @@ function CommentsPreview({
   if (!showComments) {return null;}
 
   return (
-    <section className="mt-10 rounded-xl border border-border/50 bg-background/70 p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold">Bình luận</h3>
-        <span className="text-xs text-muted-foreground">{MOCK_COMMENTS.length} bình luận</span>
+    <section className="mt-10 space-y-8">
+      {/* Header */}
+      <div className="flex items-center gap-2 pb-4 border-b">
+        <MessageSquare className="h-5 w-5" style={{ color: brandColor }} />
+        <h3 className="text-xl font-semibold tracking-tight">
+          Bình luận <span className="text-muted-foreground text-base font-normal">({MOCK_COMMENTS.length})</span>
+        </h3>
       </div>
 
-      <div className="mt-4 space-y-3">
-        {MOCK_COMMENTS.map((comment) => (
-          <div key={comment._id} className="rounded-lg border border-border/40 bg-background p-4 shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-foreground">{comment.authorName}</span>
-              <span className="text-[11px] text-muted-foreground">{new Date(comment.createdAt).toLocaleDateString('vi-VN')}</span>
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground">{comment.content}</p>
-            {(showLikes || showReplies) && (
-              <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
-                {showLikes && (
-                  <button type="button" className="inline-flex items-center gap-1.5 hover:text-foreground">
-                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: brandColor }} />
-                    Thích
-                  </button>
-                )}
-                {showReplies && (
-                  <button type="button" className="inline-flex items-center gap-1.5 hover:text-foreground">
-                    Trả lời
-                  </button>
-                )}
-              </div>
-            )}
+      {/* Comment Form */}
+      <div className="bg-muted/30 rounded-xl p-4 sm:p-6 border border-border/50 shadow-sm">
+        <h4 className="text-sm font-medium mb-4">Để lại bình luận của bạn</h4>
+        <div className="flex gap-4">
+          <div className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-medium text-white hidden sm:flex" style={{ backgroundColor: brandColor }}>
+            ME
           </div>
+          <div className="flex-1 space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input
+                type="text"
+                placeholder="Họ và tên"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                readOnly
+              />
+              <input
+                type="email"
+                placeholder="Email (không bắt buộc)"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                readOnly
+              />
+            </div>
+            <textarea
+              className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
+              placeholder="Chia sẻ ý kiến của bạn..."
+              readOnly
+            />
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 text-white w-full sm:w-auto"
+                style={{ backgroundColor: brandColor }}
+              >
+                Gửi bình luận
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Comments List */}
+      <div className="space-y-2">
+        {MOCK_COMMENTS.map((comment) => (
+          <CommentItem key={comment._id} comment={comment} showLikes={showLikes} showReplies={showReplies} brandColor={brandColor} />
         ))}
       </div>
-
-      <div className="mt-5 flex items-center justify-between rounded-lg border border-dashed border-border/60 bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-        <span>Form bình luận sẽ hiển thị ở frontend.</span>
-        <span className="font-medium" style={{ color: brandColor }}>Đang bật</span>
-      </div>
     </section>
+  );
+}
+
+function CommentItem({ comment, isReply = false, showLikes, showReplies, brandColor }: { comment: MockComment; isReply?: boolean; showLikes?: boolean; showReplies?: boolean; brandColor: string }) {
+  const initials = comment.authorName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  
+  return (
+    <div className={`flex gap-4 ${isReply ? 'mt-4 ml-8 pl-4 border-l-2 border-muted' : 'mt-6'}`}>
+      <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-background shadow-sm">
+        <div className="flex h-full w-full items-center justify-center rounded-full bg-muted text-muted-foreground text-sm font-medium">
+          {initials}
+        </div>
+      </div>
+      <div className="flex-1 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-foreground">{comment.authorName}</span>
+            <span className="text-xs text-muted-foreground">{comment.timestamp}</span>
+          </div>
+          <button type="button" className="h-8 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground">
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="text-sm leading-relaxed text-foreground/90">
+          {comment.content}
+        </div>
+
+        {(showLikes || showReplies) && (
+          <div className="flex items-center gap-4 pt-1">
+            {showLikes && (
+              <button type="button" className={`h-8 px-2 gap-1.5 inline-flex items-center rounded-md text-sm font-medium hover:text-red-500 ${comment.isLiked ? 'text-red-500' : 'text-muted-foreground'}`}>
+                <ThumbsUp className={`h-3.5 w-3.5 ${comment.isLiked ? 'fill-current' : ''}`} />
+                <span className="text-xs font-medium">{comment.likes > 0 ? comment.likes : 'Thích'}</span>
+              </button>
+            )}
+            {showReplies && (
+              <button type="button" className="h-8 px-2 gap-1.5 inline-flex items-center rounded-md text-sm font-medium text-muted-foreground hover:opacity-80" style={{ ['--hover-color' as string]: brandColor }}>
+                <Reply className="h-3.5 w-3.5" />
+                <span className="text-xs font-medium">Trả lời</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {showReplies && comment.replies && comment.replies.length > 0 && (
+          <div className="pt-2">
+            {comment.replies.map(reply => (
+              <CommentItem key={reply._id} comment={reply} isReply showLikes={showLikes} showReplies={showReplies} brandColor={brandColor} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
