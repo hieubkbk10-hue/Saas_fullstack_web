@@ -20,6 +20,8 @@ type ServiceDetailExperienceConfig = {
   quickContactTitle: string;
   quickContactDescription: string;
   quickContactShowPrice: boolean;
+  quickContactButtonText: string;
+  quickContactButtonLink: string;
 };
 
 function useServiceDetailExperienceConfig(): ServiceDetailExperienceConfig {
@@ -36,6 +38,8 @@ function useServiceDetailExperienceConfig(): ServiceDetailExperienceConfig {
       quickContactTitle: raw?.quickContactTitle ?? 'Liên hệ nhanh',
       quickContactDescription: raw?.quickContactDescription ?? 'Tư vấn miễn phí, báo giá trong 24h.',
       quickContactShowPrice: raw?.quickContactShowPrice ?? true,
+      quickContactButtonText: raw?.quickContactButtonText ?? 'Liên hệ tư vấn',
+      quickContactButtonLink: raw?.quickContactButtonLink ?? '',
     };
   }, [setting?.value]);
 }
@@ -119,6 +123,8 @@ export default function ServiceDetailPage({ params }: PageProps) {
     title: experienceConfig.quickContactTitle,
     description: experienceConfig.quickContactDescription,
     showPrice: experienceConfig.quickContactShowPrice,
+    buttonText: experienceConfig.quickContactButtonText,
+    buttonLink: experienceConfig.quickContactButtonLink,
   };
 
   return (

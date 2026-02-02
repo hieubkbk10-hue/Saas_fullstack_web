@@ -116,17 +116,38 @@ interface QuickContactButtonsProps {
   serviceName?: string;
   brandColor: string;
   className?: string;
+  buttonLabel?: string;
+  buttonHref?: string;
 }
 
 export function QuickContactButtons({ 
   serviceName, 
   brandColor,
-  className = ''
+  className = '',
+  buttonLabel = 'Liên hệ tư vấn',
+  buttonHref
 }: QuickContactButtonsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const contactSettings = useQuery(api.settings.getMultiple, {
     keys: ['contact_phone', 'contact_zalo', 'contact_messenger']
   });
+
+  if (buttonHref) {
+    return (
+      <div className={`w-full ${className}`}>
+        <a
+          href={buttonHref}
+          target="_blank"
+          rel="noreferrer"
+          className="w-full min-h-11 px-6 rounded-xl text-white font-semibold transition-all hover:shadow-lg hover:scale-[1.01] flex items-center justify-center gap-2"
+          style={{ backgroundColor: brandColor }}
+        >
+          <Phone size={18} />
+          {buttonLabel}
+        </a>
+      </div>
+    );
+  }
 
   if (!contactSettings) {
     return null;
@@ -150,7 +171,7 @@ export function QuickContactButtons({
         style={{ backgroundColor: brandColor }}
       >
         <Phone size={18} />
-        Liên hệ tư vấn
+        {buttonLabel}
       </button>
       <QuickContactModal
         brandColor={brandColor}

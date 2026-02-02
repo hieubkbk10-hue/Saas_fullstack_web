@@ -30,6 +30,8 @@ type ServiceDetailExperienceConfig = {
   quickContactTitle: string;
   quickContactDescription: string;
   quickContactShowPrice: boolean;
+  quickContactButtonText: string;
+  quickContactButtonLink: string;
 };
 
 const EXPERIENCE_KEY = 'services_detail_ui';
@@ -50,6 +52,8 @@ const DEFAULT_CONFIG: ServiceDetailExperienceConfig = {
   quickContactTitle: 'Liên hệ nhanh',
   quickContactDescription: 'Tư vấn miễn phí, báo giá trong 24h.',
   quickContactShowPrice: true,
+  quickContactButtonText: 'Liên hệ tư vấn',
+  quickContactButtonLink: '',
 };
 
 const HINTS = [
@@ -76,6 +80,8 @@ export default function ServiceDetailExperiencePage() {
       quickContactTitle: raw?.quickContactTitle ?? 'Liên hệ nhanh',
       quickContactDescription: raw?.quickContactDescription ?? 'Tư vấn miễn phí, báo giá trong 24h.',
       quickContactShowPrice: raw?.quickContactShowPrice ?? true,
+      quickContactButtonText: raw?.quickContactButtonText ?? 'Liên hệ tư vấn',
+      quickContactButtonLink: raw?.quickContactButtonLink ?? '',
     };
   }, [experienceSetting?.value]);
 
@@ -125,6 +131,8 @@ export default function ServiceDetailExperiencePage() {
           quickContactTitle={config.quickContactTitle}
           quickContactDescription={config.quickContactDescription}
           quickContactShowPrice={config.quickContactShowPrice}
+          quickContactButtonText={config.quickContactButtonText}
+          quickContactButtonLink={config.quickContactButtonLink}
         />
       </ExperiencePreview>
 
@@ -142,7 +150,7 @@ export default function ServiceDetailExperiencePage() {
           </SettingsCard>
 
           {config.layoutStyle === 'classic' && (
-            <SettingsCard title="Liên hệ nhanh (Classic)">
+            <SettingsCard title="Cấu hình thêm cho Classic">
               <ExperienceBlockToggle
                 label="Hiển thị khối liên hệ nhanh"
                 description="Hiện/ẩn cục liên hệ nhanh ở sidebar"
@@ -174,6 +182,25 @@ export default function ServiceDetailExperiencePage() {
                 onChange={() => setConfig(prev => ({ ...prev, quickContactShowPrice: !prev.quickContactShowPrice }))}
                 color="bg-violet-500"
               />
+
+              <SettingInput
+                type="text"
+                label="Text nút liên hệ"
+                value={config.quickContactButtonText}
+                onChange={(value) => setConfig(prev => ({ ...prev, quickContactButtonText: value }))}
+                focusColor="focus:border-violet-500"
+              />
+
+              <div className="space-y-1">
+                <SettingInput
+                  type="text"
+                  label="Link nút liên hệ"
+                  value={config.quickContactButtonLink}
+                  onChange={(value) => setConfig(prev => ({ ...prev, quickContactButtonLink: value }))}
+                  focusColor="focus:border-violet-500"
+                />
+                <p className="text-xs text-slate-500">VD: https://zalo.me/ hoặc https://m.me/yourpage</p>
+              </div>
             </SettingsCard>
           )}
 

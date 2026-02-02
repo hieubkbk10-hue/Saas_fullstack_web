@@ -36,6 +36,8 @@ type QuickContactConfig = {
   title: string;
   description: string;
   showPrice: boolean;
+  buttonText: string;
+  buttonLink: string;
 };
 
 export interface StyleProps {
@@ -97,6 +99,8 @@ export function ClassicStyle({ service, brandColor, relatedServices, enabledFiel
     title: 'Liên hệ nhanh',
     description: 'Tư vấn miễn phí, báo giá trong 24h.',
     showPrice: true,
+    buttonText: 'Liên hệ tư vấn',
+    buttonLink: '',
     ...quickContact,
   };
   const [copied, setCopied] = useState(false);
@@ -269,6 +273,8 @@ export function ClassicStyle({ service, brandColor, relatedServices, enabledFiel
                     <QuickContactButtons 
                       serviceName={service.title}
                       brandColor={brandColor}
+                      buttonLabel={quickContactConfig.buttonText}
+                      buttonHref={quickContactConfig.buttonLink}
                     />
                   </div>
                 </div>

@@ -15,6 +15,8 @@ type PostDetailPreviewProps = {
   quickContactTitle?: string;
   quickContactDescription?: string;
   quickContactShowPrice?: boolean;
+  quickContactButtonText?: string;
+  quickContactButtonLink?: string;
   device?: DeviceType;
   brandColor?: string;
 };
@@ -90,7 +92,7 @@ function RelatedServiceThumb({ title, thumbnail, brandColor }: { title: string; 
   );
 }
 
-function QuickContactButtonsPreview({ brandColor }: { brandColor: string }) {
+function QuickContactButtonsPreview({ brandColor, label }: { brandColor: string; label: string }) {
   return (
     <div className="w-full">
       <button
@@ -99,7 +101,7 @@ function QuickContactButtonsPreview({ brandColor }: { brandColor: string }) {
         style={{ backgroundColor: brandColor }}
       >
         <Phone size={18} />
-        Liên hệ tư vấn
+        {label}
       </button>
     </div>
   );
@@ -590,6 +592,8 @@ function ClassicServicePreview({
   quickContactTitle,
   quickContactDescription,
   quickContactShowPrice,
+  quickContactButtonText,
+  quickContactButtonLink,
 }: PostDetailPreviewProps) {
   const isDesktop = device === 'desktop';
   const isMobile = device === 'mobile';
@@ -602,6 +606,8 @@ function ClassicServicePreview({
     title: quickContactTitle ?? 'Liên hệ nhanh',
     description: quickContactDescription ?? 'Tư vấn miễn phí, báo giá trong 24h.',
     showPrice: quickContactShowPrice ?? true,
+    buttonText: quickContactButtonText ?? 'Liên hệ tư vấn',
+    buttonLink: quickContactButtonLink ?? '',
   };
 
   return (
@@ -751,7 +757,7 @@ function ClassicServicePreview({
                     )}
                   </div>
                   <div className="mt-3">
-                    <QuickContactButtonsPreview brandColor={brandColor} />
+                    <QuickContactButtonsPreview brandColor={brandColor} label={quickContactConfig.buttonText} />
                   </div>
                 </div>
               )}
@@ -814,7 +820,7 @@ function ModernServicePreview({ showRelated, brandColor = '#3b82f6', device = 'd
                 </div>
               )}
               <div className="min-w-[220px]">
-                <QuickContactButtonsPreview brandColor={brandColor} />
+                <QuickContactButtonsPreview brandColor={brandColor} label="Liên hệ tư vấn" />
               </div>
             </div>
 
@@ -862,7 +868,7 @@ function ModernServicePreview({ showRelated, brandColor = '#3b82f6', device = 'd
             Liên hệ ngay để được tư vấn miễn phí và nhận báo giá chi tiết cho dự án của bạn.
           </p>
           <div className="flex justify-center">
-            <QuickContactButtonsPreview brandColor={brandColor} />
+            <QuickContactButtonsPreview brandColor={brandColor} label="Liên hệ tư vấn" />
           </div>
         </div>
       </section>
@@ -1007,7 +1013,7 @@ function MinimalServicePreview({ showRelated, brandColor = '#3b82f6', device = '
         <div className="mt-14 rounded-2xl border border-slate-200 bg-white p-6 text-center">
           <p className="text-slate-600 mb-5">Quan tâm đến dịch vụ này?</p>
           <div className="max-w-xs mx-auto">
-            <QuickContactButtonsPreview brandColor={brandColor} />
+            <QuickContactButtonsPreview brandColor={brandColor} label="Liên hệ tư vấn" />
           </div>
         </div>
 
@@ -1053,6 +1059,8 @@ export function ServiceDetailPreview({
   quickContactTitle,
   quickContactDescription,
   quickContactShowPrice,
+  quickContactButtonText,
+  quickContactButtonLink,
   brandColor = '#3b82f6',
   device = 'desktop',
 }: PostDetailPreviewProps) {
@@ -1068,6 +1076,8 @@ export function ServiceDetailPreview({
     quickContactTitle,
     quickContactDescription,
     quickContactShowPrice,
+    quickContactButtonText,
+    quickContactButtonLink,
   };
 
   return (
