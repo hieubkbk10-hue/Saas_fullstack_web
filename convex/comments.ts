@@ -12,6 +12,7 @@ const commentDoc = v.object({
   authorName: v.string(),
   content: v.string(),
   customerId: v.optional(v.id("customers")),
+  likesCount: v.optional(v.number()),
   parentId: v.optional(v.id("comments")),
   rating: v.optional(v.number()),
   status: commentStatus,
@@ -241,6 +242,15 @@ export const remove = mutation({
   args: { id: v.id("comments") },
   handler: async (ctx, args) => {
     await CommentsModel.remove(ctx, args);
+    return null;
+  },
+  returns: v.null(),
+});
+
+export const incrementLike = mutation({
+  args: { id: v.id("comments") },
+  handler: async (ctx, args) => {
+    await CommentsModel.incrementLike(ctx, args);
     return null;
   },
   returns: v.null(),

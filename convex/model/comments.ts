@@ -187,6 +187,16 @@ async function getDefaultStatus(ctx: QueryCtx): Promise<CommentStatus> {
   return (setting?.value as CommentStatus) || "Pending";
 }
 
+async function getAutoApprove(ctx: QueryCtx): Promise<boolean> {
+  const setting = await ctx.db
+    .query("moduleSettings")
+    .withIndex("by_module_setting", (q) =>
+      q.eq("moduleKey", "comments").eq("settingKey", "autoApprove")
+    )
+    .unique();
+  return (setting?.value as boolean) ?? false;
+}
+
 /**
  * Create comment
  */
@@ -206,7 +216,8 @@ export async function create(
   }
 ): Promise<Id<"comments">> {
   assertValidRating(args.rating);
-  const status = args.status ?? (await getDefaultStatus(ctx));
+  const autoApprove = await getAutoApprove(ctx);
+  const status = args.status ?? (autoApprove ? "Approved" : await getDefaultStatus(ctx));
 
   return  ctx.db.insert("comments", {
     authorEmail: args.authorEmail,
@@ -214,6 +225,7 @@ export async function create(
     authorName: args.authorName,
     content: args.content,
     customerId: args.customerId,
+    likesCount: 0,
     parentId: args.parentId,
     rating: args.rating,
     status,
@@ -310,4 +322,13 @@ export async function remove(
     await ctx.db.delete(child._id);
   }
   await ctx.db.delete(id);
+}
+
+export async function incrementLike(
+  ctx: MutationCtx,
+  { id }: { id: Id<"comments"> }
+): Promise<void> {
+  const comment = await getByIdOrThrow(ctx, { id });
+  const current = comment.likesCount ?? 0;
+  await ctx.db.patch(id, { likesCount: current + 1 });
 }

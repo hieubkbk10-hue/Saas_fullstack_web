@@ -58,6 +58,7 @@ export default function PostDetailPage({ params }: PageProps) {
   const commentsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'comments' });
   const commentsLikesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableLikes', moduleKey: 'comments' });
   const commentsRepliesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableReplies', moduleKey: 'comments' });
+  const commentsSettings = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'comments' });
   const post = useQuery(api.posts.getBySlug, { slug });
   const category = useQuery(
     api.postCategories.getById, 
@@ -81,18 +82,44 @@ export default function PostDetailPage({ params }: PageProps) {
   const shouldShowComments = commentsEnabled && experienceConfig.showComments;
   const shouldShowCommentLikes = shouldShowComments && style === 'classic' && (commentsLikesFeature?.enabled ?? false) && experienceConfig.showCommentLikes;
   const shouldShowCommentReplies = shouldShowComments && style === 'classic' && (commentsRepliesFeature?.enabled ?? false) && experienceConfig.showCommentReplies;
+  const commentsPerPageSetting = useMemo(() => {
+    const perPage = commentsSettings?.find(setting => setting.settingKey === 'commentsPerPage')?.value as number | undefined;
+    return perPage ?? 20;
+  }, [commentsSettings]);
+  const autoApprove = useMemo(() => {
+    const setting = commentsSettings?.find(setting => setting.settingKey === 'autoApprove')?.value as boolean | undefined;
+    return setting ?? false;
+  }, [commentsSettings]);
   const commentsPage = useQuery(
     api.comments.listByTarget,
     post && shouldShowComments
-      ? { paginationOpts: { cursor: null, numItems: 20 }, status: 'Approved', targetId: post._id, targetType: 'post' }
+      ? { paginationOpts: { cursor: null, numItems: Math.min(commentsPerPageSetting * 2, 60) }, status: 'Approved', targetId: post._id, targetType: 'post' }
       : 'skip'
   );
-  const comments = commentsPage?.page ?? [];
+  const comments = useMemo(() => commentsPage?.page ?? [], [commentsPage?.page]);
+  const commentRepliesMap = useMemo(() => {
+    const map = new Map<string, CommentData[]>();
+    comments.forEach((comment) => {
+      if (!comment.parentId) {return;}
+      const list = map.get(comment.parentId) ?? [];
+      list.push(comment);
+      map.set(comment.parentId, list);
+    });
+    return map;
+  }, [comments]);
+  const rootComments = useMemo(
+    () => comments.filter(comment => !comment.parentId),
+    [comments]
+  );
   const [commentName, setCommentName] = useState('');
   const [commentEmail, setCommentEmail] = useState('');
   const [commentContent, setCommentContent] = useState('');
   const [commentMessage, setCommentMessage] = useState<string | null>(null);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, { content: string; email: string; name: string }>>({});
+  const [replySubmittingId, setReplySubmittingId] = useState<string | null>(null);
+  const [likingIds, setLikingIds] = useState<Set<string>>(new Set());
+  const incrementLike = useMutation(api.comments.incrementLike);
   
   // Related posts - lấy cùng category
   const relatedPosts = useQuery(
@@ -151,14 +178,14 @@ export default function PostDetailPage({ params }: PageProps) {
         authorEmail: commentEmail.trim() || undefined,
         authorName: commentName.trim(),
         content: commentContent.trim(),
-        status: 'Pending',
+        status: autoApprove ? 'Approved' : 'Pending',
         targetId: post._id,
         targetType: 'post',
       });
       setCommentName('');
       setCommentEmail('');
       setCommentContent('');
-      setCommentMessage('Bình luận đã được gửi, vui lòng chờ duyệt.');
+      setCommentMessage(autoApprove ? 'Bình luận đã được đăng.' : 'Bình luận đã được gửi, vui lòng chờ duyệt.');
     } catch {
       setCommentMessage('Không thể gửi bình luận. Vui lòng thử lại.');
     } finally {
@@ -166,21 +193,74 @@ export default function PostDetailPage({ params }: PageProps) {
     }
   };
 
+  const handleSubmitReply = async (parentId: Id<'comments'>) => {
+    if (!post) {return;}
+    const draft = replyDrafts[parentId];
+    if (!draft?.name?.trim() || !draft?.content?.trim()) {return;}
+    setReplySubmittingId(parentId);
+    try {
+      await createComment({
+        authorEmail: draft.email?.trim() || undefined,
+        authorName: draft.name.trim(),
+        content: draft.content.trim(),
+        parentId,
+        status: autoApprove ? 'Approved' : 'Pending',
+        targetId: post._id,
+        targetType: 'post',
+      });
+      setReplyDrafts(prev => ({ ...prev, [parentId]: { content: '', email: '', name: '' } }));
+    } finally {
+      setReplySubmittingId(null);
+    }
+  };
+
+  const handleReplyDraftChange = (parentId: Id<'comments'>, key: 'name' | 'email' | 'content', value: string) => {
+    setReplyDrafts(prev => ({
+      ...prev,
+      [parentId]: {
+        content: prev[parentId]?.content ?? '',
+        email: prev[parentId]?.email ?? '',
+        name: prev[parentId]?.name ?? '',
+        [key]: value,
+      },
+    }));
+  };
+
+  const handleLike = async (id: Id<'comments'>) => {
+    if (likingIds.has(id)) {return;}
+    setLikingIds(prev => new Set([...prev, id]));
+    try {
+      await incrementLike({ id });
+    } finally {
+      setLikingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
   const commentsSection = shouldShowComments ? (
     <CommentsSection
       brandColor={brandColor}
-      comments={comments}
+      comments={rootComments}
+      replyMap={commentRepliesMap}
       commentContent={commentContent}
       commentEmail={commentEmail}
       commentMessage={commentMessage}
       commentName={commentName}
       isSubmitting={isSubmittingComment}
+      replySubmittingId={replySubmittingId}
+      replyDrafts={replyDrafts}
       showLikes={shouldShowCommentLikes}
       showReplies={shouldShowCommentReplies}
       onContentChange={setCommentContent}
       onEmailChange={setCommentEmail}
       onNameChange={setCommentName}
       onSubmit={handleSubmitComment}
+      onLike={handleLike}
+      onReplyDraftChange={handleReplyDraftChange}
+      onReplySubmit={handleSubmitReply}
     />
   ) : null;
 
@@ -242,6 +322,8 @@ interface CommentData {
   _creationTime: number;
   authorName: string;
   content: string;
+  likesCount?: number;
+  parentId?: Id<"comments">;
 }
 
 interface RelatedPost {
@@ -829,34 +911,59 @@ function MinimalStyle({ post, brandColor, relatedPosts, showAuthor, authorName, 
 type CommentsSectionProps = {
   brandColor: string;
   comments: CommentData[];
+  replyMap: Map<string, CommentData[]>;
   commentName: string;
   commentEmail: string;
   commentContent: string;
   commentMessage: string | null;
   isSubmitting: boolean;
+  replyDrafts: Record<string, { content: string; email: string; name: string }>;
+  replySubmittingId: string | null;
   showLikes: boolean;
   showReplies: boolean;
   onNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
   onContentChange: (value: string) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onLike: (id: Id<'comments'>) => void;
+  onReplyDraftChange: (parentId: Id<'comments'>, key: 'name' | 'email' | 'content', value: string) => void;
+  onReplySubmit: (parentId: Id<'comments'>) => void;
 };
 
 function CommentsSection({
   brandColor,
   comments,
+  replyMap,
   commentName,
   commentEmail,
   commentContent,
   commentMessage,
   isSubmitting,
+  replyDrafts,
+  replySubmittingId,
   showLikes,
   showReplies,
   onNameChange,
   onEmailChange,
   onContentChange,
   onSubmit,
+  onLike,
+  onReplyDraftChange,
+  onReplySubmit,
 }: CommentsSectionProps) {
+  const [openReplyIds, setOpenReplyIds] = useState<Set<string>>(new Set());
+  const toggleReplyForm = (id: Id<'comments'>) => {
+    setOpenReplyIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   return (
     <section className="rounded-2xl border border-border/50 bg-background/70 p-6 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -878,17 +985,71 @@ function CommentsSection({
               {(showLikes || showReplies) && (
                 <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                   {showLikes && (
-                    <button type="button" className="inline-flex items-center gap-1.5 hover:text-foreground">
+                    <button type="button" onClick={() => onLike(comment._id)} className="inline-flex items-center gap-1.5 hover:text-foreground">
                       <Heart className="h-3.5 w-3.5" />
                       Thích
+                      <span className="text-[11px] text-muted-foreground">{comment.likesCount ?? 0}</span>
                     </button>
                   )}
                   {showReplies && (
-                    <button type="button" className="inline-flex items-center gap-1.5 hover:text-foreground">
+                    <button type="button" onClick={() => toggleReplyForm(comment._id)} className="inline-flex items-center gap-1.5 hover:text-foreground">
                       <Reply className="h-3.5 w-3.5" />
                       Trả lời
                     </button>
                   )}
+                </div>
+              )}
+
+              {showReplies && openReplyIds.has(comment._id) && (
+                <div className="mt-4 space-y-3 rounded-xl border border-border/50 bg-muted/20 p-3">
+                  <div className="space-y-3">
+                    {(replyMap.get(comment._id) ?? []).map((reply) => (
+                      <div key={reply._id} className="rounded-lg border border-border/40 bg-background px-3 py-2">
+                        <div className="flex items-center justify-between gap-2 text-xs">
+                          <span className="font-medium text-foreground">{reply.authorName}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(reply._creationTime).toLocaleDateString('vi-VN')}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">{reply.content}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                    <input
+                      value={replyDrafts[comment._id]?.name ?? ''}
+                      onChange={(event) =>{  onReplyDraftChange(comment._id, 'name', event.target.value); }}
+                      placeholder="Họ và tên"
+                      className="h-9 w-full rounded-lg border border-border/60 bg-background px-3 text-xs"
+                      required
+                    />
+                    <input
+                      value={replyDrafts[comment._id]?.email ?? ''}
+                      onChange={(event) =>{  onReplyDraftChange(comment._id, 'email', event.target.value); }}
+                      placeholder="Email (không bắt buộc)"
+                      className="h-9 w-full rounded-lg border border-border/60 bg-background px-3 text-xs"
+                      type="email"
+                    />
+                  </div>
+                  <textarea
+                    value={replyDrafts[comment._id]?.content ?? ''}
+                    onChange={(event) =>{  onReplyDraftChange(comment._id, 'content', event.target.value); }}
+                    placeholder="Nội dung trả lời..."
+                    className="min-h-[80px] w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-xs"
+                    required
+                  />
+                  <div className="flex items-center justify-end">
+                    <Button
+                      type="button"
+                      disabled={replySubmittingId === comment._id}
+                      onClick={() => onReplySubmit(comment._id)}
+                      style={{ backgroundColor: brandColor }}
+                      className="h-8 rounded-full px-3 text-xs text-white"
+                    >
+                      {replySubmittingId === comment._id ? 'Đang gửi...' : 'Gửi trả lời'}
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

@@ -338,6 +338,7 @@ export default defineSchema({
     authorName: v.string(),
     content: v.string(),
     customerId: v.optional(v.id("customers")),
+    likesCount: v.optional(v.number()),
     parentId: v.optional(v.id("comments")),
     rating: v.optional(v.number()),
     status: v.union(
