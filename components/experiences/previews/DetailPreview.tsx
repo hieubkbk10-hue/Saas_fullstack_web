@@ -812,7 +812,7 @@ function ModernServicePreview({
   const showPrice = true;
   const showDuration = true;
   const showFeatured = true;
-  const headingSize = isMobile ? 'text-3xl' : isTablet ? 'text-5xl' : 'text-6xl';
+  const headingSize = isMobile ? 'text-2xl' : isTablet ? 'text-4xl' : 'text-5xl';
   
   const modernConfig = {
     heroCtaText: modernHeroCtaText ?? 'Liên hệ tư vấn',
@@ -827,57 +827,59 @@ function ModernServicePreview({
     <div className="min-h-screen bg-white">
       <section className="relative overflow-hidden" style={{ backgroundColor: `${brandColor}06` }}>
         <div
-          className="absolute inset-0 opacity-25"
-          style={{ backgroundImage: `radial-gradient(circle at 20% 45%, ${brandColor}18 0%, transparent 55%), radial-gradient(circle at 80% 55%, ${brandColor}12 0%, transparent 60%)` }}
+          className="absolute inset-0 opacity-20"
+          style={{ backgroundImage: `radial-gradient(circle at 20% 45%, ${brandColor}15 0%, transparent 55%), radial-gradient(circle at 80% 55%, ${brandColor}10 0%, transparent 60%)` }}
         />
 
-        <div className={`relative max-w-6xl mx-auto px-4 ${isMobile ? 'py-12' : 'py-20'}`}>
-          <div className="max-w-3xl space-y-6">
-            <div className="flex flex-wrap items-center gap-3">
+        <div className={`relative max-w-6xl mx-auto px-4 ${isMobile ? 'py-8' : 'py-12'}`}>
+          <div className="max-w-4xl space-y-5">
+            <div className="flex flex-wrap items-center gap-2">
               {showFeatured && MOCK_SERVICE.featured && (
-                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-400 text-amber-900 text-sm font-semibold rounded-full shadow-sm">
-                  <Star size={14} className="fill-current" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-400 text-amber-900 text-xs font-semibold rounded-full shadow-sm">
+                  <Star size={12} className="fill-current" />
                   Nổi bật
                 </span>
               )}
-              <span className="px-4 py-1.5 bg-white/80 backdrop-blur-sm text-sm font-medium rounded-full shadow-sm" style={{ color: brandColor }}>
+              <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-xs font-medium rounded-full shadow-sm" style={{ color: brandColor }}>
                 {MOCK_SERVICE.categoryName}
               </span>
             </div>
 
-            <h1 className={`${headingSize} font-bold text-slate-900 leading-tight`}>
+            <h1 className={`${headingSize} font-bold text-slate-900 leading-[1.15]`}>
               {MOCK_SERVICE.title}
             </h1>
 
             {MOCK_SERVICE.excerpt && (
-              <p className={`${isMobile ? 'text-lg' : 'text-xl'} text-slate-600 leading-relaxed max-w-2xl`}>
+              <p className={`${isMobile ? 'text-base' : 'text-lg'} text-slate-600 leading-relaxed max-w-2xl`}>
                 {MOCK_SERVICE.excerpt}
               </p>
             )}
 
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3 pt-2">
               {showPrice && (
-                <div className="min-w-[160px]">
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Chỉ từ</p>
-                  <p className={`${isMobile ? 'text-3xl' : 'text-4xl'} font-bold`} style={{ color: brandColor }}>
-                    {formatPrice(MOCK_SERVICE.price)}
-                  </p>
+                <div className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm">
+                  <div>
+                    <p className="text-xs text-slate-500">Chỉ từ</p>
+                    <p className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold leading-none`} style={{ color: brandColor }}>
+                      {formatPrice(MOCK_SERVICE.price)}
+                    </p>
+                  </div>
                 </div>
               )}
-              <div className="min-w-[220px]">
+              <div className="min-w-[180px]">
                 <QuickContactButtonsPreview brandColor={brandColor} label={modernConfig.heroCtaText} />
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-6">
-              <div className="flex items-center gap-2">
-                <Eye size={20} className="text-slate-400" />
-                <span className="text-slate-600"><strong className="text-slate-900">{MOCK_SERVICE.views.toLocaleString()}</strong> lượt xem</span>
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <div className="flex items-center gap-2 text-slate-600">
+                <Eye size={16} className="text-slate-400" />
+                <span>{MOCK_SERVICE.views.toLocaleString()} lượt xem</span>
               </div>
               {showDuration && MOCK_SERVICE.duration && (
-                <div className="flex items-center gap-2">
-                  <Clock size={20} className="text-slate-400" />
-                  <span className="text-slate-600">Hoàn thành trong <strong className="text-slate-900">{MOCK_SERVICE.duration}</strong></span>
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Clock size={16} className="text-slate-400" />
+                  <span>{MOCK_SERVICE.duration}</span>
                 </div>
               )}
             </div>
@@ -886,63 +888,63 @@ function ModernServicePreview({
       </section>
 
       {MOCK_SERVICE.thumbnail && (
-        <div className="max-w-5xl mx-auto px-4 -mt-10 relative z-10">
-          <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[16/9]">
+        <div className="max-w-6xl mx-auto px-4 -mt-6 relative z-10">
+          <div className="relative rounded-xl overflow-hidden shadow-2xl aspect-[16/9]">
             <Image
               src={MOCK_SERVICE.thumbnail}
               alt={MOCK_SERVICE.title}
               fill
-              sizes="(max-width: 1024px) 100vw, 800px"
+              sizes="(max-width: 1024px) 100vw, 1200px"
               className="object-cover"
             />
           </div>
         </div>
       )}
 
-      <section className={`max-w-3xl mx-auto px-4 ${isMobile ? 'py-14' : 'py-20'}`}>
+      <section className={`max-w-4xl mx-auto px-4 ${isMobile ? 'py-10' : 'py-16'}`}>
         <article
-          className="prose prose-lg prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:no-underline hover:prose-a:underline prose-img:rounded-2xl prose-strong:text-slate-900"
+          className="prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-strong:text-slate-900"
           style={{ '--tw-prose-links': brandColor } as React.CSSProperties}
         >
           <div dangerouslySetInnerHTML={{ __html: MOCK_SERVICE.content }} />
         </article>
 
-        <div className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 text-center">
-          <h3 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-slate-900`}>{modernConfig.ctaSectionTitle}</h3>
-          <p className="text-slate-600 mt-2 mb-5 max-w-md mx-auto">
+        <div className="mt-10 rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
+          <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-slate-900`}>{modernConfig.ctaSectionTitle}</h3>
+          <p className="text-sm text-slate-600 mt-2 mb-4 max-w-md mx-auto">
             {modernConfig.ctaSectionDescription}
           </p>
-          <div className="flex justify-center">
+          <div className="flex justify-center max-w-xs mx-auto">
             <QuickContactButtonsPreview brandColor={brandColor} label={modernConfig.ctaButtonText} />
           </div>
         </div>
       </section>
 
       {relatedServices.length > 0 && (
-        <section className="bg-slate-50 py-12">
+        <section className="bg-slate-50 py-10">
           <div className="max-w-6xl mx-auto px-4">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-slate-900">Dịch vụ liên quan</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-slate-900">Dịch vụ liên quan</h2>
               <div className="text-sm font-medium flex items-center gap-1 transition-colors hover:opacity-80" style={{ color: brandColor }}>
                 Xem tất cả
                 <ArrowRight size={16} />
               </div>
             </div>
-            <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-3'} gap-6`}>
+            <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-3'} gap-5`}>
               {relatedServices.map((s) => (
                 <div
                   key={s._id}
-                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-slate-100"
                 >
-                  <div className="aspect-[16/10] overflow-hidden bg-slate-100 relative">
+                  <div className="aspect-video overflow-hidden bg-slate-100 relative">
                     <RelatedServiceThumb title={s.title} thumbnail={s.thumbnail} brandColor={brandColor} />
                   </div>
-                  <div className="p-5">
-                    <h3 className="font-semibold text-slate-900 mb-2 group-hover:opacity-70 transition-opacity">
+                  <div className="p-4">
+                    <h3 className="text-sm font-semibold text-slate-900 mb-2 line-clamp-2 group-hover:opacity-70 transition-opacity">
                       {s.title}
                     </h3>
                     {showPrice && (
-                      <p className="font-bold" style={{ color: brandColor }}>
+                      <p className="text-base font-bold" style={{ color: brandColor }}>
                         {formatPrice(s.price)}
                       </p>
                     )}
@@ -954,7 +956,7 @@ function ModernServicePreview({
         </section>
       )}
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80" style={{ color: brandColor }}>
           <ArrowLeft size={16} />
           Quay lại danh sách dịch vụ
