@@ -36,6 +36,7 @@ export interface StyleProps {
   brandColor: string;
   relatedServices: RelatedService[];
   enabledFields: Set<string>;
+  showShare?: boolean;
 }
 
 function formatPrice(price?: number): string {
@@ -79,7 +80,7 @@ function RelatedServiceThumb({ title, thumbnail, brandColor, size }: { title: st
 }
 
 // STYLE 1: CLASSIC - Professional service page with sticky CTA sidebar
-export function ClassicStyle({ service, brandColor, relatedServices, enabledFields }: StyleProps) {
+export function ClassicStyle({ service, brandColor, relatedServices, enabledFields, showShare = true }: StyleProps) {
   const showPrice = enabledFields.has('price');
   const showDuration = enabledFields.has('duration');
   const showFeatured = enabledFields.has('featured');
@@ -178,18 +179,20 @@ export function ClassicStyle({ service, brandColor, relatedServices, enabledFiel
 
             <div className="mt-12 pt-8 border-t border-slate-200">
               <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-slate-500">Chia sẻ:</span>
-                  <button
-                    type="button"
-                    aria-label="Copy dịch vụ"
-                    onClick={handleCopy}
-                    className="inline-flex items-center gap-2 min-h-11 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-sm font-medium text-slate-700 transition-colors"
-                  >
-                    <Copy size={16} />
-                    {copied ? 'Đã copy' : 'Copy dịch vụ'}
-                  </button>
-                </div>
+                {showShare && (
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-slate-500">Chia sẻ:</span>
+                    <button
+                      type="button"
+                      aria-label="Copy dịch vụ"
+                      onClick={handleCopy}
+                      className="inline-flex items-center gap-2 min-h-11 px-4 rounded-full bg-slate-100 hover:bg-slate-200 text-sm font-medium text-slate-700 transition-colors"
+                    >
+                      <Copy size={16} />
+                      {copied ? 'Đã copy' : 'Copy dịch vụ'}
+                    </button>
+                  </div>
+                )}
                 <Link 
                   href="/services"
                   className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80"

@@ -10,9 +10,26 @@ import { ArrowLeft, Briefcase } from 'lucide-react';
 
 type ServiceDetailStyle = 'classic' | 'modern' | 'minimal';
 
-function useServiceDetailStyle(): ServiceDetailStyle {
-  const setting = useQuery(api.settings.getByKey, { key: 'services_detail_style' });
-  return (setting?.value as ServiceDetailStyle) || 'classic';
+type ServiceDetailExperienceConfig = {
+  layoutStyle: ServiceDetailStyle;
+  showAuthor: boolean;
+  showRelated: boolean;
+  showShare: boolean;
+  showComments: boolean;
+};
+
+function useServiceDetailExperienceConfig(): ServiceDetailExperienceConfig {
+  const setting = useQuery(api.settings.getByKey, { key: 'services_detail_ui' });
+  return useMemo(() => {
+    const raw = setting?.value as Partial<ServiceDetailExperienceConfig> | undefined;
+    return {
+      layoutStyle: raw?.layoutStyle ?? 'classic',
+      showAuthor: raw?.showAuthor ?? true,
+      showRelated: raw?.showRelated ?? true,
+      showShare: raw?.showShare ?? true,
+      showComments: raw?.showComments ?? true,
+    };
+  }, [setting?.value]);
 }
 
 function useEnabledServiceFields(): Set<string> {
@@ -30,7 +47,7 @@ interface PageProps {
 export default function ServiceDetailPage({ params }: PageProps) {
   const { slug } = use(params);
   const brandColor = useBrandColor();
-  const style = useServiceDetailStyle();
+  const experienceConfig = useServiceDetailExperienceConfig();
   const enabledFields = useEnabledServiceFields();
   
   const service = useQuery(api.services.getBySlug, { slug });
@@ -77,14 +94,23 @@ export default function ServiceDetailPage({ params }: PageProps) {
     );
   }
 
-  const filteredRelated = relatedServices?.filter(s => s._id !== service._id).slice(0, 3) ?? [];
+  const filteredRelated = experienceConfig.showRelated 
+    ? (relatedServices?.filter(s => s._id !== service._id).slice(0, 3) ?? [])
+    : [];
   const serviceData = { ...service, categoryName: category?.name ?? 'Dịch vụ' };
+  const styleProps = {
+    service: serviceData,
+    brandColor,
+    relatedServices: filteredRelated,
+    enabledFields,
+    showShare: experienceConfig.showShare,
+  };
 
   return (
     <>
-      {style === 'classic' && <ClassicStyle service={serviceData} brandColor={brandColor} relatedServices={filteredRelated} enabledFields={enabledFields} />}
-      {style === 'modern' && <ModernStyle service={serviceData} brandColor={brandColor} relatedServices={filteredRelated} enabledFields={enabledFields} />}
-      {style === 'minimal' && <MinimalStyle service={serviceData} brandColor={brandColor} relatedServices={filteredRelated} enabledFields={enabledFields} />}
+      {experienceConfig.layoutStyle === 'classic' && <ClassicStyle {...styleProps} />}
+      {experienceConfig.layoutStyle === 'modern' && <ModernStyle {...styleProps} />}
+      {experienceConfig.layoutStyle === 'minimal' && <MinimalStyle {...styleProps} />}
     </>
   );
 }
