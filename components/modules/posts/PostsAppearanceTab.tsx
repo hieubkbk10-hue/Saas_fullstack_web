@@ -1,6 +1,6 @@
  'use client';
  
- import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
  import { useQuery, useMutation } from 'convex/react';
  import { api } from '@/convex/_generated/api';
  import { toast } from 'sonner';
@@ -47,37 +47,35 @@ export function PostsAppearanceTab({ onHasChanges, onSaveRef }: PostsAppearanceT
    const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
    const setMultipleSettings = useMutation(api.settings.setMultiple);
    
-   const [listStyle, setListStyle] = useState<PostsListStyle>('fullwidth');
-   const [detailStyle, setDetailStyle] = useState<PostsDetailStyle>('classic');
+   const [listStyle, setListStyle] = useState<PostsListStyle | null>(null);
+   const [detailStyle, setDetailStyle] = useState<PostsDetailStyle | null>(null);
    const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
    const [activePreview, setActivePreview] = useState<'list' | 'detail'>('list');
    const [hasChanges, setHasChanges] = useState(false);
    
    const brandColor = (brandColorSetting?.value as string) || '#3b82f6';
    
-   useEffect(() => {
-     if (listStyleSetting?.value) setListStyle(listStyleSetting.value as PostsListStyle);
-     if (detailStyleSetting?.value) setDetailStyle(detailStyleSetting.value as PostsDetailStyle);
-   }, [listStyleSetting, detailStyleSetting]);
+   const resolvedListStyle = listStyle ?? (listStyleSetting?.value as PostsListStyle) ?? 'fullwidth';
+   const resolvedDetailStyle = detailStyle ?? (detailStyleSetting?.value as PostsDetailStyle) ?? 'classic';
    
    useEffect(() => {
      onHasChanges?.(hasChanges);
    }, [hasChanges, onHasChanges]);
    
-   const handleSave = async () => {
+   const handleSave = useCallback(async () => {
      await setMultipleSettings({
        settings: [
-         { group: 'posts', key: 'posts_list_style', value: listStyle },
-         { group: 'posts', key: 'posts_detail_style', value: detailStyle },
+         { group: 'posts', key: 'posts_list_style', value: resolvedListStyle },
+         { group: 'posts', key: 'posts_detail_style', value: resolvedDetailStyle },
        ]
      });
      setHasChanges(false);
      toast.success('Đã lưu cài đặt giao diện!');
-   };
+   }, [resolvedListStyle, resolvedDetailStyle, setMultipleSettings]);
    
    useEffect(() => {
      if (onSaveRef) onSaveRef.current = handleSave;
-   }, [onSaveRef, listStyle, detailStyle]);
+   }, [handleSave, onSaveRef]);
    
    const handleListStyleChange = (style: PostsListStyle) => {
      setListStyle(style);
@@ -106,7 +104,7 @@ export function PostsAppearanceTab({ onHasChanges, onSaveRef }: PostsAppearanceT
                    title={style.description}
                    className={cn(
                      "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
-                     listStyle === style.id 
+                     resolvedListStyle === style.id 
                        ? "bg-cyan-500 text-white shadow-sm" 
                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                    )}
@@ -132,7 +130,7 @@ export function PostsAppearanceTab({ onHasChanges, onSaveRef }: PostsAppearanceT
                    title={style.description}
                    className={cn(
                      "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
-                     detailStyle === style.id 
+                     resolvedDetailStyle === style.id 
                        ? "bg-cyan-500 text-white shadow-sm" 
                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                    )}
@@ -194,14 +192,14 @@ export function PostsAppearanceTab({ onHasChanges, onSaveRef }: PostsAppearanceT
            <div className={cn("mx-auto transition-all duration-300", deviceWidths[previewDevice])}>
              <BrowserFrame>
                {activePreview === 'list' 
-                 ? <ListPreview style={listStyle} brandColor={brandColor} device={previewDevice} />
-                 : <DetailPreview style={detailStyle} brandColor={brandColor} device={previewDevice} />
+                ? <ListPreview style={resolvedListStyle} brandColor={brandColor} device={previewDevice} />
+                : <DetailPreview style={resolvedDetailStyle} brandColor={brandColor} device={previewDevice} />
                }
              </BrowserFrame>
            </div>
            <div className="mt-3 text-xs text-slate-500 text-center">
              {activePreview === 'list' ? 'Trang /posts' : 'Trang /posts/[slug]'}
-             {' • '}Style: <strong>{activePreview === 'list' ? LIST_STYLES.find(s => s.id === listStyle)?.label : DETAIL_STYLES.find(s => s.id === detailStyle)?.label}</strong>
+            {' • '}Style: <strong>{activePreview === 'list' ? LIST_STYLES.find(s => s.id === resolvedListStyle)?.label : DETAIL_STYLES.find(s => s.id === resolvedDetailStyle)?.label}</strong>
              {' • '}{previewDevice === 'desktop' ? '1920px' : (previewDevice === 'tablet' ? '768px' : '375px')}
            </div>
          </CardContent>

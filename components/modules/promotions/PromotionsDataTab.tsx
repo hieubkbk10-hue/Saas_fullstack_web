@@ -20,6 +20,7 @@
  }
  
 export function PromotionsDataTab({ colorClasses: _colorClasses }: PromotionsDataTabProps) {
+  void _colorClasses;
    const promotionsData = useQuery(api.promotions.listAll);
    const statsData = useQuery(api.promotions.getStats);
  

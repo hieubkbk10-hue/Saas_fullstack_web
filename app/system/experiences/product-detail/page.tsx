@@ -167,6 +167,8 @@ export default function ProductDetailExperiencePage() {
       showClassicHighlights: config.layoutStyle === 'classic' 
         ? (currentLayoutConfig as ClassicLayoutConfig).showHighlights 
         : false,
+      device: previewDevice,
+      brandColor: '#06b6d4',
     };
 
     return base;

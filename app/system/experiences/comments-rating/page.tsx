@@ -131,6 +131,8 @@ export default function CommentsRatingExperiencePage() {
               showLikes={config.showLikes}
               showReplies={config.showReplies}
               showModeration={config.showModeration}
+              device={previewDevice}
+              brandColor="#a855f7"
             />
           </BrowserFrame>
         </div>

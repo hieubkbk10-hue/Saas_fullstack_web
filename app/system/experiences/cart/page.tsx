@@ -158,6 +158,8 @@ export default function CartExperiencePage() {
               showGuestCart={currentLayoutConfig.showGuestCart}
               showExpiry={currentLayoutConfig.showExpiry}
               showNote={currentLayoutConfig.showNote}
+              device={previewDevice}
+              brandColor="#f97316"
             />
           </BrowserFrame>
         </div>

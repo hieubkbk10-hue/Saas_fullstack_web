@@ -22,6 +22,7 @@ const MODULE_KEY = 'analytics';
  }
  
 export function AnalyticsDataTab({ colorClasses: _colorClasses }: AnalyticsDataTabProps) {
+  void _colorClasses;
   // Query features and settings from Convex
   const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
@@ -41,18 +42,13 @@ export function AnalyticsDataTab({ colorClasses: _colorClasses }: AnalyticsDataT
     return { autoRefresh, defaultPeriod, refreshInterval };
   }, [settingsData]);
 
-  const [selectedPeriod, setSelectedPeriod] = useState('30d');
+  const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
    const [lastRefresh, setLastRefresh] = useState(() => Date.now());
  
-  // Update selectedPeriod when settings load
-  useEffect(() => {
-    if (settings.defaultPeriod) {
-      setSelectedPeriod(settings.defaultPeriod);
-    }
-  }, [settings.defaultPeriod]);
+  const effectivePeriod = selectedPeriod ?? settings.defaultPeriod ?? '30d';
 
-   const summaryStats = useQuery(api.analytics.getSummaryStats, { period: selectedPeriod });
-   const chartData = useQuery(api.analytics.getRevenueChartData, { period: selectedPeriod });
+   const summaryStats = useQuery(api.analytics.getSummaryStats, { period: effectivePeriod });
+   const chartData = useQuery(api.analytics.getRevenueChartData, { period: effectivePeriod });
    const topProducts = useQuery(api.analytics.getTopProducts, { limit: 5 });
    const lowStockProducts = useQuery(api.analytics.getLowStockProducts, { limit: 5, threshold: 10 });
  
@@ -89,7 +85,7 @@ export function AnalyticsDataTab({ colorClasses: _colorClasses }: AnalyticsDataT
      <div className="space-y-6">
        <div className="flex items-center justify-between">
          <div className="flex items-center gap-2">
-           <select value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-800">
+           <select value={effectivePeriod} onChange={(e) => setSelectedPeriod(e.target.value)} className="text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-1.5 bg-white dark:bg-slate-800">
              <option value="7d">7 ngày</option>
              <option value="30d">30 ngày</option>
              <option value="90d">90 ngày</option>

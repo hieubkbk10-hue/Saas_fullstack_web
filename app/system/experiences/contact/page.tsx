@@ -153,6 +153,8 @@ export default function ContactExperiencePage() {
               showMap={currentLayoutConfig.showMap}
               showContactInfo={currentLayoutConfig.showContactInfo}
               showSocialLinks={currentLayoutConfig.showSocialLinks}
+              device={previewDevice}
+              brandColor="#6366f1"
             />
           </BrowserFrame>
         </div>

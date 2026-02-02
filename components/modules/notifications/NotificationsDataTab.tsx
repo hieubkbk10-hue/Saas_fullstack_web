@@ -25,6 +25,7 @@ import { Badge, Card, Table, TableBody, TableCell, TableHead, TableHeader, Table
  };
  
 export function NotificationsDataTab({ colorClasses: _colorClasses }: NotificationsDataTabProps) {
+  void _colorClasses;
    const notificationsData = useQuery(api.notifications.listAll);
  
    const stats = useMemo(() => {

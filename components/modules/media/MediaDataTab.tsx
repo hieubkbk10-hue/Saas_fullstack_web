@@ -19,6 +19,7 @@ import { Badge, Card, Table, TableBody, TableCell, TableHead, TableHeader, Table
  }
  
 export function MediaDataTab({ colorClasses: _colorClasses }: MediaDataTabProps) {
+  void _colorClasses;
    const mediaData = useQuery(api.media.listAll);
    const statsData = useQuery(api.media.getStats);
    const foldersData = useQuery(api.media.getFolders);

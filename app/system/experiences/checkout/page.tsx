@@ -158,6 +158,8 @@ export default function CheckoutExperiencePage() {
               orderSummaryPosition={currentLayoutConfig.orderSummaryPosition}
               showPaymentMethods={currentLayoutConfig.showPaymentMethods}
               showShippingOptions={currentLayoutConfig.showShippingOptions}
+              device={previewDevice}
+              brandColor="#22c55e"
             />
           </BrowserFrame>
         </div>

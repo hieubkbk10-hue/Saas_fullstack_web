@@ -152,6 +152,8 @@ export default function WishlistExperiencePage() {
               showWishlistButton={currentLayoutConfig.showWishlistButton}
               showNote={currentLayoutConfig.showNote}
               showNotification={currentLayoutConfig.showNotification}
+              device={previewDevice}
+              brandColor="#ec4899"
             />
           </BrowserFrame>
         </div>

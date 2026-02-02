@@ -11,6 +11,7 @@ import { Badge, Card, Table, TableBody, TableCell, TableHead, TableHeader, Table
  }
  
 export function CartDataTab({ colorClasses: _colorClasses }: CartDataTabProps) {
+  void _colorClasses;
    const cartsData = useQuery(api.cart.listAll, { limit: 100 });
    const cartItemsData = useQuery(api.cart.listAllItems, { limit: 100 });
    const statsData = useQuery(api.cart.getStats);

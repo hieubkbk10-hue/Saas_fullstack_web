@@ -166,6 +166,8 @@ export default function SearchFilterExperiencePage() {
               showFilters={currentLayoutConfig.showFilters}
               showSorting={currentLayoutConfig.showSorting}
               showResultCount={currentLayoutConfig.showResultCount}
+              device={previewDevice}
+              brandColor="#14b8a6"
             />
           </BrowserFrame>
         </div>

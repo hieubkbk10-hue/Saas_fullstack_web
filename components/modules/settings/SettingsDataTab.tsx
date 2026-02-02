@@ -12,6 +12,7 @@
  }
  
 export function SettingsDataTab({ colorClasses: _colorClasses }: SettingsDataTabProps) {
+  void _colorClasses;
    const settingsData = useQuery(api.settings.listAll);
    const settingsGroups = useQuery(api.settings.listGroups);
    const setSetting = useMutation(api.settings.set);
