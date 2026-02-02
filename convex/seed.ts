@@ -251,8 +251,8 @@ export const seedPostsModule = mutation({
     }
 
     // 6. Seed posts module fields
-    const existingFields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "posts")).first();
-    if (!existingFields) {
+    const existingFields = await ctx.db.query("moduleFields").withIndex("by_module", q => q.eq("moduleKey", "posts")).collect();
+    if (existingFields.length === 0) {
       const fields = [
         { enabled: true, fieldKey: "title", isSystem: true, moduleKey: "posts", name: "Tiêu đề", order: 0, required: true, type: "text" as const },
         { enabled: true, fieldKey: "content", isSystem: true, moduleKey: "posts", name: "Nội dung", order: 1, required: true, type: "richtext" as const },
@@ -280,6 +280,23 @@ export const seedPostsModule = mutation({
       ];
       for (const field of categoryFields) {
         await ctx.db.insert("moduleFields", field);
+      }
+    }
+
+    if (existingFields.length > 0) {
+      const hasAuthorName = existingFields.some((field) => field.fieldKey === "author_name");
+      if (!hasAuthorName) {
+        const maxOrder = Math.max(...existingFields.map((field) => field.order)) + 1;
+        await ctx.db.insert("moduleFields", {
+          enabled: true,
+          fieldKey: "author_name",
+          isSystem: false,
+          moduleKey: "posts",
+          name: "Tác giả",
+          order: maxOrder,
+          required: false,
+          type: "text",
+        });
       }
     }
 
