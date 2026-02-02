@@ -31,5 +31,5 @@ export const servicesModule = defineModule({
 
    conventionNote: 'Slug tự động từ tiêu đề. Trường order và active bắt buộc theo Rails convention.',
 
-   tabs: ['config', 'data', 'appearance'],
+   tabs: ['config', 'data'],
 });

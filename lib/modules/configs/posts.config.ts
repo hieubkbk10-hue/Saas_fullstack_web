@@ -3,7 +3,7 @@
  
  export const postsModule = defineModule({
    key: 'posts',
-   name: 'Bài viết',
+  name: 'Bài viết',
    description: 'Cấu hình bài viết blog',
    icon: FileText,
    color: 'cyan',
@@ -31,5 +31,5 @@
    
    conventionNote: 'Slug tự động từ tiêu đề. Trường order và active bắt buộc.',
    
-   tabs: ['config', 'data', 'appearance'],
+   tabs: ['config', 'data'],
  });
