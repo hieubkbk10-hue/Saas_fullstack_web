@@ -4,6 +4,8 @@
  export { menusModule } from './menus.config';
  export { ordersModule } from './orders.config';
  export { postsModule } from './posts.config';
+export { productsModule } from './products.config';
  export { rolesModule } from './roles.config';
+export { servicesModule } from './services.config';
  export { usersModule } from './users.config';
  export { wishlistModule } from './wishlist.config';
