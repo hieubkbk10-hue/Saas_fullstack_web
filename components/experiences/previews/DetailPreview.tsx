@@ -11,6 +11,10 @@ type PostDetailPreviewProps = {
   showRelated: boolean;
   showShare: boolean;
   showComments: boolean;
+  quickContactEnabled?: boolean;
+  quickContactTitle?: string;
+  quickContactDescription?: string;
+  quickContactShowPrice?: boolean;
   device?: DeviceType;
   brandColor?: string;
 };
@@ -577,13 +581,28 @@ export function PostDetailPreview({
   );
 }
 
-function ClassicServicePreview({ showRelated, showShare, brandColor = '#3b82f6', device = 'desktop' }: PostDetailPreviewProps) {
+function ClassicServicePreview({
+  showRelated,
+  showShare,
+  brandColor = '#3b82f6',
+  device = 'desktop',
+  quickContactEnabled,
+  quickContactTitle,
+  quickContactDescription,
+  quickContactShowPrice,
+}: PostDetailPreviewProps) {
   const isDesktop = device === 'desktop';
   const isMobile = device === 'mobile';
   const relatedServices = showRelated ? MOCK_RELATED_SERVICES : [];
   const showPrice = true;
   const showDuration = true;
   const showFeatured = true;
+  const quickContactConfig = {
+    enabled: quickContactEnabled ?? true,
+    title: quickContactTitle ?? 'Liên hệ nhanh',
+    description: quickContactDescription ?? 'Tư vấn miễn phí, báo giá trong 24h.',
+    showPrice: quickContactShowPrice ?? true,
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -716,22 +735,26 @@ function ClassicServicePreview({ showRelated, showShare, brandColor = '#3b82f6',
                 </div>
               )}
 
-              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-700">Liên hệ nhanh</p>
-                    <p className="text-sm text-slate-500">Tư vấn miễn phí, báo giá trong 24h.</p>
-                  </div>
-                  {showPrice && (
-                    <div className="text-base font-semibold" style={{ color: brandColor }}>
-                      {formatPrice(MOCK_SERVICE.price)}
+              {quickContactConfig.enabled && (
+                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-700">{quickContactConfig.title}</p>
+                      {quickContactConfig.description && (
+                        <p className="text-sm text-slate-500">{quickContactConfig.description}</p>
+                      )}
                     </div>
-                  )}
+                    {showPrice && quickContactConfig.showPrice && (
+                      <div className="text-base font-semibold" style={{ color: brandColor }}>
+                        {formatPrice(MOCK_SERVICE.price)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3">
+                    <QuickContactButtonsPreview brandColor={brandColor} />
+                  </div>
                 </div>
-                <div className="mt-3">
-                  <QuickContactButtonsPreview brandColor={brandColor} />
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -1026,10 +1049,26 @@ export function ServiceDetailPreview({
   showRelated,
   showShare,
   showComments,
+  quickContactEnabled,
+  quickContactTitle,
+  quickContactDescription,
+  quickContactShowPrice,
   brandColor = '#3b82f6',
   device = 'desktop',
 }: PostDetailPreviewProps) {
-  const props = { showAuthor, showRelated, showShare, showComments, brandColor, device, layoutStyle };
+  const props = {
+    showAuthor,
+    showRelated,
+    showShare,
+    showComments,
+    brandColor,
+    device,
+    layoutStyle,
+    quickContactEnabled,
+    quickContactTitle,
+    quickContactDescription,
+    quickContactShowPrice,
+  };
 
   return (
     <div className="w-full">

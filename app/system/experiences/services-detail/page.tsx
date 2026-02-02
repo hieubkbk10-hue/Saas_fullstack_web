@@ -5,7 +5,7 @@ import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Briefcase, LayoutTemplate, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
-import { ModuleHeader, SettingsCard, SettingSelect } from '@/components/modules/shared';
+import { ModuleHeader, SettingsCard, SettingInput, SettingSelect } from '@/components/modules/shared';
 import { 
   ExperienceModuleLink, 
   ExperienceSummaryGrid, 
@@ -26,6 +26,10 @@ type ServiceDetailExperienceConfig = {
   showRelated: boolean;
   showShare: boolean;
   showComments: boolean;
+  quickContactEnabled: boolean;
+  quickContactTitle: string;
+  quickContactDescription: string;
+  quickContactShowPrice: boolean;
 };
 
 const EXPERIENCE_KEY = 'services_detail_ui';
@@ -42,6 +46,10 @@ const DEFAULT_CONFIG: ServiceDetailExperienceConfig = {
   showRelated: true,
   showShare: true,
   showComments: true,
+  quickContactEnabled: true,
+  quickContactTitle: 'Liên hệ nhanh',
+  quickContactDescription: 'Tư vấn miễn phí, báo giá trong 24h.',
+  quickContactShowPrice: true,
 };
 
 const HINTS = [
@@ -64,6 +72,10 @@ export default function ServiceDetailExperiencePage() {
       showRelated: raw?.showRelated ?? true,
       showShare: raw?.showShare ?? true,
       showComments: raw?.showComments ?? true,
+      quickContactEnabled: raw?.quickContactEnabled ?? true,
+      quickContactTitle: raw?.quickContactTitle ?? 'Liên hệ nhanh',
+      quickContactDescription: raw?.quickContactDescription ?? 'Tư vấn miễn phí, báo giá trong 24h.',
+      quickContactShowPrice: raw?.quickContactShowPrice ?? true,
     };
   }, [experienceSetting?.value]);
 
@@ -109,6 +121,10 @@ export default function ServiceDetailExperiencePage() {
           showRelated={config.showRelated}
           showShare={config.showShare}
           showComments={config.showComments}
+          quickContactEnabled={config.quickContactEnabled}
+          quickContactTitle={config.quickContactTitle}
+          quickContactDescription={config.quickContactDescription}
+          quickContactShowPrice={config.quickContactShowPrice}
         />
       </ExperiencePreview>
 
@@ -124,6 +140,42 @@ export default function ServiceDetailExperiencePage() {
               focusColor="focus:border-violet-500"
             />
           </SettingsCard>
+
+          {config.layoutStyle === 'classic' && (
+            <SettingsCard title="Liên hệ nhanh (Classic)">
+              <ExperienceBlockToggle
+                label="Hiển thị khối liên hệ nhanh"
+                description="Hiện/ẩn cục liên hệ nhanh ở sidebar"
+                enabled={config.quickContactEnabled}
+                onChange={() => setConfig(prev => ({ ...prev, quickContactEnabled: !prev.quickContactEnabled }))}
+                color="bg-violet-500"
+              />
+
+              <SettingInput
+                type="text"
+                label="Tiêu đề"
+                value={config.quickContactTitle}
+                onChange={(value) => setConfig(prev => ({ ...prev, quickContactTitle: value }))}
+                focusColor="focus:border-violet-500"
+              />
+
+              <SettingInput
+                type="text"
+                label="Mô tả"
+                value={config.quickContactDescription}
+                onChange={(value) => setConfig(prev => ({ ...prev, quickContactDescription: value }))}
+                focusColor="focus:border-violet-500"
+              />
+
+              <ExperienceBlockToggle
+                label="Hiển thị giá trong khối"
+                description="Ẩn/hiện giá ở phần liên hệ nhanh"
+                enabled={config.quickContactShowPrice}
+                onChange={() => setConfig(prev => ({ ...prev, quickContactShowPrice: !prev.quickContactShowPrice }))}
+                color="bg-violet-500"
+              />
+            </SettingsCard>
+          )}
 
           <Card className="p-4">
             <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Khối hiển thị</h3>

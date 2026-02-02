@@ -31,12 +31,20 @@ export interface RelatedService {
   price?: number;
 }
 
+type QuickContactConfig = {
+  enabled: boolean;
+  title: string;
+  description: string;
+  showPrice: boolean;
+};
+
 export interface StyleProps {
   service: ServiceDetailData;
   brandColor: string;
   relatedServices: RelatedService[];
   enabledFields: Set<string>;
   showShare?: boolean;
+  quickContact?: QuickContactConfig;
 }
 
 function formatPrice(price?: number): string {
@@ -80,10 +88,17 @@ function RelatedServiceThumb({ title, thumbnail, brandColor, size }: { title: st
 }
 
 // STYLE 1: CLASSIC - Professional service page with sticky CTA sidebar
-export function ClassicStyle({ service, brandColor, relatedServices, enabledFields, showShare = true }: StyleProps) {
+export function ClassicStyle({ service, brandColor, relatedServices, enabledFields, showShare = true, quickContact }: StyleProps) {
   const showPrice = enabledFields.has('price');
   const showDuration = enabledFields.has('duration');
   const showFeatured = enabledFields.has('featured');
+  const quickContactConfig: QuickContactConfig = {
+    enabled: true,
+    title: 'Liên hệ nhanh',
+    description: 'Tư vấn miễn phí, báo giá trong 24h.',
+    showPrice: true,
+    ...quickContact,
+  };
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -235,25 +250,29 @@ export function ClassicStyle({ service, brandColor, relatedServices, enabledFiel
                   </div>
                 </div>
               )}
-              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-700">Liên hệ nhanh</p>
-                    <p className="text-sm text-slate-500">Tư vấn miễn phí, báo giá trong 24h.</p>
-                  </div>
-                  {showPrice && (
-                    <div className="text-base font-semibold" style={{ color: brandColor }}>
-                      {formatPrice(service.price)}
+              {quickContactConfig.enabled && (
+                <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-700">{quickContactConfig.title}</p>
+                      {quickContactConfig.description && (
+                        <p className="text-sm text-slate-500">{quickContactConfig.description}</p>
+                      )}
                     </div>
-                  )}
+                    {showPrice && quickContactConfig.showPrice && (
+                      <div className="text-base font-semibold" style={{ color: brandColor }}>
+                        {formatPrice(service.price)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-3">
+                    <QuickContactButtons 
+                      serviceName={service.title}
+                      brandColor={brandColor}
+                    />
+                  </div>
                 </div>
-                <div className="mt-3">
-                  <QuickContactButtons 
-                    serviceName={service.title}
-                    brandColor={brandColor}
-                  />
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

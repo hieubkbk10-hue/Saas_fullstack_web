@@ -16,6 +16,10 @@ type ServiceDetailExperienceConfig = {
   showRelated: boolean;
   showShare: boolean;
   showComments: boolean;
+  quickContactEnabled: boolean;
+  quickContactTitle: string;
+  quickContactDescription: string;
+  quickContactShowPrice: boolean;
 };
 
 function useServiceDetailExperienceConfig(): ServiceDetailExperienceConfig {
@@ -28,6 +32,10 @@ function useServiceDetailExperienceConfig(): ServiceDetailExperienceConfig {
       showRelated: raw?.showRelated ?? true,
       showShare: raw?.showShare ?? true,
       showComments: raw?.showComments ?? true,
+      quickContactEnabled: raw?.quickContactEnabled ?? true,
+      quickContactTitle: raw?.quickContactTitle ?? 'Liên hệ nhanh',
+      quickContactDescription: raw?.quickContactDescription ?? 'Tư vấn miễn phí, báo giá trong 24h.',
+      quickContactShowPrice: raw?.quickContactShowPrice ?? true,
     };
   }, [setting?.value]);
 }
@@ -106,9 +114,16 @@ export default function ServiceDetailPage({ params }: PageProps) {
     showShare: experienceConfig.showShare,
   };
 
+  const quickContactConfig = {
+    enabled: experienceConfig.quickContactEnabled,
+    title: experienceConfig.quickContactTitle,
+    description: experienceConfig.quickContactDescription,
+    showPrice: experienceConfig.quickContactShowPrice,
+  };
+
   return (
     <>
-      {experienceConfig.layoutStyle === 'classic' && <ClassicStyle {...styleProps} />}
+      {experienceConfig.layoutStyle === 'classic' && <ClassicStyle {...styleProps} quickContact={quickContactConfig} />}
       {experienceConfig.layoutStyle === 'modern' && <ModernStyle {...styleProps} />}
       {experienceConfig.layoutStyle === 'minimal' && <MinimalStyle {...styleProps} />}
     </>
