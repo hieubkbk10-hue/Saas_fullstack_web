@@ -31,6 +31,8 @@ type ServiceDetailPreviewProps = {
   quickContactShowPrice?: boolean;
   quickContactButtonText?: string;
   quickContactButtonLink?: string;
+  modernContactEnabled?: boolean;
+  modernContactShowPrice?: boolean;
   modernHeroCtaText?: string;
   modernHeroCtaLink?: string;
   modernCtaSectionTitle?: string;
@@ -799,6 +801,8 @@ function ModernServicePreview({
   showRelated,
   brandColor = '#3b82f6',
   device = 'desktop',
+  modernContactEnabled,
+  modernContactShowPrice,
   modernHeroCtaText,
   modernHeroCtaLink,
   modernCtaSectionTitle,
@@ -809,10 +813,12 @@ function ModernServicePreview({
   const isTablet = device === 'tablet';
   const isMobile = device === 'mobile';
   const relatedServices = showRelated ? MOCK_RELATED_SERVICES : [];
-  const showPrice = true;
   const showDuration = true;
   const showFeatured = true;
   const headingSize = isMobile ? 'text-xl' : isTablet ? 'text-3xl' : 'text-4xl';
+  
+  const contactEnabled = modernContactEnabled ?? true;
+  const showPrice = modernContactShowPrice ?? true;
   
   const modernConfig = {
     heroCtaText: modernHeroCtaText ?? 'Liên hệ tư vấn',
@@ -855,21 +861,23 @@ function ModernServicePreview({
               </p>
             )}
 
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              {showPrice && (
-                <div className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm">
-                  <div>
-                    <p className="text-xs text-slate-500">Chỉ từ</p>
-                    <p className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold leading-none`} style={{ color: brandColor }}>
-                      {formatPrice(MOCK_SERVICE.price)}
-                    </p>
+            {contactEnabled && (
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                {showPrice && (
+                  <div className="flex items-center gap-3 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm">
+                    <div>
+                      <p className="text-xs text-slate-500">Chỉ từ</p>
+                      <p className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold leading-none`} style={{ color: brandColor }}>
+                        {formatPrice(MOCK_SERVICE.price)}
+                      </p>
+                    </div>
                   </div>
+                )}
+                <div className="min-w-[180px]">
+                  <QuickContactButtonsPreview brandColor={brandColor} label={modernConfig.heroCtaText} />
                 </div>
-              )}
-              <div className="min-w-[180px]">
-                <QuickContactButtonsPreview brandColor={brandColor} label={modernConfig.heroCtaText} />
               </div>
-            </div>
+            )}
 
             <div className="flex flex-wrap items-center gap-4 text-sm">
               <div className="flex items-center gap-2 text-slate-600">

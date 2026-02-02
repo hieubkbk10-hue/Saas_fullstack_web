@@ -32,6 +32,8 @@ type ServiceDetailExperienceConfig = {
   quickContactButtonText: string;
   quickContactButtonLink: string;
   // Modern config
+  modernContactEnabled: boolean;
+  modernContactShowPrice: boolean;
   modernHeroCtaText: string;
   modernHeroCtaLink: string;
   modernCtaSectionTitle: string;
@@ -64,6 +66,8 @@ const DEFAULT_CONFIG: ServiceDetailExperienceConfig = {
   quickContactButtonText: 'Liên hệ tư vấn',
   quickContactButtonLink: '',
   // Modern
+  modernContactEnabled: true,
+  modernContactShowPrice: true,
   modernHeroCtaText: 'Liên hệ tư vấn',
   modernHeroCtaLink: '',
   modernCtaSectionTitle: 'Sẵn sàng bắt đầu?',
@@ -101,6 +105,8 @@ export default function ServiceDetailExperiencePage() {
       quickContactButtonText: raw?.quickContactButtonText ?? 'Liên hệ tư vấn',
       quickContactButtonLink: raw?.quickContactButtonLink ?? '',
       // Modern
+      modernContactEnabled: raw?.modernContactEnabled ?? true,
+      modernContactShowPrice: raw?.modernContactShowPrice ?? true,
       modernHeroCtaText: raw?.modernHeroCtaText ?? 'Liên hệ tư vấn',
       modernHeroCtaLink: raw?.modernHeroCtaLink ?? '',
       modernCtaSectionTitle: raw?.modernCtaSectionTitle ?? 'Sẵn sàng bắt đầu?',
@@ -159,6 +165,8 @@ export default function ServiceDetailExperiencePage() {
           quickContactShowPrice={config.quickContactShowPrice}
           quickContactButtonText={config.quickContactButtonText}
           quickContactButtonLink={config.quickContactButtonLink}
+          modernContactEnabled={config.modernContactEnabled}
+          modernContactShowPrice={config.modernContactShowPrice}
           modernHeroCtaText={config.modernHeroCtaText}
           modernHeroCtaLink={config.modernHeroCtaLink}
           modernCtaSectionTitle={config.modernCtaSectionTitle}
@@ -257,24 +265,44 @@ export default function ServiceDetailExperiencePage() {
 
           {config.layoutStyle === 'modern' && (
             <SettingsCard title="Cấu hình thêm cho Modern">
-              <SettingInput
-                type="text"
-                label="Text nút liên hệ"
-                value={config.modernHeroCtaText}
-                onChange={(value) => setConfig(prev => ({ ...prev, modernHeroCtaText: value }))}
-                focusColor="focus:border-violet-500"
+              <ExperienceBlockToggle
+                label="Hiển thị cụm liên hệ"
+                description="Hiện/ẩn giá và nút liên hệ trong Hero"
+                enabled={config.modernContactEnabled}
+                onChange={() => setConfig(prev => ({ ...prev, modernContactEnabled: !prev.modernContactEnabled }))}
+                color="bg-violet-500"
               />
 
-              <div className="space-y-1">
-                <SettingInput
-                  type="text"
-                  label="Link nút liên hệ"
-                  value={config.modernHeroCtaLink}
-                  onChange={(value) => setConfig(prev => ({ ...prev, modernHeroCtaLink: value }))}
-                  focusColor="focus:border-violet-500"
-                />
-                <p className="text-xs text-slate-500">VD: https://zalo.me/ hoặc https://m.me/yourpage</p>
-              </div>
+              {config.modernContactEnabled && (
+                <>
+                  <ExperienceBlockToggle
+                    label="Hiển thị giá trong Hero"
+                    description="Hiện/ẩn giá dịch vụ"
+                    enabled={config.modernContactShowPrice}
+                    onChange={() => setConfig(prev => ({ ...prev, modernContactShowPrice: !prev.modernContactShowPrice }))}
+                    color="bg-violet-500"
+                  />
+
+                  <SettingInput
+                    type="text"
+                    label="Text nút liên hệ"
+                    value={config.modernHeroCtaText}
+                    onChange={(value) => setConfig(prev => ({ ...prev, modernHeroCtaText: value }))}
+                    focusColor="focus:border-violet-500"
+                  />
+
+                  <div className="space-y-1">
+                    <SettingInput
+                      type="text"
+                      label="Link nút liên hệ"
+                      value={config.modernHeroCtaLink}
+                      onChange={(value) => setConfig(prev => ({ ...prev, modernHeroCtaLink: value }))}
+                      focusColor="focus:border-violet-500"
+                    />
+                    <p className="text-xs text-slate-500">VD: https://zalo.me/ hoặc https://m.me/yourpage</p>
+                  </div>
+                </>
+              )}
 
               <ExperienceBlockToggle
                 label="Dịch vụ liên quan"

@@ -22,6 +22,8 @@ type ServiceDetailExperienceConfig = {
   quickContactButtonText: string;
   quickContactButtonLink: string;
   // Modern
+  modernContactEnabled: boolean;
+  modernContactShowPrice: boolean;
   modernHeroCtaText: string;
   modernHeroCtaLink: string;
   modernCtaSectionTitle: string;
@@ -50,6 +52,8 @@ function useServiceDetailExperienceConfig(): ServiceDetailExperienceConfig {
       quickContactButtonText: raw?.quickContactButtonText ?? 'Liên hệ tư vấn',
       quickContactButtonLink: raw?.quickContactButtonLink ?? '',
       // Modern
+      modernContactEnabled: raw?.modernContactEnabled ?? true,
+      modernContactShowPrice: raw?.modernContactShowPrice ?? true,
       modernHeroCtaText: raw?.modernHeroCtaText ?? 'Liên hệ tư vấn',
       modernHeroCtaLink: raw?.modernHeroCtaLink ?? '',
       modernCtaSectionTitle: raw?.modernCtaSectionTitle ?? 'Sẵn sàng bắt đầu?',
@@ -148,6 +152,8 @@ export default function ServiceDetailPage({ params }: PageProps) {
   };
 
   const modernConfig = {
+    contactEnabled: experienceConfig.modernContactEnabled,
+    contactShowPrice: experienceConfig.modernContactShowPrice,
     heroCtaText: experienceConfig.modernHeroCtaText,
     heroCtaLink: experienceConfig.modernHeroCtaLink,
     ctaSectionTitle: experienceConfig.modernCtaSectionTitle,

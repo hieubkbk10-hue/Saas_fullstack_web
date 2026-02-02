@@ -41,6 +41,8 @@ type QuickContactConfig = {
 };
 
 type ModernConfig = {
+  contactEnabled: boolean;
+  contactShowPrice: boolean;
   heroCtaText: string;
   heroCtaLink: string;
   ctaSectionTitle: string;
@@ -311,6 +313,8 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
   const showFeatured = enabledFields.has('featured');
   
   const config: ModernConfig = {
+    contactEnabled: true,
+    contactShowPrice: true,
     heroCtaText: 'Liên hệ tư vấn',
     heroCtaLink: '',
     ctaSectionTitle: 'Sẵn sàng bắt đầu?',
@@ -367,26 +371,28 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
             )}
 
             {/* Price & CTA - Inline horizontal layout */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              {showPrice && (
-                <div className="flex items-center gap-3 px-4 py-2 bg-background border border-border rounded-lg">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Chỉ từ</p>
-                    <p className="text-2xl md:text-3xl font-bold leading-none" style={{ color: brandColor }}>
-                      {formatPrice(service.price)}
-                    </p>
+            {config.contactEnabled && (
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                {showPrice && config.contactShowPrice && (
+                  <div className="flex items-center gap-3 px-4 py-2 bg-background border border-border rounded-lg">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Chỉ từ</p>
+                      <p className="text-2xl md:text-3xl font-bold leading-none" style={{ color: brandColor }}>
+                        {formatPrice(service.price)}
+                      </p>
+                    </div>
                   </div>
+                )}
+                <div className="min-w-[180px]">
+                  <QuickContactButtons 
+                    serviceName={service.title}
+                    brandColor={brandColor}
+                    buttonLabel={config.heroCtaText}
+                    buttonHref={config.heroCtaLink}
+                  />
                 </div>
-              )}
-              <div className="min-w-[180px]">
-                <QuickContactButtons 
-                  serviceName={service.title}
-                  brandColor={brandColor}
-                  buttonLabel={config.heroCtaText}
-                  buttonHref={config.heroCtaLink}
-                />
               </div>
-            </div>
+            )}
 
             {/* Meta info - Muted */}
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
