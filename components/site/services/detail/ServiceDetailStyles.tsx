@@ -321,44 +321,51 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <section className="relative overflow-hidden" style={{ backgroundColor: `${brandColor}06` }}>
-        <div className="absolute inset-0 opacity-25" style={{ backgroundImage: `radial-gradient(circle at 20% 45%, ${brandColor}18 0%, transparent 55%), radial-gradient(circle at 80% 55%, ${brandColor}12 0%, transparent 60%)` }} />
+    <div className="min-h-screen bg-background">
+      {/* Hero Section - Clean & Minimal */}
+      <section className="relative overflow-hidden bg-muted/30">
+        <div className="absolute inset-0 opacity-15" style={{ backgroundImage: `radial-gradient(circle at 20% 45%, ${brandColor}10 0%, transparent 55%), radial-gradient(circle at 80% 55%, ${brandColor}08 0%, transparent 60%)` }} />
         
-        <div className="relative max-w-6xl mx-auto px-4 py-12 md:py-20">
-          <div className="max-w-3xl space-y-6">
-            <div className="flex flex-wrap items-center gap-3">
+        <div className="relative max-w-6xl mx-auto px-4 py-10 md:py-16">
+          <div className="max-w-4xl space-y-4">
+            {/* Badges */}
+            <div className="flex flex-wrap items-center gap-2">
               {showFeatured && service.featured && (
-                <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-400 text-amber-900 text-sm font-semibold rounded-full shadow-sm">
-                  <Star size={14} className="fill-current" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-400 text-amber-900 text-xs font-semibold rounded-md shadow-sm">
+                  <Star size={12} className="fill-current" />
                   Nổi bật
                 </span>
               )}
-              <span className="px-4 py-1.5 bg-white/80 backdrop-blur-sm text-sm font-medium rounded-full shadow-sm" style={{ color: brandColor }}>
+              <span className="px-3 py-1 bg-background border border-border text-xs font-medium rounded-md" style={{ color: brandColor }}>
                 {service.categoryName}
               </span>
             </div>
 
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
+            {/* Title - Shadcn typography scale */}
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground leading-[1.15] tracking-tight">
               {service.title}
             </h1>
 
+            {/* Lead text */}
             {service.excerpt && (
-              <p className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-2xl">
+              <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl">
                 {service.excerpt}
               </p>
             )}
 
-            <div className="flex flex-wrap items-center gap-4">
+            {/* Price & CTA - Inline horizontal layout */}
+            <div className="flex flex-wrap items-center gap-3 pt-2">
               {showPrice && (
-                <div className="min-w-[160px]">
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Chỉ từ</p>
-                  <p className="text-3xl md:text-4xl font-bold" style={{ color: brandColor }}>
-                    {formatPrice(service.price)}
-                  </p>
+                <div className="flex items-center gap-3 px-4 py-2 bg-background border border-border rounded-lg">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Chỉ từ</p>
+                    <p className="text-2xl md:text-3xl font-bold leading-none" style={{ color: brandColor }}>
+                      {formatPrice(service.price)}
+                    </p>
+                  </div>
                 </div>
               )}
-              <div className="min-w-[220px]">
+              <div className="min-w-[180px]">
                 <QuickContactButtons 
                   serviceName={service.title}
                   brandColor={brandColor}
@@ -368,15 +375,16 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-6">
+            {/* Meta info - Muted */}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
-                <Eye size={20} className="text-slate-400" />
-                <span className="text-slate-600"><strong className="text-slate-900">{service.views.toLocaleString()}</strong> lượt xem</span>
+                <Eye size={16} />
+                <span>{service.views.toLocaleString()} lượt xem</span>
               </div>
               {showDuration && service.duration && (
                 <div className="flex items-center gap-2">
-                  <Clock size={20} className="text-slate-400" />
-                  <span className="text-slate-600">Hoàn thành trong <strong className="text-slate-900">{service.duration}</strong></span>
+                  <Clock size={16} />
+                  <span>{service.duration}</span>
                 </div>
               )}
             </div>
@@ -384,71 +392,59 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
         </div>
       </section>
 
+      {/* Hero Image - Subtle shadow */}
       {service.thumbnail && (
-        <div className="max-w-5xl mx-auto px-4 -mt-10 relative z-10">
-          <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[16/9]">
+        <div className="max-w-6xl mx-auto px-4 -mt-4 relative z-10">
+          <div className="relative rounded-lg overflow-hidden border border-border shadow-2xl aspect-[16/9]">
             <Image
               src={service.thumbnail}
               alt={service.title}
               fill
-              sizes="(max-width: 1024px) 100vw, 800px"
+              sizes="(max-width: 1024px) 100vw, 1200px"
               className="object-cover"
             />
           </div>
         </div>
       )}
 
-      <section className="max-w-3xl mx-auto px-4 py-14 md:py-20">
-        <article className="prose prose-lg prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-a:no-underline hover:prose-a:underline prose-img:rounded-2xl prose-strong:text-slate-900" style={{ '--tw-prose-links': brandColor } as React.CSSProperties}>
+      {/* Content Section */}
+      <section className="max-w-4xl mx-auto px-4 py-12 md:py-16">
+        <article className="prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:no-underline hover:prose-a:underline prose-img:rounded-lg prose-strong:text-foreground" style={{ '--tw-prose-links': brandColor } as React.CSSProperties}>
           <div dangerouslySetInnerHTML={{ __html: service.content }} />
         </article>
-
-        <div className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 text-center">
-          <h3 className="text-xl md:text-2xl font-bold text-slate-900">{config.ctaSectionTitle}</h3>
-          <p className="text-slate-600 mt-2 mb-5 max-w-md mx-auto">
-            {config.ctaSectionDescription}
-          </p>
-          <div className="flex justify-center">
-            <QuickContactButtons 
-              serviceName={service.title}
-              brandColor={brandColor}
-              buttonLabel={config.ctaButtonText}
-              buttonHref={config.ctaButtonLink}
-            />
-          </div>
-        </div>
       </section>
 
+      {/* Related Services - Clean cards */}
       {relatedServices.length > 0 && (
-        <section className="bg-slate-50 py-12">
+        <section className="bg-muted/30 py-10 md:py-12">
           <div className="max-w-6xl mx-auto px-4">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-slate-900">Dịch vụ liên quan</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-foreground">Dịch vụ liên quan</h2>
               <Link 
                 href="/services"
-                className="text-sm font-medium flex items-center gap-1 transition-colors hover:opacity-80"
+                className="text-sm font-medium flex items-center gap-1 transition-colors hover:opacity-70"
                 style={{ color: brandColor }}
               >
                 Xem tất cả
                 <ArrowRight size={16} />
               </Link>
             </div>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-3 gap-5">
               {relatedServices.map((s) => (
                 <Link 
                   key={s._id} 
                   href={`/services/${s.slug}`}
-                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+                  className="group bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg hover:border-muted-foreground/20 transition-all duration-200"
                 >
-                  <div className="aspect-[16/10] overflow-hidden bg-slate-100 relative">
+                  <div className="aspect-video overflow-hidden bg-muted relative">
                     <RelatedServiceThumb title={s.title} thumbnail={s.thumbnail} brandColor={brandColor} size="large" />
                   </div>
-                  <div className="p-5">
-                    <h3 className="font-semibold text-slate-900 mb-2 group-hover:opacity-70 transition-opacity">
+                  <div className="p-4">
+                    <h3 className="text-sm font-semibold text-foreground mb-2 line-clamp-2 group-hover:opacity-70 transition-opacity">
                       {s.title}
                     </h3>
                     {showPrice && (
-                      <p className="font-bold" style={{ color: brandColor }}>
+                      <p className="text-base font-bold" style={{ color: brandColor }}>
                         {formatPrice(s.price)}
                       </p>
                     )}
@@ -460,11 +456,11 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
         </section>
       )}
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Back link */}
+      <div className="max-w-6xl mx-auto px-4 py-6">
         <Link 
           href="/services"
-          className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80"
-          style={{ color: brandColor }}
+          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft size={16} />
           Quay lại danh sách dịch vụ
