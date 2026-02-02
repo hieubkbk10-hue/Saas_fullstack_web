@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, usePaginatedQuery, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -16,6 +16,7 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBo
 
 const MODULE_KEY = 'posts';
 const CATEGORY_MODULE_KEY = 'postCategories';
+const AUTHOR_FIELD_KEY = 'author_id';
 
 const FEATURES_CONFIG = [
   { icon: Tag, key: 'enableTags', label: 'Tags', linkedField: 'tags' },
@@ -77,12 +78,15 @@ export default function PostsModuleConfigPage() {
 
   const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
   const updateField = useMutation(api.admin.modules.updateModuleField);
+  const createField = useMutation(api.admin.modules.createModuleField);
   const setSetting = useMutation(api.admin.modules.setModuleSetting);
   const seedPostsModule = useMutation(api.seed.seedPostsModule);
   const clearPostsData = useMutation(api.seed.clearPostsData);
   const seedComments = useMutation(api.seed.seedComments);
   const clearComments = useMutation(api.seed.clearComments);
   const setMultipleSettings = useMutation(api.settings.setMultiple);
+  const authorField = useMemo(() => fieldsData?.find(field => field.fieldKey === AUTHOR_FIELD_KEY), [fieldsData]);
+  const hasCreatedAuthorField = useRef(false);
 
   // Appearance tab queries
   const listStyleSetting = useQuery(api.settings.getByKey, { key: 'posts_list_style' });
@@ -115,6 +119,22 @@ export default function PostsModuleConfigPage() {
       setLocalFeatures(features);
     }
   }, [featuresData]);
+
+  useEffect(() => {
+    if (!fieldsData || authorField || hasCreatedAuthorField.current) {return;}
+    hasCreatedAuthorField.current = true;
+    const nextOrder = fieldsData.length > 0 ? Math.max(...fieldsData.map(field => field.order)) + 1 : 0;
+    void createField({
+      enabled: true,
+      fieldKey: AUTHOR_FIELD_KEY,
+      isSystem: false,
+      moduleKey: MODULE_KEY,
+      name: 'Tác giả',
+      order: nextOrder,
+      required: false,
+      type: 'select',
+    });
+  }, [authorField, createField, fieldsData]);
 
   // Sync post fields
   useEffect(() => {
