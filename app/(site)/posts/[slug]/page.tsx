@@ -1002,9 +1002,12 @@ function CommentsSection({
                 <div className="mt-4 space-y-3 rounded-xl border border-border/50 bg-muted/20 p-3">
                   <div className="space-y-3">
                     {(replyMap.get(comment._id) ?? []).map((reply) => (
-                      <div key={reply._id} className="rounded-lg border border-border/40 bg-background px-3 py-2">
+                      <div key={reply._id} className="ml-6 rounded-lg border border-border/40 bg-background px-3 py-2 shadow-[inset_2px_0_0_rgba(148,163,184,0.45)]">
                         <div className="flex items-center justify-between gap-2 text-xs">
-                          <span className="font-medium text-foreground">{reply.authorName}</span>
+                          <span className="font-medium text-foreground">
+                            {reply.authorName}
+                            <span className="ml-2 text-[10px] text-muted-foreground">↳ Trả lời {comment.authorName}</span>
+                          </span>
                           <span className="text-[10px] text-muted-foreground">
                             {new Date(reply._creationTime).toLocaleDateString('vi-VN')}
                           </span>
