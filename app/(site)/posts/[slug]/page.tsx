@@ -963,34 +963,41 @@ function CommentsSection({
   };
 
   return (
-    <section className="rounded-2xl border border-border/50 bg-background/70 p-6 shadow-sm">
+    <section className="rounded-2xl border border-border/40 bg-card/60 p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-lg font-semibold text-foreground">Bình luận</h3>
-        <span className="text-xs text-muted-foreground">{comments.length} bình luận</span>
+        <h3 className="text-base font-semibold text-foreground">Bình luận</h3>
+        <span className="text-[11px] text-muted-foreground">{comments.length} bình luận</span>
       </div>
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 space-y-2">
         {comments.length > 0 ? (
           comments.map((comment) => (
-            <div key={comment._id} className="rounded-xl border border-border/40 bg-background p-4 shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
-              <div className="flex items-center justify-between gap-2 text-sm">
-                <span className="font-medium text-foreground">{comment.authorName}</span>
-                <span className="text-[11px] text-muted-foreground">
-                  {new Date(comment._creationTime).toLocaleDateString('vi-VN')}
-                </span>
+            <div key={comment._id} className="rounded-xl border border-border/40 bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
+                    {comment.authorName.slice(0, 1).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-foreground">{comment.authorName}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {new Date(comment._creationTime).toLocaleDateString('vi-VN')}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">{comment.content}</p>
+              <p className="mt-3 text-sm text-muted-foreground">{comment.content}</p>
               {(showLikes || showReplies) && (
                 <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                   {showLikes && (
-                    <button type="button" onClick={() => onLike(comment._id)} className="inline-flex items-center gap-1.5 hover:text-foreground">
+                    <button type="button" onClick={() => onLike(comment._id)} className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-2.5 py-1 hover:text-foreground">
                       <Heart className="h-3.5 w-3.5" />
                       Thích
                       <span className="text-[11px] text-muted-foreground">{comment.likesCount ?? 0}</span>
                     </button>
                   )}
                   {showReplies && (
-                    <button type="button" onClick={() => toggleReplyForm(comment._id)} className="inline-flex items-center gap-1.5 hover:text-foreground">
+                    <button type="button" onClick={() => toggleReplyForm(comment._id)} className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-2.5 py-1 hover:text-foreground">
                       <Reply className="h-3.5 w-3.5" />
                       Trả lời
                     </button>
@@ -999,20 +1006,22 @@ function CommentsSection({
               )}
 
               {showReplies && openReplyIds.has(comment._id) && (
-                <div className="mt-4 space-y-3 rounded-xl border border-border/50 bg-muted/20 p-3">
-                  <div className="space-y-3">
+                <div className="mt-4 space-y-3 rounded-xl border border-border/50 bg-muted/30 p-3">
+                  <div className="space-y-2">
                     {(replyMap.get(comment._id) ?? []).map((reply) => (
-                      <div key={reply._id} className="ml-6 rounded-lg border border-border/40 bg-background px-3 py-2 shadow-[inset_2px_0_0_rgba(148,163,184,0.45)]">
-                        <div className="flex items-center justify-between gap-2 text-xs">
-                          <span className="font-medium text-foreground">
-                            {reply.authorName}
-                            <span className="ml-2 text-[10px] text-muted-foreground">↳ Trả lời {comment.authorName}</span>
-                          </span>
-                          <span className="text-[10px] text-muted-foreground">
-                            {new Date(reply._creationTime).toLocaleDateString('vi-VN')}
-                          </span>
+                      <div key={reply._id} className="ml-5 border-l border-border/60 pl-3">
+                        <div className="rounded-lg border border-border/40 bg-card px-3 py-2">
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-foreground">{reply.authorName}</span>
+                              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">↳ Trả lời {comment.authorName}</span>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">
+                              {new Date(reply._creationTime).toLocaleDateString('vi-VN')}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">{reply.content}</p>
                         </div>
-                        <p className="mt-1 text-xs text-muted-foreground">{reply.content}</p>
                       </div>
                     ))}
                   </div>
@@ -1022,14 +1031,14 @@ function CommentsSection({
                       value={replyDrafts[comment._id]?.name ?? ''}
                       onChange={(event) =>{  onReplyDraftChange(comment._id, 'name', event.target.value); }}
                       placeholder="Họ và tên"
-                      className="h-9 w-full rounded-lg border border-border/60 bg-background px-3 text-xs"
+                      className="h-9 w-full rounded-lg border border-border/60 bg-card px-3 text-xs"
                       required
                     />
                     <input
                       value={replyDrafts[comment._id]?.email ?? ''}
                       onChange={(event) =>{  onReplyDraftChange(comment._id, 'email', event.target.value); }}
                       placeholder="Email (không bắt buộc)"
-                      className="h-9 w-full rounded-lg border border-border/60 bg-background px-3 text-xs"
+                      className="h-9 w-full rounded-lg border border-border/60 bg-card px-3 text-xs"
                       type="email"
                     />
                   </div>
@@ -1037,7 +1046,7 @@ function CommentsSection({
                     value={replyDrafts[comment._id]?.content ?? ''}
                     onChange={(event) =>{  onReplyDraftChange(comment._id, 'content', event.target.value); }}
                     placeholder="Nội dung trả lời..."
-                    className="min-h-[80px] w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-xs"
+                    className="min-h-[80px] w-full rounded-lg border border-border/60 bg-card px-3 py-2 text-xs"
                     required
                   />
                   <div className="flex items-center justify-end">
@@ -1046,7 +1055,7 @@ function CommentsSection({
                       disabled={replySubmittingId === comment._id}
                       onClick={() => onReplySubmit(comment._id)}
                       style={{ backgroundColor: brandColor }}
-                      className="h-8 rounded-full px-3 text-xs text-white"
+                      className="h-8 rounded-full px-3 text-xs text-white shadow-sm"
                     >
                       {replySubmittingId === comment._id ? 'Đang gửi...' : 'Gửi trả lời'}
                     </Button>
@@ -1062,20 +1071,20 @@ function CommentsSection({
         )}
       </div>
 
-      <form onSubmit={onSubmit} className="mt-6 space-y-3">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <form onSubmit={onSubmit} className="mt-5 space-y-3">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <input
             value={commentName}
             onChange={(event) =>{  onNameChange(event.target.value); }}
             placeholder="Họ và tên"
-            className="h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm"
+            className="h-9 w-full rounded-lg border border-border/60 bg-card px-3 text-sm"
             required
           />
           <input
             value={commentEmail}
             onChange={(event) =>{  onEmailChange(event.target.value); }}
             placeholder="Email (không bắt buộc)"
-            className="h-10 w-full rounded-xl border border-border/60 bg-background px-3 text-sm"
+            className="h-9 w-full rounded-lg border border-border/60 bg-card px-3 text-sm"
             type="email"
           />
         </div>
@@ -1083,7 +1092,7 @@ function CommentsSection({
           value={commentContent}
           onChange={(event) =>{  onContentChange(event.target.value); }}
           placeholder="Nội dung bình luận..."
-          className="min-h-[110px] w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-sm"
+          className="min-h-[100px] w-full rounded-lg border border-border/60 bg-card px-3 py-2 text-sm"
           required
         />
         {commentMessage && (
