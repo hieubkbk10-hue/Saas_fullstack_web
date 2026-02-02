@@ -32,7 +32,7 @@ type PostDetailExperienceConfig = {
 };
 
 const EXPERIENCE_KEY = 'posts_detail_ui';
-const AUTHOR_FIELD_KEY = 'author_id';
+const AUTHOR_FIELD_KEY = 'author_name';
 
 // Legacy key for backward compatibility
 const LEGACY_DETAIL_STYLE_KEY = 'posts_detail_style';

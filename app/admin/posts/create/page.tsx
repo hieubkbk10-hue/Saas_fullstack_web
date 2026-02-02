@@ -18,7 +18,6 @@ const MODULE_KEY = 'posts';
 export default function PostCreatePage() {
   const router = useRouter();
   const categoriesData = useQuery(api.postCategories.listAll, {});
-  const usersData = useQuery(api.users.listAll);
   const createPost = useMutation(api.posts.create);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
 
@@ -30,7 +29,7 @@ export default function PostCreatePage() {
   const [excerpt, setExcerpt] = useState('');
   const [thumbnail, setThumbnail] = useState<string | undefined>();
   const [categoryId, setCategoryId] = useState('');
-  const [authorId, setAuthorId] = useState('');
+  const [authorName, setAuthorName] = useState('');
   const [status, setStatus] = useState<'Draft' | 'Published'>('Draft');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -44,12 +43,6 @@ export default function PostCreatePage() {
       }
     }
   }, [settingsData]);
-
-  useEffect(() => {
-    if (usersData?.length && !authorId) {
-      setAuthorId(usersData[0]._id);
-    }
-  }, [authorId, usersData]);
 
   // FIX LOW-002: Keyboard shortcuts
   const handleSaveShortcut = useCallback(() => {
@@ -88,12 +81,12 @@ export default function PostCreatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !categoryId || !usersData?.length) {return;}
+    if (!title.trim() || !categoryId) {return;}
 
     setIsSubmitting(true);
     try {
       await createPost({
-        authorId: (enabledFields.has('author_id') ? authorId : usersData[0]._id) as Id<"users">,
+        authorName: enabledFields.has('author_name') ? authorName.trim() || undefined : undefined,
         categoryId: categoryId as Id<"postCategories">,
         content,
         excerpt: excerpt.trim() || undefined,
@@ -196,18 +189,14 @@ export default function PostCreatePage() {
                   </Button>
                 </div>
               </div>
-              {enabledFields.has('author_id') && (
+              {enabledFields.has('author_name') && (
                 <div className="space-y-2">
                   <Label>Tác giả</Label>
-                  <select
-                    value={authorId}
-                    onChange={(e) =>{  setAuthorId(e.target.value); }}
-                    className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
-                  >
-                    {usersData?.map((user) => (
-                      <option key={user._id} value={user._id}>{user.name}</option>
-                    ))}
-                  </select>
+                  <Input
+                    value={authorName}
+                    onChange={(e) =>{  setAuthorName(e.target.value); }}
+                    placeholder="Nhập tên tác giả..."
+                  />
                 </div>
               )}
             </CardContent>

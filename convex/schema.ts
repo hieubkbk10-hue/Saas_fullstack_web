@@ -311,7 +311,7 @@ export default defineSchema({
     excerpt: v.optional(v.string()),
     thumbnail: v.optional(v.string()),
     categoryId: v.id("postCategories"),
-    authorId: v.id("users"),
+    authorName: v.optional(v.string()),
     status: v.union(
       v.literal("Published"),
       v.literal("Draft"),
@@ -326,7 +326,7 @@ export default defineSchema({
   })
     .index("by_slug", ["slug"])
     .index("by_category_status", ["categoryId", "status"])
-    .index("by_author_status", ["authorId", "status"])
+    .index("by_author_name_status", ["authorName", "status"])
     .index("by_status_publishedAt", ["status", "publishedAt"])
     .index("by_status_views", ["status", "views"]),
 

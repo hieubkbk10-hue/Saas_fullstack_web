@@ -68,11 +68,8 @@ export default function PostDetailPage({ params }: PageProps) {
     };
   }, [experienceSetting?.value]);
 
-  const shouldShowAuthor = enabledFields.has('author_id') && experienceConfig.showAuthor;
-  const author = useQuery(
-    api.users.getById,
-    post && shouldShowAuthor ? { id: post.authorId } : 'skip'
-  );
+  const shouldShowAuthor = enabledFields.has('author_name') && experienceConfig.showAuthor;
+  const authorName = post?.authorName ?? '';
   
   // Related posts - lấy cùng category
   const relatedPosts = useQuery(
@@ -130,7 +127,7 @@ export default function PostDetailPage({ params }: PageProps) {
           relatedPosts={filteredRelated}
           enabledFields={enabledFields}
           showAuthor={shouldShowAuthor}
-          authorName={author?.name ?? ''}
+          authorName={authorName}
         />
       )}
       {style === 'modern' && (
@@ -140,7 +137,7 @@ export default function PostDetailPage({ params }: PageProps) {
           relatedPosts={filteredRelated}
           enabledFields={enabledFields}
           showAuthor={shouldShowAuthor}
-          authorName={author?.name ?? ''}
+          authorName={authorName}
         />
       )}
       {style === 'minimal' && (
@@ -150,7 +147,7 @@ export default function PostDetailPage({ params }: PageProps) {
           relatedPosts={filteredRelated}
           enabledFields={enabledFields}
           showAuthor={shouldShowAuthor}
-          authorName={author?.name ?? ''}
+          authorName={authorName}
         />
       )}
     </>
@@ -159,7 +156,7 @@ export default function PostDetailPage({ params }: PageProps) {
 
 interface PostData {
   _id: Id<"posts">;
-  authorId: Id<"users">;
+  authorName?: string;
   title: string;
   slug: string;
   content: string;

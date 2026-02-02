@@ -16,7 +16,7 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBo
 
 const MODULE_KEY = 'posts';
 const CATEGORY_MODULE_KEY = 'postCategories';
-const AUTHOR_FIELD_KEY = 'author_id';
+const AUTHOR_FIELD_KEY = 'author_name';
 
 const FEATURES_CONFIG = [
   { icon: Tag, key: 'enableTags', label: 'Tags', linkedField: 'tags' },
@@ -132,7 +132,7 @@ export default function PostsModuleConfigPage() {
       name: 'Tác giả',
       order: nextOrder,
       required: false,
-      type: 'select',
+      type: 'text',
     });
   }, [authorField, createField, fieldsData]);
 

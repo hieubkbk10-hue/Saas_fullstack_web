@@ -8,7 +8,7 @@ import type { Doc } from "./_generated/dataModel";
 const postDoc = v.object({
   _creationTime: v.number(),
   _id: v.id("posts"),
-  authorId: v.id("users"),
+  authorName: v.optional(v.string()),
   categoryId: v.id("postCategories"),
   content: v.string(),
   excerpt: v.optional(v.string()),
@@ -103,7 +103,7 @@ export const listByCategory = query({
 
 export const listByAuthor = query({
   args: {
-    authorId: v.id("users"),
+    authorName: v.string(),
     paginationOpts: paginationOptsValidator,
     status: v.optional(contentStatus),
   },
@@ -111,14 +111,14 @@ export const listByAuthor = query({
     if (args.status) {
       return  ctx.db
         .query("posts")
-        .withIndex("by_author_status", (q) =>
-          q.eq("authorId", args.authorId).eq("status", args.status!)
+        .withIndex("by_author_name_status", (q) =>
+          q.eq("authorName", args.authorName).eq("status", args.status!)
         )
         .paginate(args.paginationOpts);
     }
     return  ctx.db
       .query("posts")
-      .withIndex("by_author_status", (q) => q.eq("authorId", args.authorId))
+      .withIndex("by_author_name_status", (q) => q.eq("authorName", args.authorName))
       .paginate(args.paginationOpts);
   },
   returns: paginatedPosts,
@@ -263,7 +263,7 @@ export const countPublished = query({
 
 export const create = mutation({
   args: {
-    authorId: v.id("users"),
+    authorName: v.optional(v.string()),
     categoryId: v.id("postCategories"),
     content: v.string(),
     excerpt: v.optional(v.string()),
@@ -279,7 +279,7 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
-    authorId: v.optional(v.id("users")),
+    authorName: v.optional(v.string()),
     categoryId: v.optional(v.id("postCategories")),
     content: v.optional(v.string()),
     excerpt: v.optional(v.string()),

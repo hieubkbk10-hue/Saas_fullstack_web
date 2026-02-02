@@ -152,7 +152,7 @@ export async function create(
     excerpt?: string;
     thumbnail?: string;
     categoryId: Id<"postCategories">;
-    authorId: Id<"users">;
+    authorName?: string;
     status?: Doc<"posts">["status"];
     order?: number;
   }
@@ -165,7 +165,7 @@ export async function create(
   const status = args.status ?? "Draft";
 
   return  ctx.db.insert("posts", {
-    authorId: args.authorId,
+    authorName: args.authorName,
     categoryId: args.categoryId,
     content: args.content,
     excerpt: args.excerpt,
@@ -186,7 +186,7 @@ export async function update(
   ctx: MutationCtx,
   args: {
     id: Id<"posts">;
-    authorId?: Id<"users">;
+    authorName?: string;
     title?: string;
     slug?: string;
     content?: string;

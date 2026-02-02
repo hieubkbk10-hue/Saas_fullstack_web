@@ -178,7 +178,7 @@ export const clearAnalyticsConfig = mutation({
 export const seedPostsModule = mutation({
   args: {},
   handler: async (ctx) => {
-    // 1. Seed roles if not exist (needed for authorId)
+    // 1. Seed roles if not exist
     let adminRoleId = (await ctx.db.query("roles").withIndex("by_name", q => q.eq("name", "Admin")).first())?._id;
     adminRoleId ??= await ctx.db.insert("roles", {
         color: "#3b82f6",
@@ -190,13 +190,15 @@ export const seedPostsModule = mutation({
       });
 
     // 2. Seed users if not exist
-    let adminUserId = (await ctx.db.query("users").withIndex("by_email", q => q.eq("email", "admin@example.com")).first())?._id;
-    adminUserId ??= await ctx.db.insert("users", {
+    const adminUser = await ctx.db.query("users").withIndex("by_email", q => q.eq("email", "admin@example.com")).first();
+    if (!adminUser) {
+      await ctx.db.insert("users", {
         email: "admin@example.com",
         name: "Admin User",
         roleId: adminRoleId,
         status: "Active",
       });
+    }
 
     // 3. Seed post categories
     const existingCategories = await ctx.db.query("postCategories").first();
@@ -222,12 +224,12 @@ export const seedPostsModule = mutation({
       
       if (tinTucCat && huongDanCat && khuyenMaiCat) {
         const posts = [
-          { authorId: adminUserId, categoryId: tinTucCat._id, content: "<p>Chúng tôi vui mừng giới thiệu dòng sản phẩm mới nhất với nhiều tính năng đột phá...</p>", excerpt: "Khám phá dòng sản phẩm mới với công nghệ tiên tiến", order: 0, publishedAt: Date.now() - 86_400_000, slug: "ra-mat-san-pham-moi-thang-1-2025", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400", title: "Ra mắt sản phẩm mới tháng 1/2025", views: 1250 },
-          { authorId: adminUserId, categoryId: huongDanCat._id, content: "<p>Bài viết này sẽ hướng dẫn bạn từng bước cách sử dụng ứng dụng di động của chúng tôi...</p>", excerpt: "Hướng dẫn chi tiết từ A-Z", order: 1, publishedAt: Date.now() - 172_800_000, slug: "huong-dan-su-dung-ung-dung-di-dong", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400", title: "Hướng dẫn sử dụng ứng dụng di động", views: 890 },
-          { authorId: adminUserId, categoryId: khuyenMaiCat._id, content: "<p>Chương trình khuyến mãi đặc biệt giảm giá lên đến 50% cho tất cả sản phẩm...</p>", excerpt: "Ưu đãi khủng mừng năm mới 2025", order: 2, publishedAt: Date.now() - 259_200_000, slug: "giam-gia-50-nhan-dip-nam-moi", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=400", title: "Giảm giá 50% nhân dịp năm mới", views: 2100 },
-          { authorId: adminUserId, categoryId: tinTucCat._id, content: "<p>Chính sách bảo hành mới sẽ có hiệu lực từ ngày 01/02/2025 với nhiều cải tiến...</p>", excerpt: "Thông tin chính sách bảo hành", order: 3, slug: "cap-nhat-chinh-sach-bao-hanh-moi", status: "Draft" as const, thumbnail: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400", title: "Cập nhật chính sách bảo hành mới", views: 0 },
-          { authorId: adminUserId, categoryId: huongDanCat._id, content: "<p>Các phương thức thanh toán online được hỗ trợ và hướng dẫn chi tiết...</p>", excerpt: "Thanh toán nhanh chóng, an toàn", order: 4, publishedAt: Date.now() - 345_600_000, slug: "huong-dan-thanh-toan-online", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400", title: "Hướng dẫn thanh toán online", views: 650 },
-          { authorId: adminUserId, categoryId: tinTucCat._id, content: "<p>Điểm lại những sản phẩm được yêu thích nhất trong năm qua...</p>", excerpt: "Những sản phẩm hot nhất năm", order: 5, publishedAt: Date.now() - 604_800_000, slug: "top-10-san-pham-ban-chay-nhat-2024", status: "Archived" as const, thumbnail: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400", title: "Top 10 sản phẩm bán chạy nhất 2024", views: 3200 },
+          { authorName: "Admin", categoryId: tinTucCat._id, content: "<p>Chúng tôi vui mừng giới thiệu dòng sản phẩm mới nhất với nhiều tính năng đột phá...</p>", excerpt: "Khám phá dòng sản phẩm mới với công nghệ tiên tiến", order: 0, publishedAt: Date.now() - 86_400_000, slug: "ra-mat-san-pham-moi-thang-1-2025", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400", title: "Ra mắt sản phẩm mới tháng 1/2025", views: 1250 },
+          { authorName: "Admin", categoryId: huongDanCat._id, content: "<p>Bài viết này sẽ hướng dẫn bạn từng bước cách sử dụng ứng dụng di động của chúng tôi...</p>", excerpt: "Hướng dẫn chi tiết từ A-Z", order: 1, publishedAt: Date.now() - 172_800_000, slug: "huong-dan-su-dung-ung-dung-di-dong", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400", title: "Hướng dẫn sử dụng ứng dụng di động", views: 890 },
+          { authorName: "Admin", categoryId: khuyenMaiCat._id, content: "<p>Chương trình khuyến mãi đặc biệt giảm giá lên đến 50% cho tất cả sản phẩm...</p>", excerpt: "Ưu đãi khủng mừng năm mới 2025", order: 2, publishedAt: Date.now() - 259_200_000, slug: "giam-gia-50-nhan-dip-nam-moi", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=400", title: "Giảm giá 50% nhân dịp năm mới", views: 2100 },
+          { authorName: "Admin", categoryId: tinTucCat._id, content: "<p>Chính sách bảo hành mới sẽ có hiệu lực từ ngày 01/02/2025 với nhiều cải tiến...</p>", excerpt: "Thông tin chính sách bảo hành", order: 3, slug: "cap-nhat-chinh-sach-bao-hanh-moi", status: "Draft" as const, thumbnail: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400", title: "Cập nhật chính sách bảo hành mới", views: 0 },
+          { authorName: "Admin", categoryId: huongDanCat._id, content: "<p>Các phương thức thanh toán online được hỗ trợ và hướng dẫn chi tiết...</p>", excerpt: "Thanh toán nhanh chóng, an toàn", order: 4, publishedAt: Date.now() - 345_600_000, slug: "huong-dan-thanh-toan-online", status: "Published" as const, thumbnail: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400", title: "Hướng dẫn thanh toán online", views: 650 },
+          { authorName: "Admin", categoryId: tinTucCat._id, content: "<p>Điểm lại những sản phẩm được yêu thích nhất trong năm qua...</p>", excerpt: "Những sản phẩm hot nhất năm", order: 5, publishedAt: Date.now() - 604_800_000, slug: "top-10-san-pham-ban-chay-nhat-2024", status: "Archived" as const, thumbnail: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400", title: "Top 10 sản phẩm bán chạy nhất 2024", views: 3200 },
         ];
         for (const post of posts) {
           await ctx.db.insert("posts", post);
@@ -259,7 +261,7 @@ export const seedPostsModule = mutation({
         { enabled: true, fieldKey: "excerpt", isSystem: false, moduleKey: "posts", name: "Mô tả ngắn", order: 4, required: false, type: "textarea" as const },
         { enabled: true, fieldKey: "thumbnail", isSystem: false, moduleKey: "posts", name: "Ảnh đại diện", order: 5, required: false, type: "image" as const },
         { enabled: true, fieldKey: "category_id", isSystem: false, moduleKey: "posts", name: "Danh mục", order: 6, required: false, type: "select" as const },
-        { enabled: true, fieldKey: "author_id", isSystem: false, moduleKey: "posts", name: "Tác giả", order: 7, required: false, type: "select" as const },
+        { enabled: true, fieldKey: "author_name", isSystem: false, moduleKey: "posts", name: "Tác giả", order: 7, required: false, type: "text" as const },
         { enabled: true, fieldKey: "tags", isSystem: false, linkedFeature: "enableTags", moduleKey: "posts", name: "Tags", order: 8, required: false, type: "tags" as const },
         { enabled: true, fieldKey: "featured", isSystem: false, linkedFeature: "enableFeatured", moduleKey: "posts", name: "Nổi bật", order: 9, required: false, type: "boolean" as const },
         { enabled: true, fieldKey: "publish_date", isSystem: false, linkedFeature: "enableScheduling", moduleKey: "posts", name: "Ngày xuất bản", order: 10, required: false, type: "date" as const },
