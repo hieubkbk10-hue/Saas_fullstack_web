@@ -366,6 +366,8 @@ function ClassicStyle({ post, brandColor, relatedPosts, showAuthor, authorName, 
   const { isBroken, markBroken } = useImageFallback();
   const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
 
+  const hasRelatedPosts = relatedPosts.length > 0;
+
   useEffect(() => {
     const handleScroll = () => {
       const totalScroll = document.documentElement.scrollTop;
@@ -412,8 +414,8 @@ function ClassicStyle({ post, brandColor, relatedPosts, showAuthor, authorName, 
           </ol>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          <article className="lg:col-span-9 space-y-8">
+        <div className={`grid grid-cols-1 gap-10 ${hasRelatedPosts ? 'lg:grid-cols-12' : ''}`}>
+          <article className={`space-y-8 ${hasRelatedPosts ? 'lg:col-span-9' : 'max-w-4xl mx-auto'}`}>
             <header className="space-y-4">
               <div className="flex items-center gap-2">
                 <span

@@ -50,6 +50,8 @@ type ModernLayoutConfig = {
   showAuthor: boolean;
   showShare: boolean;
   showComments: boolean;
+  showCommentLikes: boolean;
+  showCommentReplies: boolean;
   showRelated: boolean;
 };
 
@@ -57,6 +59,8 @@ type MinimalLayoutConfig = {
   showAuthor: boolean;
   showShare: boolean;
   showComments: boolean;
+  showCommentLikes: boolean;
+  showCommentReplies: boolean;
   showRelated: boolean;
 };
 
@@ -76,8 +80,8 @@ const DEFAULT_CONFIG: PostDetailExperienceConfig = {
   layoutStyle: 'classic',
   layouts: {
     classic: { showAuthor: true, showShare: true, showComments: true, showCommentLikes: true, showCommentReplies: true, showRelated: true },
-    modern: { showAuthor: true, showShare: true, showComments: true, showRelated: true },
-    minimal: { showAuthor: false, showShare: true, showComments: true, showRelated: true },
+    modern: { showAuthor: true, showShare: true, showComments: true, showCommentLikes: true, showCommentReplies: true, showRelated: true },
+    minimal: { showAuthor: false, showShare: true, showComments: true, showCommentLikes: true, showCommentReplies: true, showRelated: true },
   },
 };
 
@@ -154,8 +158,8 @@ export default function PostDetailExperiencePage() {
   // Sync checks based on active layout
   const isAuthorSyncPending = Boolean(authorField) && authorFieldEnabled !== currentLayoutConfig.showAuthor;
   const isCommentsSyncPending = Boolean(commentsModule) && commentsModuleEnabled !== currentLayoutConfig.showComments;
-  const isCommentLikesSyncPending = config.layoutStyle === 'classic' && Boolean(commentsLikesFeature) && commentsLikesEnabled !== (config.layouts.classic.showCommentLikes ?? false);
-  const isCommentRepliesSyncPending = config.layoutStyle === 'classic' && Boolean(commentsRepliesFeature) && commentsRepliesEnabled !== (config.layouts.classic.showCommentReplies ?? false);
+  const isCommentLikesSyncPending = Boolean(commentsLikesFeature) && commentsLikesEnabled !== (currentLayoutConfig.showCommentLikes ?? false);
+  const isCommentRepliesSyncPending = Boolean(commentsRepliesFeature) && commentsRepliesEnabled !== (currentLayoutConfig.showCommentReplies ?? false);
 
   // Sync with legacy key
   const additionalSettings = useMemo(() => [
@@ -182,12 +186,12 @@ export default function PostDetailExperiencePage() {
         tasks.push(toggleModule({ enabled: currentLayoutConfig.showComments, key: 'comments' }));
       }
 
-      if (config.layoutStyle === 'classic' && commentsLikesFeature && commentsLikesEnabled !== config.layouts.classic.showCommentLikes) {
-        tasks.push(toggleFeature({ enabled: config.layouts.classic.showCommentLikes, featureKey: 'enableLikes', moduleKey: 'comments' }));
+      if (commentsLikesFeature && commentsLikesEnabled !== currentLayoutConfig.showCommentLikes) {
+        tasks.push(toggleFeature({ enabled: currentLayoutConfig.showCommentLikes, featureKey: 'enableLikes', moduleKey: 'comments' }));
       }
 
-      if (config.layoutStyle === 'classic' && commentsRepliesFeature && commentsRepliesEnabled !== config.layouts.classic.showCommentReplies) {
-        tasks.push(toggleFeature({ enabled: config.layouts.classic.showCommentReplies, featureKey: 'enableReplies', moduleKey: 'comments' }));
+      if (commentsRepliesFeature && commentsRepliesEnabled !== currentLayoutConfig.showCommentReplies) {
+        tasks.push(toggleFeature({ enabled: currentLayoutConfig.showCommentReplies, featureKey: 'enableReplies', moduleKey: 'comments' }));
       }
 
       await Promise.all(tasks);
@@ -243,8 +247,8 @@ export default function PostDetailExperiencePage() {
               showRelated={currentLayoutConfig.showRelated}
               showShare={currentLayoutConfig.showShare}
               showComments={currentLayoutConfig.showComments}
-              showCommentLikes={config.layoutStyle === 'classic' ? config.layouts.classic.showCommentLikes : false}
-              showCommentReplies={config.layoutStyle === 'classic' ? config.layouts.classic.showCommentReplies : false}
+              showCommentLikes={currentLayoutConfig.showCommentLikes}
+              showCommentReplies={currentLayoutConfig.showCommentReplies}
               device={previewDevice}
               brandColor={brandColor}
             />
@@ -304,24 +308,20 @@ export default function PostDetailExperiencePage() {
               accentColor="#3b82f6"
               disabled={!commentsModule}
             />
-            {config.layoutStyle === 'classic' && (
-              <>
-                <ToggleRow 
-                  label="Nút thích" 
-                  checked={config.layouts.classic.showCommentLikes} 
-                  onChange={(v) => setConfig(prev => ({ ...prev, layouts: { ...prev.layouts, classic: { ...prev.layouts.classic, showCommentLikes: v } } }))} 
-                  accentColor="#3b82f6"
-                  disabled={!commentsLikesFeature}
-                />
-                <ToggleRow 
-                  label="Nút trả lời" 
-                  checked={config.layouts.classic.showCommentReplies} 
-                  onChange={(v) => setConfig(prev => ({ ...prev, layouts: { ...prev.layouts, classic: { ...prev.layouts.classic, showCommentReplies: v } } }))} 
-                  accentColor="#3b82f6"
-                  disabled={!commentsRepliesFeature}
-                />
-              </>
-            )}
+            <ToggleRow 
+              label="Nút thích" 
+              checked={currentLayoutConfig.showCommentLikes} 
+              onChange={(v) => updateLayoutConfig('showCommentLikes', v)} 
+              accentColor="#3b82f6"
+              disabled={!commentsLikesFeature}
+            />
+            <ToggleRow 
+              label="Nút trả lời" 
+              checked={currentLayoutConfig.showCommentReplies} 
+              onChange={(v) => updateLayoutConfig('showCommentReplies', v)} 
+              accentColor="#3b82f6"
+              disabled={!commentsRepliesFeature}
+            />
           </ControlCard>
           
           {/* Sync status & modules */}
