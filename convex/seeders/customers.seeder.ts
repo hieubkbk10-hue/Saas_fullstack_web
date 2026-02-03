@@ -68,7 +68,8 @@ export class CustomerSeeder extends BaseSeeder<CustomerData> {
     );
   }
   
-  protected async afterSeed(_count: number): Promise<void> {
+  protected async afterSeed(count: number): Promise<void> {
+    void count;
     // Initialize stats (will be updated by orders)
     const customers = await this.ctx.db.query('customers').collect();
     

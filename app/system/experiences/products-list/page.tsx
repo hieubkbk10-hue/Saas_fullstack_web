@@ -142,7 +142,7 @@ export default function ProductsListExperiencePage() {
     MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY])
   );
 
-  const currentLayoutConfig = config.layouts[config.layoutStyle];
+  const currentLayoutConfig = config.layouts[config.layoutStyle] ?? DEFAULT_LAYOUT_CONFIG;
   const hasDisabledModules = !wishlistModule?.enabled || !cartModule?.enabled || !ordersModule?.enabled || !promotionsModule?.enabled;
 
   const updateLayoutConfig = <K extends keyof LayoutConfig>(
@@ -154,6 +154,7 @@ export default function ProductsListExperiencePage() {
       layouts: {
         ...prev.layouts,
         [prev.layoutStyle]: {
+          ...DEFAULT_LAYOUT_CONFIG,
           ...prev.layouts[prev.layoutStyle],
           [key]: value,
         },

@@ -138,7 +138,8 @@ export class OrderSeeder extends BaseSeeder<OrderData> {
     );
   }
   
-  protected async afterSeed(_count: number): Promise<void> {
+  protected async afterSeed(count: number): Promise<void> {
+    void count;
     // Update customers' order stats
     await this.updateCustomerStats();
   }

@@ -113,7 +113,7 @@ export default function ServiceDetailExperiencePage() {
     if (priceField) {
       setPriceFieldEnabled(priceField.enabled);
     }
-  }, [priceField?.enabled]);
+  }, [priceField]);
 
   const localPriceEnabled = priceFieldEnabled ?? priceField?.enabled ?? true;
   const isPriceSyncPending = Boolean(priceField) && localPriceEnabled !== priceField?.enabled;

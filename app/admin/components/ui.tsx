@@ -237,7 +237,9 @@ export const ScrollArea = React.forwardRef<HTMLDivElement, React.HTMLAttributes<
 ScrollArea.displayName = "ScrollArea";
 
 // Popover Components
-export const Popover = ({ open: _open, onOpenChange: _onOpenChange, children }: { open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode }) => {
+export const Popover = ({ open, onOpenChange, children }: { open?: boolean; onOpenChange?: (open: boolean) => void; children: React.ReactNode }) => {
+  void open;
+  void onOpenChange;
   return <div className="relative">{children}</div>;
 };
 

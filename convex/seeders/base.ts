@@ -250,7 +250,8 @@ export abstract class BaseSeeder<T = unknown> {
     );
   }
   
-  protected async afterSeed(_count: number): Promise<void> {
+  protected async afterSeed(count: number): Promise<void> {
+    void count;
     // Hook for post-seed operations (update counters, etc.)
     // Override in subclass if needed
   }

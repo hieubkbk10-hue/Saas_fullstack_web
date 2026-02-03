@@ -268,8 +268,6 @@ export const seedPreset = mutation({
   },
   handler: async (ctx, args) => {
     const presetConfig = SEED_PRESETS[args.preset as PresetType];
-    const _sessionId = args.sessionId || `seed_preset_${Date.now()}`;
-    
     console.log(`[SeedManager] Seeding preset: ${presetConfig.name}`);
     
     const configs = Object.entries(presetConfig.modules).map(([moduleKey, quantity]) => ({

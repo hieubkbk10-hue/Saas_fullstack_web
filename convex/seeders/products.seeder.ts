@@ -81,11 +81,12 @@ export class ProductSeeder extends BaseSeeder<ProductData> {
   }
   
   protected async afterSeed(count: number): Promise<void> {
+    void count;
     // Update product stats
-    await this.updateStats(count);
+    await this.updateStats();
   }
   
-  private async updateStats(_totalCount: number): Promise<void> {
+  private async updateStats(): Promise<void> {
     // Clear existing stats
     const existingStats = await this.ctx.db.query('productStats').collect();
     await Promise.all(existingStats.map(s => this.ctx.db.delete(s._id)));
