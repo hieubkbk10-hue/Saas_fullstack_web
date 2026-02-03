@@ -9,7 +9,7 @@ interface FieldsCardProps {
   icon: React.ComponentType<{ size?: number; className?: string }>;
   iconColorClass: string;
   fields: FieldConfig[];
-  onToggle: (id: string) => void;
+  onToggle: (fieldKey: string) => void;
   fieldColorClass?: string;
   toggleColor?: string;
 }

@@ -30,7 +30,7 @@ const fieldTypeIcons: Record<FieldType, React.ComponentType<{ size?: number }>> 
 
 interface FieldRowProps {
   field: FieldConfig;
-  onToggle: (id: string) => void;
+  onToggle: (fieldKey: string) => void;
   colorClass?: string;
   toggleColor?: string;
 }
@@ -71,7 +71,7 @@ export const FieldRow: React.FC<FieldRowProps> = ({
       
       <ToggleSwitch 
         enabled={field.enabled} 
-        onChange={() =>{  onToggle(field.id); }}
+        onChange={() =>{  onToggle(field.key); }}
         disabled={field.isSystem && field.required}
         color={toggleColor}
       />

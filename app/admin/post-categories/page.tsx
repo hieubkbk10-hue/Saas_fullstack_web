@@ -23,6 +23,7 @@ export default function PostCategoriesListPage() {
 function PostCategoriesContent() {
   const categoriesData = useQuery(api.postCategories.listAll, {});
   const postsData = useQuery(api.posts.listAll, {});
+  const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'postCategories' });
   const deleteCategory = useMutation(api.postCategories.remove);
   const seedPostsModule = useMutation(api.seed.seedPostsModule);
   const clearPostsData = useMutation(api.seed.clearPostsData);
@@ -32,7 +33,10 @@ function PostCategoriesContent() {
   const [visibleColumns, setVisibleColumns] = useState(['select', 'thumbnail', 'name', 'slug', 'count', 'status', 'actions']);
   const [selectedIds, setSelectedIds] = useState<Id<"postCategories">[]>([]);
 
-  const isLoading = categoriesData === undefined || postsData === undefined;
+  const isLoading = categoriesData === undefined || postsData === undefined || fieldsData === undefined;
+
+  const enabledFields = useMemo(() => new Set(fieldsData?.map(field => field.fieldKey) ?? []), [fieldsData]);
+  const showThumbnail = enabledFields.has('thumbnail');
 
   // Count posts per category
   const postCountMap = useMemo(() => {
@@ -51,13 +55,15 @@ function PostCategoriesContent() {
 
   const columns = [
     { key: 'select', label: 'Chọn' },
-    { key: 'thumbnail', label: 'Ảnh' },
+    ...(showThumbnail ? [{ key: 'thumbnail', label: 'Ảnh' }] : []),
     { key: 'name', label: 'Tên danh mục', required: true },
     { key: 'slug', label: 'Slug' },
     { key: 'count', label: 'Số bài viết' },
     { key: 'status', label: 'Trạng thái' },
     { key: 'actions', label: 'Hành động', required: true }
   ];
+
+  const resolvedVisibleColumns = visibleColumns.filter(key => columns.some(col => col.key === key));
 
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
@@ -149,31 +155,31 @@ function PostCategoriesContent() {
               <Input placeholder="Tìm kiếm danh mục..." className="pl-9" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); }} />
             </div>
           </div>
-          <ColumnToggle columns={columns} visibleColumns={visibleColumns} onToggle={toggleColumn} />
+          <ColumnToggle columns={columns} visibleColumns={resolvedVisibleColumns} onToggle={toggleColumn} />
         </div>
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumns.includes('select') && (
+              {resolvedVisibleColumns.includes('select') && (
                 <TableHead className="w-[40px]">
                   <SelectCheckbox checked={selectedIds.length === sortedData.length && sortedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedData.length} />
                 </TableHead>
               )}
-              {visibleColumns.includes('thumbnail') && <TableHead className="w-[60px]">Ảnh</TableHead>}
-              {visibleColumns.includes('name') && <SortableHeader label="Tên danh mục" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('slug') && <SortableHeader label="Slug" sortKey="slug" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('count') && <SortableHeader label="Số bài viết" sortKey="count" sortConfig={sortConfig} onSort={handleSort} className="text-center" />}
-              {visibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('actions') && <TableHead className="text-right">Hành động</TableHead>}
+              {resolvedVisibleColumns.includes('thumbnail') && <TableHead className="w-[60px]">Ảnh</TableHead>}
+              {resolvedVisibleColumns.includes('name') && <SortableHeader label="Tên danh mục" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('slug') && <SortableHeader label="Slug" sortKey="slug" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('count') && <SortableHeader label="Số bài viết" sortKey="count" sortConfig={sortConfig} onSort={handleSort} className="text-center" />}
+              {resolvedVisibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('actions') && <TableHead className="text-right">Hành động</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedData.map(cat => (
               <TableRow key={cat.id} className={selectedIds.includes(cat.id) ? 'bg-blue-500/5' : ''}>
-                {visibleColumns.includes('select') && (
+                {resolvedVisibleColumns.includes('select') && (
                   <TableCell><SelectCheckbox checked={selectedIds.includes(cat.id)} onChange={() =>{  toggleSelectItem(cat.id); }} /></TableCell>
                 )}
-                {visibleColumns.includes('thumbnail') && (
+                {resolvedVisibleColumns.includes('thumbnail') && (
                   <TableCell>
                     {cat.thumbnail ? (
                       <Image src={cat.thumbnail} alt={cat.name} width={40} height={32} className="w-10 h-8 object-cover rounded" />
@@ -182,15 +188,15 @@ function PostCategoriesContent() {
                     )}
                   </TableCell>
                 )}
-                {visibleColumns.includes('name') && <TableCell className="font-medium">{cat.name}</TableCell>}
-                {visibleColumns.includes('slug') && <TableCell className="text-slate-500 font-mono text-sm">{cat.slug}</TableCell>}
-                {visibleColumns.includes('count') && <TableCell className="text-center"><Badge variant="secondary">{cat.count}</Badge></TableCell>}
-                {visibleColumns.includes('status') && (
+                {resolvedVisibleColumns.includes('name') && <TableCell className="font-medium">{cat.name}</TableCell>}
+                {resolvedVisibleColumns.includes('slug') && <TableCell className="text-slate-500 font-mono text-sm">{cat.slug}</TableCell>}
+                {resolvedVisibleColumns.includes('count') && <TableCell className="text-center"><Badge variant="secondary">{cat.count}</Badge></TableCell>}
+                {resolvedVisibleColumns.includes('status') && (
                   <TableCell>
                     <Badge variant={cat.active ? 'default' : 'secondary'}>{cat.active ? 'Hoạt động' : 'Ẩn'}</Badge>
                   </TableCell>
                 )}
-                {visibleColumns.includes('actions') && (
+                {resolvedVisibleColumns.includes('actions') && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem trên web" onClick={() =>{  openFrontend(cat.slug); }}><ExternalLink size={16}/></Button>
@@ -203,7 +209,7 @@ function PostCategoriesContent() {
             ))}
             {sortedData.length === 0 && (
               <TableRow>
-                <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={resolvedVisibleColumns.length} className="text-center py-8 text-slate-500">
                   {searchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có danh mục nào'}
                 </TableCell>
               </TableRow>
