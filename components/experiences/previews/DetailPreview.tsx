@@ -41,6 +41,8 @@ type ServiceDetailPreviewProps = {
   modernCtaSectionDescription?: string;
   modernCtaButtonText?: string;
   modernCtaButtonLink?: string;
+  minimalCtaEnabled?: boolean;
+  minimalShowPrice?: boolean;
   minimalCtaText?: string;
   minimalCtaButtonText?: string;
   minimalCtaButtonLink?: string;
@@ -1162,6 +1164,8 @@ function MinimalServicePreview({
   showRelated,
   brandColor = '#3b82f6',
   device = 'desktop',
+  minimalCtaEnabled,
+  minimalShowPrice,
   minimalCtaText,
   minimalCtaButtonText,
   minimalCtaButtonLink,
@@ -1169,9 +1173,11 @@ function MinimalServicePreview({
   const isTablet = device === 'tablet';
   const isMobile = device === 'mobile';
   const relatedServices = showRelated ? MOCK_RELATED_SERVICES : [];
-  const showPrice = true;
   const showDuration = true;
   const showFeatured = true;
+  
+  const ctaEnabled = minimalCtaEnabled ?? true;
+  const showPrice = minimalShowPrice ?? true;
   
   const minimalConfig = {
     ctaText: minimalCtaText ?? 'Quan tâm đến dịch vụ này?',
@@ -1262,12 +1268,14 @@ function MinimalServicePreview({
           <div dangerouslySetInnerHTML={{ __html: MOCK_SERVICE.content }} />
         </div>
 
-        <div className="mt-14 rounded-2xl border border-slate-200 bg-white p-6 text-center">
-          <p className="text-slate-600 mb-5">{minimalConfig.ctaText}</p>
-          <div className="max-w-xs mx-auto">
-            <QuickContactButtonsPreview brandColor={brandColor} label={minimalConfig.ctaButtonText} />
+        {ctaEnabled && (
+          <div className="mt-14 rounded-2xl border border-slate-200 bg-white p-6 text-center">
+            <p className="text-slate-600 mb-5">{minimalConfig.ctaText}</p>
+            <div className="max-w-xs mx-auto">
+              <QuickContactButtonsPreview brandColor={brandColor} label={minimalConfig.ctaButtonText} />
+            </div>
           </div>
-        </div>
+        )}
 
         {relatedServices.length > 0 && (
           <div className="mt-16">
@@ -1311,12 +1319,16 @@ export function ServiceDetailPreview({
   quickContactShowPrice,
   quickContactButtonText,
   quickContactButtonLink,
+  modernContactEnabled,
+  modernContactShowPrice,
   modernHeroCtaText,
   modernHeroCtaLink,
   modernCtaSectionTitle,
   modernCtaSectionDescription,
   modernCtaButtonText,
   modernCtaButtonLink,
+  minimalCtaEnabled,
+  minimalShowPrice,
   minimalCtaText,
   minimalCtaButtonText,
   minimalCtaButtonLink,
@@ -1335,12 +1347,16 @@ export function ServiceDetailPreview({
     quickContactShowPrice,
     quickContactButtonText,
     quickContactButtonLink,
+    modernContactEnabled,
+    modernContactShowPrice,
     modernHeroCtaText,
     modernHeroCtaLink,
     modernCtaSectionTitle,
     modernCtaSectionDescription,
     modernCtaButtonText,
     modernCtaButtonLink,
+    minimalCtaEnabled,
+    minimalShowPrice,
     minimalCtaText,
     minimalCtaButtonText,
     minimalCtaButtonLink,

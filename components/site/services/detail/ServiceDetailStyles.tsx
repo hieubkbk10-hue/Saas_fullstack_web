@@ -52,6 +52,8 @@ type ModernConfig = {
 };
 
 type MinimalConfig = {
+  ctaEnabled: boolean;
+  showPrice: boolean;
   ctaText: string;
   ctaButtonText: string;
   ctaButtonLink: string;
@@ -491,16 +493,19 @@ export function ModernStyle({ service, brandColor, relatedServices, enabledField
 
 // STYLE 3: MINIMAL - Clean, distraction-free reading experience
 export function MinimalStyle({ service, brandColor, relatedServices, enabledFields, minimalConfig }: StyleProps) {
-  const showPrice = enabledFields.has('price');
   const showDuration = enabledFields.has('duration');
   const showFeatured = enabledFields.has('featured');
 
   const config: MinimalConfig = {
+    ctaEnabled: true,
+    showPrice: true,
     ctaText: 'Quan tâm đến dịch vụ này?',
     ctaButtonText: 'Liên hệ tư vấn',
     ctaButtonLink: '',
     ...minimalConfig,
   };
+
+  const showPrice = config.showPrice && enabledFields.has('price');
 
   return (
     <div className="min-h-screen bg-white">
@@ -589,18 +594,20 @@ export function MinimalStyle({ service, brandColor, relatedServices, enabledFiel
           <div dangerouslySetInnerHTML={{ __html: service.content }} />
         </div>
 
-        <div className="mt-14 rounded-2xl border border-slate-200 bg-white p-6 text-center">
-          <p className="text-slate-600 mb-5">{config.ctaText}</p>
-          
-          <div className="max-w-xs mx-auto">
-            <QuickContactButtons 
-              serviceName={service.title}
-              brandColor={brandColor}
-              buttonLabel={config.ctaButtonText}
-              buttonHref={config.ctaButtonLink}
-            />
+        {config.ctaEnabled && (
+          <div className="mt-14 rounded-2xl border border-slate-200 bg-white p-6 text-center">
+            <p className="text-slate-600 mb-5">{config.ctaText}</p>
+            
+            <div className="max-w-xs mx-auto">
+              <QuickContactButtons 
+                serviceName={service.title}
+                brandColor={brandColor}
+                buttonLabel={config.ctaButtonText}
+                buttonHref={config.ctaButtonLink}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {relatedServices.length > 0 && (
           <div className="mt-16">

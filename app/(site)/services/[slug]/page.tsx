@@ -31,6 +31,8 @@ type ServiceDetailExperienceConfig = {
   modernCtaButtonText: string;
   modernCtaButtonLink: string;
   // Minimal
+  minimalCtaEnabled: boolean;
+  minimalShowPrice: boolean;
   minimalCtaText: string;
   minimalCtaButtonText: string;
   minimalCtaButtonLink: string;
@@ -61,6 +63,8 @@ function useServiceDetailExperienceConfig(): ServiceDetailExperienceConfig {
       modernCtaButtonText: raw?.modernCtaButtonText ?? 'Liên hệ tư vấn',
       modernCtaButtonLink: raw?.modernCtaButtonLink ?? '',
       // Minimal
+      minimalCtaEnabled: raw?.minimalCtaEnabled ?? true,
+      minimalShowPrice: raw?.minimalShowPrice ?? true,
       minimalCtaText: raw?.minimalCtaText ?? 'Quan tâm đến dịch vụ này?',
       minimalCtaButtonText: raw?.minimalCtaButtonText ?? 'Liên hệ tư vấn',
       minimalCtaButtonLink: raw?.minimalCtaButtonLink ?? '',
@@ -163,6 +167,8 @@ export default function ServiceDetailPage({ params }: PageProps) {
   };
 
   const minimalConfig = {
+    ctaEnabled: experienceConfig.minimalCtaEnabled,
+    showPrice: experienceConfig.minimalShowPrice,
     ctaText: experienceConfig.minimalCtaText,
     ctaButtonText: experienceConfig.minimalCtaButtonText,
     ctaButtonLink: experienceConfig.minimalCtaButtonLink,
