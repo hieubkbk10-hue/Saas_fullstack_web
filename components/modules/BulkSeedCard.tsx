@@ -18,6 +18,7 @@ import {
   Package,
   Rocket,
   Sparkles,
+  ChevronDown,
 } from 'lucide-react';
 import { Button, Card, Progress } from '@/app/admin/components/ui';
 
@@ -72,6 +73,7 @@ const PRESETS: Array<{
 ];
 
 export function BulkSeedCard({ onSeedComplete, onOpenCustomDialog }: BulkSeedCardProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentModule, setCurrentModule] = useState('');
@@ -84,6 +86,7 @@ export function BulkSeedCard({ onSeedComplete, onOpenCustomDialog }: BulkSeedCar
     }
 
     setIsSeeding(true);
+    setIsOpen(true);
     setProgress(0);
     
     try {
@@ -126,65 +129,75 @@ export function BulkSeedCard({ onSeedComplete, onOpenCustomDialog }: BulkSeedCar
             Seed tất cả modules cùng lúc với preset hoặc tùy chỉnh
           </p>
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsOpen(prev => !prev)}
+          className="gap-2"
+          aria-expanded={isOpen}
+          aria-controls="bulk-seed-content"
+        >
+          {isOpen ? 'Thu gọn' : 'Mở'}
+          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </Button>
       </div>
 
-      {/* Preset Buttons */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        {PRESETS.map(preset => {
-          const Icon = preset.icon;
-          return (
-            <button
-              key={preset.key}
-              onClick={() => handleSeedPreset(preset.key)}
-              disabled={isSeeding}
-              className={`
-                relative p-4 rounded-lg border border-slate-200 dark:border-slate-700
-                ${preset.color}
-                transition-all duration-200
-                hover:scale-105 hover:shadow-md
-                disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
-                text-left
-              `}
-            >
-              <Icon className="w-6 h-6 mb-2" />
-              <div className="font-semibold mb-1">{preset.name}</div>
-              <div className="text-xs opacity-75 mb-2">{preset.description}</div>
-              <div className="text-xs font-mono opacity-60">{preset.qty} records</div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Custom Seed Button */}
-      <Button
-        onClick={() => onOpenCustomDialog?.()}
-        variant="outline"
-        className="w-full border-dashed"
-        disabled={isSeeding}
-      >
-        <Settings className="w-4 h-4 mr-2" />
-        Tùy chỉnh chi tiết...
-      </Button>
-
-      {/* Progress Bar */}
-      {isSeeding && (
-        <div className="mt-4 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              {currentModule || 'Đang xử lý...'}
-            </span>
-            <span className="font-mono text-slate-500">{progress}%</span>
-          </div>
-          <Progress value={progress} className="h-2" />
+      <div id="bulk-seed-content" className={`${isOpen || isSeeding ? 'block' : 'hidden'}`}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          {PRESETS.map(preset => {
+            const Icon = preset.icon;
+            return (
+              <button
+                key={preset.key}
+                onClick={() => handleSeedPreset(preset.key)}
+                disabled={isSeeding}
+                className={`
+                  relative p-4 rounded-lg border border-slate-200 dark:border-slate-700
+                  ${preset.color}
+                  transition-all duration-200
+                  hover:scale-105 hover:shadow-md
+                  disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
+                  text-left
+                `}
+              >
+                <Icon className="w-6 h-6 mb-2" />
+                <div className="font-semibold mb-1">{preset.name}</div>
+                <div className="text-xs opacity-75 mb-2">{preset.description}</div>
+                <div className="text-xs font-mono opacity-60">{preset.qty} records</div>
+              </button>
+            );
+          })}
         </div>
-      )}
 
-      {/* Info */}
-      <div className="mt-4 p-3 bg-cyan-50 dark:bg-cyan-950/20 rounded-lg">
-        <p className="text-xs text-cyan-800 dark:text-cyan-400">
-          💡 <strong>Tip:</strong> Dependencies sẽ được seed tự động. Ví dụ: Orders sẽ tự động seed Products và Customers nếu chưa có.
-        </p>
+        <Button
+          onClick={() => onOpenCustomDialog?.()}
+          variant="outline"
+          className="w-full border-dashed"
+          disabled={isSeeding}
+        >
+          <Settings className="w-4 h-4 mr-2" />
+          Tùy chỉnh chi tiết...
+        </Button>
+
+        {isSeeding && (
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {currentModule || 'Đang xử lý...'}
+              </span>
+              <span className="font-mono text-slate-500">{progress}%</span>
+            </div>
+            <Progress value={progress} className="h-2" />
+          </div>
+        )}
+
+        <div className="mt-4 p-3 bg-cyan-50 dark:bg-cyan-950/20 rounded-lg">
+          <p className="text-xs text-cyan-800 dark:text-cyan-400">
+            💡 <strong>Tip:</strong> Dependencies sẽ được seed tự động. Ví dụ: Orders sẽ tự động seed Products và Customers nếu chưa có.
+          </p>
+        </div>
       </div>
     </Card>
   );
