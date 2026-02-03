@@ -188,15 +188,18 @@ function ProductsContent() {
     { initialNumItems: postsPerPage }
   );
 
+  const isSearchActive = Boolean(debouncedSearchQuery?.trim());
+  const isPaginationMode = listConfig.paginationType === 'pagination' || isSearchActive;
+
   const useCursorPagination =
-    listConfig.paginationType === 'pagination' &&
-    !debouncedSearchQuery?.trim() &&
+    isPaginationMode &&
+    !isSearchActive &&
     ['newest', 'oldest', 'popular'].includes(sortBy);
 
   const offset = (urlPage - 1) * postsPerPage;
   const paginatedProducts = useQuery(
     api.products.listPublishedWithOffset,
-    listConfig.paginationType === 'pagination' && !useCursorPagination
+    isPaginationMode && !useCursorPagination
       ? {
           categoryId: activeCategory ?? undefined,
           limit: postsPerPage,
@@ -207,15 +210,16 @@ function ProductsContent() {
       : 'skip'
   );
 
-  const products = listConfig.paginationType === 'pagination'
+  const products = isPaginationMode
     ? (useCursorPagination
       ? infiniteResults.slice(offset, offset + postsPerPage)
       : (paginatedProducts ?? []))
     : infiniteResults;
 
-  const totalCount = useQuery(api.products.countPublished, {
+  const totalCountRaw = useQuery(api.products.countPublished, {
     categoryId: activeCategory ?? undefined,
   });
+  const totalCount = isSearchActive ? products.length : totalCountRaw;
 
   const categoryMap = useMemo(() => {
     if (!categories) {return new Map<string, string>();}
@@ -225,10 +229,13 @@ function ProductsContent() {
   const requiredCount = urlPage * postsPerPage;
 
   useEffect(() => {
-    if (listConfig.paginationType === 'infiniteScroll' && inView && infiniteStatus === 'CanLoadMore') {
+    if (isPaginationMode) {
+      return;
+    }
+    if (inView && infiniteStatus === 'CanLoadMore') {
       loadMore(postsPerPage);
     }
-  }, [inView, infiniteStatus, loadMore, postsPerPage, listConfig.paginationType]);
+  }, [inView, infiniteStatus, loadMore, postsPerPage, isPaginationMode]);
 
   useEffect(() => {
     if (!useCursorPagination) return;
