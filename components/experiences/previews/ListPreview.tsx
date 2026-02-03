@@ -2,13 +2,11 @@ import React from 'react';
 import { ChevronDown, FileText, Heart, Search, ShoppingCart, SlidersHorizontal } from 'lucide-react';
 
 type ListLayoutStyle = 'fullwidth' | 'sidebar' | 'magazine' | 'grid' | 'list' | 'masonry';
-type FilterPosition = 'sidebar' | 'top' | 'none';
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
 type PaginationType = 'pagination' | 'infiniteScroll';
 
 type PostsListPreviewProps = {
   layoutStyle: ListLayoutStyle;
-  filterPosition?: FilterPosition;
   paginationType?: PaginationType;
   showSearch?: boolean;
   showCategories?: boolean;
@@ -510,7 +508,6 @@ export function PostsListPreview({
 
 type ProductsListPreviewProps = {
   layoutStyle: ListLayoutStyle;
-  filterPosition?: FilterPosition;
   paginationType?: PaginationType;
   showSearch?: boolean;
   showCategories?: boolean;
@@ -532,7 +529,6 @@ const formatVND = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'cu
 
 export function ProductsListPreview({
   layoutStyle,
-  filterPosition = 'sidebar',
   paginationType = 'pagination',
   showSearch = true,
   showCategories = true,
@@ -633,16 +629,14 @@ export function ProductsListPreview({
                       <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
                   )}
-                  {filterPosition !== 'none' && (
-                    <div className="relative">
-                      <select className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white" disabled>
-                        <option>Giá: Thấp đến cao</option>
-                        <option>Giá: Cao đến thấp</option>
-                        <option>Bán chạy nhất</option>
-                      </select>
-                      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                    </div>
-                  )}
+                  <div className="relative">
+                    <select className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white" disabled>
+                      <option>Giá: Thấp đến cao</option>
+                      <option>Giá: Cao đến thấp</option>
+                      <option>Bán chạy nhất</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  </div>
                   {isCompact && (
                     <button className="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-lg text-sm shrink-0">
                       <SlidersHorizontal className="w-4 h-4" />
@@ -681,7 +675,7 @@ export function ProductsListPreview({
   // Sidebar layout
   const sidebarWidth = isDesktop ? 'lg:w-64' : '';
   const containerClass = isMobile ? 'flex-col' : (isDesktop ? 'lg:flex-row' : 'flex-col');
-  const sidebarOrder = filterPosition === 'sidebar' ? (isMobile ? 'order-2' : (isDesktop ? 'lg:order-1' : 'order-2')) : 'order-2';
+  const sidebarOrder = isMobile ? 'order-2' : (isDesktop ? 'lg:order-1' : 'order-2');
   const mainOrder = isMobile ? 'order-1' : (isDesktop ? 'lg:order-2' : 'order-1');
 
   return (
@@ -692,45 +686,43 @@ export function ProductsListPreview({
         </div>
 
         <div className={`flex ${containerClass} gap-5`}>
-          {filterPosition === 'sidebar' && (
-            <aside className={`${sidebarWidth} flex-shrink-0 ${sidebarOrder}`}>
-              <div className="space-y-3">
-                {showSearch && (
-                  <div className="bg-white rounded-lg border border-slate-200 p-3">
-                    <h3 className="font-semibold text-slate-900 text-sm mb-2 flex items-center gap-2">
-                      <Search size={14} style={{ color: brandColor }} />
-                      Tìm kiếm
-                    </h3>
-                    <input type="text" placeholder="Nhập từ khóa..." className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" disabled />
-                  </div>
-                )}
-                {showCategories && (
-                  <div className="bg-white rounded-lg border border-slate-200 p-3">
-                    <h3 className="font-semibold text-slate-900 text-sm mb-2 flex items-center gap-2">
-                      <FileText size={14} style={{ color: brandColor }} />
-                      Danh mục
-                    </h3>
-                    <ul className="space-y-0.5">
-                      {categories.map((cat, i) => (
-                        <li key={cat}>
-                          <button className={`w-full text-left px-2.5 py-1.5 rounded text-sm transition-colors ${i === 0 ? 'font-medium' : 'text-slate-600'}`} style={i === 0 ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined} disabled>
-                            {cat}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+          <aside className={`${sidebarWidth} flex-shrink-0 ${sidebarOrder}`}>
+            <div className="space-y-3">
+              {showSearch && (
                 <div className="bg-white rounded-lg border border-slate-200 p-3">
-                  <h3 className="font-semibold text-slate-900 text-sm mb-2">Khoảng giá</h3>
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="Từ" className="w-1/2 px-2 py-1.5 border border-slate-200 rounded text-sm" disabled />
-                    <input type="text" placeholder="Đến" className="w-1/2 px-2 py-1.5 border border-slate-200 rounded text-sm" disabled />
-                  </div>
+                  <h3 className="font-semibold text-slate-900 text-sm mb-2 flex items-center gap-2">
+                    <Search size={14} style={{ color: brandColor }} />
+                    Tìm kiếm
+                  </h3>
+                  <input type="text" placeholder="Nhập từ khóa..." className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" disabled />
+                </div>
+              )}
+              {showCategories && (
+                <div className="bg-white rounded-lg border border-slate-200 p-3">
+                  <h3 className="font-semibold text-slate-900 text-sm mb-2 flex items-center gap-2">
+                    <FileText size={14} style={{ color: brandColor }} />
+                    Danh mục
+                  </h3>
+                  <ul className="space-y-0.5">
+                    {categories.map((cat, i) => (
+                      <li key={cat}>
+                        <button className={`w-full text-left px-2.5 py-1.5 rounded text-sm transition-colors ${i === 0 ? 'font-medium' : 'text-slate-600'}`} style={i === 0 ? { backgroundColor: `${brandColor}15`, color: brandColor } : undefined} disabled>
+                          {cat}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="bg-white rounded-lg border border-slate-200 p-3">
+                <h3 className="font-semibold text-slate-900 text-sm mb-2">Khoảng giá</h3>
+                <div className="flex gap-2">
+                  <input type="text" placeholder="Từ" className="w-1/2 px-2 py-1.5 border border-slate-200 rounded text-sm" disabled />
+                  <input type="text" placeholder="Đến" className="w-1/2 px-2 py-1.5 border border-slate-200 rounded text-sm" disabled />
                 </div>
               </div>
-            </aside>
-          )}
+            </div>
+          </aside>
 
           <main className={`flex-1 ${mainOrder}`}>
             <div className={`grid ${gridClass} gap-3`}>

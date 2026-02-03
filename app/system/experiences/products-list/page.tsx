@@ -26,7 +26,6 @@ import {
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type ListLayoutStyle = 'grid' | 'list' | 'masonry';
-type FilterPosition = 'sidebar' | 'top' | 'none';
 type PaginationType = 'pagination' | 'infiniteScroll';
 
 type ProductsListExperienceConfig = {
@@ -42,7 +41,6 @@ type ProductsListExperienceConfig = {
 };
 
 type LayoutConfig = {
-  filterPosition: FilterPosition;
   paginationType: PaginationType;
   showSearch: boolean;
   showCategories: boolean;
@@ -57,14 +55,7 @@ const LAYOUT_STYLES: LayoutOption<ListLayoutStyle>[] = [
   { description: 'Hiển thị dạng masonry', id: 'masonry', label: 'Masonry' },
 ];
 
-const FILTER_POSITIONS: LayoutOption<FilterPosition>[] = [
-  { description: 'Filters ở thanh bên trái', id: 'sidebar', label: 'Sidebar' },
-  { description: 'Filters ở trên cùng', id: 'top', label: 'Top' },
-  { description: 'Không hiển thị filters', id: 'none', label: 'None' },
-];
-
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
-  filterPosition: 'sidebar',
   paginationType: 'pagination',
   showSearch: true,
   showCategories: true,
@@ -113,7 +104,6 @@ export default function ProductsListExperiencePage() {
     };
     
     const normalizeLayoutConfig = (cfg?: Partial<LayoutConfig & { showPagination?: boolean }>): LayoutConfig => ({
-      filterPosition: cfg?.filterPosition ?? 'sidebar',
       paginationType: normalizePaginationType(cfg?.paginationType ?? cfg?.showPagination),
       showSearch: cfg?.showSearch ?? true,
       showCategories: cfg?.showCategories ?? true,
@@ -198,7 +188,6 @@ export default function ProductsListExperiencePage() {
           <BrowserFrame url="yoursite.com/products" maxHeight="calc(100vh - 320px)">
             <ProductsListPreview
               layoutStyle={config.layoutStyle}
-              filterPosition={currentLayoutConfig.filterPosition}
               paginationType={currentLayoutConfig.paginationType}
               showSearch={currentLayoutConfig.showSearch}
               showCategories={currentLayoutConfig.showCategories}
@@ -227,18 +216,6 @@ export default function ProductsListExperiencePage() {
         }
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          <ControlCard title="Vị trí Filters">
-            {FILTER_POSITIONS.map((pos) => (
-              <ToggleRow
-                key={pos.id}
-                label={pos.label}
-                checked={currentLayoutConfig.filterPosition === pos.id}
-                onChange={() => updateLayoutConfig('filterPosition', pos.id)}
-                accentColor="#10b981"
-              />
-            ))}
-          </ControlCard>
-
           <ControlCard title="Khối hiển thị">
             <ToggleRow
               label="Tìm kiếm"
