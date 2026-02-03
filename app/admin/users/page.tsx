@@ -1,56 +1,134 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronLeft, ChevronRight, Edit, Loader2, Plus, Search, Trash2 } from 'lucide-react';
+import { ChevronDown, Edit, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
-import { BulkActionBar, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
+import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, generatePaginationItems, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'users';
 
 export default function UsersListPage() {
   return (
-    <ModuleGuard moduleKey="users">
+    <ModuleGuard moduleKey={MODULE_KEY}>
       <UsersContent />
     </ModuleGuard>
   );
 }
 
 function UsersContent() {
-  const usersData = useQuery(api.users.listAll);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [filterRole, setFilterRole] = useState<Id<"roles"> | ''>('');
+  const [filterStatus, setFilterStatus] = useState<'' | 'Active' | 'Inactive' | 'Banned'>('');
+  const [manualSelectedIds, setManualSelectedIds] = useState<Id<"users">[]>([]);
+  const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
+    if (typeof window === 'undefined') {
+      return ['role', 'status'];
+    }
+    try {
+      const stored = window.localStorage.getItem('admin_users_visible_columns');
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[];
+        return parsed.length > 0 ? parsed : ['role', 'status'];
+      }
+    } catch {
+      return ['role', 'status'];
+    }
+    return ['role', 'status'];
+  });
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const isSelectAllActive = selectionMode === 'all';
+
   const rolesData = useQuery(api.roles.listAll);
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   const deleteUser = useMutation(api.users.remove);
   const bulkDeleteUsers = useMutation(api.users.bulkRemove);
 
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Id<"users">[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () =>{  clearTimeout(timer); };
+  }, [searchTerm]);
 
-  const isLoading = usersData === undefined || rolesData === undefined;
+  useEffect(() => {
+    window.localStorage.setItem('admin_users_visible_columns', JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
 
-  // Settings: usersPerPage
   const usersPerPage = useMemo(() => {
     const setting = settingsData?.find(s => s.settingKey === 'usersPerPage');
     return (setting?.value as number) || 20;
   }, [settingsData]);
 
-  // Features: enableLastLogin
+  const resolvedUsersPerPage = pageSizeOverride ?? usersPerPage;
+  const offset = (currentPage - 1) * resolvedUsersPerPage;
+  const resolvedSearch = debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined;
+
+  const usersData = useQuery(api.users.listAdminWithOffset, {
+    limit: resolvedUsersPerPage,
+    offset,
+    roleId: filterRole || undefined,
+    search: resolvedSearch,
+    status: filterStatus || undefined,
+  });
+
+  const totalCountData = useQuery(api.users.countAdmin, {
+    roleId: filterRole || undefined,
+    search: resolvedSearch,
+    status: filterStatus || undefined,
+  });
+
+  const selectAllData = useQuery(
+    api.users.listAdminIds,
+    isSelectAllActive
+      ? {
+          roleId: filterRole || undefined,
+          search: resolvedSearch,
+          status: filterStatus || undefined,
+        }
+      : 'skip'
+  );
+
+  const isTableLoading = usersData === undefined || totalCountData === undefined || rolesData === undefined;
+
   const enabledFeatures = useMemo(() => {
     const features: Record<string, boolean> = {};
     featuresData?.forEach(f => { features[f.featureKey] = f.enabled; });
     return features;
   }, [featuresData]);
+
+  const showAvatar = enabledFeatures.enableAvatar ?? true;
+  const showPhone = enabledFeatures.enablePhone ?? true;
+  const showLastLogin = enabledFeatures.enableLastLogin ?? true;
+
+  const columns = [
+    { key: 'role', label: 'Vai trò', required: true },
+    { key: 'status', label: 'Trạng thái', required: true },
+    ...(showPhone ? [{ key: 'phone', label: 'Số điện thoại' }] : []),
+    ...(showLastLogin ? [{ key: 'lastLogin', label: 'Đăng nhập cuối' }] : []),
+  ];
+
+  const requiredColumnKeys = columns.filter(col => col.required).map(col => col.key);
+  const resolvedVisibleColumns = Array.from(new Set([...requiredColumnKeys, ...visibleColumns]))
+    .filter(key => columns.some(col => col.key === key));
+
+  useEffect(() => {
+    if (selectAllData?.hasMore) {
+      toast.info('Đã chọn tối đa 5.000 người dùng phù hợp.');
+    }
+  }, [selectAllData?.hasMore]);
 
   const roleMap = useMemo(() => {
     const map: Record<string, { name: string; color?: string }> = {};
@@ -59,59 +137,73 @@ function UsersContent() {
   }, [rolesData]);
 
   const users = useMemo(() => usersData?.map(user => ({
-      ...user,
-      roleName: roleMap[user.roleId]?.name || 'N/A',
-      roleColor: roleMap[user.roleId]?.color,
-    })) ?? [], [usersData, roleMap]);
+    ...user,
+    roleName: roleMap[user.roleId]?.name || 'N/A',
+    roleColor: roleMap[user.roleId]?.color,
+  })) ?? [], [usersData, roleMap]);
 
-  const filteredUsers = useMemo(() => {
-    let data = [...users];
-    if (searchTerm) {
-      data = data.filter(u => 
-        u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        u.email.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    if (filterRole) {
-      data = data.filter(u => u.roleId === filterRole);
-    }
-    if (filterStatus) {
-      data = data.filter(u => u.status === filterStatus);
-    }
-    return data;
-  }, [users, searchTerm, filterRole, filterStatus]);
+  const sortedUsers = useSortableData(users, sortConfig);
 
-  const sortedUsers = useSortableData(filteredUsers, sortConfig);
+  const totalCount = totalCountData?.count ?? 0;
+  const totalPages = totalCount ? Math.ceil(totalCount / resolvedUsersPerPage) : 1;
+  const paginatedUsers = sortedUsers;
+  const tableColumnCount = resolvedVisibleColumns.length + 3;
+  const selectedIds = isSelectAllActive && selectAllData ? selectAllData.ids : manualSelectedIds;
+  const isSelectingAll = isSelectAllActive && selectAllData === undefined;
 
-  // Pagination
-  const totalPages = Math.ceil(sortedUsers.length / usersPerPage);
-  const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * usersPerPage;
-    return sortedUsers.slice(start, start + usersPerPage);
-  }, [sortedUsers, currentPage, usersPerPage]);
+  const applyManualSelection = (nextIds: Id<"users">[]) => {
+    setSelectionMode('manual');
+    setManualSelectedIds(nextIds);
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+    setFilterRole('');
+    setFilterStatus('');
+    setCurrentPage(1);
+    setPageSizeOverride(null);
+    applyManualSelection([]);
+  };
 
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
     setCurrentPage(1);
   };
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
-  };
-
   const handleFilterRole = (value: string) => {
-    setFilterRole(value);
+    setFilterRole(value as Id<"roles"> | '');
     setCurrentPage(1);
+    applyManualSelection([]);
   };
 
   const handleFilterStatus = (value: string) => {
-    setFilterStatus(value);
+    setFilterStatus(value as '' | 'Active' | 'Inactive' | 'Banned');
     setCurrentPage(1);
+    applyManualSelection([]);
   };
 
-  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedUsers.length ? [] : paginatedUsers.map(u => u._id)); };
-  const toggleSelectItem = (id: Id<"users">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
+  const selectedOnPage = paginatedUsers.filter(user => selectedIds.includes(user._id));
+  const isPageSelected = paginatedUsers.length > 0 && selectedOnPage.length === paginatedUsers.length;
+  const isPageIndeterminate = selectedOnPage.length > 0 && selectedOnPage.length < paginatedUsers.length;
+
+  const toggleSelectAll = () => {
+    if (isPageSelected) {
+      const remaining = selectedIds.filter(id => !paginatedUsers.some(user => user._id === id));
+      applyManualSelection(remaining);
+      return;
+    }
+    const next = new Set(selectedIds);
+    paginatedUsers.forEach(user => next.add(user._id));
+    applyManualSelection(Array.from(next));
+  };
+
+  const toggleSelectItem = (id: Id<"users">) => {
+    const next = selectedIds.includes(id)
+      ? selectedIds.filter(i => i !== id)
+      : [...selectedIds, id];
+    applyManualSelection(next);
+  };
 
   const handleDelete = async (id: Id<"users">) => {
     if (confirm('Bạn có chắc muốn xóa người dùng này?')) {
@@ -124,16 +216,18 @@ function UsersContent() {
     }
   };
 
-  // USR-005 FIX: Sử dụng bulkRemove mutation thay vì sequential delete
   const handleBulkDelete = async () => {
     if (confirm(`Xóa ${selectedIds.length} người dùng đã chọn?`)) {
       try {
+        setIsBulkDeleting(true);
         const count = selectedIds.length;
         await bulkDeleteUsers({ ids: selectedIds });
-        setSelectedIds([]);
+        applyManualSelection([]);
         toast.success(`Đã xóa ${count} người dùng`);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+      } finally {
+        setIsBulkDeleting(false);
       }
     }
   };
@@ -143,14 +237,6 @@ function UsersContent() {
     const date = new Date(timestamp);
     return date.toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-slate-400" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -164,130 +250,263 @@ function UsersContent() {
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  applyManualSelection([]); }} isLoading={isBulkDeleting} />
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap gap-2 text-sm">
+          <Button variant="outline" size="sm" onClick={() =>{  applyManualSelection(paginatedUsers.map(user => user._id)); }}>
+            Chọn trang này
+          </Button>
+          <Button variant="outline" size="sm" onClick={() =>{  setSelectionMode('all'); }} disabled={isSelectingAll}>
+            {isSelectingAll ? 'Đang chọn...' : 'Chọn tất cả kết quả'}
+          </Button>
+        </div>
+      )}
 
       <Card>
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
           <div className="relative max-w-xs flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm theo tên, email..." className="pl-9" value={searchTerm} onChange={(e) =>{  handleSearch(e.target.value); }} />
+            <Input
+              placeholder="Tìm kiếm theo tên, email, điện thoại..."
+              className="pl-9"
+              value={searchTerm}
+              onChange={(e) =>{  setSearchTerm(e.target.value); setCurrentPage(1); applyManualSelection([]); }}
+            />
           </div>
-          <select 
-            className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
-            value={filterRole} 
-            onChange={(e) =>{  handleFilterRole(e.target.value); }}
-          >
-            <option value="">Tất cả vai trò</option>
-            {rolesData?.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
-          </select>
-          <select 
-            className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" 
-            value={filterStatus} 
-            onChange={(e) =>{  handleFilterStatus(e.target.value); }}
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="Active">Hoạt động</option>
-            <option value="Inactive">Không hoạt động</option>
-            <option value="Banned">Bị cấm</option>
-          </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              value={filterRole}
+              onChange={(e) =>{  handleFilterRole(e.target.value); }}
+            >
+              <option value="">Tất cả vai trò</option>
+              {rolesData?.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
+            </select>
+            <select
+              className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              value={filterStatus}
+              onChange={(e) =>{  handleFilterStatus(e.target.value); }}
+            >
+              <option value="">Tất cả trạng thái</option>
+              <option value="Active">Hoạt động</option>
+              <option value="Inactive">Không hoạt động</option>
+              <option value="Banned">Bị cấm</option>
+            </select>
+            <Button variant="outline" size="sm" onClick={handleResetFilters}>
+              Xóa lọc
+            </Button>
+            <ColumnToggle
+              columns={columns}
+              visibleColumns={resolvedVisibleColumns}
+              onToggle={(key) => {
+                setVisibleColumns(prev => prev.includes(key) ? prev.filter(col => col !== key) : [...prev, key]);
+              }}
+            />
+          </div>
         </div>
         <Table>
-          <TableHeader>
+          <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-white dark:[&_th]:bg-slate-900">
             <TableRow>
-              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedUsers.length && paginatedUsers.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedUsers.length} /></TableHead>
+              <TableHead className="w-[40px]"><SelectCheckbox checked={isPageSelected} onChange={toggleSelectAll} indeterminate={isPageIndeterminate} /></TableHead>
               <SortableHeader label="Người dùng" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />
-              <SortableHeader label="Vai trò" sortKey="roleName" sortConfig={sortConfig} onSort={handleSort} />
-              <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
-              {(enabledFeatures.enableLastLogin ?? true) && <TableHead>Đăng nhập cuối</TableHead>}
+              {resolvedVisibleColumns.includes('role') && <SortableHeader label="Vai trò" sortKey="roleName" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('phone') && <SortableHeader label="Số điện thoại" sortKey="phone" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('lastLogin') && <SortableHeader label="Đăng nhập cuối" sortKey="lastLogin" sortConfig={sortConfig} onSort={handleSort} />}
               <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedUsers.map(user => (
-              <TableRow key={user._id} className={selectedIds.includes(user._id) ? 'bg-blue-500/5' : ''}>
-                <TableCell><SelectCheckbox checked={selectedIds.includes(user._id)} onChange={() =>{  toggleSelectItem(user._id); }} /></TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    {(enabledFeatures.enableAvatar ?? true) && (
-                      user.avatar ? (
-                        <Image src={user.avatar} width={36} height={36} className="w-9 h-9 rounded-full object-cover" alt={user.name} />
-                      ) : (
-                        <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm font-medium text-slate-500">
-                          {user.name.charAt(0).toUpperCase()}
-                        </div>
-                      )
-                    )}
-                    <div>
-                      <div className="font-medium">{user.name}</div>
-                      <div className="text-xs text-slate-500">{user.email}</div>
+            {isTableLoading ? (
+              Array.from({ length: resolvedUsersPerPage }).map((_, index) => (
+                <TableRow key={`loading-${index}`}>
+                  <TableCell>
+                    <div className="h-4 w-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      {showAvatar && <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />}
+                      <div className="space-y-2">
+                        <div className="h-4 w-32 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                        <div className="h-3 w-24 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                      </div>
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {user.roleColor ? (
-                    <span 
-                      className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
-                      style={{ backgroundColor: user.roleColor, borderColor: user.roleColor, color: '#fff' }}
-                    >
-                      {user.roleName}
-                    </span>
-                  ) : (
-                    <Badge variant="secondary">{user.roleName}</Badge>
+                  </TableCell>
+                  {resolvedVisibleColumns.includes('role') && (
+                    <TableCell>
+                      <div className="h-5 w-20 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
                   )}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={user.status === 'Active' ? 'success' : (user.status === 'Inactive' ? 'secondary' : 'destructive')}>
-                    {user.status === 'Active' ? 'Hoạt động' : (user.status === 'Inactive' ? 'Không hoạt động' : 'Bị cấm')}
-                  </Badge>
-                </TableCell>
-                {(enabledFeatures.enableLastLogin ?? true) && (
-                  <TableCell className="text-slate-500 text-sm">{formatLastLogin(user.lastLogin)}</TableCell>
-                )}
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Link href={`/admin/users/${user._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(user._id)}><Trash2 size={16}/></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {paginatedUsers.length === 0 && (
+                  {resolvedVisibleColumns.includes('status') && (
+                    <TableCell>
+                      <div className="h-5 w-24 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  {resolvedVisibleColumns.includes('phone') && (
+                    <TableCell>
+                      <div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  {resolvedVisibleColumns.includes('lastLogin') && (
+                    <TableCell>
+                      <div className="h-4 w-32 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  <TableCell className="text-right">
+                    <div className="ml-auto h-8 w-20 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <>
+                {paginatedUsers.map(user => (
+                  <TableRow key={user._id} className={selectedIds.includes(user._id) ? 'bg-blue-500/5' : ''}>
+                    <TableCell><SelectCheckbox checked={selectedIds.includes(user._id)} onChange={() =>{  toggleSelectItem(user._id); }} /></TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        {showAvatar && (
+                          user.avatar ? (
+                            <Image src={user.avatar} width={36} height={36} className="w-9 h-9 rounded-full object-cover" alt={user.name} />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm font-medium text-slate-500">
+                              {user.name.charAt(0).toUpperCase()}
+                            </div>
+                          )
+                        )}
+                        <div>
+                          <div className="font-medium">{user.name}</div>
+                          <div className="text-xs text-slate-500">{user.email}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    {resolvedVisibleColumns.includes('role') && (
+                      <TableCell>
+                        {user.roleColor ? (
+                          <span
+                            className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                            style={{ backgroundColor: user.roleColor, borderColor: user.roleColor, color: '#fff' }}
+                          >
+                            {user.roleName}
+                          </span>
+                        ) : (
+                          <Badge variant="secondary">{user.roleName}</Badge>
+                        )}
+                      </TableCell>
+                    )}
+                    {resolvedVisibleColumns.includes('status') && (
+                      <TableCell>
+                        <Badge variant={user.status === 'Active' ? 'success' : (user.status === 'Inactive' ? 'secondary' : 'destructive')}>
+                          {user.status === 'Active' ? 'Hoạt động' : (user.status === 'Inactive' ? 'Không hoạt động' : 'Bị cấm')}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    {resolvedVisibleColumns.includes('phone') && (
+                      <TableCell className="text-slate-600">
+                        {user.phone || '—'}
+                      </TableCell>
+                    )}
+                    {resolvedVisibleColumns.includes('lastLogin') && (
+                      <TableCell className="text-slate-500 text-sm">{formatLastLogin(user.lastLogin)}</TableCell>
+                    )}
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Link href={`/admin/users/${user._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
+                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(user._id)}><Trash2 size={16}/></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
+            )}
+            {!isTableLoading && paginatedUsers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={(enabledFeatures.enableLastLogin ?? true) ? 6 : 5} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
                   {searchTerm || filterRole || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có người dùng nào'}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-        {sortedUsers.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-sm text-slate-500">
-              Hiển thị {Math.min((currentPage - 1) * usersPerPage + 1, sortedUsers.length)} - {Math.min(currentPage * usersPerPage, sortedUsers.length)} / {sortedUsers.length} người dùng
-            </span>
-            {totalPages > 1 && (
+        {totalCount > 0 && !isTableLoading && (
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === 1}
-                  onClick={() =>{  setCurrentPage(p => p - 1); }}
+                <span className="text-slate-600">Hiển thị</span>
+                <select
+                  value={resolvedUsersPerPage}
+                  onChange={(event) =>{  setPageSizeOverride(Number(event.target.value)); setCurrentPage(1); applyManualSelection([]); }}
+                  className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
+                  aria-label="Số người dùng mỗi trang"
                 >
-                  <ChevronLeft size={16} />
-                </Button>
-                <span className="text-sm text-slate-600 dark:text-slate-400">
-                  Trang {currentPage} / {totalPages}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === totalPages}
-                  onClick={() =>{  setCurrentPage(p => p + 1); }}
-                >
-                  <ChevronRight size={16} />
-                </Button>
+                  {[10, 20, 30, 50, 100].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <span>người dùng/trang</span>
               </div>
-            )}
+
+              <div className="text-right sm:text-left">
+                <span className="font-medium text-slate-900">
+                  {totalCount ? ((currentPage - 1) * resolvedUsersPerPage) + 1 : 0}–{Math.min(currentPage * resolvedUsersPerPage, totalCount)}
+                </span>
+                <span className="mx-1 text-slate-300">/</span>
+                <span className="font-medium text-slate-900">
+                  {totalCount}{totalCountData?.hasMore ? '+' : ''}
+                </span>
+                <span className="ml-1 text-slate-500">người dùng</span>
+              </div>
+            </div>
+
+            <div className="order-1 flex w-full justify-center sm:order-2 sm:w-auto sm:justify-end">
+              <nav className="flex items-center space-x-1 sm:space-x-2" aria-label="Phân trang">
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.max(1, prev - 1)); }}
+                  disabled={currentPage === 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang trước"
+                >
+                  <ChevronDown className="h-4 w-4 rotate-90" />
+                </button>
+
+                {generatePaginationItems(currentPage, totalPages).map((item, index) => {
+                  if (item === 'ellipsis') {
+                    return (
+                      <div key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-slate-400">
+                        …
+                      </div>
+                    );
+                  }
+
+                  const pageNum = item as number;
+                  const isActive = pageNum === currentPage;
+                  const isMobileHidden = !isActive && pageNum !== 1 && pageNum !== totalPages;
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() =>{  setCurrentPage(pageNum); }}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-sm border font-medium'
+                          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.min(totalPages, prev + 1)); }}
+                  disabled={currentPage >= totalPages}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang sau"
+                >
+                  <ChevronDown className="h-4 w-4 -rotate-90" />
+                </button>
+              </nav>
+            </div>
           </div>
         )}
       </Card>
