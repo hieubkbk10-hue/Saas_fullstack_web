@@ -877,6 +877,15 @@ function ClassicServicePreview({
                 </p>
               )}
 
+              {showPrice && (
+                <div className="mt-6">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Chi phí dự kiến</p>
+                  <p className="text-3xl font-bold" style={{ color: brandColor }}>
+                    {formatPrice(MOCK_SERVICE.price)}
+                  </p>
+                </div>
+              )}
+
               <div className="flex flex-wrap items-center gap-4 mt-6 pt-6 border-t border-slate-100">
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                   <Eye size={16} />
