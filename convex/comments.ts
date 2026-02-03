@@ -40,6 +40,7 @@ export const listAdminWithOffset = query({
     search: v.optional(v.string()),
     status: v.optional(commentStatus),
     targetType: v.optional(targetType),
+    targetId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const limit = Math.min(args.limit ?? 20, 100);
@@ -47,7 +48,25 @@ export const listAdminWithOffset = query({
     const fetchLimit = Math.min(offset + limit + 50, 500);
     let comments: Doc<"comments">[] = [];
 
-    if (args.status) {
+    if (args.targetType && args.targetId) {
+      if (args.status) {
+        comments = await ctx.db
+          .query("comments")
+          .withIndex("by_target_status", (q) =>
+            q.eq("targetType", args.targetType!).eq("targetId", args.targetId!).eq("status", args.status!)
+          )
+          .order("desc")
+          .take(fetchLimit);
+      } else {
+        comments = await ctx.db
+          .query("comments")
+          .withIndex("by_target_status", (q) =>
+            q.eq("targetType", args.targetType!).eq("targetId", args.targetId!)
+          )
+          .order("desc")
+          .take(fetchLimit);
+      }
+    } else if (args.status) {
       comments = await ctx.db
         .query("comments")
         .withIndex("by_status", (q) => q.eq("status", args.status!))
@@ -60,7 +79,7 @@ export const listAdminWithOffset = query({
         .take(fetchLimit);
     }
 
-    if (args.targetType) {
+    if (args.targetType && !args.targetId) {
       comments = comments.filter((comment) => comment.targetType === args.targetType);
     }
 
@@ -82,12 +101,29 @@ export const countAdmin = query({
     search: v.optional(v.string()),
     status: v.optional(commentStatus),
     targetType: v.optional(targetType),
+    targetId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const limit = 5000;
     let comments: Doc<"comments">[] = [];
 
-    if (args.status) {
+    if (args.targetType && args.targetId) {
+      if (args.status) {
+        comments = await ctx.db
+          .query("comments")
+          .withIndex("by_target_status", (q) =>
+            q.eq("targetType", args.targetType!).eq("targetId", args.targetId!).eq("status", args.status!)
+          )
+          .take(limit + 1);
+      } else {
+        comments = await ctx.db
+          .query("comments")
+          .withIndex("by_target_status", (q) =>
+            q.eq("targetType", args.targetType!).eq("targetId", args.targetId!)
+          )
+          .take(limit + 1);
+      }
+    } else if (args.status) {
       comments = await ctx.db
         .query("comments")
         .withIndex("by_status", (q) => q.eq("status", args.status!))
@@ -98,7 +134,7 @@ export const countAdmin = query({
         .take(limit + 1);
     }
 
-    if (args.targetType) {
+    if (args.targetType && !args.targetId) {
       comments = comments.filter((comment) => comment.targetType === args.targetType);
     }
 
@@ -120,13 +156,30 @@ export const listAdminIds = query({
     search: v.optional(v.string()),
     status: v.optional(commentStatus),
     targetType: v.optional(targetType),
+    targetId: v.optional(v.string()),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const limit = Math.min(args.limit ?? 5000, 5000);
     let comments: Doc<"comments">[] = [];
 
-    if (args.status) {
+    if (args.targetType && args.targetId) {
+      if (args.status) {
+        comments = await ctx.db
+          .query("comments")
+          .withIndex("by_target_status", (q) =>
+            q.eq("targetType", args.targetType!).eq("targetId", args.targetId!).eq("status", args.status!)
+          )
+          .take(limit + 1);
+      } else {
+        comments = await ctx.db
+          .query("comments")
+          .withIndex("by_target_status", (q) =>
+            q.eq("targetType", args.targetType!).eq("targetId", args.targetId!)
+          )
+          .take(limit + 1);
+      }
+    } else if (args.status) {
       comments = await ctx.db
         .query("comments")
         .withIndex("by_status", (q) => q.eq("status", args.status!))
@@ -137,7 +190,7 @@ export const listAdminIds = query({
         .take(limit + 1);
     }
 
-    if (args.targetType) {
+    if (args.targetType && !args.targetId) {
       comments = comments.filter((comment) => comment.targetType === args.targetType);
     }
 
