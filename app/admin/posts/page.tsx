@@ -62,6 +62,7 @@ function PostsContent() {
   const isSelectAllActive = selectionMode === 'all';
 
   const categoriesData = useQuery(api.postCategories.listAll, {});
+  const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'posts' });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'posts' });
   const deletePost = useMutation(api.posts.remove);
   
@@ -110,7 +111,20 @@ function PostsContent() {
       : 'skip'
   );
 
-  const isTableLoading = postsData === undefined || totalCountData === undefined;
+  const isTableLoading = postsData === undefined || totalCountData === undefined || fieldsData === undefined;
+
+  const enabledFields = useMemo(() => new Set(fieldsData?.map(field => field.fieldKey) ?? []), [fieldsData]);
+  const showThumbnail = enabledFields.has('thumbnail');
+  const showCategory = enabledFields.has('category_id');
+
+  const columns = [
+    ...(showThumbnail ? [{ key: 'thumbnail', label: 'Thumbnail' }] : []),
+    ...(showCategory ? [{ key: 'category', label: 'Danh mục' }] : []),
+    { key: 'views', label: 'Lượt xem' },
+    { key: 'status', label: 'Trạng thái' },
+  ];
+
+  const resolvedVisibleColumns = visibleColumns.filter(key => columns.some(col => col.key === key));
 
   useEffect(() => {
     if (selectAllData?.hasMore) {
@@ -136,7 +150,7 @@ function PostsContent() {
   const totalCount = totalCountData?.count ?? 0;
   const totalPages = totalCount ? Math.ceil(totalCount / resolvedPostsPerPage) : 1;
   const paginatedPosts = sortedPosts;
-  const tableColumnCount = 3 + visibleColumns.length;
+  const tableColumnCount = 3 + resolvedVisibleColumns.length;
   const selectedIds = isSelectAllActive && selectAllData ? selectAllData.ids : manualSelectedIds;
   const isSelectingAll = isSelectAllActive && selectAllData === undefined;
 
@@ -251,13 +265,8 @@ function PostsContent() {
               Xóa lọc
             </Button>
             <ColumnToggle
-              columns={[
-                { key: 'thumbnail', label: 'Thumbnail' },
-                { key: 'category', label: 'Danh mục' },
-                { key: 'views', label: 'Lượt xem' },
-                { key: 'status', label: 'Trạng thái' },
-              ]}
-              visibleColumns={visibleColumns}
+              columns={columns}
+              visibleColumns={resolvedVisibleColumns}
               onToggle={(key) => {
                 setVisibleColumns(prev => prev.includes(key) ? prev.filter(col => col !== key) : [...prev, key]);
               }}
@@ -268,11 +277,11 @@ function PostsContent() {
           <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-white dark:[&_th]:bg-slate-900">
             <TableRow>
               <TableHead className="w-[40px]"><SelectCheckbox checked={isPageSelected} onChange={toggleSelectAll} indeterminate={isPageIndeterminate} /></TableHead>
-              {visibleColumns.includes('thumbnail') && <TableHead className="w-[80px]">Thumbnail</TableHead>}
+              {resolvedVisibleColumns.includes('thumbnail') && <TableHead className="w-[80px]">Thumbnail</TableHead>}
               <SortableHeader label="Tiêu đề" sortKey="title" sortConfig={sortConfig} onSort={handleSort} />
-              {visibleColumns.includes('category') && <SortableHeader label="Danh mục" sortKey="category" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('views') && <SortableHeader label="Lượt xem" sortKey="views" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('category') && <SortableHeader label="Danh mục" sortKey="category" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('views') && <SortableHeader label="Lượt xem" sortKey="views" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />}
               <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
           </TableHeader>
@@ -283,7 +292,7 @@ function PostsContent() {
                   <TableCell>
                     <div className="h-4 w-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
                   </TableCell>
-                  {visibleColumns.includes('thumbnail') && (
+                  {resolvedVisibleColumns.includes('thumbnail') && (
                     <TableCell>
                       <div className="h-8 w-12 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
                     </TableCell>
@@ -291,17 +300,17 @@ function PostsContent() {
                   <TableCell>
                     <div className="h-4 w-2/3 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
                   </TableCell>
-                  {visibleColumns.includes('category') && (
+                  {resolvedVisibleColumns.includes('category') && (
                     <TableCell>
                       <div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
                     </TableCell>
                   )}
-                  {visibleColumns.includes('views') && (
+                  {resolvedVisibleColumns.includes('views') && (
                     <TableCell>
                       <div className="h-4 w-16 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
                     </TableCell>
                   )}
-                  {visibleColumns.includes('status') && (
+                  {resolvedVisibleColumns.includes('status') && (
                     <TableCell>
                       <div className="h-5 w-20 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
                     </TableCell>
@@ -316,7 +325,7 @@ function PostsContent() {
                 {paginatedPosts.map(post => (
                   <TableRow key={post._id} className={selectedIds.includes(post._id) ? 'bg-blue-500/5' : ''}>
                     <TableCell><SelectCheckbox checked={selectedIds.includes(post._id)} onChange={() =>{  toggleSelectItem(post._id); }} /></TableCell>
-                    {visibleColumns.includes('thumbnail') && (
+                    {resolvedVisibleColumns.includes('thumbnail') && (
                       <TableCell>
                         {post.thumbnail ? (
                           <Image src={post.thumbnail} width={48} height={32} className="w-12 h-8 object-cover rounded" alt={post.title} />
@@ -326,9 +335,9 @@ function PostsContent() {
                       </TableCell>
                     )}
                     <TableCell className="font-medium max-w-[300px] truncate">{post.title}</TableCell>
-                    {visibleColumns.includes('category') && <TableCell>{post.category}</TableCell>}
-                    {visibleColumns.includes('views') && <TableCell className="text-slate-500">{post.views.toLocaleString()}</TableCell>}
-                    {visibleColumns.includes('status') && (
+                    {resolvedVisibleColumns.includes('category') && <TableCell>{post.category}</TableCell>}
+                    {resolvedVisibleColumns.includes('views') && <TableCell className="text-slate-500">{post.views.toLocaleString()}</TableCell>}
+                    {resolvedVisibleColumns.includes('status') && (
                       <TableCell>
                         <Badge variant={post.status === 'Published' ? 'success' : (post.status === 'Draft' ? 'secondary' : 'warning')}>
                           {post.status === 'Published' ? 'Đã xuất bản' : (post.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ')}

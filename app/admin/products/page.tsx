@@ -128,10 +128,10 @@ function ProductsContent() {
   const columns = useMemo(() => {
     const cols = [
       { key: 'select', label: 'Chọn' },
-      { key: 'image', label: 'Ảnh' },
       { key: 'name', label: 'Tên sản phẩm', required: true },
     ];
-    
+
+    if (enabledFields.has('image')) {cols.push({ key: 'image', label: 'Ảnh' });}
     if (enabledFields.has('sku')) {cols.push({ key: 'sku', label: 'SKU' });}
     cols.push({ key: 'category', label: 'Danh mục' });
     cols.push({ key: 'price', label: 'Giá bán' });

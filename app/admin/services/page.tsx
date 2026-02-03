@@ -23,6 +23,7 @@ export default function ServicesListPage() {
 function ServicesContent() {
   const servicesData = useQuery(api.services.listAll, {});
   const categoriesData = useQuery(api.serviceCategories.listAll, {});
+  const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'services' });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'services' });
   const deleteService = useMutation(api.services.remove);
   const seedServicesModule = useMutation(api.seed.seedServicesModule);
@@ -34,7 +35,11 @@ function ServicesContent() {
   const [selectedIds, setSelectedIds] = useState<Id<"services">[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const isLoading = servicesData === undefined || categoriesData === undefined;
+  const isLoading = servicesData === undefined || categoriesData === undefined || fieldsData === undefined;
+
+  const enabledFields = useMemo(() => new Set(fieldsData?.map(field => field.fieldKey) ?? []), [fieldsData]);
+  const showThumbnail = enabledFields.has('thumbnail');
+  const showPrice = enabledFields.has('price');
 
   const servicesPerPage = useMemo(() => {
     const setting = settingsData?.find(s => s.settingKey === 'servicesPerPage');
@@ -175,10 +180,10 @@ function ServicesContent() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedServices.length && paginatedServices.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedServices.length} /></TableHead>
-              <TableHead className="w-[80px]">Ảnh</TableHead>
+              {showThumbnail && <TableHead className="w-[80px]">Ảnh</TableHead>}
               <SortableHeader label="Tiêu đề" sortKey="title" sortConfig={sortConfig} onSort={handleSort} />
               <SortableHeader label="Danh mục" sortKey="category" sortConfig={sortConfig} onSort={handleSort} />
-              <SortableHeader label="Giá" sortKey="price" sortConfig={sortConfig} onSort={handleSort} />
+              {showPrice && <SortableHeader label="Giá" sortKey="price" sortConfig={sortConfig} onSort={handleSort} />}
               <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
               <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
@@ -187,16 +192,18 @@ function ServicesContent() {
             {paginatedServices.map(service => (
               <TableRow key={service._id} className={selectedIds.includes(service._id) ? 'bg-teal-500/5' : ''}>
                 <TableCell><SelectCheckbox checked={selectedIds.includes(service._id)} onChange={() =>{  toggleSelectItem(service._id); }} /></TableCell>
-                <TableCell>
-                  {service.thumbnail ? (
-                    <Image src={service.thumbnail} width={48} height={32} className="w-12 h-8 object-cover rounded" alt={service.title} />
-                  ) : (
-                    <div className="w-12 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-slate-400">No img</div>
-                  )}
-                </TableCell>
+                {showThumbnail && (
+                  <TableCell>
+                    {service.thumbnail ? (
+                      <Image src={service.thumbnail} width={48} height={32} className="w-12 h-8 object-cover rounded" alt={service.title} />
+                    ) : (
+                      <div className="w-12 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-slate-400">No img</div>
+                    )}
+                  </TableCell>
+                )}
                 <TableCell className="font-medium max-w-[300px] truncate">{service.title}</TableCell>
                 <TableCell>{service.category}</TableCell>
-                <TableCell className="text-slate-500">{formatPrice(service.price)}</TableCell>
+                {showPrice && <TableCell className="text-slate-500">{formatPrice(service.price)}</TableCell>}
                 <TableCell>
                   <Badge variant={service.status === 'Published' ? 'success' : (service.status === 'Draft' ? 'secondary' : 'warning')}>
                     {service.status === 'Published' ? 'Đã xuất bản' : (service.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ')}
@@ -213,7 +220,7 @@ function ServicesContent() {
             ))}
             {paginatedServices.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={5 + (showThumbnail ? 1 : 0) + (showPrice ? 1 : 0)} className="text-center py-8 text-slate-500">
                    {searchTerm || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có dịch vụ nào'}
                  </TableCell>
               </TableRow>
