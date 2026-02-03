@@ -147,6 +147,7 @@ function ProductsContent() {
   const [sortBy, setSortBy] = useState<ProductSortOption>('newest');
   const [showFilters, setShowFilters] = useState(false);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const isSearching = searchQuery.trim() !== debouncedSearchQuery.trim();
   const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
   const postsPerPage = pageSizeOverride ?? (listConfig.postsPerPage ?? 12);
 
@@ -297,11 +298,11 @@ function ProductsContent() {
     }
     prevFilterKeyRef.current = filterKey;
   }, [filterKey, listConfig.paginationType, pathname, router, searchParams, urlPage]);
-  const isLoadingProducts = listConfig.paginationType === 'pagination' && (
+  const isLoadingProducts = isSearching || (isSearchActive && paginatedProducts === undefined) || (listConfig.paginationType === 'pagination' && (
     useCursorPagination
       ? infiniteStatus === 'LoadingFirstPage' || infiniteResults.length < requiredCount
       : paginatedProducts === undefined
-  );
+  ));
 
   if (categories === undefined) {
     return <ProductsListSkeleton />;

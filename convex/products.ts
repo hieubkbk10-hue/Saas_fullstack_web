@@ -230,7 +230,17 @@ export const listPublishedWithOffset = query({
     let products: Doc<"products">[] = [];
     const fetchLimit = offset + limit + 10;
 
-    if (args.categoryId) {
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      const fetchLimit = Math.min(offset + limit + 20, 500);
+      const searchQuery = ctx.db
+        .query("products")
+        .withSearchIndex("search_name", (q) => {
+          const builder = q.search("name", searchLower).eq("status", "Active");
+          return args.categoryId ? builder.eq("categoryId", args.categoryId) : builder;
+        });
+      products = await searchQuery.take(fetchLimit);
+    } else if (args.categoryId) {
       products = await ctx.db
         .query("products")
         .withIndex("by_category_status", (q) =>
@@ -250,13 +260,13 @@ export const listPublishedWithOffset = query({
         .take(fetchLimit);
     }
 
-    if (args.search && args.search.trim()) {
+    if (args.search && args.search.trim() && products.length > 0) {
       const searchLower = args.search.toLowerCase().trim();
-      products = products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchLower) ||
-          p.sku.toLowerCase().includes(searchLower)
-      );
+      products = products.filter((p) => {
+        const name = p.name?.toLowerCase() ?? '';
+        const sku = p.sku?.toLowerCase() ?? '';
+        return name.includes(searchLower) || sku.includes(searchLower);
+      });
     }
 
     switch (sortBy) {
@@ -312,7 +322,17 @@ export const searchPublished = query({
     const limit = Math.min(args.limit ?? 20, 100);
     let products;
 
-    if (args.categoryId) {
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      const fetchLimit = Math.min(limit * 2, 200);
+      const searchQuery = ctx.db
+        .query("products")
+        .withSearchIndex("search_name", (q) => {
+          const builder = q.search("name", searchLower).eq("status", "Active");
+          return args.categoryId ? builder.eq("categoryId", args.categoryId) : builder;
+        });
+      products = await searchQuery.take(fetchLimit);
+    } else if (args.categoryId) {
       products = await ctx.db
         .query("products")
         .withIndex("by_category_status", (q) =>
@@ -327,13 +347,13 @@ export const searchPublished = query({
     }
 
     // Client-side search filter
-    if (args.search) {
-      const searchLower = args.search.toLowerCase();
-      products = products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchLower) ||
-          p.sku.toLowerCase().includes(searchLower)
-      );
+    if (args.search?.trim() && products.length > 0) {
+      const searchLower = args.search.toLowerCase().trim();
+      products = products.filter((p) => {
+        const name = p.name?.toLowerCase() ?? '';
+        const sku = p.sku?.toLowerCase() ?? '';
+        return name.includes(searchLower) || sku.includes(searchLower);
+      });
     }
 
     // Sort

@@ -279,7 +279,8 @@ export default defineSchema({
     .index("by_status_price", ["status", "price"])
     .index("by_status_stock", ["status", "stock"])
     .index("by_status_sales", ["status", "sales"])
-    .index("by_status_order", ["status", "order"]),
+    .index("by_status_order", ["status", "order"])
+    .searchIndex("search_name", { filterFields: ["status", "categoryId"], searchField: "name" }),
 
   // 10a. productStats - Counter table cho product statistics (tránh full scan)
   productStats: defineTable({
