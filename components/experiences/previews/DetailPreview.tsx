@@ -27,6 +27,7 @@ type ServiceDetailPreviewProps = {
   layoutStyle: DetailLayoutStyle;
   showRelated: boolean;
   showShare: boolean;
+  priceFieldEnabled?: boolean;
   quickContactEnabled?: boolean;
   quickContactTitle?: string;
   quickContactDescription?: string;
@@ -812,6 +813,7 @@ function ClassicServicePreview({
   showShare,
   brandColor = '#3b82f6',
   device = 'desktop',
+  priceFieldEnabled,
   quickContactEnabled,
   quickContactTitle,
   quickContactDescription,
@@ -822,7 +824,7 @@ function ClassicServicePreview({
   const isDesktop = device === 'desktop';
   const isMobile = device === 'mobile';
   const relatedServices = showRelated ? MOCK_RELATED_SERVICES : [];
-  const showPrice = true;
+  const showPrice = priceFieldEnabled ?? true;
   const showDuration = true;
   const showFeatured = true;
   const quickContactConfig = {
@@ -997,6 +999,7 @@ function ModernServicePreview({
   showRelated,
   brandColor = '#3b82f6',
   device = 'desktop',
+  priceFieldEnabled,
   modernContactEnabled,
   modernContactShowPrice,
   modernHeroCtaText,
@@ -1014,7 +1017,7 @@ function ModernServicePreview({
   const headingSize = isMobile ? 'text-xl' : isTablet ? 'text-3xl' : 'text-4xl';
   
   const contactEnabled = modernContactEnabled ?? true;
-  const showPrice = modernContactShowPrice ?? true;
+  const showPrice = (priceFieldEnabled ?? true) && (modernContactShowPrice ?? true);
   
   const modernConfig = {
     heroCtaText: modernHeroCtaText ?? 'Liên hệ tư vấn',
@@ -1164,6 +1167,7 @@ function MinimalServicePreview({
   showRelated,
   brandColor = '#3b82f6',
   device = 'desktop',
+  priceFieldEnabled,
   minimalCtaEnabled,
   minimalShowPrice,
   minimalCtaText,
@@ -1177,7 +1181,7 @@ function MinimalServicePreview({
   const showFeatured = true;
   
   const ctaEnabled = minimalCtaEnabled ?? true;
-  const showPrice = minimalShowPrice ?? true;
+  const showPrice = (priceFieldEnabled ?? true) && (minimalShowPrice ?? true);
   
   const minimalConfig = {
     ctaText: minimalCtaText ?? 'Quan tâm đến dịch vụ này?',
@@ -1313,6 +1317,7 @@ export function ServiceDetailPreview({
   layoutStyle,
   showRelated,
   showShare,
+  priceFieldEnabled,
   quickContactEnabled,
   quickContactTitle,
   quickContactDescription,
@@ -1338,6 +1343,7 @@ export function ServiceDetailPreview({
   const props = {
     showRelated,
     showShare,
+    priceFieldEnabled,
     brandColor,
     device,
     layoutStyle,

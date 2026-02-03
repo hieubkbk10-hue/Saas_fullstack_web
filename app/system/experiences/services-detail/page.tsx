@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import { useQuery } from 'convex/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Briefcase, LayoutTemplate, Loader2, Save } from 'lucide-react';
+import type { Id } from '@/convex/_generated/dataModel';
+import { AlertCircle, Briefcase, LayoutTemplate, Loader2, Save } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button, Card } from '@/app/admin/components/ui';
 import { SettingInput } from '@/components/modules/shared';
 import { 
@@ -23,7 +25,7 @@ import {
   type DeviceType,
   type LayoutOption,
 } from '@/components/experiences/editor';
-import { useExperienceConfig, useExperienceSave, useExampleServiceSlug, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
+import { useExperienceConfig, useExampleServiceSlug, EXPERIENCE_GROUP, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type DetailLayoutStyle = 'classic' | 'modern' | 'minimal';
 
@@ -86,25 +88,57 @@ const HINTS = [
 export default function ServiceDetailExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const servicesModule = useQuery(api.admin.modules.getModuleByKey, { key: 'services' });
+  const serviceFields = useQuery(api.admin.modules.listModuleFields, { moduleKey: 'services' });
   const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
   const exampleServiceSlug = useExampleServiceSlug();
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
+  const [priceFieldEnabled, setPriceFieldEnabled] = useState<boolean | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const setMultipleSettings = useMutation(api.settings.setMultiple);
+  const updateField = useMutation(api.admin.modules.updateModuleField);
 
   const serverConfig = useMemo<ServiceDetailExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<ServiceDetailExperienceConfig> | undefined;
     return { ...DEFAULT_CONFIG, ...raw };
   }, [experienceSetting?.value]);
 
-  const isLoading = experienceSetting === undefined || servicesModule === undefined;
+  const isLoading = experienceSetting === undefined || servicesModule === undefined || serviceFields === undefined;
   const brandColor = (brandColorSetting?.value as string) || '#8b5cf6';
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
-  const { handleSave, isSaving } = useExperienceSave(
-    EXPERIENCE_KEY,
-    config,
-    MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY])
-  );
+  const priceField = useMemo(() => serviceFields?.find(field => field.fieldKey === 'price'), [serviceFields]);
+
+  useEffect(() => {
+    if (priceField) {
+      setPriceFieldEnabled(priceField.enabled);
+    }
+  }, [priceField?.enabled]);
+
+  const localPriceEnabled = priceFieldEnabled ?? priceField?.enabled ?? true;
+  const isPriceSyncPending = Boolean(priceField) && localPriceEnabled !== priceField?.enabled;
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const settingsToSave: Array<{ group: string; key: string; value: unknown }> = [
+        { group: EXPERIENCE_GROUP, key: EXPERIENCE_KEY, value: config }
+      ];
+
+      const tasks: Promise<unknown>[] = [setMultipleSettings({ settings: settingsToSave })];
+
+      if (priceField && isPriceSyncPending) {
+        tasks.push(updateField({ enabled: localPriceEnabled, id: priceField._id as Id<'moduleFields'> }));
+      }
+
+      await Promise.all(tasks);
+      toast.success(MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
+    } catch {
+      toast.error(MESSAGES.saveError);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const updateConfig = <K extends keyof ServiceDetailExperienceConfig>(
     key: K,
@@ -117,6 +151,7 @@ export default function ServiceDetailExperiencePage() {
     const base = {
       layoutStyle: config.layoutStyle,
       showRelated: config.showRelated,
+      priceFieldEnabled: localPriceEnabled,
       brandColor,
       device: previewDevice,
     };
@@ -303,11 +338,11 @@ export default function ServiceDetailExperiencePage() {
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={!hasChanges || isSaving}
+            disabled={(!hasChanges && !isPriceSyncPending) || isSaving}
             className="bg-violet-600 hover:bg-violet-500 gap-1.5"
           >
             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
+            <span>{hasChanges || isPriceSyncPending ? 'Lưu' : 'Đã lưu'}</span>
           </Button>
         </div>
       </header>
@@ -348,12 +383,26 @@ export default function ServiceDetailExperiencePage() {
           </ControlCard>
 
           <ControlCard title="Module liên quan">
+            {isPriceSyncPending && (
+              <div className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-xs text-amber-700 dark:text-amber-300 mb-2">
+                <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
+                <span>Bấm Lưu để đồng bộ trường giá của module.</span>
+              </div>
+            )}
             <ExperienceModuleLink
               enabled={servicesModule?.enabled ?? false}
               href="/system/modules/services"
               icon={Briefcase}
               title="Dịch vụ"
               colorScheme="cyan"
+            />
+            <ToggleRow
+              label="Hiện giá dịch vụ"
+              description="Đồng bộ với trường giá của module Dịch vụ"
+              checked={localPriceEnabled}
+              onChange={setPriceFieldEnabled}
+              accentColor="#8b5cf6"
+              disabled={!priceField}
             />
           </ControlCard>
 
