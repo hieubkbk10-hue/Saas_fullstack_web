@@ -64,6 +64,22 @@ export const SortableHeader = ({ label, sortKey, sortConfig, onSort, className }
   </TableHead>
 );
 
+export function generatePaginationItems(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  if (currentPage <= 3) {
+    return [1, 2, 3, 4, 'ellipsis', totalPages];
+  }
+
+  if (currentPage >= totalPages - 2) {
+    return [1, 'ellipsis', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+
+  return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
+}
+
 export function useSortableData<T>(items: T[], config: { key: string | null; direction: 'asc' | 'desc' }) {
   return React.useMemo(() => {
     const sortableItems = [...items];

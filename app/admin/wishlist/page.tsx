@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronLeft, ChevronRight, Heart, Loader2, Package, RefreshCw, Search, Trash2, User } from 'lucide-react';
+import { ChevronDown, Heart, Loader2, Package, RefreshCw, Search, Trash2, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
-import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
+import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'wishlist';
@@ -27,8 +27,6 @@ export default function WishlistListPage() {
 }
 
 function WishlistContent() {
-  // WL-004 FIX: Thêm limit để tránh fetch all
-  const wishlistData = useQuery(api.wishlist.listAll, { limit: 500 });
   const customersData = useQuery(api.customers.listAll, { limit: 200 });
   const productsData = useQuery(api.products.listAll, { limit: 500 });
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
@@ -38,19 +36,81 @@ function WishlistContent() {
   const clearWishlistData = useMutation(api.seed.clearWishlistData);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCustomer, setFilterCustomer] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [filterCustomer, setFilterCustomer] = useState<Id<"customers"> | ''>('');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
-  const [hiddenColumns, setHiddenColumns] = useState<string[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Id<"wishlist">[]>([]);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
+    if (typeof window === 'undefined') {
+      return [];
+    }
+    try {
+      const stored = window.localStorage.getItem('admin_wishlist_visible_columns');
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[];
+        return parsed.length > 0 ? parsed : [];
+      }
+    } catch {
+      return [];
+    }
+    return [];
+  });
+  const [manualSelectedIds, setManualSelectedIds] = useState<Id<"wishlist">[]>([]);
+  const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
 
-  const isLoading = wishlistData === undefined || customersData === undefined || productsData === undefined || fieldsData === undefined;
+  const isSelectAllActive = selectionMode === 'all';
 
-  // Lấy setting itemsPerPage từ module settings
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () =>{  clearTimeout(timer); };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (visibleColumns.length > 0) {
+      window.localStorage.setItem('admin_wishlist_visible_columns', JSON.stringify(visibleColumns));
+    }
+  }, [visibleColumns]);
+
   const itemsPerPage = useMemo(() => {
     const setting = settingsData?.find(s => s.settingKey === 'itemsPerPage');
     return (setting?.value as number) || 20;
   }, [settingsData]);
+
+  const resolvedItemsPerPage = pageSizeOverride ?? itemsPerPage;
+  const offset = (currentPage - 1) * resolvedItemsPerPage;
+
+  const wishlistData = useQuery(api.wishlist.listAdminWithOffset, {
+    limit: resolvedItemsPerPage,
+    offset,
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    customerId: filterCustomer || undefined,
+  });
+
+  const totalCountData = useQuery(api.wishlist.countAdmin, {
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    customerId: filterCustomer || undefined,
+  });
+
+  const selectAllData = useQuery(
+    api.wishlist.listAdminIds,
+    isSelectAllActive
+      ? {
+          search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+          customerId: filterCustomer || undefined,
+        }
+      : 'skip'
+  );
+
+  const isLoading = wishlistData === undefined || totalCountData === undefined || customersData === undefined || productsData === undefined || fieldsData === undefined;
+
+  useEffect(() => {
+    if (selectAllData?.hasMore) {
+      toast.info('Đã chọn tối đa 5.000 wishlist phù hợp.');
+    }
+  }, [selectAllData?.hasMore]);
 
   const enabledFields = useMemo(() => {
     const fields = new Set<string>();
@@ -70,10 +130,7 @@ function WishlistContent() {
     cols.push({ key: 'actions', label: 'Hành động', required: true });
     return cols;
   }, [enabledFields]);
-  const visibleColumns = useMemo(
-    () => columns.map(c => c.key).filter(key => !hiddenColumns.includes(key)),
-    [columns, hiddenColumns]
-  );
+  const resolvedVisibleColumns = visibleColumns.length > 0 ? visibleColumns : columns.map(c => c.key);
 
   const customerMap = useMemo(() => {
     const map: Record<string, { name: string; email: string }> = {};
@@ -101,48 +158,64 @@ function WishlistContent() {
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
+    applyManualSelection([]);
   };
 
   const handleCustomerChange = (value: string) => {
-    setFilterCustomer(value);
+    setFilterCustomer(value as Id<"customers"> | '');
     setCurrentPage(1);
+    applyManualSelection([]);
   };
 
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
     setCurrentPage(1);
+    applyManualSelection([]);
   };
 
-  const toggleColumn = (key: string) => {
-    setHiddenColumns(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  const sortedData = useSortableData(wishlistItems, sortConfig);
+
+  const totalCount = totalCountData?.count ?? 0;
+  const totalPages = totalCount ? Math.ceil(totalCount / resolvedItemsPerPage) : 1;
+  const paginatedData = sortedData;
+  const tableColumnCount = resolvedVisibleColumns.length;
+  const selectedIds = isSelectAllActive && selectAllData ? selectAllData.ids : manualSelectedIds;
+  const isSelectingAll = isSelectAllActive && selectAllData === undefined;
+
+  const applyManualSelection = (nextIds: Id<"wishlist">[]) => {
+    setSelectionMode('manual');
+    setManualSelectedIds(nextIds);
   };
 
-  const filteredData = useMemo(() => {
-    let data = [...wishlistItems];
-    if (searchTerm) {
-      data = data.filter(item => 
-        item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.productName.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+    setFilterCustomer('');
+    setCurrentPage(1);
+    setPageSizeOverride(null);
+    applyManualSelection([]);
+  };
+
+  const selectedOnPage = paginatedData.filter(item => selectedIds.includes(item._id));
+  const isPageSelected = paginatedData.length > 0 && selectedOnPage.length === paginatedData.length;
+  const isPageIndeterminate = selectedOnPage.length > 0 && selectedOnPage.length < paginatedData.length;
+
+  const toggleSelectAll = () => {
+    if (isPageSelected) {
+      const remaining = selectedIds.filter(id => !paginatedData.some(item => item._id === id));
+      applyManualSelection(remaining);
+      return;
     }
-    if (filterCustomer) {
-      data = data.filter(item => item.customerId === filterCustomer);
-    }
-    return data;
-  }, [wishlistItems, searchTerm, filterCustomer]);
-
-  const sortedData = useSortableData(filteredData, sortConfig);
-
-  // Pagination
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return sortedData.slice(start, start + itemsPerPage);
-  }, [sortedData, currentPage, itemsPerPage]);
-
-
-  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(item => item._id)); };
-  const toggleSelectItem = (id: Id<"wishlist">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
+    const next = new Set(selectedIds);
+    paginatedData.forEach(item => next.add(item._id));
+    applyManualSelection(Array.from(next));
+  };
+  const toggleSelectItem = (id: Id<"wishlist">) =>{  
+    const next = selectedIds.includes(id)
+      ? selectedIds.filter(i => i !== id)
+      : [...selectedIds, id];
+    applyManualSelection(next);
+  };
 
   const handleDelete = async (id: Id<"wishlist">) => {
     if (confirm('Xóa sản phẩm này khỏi wishlist?')) {
@@ -161,7 +234,7 @@ function WishlistContent() {
       try {
         const count = selectedIds.length;
         await Promise.all(selectedIds.map( async id => removeItem({ id })));
-        setSelectedIds([]);
+        applyManualSelection([]);
         toast.success(`Đã xóa ${count} mục`);
       } catch {
         toast.error('Có lỗi khi xóa');
@@ -174,7 +247,7 @@ function WishlistContent() {
       try {
         await clearWishlistData();
         await seedWishlistModule();
-        setSelectedIds([]);
+        applyManualSelection([]);
         toast.success('Đã reset dữ liệu wishlist');
       } catch {
         toast.error('Có lỗi khi reset dữ liệu');
@@ -273,7 +346,17 @@ function WishlistContent() {
         </Card>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  applyManualSelection([]); }} />
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap gap-2 text-sm">
+          <Button variant="outline" size="sm" onClick={() =>{  applyManualSelection(paginatedData.map(item => item._id)); }}>
+            Chọn trang này
+          </Button>
+          <Button variant="outline" size="sm" onClick={() =>{  setSelectionMode('all'); }} disabled={isSelectingAll}>
+            {isSelectingAll ? 'Đang chọn...' : 'Chọn tất cả kết quả'}
+          </Button>
+        </div>
+      )}
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between">
@@ -287,25 +370,31 @@ function WishlistContent() {
               {customersData?.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
             </select>
           </div>
-          <ColumnToggle columns={columns} visibleColumns={visibleColumns} onToggle={toggleColumn} />
+          <Button variant="outline" size="sm" onClick={handleResetFilters}>Xóa lọc</Button>
+          <ColumnToggle columns={columns} visibleColumns={resolvedVisibleColumns} onToggle={(key) =>{
+            setVisibleColumns(prev => {
+              const base = prev.length > 0 ? prev : columns.map(c => c.key);
+              return base.includes(key) ? base.filter(col => col !== key) : [...base, key];
+            });
+          }} />
         </div>
         <Table>
-          <TableHeader>
+          <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-white dark:[&_th]:bg-slate-900">
             <TableRow>
-              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedData.length && paginatedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedData.length} /></TableHead>}
-              {visibleColumns.includes('customer') && <SortableHeader label="Khách hàng" sortKey="customerName" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('product') && <SortableHeader label="Sản phẩm" sortKey="productName" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('price') && <SortableHeader label="Giá" sortKey="productPrice" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('note') && enabledFields.has('note') && <TableHead>Ghi chú</TableHead>}
-              {visibleColumns.includes('createdAt') && <SortableHeader label="Ngày thêm" sortKey="_creationTime" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('actions') && <TableHead className="text-right">Hành động</TableHead>}
+              {resolvedVisibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={isPageSelected} onChange={toggleSelectAll} indeterminate={isPageIndeterminate} /></TableHead>}
+              {resolvedVisibleColumns.includes('customer') && <SortableHeader label="Khách hàng" sortKey="customerName" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('product') && <SortableHeader label="Sản phẩm" sortKey="productName" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('price') && <SortableHeader label="Giá" sortKey="productPrice" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('note') && enabledFields.has('note') && <TableHead>Ghi chú</TableHead>}
+              {resolvedVisibleColumns.includes('createdAt') && <SortableHeader label="Ngày thêm" sortKey="_creationTime" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('actions') && <TableHead className="text-right">Hành động</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedData.map(item => (
               <TableRow key={item._id} className={selectedIds.includes(item._id) ? 'bg-pink-500/5' : ''}>
-                {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(item._id)} onChange={() =>{  toggleSelectItem(item._id); }} /></TableCell>}
-                {visibleColumns.includes('customer') && (
+                {resolvedVisibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(item._id)} onChange={() =>{  toggleSelectItem(item._id); }} /></TableCell>}
+                {resolvedVisibleColumns.includes('customer') && (
                   <TableCell>
                     <div>
                       <p className="font-medium">{item.customerName}</p>
@@ -313,7 +402,7 @@ function WishlistContent() {
                     </div>
                   </TableCell>
                 )}
-                {visibleColumns.includes('product') && (
+                {resolvedVisibleColumns.includes('product') && (
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {item.productImage ? (
@@ -327,7 +416,7 @@ function WishlistContent() {
                     </div>
                   </TableCell>
                 )}
-                {visibleColumns.includes('price') && (
+                {resolvedVisibleColumns.includes('price') && (
                   <TableCell>
                     {item.productSalePrice ? (
                       <div>
@@ -339,11 +428,11 @@ function WishlistContent() {
                     )}
                   </TableCell>
                 )}
-                {visibleColumns.includes('note') && enabledFields.has('note') && (
+                {resolvedVisibleColumns.includes('note') && enabledFields.has('note') && (
                   <TableCell className="text-slate-500 text-sm max-w-[150px] truncate">{item.note ?? '-'}</TableCell>
                 )}
-                {visibleColumns.includes('createdAt') && <TableCell className="text-slate-500 text-sm">{formatDate(item._creationTime)}</TableCell>}
-                {visibleColumns.includes('actions') && (
+                {resolvedVisibleColumns.includes('createdAt') && <TableCell className="text-slate-500 text-sm">{formatDate(item._creationTime)}</TableCell>}
+                {resolvedVisibleColumns.includes('actions') && (
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(item._id)}><Trash2 size={16}/></Button>
                   </TableCell>
@@ -352,41 +441,93 @@ function WishlistContent() {
             ))}
             {paginatedData.length === 0 && (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
                   {searchTerm || filterCustomer ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có sản phẩm yêu thích nào. Nhấn Reset để tạo dữ liệu mẫu.'}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-        {sortedData.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-sm text-slate-500">
-              Hiển thị {Math.min((currentPage - 1) * itemsPerPage + 1, sortedData.length)} - {Math.min(currentPage * itemsPerPage, sortedData.length)} / {sortedData.length} mục
-            </span>
-            {totalPages > 1 && (
+        {totalCount > 0 && !isLoading && (
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === 1}
-                  onClick={() =>{  setCurrentPage(p => p - 1); }}
+                <span className="text-slate-600">Hiển thị</span>
+                <select
+                  value={resolvedItemsPerPage}
+                  onChange={(event) =>{  setPageSizeOverride(Number(event.target.value)); setCurrentPage(1); applyManualSelection([]); }}
+                  className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
+                  aria-label="Số wishlist mỗi trang"
                 >
-                  <ChevronLeft size={16} />
-                </Button>
-                <span className="text-sm text-slate-600 dark:text-slate-400">
-                  Trang {currentPage} / {totalPages}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === totalPages}
-                  onClick={() =>{  setCurrentPage(p => p + 1); }}
-                >
-                  <ChevronRight size={16} />
-                </Button>
+                  {[10, 20, 30, 50, 100].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <span>mục/trang</span>
               </div>
-            )}
+
+              <div className="text-right sm:text-left">
+                <span className="font-medium text-slate-900">
+                  {totalCount ? ((currentPage - 1) * resolvedItemsPerPage) + 1 : 0}–{Math.min(currentPage * resolvedItemsPerPage, totalCount)}
+                </span>
+                <span className="mx-1 text-slate-300">/</span>
+                <span className="font-medium text-slate-900">
+                  {totalCount}{totalCountData?.hasMore ? '+' : ''}
+                </span>
+                <span className="ml-1 text-slate-500">wishlist</span>
+              </div>
+            </div>
+
+            <div className="order-1 flex w-full justify-center sm:order-2 sm:w-auto sm:justify-end">
+              <nav className="flex items-center space-x-1 sm:space-x-2" aria-label="Phân trang">
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.max(1, prev - 1)); }}
+                  disabled={currentPage === 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang trước"
+                >
+                  <ChevronDown className="h-4 w-4 rotate-90" />
+                </button>
+
+                {generatePaginationItems(currentPage, totalPages).map((item, index) => {
+                  if (item === 'ellipsis') {
+                    return (
+                      <div key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-slate-400">
+                        …
+                      </div>
+                    );
+                  }
+
+                  const pageNum = item as number;
+                  const isActive = pageNum === currentPage;
+                  const isMobileHidden = !isActive && pageNum !== 1 && pageNum !== totalPages;
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() =>{  setCurrentPage(pageNum); }}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
+                        isActive
+                          ? 'bg-pink-600 text-white shadow-sm border font-medium'
+                          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.min(totalPages, prev + 1)); }}
+                  disabled={currentPage >= totalPages}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang sau"
+                >
+                  <ChevronDown className="h-4 w-4 -rotate-90" />
+                </button>
+              </nav>
+            </div>
           </div>
         )}
       </Card>

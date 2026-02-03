@@ -3,13 +3,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMutation, usePaginatedQuery, useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronRight, Edit, ExternalLink, Loader2, Package, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { ChevronDown, Edit, ExternalLink, Loader2, Package, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
-import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
+import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'products';
@@ -23,7 +23,6 @@ export default function ProductsListPage() {
 }
 
 function ProductsContent() {
-  // FIX #5: Use server-side pagination instead of listAll
   const categoriesData = useQuery(api.productCategories.listActive);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
@@ -36,12 +35,45 @@ function ProductsContent() {
   const initStats = useMutation(api.products.initStats);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState<Id<"productCategories"> | ''>('');
+  const [filterStatus, setFilterStatus] = useState<'' | 'Active' | 'Archived' | 'Draft'>('');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
-  const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Id<"products">[]>([]);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
+    if (typeof window === 'undefined') {
+      return [];
+    }
+    try {
+      const stored = window.localStorage.getItem('admin_products_visible_columns');
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[];
+        return parsed.length > 0 ? parsed : [];
+      }
+    } catch {
+      return [];
+    }
+    return [];
+  });
+  const [manualSelectedIds, setManualSelectedIds] = useState<Id<"products">[]>([]);
+  const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const isSelectAllActive = selectionMode === 'all';
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () =>{  clearTimeout(timer); };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (visibleColumns.length > 0) {
+      window.localStorage.setItem('admin_products_visible_columns', JSON.stringify(visibleColumns));
+    }
+  }, [visibleColumns]);
 
   // Get productsPerPage from module settings
   const productsPerPage = useMemo(() => {
@@ -49,14 +81,41 @@ function ProductsContent() {
     return (setting?.value as number) || 12;
   }, [settingsData]);
 
-  // FIX #5: Server-side pagination
-  const { results: productsData, status, loadMore } = usePaginatedQuery(
-    api.products.list,
-    {},
-    { initialNumItems: productsPerPage }
+  const resolvedProductsPerPage = pageSizeOverride ?? productsPerPage;
+  const offset = (currentPage - 1) * resolvedProductsPerPage;
+
+  const productsData = useQuery(api.products.listAdminWithOffset, {
+    limit: resolvedProductsPerPage,
+    offset,
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    categoryId: filterCategory || undefined,
+    status: filterStatus || undefined,
+  });
+
+  const totalCountData = useQuery(api.products.countAdmin, {
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    categoryId: filterCategory || undefined,
+    status: filterStatus || undefined,
+  });
+
+  const selectAllData = useQuery(
+    api.products.listAdminIds,
+    isSelectAllActive
+      ? {
+          search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+          categoryId: filterCategory || undefined,
+          status: filterStatus || undefined,
+        }
+      : 'skip'
   );
 
-  const isLoading = productsData === undefined || categoriesData === undefined || fieldsData === undefined;
+  const isLoading = productsData === undefined || totalCountData === undefined || categoriesData === undefined || fieldsData === undefined;
+
+  useEffect(() => {
+    if (selectAllData?.hasMore) {
+      toast.info('Đã chọn tối đa 5.000 sản phẩm phù hợp.');
+    }
+  }, [selectAllData?.hasMore]);
 
   // Get enabled fields from system config
   const enabledFields = useMemo(() => {
@@ -121,29 +180,61 @@ function ProductsContent() {
     setVisibleColumns(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
   };
 
-  // Client-side filtering (on paginated data)
-  const filteredData = useMemo(() => {
-    let data = [...products];
-    if (searchTerm) {
-      data = data.filter(p => {
-        const matchName = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchSku = enabledFields.has('sku') && p.sku.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchName || matchSku;
-      });
-    }
-    if (filterCategory) {
-      data = data.filter(p => p.categoryId === filterCategory);
-    }
-    if (filterStatus) {
-      data = data.filter(p => p.status === filterStatus);
-    }
-    return data;
-  }, [products, searchTerm, filterCategory, filterStatus, enabledFields]);
+  const sortedData = useSortableData(products, sortConfig);
 
-  const sortedData = useSortableData(filteredData, sortConfig);
+  const totalCount = totalCountData?.count ?? 0;
+  const totalPages = totalCount ? Math.ceil(totalCount / resolvedProductsPerPage) : 1;
+  const paginatedData = sortedData;
+  const tableColumnCount = visibleColumns.length;
+  const selectedIds = isSelectAllActive && selectAllData ? selectAllData.ids : manualSelectedIds;
+  const isSelectingAll = isSelectAllActive && selectAllData === undefined;
 
-  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(p => p._id)); };
-  const toggleSelectItem = (id: Id<"products">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
+  const applyManualSelection = (nextIds: Id<"products">[]) => {
+    setSelectionMode('manual');
+    setManualSelectedIds(nextIds);
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+    setFilterCategory('');
+    setFilterStatus('');
+    setCurrentPage(1);
+    setPageSizeOverride(null);
+    applyManualSelection([]);
+  };
+
+  const handleFilterChange = (type: 'category' | 'status', value: string) => {
+    if (type === 'category') {
+      setFilterCategory(value as Id<"productCategories"> | '');
+    } else {
+      setFilterStatus(value as '' | 'Active' | 'Archived' | 'Draft');
+    }
+    setCurrentPage(1);
+    applyManualSelection([]);
+  };
+
+  const selectedOnPage = paginatedData.filter(product => selectedIds.includes(product._id));
+  const isPageSelected = paginatedData.length > 0 && selectedOnPage.length === paginatedData.length;
+  const isPageIndeterminate = selectedOnPage.length > 0 && selectedOnPage.length < paginatedData.length;
+
+  const toggleSelectAll = () => {
+    if (isPageSelected) {
+      const remaining = selectedIds.filter(id => !paginatedData.some(product => product._id === id));
+      applyManualSelection(remaining);
+      return;
+    }
+    const next = new Set(selectedIds);
+    paginatedData.forEach(product => next.add(product._id));
+    applyManualSelection(Array.from(next));
+  };
+
+  const toggleSelectItem = (id: Id<"products">) => {
+    const next = selectedIds.includes(id)
+      ? selectedIds.filter(i => i !== id)
+      : [...selectedIds, id];
+    applyManualSelection(next);
+  };
 
   const openFrontend = (slug: string) => {
     window.open(`/products/${slug}`, '_blank');
@@ -166,7 +257,7 @@ function ProductsContent() {
       setIsDeleting(true);
       try {
         const count = await bulkRemove({ ids: selectedIds });
-        setSelectedIds([]);
+        applyManualSelection([]);
         toast.success(`Đã xóa ${count} sản phẩm`);
       } catch {
         toast.error('Có lỗi khi xóa sản phẩm');
@@ -182,7 +273,7 @@ function ProductsContent() {
         await clearProductsData();
         await seedProductsModule();
         await initStats();
-        setSelectedIds([]);
+        applyManualSelection([]);
         toast.success('Đã reset dữ liệu sản phẩm');
       } catch {
         toast.error('Có lỗi khi reset dữ liệu');
@@ -225,9 +316,19 @@ function ProductsContent() {
       <BulkActionBar 
         selectedCount={selectedIds.length} 
         onDelete={handleBulkDelete} 
-        onClearSelection={() =>{  setSelectedIds([]); }} 
+        onClearSelection={() =>{  applyManualSelection([]); }} 
         isLoading={isDeleting}
       />
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap gap-2 text-sm">
+          <Button variant="outline" size="sm" onClick={() =>{  applyManualSelection(paginatedData.map(product => product._id)); }}>
+            Chọn trang này
+          </Button>
+          <Button variant="outline" size="sm" onClick={() =>{  setSelectionMode('all'); }} disabled={isSelectingAll}>
+            {isSelectingAll ? 'Đang chọn...' : 'Chọn tất cả kết quả'}
+          </Button>
+        </div>
+      )}
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between">
@@ -238,26 +339,27 @@ function ProductsContent() {
                 placeholder={enabledFields.has('sku') ? "Tìm tên, SKU..." : "Tìm tên sản phẩm..."} 
                 className="pl-9 w-48" 
                 value={searchTerm} 
-                onChange={(e) =>{  setSearchTerm(e.target.value); }} 
+                onChange={(e) =>{  setSearchTerm(e.target.value); setCurrentPage(1); applyManualSelection([]); }} 
               />
             </div>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterCategory} onChange={(e) =>{  setFilterCategory(e.target.value); }}>
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterCategory} onChange={(e) =>{  handleFilterChange('category', e.target.value); }}>
               <option value="">Tất cả danh mục</option>
               {categoriesData?.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
             </select>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  setFilterStatus(e.target.value); }}>
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  handleFilterChange('status', e.target.value); }}>
               <option value="">Tất cả trạng thái</option>
               <option value="Active">Đang bán</option>
               <option value="Draft">Bản nháp</option>
               <option value="Archived">Lưu trữ</option>
             </select>
+            <Button variant="outline" size="sm" onClick={handleResetFilters}>Xóa lọc</Button>
           </div>
           <ColumnToggle columns={columns} visibleColumns={visibleColumns} onToggle={toggleColumn} />
         </div>
         <Table>
-          <TableHeader>
+          <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-white dark:[&_th]:bg-slate-900">
             <TableRow>
-              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === sortedData.length && sortedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedData.length} /></TableHead>}
+              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={isPageSelected} onChange={toggleSelectAll} indeterminate={isPageIndeterminate} /></TableHead>}
               {visibleColumns.includes('image') && <TableHead className="w-[60px]">Ảnh</TableHead>}
               {visibleColumns.includes('name') && <SortableHeader label="Tên sản phẩm" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('sku') && enabledFields.has('sku') && <SortableHeader label="SKU" sortKey="sku" sortConfig={sortConfig} onSort={handleSort} />}
@@ -269,7 +371,7 @@ function ProductsContent() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedData.map(product => (
+            {paginatedData.map(product => (
               <TableRow key={product._id} className={selectedIds.includes(product._id) ? 'bg-orange-500/5' : ''}>
                 {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(product._id)} onChange={() =>{  toggleSelectItem(product._id); }} /></TableCell>}
                 {visibleColumns.includes('image') && (
@@ -319,36 +421,95 @@ function ProductsContent() {
                 )}
               </TableRow>
             ))}
-            {sortedData.length === 0 && (
+            {paginatedData.length === 0 && (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
                   {searchTerm || filterCategory || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có sản phẩm nào. Nhấn Reset để tạo dữ liệu mẫu.'}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-        {sortedData.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-sm text-slate-500">
-              Hiển thị {sortedData.length} sản phẩm
-              {productStats && ` / ${productStats.total} tổng`}
-            </span>
-            {status === 'CanLoadMore' && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() =>{  loadMore(productsPerPage); }}
-                className="gap-2"
-              >
-                <ChevronRight size={16} /> Tải thêm
-              </Button>
-            )}
-            {status === 'LoadingMore' && (
-              <div className="flex items-center gap-2 text-sm text-slate-500">
-                <Loader2 size={16} className="animate-spin" /> Đang tải...
+        {totalCount > 0 && !isLoading && (
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-600">Hiển thị</span>
+                <select
+                  value={resolvedProductsPerPage}
+                  onChange={(event) =>{  setPageSizeOverride(Number(event.target.value)); setCurrentPage(1); applyManualSelection([]); }}
+                  className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
+                  aria-label="Số sản phẩm mỗi trang"
+                >
+                  {[12, 20, 30, 50, 100].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <span>sản phẩm/trang</span>
               </div>
-            )}
+
+              <div className="text-right sm:text-left">
+                <span className="font-medium text-slate-900">
+                  {totalCount ? ((currentPage - 1) * resolvedProductsPerPage) + 1 : 0}–{Math.min(currentPage * resolvedProductsPerPage, totalCount)}
+                </span>
+                <span className="mx-1 text-slate-300">/</span>
+                <span className="font-medium text-slate-900">
+                  {totalCount}{totalCountData?.hasMore ? '+' : ''}
+                </span>
+                <span className="ml-1 text-slate-500">sản phẩm</span>
+              </div>
+            </div>
+
+            <div className="order-1 flex w-full justify-center sm:order-2 sm:w-auto sm:justify-end">
+              <nav className="flex items-center space-x-1 sm:space-x-2" aria-label="Phân trang">
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.max(1, prev - 1)); }}
+                  disabled={currentPage === 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang trước"
+                >
+                  <ChevronDown className="h-4 w-4 rotate-90" />
+                </button>
+
+                {generatePaginationItems(currentPage, totalPages).map((item, index) => {
+                  if (item === 'ellipsis') {
+                    return (
+                      <div key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-slate-400">
+                        …
+                      </div>
+                    );
+                  }
+
+                  const pageNum = item as number;
+                  const isActive = pageNum === currentPage;
+                  const isMobileHidden = !isActive && pageNum !== 1 && pageNum !== totalPages;
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() =>{  setCurrentPage(pageNum); }}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
+                        isActive
+                          ? 'bg-orange-600 text-white shadow-sm border font-medium'
+                          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.min(totalPages, prev + 1)); }}
+                  disabled={currentPage >= totalPages}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang sau"
+                >
+                  <ChevronDown className="h-4 w-4 -rotate-90" />
+                </button>
+              </nav>
+            </div>
           </div>
         )}
       </Card>

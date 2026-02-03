@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 
 const categoryDoc = v.object({
   _creationTime: v.number(),
@@ -20,6 +21,80 @@ export const listAll = query({
     return  ctx.db.query("productCategories").take(maxLimit);
   },
   returns: v.array(categoryDoc),
+});
+
+export const listAdminWithOffset = query({
+  args: {
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    search: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 20, 100);
+    const offset = args.offset ?? 0;
+    const fetchLimit = Math.min(offset + limit + 50, 1000);
+
+    let categories = await ctx.db.query("productCategories").order("desc").take(fetchLimit);
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      categories = categories.filter((category) =>
+        category.name.toLowerCase().includes(searchLower) ||
+        category.slug.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return categories.slice(offset, offset + limit);
+  },
+  returns: v.array(categoryDoc),
+});
+
+export const countAdmin = query({
+  args: {
+    search: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const limit = 5000;
+    const fetchLimit = limit + 1;
+
+    let categories: Doc<"productCategories">[] = await ctx.db.query("productCategories").take(fetchLimit);
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      categories = categories.filter((category) =>
+        category.name.toLowerCase().includes(searchLower) ||
+        category.slug.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return { count: Math.min(categories.length, limit), hasMore: categories.length > limit };
+  },
+  returns: v.object({ count: v.number(), hasMore: v.boolean() }),
+});
+
+export const listAdminIds = query({
+  args: {
+    limit: v.optional(v.number()),
+    search: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 5000, 5000);
+    const fetchLimit = limit + 1;
+
+    let categories: Doc<"productCategories">[] = await ctx.db.query("productCategories").take(fetchLimit);
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      categories = categories.filter((category) =>
+        category.name.toLowerCase().includes(searchLower) ||
+        category.slug.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const hasMore = categories.length > limit;
+    return { ids: categories.slice(0, limit).map((category) => category._id), hasMore };
+  },
+  returns: v.object({ ids: v.array(v.id("productCategories")), hasMore: v.boolean() }),
 });
 
 export const listActive = query({

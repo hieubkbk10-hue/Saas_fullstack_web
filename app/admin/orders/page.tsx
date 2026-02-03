@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Edit, Eye, Loader2, Plus, RefreshCw, Search, ShoppingBag, Trash2 } from 'lucide-react';
+import { ChevronDown, Edit, Eye, Loader2, Plus, RefreshCw, Search, ShoppingBag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
-import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
+import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'orders';
@@ -55,9 +55,7 @@ export default function OrdersListPage() {
 }
 
 function OrdersContent() {
-  // Use limited queries instead of collecting all
-  const ordersData = useQuery(api.orders.listAll, { limit: 100 });
-  const customersData = useQuery(api.customers.listAll, { limit: 100 });
+  const customersData = useQuery(api.customers.listAll, { limit: 500 });
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   
@@ -67,16 +65,46 @@ function OrdersContent() {
   const clearOrdersData = useMutation(api.seed.clearOrdersData);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [filterPaymentStatus, setFilterPaymentStatus] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'' | 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'>('');
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState<'' | 'Pending' | 'Paid' | 'Failed' | 'Refunded'>('');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
-  const [visibleColumns, setVisibleColumns] = useState<string[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Id<"orders">[]>([]);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
+    if (typeof window === 'undefined') {
+      return [];
+    }
+    try {
+      const stored = window.localStorage.getItem('admin_orders_visible_columns');
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[];
+        return parsed.length > 0 ? parsed : [];
+      }
+    } catch {
+      return [];
+    }
+    return [];
+  });
+  const [manualSelectedIds, setManualSelectedIds] = useState<Id<"orders">[]>([]);
+  const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
-  const isLoading = ordersData === undefined || customersData === undefined || fieldsData === undefined;
+  const isSelectAllActive = selectionMode === 'all';
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () =>{  clearTimeout(timer); };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (visibleColumns.length > 0) {
+      window.localStorage.setItem('admin_orders_visible_columns', JSON.stringify(visibleColumns));
+    }
+  }, [visibleColumns]);
 
   const enabledFields = useMemo(() => {
     const fields = new Set<string>();
@@ -115,6 +143,48 @@ function OrdersContent() {
     }
   }, [fieldsData, columns]);
 
+  // Lấy setting ordersPerPage từ module settings
+  const ordersPerPage = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'ordersPerPage');
+    return (setting?.value as number) || 20;
+  }, [settingsData]);
+
+  const resolvedOrdersPerPage = pageSizeOverride ?? ordersPerPage;
+  const offset = (currentPage - 1) * resolvedOrdersPerPage;
+
+  const ordersData = useQuery(api.orders.listAdminWithOffset, {
+    limit: resolvedOrdersPerPage,
+    offset,
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    status: filterStatus || undefined,
+    paymentStatus: filterPaymentStatus || undefined,
+  });
+
+  const totalCountData = useQuery(api.orders.countAdmin, {
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    status: filterStatus || undefined,
+    paymentStatus: filterPaymentStatus || undefined,
+  });
+
+  const selectAllData = useQuery(
+    api.orders.listAdminIds,
+    isSelectAllActive
+      ? {
+          search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+          status: filterStatus || undefined,
+          paymentStatus: filterPaymentStatus || undefined,
+        }
+      : 'skip'
+  );
+
+  const isLoading = ordersData === undefined || totalCountData === undefined || customersData === undefined || fieldsData === undefined;
+
+  useEffect(() => {
+    if (selectAllData?.hasMore) {
+      toast.info('Đã chọn tối đa 5.000 đơn hàng phù hợp.');
+    }
+  }, [selectAllData?.hasMore]);
+
   // Build customer map using Map for O(1) lookup
   const customerMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -137,39 +207,61 @@ function OrdersContent() {
     setVisibleColumns(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
   };
 
-  const filteredData = useMemo(() => {
-    let data = [...orders];
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      data = data.filter(o => 
-        o.orderNumber.toLowerCase().includes(term) ||
-        o.customerName.toLowerCase().includes(term)
-      );
-    }
-    if (filterStatus) {data = data.filter(o => o.status === filterStatus);}
-    if (filterPaymentStatus) {data = data.filter(o => o.paymentStatus === filterPaymentStatus);}
-    return data;
-  }, [orders, searchTerm, filterStatus, filterPaymentStatus]);
+  const sortedData = useSortableData(orders, sortConfig);
 
-  const sortedData = useSortableData(filteredData, sortConfig);
+  const totalCount = totalCountData?.count ?? 0;
+  const totalPages = totalCount ? Math.ceil(totalCount / resolvedOrdersPerPage) : 1;
+  const paginatedData = sortedData;
+  const tableColumnCount = visibleColumns.length;
+  const selectedIds = isSelectAllActive && selectAllData ? selectAllData.ids : manualSelectedIds;
+  const isSelectingAll = isSelectAllActive && selectAllData === undefined;
 
-  const ordersPerPage = useMemo(() => {
-    const setting = settingsData?.find(s => s.settingKey === 'ordersPerPage');
-    return (setting?.value as number) || 20;
-  }, [settingsData]);
+  const applyManualSelection = (nextIds: Id<"orders">[]) => {
+    setSelectionMode('manual');
+    setManualSelectedIds(nextIds);
+  };
 
-  const totalPages = Math.ceil(sortedData.length / ordersPerPage);
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * ordersPerPage;
-    return sortedData.slice(start, start + ordersPerPage);
-  }, [sortedData, currentPage, ordersPerPage]);
-
-  useEffect(() => {
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+    setFilterStatus('');
+    setFilterPaymentStatus('');
     setCurrentPage(1);
-  }, [searchTerm, filterStatus, filterPaymentStatus]);
+    setPageSizeOverride(null);
+    applyManualSelection([]);
+  };
 
-  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedData.length ? [] : paginatedData.map(o => o._id)); };
-  const toggleSelectItem = (id: Id<"orders">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
+  const handleFilterChange = (type: 'status' | 'paymentStatus', value: string) => {
+    if (type === 'status') {
+      setFilterStatus(value as '' | 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled');
+    } else {
+      setFilterPaymentStatus(value as '' | 'Pending' | 'Paid' | 'Failed' | 'Refunded');
+    }
+    setCurrentPage(1);
+    applyManualSelection([]);
+  };
+
+  const selectedOnPage = paginatedData.filter(order => selectedIds.includes(order._id));
+  const isPageSelected = paginatedData.length > 0 && selectedOnPage.length === paginatedData.length;
+  const isPageIndeterminate = selectedOnPage.length > 0 && selectedOnPage.length < paginatedData.length;
+
+  const toggleSelectAll = () => {
+    if (isPageSelected) {
+      const remaining = selectedIds.filter(id => !paginatedData.some(order => order._id === id));
+      applyManualSelection(remaining);
+      return;
+    }
+    const next = new Set(selectedIds);
+    paginatedData.forEach(order => next.add(order._id));
+    applyManualSelection(Array.from(next));
+  };
+
+  const toggleSelectItem = (id: Id<"orders">) => {
+    const next = selectedIds.includes(id)
+      ? selectedIds.filter(i => i !== id)
+      : [...selectedIds, id];
+    applyManualSelection(next);
+  };
 
   const handleDelete = async (id: Id<"orders">) => {
     if (confirm('Xóa đơn hàng này?')) {
@@ -187,7 +279,7 @@ function OrdersContent() {
       setIsDeleting(true);
       try {
         const deletedCount = await bulkDeleteOrders({ ids: selectedIds });
-        setSelectedIds([]);
+        applyManualSelection([]);
         toast.success(`Đã xóa ${deletedCount} đơn hàng`);
       } catch {
         toast.error('Có lỗi khi xóa đơn hàng');
@@ -203,7 +295,7 @@ function OrdersContent() {
       try {
         await clearOrdersData();
         await seedOrdersModule();
-        setSelectedIds([]);
+        applyManualSelection([]);
         toast.success('Đã reset dữ liệu đơn hàng');
       } catch {
         toast.error('Có lỗi khi reset dữ liệu');
@@ -242,18 +334,28 @@ function OrdersContent() {
       <BulkActionBar 
         selectedCount={selectedIds.length} 
         onDelete={handleBulkDelete} 
-        onClearSelection={() =>{  setSelectedIds([]); }} 
+        onClearSelection={() =>{  applyManualSelection([]); }} 
         isLoading={isDeleting}
       />
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap gap-2 text-sm">
+          <Button variant="outline" size="sm" onClick={() =>{  applyManualSelection(paginatedData.map(order => order._id)); }}>
+            Chọn trang này
+          </Button>
+          <Button variant="outline" size="sm" onClick={() =>{  setSelectionMode('all'); }} disabled={isSelectingAll}>
+            {isSelectingAll ? 'Đang chọn...' : 'Chọn tất cả kết quả'}
+          </Button>
+        </div>
+      )}
 
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between">
           <div className="flex flex-wrap gap-3 flex-1">
             <div className="relative max-w-xs">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input placeholder="Tìm mã đơn, khách hàng..." className="pl-9 w-48" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); }} />
+              <Input placeholder="Tìm mã đơn, khách hàng..." className="pl-9 w-48" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); setCurrentPage(1); applyManualSelection([]); }} />
             </div>
-            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  setFilterStatus(e.target.value); }}>
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  handleFilterChange('status', e.target.value); }}>
               <option value="">Tất cả trạng thái</option>
               <option value="Pending">Chờ xử lý</option>
               <option value="Processing">Đang xử lý</option>
@@ -262,7 +364,7 @@ function OrdersContent() {
               <option value="Cancelled">Đã hủy</option>
             </select>
             {enabledFields.has('paymentStatus') && (
-              <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterPaymentStatus} onChange={(e) =>{  setFilterPaymentStatus(e.target.value); }}>
+              <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterPaymentStatus} onChange={(e) =>{  handleFilterChange('paymentStatus', e.target.value); }}>
                 <option value="">Tất cả TT toán</option>
                 <option value="Pending">Chờ thanh toán</option>
                 <option value="Paid">Đã thanh toán</option>
@@ -270,13 +372,14 @@ function OrdersContent() {
                 <option value="Refunded">Hoàn tiền</option>
               </select>
             )}
+            <Button variant="outline" size="sm" onClick={handleResetFilters}>Xóa lọc</Button>
           </div>
           <ColumnToggle columns={columns} visibleColumns={visibleColumns} onToggle={toggleColumn} />
         </div>
         <Table>
-          <TableHeader>
+          <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-white dark:[&_th]:bg-slate-900">
             <TableRow>
-              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedData.length && paginatedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedData.length} /></TableHead>}
+              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={isPageSelected} onChange={toggleSelectAll} indeterminate={isPageIndeterminate} /></TableHead>}
               {visibleColumns.includes('orderNumber') && <SortableHeader label="Mã đơn" sortKey="orderNumber" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('customer') && <SortableHeader label="Khách hàng" sortKey="customerName" sortConfig={sortConfig} onSort={handleSort} />}
               {visibleColumns.includes('items') && <TableHead>Sản phẩm</TableHead>}
@@ -334,41 +437,93 @@ function OrdersContent() {
             ))}
             {paginatedData.length === 0 && (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
                   {searchTerm || filterStatus || filterPaymentStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có đơn hàng nào. Nhấn Reset để tạo dữ liệu mẫu.'}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-        {sortedData.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-sm text-slate-500">
-              Hiển thị {(currentPage - 1) * ordersPerPage + 1} - {Math.min(currentPage * ordersPerPage, sortedData.length)} / {sortedData.length} đơn hàng
-            </span>
-            {totalPages > 1 && (
+        {totalCount > 0 && !isLoading && (
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === 1}
-                  onClick={() =>{  setCurrentPage(p => p - 1); }}
+                <span className="text-slate-600">Hiển thị</span>
+                <select
+                  value={resolvedOrdersPerPage}
+                  onChange={(event) =>{  setPageSizeOverride(Number(event.target.value)); setCurrentPage(1); applyManualSelection([]); }}
+                  className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
+                  aria-label="Số đơn hàng mỗi trang"
                 >
-                  Trước
-                </Button>
-                <span className="text-sm text-slate-600 dark:text-slate-400">
-                  Trang {currentPage} / {totalPages}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === totalPages}
-                  onClick={() =>{  setCurrentPage(p => p + 1); }}
-                >
-                  Sau
-                </Button>
+                  {[10, 20, 30, 50, 100].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <span>đơn/trang</span>
               </div>
-            )}
+
+              <div className="text-right sm:text-left">
+                <span className="font-medium text-slate-900">
+                  {totalCount ? ((currentPage - 1) * resolvedOrdersPerPage) + 1 : 0}–{Math.min(currentPage * resolvedOrdersPerPage, totalCount)}
+                </span>
+                <span className="mx-1 text-slate-300">/</span>
+                <span className="font-medium text-slate-900">
+                  {totalCount}{totalCountData?.hasMore ? '+' : ''}
+                </span>
+                <span className="ml-1 text-slate-500">đơn hàng</span>
+              </div>
+            </div>
+
+            <div className="order-1 flex w-full justify-center sm:order-2 sm:w-auto sm:justify-end">
+              <nav className="flex items-center space-x-1 sm:space-x-2" aria-label="Phân trang">
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.max(1, prev - 1)); }}
+                  disabled={currentPage === 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang trước"
+                >
+                  <ChevronDown className="h-4 w-4 rotate-90" />
+                </button>
+
+                {generatePaginationItems(currentPage, totalPages).map((item, index) => {
+                  if (item === 'ellipsis') {
+                    return (
+                      <div key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-slate-400">
+                        …
+                      </div>
+                    );
+                  }
+
+                  const pageNum = item as number;
+                  const isActive = pageNum === currentPage;
+                  const isMobileHidden = !isActive && pageNum !== 1 && pageNum !== totalPages;
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() =>{  setCurrentPage(pageNum); }}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
+                        isActive
+                          ? 'bg-emerald-600 text-white shadow-sm border font-medium'
+                          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.min(totalPages, prev + 1)); }}
+                  disabled={currentPage >= totalPages}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang sau"
+                >
+                  <ChevronDown className="h-4 w-4 -rotate-90" />
+                </button>
+              </nav>
+            </div>
           </div>
         )}
       </Card>

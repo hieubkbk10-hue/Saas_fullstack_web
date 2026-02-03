@@ -2,7 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import type { Id } from "./_generated/dataModel";
-import type { MutationCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 
 // Helper: Validate foreign keys và maxItems (DRY)
 async function validateWishlistAdd(
@@ -50,6 +50,39 @@ const wishlistDoc = v.object({
   productId: v.id("products"),
 });
 
+const SEARCH_LOOKUP_LIMIT = 2000;
+
+async function getSearchIdSets(ctx: QueryCtx, search: string) {
+  const searchLower = search.toLowerCase().trim();
+  const [customers, products] = await Promise.all([
+    ctx.db.query("customers").take(SEARCH_LOOKUP_LIMIT),
+    ctx.db.query("products").take(SEARCH_LOOKUP_LIMIT),
+  ]);
+
+  const customerIds = new Set(
+    customers
+      .filter(
+        (customer) =>
+          customer.name.toLowerCase().includes(searchLower) ||
+          customer.email.toLowerCase().includes(searchLower) ||
+          customer.phone.toLowerCase().includes(searchLower)
+      )
+      .map((customer) => customer._id)
+  );
+
+  const productIds = new Set(
+    products
+      .filter(
+        (product) =>
+          product.name.toLowerCase().includes(searchLower) ||
+          product.sku.toLowerCase().includes(searchLower)
+      )
+      .map((product) => product._id)
+  );
+
+  return { customerIds, productIds };
+}
+
 // Queries
 // WL-001 FIX: Thêm limit parameter để tránh fetch all
 export const listAll = query({
@@ -58,6 +91,107 @@ export const listAll = query({
     const limit = Math.min(args.limit ?? 100, 500);
     return  ctx.db.query("wishlist").take(limit);
   },
+});
+
+export const listAdminWithOffset = query({
+  args: {
+    customerId: v.optional(v.id("customers")),
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    search: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 20, 100);
+    const offset = args.offset ?? 0;
+    const fetchLimit = Math.min(offset + limit + 50, 1000);
+
+    const searchTerm = args.search?.trim();
+    const searchIds = searchTerm ? await getSearchIdSets(ctx, searchTerm) : null;
+    if (searchIds && searchIds.customerIds.size === 0 && searchIds.productIds.size === 0) {
+      return [];
+    }
+
+    const queryBuilder = args.customerId
+      ? ctx.db.query("wishlist").withIndex("by_customer", (q) => q.eq("customerId", args.customerId!))
+      : ctx.db.query("wishlist");
+
+    let items = await queryBuilder.order("desc").take(fetchLimit);
+
+    if (searchIds) {
+      items = items.filter(
+        (item) => searchIds.customerIds.has(item.customerId) || searchIds.productIds.has(item.productId)
+      );
+    }
+
+    return items.slice(offset, offset + limit);
+  },
+  returns: v.array(wishlistDoc),
+});
+
+export const countAdmin = query({
+  args: {
+    customerId: v.optional(v.id("customers")),
+    search: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const limit = 5000;
+    const fetchLimit = limit + 1;
+
+    const searchTerm = args.search?.trim();
+    const searchIds = searchTerm ? await getSearchIdSets(ctx, searchTerm) : null;
+    if (searchIds && searchIds.customerIds.size === 0 && searchIds.productIds.size === 0) {
+      return { count: 0, hasMore: false };
+    }
+
+    const queryBuilder = args.customerId
+      ? ctx.db.query("wishlist").withIndex("by_customer", (q) => q.eq("customerId", args.customerId!))
+      : ctx.db.query("wishlist");
+
+    let items = await queryBuilder.take(fetchLimit);
+
+    if (searchIds) {
+      items = items.filter(
+        (item) => searchIds.customerIds.has(item.customerId) || searchIds.productIds.has(item.productId)
+      );
+    }
+
+    return { count: Math.min(items.length, limit), hasMore: items.length > limit };
+  },
+  returns: v.object({ count: v.number(), hasMore: v.boolean() }),
+});
+
+export const listAdminIds = query({
+  args: {
+    customerId: v.optional(v.id("customers")),
+    limit: v.optional(v.number()),
+    search: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 5000, 5000);
+    const fetchLimit = limit + 1;
+
+    const searchTerm = args.search?.trim();
+    const searchIds = searchTerm ? await getSearchIdSets(ctx, searchTerm) : null;
+    if (searchIds && searchIds.customerIds.size === 0 && searchIds.productIds.size === 0) {
+      return { ids: [], hasMore: false };
+    }
+
+    const queryBuilder = args.customerId
+      ? ctx.db.query("wishlist").withIndex("by_customer", (q) => q.eq("customerId", args.customerId!))
+      : ctx.db.query("wishlist");
+
+    let items = await queryBuilder.take(fetchLimit);
+
+    if (searchIds) {
+      items = items.filter(
+        (item) => searchIds.customerIds.has(item.customerId) || searchIds.productIds.has(item.productId)
+      );
+    }
+
+    const hasMore = items.length > limit;
+    return { ids: items.slice(0, limit).map((item) => item._id), hasMore };
+  },
+  returns: v.object({ ids: v.array(v.id("wishlist")), hasMore: v.boolean() }),
 });
 
 export const list = query({

@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { customerStatus } from "./lib/validators";
+import type { Doc } from "./_generated/dataModel";
 
 const customerDoc = v.object({
   _creationTime: v.number(),
@@ -35,6 +36,111 @@ export const listAll = query({
     const maxLimit = Math.min(args.limit ?? 100, 100);
     return  ctx.db.query("customers").order("desc").take(maxLimit);
   },
+});
+
+export const listAdminWithOffset = query({
+  args: {
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    search: v.optional(v.string()),
+    status: v.optional(customerStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 20, 100);
+    const offset = args.offset ?? 0;
+    const fetchLimit = Math.min(offset + limit + 50, 1000);
+
+    let customers: Doc<"customers">[] = [];
+    if (args.status) {
+      customers = await ctx.db
+        .query("customers")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .order("desc")
+        .take(fetchLimit);
+    } else {
+      customers = await ctx.db.query("customers").order("desc").take(fetchLimit);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      customers = customers.filter((customer) =>
+        customer.name.toLowerCase().includes(searchLower) ||
+        customer.email.toLowerCase().includes(searchLower) ||
+        customer.phone.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return customers.slice(offset, offset + limit);
+  },
+  returns: v.array(customerDoc),
+});
+
+export const countAdmin = query({
+  args: {
+    search: v.optional(v.string()),
+    status: v.optional(customerStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = 5000;
+    const fetchLimit = limit + 1;
+
+    let customers: Doc<"customers">[] = [];
+    if (args.status) {
+      customers = await ctx.db
+        .query("customers")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .take(fetchLimit);
+    } else {
+      customers = await ctx.db.query("customers").take(fetchLimit);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      customers = customers.filter((customer) =>
+        customer.name.toLowerCase().includes(searchLower) ||
+        customer.email.toLowerCase().includes(searchLower) ||
+        customer.phone.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return { count: Math.min(customers.length, limit), hasMore: customers.length > limit };
+  },
+  returns: v.object({ count: v.number(), hasMore: v.boolean() }),
+});
+
+export const listAdminIds = query({
+  args: {
+    limit: v.optional(v.number()),
+    search: v.optional(v.string()),
+    status: v.optional(customerStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 5000, 5000);
+    const fetchLimit = limit + 1;
+
+    let customers: Doc<"customers">[] = [];
+    if (args.status) {
+      customers = await ctx.db
+        .query("customers")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .take(fetchLimit);
+    } else {
+      customers = await ctx.db.query("customers").take(fetchLimit);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      customers = customers.filter((customer) =>
+        customer.name.toLowerCase().includes(searchLower) ||
+        customer.email.toLowerCase().includes(searchLower) ||
+        customer.phone.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const hasMore = customers.length > limit;
+    return { ids: customers.slice(0, limit).map((customer) => customer._id), hasMore };
+  },
+  returns: v.object({ ids: v.array(v.id("customers")), hasMore: v.boolean() }),
 });
 
 export const getById = query({

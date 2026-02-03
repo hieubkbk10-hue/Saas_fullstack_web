@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import * as OrdersModel from "./model/orders";
+import type { Doc } from "./_generated/dataModel";
 
 const orderStatus = v.union(
   v.literal("Pending"),
@@ -68,6 +69,114 @@ export const list = query({
 export const listAll = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) =>  OrdersModel.listWithLimit(ctx, { limit: args.limit }),
+});
+
+export const listAdminWithOffset = query({
+  args: {
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    paymentStatus: v.optional(paymentStatus),
+    search: v.optional(v.string()),
+    status: v.optional(orderStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 20, 100);
+    const offset = args.offset ?? 0;
+    const fetchLimit = Math.min(offset + limit + 50, 1000);
+
+    let orders: Doc<"orders">[] = [];
+    if (args.status) {
+      orders = await ctx.db
+        .query("orders")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .order("desc")
+        .take(fetchLimit);
+    } else {
+      orders = await ctx.db.query("orders").order("desc").take(fetchLimit);
+    }
+
+    if (args.paymentStatus) {
+      orders = orders.filter((order) => order.paymentStatus === args.paymentStatus);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      orders = orders.filter((order) => order.orderNumber.toLowerCase().includes(searchLower));
+    }
+
+    return orders.slice(offset, offset + limit);
+  },
+  returns: v.array(orderDoc),
+});
+
+export const countAdmin = query({
+  args: {
+    paymentStatus: v.optional(paymentStatus),
+    search: v.optional(v.string()),
+    status: v.optional(orderStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = 5000;
+    const fetchLimit = limit + 1;
+
+    let orders: Doc<"orders">[] = [];
+    if (args.status) {
+      orders = await ctx.db
+        .query("orders")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .take(fetchLimit);
+    } else {
+      orders = await ctx.db.query("orders").take(fetchLimit);
+    }
+
+    if (args.paymentStatus) {
+      orders = orders.filter((order) => order.paymentStatus === args.paymentStatus);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      orders = orders.filter((order) => order.orderNumber.toLowerCase().includes(searchLower));
+    }
+
+    return { count: Math.min(orders.length, limit), hasMore: orders.length > limit };
+  },
+  returns: v.object({ count: v.number(), hasMore: v.boolean() }),
+});
+
+export const listAdminIds = query({
+  args: {
+    limit: v.optional(v.number()),
+    paymentStatus: v.optional(paymentStatus),
+    search: v.optional(v.string()),
+    status: v.optional(orderStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 5000, 5000);
+    const fetchLimit = limit + 1;
+
+    let orders: Doc<"orders">[] = [];
+    if (args.status) {
+      orders = await ctx.db
+        .query("orders")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .take(fetchLimit);
+    } else {
+      orders = await ctx.db.query("orders").take(fetchLimit);
+    }
+
+    if (args.paymentStatus) {
+      orders = orders.filter((order) => order.paymentStatus === args.paymentStatus);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      orders = orders.filter((order) => order.orderNumber.toLowerCase().includes(searchLower));
+    }
+
+    const hasMore = orders.length > limit;
+    return { ids: orders.slice(0, limit).map((order) => order._id), hasMore };
+  },
+  returns: v.object({ ids: v.array(v.id("orders")), hasMore: v.boolean() }),
 });
 
 // Efficient count using take() instead of collect()

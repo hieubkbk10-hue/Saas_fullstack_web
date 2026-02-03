@@ -50,6 +50,122 @@ export const listAll = query({
   returns: v.array(productDoc),
 });
 
+export const listAdminWithOffset = query({
+  args: {
+    categoryId: v.optional(v.id("productCategories")),
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    search: v.optional(v.string()),
+    status: v.optional(productStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 20, 100);
+    const offset = args.offset ?? 0;
+    const fetchLimit = Math.min(offset + limit + 50, 1000);
+
+    const queryBuilder = args.categoryId && args.status
+      ? ctx.db.query("products").withIndex("by_category_status", (q) =>
+        q.eq("categoryId", args.categoryId!).eq("status", args.status!)
+      )
+      : args.categoryId
+        ? ctx.db.query("products").withIndex("by_category_status", (q) =>
+          q.eq("categoryId", args.categoryId!)
+        )
+        : args.status
+          ? ctx.db.query("products").withIndex("by_status_order", (q) => q.eq("status", args.status!))
+          : ctx.db.query("products");
+
+    let products = await queryBuilder.order("desc").take(fetchLimit);
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      products = products.filter((product) =>
+        product.name.toLowerCase().includes(searchLower) ||
+        product.sku.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return products.slice(offset, offset + limit);
+  },
+  returns: v.array(productDoc),
+});
+
+export const countAdmin = query({
+  args: {
+    categoryId: v.optional(v.id("productCategories")),
+    search: v.optional(v.string()),
+    status: v.optional(productStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = 5000;
+    const fetchLimit = limit + 1;
+
+    const queryBuilder = args.categoryId && args.status
+      ? ctx.db.query("products").withIndex("by_category_status", (q) =>
+        q.eq("categoryId", args.categoryId!).eq("status", args.status!)
+      )
+      : args.categoryId
+        ? ctx.db.query("products").withIndex("by_category_status", (q) =>
+          q.eq("categoryId", args.categoryId!)
+        )
+        : args.status
+          ? ctx.db.query("products").withIndex("by_status_order", (q) => q.eq("status", args.status!))
+          : ctx.db.query("products");
+
+    let products = await queryBuilder.take(fetchLimit);
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      products = products.filter((product) =>
+        product.name.toLowerCase().includes(searchLower) ||
+        product.sku.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return { count: Math.min(products.length, limit), hasMore: products.length > limit };
+  },
+  returns: v.object({ count: v.number(), hasMore: v.boolean() }),
+});
+
+export const listAdminIds = query({
+  args: {
+    categoryId: v.optional(v.id("productCategories")),
+    limit: v.optional(v.number()),
+    search: v.optional(v.string()),
+    status: v.optional(productStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 5000, 5000);
+    const fetchLimit = limit + 1;
+
+    const queryBuilder = args.categoryId && args.status
+      ? ctx.db.query("products").withIndex("by_category_status", (q) =>
+        q.eq("categoryId", args.categoryId!).eq("status", args.status!)
+      )
+      : args.categoryId
+        ? ctx.db.query("products").withIndex("by_category_status", (q) =>
+          q.eq("categoryId", args.categoryId!)
+        )
+        : args.status
+          ? ctx.db.query("products").withIndex("by_status_order", (q) => q.eq("status", args.status!))
+          : ctx.db.query("products");
+
+    let products = await queryBuilder.take(fetchLimit);
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      products = products.filter((product) =>
+        product.name.toLowerCase().includes(searchLower) ||
+        product.sku.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const hasMore = products.length > limit;
+    return { ids: products.slice(0, limit).map((product) => product._id), hasMore };
+  },
+  returns: v.object({ ids: v.array(v.id("products")), hasMore: v.boolean() }),
+});
+
 // FIX #2: Use counter table for count instead of fetching ALL
 export const count = query({
   args: { status: v.optional(productStatus) },

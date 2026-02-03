@@ -1,6 +1,7 @@
 import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 
 // HIGH-004 FIX: Helper function to update promotionStats counter
 async function updatePromotionStats(
@@ -55,6 +56,123 @@ export const listAll = query({
   args: {},
   handler: async (ctx) => ctx.db.query("promotions").take(500),
   returns: v.array(promotionDoc),
+});
+
+export const listAdminWithOffset = query({
+  args: {
+    discountType: v.optional(discountType),
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    search: v.optional(v.string()),
+    status: v.optional(promotionStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 20, 100);
+    const offset = args.offset ?? 0;
+    const fetchLimit = Math.min(offset + limit + 50, 1000);
+
+    let promotions: Doc<"promotions">[] = [];
+    if (args.status) {
+      promotions = await ctx.db
+        .query("promotions")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .order("desc")
+        .take(fetchLimit);
+    } else {
+      promotions = await ctx.db.query("promotions").order("desc").take(fetchLimit);
+    }
+
+    if (args.discountType) {
+      promotions = promotions.filter((promo) => promo.discountType === args.discountType);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      promotions = promotions.filter((promo) =>
+        promo.name.toLowerCase().includes(searchLower) ||
+        promo.code.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return promotions.slice(offset, offset + limit);
+  },
+  returns: v.array(promotionDoc),
+});
+
+export const countAdmin = query({
+  args: {
+    discountType: v.optional(discountType),
+    search: v.optional(v.string()),
+    status: v.optional(promotionStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = 5000;
+    const fetchLimit = limit + 1;
+
+    let promotions: Doc<"promotions">[] = [];
+    if (args.status) {
+      promotions = await ctx.db
+        .query("promotions")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .take(fetchLimit);
+    } else {
+      promotions = await ctx.db.query("promotions").take(fetchLimit);
+    }
+
+    if (args.discountType) {
+      promotions = promotions.filter((promo) => promo.discountType === args.discountType);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      promotions = promotions.filter((promo) =>
+        promo.name.toLowerCase().includes(searchLower) ||
+        promo.code.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return { count: Math.min(promotions.length, limit), hasMore: promotions.length > limit };
+  },
+  returns: v.object({ count: v.number(), hasMore: v.boolean() }),
+});
+
+export const listAdminIds = query({
+  args: {
+    discountType: v.optional(discountType),
+    limit: v.optional(v.number()),
+    search: v.optional(v.string()),
+    status: v.optional(promotionStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 5000, 5000);
+    const fetchLimit = limit + 1;
+
+    let promotions: Doc<"promotions">[] = [];
+    if (args.status) {
+      promotions = await ctx.db
+        .query("promotions")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .take(fetchLimit);
+    } else {
+      promotions = await ctx.db.query("promotions").take(fetchLimit);
+    }
+
+    if (args.discountType) {
+      promotions = promotions.filter((promo) => promo.discountType === args.discountType);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      promotions = promotions.filter((promo) =>
+        promo.name.toLowerCase().includes(searchLower) ||
+        promo.code.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const hasMore = promotions.length > limit;
+    return { ids: promotions.slice(0, limit).map((promo) => promo._id), hasMore };
+  },
+  returns: v.object({ ids: v.array(v.id("promotions")), hasMore: v.boolean() }),
 });
 
 // HIGH-004 FIX: Thêm limit

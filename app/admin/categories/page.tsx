@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Edit, ExternalLink, FolderTree, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { ChevronDown, Edit, ExternalLink, FolderTree, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
-import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
+import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 export default function CategoriesListPage() {
@@ -20,18 +20,76 @@ export default function CategoriesListPage() {
 }
 
 function CategoriesContent() {
-  const categoriesData = useQuery(api.productCategories.listAll, {});
-  const productsData = useQuery(api.products.listAll, {});
+  const productsData = useQuery(api.products.listAll, { limit: 1000 });
   const deleteCategory = useMutation(api.productCategories.remove);
   const seedProductsModule = useMutation(api.seed.seedProductsModule);
   const clearProductsData = useMutation(api.seed.clearProductsData);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
-  const [visibleColumns, setVisibleColumns] = useState(['select', 'name', 'slug', 'count', 'status', 'actions']);
-  const [selectedIds, setSelectedIds] = useState<Id<"productCategories">[]>([]);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
+    if (typeof window === 'undefined') {
+      return [];
+    }
+    try {
+      const stored = window.localStorage.getItem('admin_categories_visible_columns');
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[];
+        return parsed.length > 0 ? parsed : [];
+      }
+    } catch {
+      return [];
+    }
+    return [];
+  });
+  const [manualSelectedIds, setManualSelectedIds] = useState<Id<"productCategories">[]>([]);
+  const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
 
-  const isLoading = categoriesData === undefined || productsData === undefined;
+  const isSelectAllActive = selectionMode === 'all';
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () =>{  clearTimeout(timer); };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (visibleColumns.length > 0) {
+      window.localStorage.setItem('admin_categories_visible_columns', JSON.stringify(visibleColumns));
+    }
+  }, [visibleColumns]);
+
+  const resolvedPageSize = pageSizeOverride ?? 20;
+  const offset = (currentPage - 1) * resolvedPageSize;
+
+  const categoriesData = useQuery(api.productCategories.listAdminWithOffset, {
+    limit: resolvedPageSize,
+    offset,
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+  });
+
+  const totalCountData = useQuery(api.productCategories.countAdmin, {
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+  });
+
+  const selectAllData = useQuery(
+    api.productCategories.listAdminIds,
+    isSelectAllActive
+      ? { search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined }
+      : 'skip'
+  );
+
+  const isLoading = categoriesData === undefined || totalCountData === undefined || productsData === undefined;
+
+  useEffect(() => {
+    if (selectAllData?.hasMore) {
+      toast.info('Đã chọn tối đa 5.000 danh mục phù hợp.');
+    }
+  }, [selectAllData?.hasMore]);
 
   const columns = [
     { key: 'select', label: 'Chọn' },
@@ -41,6 +99,7 @@ function CategoriesContent() {
     { key: 'status', label: 'Trạng thái' },
     { key: 'actions', label: 'Hành động', required: true }
   ];
+  const resolvedVisibleColumns = visibleColumns.length > 0 ? visibleColumns : columns.map(c => c.key);
 
   const productCountMap = useMemo(() => {
     const map: Record<string, number> = {};
@@ -58,24 +117,52 @@ function CategoriesContent() {
 
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
+    setCurrentPage(1);
+    applyManualSelection([]);
   };
 
-  const toggleColumn = (key: string) => {
-    setVisibleColumns(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  const sortedData = useSortableData(categories, sortConfig);
+
+  const totalCount = totalCountData?.count ?? 0;
+  const totalPages = totalCount ? Math.ceil(totalCount / resolvedPageSize) : 1;
+  const paginatedData = sortedData;
+  const tableColumnCount = resolvedVisibleColumns.length;
+  const selectedIds = isSelectAllActive && selectAllData ? selectAllData.ids : manualSelectedIds;
+  const isSelectingAll = isSelectAllActive && selectAllData === undefined;
+
+  const applyManualSelection = (nextIds: Id<"productCategories">[]) => {
+    setSelectionMode('manual');
+    setManualSelectedIds(nextIds);
   };
 
-  const filteredData = useMemo(() => {
-    let data = [...categories];
-    if (searchTerm) {
-      data = data.filter(cat => cat.name.toLowerCase().includes(searchTerm.toLowerCase()) || cat.slug.toLowerCase().includes(searchTerm.toLowerCase()));
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+    setCurrentPage(1);
+    setPageSizeOverride(null);
+    applyManualSelection([]);
+  };
+
+  const selectedOnPage = paginatedData.filter(cat => selectedIds.includes(cat.id));
+  const isPageSelected = paginatedData.length > 0 && selectedOnPage.length === paginatedData.length;
+  const isPageIndeterminate = selectedOnPage.length > 0 && selectedOnPage.length < paginatedData.length;
+
+  const toggleSelectAll = () => {
+    if (isPageSelected) {
+      const remaining = selectedIds.filter(id => !paginatedData.some(cat => cat.id === id));
+      applyManualSelection(remaining);
+      return;
     }
-    return data;
-  }, [categories, searchTerm]);
-
-  const sortedData = useSortableData(filteredData, sortConfig);
-
-  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === sortedData.length ? [] : sortedData.map(item => item.id)); };
-  const toggleSelectItem = (id: Id<"productCategories">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
+    const next = new Set(selectedIds);
+    paginatedData.forEach(cat => next.add(cat.id));
+    applyManualSelection(Array.from(next));
+  };
+  const toggleSelectItem = (id: Id<"productCategories">) =>{  
+    const next = selectedIds.includes(id)
+      ? selectedIds.filter(i => i !== id)
+      : [...selectedIds, id];
+    applyManualSelection(next);
+  };
 
   const handleDelete = async (id: Id<"productCategories">) => {
     if (confirm('Xóa danh mục này?')) {
@@ -94,7 +181,7 @@ function CategoriesContent() {
         for (const id of selectedIds) {
           await deleteCategory({ id });
         }
-        setSelectedIds([]);
+        applyManualSelection([]);
         toast.success(`Đã xóa ${selectedIds.length} danh mục`);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Không thể xóa danh mục');
@@ -107,7 +194,7 @@ function CategoriesContent() {
       try {
         await clearProductsData();
         await seedProductsModule();
-        setSelectedIds([]);
+        applyManualSelection([]);
         toast.success('Đã reset dữ liệu danh mục');
       } catch {
         toast.error('Có lỗi khi reset dữ liệu');
@@ -140,32 +227,48 @@ function CategoriesContent() {
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  applyManualSelection([]); }} />
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap gap-2 text-sm">
+          <Button variant="outline" size="sm" onClick={() =>{  applyManualSelection(paginatedData.map(cat => cat.id)); }}>
+            Chọn trang này
+          </Button>
+          <Button variant="outline" size="sm" onClick={() =>{  setSelectionMode('all'); }} disabled={isSelectingAll}>
+            {isSelectingAll ? 'Đang chọn...' : 'Chọn tất cả kết quả'}
+          </Button>
+        </div>
+      )}
       
       <Card>
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between">
           <div className="relative max-w-xs flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm danh mục..." className="pl-9" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); }} />
+            <Input placeholder="Tìm kiếm danh mục..." className="pl-9" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); setCurrentPage(1); applyManualSelection([]); }} />
           </div>
-          <ColumnToggle columns={columns} visibleColumns={visibleColumns} onToggle={toggleColumn} />
+          <Button variant="outline" size="sm" onClick={handleResetFilters}>Xóa lọc</Button>
+          <ColumnToggle columns={columns} visibleColumns={resolvedVisibleColumns} onToggle={(key) =>{
+            setVisibleColumns(prev => {
+              const base = prev.length > 0 ? prev : columns.map(c => c.key);
+              return base.includes(key) ? base.filter(col => col !== key) : [...base, key];
+            });
+          }} />
         </div>
         <Table>
-          <TableHeader>
+          <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-white dark:[&_th]:bg-slate-900">
             <TableRow>
-              {visibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === sortedData.length && sortedData.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < sortedData.length} /></TableHead>}
-              {visibleColumns.includes('name') && <SortableHeader label="Tên danh mục" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('slug') && <SortableHeader label="Slug" sortKey="slug" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('count') && <SortableHeader label="Số sản phẩm" sortKey="count" sortConfig={sortConfig} onSort={handleSort} className="text-center" />}
-              {visibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="active" sortConfig={sortConfig} onSort={handleSort} />}
-              {visibleColumns.includes('actions') && <TableHead className="text-right">Hành động</TableHead>}
+              {resolvedVisibleColumns.includes('select') && <TableHead className="w-[40px]"><SelectCheckbox checked={isPageSelected} onChange={toggleSelectAll} indeterminate={isPageIndeterminate} /></TableHead>}
+              {resolvedVisibleColumns.includes('name') && <SortableHeader label="Tên danh mục" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('slug') && <SortableHeader label="Slug" sortKey="slug" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('count') && <SortableHeader label="Số sản phẩm" sortKey="count" sortConfig={sortConfig} onSort={handleSort} className="text-center" />}
+              {resolvedVisibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="active" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('actions') && <TableHead className="text-right">Hành động</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedData.map(cat => (
+            {paginatedData.map(cat => (
               <TableRow key={cat.id} className={selectedIds.includes(cat.id) ? 'bg-orange-500/5' : ''}>
-                {visibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(cat.id)} onChange={() =>{  toggleSelectItem(cat.id); }} /></TableCell>}
-                {visibleColumns.includes('name') && (
+                {resolvedVisibleColumns.includes('select') && <TableCell><SelectCheckbox checked={selectedIds.includes(cat.id)} onChange={() =>{  toggleSelectItem(cat.id); }} /></TableCell>}
+                {resolvedVisibleColumns.includes('name') && (
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <FolderTree size={16} className="text-orange-500" />
@@ -173,14 +276,14 @@ function CategoriesContent() {
                     </div>
                   </TableCell>
                 )}
-                {visibleColumns.includes('slug') && <TableCell className="text-slate-500 font-mono text-sm">{cat.slug}</TableCell>}
-                {visibleColumns.includes('count') && <TableCell className="text-center"><Badge variant="secondary">{cat.count}</Badge></TableCell>}
-                {visibleColumns.includes('status') && (
+                {resolvedVisibleColumns.includes('slug') && <TableCell className="text-slate-500 font-mono text-sm">{cat.slug}</TableCell>}
+                {resolvedVisibleColumns.includes('count') && <TableCell className="text-center"><Badge variant="secondary">{cat.count}</Badge></TableCell>}
+                {resolvedVisibleColumns.includes('status') && (
                   <TableCell>
                     <Badge variant={cat.active ? 'success' : 'secondary'}>{cat.active ? 'Hoạt động' : 'Ẩn'}</Badge>
                   </TableCell>
                 )}
-                {visibleColumns.includes('actions') && (
+                {resolvedVisibleColumns.includes('actions') && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem trên web" onClick={() =>{  openFrontend(cat.slug); }}><ExternalLink size={16}/></Button>
@@ -191,18 +294,95 @@ function CategoriesContent() {
                 )}
               </TableRow>
             ))}
-            {sortedData.length === 0 && (
+            {paginatedData.length === 0 && (
               <TableRow>
-                <TableCell colSpan={visibleColumns.length} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
                   {searchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có danh mục nào. Nhấn Reset để tạo dữ liệu mẫu.'}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-        {sortedData.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-sm text-slate-500">
-            Hiển thị {sortedData.length} / {categories.length} danh mục
+        {totalCount > 0 && !isLoading && (
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-600">Hiển thị</span>
+                <select
+                  value={resolvedPageSize}
+                  onChange={(event) =>{  setPageSizeOverride(Number(event.target.value)); setCurrentPage(1); applyManualSelection([]); }}
+                  className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
+                  aria-label="Số danh mục mỗi trang"
+                >
+                  {[10, 20, 30, 50, 100].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <span>danh mục/trang</span>
+              </div>
+
+              <div className="text-right sm:text-left">
+                <span className="font-medium text-slate-900">
+                  {totalCount ? ((currentPage - 1) * resolvedPageSize) + 1 : 0}–{Math.min(currentPage * resolvedPageSize, totalCount)}
+                </span>
+                <span className="mx-1 text-slate-300">/</span>
+                <span className="font-medium text-slate-900">
+                  {totalCount}{totalCountData?.hasMore ? '+' : ''}
+                </span>
+                <span className="ml-1 text-slate-500">danh mục</span>
+              </div>
+            </div>
+
+            <div className="order-1 flex w-full justify-center sm:order-2 sm:w-auto sm:justify-end">
+              <nav className="flex items-center space-x-1 sm:space-x-2" aria-label="Phân trang">
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.max(1, prev - 1)); }}
+                  disabled={currentPage === 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang trước"
+                >
+                  <ChevronDown className="h-4 w-4 rotate-90" />
+                </button>
+
+                {generatePaginationItems(currentPage, totalPages).map((item, index) => {
+                  if (item === 'ellipsis') {
+                    return (
+                      <div key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-slate-400">
+                        …
+                      </div>
+                    );
+                  }
+
+                  const pageNum = item as number;
+                  const isActive = pageNum === currentPage;
+                  const isMobileHidden = !isActive && pageNum !== 1 && pageNum !== totalPages;
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() =>{  setCurrentPage(pageNum); }}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
+                        isActive
+                          ? 'bg-orange-600 text-white shadow-sm border font-medium'
+                          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.min(totalPages, prev + 1)); }}
+                  disabled={currentPage >= totalPages}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang sau"
+                >
+                  <ChevronDown className="h-4 w-4 -rotate-90" />
+                </button>
+              </nav>
+            </div>
           </div>
         )}
       </Card>
