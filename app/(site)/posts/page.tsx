@@ -238,9 +238,10 @@ function PostsContent() {
     : infiniteResults;
   
   // Loading state for pagination mode  
+  const requiredCount = urlPage * postsPerPage;
   const isLoadingPosts = listConfig.paginationType === 'pagination' && (
     useCursorPagination
-      ? infiniteStatus === 'LoadingFirstPage'
+      ? infiniteStatus === 'LoadingFirstPage' || infiniteResults.length < requiredCount
       : paginatedPosts === undefined
   );
   
@@ -260,7 +261,6 @@ function PostsContent() {
   useEffect(() => {
     if (!useCursorPagination) return;
     if (infiniteStatus !== 'CanLoadMore') return;
-    const requiredCount = urlPage * postsPerPage;
     if (infiniteResults.length >= requiredCount) return;
     loadMore(requiredCount - infiniteResults.length);
   }, [useCursorPagination, infiniteStatus, infiniteResults.length, urlPage, postsPerPage, loadMore]);
