@@ -1,4 +1,5 @@
 import type { MutationCtx } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -88,6 +89,139 @@ export const listAll = query({
   args: {},
   handler: async (ctx) => ctx.db.query("notifications").take(500),
   returns: v.array(notificationDoc),
+});
+
+export const listAdminWithOffset = query({
+  args: {
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    search: v.optional(v.string()),
+    status: v.optional(notificationStatus),
+    type: v.optional(notificationType),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 20, 100);
+    const offset = args.offset ?? 0;
+    const fetchLimit = Math.min(offset + limit + 50, 1000);
+
+    let notifications: Doc<"notifications">[] = [];
+    if (args.status) {
+      notifications = await ctx.db
+        .query("notifications")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .order("desc")
+        .take(fetchLimit);
+    } else if (args.type) {
+      notifications = await ctx.db
+        .query("notifications")
+        .withIndex("by_type", (q) => q.eq("type", args.type!))
+        .order("desc")
+        .take(fetchLimit);
+    } else {
+      notifications = await ctx.db.query("notifications").order("desc").take(fetchLimit);
+    }
+
+    if (args.type) {
+      notifications = notifications.filter((notif) => notif.type === args.type);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      notifications = notifications.filter((notif) =>
+        notif.title.toLowerCase().includes(searchLower) ||
+        notif.content.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return notifications.slice(offset, offset + limit);
+  },
+  returns: v.array(notificationDoc),
+});
+
+export const countAdmin = query({
+  args: {
+    search: v.optional(v.string()),
+    status: v.optional(notificationStatus),
+    type: v.optional(notificationType),
+  },
+  handler: async (ctx, args) => {
+    const limit = 5000;
+    const fetchLimit = limit + 1;
+
+    let notifications: Doc<"notifications">[] = [];
+    if (args.status) {
+      notifications = await ctx.db
+        .query("notifications")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .take(fetchLimit);
+    } else if (args.type) {
+      notifications = await ctx.db
+        .query("notifications")
+        .withIndex("by_type", (q) => q.eq("type", args.type!))
+        .take(fetchLimit);
+    } else {
+      notifications = await ctx.db.query("notifications").take(fetchLimit);
+    }
+
+    if (args.type) {
+      notifications = notifications.filter((notif) => notif.type === args.type);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      notifications = notifications.filter((notif) =>
+        notif.title.toLowerCase().includes(searchLower) ||
+        notif.content.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return { count: Math.min(notifications.length, limit), hasMore: notifications.length > limit };
+  },
+  returns: v.object({ count: v.number(), hasMore: v.boolean() }),
+});
+
+export const listAdminIds = query({
+  args: {
+    limit: v.optional(v.number()),
+    search: v.optional(v.string()),
+    status: v.optional(notificationStatus),
+    type: v.optional(notificationType),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 5000, 5000);
+    const fetchLimit = limit + 1;
+
+    let notifications: Doc<"notifications">[] = [];
+    if (args.status) {
+      notifications = await ctx.db
+        .query("notifications")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .take(fetchLimit);
+    } else if (args.type) {
+      notifications = await ctx.db
+        .query("notifications")
+        .withIndex("by_type", (q) => q.eq("type", args.type!))
+        .take(fetchLimit);
+    } else {
+      notifications = await ctx.db.query("notifications").take(fetchLimit);
+    }
+
+    if (args.type) {
+      notifications = notifications.filter((notif) => notif.type === args.type);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      notifications = notifications.filter((notif) =>
+        notif.title.toLowerCase().includes(searchLower) ||
+        notif.content.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const hasMore = notifications.length > limit;
+    return { ids: notifications.slice(0, limit).map((notif) => notif._id), hasMore };
+  },
+  returns: v.object({ ids: v.array(v.id("notifications")), hasMore: v.boolean() }),
 });
 
 export const getById = query({
