@@ -10,6 +10,7 @@ type PostsListConfig = {
   paginationType: PaginationType;
   showSearch: boolean;
   showCategories: boolean;
+  postsPerPage: number;
 };
 
 const normalizePaginationType = (value?: string | boolean): PaginationType => {
@@ -30,6 +31,7 @@ export function usePostsListConfig(): PostsListConfig {
       paginationType: normalizePaginationType(raw?.paginationType ?? raw?.showPagination),
       showSearch: raw?.showSearch ?? true,
       showCategories: raw?.showCategories ?? true,
+      postsPerPage: raw?.postsPerPage ?? 12,
     };
   }, [experienceSetting?.value]);
 }

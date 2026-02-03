@@ -262,6 +262,83 @@ export const countPublished = query({
   returns: v.number(),
 });
 
+// Search published posts with cursor-based pagination
+export const searchPublishedPaginated = query({
+  args: {
+    categoryId: v.optional(v.id("postCategories")),
+    cursor: v.optional(v.string()),
+    limit: v.optional(v.number()),
+    search: v.optional(v.string()),
+    sortBy: v.optional(v.union(
+      v.literal("newest"),
+      v.literal("oldest"),
+      v.literal("popular"),
+      v.literal("title")
+    )),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 12, 50);
+    const sortBy = args.sortBy ?? "newest";
+    
+    // Build pagination options
+    const paginationOpts = {
+      numItems: limit,
+      cursor: args.cursor ?? null,
+    };
+    
+    let result;
+    
+    // Use appropriate index based on filters
+    if (args.categoryId) {
+      result = await ctx.db
+        .query("posts")
+        .withIndex("by_category_status", (q) => 
+          q.eq("categoryId", args.categoryId!).eq("status", "Published")
+        )
+        .paginate(paginationOpts);
+    } else if (sortBy === "popular") {
+      result = await ctx.db
+        .query("posts")
+        .withIndex("by_status_views", (q) => q.eq("status", "Published"))
+        .order("desc")
+        .paginate(paginationOpts);
+    } else {
+      result = await ctx.db
+        .query("posts")
+        .withIndex("by_status_publishedAt", (q) => q.eq("status", "Published"))
+        .order(sortBy === "oldest" ? "asc" : "desc")
+        .paginate(paginationOpts);
+    }
+    
+    let posts = result.page;
+    
+    // Client-side text search filter
+    if (args.search && args.search.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      posts = posts.filter(post => 
+        post.title.toLowerCase().includes(searchLower) ||
+        (post.excerpt?.toLowerCase().includes(searchLower))
+      );
+    }
+    
+    // Sort by title if needed (other sorts handled by index)
+    if (sortBy === "title") {
+      posts.sort((a, b) => a.title.localeCompare(b.title, 'vi'));
+    }
+    
+    return {
+      posts,
+      nextCursor: result.isDone ? null : result.continueCursor,
+      isDone: result.isDone,
+    };
+  },
+  returns: v.object({
+    posts: v.array(postDoc),
+    nextCursor: v.union(v.string(), v.null()),
+    isDone: v.boolean(),
+  }),
+});
+
 export const create = mutation({
   args: {
     authorName: v.optional(v.string()),

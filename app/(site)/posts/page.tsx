@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/convex/_generated/api';
@@ -89,6 +89,14 @@ function PostsContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allPosts, setAllPosts] = useState<typeof posts>([]);
+  const [cursors, setCursors] = useState<(string | null)[]>([null]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const postsPerPage = listConfig.postsPerPage ?? 12;
 
   // Debounce search query
   useEffect(() => {
@@ -109,16 +117,81 @@ function PostsContent() {
   }, [searchParams, categories]);
 
   const activeCategory = selectedCategory ?? categoryFromUrl;
-  const posts = useQuery(api.posts.searchPublished, {
+  
+  // Use paginated query
+  const currentCursor = cursors[currentPage - 1] ?? null;
+  const postsResult = useQuery(api.posts.searchPublishedPaginated, {
     categoryId: activeCategory ?? undefined,
-    limit: 24,
+    cursor: currentCursor ?? undefined,
+    limit: postsPerPage,
     search: debouncedSearchQuery || undefined,
     sortBy,
   });
+  const posts = postsResult?.posts ?? [];
+  
   const totalCount = useQuery(api.posts.countPublished, {
     categoryId: activeCategory ?? undefined,
   });
   const featuredPosts = useQuery(api.posts.listFeatured, { limit: 5 });
+  
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    setCursors([null]);
+    setAllPosts([]);
+  }, [activeCategory, debouncedSearchQuery, sortBy]);
+  
+  // Update cursors when we get new data
+  useEffect(() => {
+    if (postsResult?.nextCursor && currentPage === cursors.length) {
+      setCursors(prev => [...prev, postsResult.nextCursor]);
+    }
+  }, [postsResult?.nextCursor, currentPage, cursors.length]);
+  
+  // Accumulate posts for infinite scroll
+  useEffect(() => {
+    if (listConfig.paginationType === 'infiniteScroll' && posts.length > 0) {
+      setAllPosts(prev => {
+        if (currentPage === 1) return posts;
+        const existingIds = new Set(prev.map(p => p._id));
+        const newPosts = posts.filter(p => !existingIds.has(p._id));
+        return [...prev, ...newPosts];
+      });
+      setIsLoadingMore(false);
+    }
+  }, [posts, currentPage, listConfig.paginationType]);
+  
+  // Infinite scroll observer
+  useEffect(() => {
+    if (listConfig.paginationType !== 'infiniteScroll') return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore && !postsResult?.isDone) {
+          setIsLoadingMore(true);
+          setCurrentPage(prev => prev + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+    
+    return () => observer.disconnect();
+  }, [listConfig.paginationType, isLoadingMore, postsResult?.isDone]);
+  
+  // Calculate total pages
+  const totalPages = useMemo(() => {
+    if (!totalCount) return 1;
+    return Math.ceil(totalCount / postsPerPage);
+  }, [totalCount, postsPerPage]);
+  
+  // Get display posts based on pagination type
+  const displayPosts = listConfig.paginationType === 'infiniteScroll' 
+    ? (allPosts.length > 0 ? allPosts : posts)
+    : posts;
 
   // Build category map for O(1) lookup
   const categoryMap = useMemo(() => {
@@ -151,6 +224,11 @@ function PostsContent() {
 
   const handleSortChange = useCallback((sort: SortOption) => {
     setSortBy(sort);
+  }, []);
+  
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   // Initial loading state only (not on search/filter changes)
@@ -194,7 +272,7 @@ function PostsContent() {
 
             {/* Posts */}
             <FullWidthLayout
-              posts={posts ?? []}
+              posts={displayPosts}
               brandColor={brandColor}
               categoryMap={categoryMap}
               enabledFields={enabledFields}
@@ -204,7 +282,7 @@ function PostsContent() {
 
         {layout === 'sidebar' && (
           <SidebarLayout
-            posts={posts ?? []}
+            posts={displayPosts}
             brandColor={brandColor}
             categoryMap={categoryMap}
             categories={categories}
@@ -222,7 +300,7 @@ function PostsContent() {
 
         {layout === 'magazine' && (
           <MagazineLayout
-            posts={posts ?? []}
+            posts={displayPosts}
             brandColor={brandColor}
             categoryMap={categoryMap}
             categories={categories}
@@ -239,41 +317,91 @@ function PostsContent() {
           />
         )}
 
-        {/* Load More (for all layouts) - Hide based on config */}
-        {(posts?.length ?? 0) >= 24 && (
-          listConfig.paginationType === 'pagination' ? (
-            <div className="text-center mt-6">
-              <nav className="inline-flex items-center gap-1">
-                <button
-                  className="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                  style={{ backgroundColor: brandColor, color: 'white' }}
-                >
-                  1
-                </button>
-                {[2, 3, 4].map((page) => (
+        {/* Pagination / Infinite Scroll */}
+        {listConfig.paginationType === 'pagination' && totalPages > 1 && (
+          <div className="text-center mt-6">
+            <nav className="inline-flex items-center gap-1">
+              {/* Previous button */}
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
+              >
+                &larr;
+              </button>
+              
+              {/* Page numbers */}
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                let pageNum: number;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
                   <button
-                    key={page}
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                    style={currentPage === pageNum 
+                      ? { backgroundColor: brandColor, color: 'white' }
+                      : undefined
+                    }
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              
+              {/* Ellipsis and last page */}
+              {totalPages > 5 && currentPage < totalPages - 2 && (
+                <>
+                  <span className="px-2 text-slate-400">...</span>
+                  <button
+                    onClick={() => handlePageChange(totalPages)}
                     className="px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-slate-100"
                   >
-                    {page}
+                    {totalPages}
                   </button>
-                ))}
-                <span className="px-2 text-slate-400">...</span>
-                <button className="px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-slate-100">
-                  10
-                </button>
-              </nav>
-            </div>
-          ) : (
-            <div className="text-center mt-6 space-y-2">
+                </>
+              )}
+              
+              {/* Next button */}
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
+              >
+                &rarr;
+              </button>
+            </nav>
+          </div>
+        )}
+        
+        {/* Infinite scroll trigger */}
+        {listConfig.paginationType === 'infiniteScroll' && !postsResult?.isDone && (
+          <div ref={loadMoreRef} className="text-center mt-6 py-4">
+            {isLoadingMore ? (
               <div className="flex justify-center gap-1">
                 <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
                 <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
                 <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
               </div>
+            ) : (
               <p className="text-sm text-slate-400">Cuộn để xem thêm...</p>
-            </div>
-          )
+            )}
+          </div>
+        )}
+        
+        {/* Show "All loaded" message for infinite scroll */}
+        {listConfig.paginationType === 'infiniteScroll' && postsResult?.isDone && displayPosts.length > 0 && (
+          <div className="text-center mt-6">
+            <p className="text-sm text-slate-400">Đã hiển thị tất cả {displayPosts.length} bài viết</p>
+          </div>
         )}
       </div>
     </div>
