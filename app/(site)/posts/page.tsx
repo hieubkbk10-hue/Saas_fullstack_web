@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePaginatedQuery, useQuery } from 'convex/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
@@ -55,37 +55,52 @@ function PostsGridSkeleton({ count = 6 }: { count?: number }) {
 
 function generatePaginationItems(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
   const items: (number | 'ellipsis')[] = [];
-  
-  if (totalPages <= 9) {
-    for (let i = 1; i <= totalPages; i++) items.push(i);
+  const siblingCount = 1;
+
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) {
+      items.push(i);
+    }
     return items;
   }
-  
-  // Always show first 2 pages
-  items.push(1, 2);
-  
-  // Ellipsis after first pages if needed
-  if (currentPage > 4) {
+
+  const leftSiblingIndex = Math.max(currentPage - siblingCount, 1);
+  const rightSiblingIndex = Math.min(currentPage + siblingCount, totalPages);
+
+  const shouldShowLeftDots = leftSiblingIndex > 2;
+  const shouldShowRightDots = rightSiblingIndex < totalPages - 2;
+
+  const firstPageIndex = 1;
+  const lastPageIndex = totalPages;
+
+  if (!shouldShowLeftDots && shouldShowRightDots) {
+    const leftRange = 3 + 2 * siblingCount;
+    for (let i = 1; i <= leftRange; i++) {
+      items.push(i);
+    }
     items.push('ellipsis');
+    items.push(totalPages);
+    return items;
   }
-  
-  // Pages around current
-  const start = Math.max(3, currentPage - 1);
-  const end = Math.min(totalPages - 2, currentPage + 1);
-  
-  for (let i = start; i <= end; i++) {
-    if (!items.includes(i)) items.push(i);
-  }
-  
-  // Ellipsis before last pages if needed
-  if (currentPage < totalPages - 3) {
+
+  if (shouldShowLeftDots && !shouldShowRightDots) {
+    items.push(firstPageIndex);
     items.push('ellipsis');
+    const rightRange = 3 + 2 * siblingCount;
+    for (let i = totalPages - rightRange + 1; i <= totalPages; i++) {
+      items.push(i);
+    }
+    return items;
   }
-  
-  // Always show last 2 pages
-  if (!items.includes(totalPages - 1)) items.push(totalPages - 1);
-  if (!items.includes(totalPages)) items.push(totalPages);
-  
+
+  items.push(firstPageIndex);
+  items.push('ellipsis');
+  for (let i = leftSiblingIndex; i <= rightSiblingIndex; i++) {
+    items.push(i);
+  }
+  items.push('ellipsis');
+  items.push(lastPageIndex);
+
   return items;
 }
 function PostsListSkeleton() {
@@ -276,6 +291,9 @@ function PostsContent() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchParams, pathname, router]);
+
+  const filterKey = `${activeCategory ?? ''}|${debouncedSearchQuery}|${sortBy}|${postsPerPage}`;
+  const prevFilterKeyRef = useRef(filterKey);
   
   // Update URL when page changes (pagination mode)
   const handlePageChange = useCallback((page: number) => {
@@ -291,12 +309,19 @@ function PostsContent() {
   
   // Reset page to 1 when search/filter/page size changes
   useEffect(() => {
-    if (listConfig.paginationType === 'pagination' && urlPage !== 1) {
+    if (listConfig.paginationType !== 'pagination') {
+      prevFilterKeyRef.current = filterKey;
+      return;
+    }
+
+    const hasFilterChanged = prevFilterKeyRef.current !== filterKey;
+    if (hasFilterChanged && urlPage !== 1) {
       const params = new URLSearchParams(searchParams.toString());
       params.delete('page');
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
-  }, [debouncedSearchQuery, sortBy, activeCategory, postsPerPage, listConfig.paginationType, pathname, router, searchParams, urlPage]);
+    prevFilterKeyRef.current = filterKey;
+  }, [filterKey, listConfig.paginationType, pathname, router, searchParams, urlPage]);
 
   // Initial loading state only (not on search/filter changes)
   const isInitialLoading = categories === undefined;
@@ -398,70 +423,82 @@ function PostsContent() {
 
         {/* Pagination / Infinite Scroll */}
         {listConfig.paginationType === 'pagination' && totalPages > 1 && (
-          <div className="mt-8 flex flex-col items-center gap-4">
-            {/* Page navigation */}
-            <nav className="flex items-center gap-1.5" aria-label="Phân trang">
-              {/* Previous */}
-              <button
-                onClick={() => handlePageChange(urlPage - 1)}
-                disabled={urlPage === 1}
-                className="inline-flex items-center justify-center w-8 h-8 rounded-md text-slate-400 transition-colors hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed"
-                aria-label="Trang trước"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              
-              {/* Page numbers */}
-              {generatePaginationItems(urlPage, totalPages).map((item, index) => (
-                item === 'ellipsis' ? (
-                  <span key={`ellipsis-${index}`} className="w-8 text-center text-slate-400 select-none">
-                    …
-                  </span>
-                ) : (
-                  <button
-                    key={item}
-                    onClick={() => handlePageChange(item)}
-                    className={`inline-flex items-center justify-center w-8 h-8 rounded-md text-sm transition-colors ${
-                      urlPage === item
-                        ? 'font-semibold text-slate-900 border border-slate-300 bg-slate-100'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                    aria-current={urlPage === item ? 'page' : undefined}
-                  >
-                    {item}
-                  </button>
-                )
-              ))}
-              
-              {/* Next */}
-              <button
-                onClick={() => handlePageChange(urlPage + 1)}
-                disabled={urlPage === totalPages}
-                className="inline-flex items-center justify-center w-8 h-8 rounded-md text-slate-400 transition-colors hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed"
-                aria-label="Trang sau"
-              >
-                <ChevronRight size={20} />
-              </button>
-            </nav>
-            
-            {/* Page info text */}
-            <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-slate-500">
-              <span>
-                Hiển thị {totalCount ? ((urlPage - 1) * postsPerPage) + 1 : 0}–{Math.min(urlPage * postsPerPage, totalCount ?? 0)} trong {totalCount ?? 0} bài viết
-              </span>
-              <div className="flex items-center gap-1">
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-600">Hiển thị</span>
                 <select
                   value={postsPerPage}
                   onChange={(event) => handlePageSizeChange(Number(event.target.value))}
-                  className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-600 shadow-sm focus:border-slate-300 focus:outline-none"
+                  className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
                   aria-label="Số bài mỗi trang"
                 >
-                  {[10, 12, 20, 30].map((size) => (
+                  {[12, 20, 24, 48, 100].map((size) => (
                     <option key={size} value={size}>{size}</option>
                   ))}
                 </select>
                 <span>bài/trang</span>
               </div>
+
+              <div className="text-right sm:text-left">
+                <span className="font-medium text-slate-900">
+                  {totalCount ? ((urlPage - 1) * postsPerPage) + 1 : 0}–{Math.min(urlPage * postsPerPage, totalCount ?? 0)}
+                </span>
+                <span className="mx-1 text-slate-300">/</span>
+                <span className="font-medium text-slate-900">{totalCount ?? 0}</span>
+                <span className="ml-1 text-slate-500">bài viết</span>
+              </div>
+            </div>
+
+            <div className="order-1 flex w-full justify-center sm:order-2 sm:w-auto sm:justify-end">
+              <nav className="flex items-center space-x-1 sm:space-x-2" aria-label="Phân trang">
+                <button
+                  onClick={() => handlePageChange(urlPage - 1)}
+                  disabled={urlPage === 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang trước"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+
+                {generatePaginationItems(urlPage, totalPages).map((item, index) => {
+                  if (item === 'ellipsis') {
+                    return (
+                      <div key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-slate-400">
+                        …
+                      </div>
+                    );
+                  }
+
+                  const pageNum = item as number;
+                  const isActive = pageNum === urlPage;
+                  const isMobileHidden = !isActive && pageNum !== 1 && pageNum !== totalPages;
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
+                        isActive
+                          ? 'bg-slate-900 text-white shadow-sm border border-slate-900 font-medium'
+                          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() => handlePageChange(urlPage + 1)}
+                  disabled={urlPage === totalPages}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang sau"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </nav>
             </div>
           </div>
         )}
