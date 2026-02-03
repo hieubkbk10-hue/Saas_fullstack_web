@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Check, ChevronDown, Copy, Edit, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, Copy, Edit, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -25,8 +25,6 @@ function PromotionsContent() {
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   const deletePromotion = useMutation(api.promotions.remove);
-  const seedPromotionsModule = useMutation(api.seed.seedPromotionsModule);
-  const clearPromotionsData = useMutation(api.seed.clearPromotionsData);
   
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [searchTerm, setSearchTerm] = useState('');
@@ -220,20 +218,6 @@ function PromotionsContent() {
     }
   };
 
-  // TICKET #10 FIX: Show detailed error message
-  const handleReseed = async () => {
-    if (confirm('Xóa tất cả khuyến mãi và seed lại dữ liệu mẫu?')) {
-      try {
-        await clearPromotionsData();
-        await seedPromotionsModule();
-        applyManualSelection([]);
-        toast.success('Đã reset dữ liệu khuyến mãi');
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Có lỗi khi reset dữ liệu');
-      }
-    }
-  };
-
   // TICKET #12 FIX: Handle clipboard API errors
   const copyCode = async (code: string) => {
     try {
@@ -289,9 +273,6 @@ function PromotionsContent() {
           <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý voucher và mã giảm giá</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleReseed} title="Reset dữ liệu mẫu">
-            <RefreshCw size={16}/> Reset
-          </Button>
           <Link href="/admin/promotions/create"><Button className="gap-2 bg-pink-600 hover:bg-pink-500"><Plus size={16}/> Thêm mới</Button></Link>
         </div>
       </div>
@@ -420,7 +401,7 @@ function PromotionsContent() {
             {paginatedPromotions.length === 0 && (
               <TableRow>
                 <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
-                  {searchTerm || filterStatus || filterType ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có khuyến mãi nào. Nhấn Reset để tạo dữ liệu mẫu.'}
+                  {searchTerm || filterStatus || filterType ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có khuyến mãi nào.'}
                 </TableCell>
               </TableRow>
             )}

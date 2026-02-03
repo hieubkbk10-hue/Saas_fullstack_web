@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Ban, Check, ChevronLeft, ChevronRight, Edit, FileText, Loader2, Package, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { Ban, Check, ChevronLeft, ChevronRight, Edit, FileText, Loader2, Package, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -28,10 +28,6 @@ function CommentsContent() {
   const approveComment = useMutation(api.comments.approve);
   const markAsSpam = useMutation(api.comments.markAsSpam);
   const bulkUpdateStatus = useMutation(api.comments.bulkUpdateStatus);
-  const seedComments = useMutation(api.seed.seedComments);
-  const clearComments = useMutation(api.seed.clearComments);
-  const seedPostsModule = useMutation(api.seed.seedPostsModule);
-  const seedProductsModule = useMutation(api.seed.seedProductsModule);
 
   const [selectedIds, setSelectedIds] = useState<Id<"comments">[]>([]);
   const [filterType, setFilterType] = useState<'' | 'post' | 'product'>('');
@@ -148,17 +144,6 @@ function CommentsContent() {
     toast.success('Đã đánh dấu spam');
   };
 
-  const handleReset = async () => {
-    if (confirm('Reset dữ liệu bình luận?')) {
-      await clearComments();
-      await seedPostsModule();
-      await seedProductsModule();
-      await seedComments();
-      setSelectedIds([]);
-      toast.success('Đã reset dữ liệu bình luận');
-    }
-  };
-
   const handleBulkApprove = async () => {
     if (selectedIds.length === 0) {return;}
     try {
@@ -197,7 +182,6 @@ function CommentsContent() {
           <p className="text-sm text-slate-500">Xem danh sách bình luận và đánh giá mới nhất</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleReset} className="gap-2"><RefreshCw size={16}/> Reset</Button>
           <Link href="/admin/comments/create"><Button className="gap-2"><Plus size={16}/> Thêm mới</Button></Link>
         </div>
       </div>
@@ -302,7 +286,7 @@ function CommentsContent() {
             {paginatedComments.length === 0 && (
               <TableRow>
                 <TableCell colSpan={9} className="h-24 text-center text-slate-500">
-                  {filterType || filterStatus || searchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Không có bình luận nào. Nhấn Reset để tạo dữ liệu mẫu.'}
+                  {filterType || filterStatus || searchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Không có bình luận nào.'}
                 </TableCell>
               </TableRow>
             )}

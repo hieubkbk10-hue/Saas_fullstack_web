@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Edit, FolderTree, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { Edit, FolderTree, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -23,8 +23,6 @@ function ServiceCategoriesContent() {
   const categoriesData = useQuery(api.serviceCategories.listAll, {});
   const servicesData = useQuery(api.services.listAll, {});
   const deleteCategory = useMutation(api.serviceCategories.remove);
-  const seedServicesModule = useMutation(api.seed.seedServicesModule);
-  const clearServicesData = useMutation(api.seed.clearServicesData);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
@@ -102,15 +100,6 @@ function ServiceCategoriesContent() {
     }
   };
 
-  const handleReset = async () => {
-    if (confirm('Reset dữ liệu danh mục? Tất cả dữ liệu cũ sẽ bị xóa.')) {
-      await clearServicesData();
-      await seedServicesModule();
-      setSelectedIds([]);
-      toast.success('Đã reset dữ liệu danh mục');
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -132,7 +121,6 @@ function ServiceCategoriesContent() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleReset} className="gap-2"><RefreshCw size={16}/> Reset</Button>
           <Link href="/admin/service-categories/create"><Button className="gap-2 bg-teal-600 hover:bg-teal-500"><Plus size={16}/> Thêm danh mục</Button></Link>
         </div>
       </div>

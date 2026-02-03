@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Ban, Check, ChevronLeft, ChevronRight, Loader2, Package, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { Ban, Check, ChevronLeft, ChevronRight, Loader2, Package, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, SelectCheckbox } from '../components/TableUtilities';
@@ -30,9 +30,6 @@ function ReviewsContent() {
   const deleteComment = useMutation(api.comments.remove);
   const approveComment = useMutation(api.comments.approve);
   const markAsSpam = useMutation(api.comments.markAsSpam);
-  const seedComments = useMutation(api.seed.seedComments);
-  const clearComments = useMutation(api.seed.clearComments);
-  const seedProductsModule = useMutation(api.seed.seedProductsModule);
 
   const [selectedIds, setSelectedIds] = useState<Id<"comments">[]>([]);
   const [filterStatus, setFilterStatus] = useState('');
@@ -133,16 +130,6 @@ function ReviewsContent() {
     toast.success('Đã đánh dấu spam');
   };
 
-  const handleReset = async () => {
-    if (confirm('Reset dữ liệu đánh giá sản phẩm?')) {
-      await clearComments();
-      await seedProductsModule();
-      await seedComments();
-      setSelectedIds([]);
-      toast.success('Đã reset dữ liệu đánh giá');
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -158,7 +145,7 @@ function ReviewsContent() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Đánh giá sản phẩm</h1>
           <p className="text-sm text-slate-500">Quản lý đánh giá và nhận xét từ khách hàng</p>
         </div>
-        <Button variant="outline" onClick={handleReset} className="gap-2"><RefreshCw size={16}/> Reset</Button>
+        <div />
       </div>
 
       <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
@@ -231,7 +218,7 @@ function ReviewsContent() {
             {paginatedReviews.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center text-slate-500">
-                  {filterStatus || filterProduct || searchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có đánh giá nào. Nhấn Reset để tạo dữ liệu mẫu.'}
+                  {filterStatus || filterProduct || searchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có đánh giá nào.'}
                 </TableCell>
               </TableRow>
             )}

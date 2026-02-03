@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronDown, Edit, ExternalLink, FolderTree, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { ChevronDown, Edit, ExternalLink, FolderTree, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -22,8 +22,6 @@ export default function ProductCategoriesListPage() {
 function ProductCategoriesContent() {
   const productsData = useQuery(api.products.listAll, { limit: 1000 });
   const deleteCategory = useMutation(api.productCategories.remove);
-  const seedProductsModule = useMutation(api.seed.seedProductsModule);
-  const clearProductsData = useMutation(api.seed.clearProductsData);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -189,15 +187,6 @@ function ProductCategoriesContent() {
     }
   };
 
-  const handleReset = async () => {
-    if (confirm('Reset dữ liệu danh mục? Tất cả dữ liệu cũ sẽ bị xóa.')) {
-      await clearProductsData();
-      await seedProductsModule();
-      applyManualSelection([]);
-      toast.success('Đã reset dữ liệu danh mục');
-    }
-  };
-
   const openFrontend = (slug: string) => {
     window.open(`/category/${slug}`, '_blank');
   };
@@ -218,7 +207,6 @@ function ProductCategoriesContent() {
           <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý phân loại sản phẩm</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleReset} className="gap-2"><RefreshCw size={16}/> Reset</Button>
           <Link href="/admin/product-categories/create"><Button className="gap-2"><Plus size={16}/> Thêm danh mục</Button></Link>
         </div>
       </div>
@@ -301,7 +289,7 @@ function ProductCategoriesContent() {
             {paginatedData.length === 0 && (
               <TableRow>
                 <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
-                  {searchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có danh mục nào. Nhấn Reset để tạo dữ liệu mẫu.'}
+                  {searchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có danh mục nào.'}
                 </TableCell>
               </TableRow>
             )}

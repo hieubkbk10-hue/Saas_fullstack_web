@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronLeft, ChevronRight, Edit, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -29,8 +29,6 @@ function UsersContent() {
   const featuresData = useQuery(api.admin.modules.listModuleFeatures, { moduleKey: MODULE_KEY });
   const deleteUser = useMutation(api.users.remove);
   const bulkDeleteUsers = useMutation(api.users.bulkRemove);
-  const seedUsersModule = useMutation(api.seed.seedUsersModule);
-  const clearUsersData = useMutation(api.seed.clearUsersData);
 
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [searchTerm, setSearchTerm] = useState('');
@@ -140,22 +138,6 @@ function UsersContent() {
     }
   };
 
-  // USR-009 FIX: Thêm loading toast cho handleReseed
-  const handleReseed = async () => {
-    if (confirm('Xóa tất cả users/roles và seed lại dữ liệu mẫu?')) {
-      const loadingToast = toast.loading('Đang reset dữ liệu...');
-      try {
-        await clearUsersData();
-        await seedUsersModule();
-        toast.dismiss(loadingToast);
-        toast.success('Đã reset dữ liệu users');
-      } catch {
-        toast.dismiss(loadingToast);
-        toast.error('Có lỗi khi reset dữ liệu');
-      }
-    }
-  };
-
   const formatLastLogin = (timestamp?: number) => {
     if (!timestamp) {return 'Chưa đăng nhập';}
     const date = new Date(timestamp);
@@ -178,9 +160,6 @@ function UsersContent() {
           <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý tài khoản truy cập vào Admin</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleReseed} title="Reset dữ liệu mẫu">
-            <RefreshCw size={16}/> Reset
-          </Button>
           <Link href="/admin/users/create"><Button className="gap-2"><Plus size={16}/> Thêm User</Button></Link>
         </div>
       </div>

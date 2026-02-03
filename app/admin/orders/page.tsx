@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronDown, Edit, Eye, Loader2, Plus, RefreshCw, Search, ShoppingBag, Trash2 } from 'lucide-react';
+import { ChevronDown, Edit, Eye, Loader2, Plus, Search, ShoppingBag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -61,8 +61,6 @@ function OrdersContent() {
   
   const deleteOrder = useMutation(api.orders.remove);
   const bulkDeleteOrders = useMutation(api.orders.bulkRemove);
-  const seedOrdersModule = useMutation(api.seed.seedOrdersModule);
-  const clearOrdersData = useMutation(api.seed.clearOrdersData);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -89,7 +87,6 @@ function OrdersContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
 
   const isSelectAllActive = selectionMode === 'all';
 
@@ -289,22 +286,6 @@ function OrdersContent() {
     }
   };
 
-  const handleReset = async () => {
-    if (confirm('Xóa tất cả đơn hàng và seed lại dữ liệu mẫu?')) {
-      setIsResetting(true);
-      try {
-        await clearOrdersData();
-        await seedOrdersModule();
-        applyManualSelection([]);
-        toast.success('Đã reset dữ liệu đơn hàng');
-      } catch {
-        toast.error('Có lỗi khi reset dữ liệu');
-      } finally {
-        setIsResetting(false);
-      }
-    }
-  };
-
   const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
   const formatDate = (timestamp: number) => new Date(timestamp).toLocaleDateString('vi-VN');
 
@@ -324,9 +305,6 @@ function OrdersContent() {
           <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý đơn hàng và vận chuyển</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleReset} disabled={isResetting} title="Reset dữ liệu mẫu">
-            {isResetting ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16}/>} Reset
-          </Button>
           <Link href="/admin/orders/create"><Button className="gap-2 bg-emerald-600 hover:bg-emerald-500"><Plus size={16}/> Tạo đơn hàng</Button></Link>
         </div>
       </div>
@@ -438,7 +416,7 @@ function OrdersContent() {
             {paginatedData.length === 0 && (
               <TableRow>
                 <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
-                  {searchTerm || filterStatus || filterPaymentStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có đơn hàng nào. Nhấn Reset để tạo dữ liệu mẫu.'}
+                  {searchTerm || filterStatus || filterPaymentStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có đơn hàng nào.'}
                 </TableCell>
               </TableRow>
             )}

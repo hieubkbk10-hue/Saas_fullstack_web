@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { AlertTriangle, CheckCircle, Eye, Loader2, RefreshCw, Search, ShoppingCart, Trash2, User } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Eye, Loader2, Search, ShoppingCart, Trash2, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -45,8 +45,6 @@ function CartContent() {
   const statsData = useQuery(api.cart.getStats);
   const deleteCart = useMutation(api.cart.remove);
   const markAsAbandoned = useMutation(api.cart.markAsAbandoned);
-  const seedCartModule = useMutation(api.seed.seedCartModule);
-  const clearCartData = useMutation(api.seed.clearCartData);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -182,19 +180,6 @@ function CartContent() {
     }
   };
 
-  const handleReset = async () => {
-    if (confirm('Xóa tất cả giỏ hàng và seed lại dữ liệu mẫu?')) {
-      try {
-        await clearCartData();
-        await seedCartModule();
-        setSelectedIds([]);
-        toast.success('Đã reset dữ liệu giỏ hàng');
-      } catch {
-        toast.error('Có lỗi khi reset dữ liệu');
-      }
-    }
-  };
-
   const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
   const formatDate = (timestamp: number) => new Date(timestamp).toLocaleDateString('vi-VN');
 
@@ -221,11 +206,7 @@ function CartContent() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Giỏ hàng</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý giỏ hàng của khách</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleReset} title="Reset dữ liệu mẫu">
-            <RefreshCw size={16}/> Reset
-          </Button>
-        </div>
+        <div className="flex gap-2" />
       </div>
 
       {/* Statistics Cards */}
@@ -372,7 +353,7 @@ function CartContent() {
             {paginatedData.length === 0 && (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center py-8 text-slate-500">
-                  {searchTerm || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có giỏ hàng nào. Nhấn Reset để tạo dữ liệu mẫu.'}
+                  {searchTerm || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có giỏ hàng nào.'}
                 </TableCell>
               </TableRow>
             )}

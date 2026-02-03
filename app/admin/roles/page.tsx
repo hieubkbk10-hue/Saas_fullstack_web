@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronLeft, ChevronRight, Crown, Edit, Loader2, Plus, RefreshCw, Search, Shield, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Crown, Edit, Loader2, Plus, Search, Shield, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -28,8 +28,6 @@ function RolesContent() {
   const userCountByRole = useQuery(api.roles.getUserCountByRole);
   
   const deleteRole = useMutation(api.roles.remove);
-  const seedRolesModule = useMutation(api.seed.seedRolesModule);
-  const clearRolesData = useMutation(api.seed.clearRolesData);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
@@ -170,19 +168,6 @@ function RolesContent() {
     }
   };
 
-  // TICKET #10 FIX: Show detailed error message
-  const handleReseed = async () => {
-    if (confirm('Reset dữ liệu vai trò về mặc định?')) {
-      try {
-        await clearRolesData();
-        await seedRolesModule();
-        toast.success('Đã reset dữ liệu vai trò');
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Có lỗi khi reset dữ liệu');
-      }
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -199,9 +184,6 @@ function RolesContent() {
           <p className="text-sm text-slate-500">Định nghĩa quyền truy cập cho từng nhóm người dùng</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleReseed} title="Reset dữ liệu mẫu">
-            <RefreshCw size={16}/> Reset
-          </Button>
           <Link href="/admin/roles/create">
             <Button className="gap-2"><Plus size={16}/> Thêm vai trò</Button>
           </Link>

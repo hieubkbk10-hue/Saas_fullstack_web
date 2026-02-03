@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronDown, Edit, ExternalLink, Loader2, Package, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { ChevronDown, Edit, ExternalLink, Loader2, Package, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -30,9 +30,6 @@ function ProductsContent() {
   
   const deleteProduct = useMutation(api.products.remove);
   const bulkRemove = useMutation(api.products.bulkRemove);
-  const seedProductsModule = useMutation(api.seed.seedProductsModule);
-  const clearProductsData = useMutation(api.seed.clearProductsData);
-  const initStats = useMutation(api.products.initStats);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -267,20 +264,6 @@ function ProductsContent() {
     }
   };
 
-  const handleReset = async () => {
-    if (confirm('Xóa tất cả sản phẩm và seed lại dữ liệu mẫu?')) {
-      try {
-        await clearProductsData();
-        await seedProductsModule();
-        await initStats();
-        applyManualSelection([]);
-        toast.success('Đã reset dữ liệu sản phẩm');
-      } catch {
-        toast.error('Có lỗi khi reset dữ liệu');
-      }
-    }
-  };
-
   const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 
   if (isLoading) {
@@ -306,9 +289,6 @@ function ProductsContent() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleReset} title="Reset dữ liệu mẫu">
-            <RefreshCw size={16}/> Reset
-          </Button>
           <Link href="/admin/products/create"><Button className="gap-2"><Plus size={16}/> Thêm sản phẩm</Button></Link>
         </div>
       </div>
@@ -424,7 +404,7 @@ function ProductsContent() {
             {paginatedData.length === 0 && (
               <TableRow>
                 <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
-                  {searchTerm || filterCategory || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có sản phẩm nào. Nhấn Reset để tạo dữ liệu mẫu.'}
+                {searchTerm || filterCategory || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có sản phẩm nào.'}
                 </TableCell>
               </TableRow>
             )}

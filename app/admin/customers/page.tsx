@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronDown, Edit, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { ChevronDown, Edit, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -29,8 +29,6 @@ function CustomersContent() {
 
   // Convex mutations
   const deleteCustomer = useMutation(api.customers.remove);
-  const seedCustomersModule = useMutation(api.seed.seedCustomersModule);
-  const clearCustomersData = useMutation(api.seed.clearCustomersData);
 
   // States
   const [searchTerm, setSearchTerm] = useState('');
@@ -248,18 +246,6 @@ function CustomersContent() {
     }
   };
 
-  const handleReseed = async () => {
-    if (confirm('Reset dữ liệu khách hàng về mẫu ban đầu?')) {
-      try {
-        await clearCustomersData();
-        await seedCustomersModule();
-        toast.success('Đã reset dữ liệu khách hàng');
-      } catch {
-        toast.error('Có lỗi khi reset dữ liệu');
-      }
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -276,9 +262,6 @@ function CustomersContent() {
           <p className="text-sm text-slate-500">Quản lý thông tin khách hàng và lịch sử mua hàng</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleReseed} title="Reset dữ liệu mẫu">
-            <RefreshCw size={16} /> Reset
-          </Button>
           <Link href="/admin/customers/create">
             <Button className="gap-2"><Plus size={16} /> Thêm mới</Button>
           </Link>

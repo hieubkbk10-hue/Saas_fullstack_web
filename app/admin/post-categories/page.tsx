@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Edit, ExternalLink, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { Edit, ExternalLink, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -25,8 +25,6 @@ function PostCategoriesContent() {
   const postsData = useQuery(api.posts.listAll, {});
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'postCategories' });
   const deleteCategory = useMutation(api.postCategories.remove);
-  const seedPostsModule = useMutation(api.seed.seedPostsModule);
-  const clearPostsData = useMutation(api.seed.clearPostsData);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
@@ -111,15 +109,6 @@ function PostCategoriesContent() {
     }
   };
 
-  const handleReset = async () => {
-    if (confirm('Reset dữ liệu danh mục? Tất cả dữ liệu cũ sẽ bị xóa.')) {
-      await clearPostsData();
-      await seedPostsModule();
-      setSelectedIds([]);
-      toast.success('Đã reset dữ liệu danh mục');
-    }
-  };
-
   const openFrontend = (slug: string) => {
     window.open(`https://example.com/category/${slug}`, '_blank');
   };
@@ -140,7 +129,6 @@ function PostCategoriesContent() {
           <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý phân loại nội dung cho website</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleReset} className="gap-2"><RefreshCw size={16}/> Reset</Button>
           <Link href="/admin/post-categories/create"><Button className="gap-2"><Plus size={16}/> Thêm danh mục</Button></Link>
         </div>
       </div>

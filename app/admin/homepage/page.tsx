@@ -8,7 +8,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { 
   ChevronLeft, ChevronRight, Edit, Eye, EyeOff, FileText, 
   GripVertical, Home, ImageIcon, LayoutGrid, Loader2,
-  Phone, Plus, RefreshCw, Search, Trash2, Users
+  Phone, Plus, Search, Trash2, Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
@@ -59,8 +59,6 @@ function HomepageContent() {
   const deleteComponent = useMutation(api.homeComponents.remove);
   const toggleComponent = useMutation(api.homeComponents.toggle);
   // Const reorderComponents = useMutation(api.homeComponents.reorder); // TODO: implement drag-drop reorder
-  const seedHomepageModule = useMutation(api.seed.seedHomepageModule);
-  const clearHomepageData = useMutation(api.seed.clearHomepageData);
   
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: 'order' });
   const [searchTerm, setSearchTerm] = useState('');
@@ -153,19 +151,6 @@ function HomepageContent() {
     }
   };
 
-  // TICKET #10 FIX: Show detailed error message
-  const handleReseed = async () => {
-    if (confirm('Xóa tất cả sections và seed lại dữ liệu mẫu?')) {
-      try {
-        await clearHomepageData();
-        await seedHomepageModule();
-        toast.success('Đã reset dữ liệu Homepage');
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Có lỗi khi reset dữ liệu');
-      }
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -184,9 +169,6 @@ function HomepageContent() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Quản lý trang chủ</h1>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleReseed} title="Reset dữ liệu mẫu">
-            <RefreshCw size={16}/> Reset
-          </Button>
           <Link href="/admin/homepage/create">
             <Button className="gap-2 bg-orange-600 hover:bg-orange-500">
               <Plus size={16}/> Thêm section

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Briefcase, ChevronLeft, ChevronRight, Edit, ExternalLink, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { Briefcase, ChevronLeft, ChevronRight, Edit, ExternalLink, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -26,8 +26,6 @@ function ServicesContent() {
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'services' });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'services' });
   const deleteService = useMutation(api.services.remove);
-  const seedServicesModule = useMutation(api.seed.seedServicesModule);
-  const clearServicesData = useMutation(api.seed.clearServicesData);
   
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [searchTerm, setSearchTerm] = useState('');
@@ -115,18 +113,6 @@ function ServicesContent() {
     }
   };
 
-  const handleReseed = async () => {
-    if (confirm('Xóa tất cả dịch vụ và seed lại dữ liệu mẫu?')) {
-      try {
-        await clearServicesData();
-        await seedServicesModule();
-        toast.success('Đã reset dữ liệu dịch vụ');
-      } catch {
-        toast.error('Có lỗi khi reset dữ liệu');
-      }
-    }
-  };
-
   const formatPrice = (price?: number) => {
     if (!price) {return '-';}
     return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
@@ -154,9 +140,6 @@ function ServicesContent() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Quản lý dịch vụ</h1>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleReseed} title="Reset dữ liệu mẫu">
-            <RefreshCw size={16}/> Reset
-          </Button>
           <Link href="/admin/services/create"><Button className="gap-2 bg-teal-600 hover:bg-teal-500"><Plus size={16}/> Thêm mới</Button></Link>
         </div>
       </div>

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronDown, Heart, Loader2, Package, RefreshCw, Search, Trash2, User } from 'lucide-react';
+import { ChevronDown, Heart, Loader2, Package, Search, Trash2, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -32,8 +32,6 @@ function WishlistContent() {
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
   const removeItem = useMutation(api.wishlist.remove);
-  const seedWishlistModule = useMutation(api.seed.seedWishlistModule);
-  const clearWishlistData = useMutation(api.seed.clearWishlistData);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -242,19 +240,6 @@ function WishlistContent() {
     }
   };
 
-  const handleReset = async () => {
-    if (confirm('Xóa tất cả và seed lại dữ liệu mẫu?')) {
-      try {
-        await clearWishlistData();
-        await seedWishlistModule();
-        applyManualSelection([]);
-        toast.success('Đã reset dữ liệu wishlist');
-      } catch {
-        toast.error('Có lỗi khi reset dữ liệu');
-      }
-    }
-  };
-
   const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
   const formatDate = (timestamp: number) => new Date(timestamp).toLocaleDateString('vi-VN');
 
@@ -289,11 +274,7 @@ function WishlistContent() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Sản phẩm yêu thích</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý wishlist của khách hàng</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleReset} title="Reset dữ liệu mẫu">
-            <RefreshCw size={16}/> Reset
-          </Button>
-        </div>
+        <div className="flex gap-2" />
       </div>
 
       {/* Stats Cards */}
@@ -442,7 +423,7 @@ function WishlistContent() {
             {paginatedData.length === 0 && (
               <TableRow>
                 <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
-                  {searchTerm || filterCustomer ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có sản phẩm yêu thích nào. Nhấn Reset để tạo dữ liệu mẫu.'}
+                  {searchTerm || filterCustomer ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có sản phẩm yêu thích nào.'}
                 </TableCell>
               </TableRow>
             )}

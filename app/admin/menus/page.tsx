@@ -11,7 +11,7 @@ import {
 import { ModuleGuard } from '../components/ModuleGuard';
 import { 
   ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ExternalLink, Eye, EyeOff, 
-  GripVertical, Loader2, Menu, Plus, RefreshCw, Save, Trash2
+  GripVertical, Loader2, Menu, Plus, Save, Trash2
 } from 'lucide-react';
 import { MenuPreview } from './MenuPreview';
 
@@ -41,26 +41,11 @@ export default function MenuBuilderPageWrapper() {
 
 function MenuBuilderPage() {
   const menusData = useQuery(api.menus.listMenus);
-  const seedMenusModule = useMutation(api.seed.seedMenusModule);
-  const clearMenusData = useMutation(api.seed.clearMenusData);
 
   const isLoading = menusData === undefined;
 
   // Only get header menu
   const headerMenu = menusData?.find(m => m.location === 'header');
-
-  // TICKET #10 FIX: Show detailed error message
-  const handleReset = async () => {
-    if (confirm('Xóa tất cả và seed lại dữ liệu mẫu?')) {
-      try {
-        await clearMenusData();
-        await seedMenusModule();
-        toast.success('Đã reset dữ liệu menu');
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Có lỗi khi reset dữ liệu');
-      }
-    }
-  };
 
   if (isLoading) {
     return (
@@ -77,9 +62,7 @@ function MenuBuilderPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Header Menu</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Quản lý menu điều hướng chính trên thanh header</p>
         </div>
-        <Button variant="outline" className="gap-2" onClick={handleReset}>
-          <RefreshCw size={16}/> Reset
-        </Button>
+        <div />
       </div>
 
       {headerMenu ? (
@@ -88,10 +71,7 @@ function MenuBuilderPage() {
         <Card className="p-8 text-center">
           <Menu className="w-12 h-12 mx-auto mb-4 text-slate-400" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">Chưa có Header Menu</h3>
-          <p className="text-slate-500 mb-4">Nhấn Reset để tạo dữ liệu mẫu</p>
-          <Button onClick={handleReset} className="gap-2 bg-orange-600 hover:bg-orange-500">
-            <RefreshCw size={16}/> Tạo dữ liệu mẫu
-          </Button>
+          <p className="text-slate-500 mb-4">Chưa có dữ liệu menu.</p>
         </Card>
       )}
     </div>
