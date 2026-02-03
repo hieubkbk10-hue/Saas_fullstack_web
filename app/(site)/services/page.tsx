@@ -1,10 +1,13 @@
 'use client';
 
-import React, { Suspense, useCallback, useMemo, useState } from 'react';
-import { useQuery } from 'convex/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { usePaginatedQuery, useQuery } from 'convex/react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useInView } from 'react-intersection-observer';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
+import { useServicesListConfig } from '@/lib/experiences';
+import { ChevronDown } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 import {
   FullWidthLayout,
@@ -16,19 +19,72 @@ import {
 
 type ServicesListLayout = 'fullwidth' | 'sidebar' | 'magazine';
 
-// Hook to get services layout from experience settings
-function useServicesLayout(): ServicesListLayout {
-  const setting = useQuery(api.settings.getByKey, { key: 'services_list_ui' });
-  const config = setting?.value as { layoutStyle?: string } | undefined;
-  const layoutStyle = config?.layoutStyle;
-  
-  // Map experience config to actual layout
-  if (layoutStyle === 'grid') {return 'fullwidth';}
-  if (layoutStyle === 'sidebar') {return 'sidebar';}
-  if (layoutStyle === 'list') {return 'sidebar';}
-  if (layoutStyle === 'masonry') {return 'magazine';}
-  
-  return 'fullwidth';
+function ServicesGridSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="bg-white rounded-xl overflow-hidden border border-slate-100">
+          <div className="aspect-video bg-slate-200" />
+          <div className="p-5 space-y-3">
+            <div className="h-5 w-20 bg-slate-200 rounded-full" />
+            <div className="h-6 w-full bg-slate-200 rounded" />
+            <div className="h-4 w-3/4 bg-slate-200 rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function generatePaginationItems(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
+  const items: (number | 'ellipsis')[] = [];
+  const siblingCount = 1;
+
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) {
+      items.push(i);
+    }
+    return items;
+  }
+
+  const leftSiblingIndex = Math.max(currentPage - siblingCount, 1);
+  const rightSiblingIndex = Math.min(currentPage + siblingCount, totalPages);
+
+  const shouldShowLeftDots = leftSiblingIndex > 2;
+  const shouldShowRightDots = rightSiblingIndex < totalPages - 2;
+
+  const firstPageIndex = 1;
+  const lastPageIndex = totalPages;
+
+  if (!shouldShowLeftDots && shouldShowRightDots) {
+    const leftRange = 3 + 2 * siblingCount;
+    for (let i = 1; i <= leftRange; i++) {
+      items.push(i);
+    }
+    items.push('ellipsis');
+    items.push(totalPages);
+    return items;
+  }
+
+  if (shouldShowLeftDots && !shouldShowRightDots) {
+    items.push(firstPageIndex);
+    items.push('ellipsis');
+    const rightRange = 3 + 2 * siblingCount;
+    for (let i = totalPages - rightRange + 1; i <= totalPages; i++) {
+      items.push(i);
+    }
+    return items;
+  }
+
+  items.push(firstPageIndex);
+  items.push('ellipsis');
+  for (let i = leftSiblingIndex; i <= rightSiblingIndex; i++) {
+    items.push(i);
+  }
+  items.push('ellipsis');
+  items.push(lastPageIndex);
+
+  return items;
 }
 
 // Hook to get enabled service fields
@@ -83,39 +139,91 @@ export default function ServicesPage() {
 }
 
 function ServicesContent() {
-  // SVC-013: Use brandColor hook
   const brandColor = useBrandColor();
-  const layout = useServicesLayout();
+  const listConfig = useServicesListConfig();
+  const layout: ServicesListLayout = listConfig.layoutStyle === 'masonry'
+    ? 'magazine'
+    : (listConfig.layoutStyle === 'list' ? 'sidebar' : 'fullwidth');
   const enabledFields = useEnabledServiceFields();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const urlPage = Number(searchParams.get('page')) || 1;
   
-  // Filter states
   const [selectedCategory, setSelectedCategory] = useState<Id<"serviceCategories"> | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<ServiceSortOption>('newest');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [postsPerPage, setPostsPerPage] = useState(listConfig.postsPerPage ?? 12);
+
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0.1,
+    rootMargin: '100px',
+  });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setPostsPerPage(listConfig.postsPerPage ?? 12);
+  }, [listConfig.postsPerPage]);
 
   // Queries
   const categories = useQuery(api.serviceCategories.listActive, { limit: 20 });
-  type CategoriesResult = NonNullable<typeof categories>;
-  const [cachedCategories, setCachedCategories] = useState<CategoriesResult | null>(null);
-  const stableCategories = categories ?? cachedCategories;
 
   const categoryFromUrl = useMemo(() => {
     const catSlug = searchParams.get('category');
-    if (!catSlug || !stableCategories) {return null;}
-    const matchedCategory = stableCategories.find((c) => c.slug === catSlug);
+    if (!catSlug || !categories) return null;
+    const matchedCategory = categories.find((c) => c.slug === catSlug);
     return matchedCategory?._id ?? null;
-  }, [searchParams, stableCategories]);
+  }, [searchParams, categories]);
 
   const activeCategory = selectedCategory ?? categoryFromUrl;
 
-  const services = useQuery(api.services.searchPublished, {
-    categoryId: activeCategory ?? undefined,
-    limit: 24,
-    search: searchQuery || undefined,
-    sortBy,
-  });
+  const paginatedSortBy = sortBy === 'popular' ? 'popular' : (sortBy === 'oldest' ? 'oldest' : 'newest');
+
+  const {
+    results: infiniteResults,
+    status: infiniteStatus,
+    loadMore,
+  } = usePaginatedQuery(
+    api.services.listPublishedPaginated,
+    {
+      categoryId: activeCategory ?? undefined,
+      sortBy: paginatedSortBy,
+    },
+    { initialNumItems: postsPerPage }
+  );
+
+  const useCursorPagination =
+    listConfig.paginationType === 'pagination' &&
+    !debouncedSearchQuery?.trim() &&
+    !['title', 'price_asc', 'price_desc'].includes(sortBy);
+
+  const offset = (urlPage - 1) * postsPerPage;
+  const paginatedServices = useQuery(
+    api.services.listPublishedWithOffset,
+    listConfig.paginationType === 'pagination' && !useCursorPagination
+      ? {
+          categoryId: activeCategory ?? undefined,
+          limit: postsPerPage,
+          offset,
+          search: debouncedSearchQuery || undefined,
+          sortBy,
+        }
+      : 'skip'
+  );
+
+  const services = listConfig.paginationType === 'pagination'
+    ? (useCursorPagination
+      ? infiniteResults.slice(offset, offset + postsPerPage)
+      : (paginatedServices ?? []))
+    : infiniteResults;
 
   const totalCount = useQuery(api.services.countPublished, {
     categoryId: activeCategory ?? undefined,
@@ -123,44 +231,39 @@ function ServicesContent() {
 
   const featuredServices = useQuery(api.services.listFeatured, { limit: 5 });
 
-  type ServicesResult = NonNullable<typeof services>;
-  const [cachedServices, setCachedServices] = useState<ServicesResult | null>(null);
-  const [cachedTotalCount, setCachedTotalCount] = useState<number | null>(null);
-
-  React.useEffect(() => {
-    if (services) {
-      setCachedServices(services);
-    }
-  }, [services]);
-
-  React.useEffect(() => {
-    if (categories) {
-      setCachedCategories(categories);
-    }
-  }, [categories]);
-
-  React.useEffect(() => {
-    if (totalCount !== undefined) {
-      setCachedTotalCount(totalCount ?? null);
-    }
-  }, [totalCount]);
-
-  const displayServices = services ?? cachedServices ?? [];
-  const displayTotalCount = totalCount ?? cachedTotalCount ?? displayServices.length;
+  const requiredCount = urlPage * postsPerPage;
+  const isLoadingServices = listConfig.paginationType === 'pagination' && (
+    useCursorPagination
+      ? infiniteStatus === 'LoadingFirstPage' || infiniteResults.length < requiredCount
+      : paginatedServices === undefined
+  );
 
   // Build category map for O(1) lookup
   const categoryMap = useMemo(() => {
-    if (!stableCategories) {return new Map<string, string>();}
-    return new Map(stableCategories.map((c) => [c._id, c.name]));
-  }, [stableCategories]);
+    if (!categories) return new Map<string, string>();
+    return new Map(categories.map((c) => [c._id, c.name]));
+  }, [categories]);
 
-  // Handlers - SVC-009: Update URL with category
+  useEffect(() => {
+    if (listConfig.paginationType === 'infiniteScroll' && inView && infiniteStatus === 'CanLoadMore') {
+      loadMore(postsPerPage);
+    }
+  }, [inView, infiniteStatus, loadMore, postsPerPage, listConfig.paginationType]);
+
+  useEffect(() => {
+    if (!useCursorPagination) return;
+    if (infiniteStatus !== 'CanLoadMore') return;
+    if (infiniteResults.length >= requiredCount) return;
+    loadMore(requiredCount - infiniteResults.length);
+  }, [useCursorPagination, infiniteStatus, infiniteResults.length, requiredCount, loadMore]);
+
+  // Handlers
   const handleCategoryChange = useCallback((categoryId: Id<"serviceCategories"> | null) => {
     setSelectedCategory(categoryId);
     
     const params = new URLSearchParams(searchParams.toString());
-    if (categoryId && stableCategories) {
-      const category = stableCategories.find(c => c._id === categoryId);
+    if (categoryId && categories) {
+      const category = categories.find(c => c._id === categoryId);
       if (category) {
         params.set('category', category.slug);
       }
@@ -170,7 +273,7 @@ function ServicesContent() {
     
     const newUrl = params.toString() ? `/services?${params.toString()}` : '/services';
     router.push(newUrl, { scroll: false });
-  }, [searchParams, stableCategories, router]);
+  }, [searchParams, categories, router]);
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
@@ -180,8 +283,45 @@ function ServicesContent() {
     setSortBy(sort);
   }, []);
 
+  const handlePageSizeChange = useCallback((value: number) => {
+    setPostsPerPage(value);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('page');
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [searchParams, pathname, router]);
+
+  const handlePageChange = useCallback((page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (page === 1) {
+      params.delete('page');
+    } else {
+      params.set('page', page.toString());
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [searchParams, pathname, router]);
+
+  const filterKey = `${activeCategory ?? ''}|${debouncedSearchQuery}|${sortBy}|${postsPerPage}`;
+  const prevFilterKeyRef = useRef(filterKey);
+
+  useEffect(() => {
+    if (listConfig.paginationType !== 'pagination') {
+      prevFilterKeyRef.current = filterKey;
+      return;
+    }
+
+    const hasFilterChanged = prevFilterKeyRef.current !== filterKey;
+    if (hasFilterChanged && urlPage !== 1) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('page');
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+    prevFilterKeyRef.current = filterKey;
+  }, [filterKey, listConfig.paginationType, pathname, router, searchParams, urlPage]);
+
   // Loading state
-  if (!stableCategories && displayServices.length === 0) {
+  if (!categories) {
     return <ServicesListSkeleton />;
   }
 
@@ -198,74 +338,178 @@ function ServicesContent() {
         {/* Layout based rendering */}
         {layout === 'fullwidth' && (
           <>
-            {/* Filter Bar */}
             <div className="mb-8">
               <ServicesFilter
-                categories={stableCategories ?? []}
+                categories={categories ?? []}
                 selectedCategory={selectedCategory}
                 onCategoryChange={handleCategoryChange}
                 searchQuery={searchQuery}
                 onSearchChange={handleSearchChange}
                 sortBy={sortBy}
                 onSortChange={handleSortChange}
-                totalResults={displayTotalCount}
+                totalResults={totalCount ?? 0}
                 brandColor={brandColor}
               />
             </div>
 
-            {/* Services */}
-            <FullWidthLayout
-              services={displayServices}
-              brandColor={brandColor}
-              categoryMap={categoryMap}
-              viewMode="grid"
-              enabledFields={enabledFields}
-            />
+            {isLoadingServices ? (
+              <ServicesGridSkeleton count={postsPerPage} />
+            ) : (
+              <FullWidthLayout
+                services={services}
+                brandColor={brandColor}
+                categoryMap={categoryMap}
+                viewMode="grid"
+                enabledFields={enabledFields}
+              />
+            )}
           </>
         )}
 
         {layout === 'sidebar' && (
-          <SidebarLayout
-            services={displayServices}
-            brandColor={brandColor}
-            categoryMap={categoryMap}
-            categories={stableCategories ?? []}
-            selectedCategory={selectedCategory}
-            onCategoryChange={handleCategoryChange}
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-            sortBy={sortBy}
-            onSortChange={handleSortChange}
-            enabledFields={enabledFields}
-          />
+          isLoadingServices ? (
+            <ServicesGridSkeleton count={postsPerPage} />
+          ) : (
+            <SidebarLayout
+              services={services}
+              brandColor={brandColor}
+              categoryMap={categoryMap}
+              categories={categories ?? []}
+              selectedCategory={selectedCategory}
+              onCategoryChange={handleCategoryChange}
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              sortBy={sortBy}
+              onSortChange={handleSortChange}
+              enabledFields={enabledFields}
+            />
+          )
         )}
 
         {layout === 'magazine' && (
-          <MagazineLayout
-            services={displayServices}
-            brandColor={brandColor}
-            categoryMap={categoryMap}
-            categories={stableCategories ?? []}
-            selectedCategory={selectedCategory}
-            onCategoryChange={handleCategoryChange}
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-            sortBy={sortBy}
-            onSortChange={handleSortChange}
-            featuredServices={featuredServices ?? []}
-            enabledFields={enabledFields}
-          />
+          isLoadingServices ? (
+            <ServicesGridSkeleton count={postsPerPage} />
+          ) : (
+            <MagazineLayout
+              services={services}
+              brandColor={brandColor}
+              categoryMap={categoryMap}
+              categories={categories ?? []}
+              selectedCategory={selectedCategory}
+              onCategoryChange={handleCategoryChange}
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              sortBy={sortBy}
+              onSortChange={handleSortChange}
+              featuredServices={featuredServices ?? []}
+              enabledFields={enabledFields}
+            />
+          )
         )}
 
-        {/* Load More (for all layouts) */}
-        {displayServices.length >= 24 && (
-          <div className="text-center mt-8">
-            <button
-              className="px-6 py-3 rounded-lg font-medium transition-colors duration-200 hover:opacity-80"
-              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-            >
-              Xem thêm dịch vụ
-            </button>
+        {/* Pagination / Infinite Scroll */}
+        {listConfig.paginationType === 'pagination' && totalCount && totalCount > postsPerPage && (
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-600">Hiển thị</span>
+                <select
+                  value={postsPerPage}
+                  onChange={(event) => handlePageSizeChange(Number(event.target.value))}
+                  className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
+                  style={{ borderColor: brandColor }}
+                  aria-label="Số bài mỗi trang"
+                >
+                  {[12, 20, 24, 48, 100].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <span>bài/trang</span>
+              </div>
+
+              <div className="text-right sm:text-left">
+                <span className="font-medium text-slate-900">
+                  {totalCount ? ((urlPage - 1) * postsPerPage) + 1 : 0}–{Math.min(urlPage * postsPerPage, totalCount ?? 0)}
+                </span>
+                <span className="mx-1 text-slate-300">/</span>
+                <span className="font-medium text-slate-900">{totalCount ?? 0}</span>
+                <span className="ml-1 text-slate-500">dịch vụ</span>
+              </div>
+            </div>
+
+            <div className="order-1 flex w-full justify-center sm:order-2 sm:w-auto sm:justify-end">
+              <nav className="flex items-center space-x-1 sm:space-x-2" aria-label="Phân trang">
+                <button
+                  onClick={() => handlePageChange(urlPage - 1)}
+                  disabled={urlPage === 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={urlPage === 1 ? undefined : { color: brandColor, borderColor: brandColor }}
+                  aria-label="Trang trước"
+                >
+                  <ChevronDown className="h-4 w-4 rotate-90" />
+                </button>
+
+                {generatePaginationItems(urlPage, Math.ceil(totalCount / postsPerPage)).map((item, index) => {
+                  if (item === 'ellipsis') {
+                    return (
+                      <div key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-slate-400">
+                        …
+                      </div>
+                    );
+                  }
+
+                  const pageNum = item as number;
+                  const isActive = pageNum === urlPage;
+                  const isMobileHidden = !isActive && pageNum !== 1 && pageNum !== Math.ceil(totalCount / postsPerPage);
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
+                        isActive
+                          ? 'text-white shadow-sm border font-medium'
+                          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
+                      style={isActive ? { backgroundColor: brandColor, borderColor: brandColor } : undefined}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() => handlePageChange(urlPage + 1)}
+                  disabled={totalCount ? urlPage >= Math.ceil(totalCount / postsPerPage) : true}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={totalCount && urlPage < Math.ceil(totalCount / postsPerPage) ? { color: brandColor, borderColor: brandColor } : undefined}
+                  aria-label="Trang sau"
+                >
+                  <ChevronDown className="h-4 w-4 -rotate-90" />
+                </button>
+              </nav>
+            </div>
+          </div>
+        )}
+
+        {listConfig.paginationType === 'infiniteScroll' && infiniteStatus !== 'Exhausted' && (
+          <div ref={loadMoreRef} className="text-center mt-6 py-8">
+            {infiniteStatus === 'LoadingMore' ? (
+              <div className="flex justify-center gap-1">
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
+              </div>
+            ) : infiniteStatus === 'CanLoadMore' ? (
+              <p className="text-sm text-slate-400">Cuộn để xem thêm...</p>
+            ) : null}
+          </div>
+        )}
+
+        {listConfig.paginationType === 'infiniteScroll' && infiniteStatus === 'Exhausted' && services.length > 0 && (
+          <div className="text-center mt-6">
+            <p className="text-sm text-slate-400">Đã hiển thị tất cả {services.length} dịch vụ</p>
           </div>
         )}
       </div>
