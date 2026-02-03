@@ -38,6 +38,8 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { useI18n } from '../i18n/context';
 import type { TranslationKeys } from '../i18n/translations';
+import { BulkSeedCard } from '@/components/modules/BulkSeedCard';
+import { CustomSeedDialog } from '@/components/modules/CustomSeedDialog';
 
 // SYS-004: Confirmation Dialog component
 const CascadeConfirmDialog: React.FC<{
@@ -499,6 +501,7 @@ export default function ModuleManagementPage() {
   const [selectedPreset, setSelectedPreset] = useState<string>('custom');
   const [togglingKey, setTogglingKey] = useState<string | null>(null);
   const [applyingPreset, setApplyingPreset] = useState(false);
+  const [showCustomSeedDialog, setShowCustomSeedDialog] = useState(false);
   
   // SYS-004: State cho cascade confirmation dialog
   const [cascadeDialog, setCascadeDialog] = useState<{
@@ -658,6 +661,14 @@ export default function ModuleManagementPage() {
           <ConfigActions modules={modules} preset={currentPreset} />
         </div>
       </div>
+
+      {/* Bulk Seed Card - NEW */}
+      <BulkSeedCard 
+        onSeedComplete={() => {
+          // Refetch modules sau khi seed xong (optional)
+        }}
+        onOpenCustomDialog={() => setShowCustomSeedDialog(true)}
+      />
       
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-md">
@@ -729,6 +740,15 @@ export default function ModuleManagementPage() {
         onConfirm={handleCascadeConfirm}
         onCancel={handleCascadeCancel}
         isLoading={Boolean(togglingKey)}
+      />
+
+      {/* Custom Seed Dialog */}
+      <CustomSeedDialog
+        open={showCustomSeedDialog}
+        onOpenChange={setShowCustomSeedDialog}
+        onComplete={() => {
+          // Optional: refetch or show success
+        }}
       />
     </div>
   );
