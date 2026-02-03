@@ -43,6 +43,7 @@ type LayoutConfig = {
   paginationType: PaginationType;
   showSearch: boolean;
   showCategories: boolean;
+  postsPerPage: number;
 };
 
 const EXPERIENCE_KEY = 'products_list_ui';
@@ -64,6 +65,7 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   paginationType: 'pagination',
   showSearch: true,
   showCategories: true,
+  postsPerPage: 12,
 };
 
 const DEFAULT_CONFIG: ProductsListExperienceConfig = {
@@ -104,6 +106,7 @@ export default function ProductsListExperiencePage() {
       paginationType: normalizePaginationType(cfg?.paginationType ?? cfg?.showPagination),
       showSearch: cfg?.showSearch ?? true,
       showCategories: cfg?.showCategories ?? true,
+      postsPerPage: cfg?.postsPerPage ?? 12,
     });
     
     return {
@@ -244,6 +247,18 @@ export default function ProductsListExperiencePage() {
                 { value: 'infiniteScroll', label: 'Cuộn vô hạn' },
               ]}
               onChange={(v) => updateLayoutConfig('paginationType', v as PaginationType)}
+              disabled={!productsModule?.enabled}
+            />
+            <SelectRow
+              label="Bài mỗi trang"
+              value={String(currentLayoutConfig.postsPerPage)}
+              options={[
+                { value: '12', label: '12' },
+                { value: '20', label: '20' },
+                { value: '24', label: '24' },
+                { value: '48', label: '48' },
+              ]}
+              onChange={(v) => updateLayoutConfig('postsPerPage', Number(v))}
               disabled={!productsModule?.enabled}
             />
           </ControlCard>

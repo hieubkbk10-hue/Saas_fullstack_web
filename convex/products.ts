@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { productStatus } from "./lib/validators";
+import type { Doc } from "./_generated/dataModel";
 
 const productDoc = v.object({
   _creationTime: v.number(),
@@ -20,6 +21,14 @@ const productDoc = v.object({
   slug: v.string(),
   status: productStatus,
   stock: v.number(),
+});
+
+const paginatedProducts = v.object({
+  continueCursor: v.string(),
+  isDone: v.boolean(),
+  page: v.array(productDoc),
+  pageStatus: v.optional(v.union(v.literal("SplitRecommended"), v.literal("SplitRequired"), v.null())),
+  splitCursor: v.optional(v.union(v.string(), v.null())),
 });
 
 // ============================================================
@@ -155,6 +164,132 @@ export const listBestSellers = query({
 // ============================================================
 // PUBLIC QUERIES (for frontend)
 // ============================================================
+
+// Paginated published products for usePaginatedQuery hook (infinite scroll)
+export const listPublishedPaginated = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    categoryId: v.optional(v.id("productCategories")),
+    sortBy: v.optional(v.union(
+      v.literal("newest"),
+      v.literal("oldest"),
+      v.literal("popular"),
+    )),
+  },
+  handler: async (ctx, args) => {
+    const sortBy = args.sortBy ?? "newest";
+
+    if (args.categoryId) {
+      return ctx.db
+        .query("products")
+        .withIndex("by_category_status", (q) =>
+          q.eq("categoryId", args.categoryId!).eq("status", "Active")
+        )
+        .order(sortBy === "oldest" ? "asc" : "desc")
+        .paginate(args.paginationOpts);
+    }
+
+    if (sortBy === "popular") {
+      return ctx.db
+        .query("products")
+        .withIndex("by_status_sales", (q) => q.eq("status", "Active"))
+        .order("desc")
+        .paginate(args.paginationOpts);
+    }
+
+    return ctx.db
+      .query("products")
+      .withIndex("by_status_order", (q) => q.eq("status", "Active"))
+      .order(sortBy === "oldest" ? "asc" : "desc")
+      .paginate(args.paginationOpts);
+  },
+  returns: paginatedProducts,
+});
+
+// Offset-based pagination for URL-based pagination mode
+export const listPublishedWithOffset = query({
+  args: {
+    categoryId: v.optional(v.id("productCategories")),
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    search: v.optional(v.string()),
+    sortBy: v.optional(v.union(
+      v.literal("newest"),
+      v.literal("oldest"),
+      v.literal("popular"),
+      v.literal("price_asc"),
+      v.literal("price_desc"),
+      v.literal("name")
+    )),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 12, 50);
+    const offset = args.offset ?? 0;
+    const sortBy = args.sortBy ?? "newest";
+
+    let products: Doc<"products">[] = [];
+    const fetchLimit = offset + limit + 10;
+
+    if (args.categoryId) {
+      products = await ctx.db
+        .query("products")
+        .withIndex("by_category_status", (q) =>
+          q.eq("categoryId", args.categoryId!).eq("status", "Active")
+        )
+        .take(fetchLimit);
+    } else if (sortBy === "popular") {
+      products = await ctx.db
+        .query("products")
+        .withIndex("by_status_sales", (q) => q.eq("status", "Active"))
+        .order("desc")
+        .take(fetchLimit);
+    } else {
+      products = await ctx.db
+        .query("products")
+        .withIndex("by_status_order", (q) => q.eq("status", "Active"))
+        .take(fetchLimit);
+    }
+
+    if (args.search && args.search.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      products = products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchLower) ||
+          p.sku.toLowerCase().includes(searchLower)
+      );
+    }
+
+    switch (sortBy) {
+      case "newest": {
+        products.sort((a, b) => b._creationTime - a._creationTime);
+        break;
+      }
+      case "oldest": {
+        products.sort((a, b) => a._creationTime - b._creationTime);
+        break;
+      }
+      case "popular": {
+        products.sort((a, b) => b.sales - a.sales);
+        break;
+      }
+      case "price_asc": {
+        products.sort((a, b) => (a.salePrice ?? a.price) - (b.salePrice ?? b.price));
+        break;
+      }
+      case "price_desc": {
+        products.sort((a, b) => (b.salePrice ?? b.price) - (a.salePrice ?? a.price));
+        break;
+      }
+      case "name": {
+        products.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      }
+    }
+
+    return products.slice(offset, offset + limit);
+  },
+  returns: v.array(productDoc),
+});
 
 // Search active products with filters
 export const searchPublished = query({

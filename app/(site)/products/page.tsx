@@ -1,27 +1,19 @@
 'use client';
 
-import React, { Suspense, useCallback, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useQuery } from 'convex/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePaginatedQuery, useQuery } from 'convex/react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useInView } from 'react-intersection-observer';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
+import { useProductsListConfig } from '@/lib/experiences';
 import { ChevronDown, LayoutGrid, List, Package, Search, ShoppingCart, SlidersHorizontal, X } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
 type ProductSortOption = 'newest' | 'oldest' | 'popular' | 'price_asc' | 'price_desc' | 'name';
 type ProductsListLayout = 'grid' | 'list' | 'catalog';
-
-// Hook to get products layout from settings
-function useProductsLayout(): ProductsListLayout {
-  const setting = useQuery(api.settings.getByKey, { key: 'products_list_style' });
-  const value = setting?.value as string;
-  if (value === 'grid') {return 'grid';}
-  if (value === 'list') {return 'list';}
-  if (value === 'catalog') {return 'catalog';}
-  return 'grid'; // Default
-}
 
 function useEnabledProductFields(): Set<string> {
   const fields = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'products' });
@@ -64,6 +56,73 @@ function ProductsListSkeleton() {
   );
 }
 
+function generatePaginationItems(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
+  const items: (number | 'ellipsis')[] = [];
+  const siblingCount = 1;
+
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) {
+      items.push(i);
+    }
+    return items;
+  }
+
+  const leftSiblingIndex = Math.max(currentPage - siblingCount, 1);
+  const rightSiblingIndex = Math.min(currentPage + siblingCount, totalPages);
+
+  const shouldShowLeftDots = leftSiblingIndex > 2;
+  const shouldShowRightDots = rightSiblingIndex < totalPages - 2;
+
+  const firstPageIndex = 1;
+  const lastPageIndex = totalPages;
+
+  if (!shouldShowLeftDots && shouldShowRightDots) {
+    const leftRange = 3 + 2 * siblingCount;
+    for (let i = 1; i <= leftRange; i++) {
+      items.push(i);
+    }
+    items.push('ellipsis');
+    items.push(totalPages);
+    return items;
+  }
+
+  if (shouldShowLeftDots && !shouldShowRightDots) {
+    items.push(firstPageIndex);
+    items.push('ellipsis');
+    const rightRange = 3 + 2 * siblingCount;
+    for (let i = totalPages - rightRange + 1; i <= totalPages; i++) {
+      items.push(i);
+    }
+    return items;
+  }
+
+  items.push(firstPageIndex);
+  items.push('ellipsis');
+  for (let i = leftSiblingIndex; i <= rightSiblingIndex; i++) {
+    items.push(i);
+  }
+  items.push('ellipsis');
+  items.push(lastPageIndex);
+
+  return items;
+}
+
+function ProductsGridSkeleton({ count = 8 }: { count?: number }) {
+  return (
+    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="bg-white rounded-xl overflow-hidden border border-slate-100">
+          <div className="aspect-square bg-slate-200" />
+          <div className="p-4 space-y-3">
+            <div className="h-4 w-full bg-slate-200 rounded" />
+            <div className="h-5 w-24 bg-slate-200 rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ProductsPage() {
   return (
     <Suspense fallback={<ProductsListSkeleton />}>
@@ -74,16 +133,38 @@ export default function ProductsPage() {
 
 function ProductsContent() {
   const brandColor = useBrandColor();
-  const layout = useProductsLayout();
+  const listConfig = useProductsListConfig();
+  const layout: ProductsListLayout = listConfig.layoutStyle === 'masonry' ? 'catalog' : listConfig.layoutStyle;
   const enabledFields = useEnabledProductFields();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const urlPage = Number(searchParams.get('page')) || 1;
 
   const [selectedCategory, setSelectedCategory] = useState<Id<"productCategories"> | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<ProductSortOption>('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [postsPerPage, setPostsPerPage] = useState(listConfig.postsPerPage ?? 12);
+
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0.1,
+    rootMargin: '100px',
+  });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () =>{  clearTimeout(timer); };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setPostsPerPage(listConfig.postsPerPage ?? 12);
+  }, [listConfig.postsPerPage]);
 
   const categories = useQuery(api.productCategories.listActive);
 
@@ -96,12 +177,45 @@ function ProductsContent() {
 
   const activeCategory = selectedCategory ?? categoryFromUrl;
 
-  const products = useQuery(api.products.searchPublished, {
-    categoryId: activeCategory ?? undefined,
-    limit: 24,
-    search: searchQuery || undefined,
-    sortBy,
-  });
+  const paginatedSortBy = sortBy === 'popular' ? 'popular' : (sortBy === 'oldest' ? 'oldest' : 'newest');
+
+  const {
+    results: infiniteResults,
+    status: infiniteStatus,
+    loadMore,
+  } = usePaginatedQuery(
+    api.products.listPublishedPaginated,
+    {
+      categoryId: activeCategory ?? undefined,
+      sortBy: paginatedSortBy,
+    },
+    { initialNumItems: postsPerPage }
+  );
+
+  const useCursorPagination =
+    listConfig.paginationType === 'pagination' &&
+    !debouncedSearchQuery?.trim() &&
+    ['newest', 'oldest', 'popular'].includes(sortBy);
+
+  const offset = (urlPage - 1) * postsPerPage;
+  const paginatedProducts = useQuery(
+    api.products.listPublishedWithOffset,
+    listConfig.paginationType === 'pagination' && !useCursorPagination
+      ? {
+          categoryId: activeCategory ?? undefined,
+          limit: postsPerPage,
+          offset,
+          search: debouncedSearchQuery || undefined,
+          sortBy,
+        }
+      : 'skip'
+  );
+
+  const products = listConfig.paginationType === 'pagination'
+    ? (useCursorPagination
+      ? infiniteResults.slice(offset, offset + postsPerPage)
+      : (paginatedProducts ?? []))
+    : infiniteResults;
 
   const totalCount = useQuery(api.products.countPublished, {
     categoryId: activeCategory ?? undefined,
@@ -111,6 +225,21 @@ function ProductsContent() {
     if (!categories) {return new Map<string, string>();}
     return new Map(categories.map((c) => [c._id, c.name]));
   }, [categories]);
+
+  const requiredCount = urlPage * postsPerPage;
+
+  useEffect(() => {
+    if (listConfig.paginationType === 'infiniteScroll' && inView && infiniteStatus === 'CanLoadMore') {
+      loadMore(postsPerPage);
+    }
+  }, [inView, infiniteStatus, loadMore, postsPerPage, listConfig.paginationType]);
+
+  useEffect(() => {
+    if (!useCursorPagination) return;
+    if (infiniteStatus !== 'CanLoadMore') return;
+    if (infiniteResults.length >= requiredCount) return;
+    loadMore(requiredCount - infiniteResults.length);
+  }, [useCursorPagination, infiniteStatus, infiniteResults.length, requiredCount, loadMore]);
 
   const handleCategoryChange = useCallback((categoryId: Id<"productCategories"> | null) => {
     setSelectedCategory(categoryId);
@@ -127,9 +256,51 @@ function ProductsContent() {
     router.push(newUrl, { scroll: false });
   }, [searchParams, categories, router]);
 
+  const handlePageSizeChange = useCallback((value: number) => {
+    setPostsPerPage(value);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('page');
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [searchParams, pathname, router]);
+
+  const handlePageChange = useCallback((page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (page === 1) {
+      params.delete('page');
+    } else {
+      params.set('page', page.toString());
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [searchParams, pathname, router]);
+
   const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 
-  if (products === undefined || categories === undefined) {
+  const filterKey = `${activeCategory ?? ''}|${debouncedSearchQuery}|${sortBy}|${postsPerPage}`;
+  const prevFilterKeyRef = useRef(filterKey);
+
+  useEffect(() => {
+    if (listConfig.paginationType !== 'pagination') {
+      prevFilterKeyRef.current = filterKey;
+      return;
+    }
+
+    const hasFilterChanged = prevFilterKeyRef.current !== filterKey;
+    if (hasFilterChanged && urlPage !== 1) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('page');
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+    prevFilterKeyRef.current = filterKey;
+  }, [filterKey, listConfig.paginationType, pathname, router, searchParams, urlPage]);
+  const isLoadingProducts = listConfig.paginationType === 'pagination' && (
+    useCursorPagination
+      ? infiniteStatus === 'LoadingFirstPage' || infiniteResults.length < requiredCount
+      : paginatedProducts === undefined
+  );
+
+  if (categories === undefined) {
     return <ProductsListSkeleton />;
   }
 
@@ -141,7 +312,7 @@ function ProductsContent() {
   if (layout === 'catalog') {
     return (
       <CatalogLayout
-        products={products}
+        products={isLoadingProducts ? [] : products}
         categories={categories}
         categoryMap={categoryMap}
         selectedCategory={selectedCategory}
@@ -163,7 +334,7 @@ function ProductsContent() {
   if (layout === 'list') {
     return (
       <ListLayout
-        products={products}
+        products={isLoadingProducts ? [] : products}
         categories={categories}
         categoryMap={categoryMap}
         selectedCategory={selectedCategory}
@@ -286,7 +457,9 @@ function ProductsContent() {
         </div>
 
         {/* Products Grid/List */}
-        {products.length === 0 ? (
+        {isLoadingProducts ? (
+          <ProductsGridSkeleton count={postsPerPage} />
+        ) : products.length === 0 ? (
           <EmptyState brandColor={brandColor} onReset={() => { setSearchQuery(''); handleCategoryChange(null); }} />
         ) : (viewMode === 'grid' ? (
           <ProductGrid products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} />
@@ -294,11 +467,109 @@ function ProductsContent() {
           <ProductList products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} />
         ))}
 
-        {products.length >= 24 && (
-          <div className="text-center mt-8">
-            <button className="px-6 py-3 rounded-lg font-medium transition-colors duration-200 hover:opacity-80" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-              Xem thêm sản phẩm
-            </button>
+        {/* Pagination / Infinite Scroll */}
+        {listConfig.paginationType === 'pagination' && totalCount && totalCount > postsPerPage && (
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-600">Hiển thị</span>
+                <select
+                  value={postsPerPage}
+                  onChange={(event) => handlePageSizeChange(Number(event.target.value))}
+                  className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
+                  style={{ borderColor: brandColor }}
+                  aria-label="Số bài mỗi trang"
+                >
+                  {[12, 20, 24, 48, 100].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <span>bài/trang</span>
+              </div>
+
+              <div className="text-right sm:text-left">
+                <span className="font-medium text-slate-900">
+                  {totalCount ? ((urlPage - 1) * postsPerPage) + 1 : 0}–{Math.min(urlPage * postsPerPage, totalCount ?? 0)}
+                </span>
+                <span className="mx-1 text-slate-300">/</span>
+                <span className="font-medium text-slate-900">{totalCount ?? 0}</span>
+                <span className="ml-1 text-slate-500">sản phẩm</span>
+              </div>
+            </div>
+
+            <div className="order-1 flex w-full justify-center sm:order-2 sm:w-auto sm:justify-end">
+              <nav className="flex items-center space-x-1 sm:space-x-2" aria-label="Phân trang">
+                <button
+                  onClick={() => handlePageChange(urlPage - 1)}
+                  disabled={urlPage === 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={urlPage === 1 ? undefined : { color: brandColor, borderColor: brandColor }}
+                  aria-label="Trang trước"
+                >
+                  <ChevronDown className="h-4 w-4 rotate-90" />
+                </button>
+
+                {generatePaginationItems(urlPage, Math.ceil(totalCount / postsPerPage)).map((item, index) => {
+                  if (item === 'ellipsis') {
+                    return (
+                      <div key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-slate-400">
+                        …
+                      </div>
+                    );
+                  }
+
+                  const pageNum = item as number;
+                  const isActive = pageNum === urlPage;
+                  const isMobileHidden = !isActive && pageNum !== 1 && pageNum !== Math.ceil(totalCount / postsPerPage);
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
+                        isActive
+                          ? 'text-white shadow-sm border font-medium'
+                          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
+                      style={isActive ? { backgroundColor: brandColor, borderColor: brandColor } : undefined}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() => handlePageChange(urlPage + 1)}
+                  disabled={totalCount ? urlPage >= Math.ceil(totalCount / postsPerPage) : true}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={totalCount && urlPage < Math.ceil(totalCount / postsPerPage) ? { color: brandColor, borderColor: brandColor } : undefined}
+                  aria-label="Trang sau"
+                >
+                  <ChevronDown className="h-4 w-4 -rotate-90" />
+                </button>
+              </nav>
+            </div>
+          </div>
+        )}
+
+        {listConfig.paginationType === 'infiniteScroll' && infiniteStatus !== 'Exhausted' && (
+          <div ref={loadMoreRef} className="text-center mt-6 py-8">
+            {infiniteStatus === 'LoadingMore' ? (
+              <div className="flex justify-center gap-1">
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
+              </div>
+            ) : infiniteStatus === 'CanLoadMore' ? (
+              <p className="text-sm text-slate-400">Cuộn để xem thêm...</p>
+            ) : null}
+          </div>
+        )}
+
+        {listConfig.paginationType === 'infiniteScroll' && infiniteStatus === 'Exhausted' && products.length > 0 && (
+          <div className="text-center mt-6">
+            <p className="text-sm text-slate-400">Đã hiển thị tất cả {products.length} sản phẩm</p>
           </div>
         )}
       </div>

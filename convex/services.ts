@@ -163,6 +163,125 @@ export const listPopular = query({
   returns: v.array(serviceDoc),
 });
 
+// Paginated published services for usePaginatedQuery hook (infinite scroll)
+export const listPublishedPaginated = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+    categoryId: v.optional(v.id("serviceCategories")),
+    sortBy: v.optional(v.union(
+      v.literal("newest"),
+      v.literal("oldest"),
+      v.literal("popular"),
+    )),
+  },
+  handler: async (ctx, args) => {
+    const sortBy = args.sortBy ?? "newest";
+
+    if (args.categoryId) {
+      return ctx.db
+        .query("services")
+        .withIndex("by_category_status", (q) =>
+          q.eq("categoryId", args.categoryId!).eq("status", "Published")
+        )
+        .order(sortBy === "oldest" ? "asc" : "desc")
+        .paginate(args.paginationOpts);
+    }
+
+    if (sortBy === "popular") {
+      return ctx.db
+        .query("services")
+        .withIndex("by_status_views", (q) => q.eq("status", "Published"))
+        .order("desc")
+        .paginate(args.paginationOpts);
+    }
+
+    return ctx.db
+      .query("services")
+      .withIndex("by_status_publishedAt", (q) => q.eq("status", "Published"))
+      .order(sortBy === "oldest" ? "asc" : "desc")
+      .paginate(args.paginationOpts);
+  },
+  returns: paginatedServices,
+});
+
+// Offset-based pagination for URL-based pagination mode
+export const listPublishedWithOffset = query({
+  args: {
+    categoryId: v.optional(v.id("serviceCategories")),
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    search: v.optional(v.string()),
+    sortBy: v.optional(v.union(
+      v.literal("newest"),
+      v.literal("oldest"),
+      v.literal("popular"),
+      v.literal("title"),
+      v.literal("price_asc"),
+      v.literal("price_desc")
+    )),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 12, 50);
+    const offset = args.offset ?? 0;
+    const sortBy = args.sortBy ?? "newest";
+
+    let services: Doc<"services">[] = [];
+    const fetchLimit = offset + limit + 10;
+
+    if (args.categoryId) {
+      services = await ctx.db
+        .query("services")
+        .withIndex("by_category_status", (q) =>
+          q.eq("categoryId", args.categoryId!).eq("status", "Published")
+        )
+        .take(fetchLimit);
+    } else if (sortBy === "popular") {
+      services = await ctx.db
+        .query("services")
+        .withIndex("by_status_views", (q) => q.eq("status", "Published"))
+        .order("desc")
+        .take(fetchLimit);
+    } else {
+      services = await ctx.db
+        .query("services")
+        .withIndex("by_status_publishedAt", (q) => q.eq("status", "Published"))
+        .order(sortBy === "oldest" ? "asc" : "desc")
+        .take(fetchLimit);
+    }
+
+    if (args.search && args.search.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      services = services.filter(s =>
+        s.title.toLowerCase().includes(searchLower) ||
+        (s.excerpt?.toLowerCase().includes(searchLower))
+      );
+    }
+
+    switch (sortBy) {
+      case "oldest":
+        services.sort((a, b) => (a.publishedAt ?? 0) - (b.publishedAt ?? 0));
+        break;
+      case "popular":
+        services.sort((a, b) => b.views - a.views);
+        break;
+      case "title":
+        services.sort((a, b) => a.title.localeCompare(b.title, 'vi'));
+        break;
+      case "price_asc":
+        services.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+        break;
+      case "price_desc":
+        services.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
+        break;
+      default:
+        services.sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
+    }
+
+    return services.slice(offset, offset + limit);
+  },
+  returns: v.array(serviceDoc),
+});
+
 export const searchPublished = query({
   args: {
     categoryId: v.optional(v.id("serviceCategories")),

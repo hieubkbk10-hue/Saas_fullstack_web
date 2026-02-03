@@ -3,10 +3,11 @@ import { api } from '@/convex/_generated/api';
 import { useMemo } from 'react';
 
 type PaginationType = 'pagination' | 'infiniteScroll';
+type FilterPosition = 'sidebar' | 'top' | 'none';
 
 type PostsListConfig = {
   layoutStyle: 'grid' | 'list' | 'masonry';
-  filterPosition: 'sidebar' | 'top' | 'none';
+  filterPosition: FilterPosition;
   paginationType: PaginationType;
   showSearch: boolean;
   showCategories: boolean;
@@ -42,19 +43,33 @@ type ProductsListConfig = {
   paginationType: PaginationType;
   showSearch: boolean;
   showCategories: boolean;
+  postsPerPage: number;
 };
 
 export function useProductsListConfig(): ProductsListConfig {
   const experienceSetting = useQuery(api.settings.getByKey, { key: 'products_list_ui' });
   
   return useMemo(() => {
-    const raw = experienceSetting?.value as Partial<ProductsListConfig & { showPagination?: boolean }> | undefined;
+    const raw = experienceSetting?.value as {
+      layoutStyle?: ProductsListConfig['layoutStyle'];
+      layouts?: Record<string, Partial<Omit<ProductsListConfig, 'layoutStyle'> & { showPagination?: boolean }>>;
+      filterPosition?: FilterPosition;
+      paginationType?: string | boolean;
+      showPagination?: boolean;
+      showSearch?: boolean;
+      showCategories?: boolean;
+      postsPerPage?: number;
+    } | undefined;
+
+    const layoutStyle = raw?.layoutStyle ?? 'grid';
+    const layoutConfig = raw?.layouts?.[layoutStyle];
     return {
-      layoutStyle: raw?.layoutStyle ?? 'grid',
-      filterPosition: raw?.filterPosition ?? 'sidebar',
-      paginationType: normalizePaginationType(raw?.paginationType ?? raw?.showPagination),
-      showSearch: raw?.showSearch ?? true,
-      showCategories: raw?.showCategories ?? true,
+      layoutStyle,
+      filterPosition: layoutConfig?.filterPosition ?? raw?.filterPosition ?? 'sidebar',
+      paginationType: normalizePaginationType(layoutConfig?.paginationType ?? raw?.paginationType ?? layoutConfig?.showPagination ?? raw?.showPagination),
+      showSearch: layoutConfig?.showSearch ?? raw?.showSearch ?? true,
+      showCategories: layoutConfig?.showCategories ?? raw?.showCategories ?? true,
+      postsPerPage: layoutConfig?.postsPerPage ?? raw?.postsPerPage ?? 12,
     };
   }, [experienceSetting?.value]);
 }
@@ -65,19 +80,33 @@ type ServicesListConfig = {
   paginationType: PaginationType;
   showSearch: boolean;
   showCategories: boolean;
+  postsPerPage: number;
 };
 
 export function useServicesListConfig(): ServicesListConfig {
   const experienceSetting = useQuery(api.settings.getByKey, { key: 'services_list_ui' });
   
   return useMemo(() => {
-    const raw = experienceSetting?.value as Partial<ServicesListConfig & { showPagination?: boolean }> | undefined;
+    const raw = experienceSetting?.value as {
+      layoutStyle?: ServicesListConfig['layoutStyle'];
+      layouts?: Record<string, Partial<Omit<ServicesListConfig, 'layoutStyle'> & { showPagination?: boolean }>>;
+      filterPosition?: FilterPosition;
+      paginationType?: string | boolean;
+      showPagination?: boolean;
+      showSearch?: boolean;
+      showCategories?: boolean;
+      postsPerPage?: number;
+    } | undefined;
+
+    const layoutStyle = raw?.layoutStyle ?? 'grid';
+    const layoutConfig = raw?.layouts?.[layoutStyle];
     return {
-      layoutStyle: raw?.layoutStyle ?? 'grid',
-      filterPosition: raw?.filterPosition ?? 'sidebar',
-      paginationType: normalizePaginationType(raw?.paginationType ?? raw?.showPagination),
-      showSearch: raw?.showSearch ?? true,
-      showCategories: raw?.showCategories ?? true,
+      layoutStyle,
+      filterPosition: layoutConfig?.filterPosition ?? raw?.filterPosition ?? 'sidebar',
+      paginationType: normalizePaginationType(layoutConfig?.paginationType ?? raw?.paginationType ?? layoutConfig?.showPagination ?? raw?.showPagination),
+      showSearch: layoutConfig?.showSearch ?? raw?.showSearch ?? true,
+      showCategories: layoutConfig?.showCategories ?? raw?.showCategories ?? true,
+      postsPerPage: layoutConfig?.postsPerPage ?? raw?.postsPerPage ?? 12,
     };
   }, [experienceSetting?.value]);
 }
