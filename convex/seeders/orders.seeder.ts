@@ -4,10 +4,11 @@
  * Generates realistic order data with dependencies on products and customers
  */
 
-import { BaseSeeder, type SeedDependency } from './base';
+import { BaseSeeder, type SeedConfig, type SeedDependency } from './base';
 import { createVietnameseFaker } from './fakerVi';
-import type { Doc } from '../_generated/dataModel';
+import type { Doc, DataModel } from '../_generated/dataModel';
 
+import type { GenericMutationCtx } from 'convex/server';
 type OrderData = Omit<Doc<'orders'>, '_id' | '_creationTime'>;
 import type { Id } from '../_generated/dataModel';
 
@@ -31,12 +32,12 @@ export class OrderSeeder extends BaseSeeder<OrderData> {
   private viFaker: ReturnType<typeof createVietnameseFaker>;
   private orderCount = 0;
   
-  constructor(ctx: any) {
+  constructor(ctx: GenericMutationCtx<DataModel>) {
     super(ctx);
     this.viFaker = createVietnameseFaker(this.faker);
   }
   
-  async seed(config: any) {
+  async seed(config: SeedConfig) {
     // Load dependencies
     [this.products, this.customers] = await Promise.all([
       this.ctx.db.query('products').collect(),
@@ -144,7 +145,7 @@ export class OrderSeeder extends BaseSeeder<OrderData> {
   
   private async updateCustomerStats(): Promise<void> {
     const orders = await this.ctx.db.query('orders').collect();
-    const customerOrders = new Map<string, { count: number; total: number }>();
+    const customerOrders = new Map<Id<'customers'>, { count: number; total: number }>();
     
     for (const order of orders) {
       const existing = customerOrders.get(order.customerId) || { count: 0, total: 0 };
@@ -156,7 +157,7 @@ export class OrderSeeder extends BaseSeeder<OrderData> {
     
     // Update each customer
     for (const [customerId, stats] of customerOrders.entries()) {
-      await this.ctx.db.patch(customerId as any, {
+      await this.ctx.db.patch(customerId, {
         ordersCount: stats.count,
         totalSpent: stats.total,
       });

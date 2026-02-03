@@ -4,9 +4,10 @@
  * Generates service data
  */
 
-import { BaseSeeder, type SeedDependency } from './base';
+import { BaseSeeder, type SeedConfig, type SeedDependency } from './base';
 import { createVietnameseFaker } from './fakerVi';
-import type { Doc } from '../_generated/dataModel';
+import type { Doc, DataModel } from '../_generated/dataModel';
+import type { GenericMutationCtx } from 'convex/server';
 
 type ServiceData = Omit<Doc<'services'>, '_id' | '_creationTime'>;
 
@@ -21,12 +22,12 @@ export class ServiceSeeder extends BaseSeeder<ServiceData> {
   private viFaker: ReturnType<typeof createVietnameseFaker>;
   private serviceCount = 0;
   
-  constructor(ctx: any) {
+  constructor(ctx: GenericMutationCtx<DataModel>) {
     super(ctx);
     this.viFaker = createVietnameseFaker(this.faker);
   }
   
-  async seed(config: any) {
+  async seed(config: SeedConfig) {
     this.categories = await this.ctx.db.query('serviceCategories').collect();
     
     if (this.categories.length === 0) {

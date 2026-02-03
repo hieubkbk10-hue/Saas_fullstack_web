@@ -134,7 +134,7 @@ export default function ProductsPage() {
 function ProductsContent() {
   const brandColor = useBrandColor();
   const listConfig = useProductsListConfig();
-  const layout: ProductsListLayout = listConfig.layoutStyle === 'masonry' ? 'catalog' : listConfig.layoutStyle;
+  const layout: ProductsListLayout = listConfig.layoutStyle === 'sidebar' ? 'catalog' : listConfig.layoutStyle;
   const enabledFields = useEnabledProductFields();
   const router = useRouter();
   const pathname = usePathname();
@@ -148,7 +148,8 @@ function ProductsContent() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-  const [postsPerPage, setPostsPerPage] = useState(listConfig.postsPerPage ?? 12);
+  const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
+  const postsPerPage = pageSizeOverride ?? (listConfig.postsPerPage ?? 12);
 
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0.1,
@@ -161,10 +162,6 @@ function ProductsContent() {
     }, 300);
     return () =>{  clearTimeout(timer); };
   }, [searchQuery]);
-
-  useEffect(() => {
-    setPostsPerPage(listConfig.postsPerPage ?? 12);
-  }, [listConfig.postsPerPage]);
 
   const categories = useQuery(api.productCategories.listActive);
 
@@ -257,7 +254,7 @@ function ProductsContent() {
   }, [searchParams, categories, router]);
 
   const handlePageSizeChange = useCallback((value: number) => {
-    setPostsPerPage(value);
+    setPageSizeOverride(value);
     const params = new URLSearchParams(searchParams.toString());
     params.delete('page');
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });

@@ -4,6 +4,7 @@ import { ChevronDown, FileText, Heart, Search, ShoppingCart, SlidersHorizontal }
 type ListLayoutStyle = 'fullwidth' | 'sidebar' | 'magazine' | 'grid' | 'list' | 'masonry';
 type PreviewDevice = 'desktop' | 'tablet' | 'mobile';
 type PaginationType = 'pagination' | 'infiniteScroll';
+type ProductsListLayoutStyle = 'grid' | 'sidebar' | 'list';
 
 type PostsListPreviewProps = {
   layoutStyle: ListLayoutStyle;
@@ -507,7 +508,7 @@ export function PostsListPreview({
 }
 
 type ProductsListPreviewProps = {
-  layoutStyle: ListLayoutStyle;
+  layoutStyle: ProductsListLayoutStyle;
   paginationType?: PaginationType;
   showSearch?: boolean;
   showCategories?: boolean;
@@ -538,7 +539,6 @@ export function ProductsListPreview({
   showAddToCartButton = true,
   showPromotionBadge = true,
 }: ProductsListPreviewProps) {
-  const style = normalizeLayoutStyle(layoutStyle);
   const categories = ['Tất cả', 'Điện thoại', 'Laptop', 'Tablet', 'Phụ kiện'];
   const isMobile = device === 'mobile';
   const isDesktop = device === 'desktop';
@@ -603,7 +603,7 @@ export function ProductsListPreview({
     </div>
   );
 
-  if (style === 'fullwidth' || style === 'magazine') {
+  if (layoutStyle === 'grid') {
     return (
       <div className="py-6 md:py-10 px-4">
         <div className="max-w-7xl mx-auto">
@@ -663,6 +663,93 @@ export function ProductsListPreview({
           <div className={`grid ${gridClass} gap-3`}>
             {mockProducts.slice(0, visibleProducts).map((product) => (
               <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+
+          <PaginationPreview paginationType={paginationType} brandColor={brandColor} />
+        </div>
+      </div>
+    );
+  }
+
+  if (layoutStyle === 'list') {
+    return (
+      <div className="py-6 md:py-10 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-3">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Sản phẩm</h2>
+          </div>
+
+          {(showSearch || showCategories) && (
+            <div className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm mb-4">
+              <div className="flex flex-col md:flex-row gap-3">
+                {showSearch && (
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input type="text" placeholder="Tìm sản phẩm..." className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm bg-white" disabled />
+                  </div>
+                )}
+                {showCategories && (
+                  <div className="relative">
+                    <select className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white min-w-[160px]" disabled>
+                      {categories.map((cat) => (<option key={cat} value={cat}>{cat}</option>))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  </div>
+                )}
+                <div className="relative">
+                  <select className="appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-lg text-sm bg-white" disabled>
+                    <option>Giá: Thấp đến cao</option>
+                    <option>Giá: Cao đến thấp</option>
+                    <option>Bán chạy nhất</option>
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {mockProducts.slice(0, visibleProducts).map((product) => (
+              <div key={product.id} className="bg-white rounded-lg border border-slate-100 overflow-hidden flex flex-col sm:flex-row gap-3 p-3">
+                <div className="w-full sm:w-32 aspect-square bg-slate-100 rounded-lg relative flex items-center justify-center">
+                  <div className="w-16 h-16 bg-slate-200 rounded-lg" />
+                  {showPromotionBadge && product.originalPrice && (
+                    <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-red-500 text-white text-xs font-medium rounded">
+                      -{Math.round((1 - product.price / product.originalPrice) * 100)}%
+                    </span>
+                  )}
+                  {showWishlistButton && (
+                    <button className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full shadow-sm">
+                      <Heart size={14} className="text-slate-400" />
+                    </button>
+                  )}
+                </div>
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <span className="text-xs font-medium px-1.5 py-0.5 rounded w-fit mb-1.5" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+                      {product.category}
+                    </span>
+                    <h3 className="text-sm font-semibold text-slate-900 line-clamp-2">{product.name}</h3>
+                    <div className="mt-2 flex items-baseline gap-1.5">
+                      <span className="text-base font-bold" style={{ color: brandColor }}>{formatVND(product.price)}</span>
+                      {product.originalPrice && (
+                        <span className="text-xs text-slate-400 line-through">{formatVND(product.originalPrice)}</span>
+                      )}
+                    </div>
+                  </div>
+                  {showAddToCartButton && (
+                    <button
+                      className="mt-2.5 w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors flex items-center justify-center gap-1.5"
+                      style={{ backgroundColor: brandColor }}
+                      disabled={!product.inStock}
+                    >
+                      <ShoppingCart size={14} />
+                      {product.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
+                    </button>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
 

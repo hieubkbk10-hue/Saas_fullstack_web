@@ -6,7 +6,8 @@
 
 import { BaseSeeder, type SeedDependency } from './base';
 import { createVietnameseFaker } from './fakerVi';
-import type { Doc } from '../_generated/dataModel';
+import type { Doc, DataModel } from '../_generated/dataModel';
+import type { GenericMutationCtx } from 'convex/server';
 
 type CustomerData = Omit<Doc<'customers'>, '_id' | '_creationTime' | 'ordersCount' | 'totalSpent'>;
 
@@ -18,7 +19,7 @@ export class CustomerSeeder extends BaseSeeder<CustomerData> {
   private viFaker: ReturnType<typeof createVietnameseFaker>;
   private usedEmails = new Set<string>();
   
-  constructor(ctx: any) {
+  constructor(ctx: GenericMutationCtx<DataModel>) {
     super(ctx);
     this.viFaker = createVietnameseFaker(this.faker);
   }

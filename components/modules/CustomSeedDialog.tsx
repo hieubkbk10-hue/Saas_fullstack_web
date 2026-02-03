@@ -37,6 +37,8 @@ interface CustomSeedDialogProps {
   onComplete?: () => void;
 }
 
+type SeedResultItem = { created: number; errors?: string[] };
+
 const MODULE_GROUPS = [
   {
     category: 'content',
@@ -136,10 +138,10 @@ export function CustomSeedDialog({
 
       const toastId = toast.loading(`Đang seed ${configs.length} modules...`);
       
-      const results = await seedBulk({ configs });
+      const results = await seedBulk({ configs }) as SeedResultItem[];
       
-      const successCount = results.filter((r: any) => !r.errors || r.errors.length === 0).length;
-      const totalCreated = results.reduce((sum: number, r: any) => sum + r.created, 0);
+      const successCount = results.filter((result) => !result.errors || result.errors.length === 0).length;
+      const totalCreated = results.reduce((sum, result) => sum + result.created, 0);
       
       toast.success(
         `✅ Seed hoàn tất!\n${successCount}/${configs.length} modules • ${totalCreated} records`,

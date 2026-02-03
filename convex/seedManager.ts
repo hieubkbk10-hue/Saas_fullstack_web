@@ -11,6 +11,8 @@
 
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import type { GenericMutationCtx } from 'convex/server';
+import type { DataModel } from './_generated/dataModel';
 import {
   resolveDependencies,
   checkDependencies,
@@ -51,7 +53,7 @@ const seedProgressValidator = v.object({
 });
 
 // Seeder registry
-const SEEDERS: Record<string, new (ctx: any) => BaseSeeder> = {
+const SEEDERS: Record<string, new (ctx: GenericMutationCtx<DataModel>) => BaseSeeder> = {
   customers: CustomerSeeder,
   orders: OrderSeeder,
   postCategories: ProductCategorySeeder, // Reuse for now
@@ -178,22 +180,22 @@ export const seedBulk = mutation({
       let completed = 0;
       
       // Seed each module in order
-      for (const module of orderedModules) {
-        const config = args.configs.find(c => c.module === module);
+      for (const moduleKey of orderedModules) {
+        const config = args.configs.find(c => c.module === moduleKey);
         if (!config) {
-          console.log(`[SeedManager] Skipping ${module} (not in config)`);
+          console.log(`[SeedManager] Skipping ${moduleKey} (not in config)`);
           continue;
         }
         
         // Update progress
         await updateProgress(ctx, sessionId, {
           completed,
-          current: module,
+          current: moduleKey,
           total: orderedModules.length,
         });
         
         // Seed module directly
-        const SeederClass = SEEDERS[module];
+        const SeederClass = SEEDERS[moduleKey];
         if (SeederClass) {
           const seeder = new SeederClass(ctx);
           const result = await seeder.seed({
@@ -208,7 +210,7 @@ export const seedBulk = mutation({
           
           // Stop if error
           if (result.errors && result.errors.length > 0) {
-            console.error(`[SeedManager] Error seeding ${module}, stopping bulk seed`);
+            console.error(`[SeedManager] Error seeding ${moduleKey}, stopping bulk seed`);
             break;
           }
         }
@@ -266,13 +268,13 @@ export const seedPreset = mutation({
   },
   handler: async (ctx, args) => {
     const presetConfig = SEED_PRESETS[args.preset as PresetType];
-    const sessionId = args.sessionId || `seed_preset_${Date.now()}`;
+    const _sessionId = args.sessionId || `seed_preset_${Date.now()}`;
     
     console.log(`[SeedManager] Seeding preset: ${presetConfig.name}`);
     
-    const configs = Object.entries(presetConfig.modules).map(([module, quantity]) => ({
+    const configs = Object.entries(presetConfig.modules).map(([moduleKey, quantity]) => ({
       force: args.force,
-      module,
+      module: moduleKey,
       quantity,
     }));
     
@@ -283,11 +285,11 @@ export const seedPreset = mutation({
       
       const results: SeedResult[] = [];
       
-      for (const module of orderedModules) {
-        const config = configs.find(c => c.module === module);
+      for (const moduleKey of orderedModules) {
+        const config = configs.find(c => c.module === moduleKey);
         if (!config) {continue;}
         
-        const SeederClass = SEEDERS[module];
+        const SeederClass = SEEDERS[moduleKey];
         if (SeederClass) {
           const seeder = new SeederClass(ctx);
           const result = await seeder.seed({
@@ -388,7 +390,7 @@ export const clearAll = mutation({
 // ============================================================
 
 async function updateProgress(
-  ctx: any,
+  ctx: GenericMutationCtx<DataModel>,
   sessionId: string,
   updates: Partial<{
     completed: number;
@@ -401,7 +403,7 @@ async function updateProgress(
 ) {
   const existing = await ctx.db
     .query('seedProgress')
-    .withIndex('by_session', (q: any) => q.eq('sessionId', sessionId))
+    .withIndex('by_session', (q) => q.eq('sessionId', sessionId))
     .first();
   
   if (existing) {

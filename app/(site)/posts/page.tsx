@@ -162,7 +162,8 @@ function PostsContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-  const [postsPerPage, setPostsPerPage] = useState(listConfig.postsPerPage ?? 12);
+  const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
+  const postsPerPage = pageSizeOverride ?? (listConfig.postsPerPage ?? 12);
   
   // Intersection observer for infinite scroll
   const { ref: loadMoreRef, inView } = useInView({
@@ -177,10 +178,6 @@ function PostsContent() {
     }, 300);
     return () =>{  clearTimeout(timer); };
   }, [searchQuery]);
-
-  useEffect(() => {
-    setPostsPerPage(listConfig.postsPerPage ?? 12);
-  }, [listConfig.postsPerPage]);
 
   // Queries
   const categories = useQuery(api.postCategories.listActive, { limit: 20 });
@@ -263,7 +260,7 @@ function PostsContent() {
     if (infiniteStatus !== 'CanLoadMore') return;
     if (infiniteResults.length >= requiredCount) return;
     loadMore(requiredCount - infiniteResults.length);
-  }, [useCursorPagination, infiniteStatus, infiniteResults.length, urlPage, postsPerPage, loadMore]);
+  }, [useCursorPagination, infiniteStatus, infiniteResults.length, requiredCount, urlPage, postsPerPage, loadMore]);
   
   // Calculate total pages
   const totalPages = useMemo(() => {
@@ -305,7 +302,7 @@ function PostsContent() {
   }, []);
 
   const handlePageSizeChange = useCallback((value: number) => {
-    setPostsPerPage(value);
+    setPageSizeOverride(value);
     const params = new URLSearchParams(searchParams.toString());
     params.delete('page');
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });

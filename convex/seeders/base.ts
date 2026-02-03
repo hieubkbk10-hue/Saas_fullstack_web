@@ -11,6 +11,7 @@
 
 import { faker } from '@faker-js/faker';
 import type { GenericMutationCtx } from 'convex/server';
+import type { DataModel } from '../_generated/dataModel';
 
 // ============================================================
 // TYPES & INTERFACES
@@ -44,12 +45,14 @@ export interface SeedDependency {
 // BASE SEEDER CLASS
 // ============================================================
 
-export abstract class BaseSeeder<T = any> {
-  protected ctx: GenericMutationCtx<any>;
+type TableName = keyof DataModel;
+
+export abstract class BaseSeeder<T = unknown> {
+  protected ctx: GenericMutationCtx<DataModel>;
   protected faker: typeof faker;
   protected config: SeedConfig = { quantity: 10 };
   
-  constructor(ctx: GenericMutationCtx<any>) {
+  constructor(ctx: GenericMutationCtx<DataModel>) {
     this.ctx = ctx;
     this.faker = faker;
   }
@@ -213,7 +216,7 @@ export abstract class BaseSeeder<T = any> {
   
   protected async countRecords(moduleName: string): Promise<number> {
     try {
-      const records = await this.ctx.db.query(moduleName as any).collect();
+      const records = await this.ctx.db.query(moduleName as TableName).collect();
       return records.length;
     } catch {
       return 0;
@@ -227,7 +230,7 @@ export abstract class BaseSeeder<T = any> {
   protected async checkExisting(): Promise<number> {
     try {
       // Count all records in table
-      const records = await this.ctx.db.query(this.tableName as any).collect();
+      const records = await this.ctx.db.query(this.tableName as TableName).collect();
       return records.length;
     } catch {
       return 0;
@@ -236,14 +239,14 @@ export abstract class BaseSeeder<T = any> {
   
   protected async clear(): Promise<void> {
     // Default implementation: delete all records
-    const records = await this.ctx.db.query(this.tableName as any).collect();
+    const records = await this.ctx.db.query(this.tableName as TableName).collect();
     await Promise.all(records.map(r => this.ctx.db.delete(r._id)));
   }
   
   protected async insertRecords(records: T[]): Promise<void> {
     // Batch insert với Promise.all() for performance
     await Promise.all(
-      records.map(record => this.ctx.db.insert(this.tableName as any, record as any))
+      records.map(record => this.ctx.db.insert(this.tableName as TableName, record as DataModel[TableName]['document']))
     );
   }
   
@@ -285,8 +288,8 @@ export abstract class BaseSeeder<T = any> {
  * Create a seeder instance
  */
 export function createSeeder<T extends BaseSeeder>(
-  SeederClass: new (ctx: any) => T,
-  ctx: any
+  SeederClass: new (ctx: GenericMutationCtx<DataModel>) => T,
+  ctx: GenericMutationCtx<DataModel>
 ): T {
   return new SeederClass(ctx);
 }

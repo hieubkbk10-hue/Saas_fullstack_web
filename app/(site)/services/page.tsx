@@ -155,7 +155,8 @@ function ServicesContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<ServiceSortOption>('newest');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-  const [postsPerPage, setPostsPerPage] = useState(listConfig.postsPerPage ?? 12);
+  const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
+  const postsPerPage = pageSizeOverride ?? (listConfig.postsPerPage ?? 12);
 
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0.1,
@@ -168,10 +169,6 @@ function ServicesContent() {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
-
-  useEffect(() => {
-    setPostsPerPage(listConfig.postsPerPage ?? 12);
-  }, [listConfig.postsPerPage]);
 
   // Queries
   const categories = useQuery(api.serviceCategories.listActive, { limit: 20 });
@@ -284,7 +281,7 @@ function ServicesContent() {
   }, []);
 
   const handlePageSizeChange = useCallback((value: number) => {
-    setPostsPerPage(value);
+    setPageSizeOverride(value);
     const params = new URLSearchParams(searchParams.toString());
     params.delete('page');
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });

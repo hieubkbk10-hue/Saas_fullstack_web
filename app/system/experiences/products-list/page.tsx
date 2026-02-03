@@ -25,15 +25,15 @@ import {
 } from '@/components/experiences/editor';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
-type ListLayoutStyle = 'grid' | 'list' | 'masonry';
+type ListLayoutStyle = 'grid' | 'sidebar' | 'list';
 type PaginationType = 'pagination' | 'infiniteScroll';
 
 type ProductsListExperienceConfig = {
   layoutStyle: ListLayoutStyle;
   layouts: {
     grid: LayoutConfig;
+    sidebar: LayoutConfig;
     list: LayoutConfig;
-    masonry: LayoutConfig;
   };
   showWishlistButton: boolean;
   showAddToCartButton: boolean;
@@ -51,8 +51,8 @@ const EXPERIENCE_KEY = 'products_list_ui';
 
 const LAYOUT_STYLES: LayoutOption<ListLayoutStyle>[] = [
   { description: 'Hiển thị dạng lưới cards', id: 'grid', label: 'Grid' },
+  { description: 'Sidebar filters + grid', id: 'sidebar', label: 'Sidebar' },
   { description: 'Hiển thị dạng danh sách', id: 'list', label: 'List' },
-  { description: 'Hiển thị dạng masonry', id: 'masonry', label: 'Masonry' },
 ];
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
@@ -66,8 +66,8 @@ const DEFAULT_CONFIG: ProductsListExperienceConfig = {
   layoutStyle: 'grid',
   layouts: {
     grid: { ...DEFAULT_LAYOUT_CONFIG },
+    sidebar: { ...DEFAULT_LAYOUT_CONFIG },
     list: { ...DEFAULT_LAYOUT_CONFIG },
-    masonry: { ...DEFAULT_LAYOUT_CONFIG },
   },
   showWishlistButton: true,
   showAddToCartButton: true,
@@ -94,7 +94,13 @@ export default function ProductsListExperiencePage() {
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
 
   const serverConfig = useMemo<ProductsListExperienceConfig>(() => {
-    const raw = experienceSetting?.value as Partial<ProductsListExperienceConfig> | undefined;
+    const raw = experienceSetting?.value as {
+      layoutStyle?: ListLayoutStyle | 'masonry';
+      layouts?: Partial<Record<'grid' | 'list' | 'sidebar' | 'masonry', Partial<LayoutConfig & { showPagination?: boolean }>>>;
+      showWishlistButton?: boolean;
+      showAddToCartButton?: boolean;
+      showPromotionBadge?: boolean;
+    } | undefined;
     
     const normalizePaginationType = (value?: string | boolean): PaginationType => {
       if (value === 'infiniteScroll') return 'infiniteScroll';
@@ -110,12 +116,15 @@ export default function ProductsListExperiencePage() {
       postsPerPage: cfg?.postsPerPage ?? 12,
     });
     
+    const layoutStyle: ListLayoutStyle = raw?.layoutStyle === 'masonry' ? 'sidebar' : (raw?.layoutStyle ?? 'grid');
+    const sidebarConfig = raw?.layouts?.sidebar ?? raw?.layouts?.masonry;
+
     return {
-      layoutStyle: raw?.layoutStyle ?? 'grid',
+      layoutStyle,
       layouts: {
         grid: normalizeLayoutConfig(raw?.layouts?.grid as Partial<LayoutConfig & { showPagination?: boolean }>),
+        sidebar: normalizeLayoutConfig(sidebarConfig as Partial<LayoutConfig & { showPagination?: boolean }>),
         list: normalizeLayoutConfig(raw?.layouts?.list as Partial<LayoutConfig & { showPagination?: boolean }>),
-        masonry: normalizeLayoutConfig(raw?.layouts?.masonry as Partial<LayoutConfig & { showPagination?: boolean }>),
       },
       showWishlistButton: raw?.showWishlistButton ?? true,
       showAddToCartButton: raw?.showAddToCartButton ?? true,

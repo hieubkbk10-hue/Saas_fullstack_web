@@ -38,8 +38,7 @@ export function usePostsListConfig(): PostsListConfig {
 }
 
 type ProductsListConfig = {
-  layoutStyle: 'grid' | 'list' | 'masonry';
-  filterPosition: 'sidebar' | 'top' | 'none';
+  layoutStyle: 'grid' | 'sidebar' | 'list';
   paginationType: PaginationType;
   showSearch: boolean;
   showCategories: boolean;
@@ -51,9 +50,8 @@ export function useProductsListConfig(): ProductsListConfig {
   
   return useMemo(() => {
     const raw = experienceSetting?.value as {
-      layoutStyle?: ProductsListConfig['layoutStyle'];
+      layoutStyle?: ProductsListConfig['layoutStyle'] | 'masonry';
       layouts?: Record<string, Partial<Omit<ProductsListConfig, 'layoutStyle'> & { showPagination?: boolean }>>;
-      filterPosition?: FilterPosition;
       paginationType?: string | boolean;
       showPagination?: boolean;
       showSearch?: boolean;
@@ -61,11 +59,13 @@ export function useProductsListConfig(): ProductsListConfig {
       postsPerPage?: number;
     } | undefined;
 
-    const layoutStyle = raw?.layoutStyle ?? 'grid';
-    const layoutConfig = raw?.layouts?.[layoutStyle];
+    const rawLayout = raw?.layoutStyle;
+    const layoutStyle: ProductsListConfig['layoutStyle'] = rawLayout === 'masonry' ? 'sidebar' : (rawLayout ?? 'grid');
+    const layoutConfig = layoutStyle === 'sidebar'
+      ? (raw?.layouts?.sidebar ?? raw?.layouts?.masonry)
+      : raw?.layouts?.[layoutStyle];
     return {
       layoutStyle,
-      filterPosition: layoutConfig?.filterPosition ?? raw?.filterPosition ?? 'sidebar',
       paginationType: normalizePaginationType(layoutConfig?.paginationType ?? raw?.paginationType ?? layoutConfig?.showPagination ?? raw?.showPagination),
       showSearch: layoutConfig?.showSearch ?? raw?.showSearch ?? true,
       showCategories: layoutConfig?.showCategories ?? raw?.showCategories ?? true,

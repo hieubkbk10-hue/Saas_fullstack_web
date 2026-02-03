@@ -27,6 +27,7 @@ interface BulkSeedCardProps {
 }
 
 type PresetType = 'minimal' | 'standard' | 'large' | 'demo';
+type SeedResultItem = { created: number; errors?: string[] };
 
 const PRESETS: Array<{
   key: PresetType;
@@ -88,12 +89,12 @@ export function BulkSeedCard({ onSeedComplete, onOpenCustomDialog }: BulkSeedCar
     try {
       const toastId = toast.loading(`Đang seed preset ${preset}...`);
       
-      const results = await seedPreset({ force: false, preset });
+      const results = await seedPreset({ force: false, preset }) as SeedResultItem[];
       
       // Calculate progress
       const totalModules = results.length;
-      const successModules = results.filter((r: any) => !r.errors || r.errors.length === 0).length;
-      const totalCreated = results.reduce((sum: number, r: any) => sum + r.created, 0);
+      const successModules = results.filter((result) => !result.errors || result.errors.length === 0).length;
+      const totalCreated = results.reduce((sum, result) => sum + result.created, 0);
       
       setProgress(100);
       

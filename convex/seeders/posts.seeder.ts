@@ -4,9 +4,10 @@
  * Generates blog posts with Vietnamese content
  */
 
-import { BaseSeeder, type SeedDependency } from './base';
+import { BaseSeeder, type SeedConfig, type SeedDependency } from './base';
 import { createVietnameseFaker } from './fakerVi';
-import type { Doc } from '../_generated/dataModel';
+import type { Doc, DataModel } from '../_generated/dataModel';
+import type { GenericMutationCtx } from 'convex/server';
 
 type PostData = Omit<Doc<'posts'>, '_id' | '_creationTime'>;
 
@@ -23,12 +24,12 @@ export class PostSeeder extends BaseSeeder<PostData> {
   private viFaker: ReturnType<typeof createVietnameseFaker>;
   private postCount = 0;
   
-  constructor(ctx: any) {
+  constructor(ctx: GenericMutationCtx<DataModel>) {
     super(ctx);
     this.viFaker = createVietnameseFaker(this.faker);
   }
   
-  async seed(config: any) {
+  async seed(config: SeedConfig) {
     // Load dependencies
     [this.categories, this.users] = await Promise.all([
       this.ctx.db.query('postCategories').collect(),

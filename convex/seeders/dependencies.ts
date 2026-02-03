@@ -8,6 +8,9 @@
  * - Module grouping by category
  */
 
+import type { GenericMutationCtx } from 'convex/server';
+import type { DataModel } from '../_generated/dataModel';
+
 // ============================================================
 // TYPES
 // ============================================================
@@ -281,41 +284,41 @@ export function resolveDependencies(modules: string[]): string[] {
   const visiting = new Set<string>();
   const visited = new Set<string>();
   
-  function visit(module: string) {
+  function visit(moduleKey: string) {
     // Already processed
-    if (visited.has(module)) {
+    if (visited.has(moduleKey)) {
       return;
     }
     
     // Circular dependency detected
-    if (visiting.has(module)) {
+    if (visiting.has(moduleKey)) {
       throw new Error(
-        `Circular dependency detected: ${module} is already being visited. ` +
+        `Circular dependency detected: ${moduleKey} is already being visited. ` +
         `Check SEED_DEPENDENCIES configuration.`
       );
     }
     
-    visiting.add(module);
+    visiting.add(moduleKey);
     
     // Get dependencies
-    const depConfig = SEED_DEPENDENCIES[module];
+    const depConfig = SEED_DEPENDENCIES[moduleKey];
     if (depConfig && depConfig.type !== 'optional') {
       for (const dep of depConfig.deps) {
         visit(dep);
       }
     }
     
-    visiting.delete(module);
-    visited.add(module);
-    resolved.push(module);
+    visiting.delete(moduleKey);
+    visited.add(moduleKey);
+    resolved.push(moduleKey);
   }
   
   // Visit all requested modules
-  for (const module of modules) {
+  for (const moduleKey of modules) {
     try {
-      visit(module);
+      visit(moduleKey);
     } catch (error) {
-      console.error(`Error resolving dependencies for ${module}:`, error);
+      console.error(`Error resolving dependencies for ${moduleKey}:`, error);
       throw error;
     }
   }
@@ -327,10 +330,10 @@ export function resolveDependencies(modules: string[]): string[] {
  * Check if dependencies are satisfied
  */
 export async function checkDependencies(
-  ctx: any,
-  module: string
+  ctx: GenericMutationCtx<DataModel>,
+  moduleKey: string
 ): Promise<{ satisfied: boolean; missing: string[] }> {
-  const depConfig = SEED_DEPENDENCIES[module];
+  const depConfig = SEED_DEPENDENCIES[moduleKey];
   
   if (!depConfig || depConfig.deps.length === 0) {
     return { missing: [], satisfied: true };
@@ -340,7 +343,7 @@ export async function checkDependencies(
   let satisfiedCount = 0;
   
   for (const dep of depConfig.deps) {
-    const tableName = getTableName(dep);
+    const tableName = getTableName(dep) as keyof DataModel;
     try {
       const exists = await ctx.db.query(tableName).first();
       if (exists) {
