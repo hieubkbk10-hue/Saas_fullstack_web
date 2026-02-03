@@ -9,7 +9,7 @@ import { useInView } from 'react-intersection-observer';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { useProductsListConfig } from '@/lib/experiences';
-import { ChevronDown, LayoutGrid, List, Package, Search, ShoppingCart, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronDown, Package, Search, ShoppingCart, SlidersHorizontal, X } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
 type ProductSortOption = 'newest' | 'oldest' | 'popular' | 'price_asc' | 'price_desc' | 'name';
@@ -145,7 +145,6 @@ function ProductsContent() {
   const [selectedCategory, setSelectedCategory] = useState<Id<"productCategories"> | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<ProductSortOption>('newest');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
@@ -490,29 +489,20 @@ function ProductsContent() {
               )}
             </div>
 
-            <div className="hidden lg:flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() =>{  handleCategoryChange(null); }}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === null ? 'text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                style={selectedCategory === null ? { backgroundColor: brandColor } : undefined}
-              >
-                Tất cả
-              </button>
-              {categories.slice(0, 5).map((cat) => (
-                <button
-                  key={cat._id}
-                  onClick={() =>{  handleCategoryChange(cat._id); }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === cat._id ? 'text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                  style={selectedCategory === cat._id ? { backgroundColor: brandColor } : undefined}
+            <div className="hidden lg:flex items-center gap-2">
+              <div className="relative">
+                <select
+                  value={selectedCategory ?? ''}
+                  onChange={(e) =>{  handleCategoryChange(e.target.value ? e.target.value as Id<"productCategories"> : null); }}
+                  className="h-10 pl-3 pr-8 rounded-lg border border-slate-200 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none min-w-[180px]"
                 >
-                  {cat.name}
-                </button>
-              ))}
-              {categories.length > 5 && (
-                <button onClick={() =>{  setShowFilters(!showFilters); }} className="px-4 py-2 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center gap-1">
-                  +{categories.length - 5} khác <ChevronDown size={14} />
-                </button>
-              )}
+                  <option value="">Tất cả danh mục</option>
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat._id}>{cat.name}</option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
             </div>
 
             <button onClick={() =>{  setShowFilters(!showFilters); }} className="lg:hidden flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-slate-600">
@@ -527,15 +517,6 @@ function ProductsContent() {
                 <option value="price_desc">Giá cao → thấp</option>
                 <option value="name">Tên A-Z</option>
               </select>
-
-              <div className="flex bg-slate-100 rounded-lg p-1">
-                <button onClick={() =>{  setViewMode('grid'); }} className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
-                  <LayoutGrid size={18} />
-                </button>
-                <button onClick={() =>{  setViewMode('list'); }} className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>
-                  <List size={18} />
-                </button>
-              </div>
             </div>
           </div>
 
@@ -569,11 +550,9 @@ function ProductsContent() {
           <ProductsGridSkeleton count={postsPerPage} />
         ) : products.length === 0 ? (
           <EmptyState brandColor={brandColor} onReset={() => { setSearchQuery(''); handleCategoryChange(null); }} />
-        ) : (viewMode === 'grid' ? (
-          <ProductGrid products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} />
         ) : (
-          <ProductList products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} />
-        ))}
+          <ProductGrid products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} />
+        )}
 
         {paginationNode}
       </div>
