@@ -4,7 +4,7 @@ import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'reac
 import { usePaginatedQuery, useQuery } from 'convex/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { usePostsListConfig } from '@/lib/experiences';
@@ -56,35 +56,38 @@ function PostsGridSkeleton({ count = 6 }: { count?: number }) {
 function generatePaginationItems(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
   const items: (number | 'ellipsis')[] = [];
   
-  if (totalPages <= 7) {
-    for (let i = 1; i <= totalPages; i++) {
-      items.push(i);
-    }
+  if (totalPages <= 9) {
+    for (let i = 1; i <= totalPages; i++) items.push(i);
     return items;
   }
   
-  items.push(1);
+  // Always show first 2 pages
+  items.push(1, 2);
   
-  if (currentPage > 3) {
+  // Ellipsis after first pages if needed
+  if (currentPage > 4) {
     items.push('ellipsis');
   }
   
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
+  // Pages around current
+  const start = Math.max(3, currentPage - 1);
+  const end = Math.min(totalPages - 2, currentPage + 1);
   
   for (let i = start; i <= end; i++) {
-    items.push(i);
+    if (!items.includes(i)) items.push(i);
   }
   
-  if (currentPage < totalPages - 2) {
+  // Ellipsis before last pages if needed
+  if (currentPage < totalPages - 3) {
     items.push('ellipsis');
   }
   
-  items.push(totalPages);
+  // Always show last 2 pages
+  if (!items.includes(totalPages - 1)) items.push(totalPages - 1);
+  if (!items.includes(totalPages)) items.push(totalPages);
   
   return items;
 }
-
 function PostsListSkeleton() {
   return (
     <div className="py-8 md:py-12 px-4 animate-pulse">
@@ -144,7 +147,7 @@ function PostsContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-  const postsPerPage = listConfig.postsPerPage ?? 12;
+  const [postsPerPage, setPostsPerPage] = useState(listConfig.postsPerPage ?? 12);
   
   // Intersection observer for infinite scroll
   const { ref: loadMoreRef, inView } = useInView({
@@ -159,6 +162,10 @@ function PostsContent() {
     }, 300);
     return () =>{  clearTimeout(timer); };
   }, [searchQuery]);
+
+  useEffect(() => {
+    setPostsPerPage(listConfig.postsPerPage ?? 12);
+  }, [listConfig.postsPerPage]);
 
   // Queries
   const categories = useQuery(api.postCategories.listActive, { limit: 20 });
@@ -261,6 +268,14 @@ function PostsContent() {
   const handleSortChange = useCallback((sort: SortOption) => {
     setSortBy(sort);
   }, []);
+
+  const handlePageSizeChange = useCallback((value: number) => {
+    setPostsPerPage(value);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('page');
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [searchParams, pathname, router]);
   
   // Update URL when page changes (pagination mode)
   const handlePageChange = useCallback((page: number) => {
@@ -274,14 +289,14 @@ function PostsContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [searchParams, pathname, router]);
   
-  // Reset page to 1 when search/filter changes
+  // Reset page to 1 when search/filter/page size changes
   useEffect(() => {
     if (listConfig.paginationType === 'pagination' && urlPage !== 1) {
       const params = new URLSearchParams(searchParams.toString());
       params.delete('page');
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
-  }, [debouncedSearchQuery, sortBy, activeCategory]);
+  }, [debouncedSearchQuery, sortBy, activeCategory, postsPerPage, listConfig.paginationType, pathname, router, searchParams, urlPage]);
 
   // Initial loading state only (not on search/filter changes)
   const isInitialLoading = categories === undefined;
@@ -383,45 +398,34 @@ function PostsContent() {
 
         {/* Pagination / Infinite Scroll */}
         {listConfig.paginationType === 'pagination' && totalPages > 1 && (
-          <div className="mt-8 flex flex-col items-center gap-3">
-            {/* Page numbers */}
-            <nav className="flex items-center gap-1" aria-label="Phân trang">
-              {/* First page */}
-              <button
-                onClick={() => handlePageChange(1)}
-                disabled={urlPage === 1}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
-                aria-label="Trang đầu"
-              >
-                <ChevronsLeft size={16} />
-              </button>
-              
+          <div className="mt-8 flex flex-col items-center gap-4">
+            {/* Page navigation */}
+            <nav className="flex items-center gap-1.5" aria-label="Phân trang">
               {/* Previous */}
               <button
                 onClick={() => handlePageChange(urlPage - 1)}
                 disabled={urlPage === 1}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center w-8 h-8 rounded-md text-slate-400 transition-colors hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed"
                 aria-label="Trang trước"
               >
-                <ChevronLeft size={18} />
+                <ChevronLeft size={20} />
               </button>
               
               {/* Page numbers */}
               {generatePaginationItems(urlPage, totalPages).map((item, index) => (
                 item === 'ellipsis' ? (
-                  <span key={`ellipsis-${index}`} className="px-2 text-slate-400 select-none">
-                    ...
+                  <span key={`ellipsis-${index}`} className="w-8 text-center text-slate-400 select-none">
+                    …
                   </span>
                 ) : (
                   <button
                     key={item}
                     onClick={() => handlePageChange(item)}
-                    className={`inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg text-sm font-medium transition-colors ${
+                    className={`inline-flex items-center justify-center w-8 h-8 rounded-md text-sm transition-colors ${
                       urlPage === item
-                        ? 'text-white shadow-sm'
-                        : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                        ? 'font-semibold text-slate-900 border border-slate-300 bg-slate-100'
+                        : 'text-slate-600 hover:bg-slate-100'
                     }`}
-                    style={urlPage === item ? { backgroundColor: brandColor } : undefined}
                     aria-current={urlPage === item ? 'page' : undefined}
                   >
                     {item}
@@ -433,27 +437,32 @@ function PostsContent() {
               <button
                 onClick={() => handlePageChange(urlPage + 1)}
                 disabled={urlPage === totalPages}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center w-8 h-8 rounded-md text-slate-400 transition-colors hover:text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed"
                 aria-label="Trang sau"
               >
-                <ChevronRight size={18} />
-              </button>
-              
-              {/* Last page */}
-              <button
-                onClick={() => handlePageChange(totalPages)}
-                disabled={urlPage === totalPages}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
-                aria-label="Trang cuối"
-              >
-                <ChevronsRight size={16} />
+                <ChevronRight size={20} />
               </button>
             </nav>
             
             {/* Page info text */}
-            <p className="text-sm text-slate-500">
-              Trang {urlPage} / {totalPages} ({totalCount} bài viết)
-            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-slate-500">
+              <span>
+                Hiển thị {totalCount ? ((urlPage - 1) * postsPerPage) + 1 : 0}–{Math.min(urlPage * postsPerPage, totalCount ?? 0)} trong {totalCount ?? 0} bài viết
+              </span>
+              <div className="flex items-center gap-1">
+                <select
+                  value={postsPerPage}
+                  onChange={(event) => handlePageSizeChange(Number(event.target.value))}
+                  className="h-8 rounded-md border border-slate-200 bg-white px-2 text-sm text-slate-600 shadow-sm focus:border-slate-300 focus:outline-none"
+                  aria-label="Số bài mỗi trang"
+                >
+                  {[10, 12, 20, 30].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <span>bài/trang</span>
+              </div>
+            </div>
           </div>
         )}
         
