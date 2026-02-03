@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronDown, Edit, ExternalLink, Loader2, Plus, Search, Trash2 } from 'lucide-react';
+import { ChevronDown, Edit, ExternalLink, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -44,7 +44,21 @@ function PostsContent() {
   const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(['status', 'views']);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
+    if (typeof window === 'undefined') {
+      return ['status', 'views'];
+    }
+    try {
+      const stored = window.localStorage.getItem('admin_posts_visible_columns');
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[];
+        return parsed.length > 0 ? parsed : ['status', 'views'];
+      }
+    } catch {
+      return ['status', 'views'];
+    }
+    return ['status', 'views'];
+  });
   const isSelectAllActive = selectionMode === 'all';
 
   const categoriesData = useQuery(api.postCategories.listAll, {});
@@ -59,6 +73,10 @@ function PostsContent() {
     }, 300);
     return () =>{  clearTimeout(timer); };
   }, [searchTerm]);
+
+  useEffect(() => {
+    window.localStorage.setItem('admin_posts_visible_columns', JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
 
   // Lấy setting postsPerPage từ module settings
   const postsPerPage = useMemo(() => {
@@ -92,7 +110,7 @@ function PostsContent() {
       : 'skip'
   );
 
-  const isLoading = postsData === undefined || categoriesData === undefined || totalCountData === undefined;
+  const isTableLoading = postsData === undefined || totalCountData === undefined;
 
   useEffect(() => {
     if (selectAllData?.hasMore) {
@@ -125,6 +143,15 @@ function PostsContent() {
   const applyManualSelection = (nextIds: Id<"posts">[]) => {
     setSelectionMode('manual');
     setManualSelectedIds(nextIds);
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+    setFilterStatus('');
+    setCurrentPage(1);
+    setPageSizeOverride(null);
+    applyManualSelection([]);
   };
 
   const handleSort = (key: string) => {
@@ -188,14 +215,6 @@ function PostsContent() {
     window.open(`/posts/${slug}`, '_blank');
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-slate-400" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -228,6 +247,9 @@ function PostsContent() {
               <option value="Draft">Bản nháp</option>
               <option value="Archived">Lưu trữ</option>
             </select>
+            <Button variant="outline" size="sm" onClick={handleResetFilters}>
+              Xóa lọc
+            </Button>
             <ColumnToggle
               columns={[
                 { key: 'thumbnail', label: 'Thumbnail' },
@@ -255,38 +277,76 @@ function PostsContent() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedPosts.map(post => (
-              <TableRow key={post._id} className={selectedIds.includes(post._id) ? 'bg-blue-500/5' : ''}>
-                <TableCell><SelectCheckbox checked={selectedIds.includes(post._id)} onChange={() =>{  toggleSelectItem(post._id); }} /></TableCell>
-                {visibleColumns.includes('thumbnail') && (
+            {isTableLoading ? (
+              Array.from({ length: resolvedPostsPerPage }).map((_, index) => (
+                <TableRow key={`loading-${index}`}>
                   <TableCell>
-                    {post.thumbnail ? (
-                      <Image src={post.thumbnail} width={48} height={32} className="w-12 h-8 object-cover rounded" alt={post.title} />
-                    ) : (
-                      <div className="w-12 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-slate-400">No img</div>
+                    <div className="h-4 w-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  </TableCell>
+                  {visibleColumns.includes('thumbnail') && (
+                    <TableCell>
+                      <div className="h-8 w-12 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  <TableCell>
+                    <div className="h-4 w-2/3 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  </TableCell>
+                  {visibleColumns.includes('category') && (
+                    <TableCell>
+                      <div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  {visibleColumns.includes('views') && (
+                    <TableCell>
+                      <div className="h-4 w-16 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  {visibleColumns.includes('status') && (
+                    <TableCell>
+                      <div className="h-5 w-20 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  <TableCell className="text-right">
+                    <div className="ml-auto h-8 w-24 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <>
+                {paginatedPosts.map(post => (
+                  <TableRow key={post._id} className={selectedIds.includes(post._id) ? 'bg-blue-500/5' : ''}>
+                    <TableCell><SelectCheckbox checked={selectedIds.includes(post._id)} onChange={() =>{  toggleSelectItem(post._id); }} /></TableCell>
+                    {visibleColumns.includes('thumbnail') && (
+                      <TableCell>
+                        {post.thumbnail ? (
+                          <Image src={post.thumbnail} width={48} height={32} className="w-12 h-8 object-cover rounded" alt={post.title} />
+                        ) : (
+                          <div className="w-12 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-slate-400">No img</div>
+                        )}
+                      </TableCell>
                     )}
-                  </TableCell>
-                )}
-                <TableCell className="font-medium max-w-[300px] truncate">{post.title}</TableCell>
-                {visibleColumns.includes('category') && <TableCell>{post.category}</TableCell>}
-                {visibleColumns.includes('views') && <TableCell className="text-slate-500">{post.views.toLocaleString()}</TableCell>}
-                {visibleColumns.includes('status') && (
-                  <TableCell>
-                    <Badge variant={post.status === 'Published' ? 'success' : (post.status === 'Draft' ? 'secondary' : 'warning')}>
-                      {post.status === 'Published' ? 'Đã xuất bản' : (post.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ')}
-                    </Badge>
-                  </TableCell>
-                )}
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem bài viết" onClick={() =>{  openFrontend(post.slug); }}><ExternalLink size={16}/></Button>
-                    <Link href={`/admin/posts/${post._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(post._id)}><Trash2 size={16}/></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {paginatedPosts.length === 0 && (
+                    <TableCell className="font-medium max-w-[300px] truncate">{post.title}</TableCell>
+                    {visibleColumns.includes('category') && <TableCell>{post.category}</TableCell>}
+                    {visibleColumns.includes('views') && <TableCell className="text-slate-500">{post.views.toLocaleString()}</TableCell>}
+                    {visibleColumns.includes('status') && (
+                      <TableCell>
+                        <Badge variant={post.status === 'Published' ? 'success' : (post.status === 'Draft' ? 'secondary' : 'warning')}>
+                          {post.status === 'Published' ? 'Đã xuất bản' : (post.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ')}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem bài viết" onClick={() =>{  openFrontend(post.slug); }}><ExternalLink size={16}/></Button>
+                        <Link href={`/admin/posts/${post._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
+                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(post._id)}><Trash2 size={16}/></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
+            )}
+            {!isTableLoading && paginatedPosts.length === 0 && (
               <TableRow>
                 <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
                   {searchTerm || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có bài viết nào'}
@@ -295,7 +355,7 @@ function PostsContent() {
             )}
           </TableBody>
         </Table>
-        {totalCount > 0 && (
+        {totalCount > 0 && !isTableLoading && (
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
               <div className="flex items-center gap-2">
