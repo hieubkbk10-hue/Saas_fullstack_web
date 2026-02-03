@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Ban, Check, ChevronLeft, ChevronRight, Edit, FileText, Loader2, Package, Plus, Search, Trash2 } from 'lucide-react';
+import { Ban, Check, ChevronDown, Edit, FileText, Package, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
-import { SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
+import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, generatePaginationItems, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
 
 export default function CommentsListPage() {
@@ -20,85 +20,152 @@ export default function CommentsListPage() {
 }
 
 function CommentsContent() {
-  const commentsData = useQuery(api.comments.listAll, {});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<'' | 'post' | 'product'>('');
+  const [filterStatus, setFilterStatus] = useState<'' | 'Pending' | 'Approved' | 'Spam'>('');
+  const [manualSelectedIds, setManualSelectedIds] = useState<Id<"comments">[]>([]);
+  const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'desc', key: 'created' });
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
+    if (typeof window === 'undefined') {
+      return ['rating', 'type', 'target', 'status', 'created'];
+    }
+    try {
+      const stored = window.localStorage.getItem('admin_comments_visible_columns');
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[];
+        return parsed.length > 0 ? parsed : ['rating', 'type', 'target', 'status', 'created'];
+      }
+    } catch {
+      return ['rating', 'type', 'target', 'status', 'created'];
+    }
+    return ['rating', 'type', 'target', 'status', 'created'];
+  });
+  const isSelectAllActive = selectionMode === 'all';
+
   const postsData = useQuery(api.posts.listAll, {});
   const productsData = useQuery(api.products.listAll, {});
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'comments' });
+
   const deleteComment = useMutation(api.comments.remove);
   const approveComment = useMutation(api.comments.approve);
   const markAsSpam = useMutation(api.comments.markAsSpam);
   const bulkUpdateStatus = useMutation(api.comments.bulkUpdateStatus);
 
-  const [selectedIds, setSelectedIds] = useState<Id<"comments">[]>([]);
-  const [filterType, setFilterType] = useState<'' | 'post' | 'product'>('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'desc', key: 'created' });
-  const [currentPage, setCurrentPage] = useState(1);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () =>{  clearTimeout(timer); };
+  }, [searchTerm]);
 
-  const isLoading = commentsData === undefined;
+  useEffect(() => {
+    window.localStorage.setItem('admin_comments_visible_columns', JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
 
-  // Lấy setting commentsPerPage từ module settings
   const commentsPerPage = useMemo(() => {
     const setting = settingsData?.find(s => s.settingKey === 'commentsPerPage');
     return (setting?.value as number) || 20;
   }, [settingsData]);
 
-  // Map post IDs to titles
+  const resolvedCommentsPerPage = pageSizeOverride ?? commentsPerPage;
+  const offset = (currentPage - 1) * resolvedCommentsPerPage;
+
+  const commentsData = useQuery(api.comments.listAdminWithOffset, {
+    limit: resolvedCommentsPerPage,
+    offset,
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    status: filterStatus || undefined,
+    targetType: filterType || undefined,
+  });
+
+  const totalCountData = useQuery(api.comments.countAdmin, {
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    status: filterStatus || undefined,
+    targetType: filterType || undefined,
+  });
+
+  const selectAllData = useQuery(
+    api.comments.listAdminIds,
+    isSelectAllActive
+      ? {
+          search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+          status: filterStatus || undefined,
+          targetType: filterType || undefined,
+        }
+      : 'skip'
+  );
+
+  const isTableLoading = commentsData === undefined
+    || totalCountData === undefined
+    || postsData === undefined
+    || productsData === undefined
+    || settingsData === undefined;
+
+  const columns = [
+    { key: 'rating', label: 'Đánh giá' },
+    { key: 'type', label: 'Loại' },
+    { key: 'target', label: 'Bài viết / Sản phẩm' },
+    { key: 'status', label: 'Trạng thái' },
+    { key: 'created', label: 'Thời gian' },
+    { key: 'ip', label: 'IP' },
+  ];
+
+  const resolvedVisibleColumns = visibleColumns.filter(key => columns.some(col => col.key === key));
+
+  useEffect(() => {
+    if (selectAllData?.hasMore) {
+      toast.info('Đã chọn tối đa 5.000 bình luận phù hợp.');
+    }
+  }, [selectAllData?.hasMore]);
+
   const postMap = useMemo(() => {
     const map: Record<string, string> = {};
     postsData?.forEach(post => { map[post._id] = post.title; });
     return map;
   }, [postsData]);
 
-  // Map product IDs to names
   const productMap = useMemo(() => {
     const map: Record<string, string> = {};
     productsData?.forEach(product => { map[product._id] = product.name; });
     return map;
   }, [productsData]);
 
-  const comments = useMemo(() => {
-    let data = commentsData?.map(c => ({
-      ...c,
-      id: c._id,
-      author: c.authorName,
-      targetName: c.targetType === 'post' 
-        ? (postMap[c.targetId] || 'Bài viết không tồn tại') 
-        : (productMap[c.targetId] || 'Sản phẩm không tồn tại'),
-      created: c._creationTime,
-    })) ?? [];
-
-    // Apply filters
-    if (filterType) {
-      data = data.filter(c => c.targetType === filterType);
-    }
-    if (filterStatus) {
-      data = data.filter(c => c.status === filterStatus);
-    }
-    if (searchTerm) {
-      data = data.filter(c => 
-        c.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.content.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    return data;
-  }, [commentsData, postMap, productMap, filterType, filterStatus, searchTerm]);
+  const comments = useMemo(() => commentsData?.map(comment => ({
+    ...comment,
+    id: comment._id,
+    author: comment.authorName,
+    targetName: comment.targetType === 'post'
+      ? (postMap[comment.targetId] || 'Bài viết không tồn tại')
+      : (productMap[comment.targetId] || 'Sản phẩm không tồn tại'),
+    created: comment._creationTime,
+  })) ?? [], [commentsData, postMap, productMap]);
 
   const sortedComments = useSortableData(comments, sortConfig);
 
-  // Pagination
-  const totalPages = Math.ceil(sortedComments.length / commentsPerPage);
-  const paginatedComments = useMemo(() => {
-    const start = (currentPage - 1) * commentsPerPage;
-    return sortedComments.slice(start, start + commentsPerPage);
-  }, [sortedComments, currentPage, commentsPerPage]);
+  const totalCount = totalCountData?.count ?? 0;
+  const totalPages = totalCount ? Math.ceil(totalCount / resolvedCommentsPerPage) : 1;
+  const paginatedComments = sortedComments;
+  const tableColumnCount = 4 + resolvedVisibleColumns.length;
+  const selectedIds = isSelectAllActive && selectAllData ? selectAllData.ids : manualSelectedIds;
+  const isSelectingAll = isSelectAllActive && selectAllData === undefined;
 
-  // Reset page when filters change
-  const handleFilterChange = (setter: (v: string) => void, value: string) => {
-    setter(value);
+  const applyManualSelection = (nextIds: Id<"comments">[]) => {
+    setSelectionMode('manual');
+    setManualSelectedIds(nextIds);
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+    setFilterStatus('');
+    setFilterType('');
     setCurrentPage(1);
+    setPageSizeOverride(null);
+    applyManualSelection([]);
   };
 
   const handleSort = (key: string) => {
@@ -106,11 +173,42 @@ function CommentsContent() {
     setCurrentPage(1);
   };
 
-  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedComments.length ? [] : paginatedComments.map(c => c.id)); };
-  const toggleSelectItem = (id: Id<"comments">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
+  const handleTypeChange = (value: string) => {
+    setFilterType(value as '' | 'post' | 'product');
+    setCurrentPage(1);
+    applyManualSelection([]);
+  };
+
+  const handleStatusChange = (value: string) => {
+    setFilterStatus(value as '' | 'Pending' | 'Approved' | 'Spam');
+    setCurrentPage(1);
+    applyManualSelection([]);
+  };
+
+  const selectedOnPage = paginatedComments.filter(comment => selectedIds.includes(comment.id));
+  const isPageSelected = paginatedComments.length > 0 && selectedOnPage.length === paginatedComments.length;
+  const isPageIndeterminate = selectedOnPage.length > 0 && selectedOnPage.length < paginatedComments.length;
+
+  const toggleSelectAll = () => {
+    if (isPageSelected) {
+      const remaining = selectedIds.filter(id => !paginatedComments.some(comment => comment.id === id));
+      applyManualSelection(remaining);
+      return;
+    }
+    const next = new Set(selectedIds);
+    paginatedComments.forEach(comment => next.add(comment.id));
+    applyManualSelection(Array.from(next));
+  };
+
+  const toggleSelectItem = (id: Id<"comments">) =>{
+    const next = selectedIds.includes(id)
+      ? selectedIds.filter(i => i !== id)
+      : [...selectedIds, id];
+    applyManualSelection(next);
+  };
 
   const handleDelete = async (id: Id<"comments">) => {
-    if(confirm('Xóa vĩnh viễn bình luận này?')) {
+    if (confirm('Xóa vĩnh viễn bình luận này?')) {
       try {
         await deleteComment({ id });
         toast.success('Đã xóa bình luận');
@@ -126,7 +224,7 @@ function CommentsContent() {
         for (const id of selectedIds) {
           await deleteComment({ id });
         }
-        setSelectedIds([]);
+        applyManualSelection([]);
         toast.success(`Đã xóa ${selectedIds.length} bình luận`);
       } catch {
         toast.error('Không thể xóa bình luận');
@@ -148,7 +246,7 @@ function CommentsContent() {
     if (selectedIds.length === 0) {return;}
     try {
       await bulkUpdateStatus({ ids: selectedIds, status: 'Approved' });
-      setSelectedIds([]);
+      applyManualSelection([]);
       toast.success(`Đã duyệt ${selectedIds.length} bình luận`);
     } catch {
       toast.error('Không thể duyệt bình luận');
@@ -159,20 +257,12 @@ function CommentsContent() {
     if (selectedIds.length === 0) {return;}
     try {
       await bulkUpdateStatus({ ids: selectedIds, status: 'Spam' });
-      setSelectedIds([]);
+      applyManualSelection([]);
       toast.success(`Đã đánh dấu spam ${selectedIds.length} bình luận`);
     } catch {
       toast.error('Không thể đánh dấu spam');
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">
@@ -186,140 +276,292 @@ function CommentsContent() {
         </div>
       </div>
 
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  applyManualSelection([]); }} />
       {selectedIds.length > 0 && (
-        <Card className="p-3 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-blue-700 dark:text-blue-300">
-              Đã chọn {selectedIds.length} bình luận
-            </span>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="text-green-600 hover:text-green-700 gap-1" onClick={handleBulkApprove}>
-                <Check size={14} /> Duyệt
-              </Button>
-              <Button size="sm" variant="outline" className="text-orange-600 hover:text-orange-700 gap-1" onClick={handleBulkSpam}>
-                <Ban size={14} /> Spam
-              </Button>
-              <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 gap-1" onClick={handleBulkDelete}>
-                <Trash2 size={14} /> Xóa
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() =>{  setSelectedIds([]); }}>Bỏ chọn</Button>
-            </div>
-          </div>
-        </Card>
+        <div className="flex flex-wrap gap-2 text-sm">
+          <Button variant="outline" size="sm" onClick={() =>{  applyManualSelection(paginatedComments.map(comment => comment.id)); }}>
+            Chọn trang này
+          </Button>
+          <Button variant="outline" size="sm" onClick={() =>{  setSelectionMode('all'); }} disabled={isSelectingAll}>
+            {isSelectingAll ? 'Đang chọn...' : 'Chọn tất cả kết quả'}
+          </Button>
+          <Button variant="outline" size="sm" className="text-green-600 hover:text-green-700" onClick={handleBulkApprove}>
+            <Check size={14} /> Duyệt
+          </Button>
+          <Button variant="outline" size="sm" className="text-orange-600 hover:text-orange-700" onClick={handleBulkSpam}>
+            <Ban size={14} /> Spam
+          </Button>
+        </div>
       )}
 
       <Card>
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
-          <div className="relative max-w-xs">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+          <div className="relative max-w-xs flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm..." className="pl-9 w-48" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); }} />
+            <Input
+              placeholder="Tìm kiếm bình luận..."
+              className="pl-9"
+              value={searchTerm}
+              onChange={(e) =>{  setSearchTerm(e.target.value); setCurrentPage(1); applyManualSelection([]); }}
+            />
           </div>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterType} onChange={(e) =>{  handleFilterChange((v) =>{  setFilterType(v as '' | 'post' | 'product'); }, e.target.value); }}>
-            <option value="">Tất cả loại</option>
-            <option value="post">Bình luận bài viết</option>
-            <option value="product">Đánh giá sản phẩm</option>
-          </select>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  handleFilterChange(setFilterStatus, e.target.value); }}>
-            <option value="">Tất cả trạng thái</option>
-            <option value="Approved">Đã duyệt</option>
-            <option value="Pending">Chờ duyệt</option>
-            <option value="Spam">Spam</option>
-          </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              value={filterType}
+              onChange={(e) =>{  handleTypeChange(e.target.value); }}
+            >
+              <option value="">Tất cả loại</option>
+              <option value="post">Bình luận bài viết</option>
+              <option value="product">Đánh giá sản phẩm</option>
+            </select>
+            <select
+              className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
+              value={filterStatus}
+              onChange={(e) =>{  handleStatusChange(e.target.value); }}
+            >
+              <option value="">Tất cả trạng thái</option>
+              <option value="Approved">Đã duyệt</option>
+              <option value="Pending">Chờ duyệt</option>
+              <option value="Spam">Spam</option>
+            </select>
+            <Button variant="outline" size="sm" onClick={handleResetFilters}>
+              Xóa lọc
+            </Button>
+            <ColumnToggle
+              columns={columns}
+              visibleColumns={resolvedVisibleColumns}
+              onToggle={(key) => {
+                setVisibleColumns(prev => prev.includes(key) ? prev.filter(col => col !== key) : [...prev, key]);
+              }}
+            />
+          </div>
         </div>
         <Table>
-          <TableHeader>
+          <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-white dark:[&_th]:bg-slate-900">
             <TableRow>
-              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedComments.length && paginatedComments.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedComments.length} /></TableHead>
+              <TableHead className="w-[40px]"><SelectCheckbox checked={isPageSelected} onChange={toggleSelectAll} indeterminate={isPageIndeterminate} /></TableHead>
               <SortableHeader label="Người dùng" sortKey="author" sortConfig={sortConfig} onSort={handleSort} className="w-[180px]" />
               <TableHead>Nội dung</TableHead>
-              <TableHead className="w-[90px]">Đánh giá</TableHead>
-              <TableHead className="w-[80px]">Loại</TableHead>
-              <TableHead className="w-[180px]">Bài viết / Sản phẩm</TableHead>
-              <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} className="w-[100px]" />
-              <SortableHeader label="Thời gian" sortKey="created" sortConfig={sortConfig} onSort={handleSort} className="w-[120px]" />
+              {resolvedVisibleColumns.includes('rating') && (
+                <SortableHeader label="Đánh giá" sortKey="rating" sortConfig={sortConfig} onSort={handleSort} className="w-[90px]" />
+              )}
+              {resolvedVisibleColumns.includes('type') && (
+                <TableHead className="w-[80px]">Loại</TableHead>
+              )}
+              {resolvedVisibleColumns.includes('target') && (
+                <TableHead className="w-[180px]">Bài viết / Sản phẩm</TableHead>
+              )}
+              {resolvedVisibleColumns.includes('status') && (
+                <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} className="w-[120px]" />
+              )}
+              {resolvedVisibleColumns.includes('created') && (
+                <SortableHeader label="Thời gian" sortKey="created" sortConfig={sortConfig} onSort={handleSort} className="w-[140px]" />
+              )}
+              {resolvedVisibleColumns.includes('ip') && (
+                <TableHead className="w-[120px]">IP</TableHead>
+              )}
               <TableHead className="text-right w-[140px]">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedComments.map(comment => (
-              <TableRow key={comment.id} className={selectedIds.includes(comment.id) ? 'bg-blue-500/5' : ''}>
-                <TableCell><SelectCheckbox checked={selectedIds.includes(comment.id)} onChange={() =>{  toggleSelectItem(comment.id); }} /></TableCell>
-                <TableCell>
-                  <div className="font-medium">{comment.author}</div>
-                  <div className="text-xs text-slate-400">IP: {comment.authorIp ?? 'N/A'}</div>
-                </TableCell>
-                <TableCell><p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2">{comment.content}</p></TableCell>
-                <TableCell className="text-sm text-slate-500">{comment.rating ? `${comment.rating}/5` : '—'}</TableCell>
-                <TableCell>
-                  <Badge variant={comment.targetType === 'post' ? 'secondary' : 'outline'} className="gap-1 whitespace-nowrap">
-                    {comment.targetType === 'post' ? <FileText size={12} /> : <Package size={12} />}
-                    {comment.targetType === 'post' ? 'Bài viết' : 'Sản phẩm'}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 truncate max-w-[180px]">
-                    {comment.targetName}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={comment.status === 'Approved' ? 'default' : (comment.status === 'Pending' ? 'secondary' : 'destructive')} className="whitespace-nowrap">
-                    {comment.status === 'Approved' ? 'Đã duyệt' : (comment.status === 'Pending' ? 'Chờ duyệt' : 'Spam')}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-xs text-slate-500">{new Date(comment.created).toLocaleString('vi-VN')}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    {comment.status !== 'Approved' && (
-                      <Button variant="ghost" size="icon" className="text-green-500 hover:text-green-600" title="Duyệt" onClick={ async () => handleApprove(comment.id)}><Check size={16}/></Button>
+            {isTableLoading ? (
+              Array.from({ length: resolvedCommentsPerPage }).map((_, index) => (
+                <TableRow key={`loading-${index}`}>
+                  <TableCell>
+                    <div className="h-4 w-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 w-2/3 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  </TableCell>
+                  {resolvedVisibleColumns.includes('rating') && (
+                    <TableCell>
+                      <div className="h-4 w-10 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  {resolvedVisibleColumns.includes('type') && (
+                    <TableCell>
+                      <div className="h-5 w-16 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  {resolvedVisibleColumns.includes('target') && (
+                    <TableCell>
+                      <div className="h-4 w-28 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  {resolvedVisibleColumns.includes('status') && (
+                    <TableCell>
+                      <div className="h-5 w-20 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  {resolvedVisibleColumns.includes('created') && (
+                    <TableCell>
+                      <div className="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  {resolvedVisibleColumns.includes('ip') && (
+                    <TableCell>
+                      <div className="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  <TableCell className="text-right">
+                    <div className="ml-auto h-8 w-24 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <>
+                {paginatedComments.map(comment => (
+                  <TableRow key={comment.id} className={selectedIds.includes(comment.id) ? 'bg-blue-500/5' : ''}>
+                    <TableCell><SelectCheckbox checked={selectedIds.includes(comment.id)} onChange={() =>{  toggleSelectItem(comment.id); }} /></TableCell>
+                    <TableCell>
+                      <div className="font-medium">{comment.author}</div>
+                      {!resolvedVisibleColumns.includes('ip') && (
+                        <div className="text-xs text-slate-400">IP: {comment.authorIp ?? 'N/A'}</div>
+                      )}
+                    </TableCell>
+                    <TableCell><p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2">{comment.content}</p></TableCell>
+                    {resolvedVisibleColumns.includes('rating') && (
+                      <TableCell className="text-sm text-slate-500">{comment.rating ? `${comment.rating}/5` : '—'}</TableCell>
                     )}
-                    {comment.status !== 'Spam' && (
-                      <Button variant="ghost" size="icon" className="text-orange-500 hover:text-orange-600" title="Đánh dấu spam" onClick={ async () => handleSpam(comment.id)}><Ban size={16}/></Button>
+                    {resolvedVisibleColumns.includes('type') && (
+                      <TableCell>
+                        <Badge variant={comment.targetType === 'post' ? 'secondary' : 'outline'} className="gap-1 whitespace-nowrap">
+                          {comment.targetType === 'post' ? <FileText size={12} /> : <Package size={12} />}
+                          {comment.targetType === 'post' ? 'Bài viết' : 'Sản phẩm'}
+                        </Badge>
+                      </TableCell>
                     )}
-                    <Link href={`/admin/comments/${comment.id}/edit`}>
-                      <Button variant="ghost" size="icon" title="Chỉnh sửa"><Edit size={16}/></Button>
-                    </Link>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" title="Xóa" onClick={ async () => handleDelete(comment.id)}><Trash2 size={16}/></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {paginatedComments.length === 0 && (
+                    {resolvedVisibleColumns.includes('target') && (
+                      <TableCell>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 truncate max-w-[180px]">
+                          {comment.targetName}
+                        </div>
+                      </TableCell>
+                    )}
+                    {resolvedVisibleColumns.includes('status') && (
+                      <TableCell>
+                        <Badge variant={comment.status === 'Approved' ? 'default' : (comment.status === 'Pending' ? 'secondary' : 'destructive')} className="whitespace-nowrap">
+                          {comment.status === 'Approved' ? 'Đã duyệt' : (comment.status === 'Pending' ? 'Chờ duyệt' : 'Spam')}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    {resolvedVisibleColumns.includes('created') && (
+                      <TableCell className="text-xs text-slate-500">{new Date(comment.created).toLocaleString('vi-VN')}</TableCell>
+                    )}
+                    {resolvedVisibleColumns.includes('ip') && (
+                      <TableCell className="text-xs text-slate-500">{comment.authorIp ?? 'N/A'}</TableCell>
+                    )}
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        {comment.status !== 'Approved' && (
+                          <Button variant="ghost" size="icon" className="text-green-500 hover:text-green-600" title="Duyệt" onClick={ async () => handleApprove(comment.id)}><Check size={16}/></Button>
+                        )}
+                        {comment.status !== 'Spam' && (
+                          <Button variant="ghost" size="icon" className="text-orange-500 hover:text-orange-600" title="Đánh dấu spam" onClick={ async () => handleSpam(comment.id)}><Ban size={16}/></Button>
+                        )}
+                        <Link href={`/admin/comments/${comment.id}/edit`}>
+                          <Button variant="ghost" size="icon" title="Chỉnh sửa"><Edit size={16}/></Button>
+                        </Link>
+                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" title="Xóa" onClick={ async () => handleDelete(comment.id)}><Trash2 size={16}/></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
+            )}
+            {!isTableLoading && paginatedComments.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="h-24 text-center text-slate-500">
-                  {filterType || filterStatus || searchTerm ? 'Không tìm thấy kết quả phù hợp' : 'Không có bình luận nào.'}
+                <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
+                  {searchTerm || filterStatus || filterType ? 'Không tìm thấy kết quả phù hợp' : 'Không có bình luận nào.'}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-        {sortedComments.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-sm text-slate-500">
-              Hiển thị {(currentPage - 1) * commentsPerPage + 1} - {Math.min(currentPage * commentsPerPage, sortedComments.length)} / {sortedComments.length} bình luận
-            </span>
-            {totalPages > 1 && (
+        {totalCount > 0 && !isTableLoading && (
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === 1}
-                  onClick={() =>{  setCurrentPage(p => p - 1); }}
+                <span className="text-slate-600">Hiển thị</span>
+                <select
+                  value={resolvedCommentsPerPage}
+                  onChange={(event) =>{  setPageSizeOverride(Number(event.target.value)); setCurrentPage(1); applyManualSelection([]); }}
+                  className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
+                  aria-label="Số bình luận mỗi trang"
                 >
-                  <ChevronLeft size={16} />
-                </Button>
-                <span className="text-sm text-slate-600 dark:text-slate-400">
-                  Trang {currentPage} / {totalPages}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === totalPages}
-                  onClick={() =>{  setCurrentPage(p => p + 1); }}
-                >
-                  <ChevronRight size={16} />
-                </Button>
+                  {[10, 20, 30, 50, 100].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <span>bình luận/trang</span>
               </div>
-            )}
+
+              <div className="text-right sm:text-left">
+                <span className="font-medium text-slate-900">
+                  {totalCount ? ((currentPage - 1) * resolvedCommentsPerPage) + 1 : 0}–{Math.min(currentPage * resolvedCommentsPerPage, totalCount)}
+                </span>
+                <span className="mx-1 text-slate-300">/</span>
+                <span className="font-medium text-slate-900">
+                  {totalCount}{totalCountData?.hasMore ? '+' : ''}
+                </span>
+                <span className="ml-1 text-slate-500">bình luận</span>
+              </div>
+            </div>
+
+            <div className="order-1 flex w-full justify-center sm:order-2 sm:w-auto sm:justify-end">
+              <nav className="flex items-center space-x-1 sm:space-x-2" aria-label="Phân trang">
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.max(1, prev - 1)); }}
+                  disabled={currentPage === 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang trước"
+                >
+                  <ChevronDown className="h-4 w-4 rotate-90" />
+                </button>
+
+                {generatePaginationItems(currentPage, totalPages).map((item, index) => {
+                  if (item === 'ellipsis') {
+                    return (
+                      <div key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-slate-400">
+                        …
+                      </div>
+                    );
+                  }
+
+                  const pageNum = item as number;
+                  const isActive = pageNum === currentPage;
+                  const isMobileHidden = !isActive && pageNum !== 1 && pageNum !== totalPages;
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() =>{  setCurrentPage(pageNum); }}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-sm border font-medium'
+                          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.min(totalPages, prev + 1)); }}
+                  disabled={currentPage >= totalPages}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang sau"
+                >
+                  <ChevronDown className="h-4 w-4 -rotate-90" />
+                </button>
+              </nav>
+            </div>
           </div>
         )}
       </Card>

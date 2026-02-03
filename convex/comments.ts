@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { commentStatus, targetType } from "./lib/validators";
 import * as CommentsModel from "./model/comments";
+import type { Doc } from "./_generated/dataModel";
 
 const commentDoc = v.object({
   _creationTime: v.number(),
@@ -30,6 +31,128 @@ export const listAll = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => CommentsModel.listWithLimit(ctx, { limit: args.limit }),
   returns: v.array(commentDoc),
+});
+
+export const listAdminWithOffset = query({
+  args: {
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    search: v.optional(v.string()),
+    status: v.optional(commentStatus),
+    targetType: v.optional(targetType),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 20, 100);
+    const offset = args.offset ?? 0;
+    const fetchLimit = Math.min(offset + limit + 50, 500);
+    let comments: Doc<"comments">[] = [];
+
+    if (args.status) {
+      comments = await ctx.db
+        .query("comments")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .order("desc")
+        .take(fetchLimit);
+    } else {
+      comments = await ctx.db
+        .query("comments")
+        .order("desc")
+        .take(fetchLimit);
+    }
+
+    if (args.targetType) {
+      comments = comments.filter((comment) => comment.targetType === args.targetType);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      comments = comments.filter((comment) =>
+        comment.authorName.toLowerCase().includes(searchLower) ||
+        comment.content.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return comments.slice(offset, offset + limit);
+  },
+  returns: v.array(commentDoc),
+});
+
+export const countAdmin = query({
+  args: {
+    search: v.optional(v.string()),
+    status: v.optional(commentStatus),
+    targetType: v.optional(targetType),
+  },
+  handler: async (ctx, args) => {
+    const limit = 5000;
+    let comments: Doc<"comments">[] = [];
+
+    if (args.status) {
+      comments = await ctx.db
+        .query("comments")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .take(limit + 1);
+    } else {
+      comments = await ctx.db
+        .query("comments")
+        .take(limit + 1);
+    }
+
+    if (args.targetType) {
+      comments = comments.filter((comment) => comment.targetType === args.targetType);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      comments = comments.filter((comment) =>
+        comment.authorName.toLowerCase().includes(searchLower) ||
+        comment.content.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return { count: Math.min(comments.length, limit), hasMore: comments.length > limit };
+  },
+  returns: v.object({ count: v.number(), hasMore: v.boolean() }),
+});
+
+export const listAdminIds = query({
+  args: {
+    search: v.optional(v.string()),
+    status: v.optional(commentStatus),
+    targetType: v.optional(targetType),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 5000, 5000);
+    let comments: Doc<"comments">[] = [];
+
+    if (args.status) {
+      comments = await ctx.db
+        .query("comments")
+        .withIndex("by_status", (q) => q.eq("status", args.status!))
+        .take(limit + 1);
+    } else {
+      comments = await ctx.db
+        .query("comments")
+        .take(limit + 1);
+    }
+
+    if (args.targetType) {
+      comments = comments.filter((comment) => comment.targetType === args.targetType);
+    }
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      comments = comments.filter((comment) =>
+        comment.authorName.toLowerCase().includes(searchLower) ||
+        comment.content.toLowerCase().includes(searchLower)
+      );
+    }
+
+    const hasMore = comments.length > limit;
+    return { ids: comments.slice(0, limit).map((comment) => comment._id), hasMore };
+  },
+  returns: v.object({ ids: v.array(v.id("comments")), hasMore: v.boolean() }),
 });
 
 export const listByTargetType = query({
