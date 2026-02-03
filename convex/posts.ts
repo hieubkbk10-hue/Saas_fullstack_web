@@ -303,6 +303,83 @@ export const listPublishedPaginated = query({
   returns: paginatedPosts,
 });
 
+// Offset-based pagination for URL-based pagination mode
+export const listPublishedWithOffset = query({
+  args: {
+    categoryId: v.optional(v.id("postCategories")),
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    search: v.optional(v.string()),
+    sortBy: v.optional(v.union(
+      v.literal("newest"),
+      v.literal("oldest"),
+      v.literal("popular"),
+      v.literal("title")
+    )),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 12, 50);
+    const offset = args.offset ?? 0;
+    const sortBy = args.sortBy ?? "newest";
+    
+    let posts: Doc<"posts">[] = [];
+    
+    // Fetch more than needed to handle offset (Convex doesn't have native offset)
+    const fetchLimit = offset + limit + 10;
+    
+    if (args.categoryId) {
+      posts = await ctx.db
+        .query("posts")
+        .withIndex("by_category_status", (q) => 
+          q.eq("categoryId", args.categoryId!).eq("status", "Published")
+        )
+        .take(fetchLimit);
+    } else if (sortBy === "popular") {
+      posts = await ctx.db
+        .query("posts")
+        .withIndex("by_status_views", (q) => q.eq("status", "Published"))
+        .order("desc")
+        .take(fetchLimit);
+    } else {
+      posts = await ctx.db
+        .query("posts")
+        .withIndex("by_status_publishedAt", (q) => q.eq("status", "Published"))
+        .order(sortBy === "oldest" ? "asc" : "desc")
+        .take(fetchLimit);
+    }
+    
+    // Client-side text search filter
+    if (args.search && args.search.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      posts = posts.filter(post => 
+        post.title.toLowerCase().includes(searchLower) ||
+        (post.excerpt?.toLowerCase().includes(searchLower))
+      );
+    }
+    
+    // Sort by title if needed
+    if (sortBy === "title") {
+      posts.sort((a, b) => a.title.localeCompare(b.title, 'vi'));
+    } else if (args.categoryId) {
+      // Re-sort if filtered by category
+      switch (sortBy) {
+        case "oldest":
+          posts.sort((a, b) => (a.publishedAt ?? 0) - (b.publishedAt ?? 0));
+          break;
+        case "popular":
+          posts.sort((a, b) => b.views - a.views);
+          break;
+        default:
+          posts.sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
+      }
+    }
+    
+    // Apply offset and limit
+    return posts.slice(offset, offset + limit);
+  },
+  returns: v.array(postDoc),
+});
+
 // Search published posts with cursor-based pagination
 export const searchPublishedPaginated = query({
   args: {

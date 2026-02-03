@@ -4,6 +4,7 @@ import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'reac
 import { usePaginatedQuery, useQuery } from 'convex/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { usePostsListConfig } from '@/lib/experiences';
@@ -139,24 +140,23 @@ function PostsContent() {
     { initialNumItems: postsPerPage }
   );
   
-  // Use regular query for pagination mode (page-based)
+  // Use offset-based query for pagination mode (proper server-side pagination)
+  const offset = (urlPage - 1) * postsPerPage;
   const paginatedPosts = useQuery(
-    api.posts.searchPublished,
+    api.posts.listPublishedWithOffset,
     listConfig.paginationType === 'pagination' 
       ? {
           categoryId: activeCategory ?? undefined,
           limit: postsPerPage,
+          offset,
           search: debouncedSearchQuery || undefined,
           sortBy,
         }
       : 'skip'
   );
   
-  // Calculate offset-based posts for pagination mode
-  const allPaginatedPosts = paginatedPosts ?? [];
-  const startIndex = (urlPage - 1) * postsPerPage;
   const posts = listConfig.paginationType === 'pagination'
-    ? allPaginatedPosts.slice(startIndex, startIndex + postsPerPage)
+    ? (paginatedPosts ?? [])
     : infiniteResults;
   
   const totalCount = useQuery(api.posts.countPublished, {
@@ -319,66 +319,33 @@ function PostsContent() {
 
         {/* Pagination / Infinite Scroll */}
         {listConfig.paginationType === 'pagination' && totalPages > 1 && (
-          <div className="text-center mt-6">
-            <nav className="inline-flex items-center gap-1">
-              {/* Previous button */}
+          <div className="mt-8 flex items-center justify-center">
+            <div className="flex items-center gap-2">
+              {/* Previous */}
               <button
                 onClick={() => handlePageChange(urlPage - 1)}
                 disabled={urlPage === 1}
-                className="px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
+                aria-label="Trang trước"
               >
-                &larr;
+                <ChevronLeft size={18} />
               </button>
               
-              {/* Page numbers */}
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                let pageNum: number;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (urlPage <= 3) {
-                  pageNum = i + 1;
-                } else if (urlPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = urlPage - 2 + i;
-                }
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => handlePageChange(pageNum)}
-                    className="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                    style={urlPage === pageNum 
-                      ? { backgroundColor: brandColor, color: 'white' }
-                      : undefined
-                    }
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
+              {/* Page info */}
+              <span className="text-sm text-slate-600 min-w-[100px] text-center">
+                Trang {urlPage} / {totalPages}
+              </span>
               
-              {/* Ellipsis and last page */}
-              {totalPages > 5 && urlPage < totalPages - 2 && (
-                <>
-                  <span className="px-2 text-slate-400">...</span>
-                  <button
-                    onClick={() => handlePageChange(totalPages)}
-                    className="px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-slate-100"
-                  >
-                    {totalPages}
-                  </button>
-                </>
-              )}
-              
-              {/* Next button */}
+              {/* Next */}
               <button
                 onClick={() => handlePageChange(urlPage + 1)}
                 disabled={urlPage === totalPages}
-                className="px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
+                aria-label="Trang sau"
               >
-                &rarr;
+                <ChevronRight size={18} />
               </button>
-            </nav>
+            </div>
           </div>
         )}
         
