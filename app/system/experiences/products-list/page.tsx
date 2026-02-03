@@ -19,6 +19,7 @@ import {
   ConfigPanel,
   ControlCard,
   ToggleRow,
+  SelectRow,
   type DeviceType,
   type LayoutOption,
 } from '@/components/experiences/editor';
@@ -26,6 +27,7 @@ import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } fr
 
 type ListLayoutStyle = 'grid' | 'list' | 'masonry';
 type FilterPosition = 'sidebar' | 'top' | 'none';
+type PaginationType = 'pagination' | 'infiniteScroll';
 
 type ProductsListExperienceConfig = {
   layoutStyle: ListLayoutStyle;
@@ -38,7 +40,7 @@ type ProductsListExperienceConfig = {
 
 type LayoutConfig = {
   filterPosition: FilterPosition;
-  showPagination: boolean;
+  paginationType: PaginationType;
   showSearch: boolean;
   showCategories: boolean;
 };
@@ -59,7 +61,7 @@ const FILTER_POSITIONS: LayoutOption<FilterPosition>[] = [
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   filterPosition: 'sidebar',
-  showPagination: true,
+  paginationType: 'pagination',
   showSearch: true,
   showCategories: true,
 };
@@ -89,12 +91,27 @@ export default function ProductsListExperiencePage() {
 
   const serverConfig = useMemo<ProductsListExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<ProductsListExperienceConfig> | undefined;
+    
+    const normalizePaginationType = (value?: string | boolean): PaginationType => {
+      if (value === 'infiniteScroll') return 'infiniteScroll';
+      if (value === 'pagination') return 'pagination';
+      if (value === false) return 'infiniteScroll';
+      return 'pagination';
+    };
+    
+    const normalizeLayoutConfig = (cfg?: Partial<LayoutConfig & { showPagination?: boolean }>): LayoutConfig => ({
+      filterPosition: cfg?.filterPosition ?? 'sidebar',
+      paginationType: normalizePaginationType(cfg?.paginationType ?? cfg?.showPagination),
+      showSearch: cfg?.showSearch ?? true,
+      showCategories: cfg?.showCategories ?? true,
+    });
+    
     return {
       layoutStyle: raw?.layoutStyle ?? 'grid',
       layouts: {
-        grid: { ...DEFAULT_LAYOUT_CONFIG, ...raw?.layouts?.grid },
-        list: { ...DEFAULT_LAYOUT_CONFIG, ...raw?.layouts?.list },
-        masonry: { ...DEFAULT_LAYOUT_CONFIG, ...raw?.layouts?.masonry },
+        grid: normalizeLayoutConfig(raw?.layouts?.grid as Partial<LayoutConfig & { showPagination?: boolean }>),
+        list: normalizeLayoutConfig(raw?.layouts?.list as Partial<LayoutConfig & { showPagination?: boolean }>),
+        masonry: normalizeLayoutConfig(raw?.layouts?.masonry as Partial<LayoutConfig & { showPagination?: boolean }>),
       },
     };
   }, [experienceSetting?.value]);
@@ -164,7 +181,7 @@ export default function ProductsListExperiencePage() {
             <ProductsListPreview
               layoutStyle={config.layoutStyle}
               filterPosition={currentLayoutConfig.filterPosition}
-              showPagination={currentLayoutConfig.showPagination}
+              paginationType={currentLayoutConfig.paginationType}
               showSearch={currentLayoutConfig.showSearch}
               showCategories={currentLayoutConfig.showCategories}
               brandColor={brandColor}
@@ -216,11 +233,17 @@ export default function ProductsListExperiencePage() {
               accentColor="#10b981"
               disabled={!productsModule?.enabled}
             />
-            <ToggleRow
-              label="Phân trang"
-              checked={currentLayoutConfig.showPagination}
-              onChange={(v) => updateLayoutConfig('showPagination', v)}
-              accentColor="#10b981"
+          </ControlCard>
+
+          <ControlCard title="Phân trang">
+            <SelectRow
+              label="Kiểu"
+              value={currentLayoutConfig.paginationType}
+              options={[
+                { value: 'pagination', label: 'Phân trang' },
+                { value: 'infiniteScroll', label: 'Cuộn vô hạn' },
+              ]}
+              onChange={(v) => updateLayoutConfig('paginationType', v as PaginationType)}
               disabled={!productsModule?.enabled}
             />
           </ControlCard>

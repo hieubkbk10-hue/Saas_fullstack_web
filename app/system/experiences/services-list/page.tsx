@@ -19,12 +19,14 @@ import {
   ConfigPanel,
   ControlCard,
   ToggleRow,
+  SelectRow,
   type DeviceType,
   type LayoutOption,
 } from '@/components/experiences/editor';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type ListLayoutStyle = 'grid' | 'sidebar' | 'masonry';
+type PaginationType = 'pagination' | 'infiniteScroll';
 
 type ServicesListExperienceConfig = {
   layoutStyle: ListLayoutStyle;
@@ -38,7 +40,7 @@ type ServicesListExperienceConfig = {
 type LayoutConfig = {
   showSearch: boolean;
   showCategories: boolean;
-  showPagination: boolean;
+  paginationType: PaginationType;
 };
 
 const EXPERIENCE_KEY = 'services_list_ui';
@@ -52,7 +54,7 @@ const LAYOUT_STYLES: LayoutOption<ListLayoutStyle>[] = [
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   showSearch: true,
   showCategories: true,
-  showPagination: true,
+  paginationType: 'pagination',
 };
 
 const DEFAULT_CONFIG: ServicesListExperienceConfig = {
@@ -83,12 +85,26 @@ export default function ServicesListExperiencePage() {
     // Migrate legacy 'list' layout to 'sidebar'
     const rawLayout = raw?.layoutStyle as string | undefined;
     const normalizedLayout = rawLayout === 'list' ? 'sidebar' : rawLayout;
+    
+    const normalizePaginationType = (value?: string | boolean): PaginationType => {
+      if (value === 'infiniteScroll') return 'infiniteScroll';
+      if (value === 'pagination') return 'pagination';
+      if (value === false) return 'infiniteScroll';
+      return 'pagination';
+    };
+    
+    const normalizeLayoutConfig = (cfg?: Partial<LayoutConfig & { showPagination?: boolean }>): LayoutConfig => ({
+      showSearch: cfg?.showSearch ?? true,
+      showCategories: cfg?.showCategories ?? true,
+      paginationType: normalizePaginationType(cfg?.paginationType ?? cfg?.showPagination),
+    });
+    
     return {
       layoutStyle: (normalizedLayout as ListLayoutStyle | undefined) ?? 'grid',
       layouts: {
-        grid: { ...DEFAULT_LAYOUT_CONFIG, ...raw?.layouts?.grid },
-        sidebar: { ...DEFAULT_LAYOUT_CONFIG, ...raw?.layouts?.sidebar },
-        masonry: { ...DEFAULT_LAYOUT_CONFIG, ...raw?.layouts?.masonry },
+        grid: normalizeLayoutConfig(raw?.layouts?.grid as Partial<LayoutConfig & { showPagination?: boolean }>),
+        sidebar: normalizeLayoutConfig(raw?.layouts?.sidebar as Partial<LayoutConfig & { showPagination?: boolean }>),
+        masonry: normalizeLayoutConfig(raw?.layouts?.masonry as Partial<LayoutConfig & { showPagination?: boolean }>),
       },
     };
   }, [experienceSetting?.value]);
@@ -159,7 +175,7 @@ export default function ServicesListExperiencePage() {
               layoutStyle={config.layoutStyle}
               showSearch={currentLayoutConfig.showSearch}
               showCategories={currentLayoutConfig.showCategories}
-              showPagination={currentLayoutConfig.showPagination}
+              paginationType={currentLayoutConfig.paginationType}
               brandColor={brandColor}
               device={previewDevice}
             />
@@ -197,11 +213,17 @@ export default function ServicesListExperiencePage() {
               accentColor="#8b5cf6"
               disabled={!servicesModule?.enabled}
             />
-            <ToggleRow
-              label="Phân trang"
-              checked={currentLayoutConfig.showPagination}
-              onChange={(v) => updateLayoutConfig('showPagination', v)}
-              accentColor="#8b5cf6"
+          </ControlCard>
+
+          <ControlCard title="Phân trang">
+            <SelectRow
+              label="Kiểu"
+              value={currentLayoutConfig.paginationType}
+              options={[
+                { value: 'pagination', label: 'Phân trang' },
+                { value: 'infiniteScroll', label: 'Cuộn vô hạn' },
+              ]}
+              onChange={(v) => updateLayoutConfig('paginationType', v as PaginationType)}
               disabled={!servicesModule?.enabled}
             />
           </ControlCard>

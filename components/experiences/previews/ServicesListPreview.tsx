@@ -5,11 +5,12 @@ import Image from 'next/image';
 type ListLayoutStyle = 'grid' | 'sidebar' | 'masonry';
 type FilterPosition = 'sidebar' | 'top' | 'none';
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
+type PaginationType = 'pagination' | 'infiniteScroll';
 
 type ServicesListPreviewProps = {
   layoutStyle: ListLayoutStyle;
   filterPosition?: FilterPosition;
-  showPagination?: boolean;
+  paginationType?: PaginationType;
   showSearch?: boolean;
   showCategories?: boolean;
   brandColor?: string;
@@ -29,8 +30,30 @@ const formatPrice = (price: number): string => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
 
+function PaginationPreviewServices({ paginationType, brandColor }: { paginationType: PaginationType; brandColor: string }) {
+  if (paginationType === 'pagination') {
+    return (
+      <div className="text-center mt-8">
+        <button className="px-6 py-3 rounded-lg font-medium transition-colors duration-200 hover:opacity-80" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
+          1 &nbsp; 2 &nbsp; 3 &nbsp; ... &nbsp; 10
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="text-center mt-8 space-y-2">
+      <div className="flex justify-center gap-1">
+        <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+        <div className="w-2 h-2 rounded-full animate-pulse delay-100" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
+        <div className="w-2 h-2 rounded-full animate-pulse delay-200" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
+      </div>
+      <p className="text-xs text-slate-400">Cuộn để xem thêm...</p>
+    </div>
+  );
+}
+
 // FullWidth Layout (Grid view only)
-function FullWidthPreview({ showSearch, showCategories, showPagination, brandColor = '#8b5cf6' }: ServicesListPreviewProps) {
+function FullWidthPreview({ showSearch, showCategories, paginationType = 'pagination', brandColor = '#8b5cf6' }: ServicesListPreviewProps) {
 
   return (
     <div className="py-6 md:py-10 px-4">
@@ -130,20 +153,14 @@ function FullWidthPreview({ showSearch, showCategories, showPagination, brandCol
         </div>
 
         {/* Load More */}
-        {showPagination && (
-          <div className="text-center mt-8">
-            <button className="px-6 py-3 rounded-lg font-medium transition-colors duration-200 hover:opacity-80" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-              Xem thêm dịch vụ
-            </button>
-          </div>
-        )}
+        <PaginationPreviewServices paginationType={paginationType} brandColor={brandColor} />
       </div>
     </div>
   );
 }
 
 // Sidebar Layout
-function SidebarPreview({ showSearch, showCategories, brandColor = '#8b5cf6' }: ServicesListPreviewProps) {
+function SidebarPreview({ showSearch, showCategories, paginationType = 'pagination', brandColor = '#8b5cf6' }: ServicesListPreviewProps) {
   return (
     <div className="py-6 md:py-10 px-4">
       <div className="max-w-7xl mx-auto">
@@ -248,6 +265,7 @@ function SidebarPreview({ showSearch, showCategories, brandColor = '#8b5cf6' }: 
                 </article>
               ))}
             </div>
+            <PaginationPreviewServices paginationType={paginationType} brandColor={brandColor} />
           </main>
         </div>
       </div>
@@ -256,7 +274,7 @@ function SidebarPreview({ showSearch, showCategories, brandColor = '#8b5cf6' }: 
 }
 
 // Magazine Layout
-function MagazinePreview({ showCategories, brandColor = '#8b5cf6' }: ServicesListPreviewProps) {
+function MagazinePreview({ showCategories, paginationType = 'pagination', brandColor = '#8b5cf6' }: ServicesListPreviewProps) {
   const mainFeatured = MOCK_SERVICES[0];
   const secondaryFeatured = MOCK_SERVICES.slice(1, 3);
   const trendingServices = MOCK_SERVICES.slice(0, 4);
@@ -424,6 +442,7 @@ function MagazinePreview({ showCategories, brandColor = '#8b5cf6' }: ServicesLis
               ))}
             </div>
           </section>
+          <PaginationPreviewServices paginationType={paginationType} brandColor={brandColor} />
         </div>
       </div>
     </div>
@@ -434,13 +453,13 @@ function MagazinePreview({ showCategories, brandColor = '#8b5cf6' }: ServicesLis
 export function ServicesListPreview({
   layoutStyle,
   filterPosition = 'sidebar',
-  showPagination = true,
+  paginationType = 'pagination',
   showSearch = true,
   showCategories = true,
   brandColor = '#8b5cf6',
   device = 'desktop',
 }: ServicesListPreviewProps) {
-  const props = { layoutStyle, filterPosition, showPagination, showSearch, showCategories, brandColor, device };
+  const props = { layoutStyle, filterPosition, paginationType, showSearch, showCategories, brandColor, device };
 
   // Map layoutStyle to actual implementation
   if (layoutStyle === 'masonry') {

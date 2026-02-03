@@ -33,10 +33,11 @@ export function usePostsListConfig(): PostsListConfig {
     };
   }, [experienceSetting?.value]);
 }
+
 type ProductsListConfig = {
   layoutStyle: 'grid' | 'list' | 'masonry';
   filterPosition: 'sidebar' | 'top' | 'none';
-  showPagination: boolean;
+  paginationType: PaginationType;
   showSearch: boolean;
   showCategories: boolean;
 };
@@ -45,11 +46,11 @@ export function useProductsListConfig(): ProductsListConfig {
   const experienceSetting = useQuery(api.settings.getByKey, { key: 'products_list_ui' });
   
   return useMemo(() => {
-    const raw = experienceSetting?.value as Partial<ProductsListConfig> | undefined;
+    const raw = experienceSetting?.value as Partial<ProductsListConfig & { showPagination?: boolean }> | undefined;
     return {
       layoutStyle: raw?.layoutStyle ?? 'grid',
       filterPosition: raw?.filterPosition ?? 'sidebar',
-      showPagination: raw?.showPagination ?? true,
+      paginationType: normalizePaginationType(raw?.paginationType ?? raw?.showPagination),
       showSearch: raw?.showSearch ?? true,
       showCategories: raw?.showCategories ?? true,
     };
@@ -59,7 +60,7 @@ export function useProductsListConfig(): ProductsListConfig {
 type ServicesListConfig = {
   layoutStyle: 'grid' | 'list' | 'masonry';
   filterPosition: 'sidebar' | 'top' | 'none';
-  showPagination: boolean;
+  paginationType: PaginationType;
   showSearch: boolean;
   showCategories: boolean;
 };
@@ -68,11 +69,11 @@ export function useServicesListConfig(): ServicesListConfig {
   const experienceSetting = useQuery(api.settings.getByKey, { key: 'services_list_ui' });
   
   return useMemo(() => {
-    const raw = experienceSetting?.value as Partial<ServicesListConfig> | undefined;
+    const raw = experienceSetting?.value as Partial<ServicesListConfig & { showPagination?: boolean }> | undefined;
     return {
       layoutStyle: raw?.layoutStyle ?? 'grid',
       filterPosition: raw?.filterPosition ?? 'sidebar',
-      showPagination: raw?.showPagination ?? true,
+      paginationType: normalizePaginationType(raw?.paginationType ?? raw?.showPagination),
       showSearch: raw?.showSearch ?? true,
       showCategories: raw?.showCategories ?? true,
     };

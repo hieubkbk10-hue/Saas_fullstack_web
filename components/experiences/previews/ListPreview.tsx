@@ -511,7 +511,7 @@ export function PostsListPreview({
 type ProductsListPreviewProps = {
   layoutStyle: ListLayoutStyle;
   filterPosition?: FilterPosition;
-  showPagination?: boolean;
+  paginationType?: PaginationType;
   showSearch?: boolean;
   showCategories?: boolean;
   brandColor?: string;
@@ -530,7 +530,7 @@ const formatVND = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'cu
 export function ProductsListPreview({
   layoutStyle,
   filterPosition = 'sidebar',
-  showPagination = true,
+  paginationType = 'pagination',
   showSearch = true,
   showCategories = true,
   brandColor = '#10b981',
@@ -658,13 +658,7 @@ export function ProductsListPreview({
             ))}
           </div>
 
-          {showPagination && (
-            <div className="text-center mt-6">
-              <button className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 hover:opacity-80" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                Xem thêm sản phẩm
-              </button>
-            </div>
-          )}
+          <PaginationPreview paginationType={paginationType} brandColor={brandColor} />
         </div>
       </div>
     );
@@ -730,13 +724,7 @@ export function ProductsListPreview({
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-            {showPagination && (
-              <div className="text-center mt-6">
-                <button className="px-5 py-2.5 rounded-lg text-sm font-medium" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                  Xem thêm
-                </button>
-              </div>
-            )}
+            <PaginationPreview paginationType={paginationType} brandColor={brandColor} />
           </main>
         </div>
       </div>
