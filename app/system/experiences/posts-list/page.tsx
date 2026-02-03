@@ -19,18 +19,20 @@ import {
   ConfigPanel,
   ControlCard,
   ToggleRow,
+  SelectRow,
   type DeviceType,
   type LayoutOption,
 } from '@/components/experiences/editor';
 import { useExperienceConfig, useExperienceSave, useExamplePostCategorySlug, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type ListLayoutStyle = 'fullwidth' | 'sidebar' | 'magazine';
+type PaginationType = 'pagination' | 'infiniteScroll';
 
 type PostsListExperienceConfig = {
   layoutStyle: ListLayoutStyle;
   showSearch: boolean;
   showCategories: boolean;
-  showPagination: boolean;
+  paginationType: PaginationType;
   postsPerPage: number;
 };
 
@@ -49,7 +51,7 @@ const DEFAULT_CONFIG: PostsListExperienceConfig = {
   layoutStyle: 'fullwidth',
   showSearch: true,
   showCategories: true,
-  showPagination: true,
+  paginationType: 'pagination',
   postsPerPage: 12,
 };
 
@@ -57,7 +59,7 @@ const HINTS = [
   'Full Width phù hợp blog có nhiều bài viết, filter rõ ràng.',
   'Sidebar giúp nhấn mạnh bộ lọc và bài viết mới.',
   'Magazine tạo cảm giác editorial, phù hợp nội dung nổi bật.',
-  'Real-time preview hiển thị chính xác với giao diện thực.',
+  'Pagination phù hợp khi cần SEO, Infinity Scroll phù hợp mobile và UX.',
 ];
 
 export default function PostsListExperiencePage() {
@@ -83,11 +85,18 @@ export default function PostsListExperiencePage() {
       return 'fullwidth';
     };
     
+    const normalizePaginationType = (value?: string | boolean): PaginationType => {
+      if (value === 'infiniteScroll') return 'infiniteScroll';
+      if (value === 'pagination') return 'pagination';
+      if (value === false) return 'infiniteScroll';
+      return 'pagination';
+    };
+    
     return {
       layoutStyle: normalizeLayoutStyle(rawLayout ?? legacyLayout),
       showSearch: raw?.showSearch ?? true,
       showCategories: raw?.showCategories ?? true,
-      showPagination: raw?.showPagination ?? true,
+      paginationType: normalizePaginationType(raw?.paginationType ?? (raw as { showPagination?: boolean })?.showPagination),
       postsPerPage: raw?.postsPerPage ?? 12,
     };
   }, [experienceSetting?.value, legacyLayoutSetting?.value]);
@@ -149,7 +158,7 @@ export default function PostsListExperiencePage() {
               device={previewDevice}
               showSearch={config.showSearch}
               showCategories={config.showCategories}
-              showPagination={config.showPagination}
+              paginationType={config.paginationType}
             />
           </BrowserFrame>
         </div>
@@ -173,7 +182,18 @@ export default function PostsListExperiencePage() {
           <ControlCard title="Hiển thị">
             <ToggleRow label="Tìm kiếm" checked={config.showSearch} onChange={(v) => setConfig(prev => ({ ...prev, showSearch: v }))} accentColor="#3b82f6" />
             <ToggleRow label="Danh mục" checked={config.showCategories} onChange={(v) => setConfig(prev => ({ ...prev, showCategories: v }))} accentColor="#3b82f6" />
-            <ToggleRow label="Phân trang" checked={config.showPagination} onChange={(v) => setConfig(prev => ({ ...prev, showPagination: v }))} accentColor="#3b82f6" />
+          </ControlCard>
+          
+          <ControlCard title="Phân trang">
+            <SelectRow
+              label="Kiểu"
+              value={config.paginationType}
+              options={[
+                { value: 'pagination', label: 'Phân trang' },
+                { value: 'infiniteScroll', label: 'Cuộn vô hạn' },
+              ]}
+              onChange={(v) => setConfig(prev => ({ ...prev, paginationType: v as PaginationType }))}
+            />
           </ControlCard>
           
           <ControlCard title="Module liên quan">
