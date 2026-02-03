@@ -2,7 +2,7 @@
  * Product Category Seeder
  */
 
-import { BaseSeeder, type SeedDependency } from './_base';
+import { BaseSeeder, type SeedDependency } from './base';
 import type { Doc } from '../_generated/dataModel';
 
 type ProductCategoryData = Omit<Doc<'productCategories'>, '_id' | '_creationTime'>;

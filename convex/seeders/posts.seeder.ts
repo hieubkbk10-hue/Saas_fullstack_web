@@ -4,8 +4,8 @@
  * Generates blog posts with Vietnamese content
  */
 
-import { BaseSeeder, type SeedDependency } from './_base';
-import { createVietnameseFaker } from './_faker-vi';
+import { BaseSeeder, type SeedDependency } from './base';
+import { createVietnameseFaker } from './fakerVi';
 import type { Doc } from '../_generated/dataModel';
 
 type PostData = Omit<Doc<'posts'>, '_id' | '_creationTime'>;

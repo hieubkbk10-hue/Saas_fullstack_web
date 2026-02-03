@@ -10,9 +10,9 @@ export { CustomerSeeder } from './customers.seeder';
 export { ServiceSeeder } from './services.seeder';
 
 // Export types
-export type { SeedConfig, SeedResult, SeedDependency } from './_base';
-export { BaseSeeder, createSeeder, processBatch } from './_base';
-export { createVietnameseFaker } from './_faker-vi';
+export type { SeedConfig, SeedResult, SeedDependency } from './base';
+export { BaseSeeder, createSeeder, processBatch } from './base';
+export { createVietnameseFaker } from './fakerVi';
 export { 
   resolveDependencies, 
   checkDependencies,
@@ -22,4 +22,4 @@ export {
   getDefaultQuantity,
   getModuleInfo,
   type PresetType,
-} from './_dependencies';
+} from './dependencies';

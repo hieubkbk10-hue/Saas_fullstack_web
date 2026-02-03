@@ -11,27 +11,25 @@ import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
 import { 
-  AlertCircle,
   CheckCircle2,
   Database, 
   Info,
   Loader2,
-  X,
 } from 'lucide-react';
 import {
+  Badge,
+  Button,
+  Checkbox,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/app/admin/components/ui/dialog';
-import { Button } from '@/app/admin/components/ui/button';
-import { Checkbox } from '@/app/admin/components/ui/checkbox';
-import { Input } from '@/app/admin/components/ui/input';
-import { Label } from '@/app/admin/components/ui/label';
-import { ScrollArea } from '@/app/admin/components/ui/scroll-area';
-import { Badge } from '@/app/admin/components/ui/badge';
+  Input,
+  Label,
+  ScrollArea,
+} from '@/app/admin/components/ui';
 
 interface CustomSeedDialogProps {
   open: boolean;
@@ -140,8 +138,8 @@ export function CustomSeedDialog({
       
       const results = await seedBulk({ configs });
       
-      const successCount = results.filter(r => !r.errors || r.errors.length === 0).length;
-      const totalCreated = results.reduce((sum, r) => sum + r.created, 0);
+      const successCount = results.filter((r: any) => !r.errors || r.errors.length === 0).length;
+      const totalCreated = results.reduce((sum: number, r: any) => sum + r.created, 0);
       
       toast.success(
         `✅ Seed hoàn tất!\n${successCount}/${configs.length} modules • ${totalCreated} records`,
@@ -225,7 +223,7 @@ export function CustomSeedDialog({
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={(checked) => 
-                            handleToggleModule(module.key, checked as boolean)
+                            handleToggleModule(module.key, checked)
                           }
                           disabled={isSeeding}
                         />
@@ -262,7 +260,7 @@ export function CustomSeedDialog({
             <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
               <Checkbox
                 checked={force}
-                onCheckedChange={(checked) => setForce(checked as boolean)}
+                onCheckedChange={(checked) => setForce(checked)}
                 disabled={isSeeding}
               />
               <div className="flex-1">

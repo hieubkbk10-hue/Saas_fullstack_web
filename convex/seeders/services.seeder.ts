@@ -4,8 +4,8 @@
  * Generates service data
  */
 
-import { BaseSeeder, type SeedDependency } from './_base';
-import { createVietnameseFaker } from './_faker-vi';
+import { BaseSeeder, type SeedDependency } from './base';
+import { createVietnameseFaker } from './fakerVi';
 import type { Doc } from '../_generated/dataModel';
 
 type ServiceData = Omit<Doc<'services'>, '_id' | '_creationTime'>;

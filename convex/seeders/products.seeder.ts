@@ -4,8 +4,8 @@
  * Generates realistic product data with Vietnamese names
  */
 
-import { BaseSeeder, type SeedDependency } from './_base';
-import { createVietnameseFaker } from './_faker-vi';
+import { BaseSeeder, type SeedDependency } from './base';
+import { createVietnameseFaker } from './fakerVi';
 import type { Doc } from '../_generated/dataModel';
 
 type ProductData = Omit<Doc<'products'>, '_id' | '_creationTime'>;

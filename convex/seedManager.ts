@@ -25,7 +25,7 @@ import {
   CustomerSeeder,
   ServiceSeeder,
 } from './seeders';
-import type { SeedResult } from './seeders/_base';
+import type { SeedResult } from './seeders/base';
 
 // ============================================================
 // TYPES

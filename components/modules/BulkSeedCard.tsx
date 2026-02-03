@@ -19,9 +19,7 @@ import {
   Rocket,
   Sparkles,
 } from 'lucide-react';
-import { Card } from '@/app/admin/components/ui/card';
-import { Button } from '@/app/admin/components/ui/button';
-import { Progress } from '@/app/admin/components/ui/progress';
+import { Button, Card, Progress } from '@/app/admin/components/ui';
 
 interface BulkSeedCardProps {
   onSeedComplete?: () => void;
@@ -94,8 +92,8 @@ export function BulkSeedCard({ onSeedComplete, onOpenCustomDialog }: BulkSeedCar
       
       // Calculate progress
       const totalModules = results.length;
-      const successModules = results.filter(r => !r.errors || r.errors.length === 0).length;
-      const totalCreated = results.reduce((sum, r) => sum + r.created, 0);
+      const successModules = results.filter((r: any) => !r.errors || r.errors.length === 0).length;
+      const totalCreated = results.reduce((sum: number, r: any) => sum + r.created, 0);
       
       setProgress(100);
       

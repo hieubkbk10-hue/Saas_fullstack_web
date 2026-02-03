@@ -8,8 +8,7 @@
 
 import React, { useState } from 'react';
 import { Database, Loader2, RefreshCw, Trash2 } from 'lucide-react';
-import { Card } from '@/app/admin/components/ui/card';
-import { Button } from '@/app/admin/components/ui/button';
+import { Button, Card } from '@/app/admin/components/ui';
 import { SeedQuantitySelector } from './SeedQuantitySelector';
 
 interface DataTabSeedHeaderProps {

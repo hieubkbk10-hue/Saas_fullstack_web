@@ -126,3 +126,145 @@ export const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttr
   <td ref={ref} className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0 text-slate-700 dark:text-slate-300", className)} {...props} />
 ))
 TableCell.displayName = "TableCell";
+
+// Progress Component
+export const Progress = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement> & { value?: number }>(
+  ({ className, value = 0, ...props }, ref) => (
+    <div ref={ref} className={cn("relative h-4 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800", className)} {...props}>
+      <div
+        className="h-full w-full flex-1 bg-slate-900 dark:bg-slate-50 transition-all"
+        style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+      />
+    </div>
+  )
+);
+Progress.displayName = "Progress";
+
+// Checkbox Component
+export const Checkbox = React.forwardRef<
+  HTMLInputElement, 
+  Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> & { 
+    onCheckedChange?: (checked: boolean) => void 
+  }
+>(({ className, onCheckedChange, ...props }, ref) => (
+  <input
+    type="checkbox"
+    ref={ref}
+    onChange={(e) => onCheckedChange?.(e.target.checked)}
+    className={cn(
+      "h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-2 focus:ring-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50",
+      className
+    )}
+    {...props}
+  />
+));
+Checkbox.displayName = "Checkbox";
+
+// Dialog Components
+export const Dialog = ({ open, onOpenChange, children }: { open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode }) => {
+  if (!open) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
+      {children}
+    </div>
+  );
+};
+
+export const DialogContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, children, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "relative z-50 grid w-full gap-4 rounded-lg border border-slate-200 bg-white p-6 shadow-lg dark:border-slate-800 dark:bg-slate-900",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+);
+DialogContent.displayName = "DialogContent";
+
+export const DialogHeader = ({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)} {...props}>
+    {children}
+  </div>
+);
+
+export const DialogTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
+  ({ className, ...props }, ref) => (
+    <h2
+      ref={ref}
+      className={cn("text-lg font-semibold leading-none tracking-tight text-slate-900 dark:text-slate-100", className)}
+      {...props}
+    />
+  )
+);
+DialogTitle.displayName = "DialogTitle";
+
+export const DialogDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
+  ({ className, ...props }, ref) => (
+    <p
+      ref={ref}
+      className={cn("text-sm text-slate-500 dark:text-slate-400", className)}
+      {...props}
+    />
+  )
+);
+DialogDescription.displayName = "DialogDescription";
+
+export const DialogFooter = ({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)} {...props}>
+    {children}
+  </div>
+);
+
+// ScrollArea Component
+export const ScrollArea = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, children, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn("relative overflow-auto", className)}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+);
+ScrollArea.displayName = "ScrollArea";
+
+// Popover Components
+export const Popover = ({ open: _open, onOpenChange: _onOpenChange, children }: { open: boolean; onOpenChange: (open: boolean) => void; children: React.ReactNode }) => {
+  return <div className="relative">{children}</div>;
+};
+
+export const PopoverTrigger = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div {...props}>
+    {children}
+  </div>
+);
+PopoverTrigger.displayName = "PopoverTrigger";
+
+export const PopoverContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement> & { align?: 'start' | 'center' | 'end' }>(
+  ({ className, align = 'center', children, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "absolute z-50 mt-2 rounded-md border border-slate-200 bg-white p-4 shadow-md outline-none dark:border-slate-800 dark:bg-slate-900",
+        {
+          "left-0": align === 'start',
+          "left-1/2 -translate-x-1/2": align === 'center',
+          "right-0": align === 'end',
+        },
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+);
+PopoverContent.displayName = "PopoverContent";

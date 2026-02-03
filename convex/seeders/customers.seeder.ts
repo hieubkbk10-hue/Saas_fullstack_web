@@ -4,8 +4,8 @@
  * Generates Vietnamese customer data
  */
 
-import { BaseSeeder, type SeedDependency } from './_base';
-import { createVietnameseFaker } from './_faker-vi';
+import { BaseSeeder, type SeedDependency } from './base';
+import { createVietnameseFaker } from './fakerVi';
 import type { Doc } from '../_generated/dataModel';
 
 type CustomerData = Omit<Doc<'customers'>, '_id' | '_creationTime' | 'ordersCount' | 'totalSpent'>;

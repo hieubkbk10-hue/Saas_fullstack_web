@@ -4,8 +4,8 @@
  * Generates realistic order data with dependencies on products and customers
  */
 
-import { BaseSeeder, type SeedDependency } from './_base';
-import { createVietnameseFaker } from './_faker-vi';
+import { BaseSeeder, type SeedDependency } from './base';
+import { createVietnameseFaker } from './fakerVi';
 import type { Doc } from '../_generated/dataModel';
 
 type OrderData = Omit<Doc<'orders'>, '_id' | '_creationTime'>;

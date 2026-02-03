@@ -7,14 +7,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button } from '@/app/admin/components/ui/button';
-import { Input } from '@/app/admin/components/ui/input';
 import {
+  Button,
+  Input,
+  Label,
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/app/admin/components/ui/popover';
-import { Label } from '@/app/admin/components/ui/label';
+} from '@/app/admin/components/ui';
 
 interface SeedQuantitySelectorProps {
   defaultQuantity?: number;
@@ -67,7 +67,7 @@ export function SeedQuantitySelector({
         ))}
         
         <Popover open={isCustomOpen} onOpenChange={setIsCustomOpen}>
-          <PopoverTrigger asChild>
+          <PopoverTrigger>
             <Button
               variant={!PRESET_QUANTITIES.includes(selectedQty) ? 'default' : 'outline'}
               size="sm"
