@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { LayoutTemplate, Loader2, Package, Save } from 'lucide-react';
+import { AlertCircle, Heart, LayoutTemplate, Loader2, Package, Save, ShoppingCart, Tag } from 'lucide-react';
 import { Button, Card } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
@@ -36,6 +36,9 @@ type ProductsListExperienceConfig = {
     list: LayoutConfig;
     masonry: LayoutConfig;
   };
+  showWishlistButton: boolean;
+  showAddToCartButton: boolean;
+  showPromotionBadge: boolean;
 };
 
 type LayoutConfig = {
@@ -75,6 +78,9 @@ const DEFAULT_CONFIG: ProductsListExperienceConfig = {
     list: { ...DEFAULT_LAYOUT_CONFIG },
     masonry: { ...DEFAULT_LAYOUT_CONFIG },
   },
+  showWishlistButton: true,
+  showAddToCartButton: true,
+  showPromotionBadge: true,
 };
 
 const HINTS = [
@@ -82,11 +88,16 @@ const HINTS = [
   'Sidebar filters quan trọng cho shop có nhiều sản phẩm.',
   'Search giúp user tìm sản phẩm nhanh.',
   'Mỗi layout có config riêng - chuyển tab để chỉnh.',
+  'Wishlist và Add to Cart có thể toggle từ đây.',
 ];
 
 export default function ProductsListExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const productsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'products' });
+  const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
+  const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
+  const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
+  const promotionsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'promotions' });
   const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
@@ -116,10 +127,13 @@ export default function ProductsListExperiencePage() {
         list: normalizeLayoutConfig(raw?.layouts?.list as Partial<LayoutConfig & { showPagination?: boolean }>),
         masonry: normalizeLayoutConfig(raw?.layouts?.masonry as Partial<LayoutConfig & { showPagination?: boolean }>),
       },
+      showWishlistButton: raw?.showWishlistButton ?? true,
+      showAddToCartButton: raw?.showAddToCartButton ?? true,
+      showPromotionBadge: raw?.showPromotionBadge ?? true,
     };
   }, [experienceSetting?.value]);
 
-  const isLoading = experienceSetting === undefined || productsModule === undefined;
+  const isLoading = experienceSetting === undefined || productsModule === undefined || wishlistModule === undefined || cartModule === undefined || ordersModule === undefined || promotionsModule === undefined;
   const brandColor = (brandColorSetting?.value as string) || '#10b981';
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
@@ -130,6 +144,7 @@ export default function ProductsListExperiencePage() {
   );
 
   const currentLayoutConfig = config.layouts[config.layoutStyle];
+  const hasDisabledModules = !wishlistModule?.enabled || !cartModule?.enabled || !ordersModule?.enabled || !promotionsModule?.enabled;
 
   const updateLayoutConfig = <K extends keyof LayoutConfig>(
     key: K,
@@ -189,6 +204,9 @@ export default function ProductsListExperiencePage() {
               showCategories={currentLayoutConfig.showCategories}
               brandColor={brandColor}
               device={previewDevice}
+              showWishlistButton={config.showWishlistButton && (wishlistModule?.enabled ?? false)}
+              showAddToCartButton={config.showAddToCartButton && (cartModule?.enabled ?? false) && (ordersModule?.enabled ?? false)}
+              showPromotionBadge={config.showPromotionBadge && (promotionsModule?.enabled ?? false)}
             />
           </BrowserFrame>
         </div>
@@ -263,12 +281,73 @@ export default function ProductsListExperiencePage() {
             />
           </ControlCard>
 
+          <ControlCard title="Tính năng sản phẩm">
+            <ToggleRow
+              label="Nút yêu thích"
+              description="Hiện nút thêm vào wishlist"
+              checked={config.showWishlistButton}
+              onChange={(v) => setConfig(prev => ({ ...prev, showWishlistButton: v }))}
+              accentColor="#10b981"
+              disabled={!wishlistModule?.enabled}
+            />
+            <ToggleRow
+              label="Nút thêm giỏ hàng"
+              description="Hiện nút add to cart"
+              checked={config.showAddToCartButton}
+              onChange={(v) => setConfig(prev => ({ ...prev, showAddToCartButton: v }))}
+              accentColor="#10b981"
+              disabled={!cartModule?.enabled || !ordersModule?.enabled}
+            />
+            <ToggleRow
+              label="Badge khuyến mãi"
+              description="Hiện badge giảm giá"
+              checked={config.showPromotionBadge}
+              onChange={(v) => setConfig(prev => ({ ...prev, showPromotionBadge: v }))}
+              accentColor="#10b981"
+              disabled={!promotionsModule?.enabled}
+            />
+          </ControlCard>
+
           <ControlCard title="Module liên quan">
+            {hasDisabledModules && (
+              <div className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-xs text-amber-700 dark:text-amber-300 mb-2">
+                <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
+                <span>Một số module chưa bật.</span>
+              </div>
+            )}
             <ExperienceModuleLink
               enabled={productsModule?.enabled ?? false}
               href="/system/modules/products"
               icon={Package}
               title="Sản phẩm"
+              colorScheme="cyan"
+            />
+            <ExperienceModuleLink
+              enabled={wishlistModule?.enabled ?? false}
+              href="/system/modules/wishlist"
+              icon={Heart}
+              title="Sản phẩm yêu thích"
+              colorScheme="cyan"
+            />
+            <ExperienceModuleLink
+              enabled={cartModule?.enabled ?? false}
+              href="/system/modules/cart"
+              icon={ShoppingCart}
+              title="Giỏ hàng"
+              colorScheme="cyan"
+            />
+            <ExperienceModuleLink
+              enabled={ordersModule?.enabled ?? false}
+              href="/system/modules/orders"
+              icon={Package}
+              title="Đơn hàng"
+              colorScheme="cyan"
+            />
+            <ExperienceModuleLink
+              enabled={promotionsModule?.enabled ?? false}
+              href="/system/modules/promotions"
+              icon={Tag}
+              title="Khuyến mãi"
               colorScheme="cyan"
             />
           </ControlCard>

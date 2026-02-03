@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, FileText, Search, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, FileText, Heart, Search, ShoppingCart, SlidersHorizontal } from 'lucide-react';
 
 type ListLayoutStyle = 'fullwidth' | 'sidebar' | 'magazine' | 'grid' | 'list' | 'masonry';
 type FilterPosition = 'sidebar' | 'top' | 'none';
@@ -516,6 +516,9 @@ type ProductsListPreviewProps = {
   showCategories?: boolean;
   brandColor?: string;
   device?: PreviewDevice;
+  showWishlistButton?: boolean;
+  showAddToCartButton?: boolean;
+  showPromotionBadge?: boolean;
 };
 
 const mockProducts = [
@@ -535,6 +538,9 @@ export function ProductsListPreview({
   showCategories = true,
   brandColor = '#10b981',
   device = 'desktop',
+  showWishlistButton = true,
+  showAddToCartButton = true,
+  showPromotionBadge = true,
 }: ProductsListPreviewProps) {
   const style = normalizeLayoutStyle(layoutStyle);
   const categories = ['Tất cả', 'Điện thoại', 'Laptop', 'Tablet', 'Phụ kiện'];
@@ -548,7 +554,7 @@ export function ProductsListPreview({
     <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-slate-100 h-full flex flex-col group">
       <div className="aspect-square bg-slate-100 flex items-center justify-center relative">
         <div className="w-16 h-16 bg-slate-200 rounded-lg" />
-        {product.originalPrice && (
+        {showPromotionBadge && product.originalPrice && (
           <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-red-500 text-white text-xs font-medium rounded">
             -{Math.round((1 - product.price / product.originalPrice) * 100)}%
           </span>
@@ -557,6 +563,11 @@ export function ProductsListPreview({
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
             <span className="bg-slate-800 text-white text-xs px-2 py-1 rounded">Hết hàng</span>
           </div>
+        )}
+        {showWishlistButton && (
+          <button className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full shadow-sm hover:bg-white transition-colors">
+            <Heart size={14} className="text-slate-400 hover:text-red-500" />
+          </button>
         )}
       </div>
       <div className="p-3 flex-1 flex flex-col">
@@ -582,13 +593,16 @@ export function ProductsListPreview({
             )}
           </div>
         </div>
-        <button 
-          className="mt-2.5 w-full py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50"
-          style={{ backgroundColor: brandColor }}
-          disabled={!product.inStock}
-        >
-          {product.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
-        </button>
+        {showAddToCartButton && (
+          <button 
+            className="mt-2.5 w-full py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+            style={{ backgroundColor: brandColor }}
+            disabled={!product.inStock}
+          >
+            <ShoppingCart size={14} />
+            {product.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
+          </button>
+        )}
       </div>
     </div>
   );
