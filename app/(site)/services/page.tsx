@@ -141,9 +141,9 @@ export default function ServicesPage() {
 function ServicesContent() {
   const brandColor = useBrandColor();
   const listConfig = useServicesListConfig();
-  const layout: ServicesListLayout = listConfig.layoutStyle === 'masonry'
-    ? 'magazine'
-    : (listConfig.layoutStyle === 'list' ? 'sidebar' : 'fullwidth');
+   const layout: ServicesListLayout = listConfig.layoutStyle === 'masonry'
+     ? 'magazine'
+     : (listConfig.layoutStyle === 'sidebar' ? 'sidebar' : 'fullwidth');
   const enabledFields = useEnabledServiceFields();
   const router = useRouter();
   const pathname = usePathname();
@@ -382,6 +382,8 @@ function ServicesContent() {
               sortBy={sortBy}
               onSortChange={handleSortChange}
               enabledFields={enabledFields}
+               showSearch={listConfig.showSearch}
+               showCategories={listConfig.showCategories}
             />
           )
         )}

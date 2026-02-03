@@ -39,6 +39,8 @@ interface SidebarLayoutProps {
   sortBy: ServiceSortOption;
   onSortChange: (sort: ServiceSortOption) => void;
   enabledFields: Set<string>;
+   showSearch?: boolean;
+   showCategories?: boolean;
 }
 
 function formatPrice(price?: number): string {
@@ -67,6 +69,8 @@ export function SidebarLayout({
   sortBy,
   onSortChange,
   enabledFields,
+   showSearch = true,
+   showCategories = true,
 }: SidebarLayoutProps) {
   const ringStyle = (style?: React.CSSProperties) =>
     ({ ...style, ['--tw-ring-color' as string]: brandColor } as React.CSSProperties);
@@ -100,7 +104,8 @@ export function SidebarLayout({
       <aside className="lg:w-72 flex-shrink-0 order-2 lg:order-1">
         <div className="lg:sticky lg:top-24 space-y-4">
           {/* Search Widget */}
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
+           {showSearch && (
+           <div className="bg-white rounded-lg border border-slate-200 p-4">
             <h3 className="font-semibold text-slate-900 text-sm mb-3 flex items-center gap-2">
               <Search size={16} style={{ color: brandColor }} />
               Tìm kiếm
@@ -118,9 +123,11 @@ export function SidebarLayout({
               style={{ '--tw-ring-color': brandColor } as React.CSSProperties}
             />
           </div>
+           )}
 
           {/* Categories Widget */}
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
+           {showCategories && (
+           <div className="bg-white rounded-lg border border-slate-200 p-4">
             <h3 className="font-semibold text-slate-900 text-sm mb-3 flex items-center gap-2">
               <Folder size={16} style={{ color: brandColor }} />
               Danh mục
@@ -156,6 +163,7 @@ export function SidebarLayout({
               ))}
             </ul>
           </div>
+           )}
 
           {/* Sort Widget */}
           <div className="bg-white rounded-lg border border-slate-200 p-4">

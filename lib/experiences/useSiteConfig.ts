@@ -75,7 +75,7 @@ export function useProductsListConfig(): ProductsListConfig {
 }
 
 type ServicesListConfig = {
-  layoutStyle: 'grid' | 'list' | 'masonry';
+   layoutStyle: 'grid' | 'sidebar' | 'masonry';
   filterPosition: 'sidebar' | 'top' | 'none';
   paginationType: PaginationType;
   showSearch: boolean;
@@ -88,7 +88,7 @@ export function useServicesListConfig(): ServicesListConfig {
   
   return useMemo(() => {
     const raw = experienceSetting?.value as {
-      layoutStyle?: ServicesListConfig['layoutStyle'];
+       layoutStyle?: ServicesListConfig['layoutStyle'] | 'list';
       layouts?: Record<string, Partial<Omit<ServicesListConfig, 'layoutStyle'> & { showPagination?: boolean }>>;
       filterPosition?: FilterPosition;
       paginationType?: string | boolean;
@@ -98,7 +98,8 @@ export function useServicesListConfig(): ServicesListConfig {
       postsPerPage?: number;
     } | undefined;
 
-    const layoutStyle = raw?.layoutStyle ?? 'grid';
+     const rawLayout = raw?.layoutStyle;
+     const layoutStyle: ServicesListConfig['layoutStyle'] = rawLayout === 'list' ? 'sidebar' : (rawLayout ?? 'grid');
     const layoutConfig = raw?.layouts?.[layoutStyle];
     return {
       layoutStyle,
