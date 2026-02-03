@@ -43,6 +43,121 @@ export const listAll = query({
   returns: v.array(serviceDoc),
 });
 
+export const listAdminWithOffset = query({
+  args: {
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    search: v.optional(v.string()),
+    status: v.optional(contentStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 10, 100);
+    const offset = args.offset ?? 0;
+    const fetchLimit = Math.min(offset + limit + 20, 500);
+    let services: Doc<"services">[] = [];
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      const searchQuery = ctx.db
+        .query("services")
+        .withSearchIndex("search_title", (q) => {
+          const builder = q.search("title", searchLower);
+          return args.status ? builder.eq("status", args.status) : builder;
+        });
+      services = await searchQuery.take(fetchLimit);
+    } else if (args.status) {
+      services = await ctx.db
+        .query("services")
+        .withIndex("by_status_publishedAt", (q) => q.eq("status", args.status!))
+        .order("desc")
+        .take(fetchLimit);
+    } else {
+      services = await ctx.db
+        .query("services")
+        .order("desc")
+        .take(fetchLimit);
+    }
+
+    if (args.search?.trim() && services.length > 0) {
+      const searchLower = args.search.toLowerCase().trim();
+      services = services.filter((service) => service.title.toLowerCase().includes(searchLower));
+    }
+
+    return services.slice(offset, offset + limit);
+  },
+  returns: v.array(serviceDoc),
+});
+
+export const countAdmin = query({
+  args: {
+    search: v.optional(v.string()),
+    status: v.optional(contentStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = 5000;
+    let services: Doc<"services">[] = [];
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      const searchQuery = ctx.db
+        .query("services")
+        .withSearchIndex("search_title", (q) => {
+          const builder = q.search("title", searchLower);
+          return args.status ? builder.eq("status", args.status) : builder;
+        });
+      services = await searchQuery.take(limit + 1);
+    } else if (args.status) {
+      services = await ctx.db
+        .query("services")
+        .withIndex("by_status_publishedAt", (q) => q.eq("status", args.status!))
+        .take(limit + 1);
+    } else {
+      services = await ctx.db
+        .query("services")
+        .take(limit + 1);
+    }
+
+    return { count: Math.min(services.length, limit), hasMore: services.length > limit };
+  },
+  returns: v.object({ count: v.number(), hasMore: v.boolean() }),
+});
+
+export const listAdminIds = query({
+  args: {
+    search: v.optional(v.string()),
+    status: v.optional(contentStatus),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 5000, 5000);
+    let services: Doc<"services">[] = [];
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      const searchQuery = ctx.db
+        .query("services")
+        .withSearchIndex("search_title", (q) => {
+          const builder = q.search("title", searchLower);
+          return args.status ? builder.eq("status", args.status) : builder;
+        });
+      services = await searchQuery.take(limit + 1);
+    } else if (args.status) {
+      services = await ctx.db
+        .query("services")
+        .withIndex("by_status_publishedAt", (q) => q.eq("status", args.status!))
+        .take(limit + 1);
+    } else {
+      services = await ctx.db
+        .query("services")
+        .take(limit + 1);
+    }
+
+    const hasMore = services.length > limit;
+    return { ids: services.slice(0, limit).map((service) => service._id), hasMore };
+  },
+  returns: v.object({ ids: v.array(v.id("services")), hasMore: v.boolean() }),
+});
+
 export const count = query({
   args: { status: v.optional(contentStatus) },
   handler: async (ctx, args) => ServicesModel.countWithLimit(ctx, { status: args.status }),

@@ -625,7 +625,8 @@ export default defineSchema({
     .index("by_status_publishedAt", ["status", "publishedAt"])
     .index("by_status_views", ["status", "views"])
     .index("by_status_order", ["status", "order"])
-    .index("by_status_featured", ["status", "featured"]), // SVC-012: Index for featured services
+    .index("by_status_featured", ["status", "featured"])
+    .searchIndex("search_title", { filterFields: ["status", "categoryId"], searchField: "title" }),
 
   // 28. promotions - Khuyến mãi & Voucher
   promotions: defineTable({

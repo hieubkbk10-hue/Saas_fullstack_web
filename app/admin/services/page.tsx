@@ -1,16 +1,32 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { Briefcase, ChevronLeft, ChevronRight, Edit, ExternalLink, Loader2, Plus, Search, Trash2 } from 'lucide-react';
+import { Briefcase, ChevronDown, Edit, ExternalLink, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
-import { BulkActionBar, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
+import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+
+function generatePaginationItems(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  if (currentPage <= 3) {
+    return [1, 2, 3, 4, 'ellipsis', totalPages];
+  }
+
+  if (currentPage >= totalPages - 2) {
+    return [1, 'ellipsis', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+
+  return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
+}
 
 export default function ServicesListPage() {
   return (
@@ -21,28 +37,99 @@ export default function ServicesListPage() {
 }
 
 function ServicesContent() {
-  const servicesData = useQuery(api.services.listAll, {});
   const categoriesData = useQuery(api.serviceCategories.listAll, {});
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: 'services' });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'services' });
   const deleteService = useMutation(api.services.remove);
   
-  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Id<"services">[]>([]);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'' | 'Published' | 'Draft' | 'Archived'>('');
+  const [manualSelectedIds, setManualSelectedIds] = useState<Id<"services">[]>([]);
+  const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
+    if (typeof window === 'undefined') {
+      return ['category', 'price', 'status'];
+    }
+    try {
+      const stored = window.localStorage.getItem('admin_services_visible_columns');
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[];
+        return parsed.length > 0 ? parsed : ['category', 'price', 'status'];
+      }
+    } catch {
+      return ['category', 'price', 'status'];
+    }
+    return ['category', 'price', 'status'];
+  });
+  const isSelectAllActive = selectionMode === 'all';
 
-  const isLoading = servicesData === undefined || categoriesData === undefined || fieldsData === undefined;
+  const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
 
-  const enabledFields = useMemo(() => new Set(fieldsData?.map(field => field.fieldKey) ?? []), [fieldsData]);
-  const showThumbnail = enabledFields.has('thumbnail');
-  const showPrice = enabledFields.has('price');
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () =>{  clearTimeout(timer); };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    window.localStorage.setItem('admin_services_visible_columns', JSON.stringify(visibleColumns));
+  }, [visibleColumns]);
 
   const servicesPerPage = useMemo(() => {
     const setting = settingsData?.find(s => s.settingKey === 'servicesPerPage');
     return (setting?.value as number) || 10;
   }, [settingsData]);
+
+  const resolvedServicesPerPage = pageSizeOverride ?? servicesPerPage;
+  const offset = (currentPage - 1) * resolvedServicesPerPage;
+
+  const servicesData = useQuery(api.services.listAdminWithOffset, {
+    limit: resolvedServicesPerPage,
+    offset,
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    status: filterStatus || undefined,
+  });
+
+  const totalCountData = useQuery(api.services.countAdmin, {
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    status: filterStatus || undefined,
+  });
+
+  const selectAllData = useQuery(
+    api.services.listAdminIds,
+    isSelectAllActive
+      ? {
+          search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+          status: filterStatus || undefined,
+        }
+      : 'skip'
+  );
+
+  const isTableLoading = servicesData === undefined || totalCountData === undefined || fieldsData === undefined;
+
+  const enabledFields = useMemo(() => new Set(fieldsData?.map(field => field.fieldKey) ?? []), [fieldsData]);
+  const showThumbnail = enabledFields.has('thumbnail');
+  const showCategory = enabledFields.has('categoryId');
+  const showPrice = enabledFields.has('price');
+
+  const columns = [
+    ...(showThumbnail ? [{ key: 'thumbnail', label: 'Ảnh' }] : []),
+    ...(showCategory ? [{ key: 'category', label: 'Danh mục' }] : []),
+    ...(showPrice ? [{ key: 'price', label: 'Giá' }] : []),
+    { key: 'status', label: 'Trạng thái' },
+  ];
+
+  const resolvedVisibleColumns = visibleColumns.filter(key => columns.some(col => col.key === key));
+
+  useEffect(() => {
+    if (selectAllData?.hasMore) {
+      toast.info('Đã chọn tối đa 5.000 dịch vụ phù hợp.');
+    }
+  }, [selectAllData?.hasMore]);
 
   const categoryMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -51,29 +138,33 @@ function ServicesContent() {
   }, [categoriesData]);
 
   const services = useMemo(() => servicesData?.map(service => ({
-      ...service,
-      id: service._id,
-      category: categoryMap[service.categoryId] || 'Không có',
-    })) ?? [], [servicesData, categoryMap]);
+    ...service,
+    id: service._id,
+    category: categoryMap[service.categoryId] || 'Không có',
+  })) ?? [], [servicesData, categoryMap]);
 
-  const filteredServices = useMemo(() => {
-    let data = [...services];
-    if (searchTerm) {
-      data = data.filter(s => s.title.toLowerCase().includes(searchTerm.toLowerCase()));
-    }
-    if (filterStatus) {
-      data = data.filter(s => s.status === filterStatus);
-    }
-    return data;
-  }, [services, searchTerm, filterStatus]);
+  const sortedServices = useSortableData(services, sortConfig);
 
-  const sortedServices = useSortableData(filteredServices, sortConfig);
+  const totalCount = totalCountData?.count ?? 0;
+  const totalPages = totalCount ? Math.ceil(totalCount / resolvedServicesPerPage) : 1;
+  const paginatedServices = sortedServices;
+  const tableColumnCount = 3 + resolvedVisibleColumns.length;
+  const selectedIds = isSelectAllActive && selectAllData ? selectAllData.ids : manualSelectedIds;
+  const isSelectingAll = isSelectAllActive && selectAllData === undefined;
 
-  const totalPages = Math.ceil(sortedServices.length / servicesPerPage);
-  const paginatedServices = useMemo(() => {
-    const start = (currentPage - 1) * servicesPerPage;
-    return sortedServices.slice(start, start + servicesPerPage);
-  }, [sortedServices, currentPage, servicesPerPage]);
+  const applyManualSelection = (nextIds: Id<"services">[]) => {
+    setSelectionMode('manual');
+    setManualSelectedIds(nextIds);
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+    setFilterStatus('');
+    setCurrentPage(1);
+    setPageSizeOverride(null);
+    applyManualSelection([]);
+  };
 
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
@@ -81,12 +172,31 @@ function ServicesContent() {
   };
 
   const handleFilterChange = (value: string) => {
-    setFilterStatus(value);
+    setFilterStatus(value as '' | 'Published' | 'Draft' | 'Archived');
     setCurrentPage(1);
+    applyManualSelection([]);
   };
 
-  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedServices.length ? [] : paginatedServices.map(s => s._id)); };
-  const toggleSelectItem = (id: Id<"services">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
+  const selectedOnPage = paginatedServices.filter(service => selectedIds.includes(service._id));
+  const isPageSelected = paginatedServices.length > 0 && selectedOnPage.length === paginatedServices.length;
+  const isPageIndeterminate = selectedOnPage.length > 0 && selectedOnPage.length < paginatedServices.length;
+
+  const toggleSelectAll = () => {
+    if (isPageSelected) {
+      const remaining = selectedIds.filter(id => !paginatedServices.some(service => service._id === id));
+      applyManualSelection(remaining);
+      return;
+    }
+    const next = new Set(selectedIds);
+    paginatedServices.forEach(service => next.add(service._id));
+    applyManualSelection(Array.from(next));
+  };
+  const toggleSelectItem = (id: Id<"services">) =>{
+    const next = selectedIds.includes(id)
+      ? selectedIds.filter(i => i !== id)
+      : [...selectedIds, id];
+    applyManualSelection(next);
+  };
 
   const handleDelete = async (id: Id<"services">) => {
     if (confirm('Xóa dịch vụ này?')) {
@@ -105,7 +215,7 @@ function ServicesContent() {
         for (const id of selectedIds) {
           await deleteService({ id });
         }
-        setSelectedIds([]);
+        applyManualSelection([]);
         toast.success(`Đã xóa ${selectedIds.length} dịch vụ`);
       } catch {
         toast.error('Có lỗi khi xóa dịch vụ');
@@ -122,14 +232,6 @@ function ServicesContent() {
     window.open(`/services/${slug}`, '_blank');
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={32} className="animate-spin text-slate-400" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -144,84 +246,214 @@ function ServicesContent() {
         </div>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  applyManualSelection([]); }} />
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap gap-2 text-sm">
+          <Button variant="outline" size="sm" onClick={() =>{  applyManualSelection(paginatedServices.map(service => service._id)); }}>
+            Chọn trang này
+          </Button>
+          <Button variant="outline" size="sm" onClick={() =>{  setSelectionMode('all'); }} disabled={isSelectingAll}>
+            {isSelectingAll ? 'Đang chọn...' : 'Chọn tất cả kết quả'}
+          </Button>
+        </div>
+      )}
 
       <Card>
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
           <div className="relative max-w-xs flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm dịch vụ..." className="pl-9" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); }} />
+            <Input placeholder="Tìm kiếm dịch vụ..." className="pl-9" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); setCurrentPage(1); applyManualSelection([]); }} />
           </div>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  handleFilterChange(e.target.value); }}>
-            <option value="">Tất cả trạng thái</option>
-            <option value="Published">Đã xuất bản</option>
-            <option value="Draft">Bản nháp</option>
-            <option value="Archived">Lưu trữ</option>
-          </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  handleFilterChange(e.target.value); }}>
+              <option value="">Tất cả trạng thái</option>
+              <option value="Published">Đã xuất bản</option>
+              <option value="Draft">Bản nháp</option>
+              <option value="Archived">Lưu trữ</option>
+            </select>
+            <Button variant="outline" size="sm" onClick={handleResetFilters}>
+              Xóa lọc
+            </Button>
+            <ColumnToggle
+              columns={columns}
+              visibleColumns={resolvedVisibleColumns}
+              onToggle={(key) => {
+                setVisibleColumns(prev => prev.includes(key) ? prev.filter(col => col !== key) : [...prev, key]);
+              }}
+            />
+          </div>
         </div>
         <Table>
-          <TableHeader>
+          <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-white dark:[&_th]:bg-slate-900">
             <TableRow>
-              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedServices.length && paginatedServices.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedServices.length} /></TableHead>
-              {showThumbnail && <TableHead className="w-[80px]">Ảnh</TableHead>}
+              <TableHead className="w-[40px]"><SelectCheckbox checked={isPageSelected} onChange={toggleSelectAll} indeterminate={isPageIndeterminate} /></TableHead>
+              {resolvedVisibleColumns.includes('thumbnail') && <TableHead className="w-[80px]">Ảnh</TableHead>}
               <SortableHeader label="Tiêu đề" sortKey="title" sortConfig={sortConfig} onSort={handleSort} />
-              <SortableHeader label="Danh mục" sortKey="category" sortConfig={sortConfig} onSort={handleSort} />
-              {showPrice && <SortableHeader label="Giá" sortKey="price" sortConfig={sortConfig} onSort={handleSort} />}
-              <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
+              {resolvedVisibleColumns.includes('category') && <SortableHeader label="Danh mục" sortKey="category" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('price') && <SortableHeader label="Giá" sortKey="price" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />}
               <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedServices.map(service => (
-              <TableRow key={service._id} className={selectedIds.includes(service._id) ? 'bg-teal-500/5' : ''}>
-                <TableCell><SelectCheckbox checked={selectedIds.includes(service._id)} onChange={() =>{  toggleSelectItem(service._id); }} /></TableCell>
-                {showThumbnail && (
+            {isTableLoading ? (
+              Array.from({ length: resolvedServicesPerPage }).map((_, index) => (
+                <TableRow key={`loading-${index}`}>
                   <TableCell>
-                    {service.thumbnail ? (
-                      <Image src={service.thumbnail} width={48} height={32} className="w-12 h-8 object-cover rounded" alt={service.title} />
-                    ) : (
-                      <div className="w-12 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-slate-400">No img</div>
-                    )}
+                    <div className="h-4 w-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
                   </TableCell>
-                )}
-                <TableCell className="font-medium max-w-[300px] truncate">{service.title}</TableCell>
-                <TableCell>{service.category}</TableCell>
-                {showPrice && <TableCell className="text-slate-500">{formatPrice(service.price)}</TableCell>}
-                <TableCell>
-                  <Badge variant={service.status === 'Published' ? 'success' : (service.status === 'Draft' ? 'secondary' : 'warning')}>
-                    {service.status === 'Published' ? 'Đã xuất bản' : (service.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ')}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" className="text-teal-600 hover:text-teal-700" title="Xem dịch vụ" onClick={() =>{  openFrontend(service.slug); }}><ExternalLink size={16}/></Button>
-                    <Link href={`/admin/services/${service._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
-                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(service._id)}><Trash2 size={16}/></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {paginatedServices.length === 0 && (
+                  {resolvedVisibleColumns.includes('thumbnail') && (
+                    <TableCell>
+                      <div className="h-8 w-12 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  <TableCell>
+                    <div className="h-4 w-2/3 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  </TableCell>
+                  {resolvedVisibleColumns.includes('category') && (
+                    <TableCell>
+                      <div className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  {resolvedVisibleColumns.includes('price') && (
+                    <TableCell>
+                      <div className="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  {resolvedVisibleColumns.includes('status') && (
+                    <TableCell>
+                      <div className="h-5 w-20 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                    </TableCell>
+                  )}
+                  <TableCell className="text-right">
+                    <div className="ml-auto h-8 w-24 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <>
+                {paginatedServices.map(service => (
+                  <TableRow key={service._id} className={selectedIds.includes(service._id) ? 'bg-teal-500/5' : ''}>
+                    <TableCell><SelectCheckbox checked={selectedIds.includes(service._id)} onChange={() =>{  toggleSelectItem(service._id); }} /></TableCell>
+                    {resolvedVisibleColumns.includes('thumbnail') && (
+                      <TableCell>
+                        {service.thumbnail ? (
+                          <Image src={service.thumbnail} width={48} height={32} className="w-12 h-8 object-cover rounded" alt={service.title} />
+                        ) : (
+                          <div className="w-12 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-slate-400">No img</div>
+                        )}
+                      </TableCell>
+                    )}
+                    <TableCell className="font-medium max-w-[300px] truncate">{service.title}</TableCell>
+                    {resolvedVisibleColumns.includes('category') && <TableCell>{service.category}</TableCell>}
+                    {resolvedVisibleColumns.includes('price') && <TableCell className="text-slate-500">{formatPrice(service.price)}</TableCell>}
+                    {resolvedVisibleColumns.includes('status') && (
+                      <TableCell>
+                        <Badge variant={service.status === 'Published' ? 'success' : (service.status === 'Draft' ? 'secondary' : 'warning')}>
+                          {service.status === 'Published' ? 'Đã xuất bản' : (service.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ')}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" className="text-teal-600 hover:text-teal-700" title="Xem dịch vụ" onClick={() =>{  openFrontend(service.slug); }}><ExternalLink size={16}/></Button>
+                        <Link href={`/admin/services/${service._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
+                        <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(service._id)}><Trash2 size={16}/></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
+            )}
+            {!isTableLoading && paginatedServices.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5 + (showThumbnail ? 1 : 0) + (showPrice ? 1 : 0)} className="text-center py-8 text-slate-500">
-                   {searchTerm || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có dịch vụ nào'}
-                 </TableCell>
+                <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
+                  {searchTerm || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có dịch vụ nào'}
+                </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-        {sortedServices.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-sm text-slate-500">
-              Hiển thị {(currentPage - 1) * servicesPerPage + 1} - {Math.min(currentPage * servicesPerPage, sortedServices.length)} / {sortedServices.length} dịch vụ
-            </span>
-            {totalPages > 1 && (
+        {totalCount > 0 && !isTableLoading && (
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() =>{  setCurrentPage(p => p - 1); }}><ChevronLeft size={16} /></Button>
-                <span className="text-sm text-slate-600 dark:text-slate-400">Trang {currentPage} / {totalPages}</span>
-                <Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() =>{  setCurrentPage(p => p + 1); }}><ChevronRight size={16} /></Button>
+                <span className="text-slate-600">Hiển thị</span>
+                <select
+                  value={resolvedServicesPerPage}
+                  onChange={(event) =>{  setPageSizeOverride(Number(event.target.value)); setCurrentPage(1); applyManualSelection([]); }}
+                  className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
+                  aria-label="Số dịch vụ mỗi trang"
+                >
+                  {[10, 20, 30, 50, 100].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <span>dịch vụ/trang</span>
               </div>
-            )}
+
+              <div className="text-right sm:text-left">
+                <span className="font-medium text-slate-900">
+                  {totalCount ? ((currentPage - 1) * resolvedServicesPerPage) + 1 : 0}–{Math.min(currentPage * resolvedServicesPerPage, totalCount)}
+                </span>
+                <span className="mx-1 text-slate-300">/</span>
+                <span className="font-medium text-slate-900">
+                  {totalCount}{totalCountData?.hasMore ? '+' : ''}
+                </span>
+                <span className="ml-1 text-slate-500">dịch vụ</span>
+              </div>
+            </div>
+
+            <div className="order-1 flex w-full justify-center sm:order-2 sm:w-auto sm:justify-end">
+              <nav className="flex items-center space-x-1 sm:space-x-2" aria-label="Phân trang">
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.max(1, prev - 1)); }}
+                  disabled={currentPage === 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang trước"
+                >
+                  <ChevronDown className="h-4 w-4 rotate-90" />
+                </button>
+
+                {generatePaginationItems(currentPage, totalPages).map((item, index) => {
+                  if (item === 'ellipsis') {
+                    return (
+                      <div key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-slate-400">
+                        …
+                      </div>
+                    );
+                  }
+
+                  const pageNum = item as number;
+                  const isActive = pageNum === currentPage;
+                  const isMobileHidden = !isActive && pageNum !== 1 && pageNum !== totalPages;
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() =>{  setCurrentPage(pageNum); }}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-sm border font-medium'
+                          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.min(totalPages, prev + 1)); }}
+                  disabled={currentPage >= totalPages}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang sau"
+                >
+                  <ChevronDown className="h-4 w-4 -rotate-90" />
+                </button>
+              </nav>
+            </div>
           </div>
         )}
       </Card>
