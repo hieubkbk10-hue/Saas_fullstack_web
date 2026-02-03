@@ -265,7 +265,7 @@ function PostsContent() {
           </div>
         </div>
         <Table>
-          <TableHeader>
+          <TableHeader className="[&_th]:sticky [&_th]:top-0 [&_th]:z-10 [&_th]:bg-white dark:[&_th]:bg-slate-900">
             <TableRow>
               <TableHead className="w-[40px]"><SelectCheckbox checked={isPageSelected} onChange={toggleSelectAll} indeterminate={isPageIndeterminate} /></TableHead>
               {visibleColumns.includes('thumbnail') && <TableHead className="w-[80px]">Thumbnail</TableHead>}
