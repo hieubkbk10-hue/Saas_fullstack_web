@@ -308,6 +308,115 @@ function ProductsContent() {
   const showSalePrice = enabledFields.has('salePrice');
   const showStock = enabledFields.has('stock');
 
+  const paginationNode = (
+    <>
+      {listConfig.paginationType === 'pagination' && totalCount && totalCount > postsPerPage && (
+        <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600">Hiển thị</span>
+              <select
+                value={postsPerPage}
+                onChange={(event) => handlePageSizeChange(Number(event.target.value))}
+                className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
+                style={{ borderColor: brandColor }}
+                aria-label="Số bài mỗi trang"
+              >
+                {[12, 20, 24, 48, 100].map((size) => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+              <span>bài/trang</span>
+            </div>
+
+            <div className="text-right sm:text-left">
+              <span className="font-medium text-slate-900">
+                {totalCount ? ((urlPage - 1) * postsPerPage) + 1 : 0}–{Math.min(urlPage * postsPerPage, totalCount ?? 0)}
+              </span>
+              <span className="mx-1 text-slate-300">/</span>
+              <span className="font-medium text-slate-900">{totalCount ?? 0}</span>
+              <span className="ml-1 text-slate-500">sản phẩm</span>
+            </div>
+          </div>
+
+          <div className="order-1 flex w-full justify-center sm:order-2 sm:w-auto sm:justify-end">
+            <nav className="flex items-center space-x-1 sm:space-x-2" aria-label="Phân trang">
+              <button
+                onClick={() => handlePageChange(urlPage - 1)}
+                disabled={urlPage === 1}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={urlPage === 1 ? undefined : { color: brandColor, borderColor: brandColor }}
+                aria-label="Trang trước"
+              >
+                <ChevronDown className="h-4 w-4 rotate-90" />
+              </button>
+
+              {generatePaginationItems(urlPage, Math.ceil(totalCount / postsPerPage)).map((item, index) => {
+                if (item === 'ellipsis') {
+                  return (
+                    <div key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-slate-400">
+                      …
+                    </div>
+                  );
+                }
+
+                const pageNum = item as number;
+                const isActive = pageNum === urlPage;
+                const isMobileHidden = !isActive && pageNum !== 1 && pageNum !== Math.ceil(totalCount / postsPerPage);
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
+                      isActive
+                        ? 'text-white shadow-sm border font-medium'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                    } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
+                    style={isActive ? { backgroundColor: brandColor, borderColor: brandColor } : undefined}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+              <button
+                onClick={() => handlePageChange(urlPage + 1)}
+                disabled={totalCount ? urlPage >= Math.ceil(totalCount / postsPerPage) : true}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={totalCount && urlPage < Math.ceil(totalCount / postsPerPage) ? { color: brandColor, borderColor: brandColor } : undefined}
+                aria-label="Trang sau"
+              >
+                <ChevronDown className="h-4 w-4 -rotate-90" />
+              </button>
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {listConfig.paginationType === 'infiniteScroll' && infiniteStatus !== 'Exhausted' && (
+        <div ref={loadMoreRef} className="text-center mt-6 py-8">
+          {infiniteStatus === 'LoadingMore' ? (
+            <div className="flex justify-center gap-1">
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
+            </div>
+          ) : infiniteStatus === 'CanLoadMore' ? (
+            <p className="text-sm text-slate-400">Cuộn để xem thêm...</p>
+          ) : null}
+        </div>
+      )}
+
+      {listConfig.paginationType === 'infiniteScroll' && infiniteStatus === 'Exhausted' && products.length > 0 && (
+        <div className="text-center mt-6">
+          <p className="text-sm text-slate-400">Đã hiển thị tất cả {products.length} sản phẩm</p>
+        </div>
+      )}
+    </>
+  );
+
   // Render based on layout setting
   if (layout === 'catalog') {
     return (
@@ -327,6 +436,7 @@ function ProductsContent() {
         showStock={showStock}
         formatPrice={formatPrice}
         totalCount={totalCount}
+        paginationNode={paginationNode}
       />
     );
   }
@@ -349,6 +459,7 @@ function ProductsContent() {
         showStock={showStock}
         formatPrice={formatPrice}
         totalCount={totalCount}
+        paginationNode={paginationNode}
       />
     );
   }
@@ -467,111 +578,7 @@ function ProductsContent() {
           <ProductList products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} />
         ))}
 
-        {/* Pagination / Infinite Scroll */}
-        {listConfig.paginationType === 'pagination' && totalCount && totalCount > postsPerPage && (
-          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
-              <div className="flex items-center gap-2">
-                <span className="text-slate-600">Hiển thị</span>
-                <select
-                  value={postsPerPage}
-                  onChange={(event) => handlePageSizeChange(Number(event.target.value))}
-                  className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
-                  style={{ borderColor: brandColor }}
-                  aria-label="Số bài mỗi trang"
-                >
-                  {[12, 20, 24, 48, 100].map((size) => (
-                    <option key={size} value={size}>{size}</option>
-                  ))}
-                </select>
-                <span>bài/trang</span>
-              </div>
-
-              <div className="text-right sm:text-left">
-                <span className="font-medium text-slate-900">
-                  {totalCount ? ((urlPage - 1) * postsPerPage) + 1 : 0}–{Math.min(urlPage * postsPerPage, totalCount ?? 0)}
-                </span>
-                <span className="mx-1 text-slate-300">/</span>
-                <span className="font-medium text-slate-900">{totalCount ?? 0}</span>
-                <span className="ml-1 text-slate-500">sản phẩm</span>
-              </div>
-            </div>
-
-            <div className="order-1 flex w-full justify-center sm:order-2 sm:w-auto sm:justify-end">
-              <nav className="flex items-center space-x-1 sm:space-x-2" aria-label="Phân trang">
-                <button
-                  onClick={() => handlePageChange(urlPage - 1)}
-                  disabled={urlPage === 1}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={urlPage === 1 ? undefined : { color: brandColor, borderColor: brandColor }}
-                  aria-label="Trang trước"
-                >
-                  <ChevronDown className="h-4 w-4 rotate-90" />
-                </button>
-
-                {generatePaginationItems(urlPage, Math.ceil(totalCount / postsPerPage)).map((item, index) => {
-                  if (item === 'ellipsis') {
-                    return (
-                      <div key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-slate-400">
-                        …
-                      </div>
-                    );
-                  }
-
-                  const pageNum = item as number;
-                  const isActive = pageNum === urlPage;
-                  const isMobileHidden = !isActive && pageNum !== 1 && pageNum !== Math.ceil(totalCount / postsPerPage);
-
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
-                        isActive
-                          ? 'text-white shadow-sm border font-medium'
-                          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-                      } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
-                      style={isActive ? { backgroundColor: brandColor, borderColor: brandColor } : undefined}
-                      aria-current={isActive ? 'page' : undefined}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-
-                <button
-                  onClick={() => handlePageChange(urlPage + 1)}
-                  disabled={totalCount ? urlPage >= Math.ceil(totalCount / postsPerPage) : true}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={totalCount && urlPage < Math.ceil(totalCount / postsPerPage) ? { color: brandColor, borderColor: brandColor } : undefined}
-                  aria-label="Trang sau"
-                >
-                  <ChevronDown className="h-4 w-4 -rotate-90" />
-                </button>
-              </nav>
-            </div>
-          </div>
-        )}
-
-        {listConfig.paginationType === 'infiniteScroll' && infiniteStatus !== 'Exhausted' && (
-          <div ref={loadMoreRef} className="text-center mt-6 py-8">
-            {infiniteStatus === 'LoadingMore' ? (
-              <div className="flex justify-center gap-1">
-                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
-                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
-                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
-              </div>
-            ) : infiniteStatus === 'CanLoadMore' ? (
-              <p className="text-sm text-slate-400">Cuộn để xem thêm...</p>
-            ) : null}
-          </div>
-        )}
-
-        {listConfig.paginationType === 'infiniteScroll' && infiniteStatus === 'Exhausted' && products.length > 0 && (
-          <div className="text-center mt-6">
-            <p className="text-sm text-slate-400">Đã hiển thị tất cả {products.length} sản phẩm</p>
-          </div>
-        )}
+        {paginationNode}
       </div>
     </div>
   );
@@ -706,9 +713,10 @@ interface LayoutProps {
   showStock: boolean;
   formatPrice: (price: number) => string;
   totalCount: number | undefined;
+  paginationNode?: React.ReactNode;
 }
 
-function CatalogLayout({ products, categories, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, formatPrice, totalCount }: LayoutProps) {
+function CatalogLayout({ products, categories, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, formatPrice, totalCount, paginationNode }: LayoutProps) {
   return (
     <div className="py-8 md:py-12 px-4">
       <div className="max-w-7xl mx-auto">
@@ -789,6 +797,8 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
             )}
           </div>
         </div>
+
+        {paginationNode}
       </div>
     </div>
   );
@@ -796,7 +806,7 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
 
 // ========== LIST LAYOUT (Full width list view) ==========
 
-function ListLayout({ products, categories, categoryMap, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, showStock, formatPrice, totalCount }: LayoutProps) {
+function ListLayout({ products, categories, categoryMap, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, showStock, formatPrice, totalCount, paginationNode }: LayoutProps) {
   return (
     <div className="py-8 md:py-12 px-4">
       <div className="max-w-5xl mx-auto">
@@ -837,6 +847,8 @@ function ListLayout({ products, categories, categoryMap, selectedCategory, onCat
         ) : (
           <ProductList products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} />
         )}
+
+        {paginationNode}
       </div>
     </div>
   );
