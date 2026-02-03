@@ -240,15 +240,40 @@ function PostsContent() {
         )}
 
         {/* Load More (for all layouts) - Hide based on config */}
-        {listConfig.showPagination && (posts?.length ?? 0) >= 24 && (
-          <div className="text-center mt-6">
-            <button
-              className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 hover:opacity-80"
-              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-            >
-              Xem thêm bài viết
-            </button>
-          </div>
+        {(posts?.length ?? 0) >= 24 && (
+          listConfig.paginationType === 'pagination' ? (
+            <div className="text-center mt-6">
+              <nav className="inline-flex items-center gap-1">
+                <button
+                  className="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                  style={{ backgroundColor: brandColor, color: 'white' }}
+                >
+                  1
+                </button>
+                {[2, 3, 4].map((page) => (
+                  <button
+                    key={page}
+                    className="px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-slate-100"
+                  >
+                    {page}
+                  </button>
+                ))}
+                <span className="px-2 text-slate-400">...</span>
+                <button className="px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-slate-100">
+                  10
+                </button>
+              </nav>
+            </div>
+          ) : (
+            <div className="text-center mt-6 space-y-2">
+              <div className="flex justify-center gap-1">
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
+              </div>
+              <p className="text-sm text-slate-400">Cuộn để xem thêm...</p>
+            </div>
+          )
         )}
       </div>
     </div>

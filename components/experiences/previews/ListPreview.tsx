@@ -22,6 +22,31 @@ const normalizeLayoutStyle = (style: ListLayoutStyle): 'fullwidth' | 'sidebar' |
   return 'magazine';
 };
 
+function PaginationPreview({ paginationType, brandColor }: { paginationType: PaginationType; brandColor: string }) {
+  if (paginationType === 'pagination') {
+    return (
+      <div className="text-center mt-6">
+        <button
+          className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 hover:opacity-80"
+          style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+        >
+          1 &nbsp; 2 &nbsp; 3 &nbsp; ... &nbsp; 10
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="text-center mt-6 space-y-2">
+      <div className="flex justify-center gap-1">
+        <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+        <div className="w-2 h-2 rounded-full animate-pulse delay-100" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
+        <div className="w-2 h-2 rounded-full animate-pulse delay-200" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
+      </div>
+      <p className="text-xs text-slate-400">Cuộn để xem thêm...</p>
+    </div>
+  );
+}
+
 export function PostsListPreview({
   layoutStyle,
   paginationType = 'pagination',
@@ -198,25 +223,7 @@ export function PostsListPreview({
         </div>
         
         {/* Pagination */}
-        {paginationType !== 'infiniteScroll' ? (
-          <div className="text-center mt-6">
-            <button
-              className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 hover:opacity-80"
-              style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
-            >
-              1 &nbsp; 2 &nbsp; 3 &nbsp; ... &nbsp; 10
-            </button>
-          </div>
-        ) : (
-          <div className="text-center mt-6 space-y-2">
-            <div className="flex justify-center gap-1">
-              <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
-              <div className="w-2 h-2 rounded-full animate-pulse delay-100" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
-              <div className="w-2 h-2 rounded-full animate-pulse delay-200" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
-            </div>
-            <p className="text-xs text-slate-400">Cuộn để xem thêm...</p>
-          </div>
-        )}
+        <PaginationPreview paginationType={paginationType} brandColor={brandColor} />
         </div>
       </div>
     );
@@ -336,6 +343,7 @@ export function PostsListPreview({
                   </div>
                 ))}
               </div>
+              <PaginationPreview paginationType={paginationType} brandColor={brandColor} />
             </main>
           </div>
         </div>
@@ -492,6 +500,8 @@ export function PostsListPreview({
               ))}
             </div>
           </section>
+          
+          <PaginationPreview paginationType={paginationType} brandColor={brandColor} />
         </div>
       </div>
     </div>
