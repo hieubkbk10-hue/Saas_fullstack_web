@@ -83,13 +83,17 @@ export abstract class BaseSeeder<T = any> {
       // 1. Configure Faker
       this.configureFaker(config.locale || 'vi');
       
-      // 2. Check existing data
-      const existing = await this.checkExisting();
-      if (existing && !config.force) {
-        console.log(`[${this.moduleName}] Data already exists. Use force=true to re-seed.`);
-        result.skipped = existing;
-        result.duration = Date.now() - startTime;
-        return result;
+      // 2. Check existing data - Only check if force=false
+      // If force=true, we'll clear and re-seed anyway
+      if (!config.force) {
+        const existing = await this.checkExisting();
+        if (existing > 0) {
+          console.log(`[${this.moduleName}] Data already exists (${existing} records). Use force=true to re-seed.`);
+          // Continue to add more data, don't skip
+          // result.skipped = existing;
+          // result.duration = Date.now() - startTime;
+          // return result;
+        }
       }
       
       // 3. Check dependencies
@@ -103,10 +107,13 @@ export abstract class BaseSeeder<T = any> {
         }
       }
       
-      // 4. Clear if force
-      if (config.force && existing) {
-        console.log(`[${this.moduleName}] Clearing existing data...`);
-        await this.clear();
+      // 4. Clear if force (delete existing data first)
+      if (config.force) {
+        const existing = await this.checkExisting();
+        if (existing > 0) {
+          console.log(`[${this.moduleName}] Clearing ${existing} existing records...`);
+          await this.clear();
+        }
       }
       
       // 5. Generate and insert data in batches
@@ -206,8 +213,8 @@ export abstract class BaseSeeder<T = any> {
   
   protected async countRecords(moduleName: string): Promise<number> {
     try {
-      const records = await this.ctx.db.query(moduleName as any).take(1);
-      return records.length > 0 ? 1 : 0; // Simple check
+      const records = await this.ctx.db.query(moduleName as any).collect();
+      return records.length;
     } catch {
       return 0;
     }
@@ -219,7 +226,8 @@ export abstract class BaseSeeder<T = any> {
   
   protected async checkExisting(): Promise<number> {
     try {
-      const records = await this.ctx.db.query(this.tableName as any).take(1);
+      // Count all records in table
+      const records = await this.ctx.db.query(this.tableName as any).collect();
       return records.length;
     } catch {
       return 0;
