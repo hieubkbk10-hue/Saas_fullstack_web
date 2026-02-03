@@ -165,13 +165,6 @@ export default function ServiceDetailExperiencePage() {
             accentColor="#8b5cf6"
           />
           <ToggleRow
-            label="Giá trong khối liên hệ"
-            description="Hiển thị giá dịch vụ hiện tại"
-            checked={config.quickContactShowPrice}
-            onChange={(v) => updateConfig('quickContactShowPrice', v)}
-            accentColor="#8b5cf6"
-          />
-          <ToggleRow
             label="Nút chia sẻ"
             description="Copy link dịch vụ"
             checked={config.showShare}

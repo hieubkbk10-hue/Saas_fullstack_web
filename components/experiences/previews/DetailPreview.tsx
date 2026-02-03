@@ -967,22 +967,13 @@ function ClassicServicePreview({
 
               {quickContactConfig.enabled && (
                 <div className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-slate-700">{quickContactConfig.title}</p>
-                      {quickContactConfig.description && (
-                        <p className="text-sm text-slate-500">{quickContactConfig.description}</p>
-                      )}
-                    </div>
-                    {showPrice && quickContactConfig.showPrice && (
-                      <div className="text-base font-semibold" style={{ color: brandColor }}>
-                        {formatPrice(MOCK_SERVICE.price)}
-                      </div>
+                  <div className="min-w-0 mb-3">
+                    <p className="text-sm font-semibold text-slate-700">{quickContactConfig.title}</p>
+                    {quickContactConfig.description && (
+                      <p className="text-sm text-slate-500">{quickContactConfig.description}</p>
                     )}
                   </div>
-                  <div className="mt-3">
-                    <QuickContactButtonsPreview brandColor={brandColor} label={quickContactConfig.buttonText} />
-                  </div>
+                  <QuickContactButtonsPreview brandColor={brandColor} label={quickContactConfig.buttonText} />
                 </div>
               )}
             </div>
