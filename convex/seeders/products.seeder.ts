@@ -1,0 +1,117 @@
+/**
+ * Product Seeder
+ * 
+ * Generates realistic product data with Vietnamese names
+ */
+
+import { BaseSeeder, type SeedDependency } from './_base';
+import { createVietnameseFaker } from './_faker-vi';
+import type { Doc } from '../_generated/dataModel';
+
+type ProductData = Omit<Doc<'products'>, '_id' | '_creationTime'>;
+
+export class ProductSeeder extends BaseSeeder<ProductData> {
+  moduleName = 'products';
+  tableName = 'products';
+  dependencies: SeedDependency[] = [
+    { minRecords: 1, module: 'productCategories', required: true },
+  ];
+  
+  private categories: Doc<'productCategories'>[] = [];
+  private viFaker: ReturnType<typeof createVietnameseFaker>;
+  private productCount = 0;
+  
+  constructor(ctx: any) {
+    super(ctx);
+    this.viFaker = createVietnameseFaker(this.faker);
+  }
+  
+  async seed(config: any) {
+    // Load categories trước khi seed
+    this.categories = await this.ctx.db.query('productCategories').collect();
+    
+    if (this.categories.length === 0) {
+      throw new Error('No product categories found. Seed productCategories first.');
+    }
+    
+    console.log(`[ProductSeeder] Found ${this.categories.length} categories`);
+    
+    return super.seed(config);
+  }
+  
+  generateFake(): ProductData {
+    const category = this.randomElement(this.categories);
+    const name = this.viFaker.productName();
+    const slug = this.slugify(name) + '-' + this.productCount++;
+    
+    const basePrice = this.randomInt(100_000, 50_000_000);
+    const hasSale = this.randomBoolean(0.3); // 30% có sale
+    
+    const status = this.faker.helpers.weightedArrayElement([
+      { value: 'Active' as const, weight: 7 },
+      { value: 'Draft' as const, weight: 2 },
+      { value: 'Archived' as const, weight: 1 },
+    ]);
+    
+    return {
+      categoryId: category._id,
+      description: this.viFaker.productDescription(),
+      image: `https://picsum.photos/seed/${slug}/400/400`,
+      name,
+      order: this.productCount,
+      price: basePrice,
+      salePrice: hasSale ? Math.floor(basePrice * this.faker.number.float({ max: 0.9, min: 0.5 })) : undefined,
+      sales: status === 'Active' ? this.randomInt(0, 500) : 0,
+      sku: this.faker.string.alphanumeric({ casing: 'upper', length: { max: 12, min: 8 } }),
+      slug,
+      status,
+      stock: status === 'Active' ? this.randomInt(0, 200) : 0,
+    };
+  }
+  
+  validateRecord(record: ProductData): boolean {
+    return (
+      !!record.name &&
+      !!record.slug &&
+      !!record.sku &&
+      record.price > 0 &&
+      !!record.categoryId
+    );
+  }
+  
+  protected async afterSeed(count: number): Promise<void> {
+    // Update product stats
+    await this.updateStats(count);
+  }
+  
+  private async updateStats(_totalCount: number): Promise<void> {
+    // Clear existing stats
+    const existingStats = await this.ctx.db.query('productStats').collect();
+    await Promise.all(existingStats.map(s => this.ctx.db.delete(s._id)));
+    
+    // Count by status
+    const products = await this.ctx.db.query('products').collect();
+    const stats: Record<string, number> = {
+      Active: 0,
+      Archived: 0,
+      Draft: 0,
+      total: products.length,
+    };
+    
+    let maxOrder = 0;
+    for (const p of products) {
+      stats[p.status]++;
+      if (p.order > maxOrder) {maxOrder = p.order;}
+    }
+    
+    // Insert new stats
+    await Promise.all([
+      this.ctx.db.insert('productStats', { count: stats.total, key: 'total', lastOrder: maxOrder }),
+      this.ctx.db.insert('productStats', { count: stats.Active, key: 'Active', lastOrder: 0 }),
+      this.ctx.db.insert('productStats', { count: stats.Draft, key: 'Draft', lastOrder: 0 }),
+      this.ctx.db.insert('productStats', { count: stats.Archived, key: 'Archived', lastOrder: 0 }),
+    ]);
+    
+    console.log('[ProductSeeder] Stats updated:', stats);
+  }
+}

@@ -655,4 +655,18 @@ export default defineSchema({
     .index("by_status_order", ["status", "order"])
     .index("by_startDate", ["startDate"])
     .index("by_endDate", ["endDate"]),
+
+  // ============================================================
+  // SEED PROGRESS TRACKING
+  // ============================================================
+
+  seedProgress: defineTable({
+    sessionId: v.string(),
+    status: v.union(v.literal("running"), v.literal("completed"), v.literal("failed")),
+    current: v.string(),
+    completed: v.number(),
+    total: v.number(),
+    results: v.array(v.any()),
+    errors: v.array(v.string()),
+  }).index("by_session", ["sessionId"]),
 });
