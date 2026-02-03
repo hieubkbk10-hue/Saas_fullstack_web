@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from './components/Sidebar';
-import { Header } from './components/header';
+import { Header } from './components/Header';
 import { Toaster } from 'sonner';
 import { AdminModulesProvider } from './context/AdminModulesContext';
 import { AdminAuthProvider } from './auth/context';
