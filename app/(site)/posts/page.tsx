@@ -4,7 +4,7 @@ import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'reac
 import { usePaginatedQuery, useQuery } from 'convex/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { usePostsListConfig } from '@/lib/experiences';
@@ -34,6 +34,55 @@ function useEnabledPostFields(): Set<string> {
     if (!fields) {return new Set<string>();}
     return new Set(fields.map(f => f.fieldKey));
   }, [fields]);
+}
+
+function PostsGridSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="bg-white rounded-xl overflow-hidden border border-slate-100">
+          <div className="aspect-video bg-slate-200" />
+          <div className="p-5 space-y-3">
+            <div className="h-5 w-20 bg-slate-200 rounded-full" />
+            <div className="h-6 w-full bg-slate-200 rounded" />
+            <div className="h-4 w-3/4 bg-slate-200 rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function generatePaginationItems(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
+  const items: (number | 'ellipsis')[] = [];
+  
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) {
+      items.push(i);
+    }
+    return items;
+  }
+  
+  items.push(1);
+  
+  if (currentPage > 3) {
+    items.push('ellipsis');
+  }
+  
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
+  
+  for (let i = start; i <= end; i++) {
+    items.push(i);
+  }
+  
+  if (currentPage < totalPages - 2) {
+    items.push('ellipsis');
+  }
+  
+  items.push(totalPages);
+  
+  return items;
 }
 
 function PostsListSkeleton() {
@@ -159,6 +208,9 @@ function PostsContent() {
     ? (paginatedPosts ?? [])
     : infiniteResults;
   
+  // Loading state for pagination mode  
+  const isLoadingPosts = listConfig.paginationType === 'pagination' && paginatedPosts === undefined;
+  
   const totalCount = useQuery(api.posts.countPublished, {
     categoryId: activeCategory ?? undefined,
   });
@@ -271,81 +323,137 @@ function PostsContent() {
             )}
 
             {/* Posts */}
-            <FullWidthLayout
-              posts={posts}
-              brandColor={brandColor}
-              categoryMap={categoryMap}
-              enabledFields={enabledFields}
-            />
+            {isLoadingPosts ? (
+              <PostsGridSkeleton count={postsPerPage} />
+            ) : (
+              <FullWidthLayout
+                posts={posts}
+                brandColor={brandColor}
+                categoryMap={categoryMap}
+                enabledFields={enabledFields}
+              />
+            )}
           </>
         )}
 
         {layout === 'sidebar' && (
-          <SidebarLayout
-            posts={posts}
-            brandColor={brandColor}
-            categoryMap={categoryMap}
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onCategoryChange={handleCategoryChange}
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-            sortBy={sortBy}
-            onSortChange={handleSortChange}
-            enabledFields={enabledFields}
-            showSearch={listConfig.showSearch}
-            showCategories={listConfig.showCategories}
-          />
+          isLoadingPosts ? (
+            <PostsGridSkeleton count={postsPerPage} />
+          ) : (
+            <SidebarLayout
+              posts={posts}
+              brandColor={brandColor}
+              categoryMap={categoryMap}
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onCategoryChange={handleCategoryChange}
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              sortBy={sortBy}
+              onSortChange={handleSortChange}
+              enabledFields={enabledFields}
+              showSearch={listConfig.showSearch}
+              showCategories={listConfig.showCategories}
+            />
+          )
         )}
 
         {layout === 'magazine' && (
-          <MagazineLayout
-            posts={posts}
-            brandColor={brandColor}
-            categoryMap={categoryMap}
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onCategoryChange={handleCategoryChange}
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-            sortBy={sortBy}
-            onSortChange={handleSortChange}
-            featuredPosts={featuredPosts ?? []}
-            enabledFields={enabledFields}
-            showSearch={listConfig.showSearch}
-            showCategories={listConfig.showCategories}
-          />
+          isLoadingPosts ? (
+            <PostsGridSkeleton count={postsPerPage} />
+          ) : (
+            <MagazineLayout
+              posts={posts}
+              brandColor={brandColor}
+              categoryMap={categoryMap}
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onCategoryChange={handleCategoryChange}
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              sortBy={sortBy}
+              onSortChange={handleSortChange}
+              featuredPosts={featuredPosts ?? []}
+              enabledFields={enabledFields}
+              showSearch={listConfig.showSearch}
+              showCategories={listConfig.showCategories}
+            />
+          )
         )}
 
         {/* Pagination / Infinite Scroll */}
         {listConfig.paginationType === 'pagination' && totalPages > 1 && (
-          <div className="mt-8 flex items-center justify-center">
-            <div className="flex items-center gap-2">
+          <div className="mt-8 flex flex-col items-center gap-3">
+            {/* Page numbers */}
+            <nav className="flex items-center gap-1" aria-label="Phân trang">
+              {/* First page */}
+              <button
+                onClick={() => handlePageChange(1)}
+                disabled={urlPage === 1}
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label="Trang đầu"
+              >
+                <ChevronsLeft size={16} />
+              </button>
+              
               {/* Previous */}
               <button
                 onClick={() => handlePageChange(urlPage - 1)}
                 disabled={urlPage === 1}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
                 aria-label="Trang trước"
               >
                 <ChevronLeft size={18} />
               </button>
               
-              {/* Page info */}
-              <span className="text-sm text-slate-600 min-w-[100px] text-center">
-                Trang {urlPage} / {totalPages}
-              </span>
+              {/* Page numbers */}
+              {generatePaginationItems(urlPage, totalPages).map((item, index) => (
+                item === 'ellipsis' ? (
+                  <span key={`ellipsis-${index}`} className="px-2 text-slate-400 select-none">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => handlePageChange(item)}
+                    className={`inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg text-sm font-medium transition-colors ${
+                      urlPage === item
+                        ? 'text-white shadow-sm'
+                        : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                    style={urlPage === item ? { backgroundColor: brandColor } : undefined}
+                    aria-current={urlPage === item ? 'page' : undefined}
+                  >
+                    {item}
+                  </button>
+                )
+              ))}
               
               {/* Next */}
               <button
                 onClick={() => handlePageChange(urlPage + 1)}
                 disabled={urlPage === totalPages}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
                 aria-label="Trang sau"
               >
                 <ChevronRight size={18} />
               </button>
-            </div>
+              
+              {/* Last page */}
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                disabled={urlPage === totalPages}
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label="Trang cuối"
+              >
+                <ChevronsRight size={16} />
+              </button>
+            </nav>
+            
+            {/* Page info text */}
+            <p className="text-sm text-slate-500">
+              Trang {urlPage} / {totalPages} ({totalCount} bài viết)
+            </p>
           </div>
         )}
         
