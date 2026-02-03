@@ -1,3 +1,5 @@
+'use client';
+
 import { ModuleConfigPage } from '@/components/modules/ModuleConfigPage';
 import { analyticsModule } from '@/lib/modules/configs/analytics.config';
 import { AnalyticsDataTab } from '@/components/modules/analytics/AnalyticsDataTab';

@@ -1,3 +1,5 @@
+'use client';
+
 import { ModuleConfigPage } from '@/components/modules/ModuleConfigPage';
 import { mediaModule } from '@/lib/modules/configs/media.config';
 import { MediaDataTab } from '@/components/modules/media/MediaDataTab';
