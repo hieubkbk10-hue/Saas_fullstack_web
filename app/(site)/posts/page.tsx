@@ -431,6 +431,7 @@ function PostsContent() {
                   value={postsPerPage}
                   onChange={(event) => handlePageSizeChange(Number(event.target.value))}
                   className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
+                  style={{ borderColor: brandColor }}
                   aria-label="Số bài mỗi trang"
                 >
                   {[12, 20, 24, 48, 100].map((size) => (
@@ -456,6 +457,7 @@ function PostsContent() {
                   onClick={() => handlePageChange(urlPage - 1)}
                   disabled={urlPage === 1}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={urlPage === 1 ? undefined : { color: brandColor, borderColor: brandColor }}
                   aria-label="Trang trước"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -480,9 +482,10 @@ function PostsContent() {
                       onClick={() => handlePageChange(pageNum)}
                       className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
                         isActive
-                          ? 'bg-slate-900 text-white shadow-sm border border-slate-900 font-medium'
+                          ? 'text-white shadow-sm border font-medium'
                           : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                       } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
+                      style={isActive ? { backgroundColor: brandColor, borderColor: brandColor } : undefined}
                       aria-current={isActive ? 'page' : undefined}
                     >
                       {pageNum}
@@ -494,6 +497,7 @@ function PostsContent() {
                   onClick={() => handlePageChange(urlPage + 1)}
                   disabled={urlPage === totalPages}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={urlPage === totalPages ? undefined : { color: brandColor, borderColor: brandColor }}
                   aria-label="Trang sau"
                 >
                   <ChevronRight className="h-4 w-4" />
