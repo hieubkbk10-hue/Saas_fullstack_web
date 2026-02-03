@@ -1,16 +1,32 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronLeft, ChevronRight, Edit, ExternalLink, Loader2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { ChevronDown, Edit, ExternalLink, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
-import { BulkActionBar, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
+import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+
+function generatePaginationItems(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  if (currentPage <= 3) {
+    return [1, 2, 3, 4, 'ellipsis', totalPages];
+  }
+
+  if (currentPage >= totalPages - 2) {
+    return [1, 'ellipsis', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+
+  return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
+}
 
 export default function PostsListPage() {
   return (
@@ -21,26 +37,68 @@ export default function PostsListPage() {
 }
 
 function PostsContent() {
-  const postsData = useQuery(api.posts.listAll, {});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'' | 'Published' | 'Draft' | 'Archived'>('');
+  const [manualSelectedIds, setManualSelectedIds] = useState<Id<"posts">[]>([]);
+  const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(['status', 'views']);
+  const isSelectAllActive = selectionMode === 'all';
+
   const categoriesData = useQuery(api.postCategories.listAll, {});
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'posts' });
   const deletePost = useMutation(api.posts.remove);
-  const seedPostsModule = useMutation(api.seed.seedPostsModule);
-  const clearPostsData = useMutation(api.seed.clearPostsData);
   
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Id<"posts">[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
 
-  const isLoading = postsData === undefined || categoriesData === undefined;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () =>{  clearTimeout(timer); };
+  }, [searchTerm]);
 
   // Lấy setting postsPerPage từ module settings
   const postsPerPage = useMemo(() => {
     const setting = settingsData?.find(s => s.settingKey === 'postsPerPage');
     return (setting?.value as number) || 10;
   }, [settingsData]);
+
+  const resolvedPostsPerPage = pageSizeOverride ?? postsPerPage;
+
+  const offset = (currentPage - 1) * resolvedPostsPerPage;
+
+  const postsData = useQuery(api.posts.listAdminWithOffset, {
+    limit: resolvedPostsPerPage,
+    offset,
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    status: filterStatus || undefined,
+  });
+
+  const totalCountData = useQuery(api.posts.countAdmin, {
+    search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    status: filterStatus || undefined,
+  });
+
+  const selectAllData = useQuery(
+    api.posts.listAdminIds,
+    isSelectAllActive
+      ? {
+          search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+          status: filterStatus || undefined,
+        }
+      : 'skip'
+  );
+
+  const isLoading = postsData === undefined || categoriesData === undefined || totalCountData === undefined;
+
+  useEffect(() => {
+    if (selectAllData?.hasMore) {
+      toast.info('Đã chọn tối đa 5.000 bài viết phù hợp.');
+    }
+  }, [selectAllData?.hasMore]);
 
   // Map category ID to name
   const categoryMap = useMemo(() => {
@@ -50,30 +108,24 @@ function PostsContent() {
   }, [categoriesData]);
 
   const posts = useMemo(() => postsData?.map(post => ({
-      ...post,
-      id: post._id,
-      category: categoryMap[post.categoryId] || 'Không có',
-    })) ?? [], [postsData, categoryMap]);
+    ...post,
+    id: post._id,
+    category: categoryMap[post.categoryId] || 'Không có',
+  })) ?? [], [postsData, categoryMap]);
 
-  const filteredPosts = useMemo(() => {
-    let data = [...posts];
-    if (searchTerm) {
-      data = data.filter(p => p.title.toLowerCase().includes(searchTerm.toLowerCase()));
-    }
-    if (filterStatus) {
-      data = data.filter(p => p.status === filterStatus);
-    }
-    return data;
-  }, [posts, searchTerm, filterStatus]);
+  const sortedPosts = useSortableData(posts, sortConfig);
 
-  const sortedPosts = useSortableData(filteredPosts, sortConfig);
+  const totalCount = totalCountData?.count ?? 0;
+  const totalPages = totalCount ? Math.ceil(totalCount / resolvedPostsPerPage) : 1;
+  const paginatedPosts = sortedPosts;
+  const tableColumnCount = 3 + visibleColumns.length;
+  const selectedIds = isSelectAllActive && selectAllData ? selectAllData.ids : manualSelectedIds;
+  const isSelectingAll = isSelectAllActive && selectAllData === undefined;
 
-  // Pagination
-  const totalPages = Math.ceil(sortedPosts.length / postsPerPage);
-  const paginatedPosts = useMemo(() => {
-    const start = (currentPage - 1) * postsPerPage;
-    return sortedPosts.slice(start, start + postsPerPage);
-  }, [sortedPosts, currentPage, postsPerPage]);
+  const applyManualSelection = (nextIds: Id<"posts">[]) => {
+    setSelectionMode('manual');
+    setManualSelectedIds(nextIds);
+  };
 
   const handleSort = (key: string) => {
     setSortConfig(prev => ({ direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc', key }));
@@ -81,12 +133,31 @@ function PostsContent() {
   };
 
   const handleFilterChange = (value: string) => {
-    setFilterStatus(value);
+    setFilterStatus(value as '' | 'Published' | 'Draft' | 'Archived');
     setCurrentPage(1);
+    applyManualSelection([]);
   };
 
-  const toggleSelectAll = () =>{  setSelectedIds(selectedIds.length === paginatedPosts.length ? [] : paginatedPosts.map(p => p._id)); };
-  const toggleSelectItem = (id: Id<"posts">) =>{  setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]); };
+  const selectedOnPage = paginatedPosts.filter(post => selectedIds.includes(post._id));
+  const isPageSelected = paginatedPosts.length > 0 && selectedOnPage.length === paginatedPosts.length;
+  const isPageIndeterminate = selectedOnPage.length > 0 && selectedOnPage.length < paginatedPosts.length;
+
+  const toggleSelectAll = () => {
+    if (isPageSelected) {
+      const remaining = selectedIds.filter(id => !paginatedPosts.some(post => post._id === id));
+      applyManualSelection(remaining);
+      return;
+    }
+    const next = new Set(selectedIds);
+    paginatedPosts.forEach(post => next.add(post._id));
+    applyManualSelection(Array.from(next));
+  };
+  const toggleSelectItem = (id: Id<"posts">) =>{
+    const next = selectedIds.includes(id)
+      ? selectedIds.filter(i => i !== id)
+      : [...selectedIds, id];
+    applyManualSelection(next);
+  };
 
   const handleDelete = async (id: Id<"posts">) => {
     if (confirm('Xóa bài viết này?')) {
@@ -105,22 +176,10 @@ function PostsContent() {
         for (const id of selectedIds) {
           await deletePost({ id });
         }
-        setSelectedIds([]);
+        applyManualSelection([]);
         toast.success(`Đã xóa ${selectedIds.length} bài viết`);
       } catch {
         toast.error('Có lỗi khi xóa bài viết');
-      }
-    }
-  };
-
-  const handleReseed = async () => {
-    if (confirm('Xóa tất cả bài viết và seed lại dữ liệu mẫu?')) {
-      try {
-        await clearPostsData();
-        await seedPostsModule();
-        toast.success('Đã reset dữ liệu bài viết');
-      } catch {
-        toast.error('Có lỗi khi reset dữ liệu');
       }
     }
   };
@@ -141,38 +200,57 @@ function PostsContent() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Quản lý bài viết</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleReseed} title="Reset dữ liệu mẫu">
-            <RefreshCw size={16}/> Reset
-          </Button>
-          <Link href="/admin/posts/create"><Button className="gap-2"><Plus size={16}/> Thêm mới</Button></Link>
-        </div>
+        <Link href="/admin/posts/create"><Button className="gap-2"><Plus size={16}/> Thêm mới</Button></Link>
       </div>
 
-      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  setSelectedIds([]); }} />
+      <BulkActionBar selectedCount={selectedIds.length} onDelete={handleBulkDelete} onClearSelection={() =>{  applyManualSelection([]); }} />
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap gap-2 text-sm">
+          <Button variant="outline" size="sm" onClick={() =>{  applyManualSelection(paginatedPosts.map(post => post._id)); }}>
+            Chọn trang này
+          </Button>
+          <Button variant="outline" size="sm" onClick={() =>{  setSelectionMode('all'); }} disabled={isSelectingAll}>
+            {isSelectingAll ? 'Đang chọn...' : 'Chọn tất cả kết quả'}
+          </Button>
+        </div>
+      )}
 
       <Card>
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-4">
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
           <div className="relative max-w-xs flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input placeholder="Tìm kiếm bài viết..." className="pl-9" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); }} />
+            <Input placeholder="Tìm kiếm bài viết..." className="pl-9" value={searchTerm} onChange={(e) =>{  setSearchTerm(e.target.value); setCurrentPage(1); applyManualSelection([]); }} />
           </div>
-          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  handleFilterChange(e.target.value); }}>
-            <option value="">Tất cả trạng thái</option>
-            <option value="Published">Đã xuất bản</option>
-            <option value="Draft">Bản nháp</option>
-            <option value="Archived">Lưu trữ</option>
-          </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  handleFilterChange(e.target.value); }}>
+              <option value="">Tất cả trạng thái</option>
+              <option value="Published">Đã xuất bản</option>
+              <option value="Draft">Bản nháp</option>
+              <option value="Archived">Lưu trữ</option>
+            </select>
+            <ColumnToggle
+              columns={[
+                { key: 'thumbnail', label: 'Thumbnail' },
+                { key: 'category', label: 'Danh mục' },
+                { key: 'views', label: 'Lượt xem' },
+                { key: 'status', label: 'Trạng thái' },
+              ]}
+              visibleColumns={visibleColumns}
+              onToggle={(key) => {
+                setVisibleColumns(prev => prev.includes(key) ? prev.filter(col => col !== key) : [...prev, key]);
+              }}
+            />
+          </div>
         </div>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[40px]"><SelectCheckbox checked={selectedIds.length === paginatedPosts.length && paginatedPosts.length > 0} onChange={toggleSelectAll} indeterminate={selectedIds.length > 0 && selectedIds.length < paginatedPosts.length} /></TableHead>
-              <TableHead className="w-[80px]">Thumbnail</TableHead>
+              <TableHead className="w-[40px]"><SelectCheckbox checked={isPageSelected} onChange={toggleSelectAll} indeterminate={isPageIndeterminate} /></TableHead>
+              {visibleColumns.includes('thumbnail') && <TableHead className="w-[80px]">Thumbnail</TableHead>}
               <SortableHeader label="Tiêu đề" sortKey="title" sortConfig={sortConfig} onSort={handleSort} />
-              <SortableHeader label="Danh mục" sortKey="category" sortConfig={sortConfig} onSort={handleSort} />
-              <SortableHeader label="Lượt xem" sortKey="views" sortConfig={sortConfig} onSort={handleSort} />
-              <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
+              {visibleColumns.includes('category') && <SortableHeader label="Danh mục" sortKey="category" sortConfig={sortConfig} onSort={handleSort} />}
+              {visibleColumns.includes('views') && <SortableHeader label="Lượt xem" sortKey="views" sortConfig={sortConfig} onSort={handleSort} />}
+              {visibleColumns.includes('status') && <SortableHeader label="Trạng thái" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />}
               <TableHead className="text-right">Hành động</TableHead>
             </TableRow>
           </TableHeader>
@@ -180,21 +258,25 @@ function PostsContent() {
             {paginatedPosts.map(post => (
               <TableRow key={post._id} className={selectedIds.includes(post._id) ? 'bg-blue-500/5' : ''}>
                 <TableCell><SelectCheckbox checked={selectedIds.includes(post._id)} onChange={() =>{  toggleSelectItem(post._id); }} /></TableCell>
-                <TableCell>
-                  {post.thumbnail ? (
-                    <Image src={post.thumbnail} width={48} height={32} className="w-12 h-8 object-cover rounded" alt={post.title} />
-                  ) : (
-                    <div className="w-12 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-slate-400">No img</div>
-                  )}
-                </TableCell>
+                {visibleColumns.includes('thumbnail') && (
+                  <TableCell>
+                    {post.thumbnail ? (
+                      <Image src={post.thumbnail} width={48} height={32} className="w-12 h-8 object-cover rounded" alt={post.title} />
+                    ) : (
+                      <div className="w-12 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center text-xs text-slate-400">No img</div>
+                    )}
+                  </TableCell>
+                )}
                 <TableCell className="font-medium max-w-[300px] truncate">{post.title}</TableCell>
-                <TableCell>{post.category}</TableCell>
-                <TableCell className="text-slate-500">{post.views.toLocaleString()}</TableCell>
-                <TableCell>
-                  <Badge variant={post.status === 'Published' ? 'success' : (post.status === 'Draft' ? 'secondary' : 'warning')}>
-                    {post.status === 'Published' ? 'Đã xuất bản' : (post.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ')}
-                  </Badge>
-                </TableCell>
+                {visibleColumns.includes('category') && <TableCell>{post.category}</TableCell>}
+                {visibleColumns.includes('views') && <TableCell className="text-slate-500">{post.views.toLocaleString()}</TableCell>}
+                {visibleColumns.includes('status') && (
+                  <TableCell>
+                    <Badge variant={post.status === 'Published' ? 'success' : (post.status === 'Draft' ? 'secondary' : 'warning')}>
+                      {post.status === 'Published' ? 'Đã xuất bản' : (post.status === 'Draft' ? 'Bản nháp' : 'Lưu trữ')}
+                    </Badge>
+                  </TableCell>
+                )}
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem bài viết" onClick={() =>{  openFrontend(post.slug); }}><ExternalLink size={16}/></Button>
@@ -206,41 +288,93 @@ function PostsContent() {
             ))}
             {paginatedPosts.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={tableColumnCount} className="text-center py-8 text-slate-500">
                   {searchTerm || filterStatus ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có bài viết nào'}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-        {sortedPosts.length > 0 && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <span className="text-sm text-slate-500">
-              Hiển thị {(currentPage - 1) * postsPerPage + 1} - {Math.min(currentPage * postsPerPage, sortedPosts.length)} / {sortedPosts.length} bài viết
-            </span>
-            {totalPages > 1 && (
+        {totalCount > 0 && (
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="order-2 flex w-full items-center justify-between text-sm text-slate-500 sm:order-1 sm:w-auto sm:justify-start sm:gap-6">
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === 1}
-                  onClick={() =>{  setCurrentPage(p => p - 1); }}
+                <span className="text-slate-600">Hiển thị</span>
+                <select
+                  value={resolvedPostsPerPage}
+                  onChange={(event) =>{  setPageSizeOverride(Number(event.target.value)); setCurrentPage(1); applyManualSelection([]); }}
+                  className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
+                  aria-label="Số bài mỗi trang"
                 >
-                  <ChevronLeft size={16} />
-                </Button>
-                <span className="text-sm text-slate-600 dark:text-slate-400">
-                  Trang {currentPage} / {totalPages}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={currentPage === totalPages}
-                  onClick={() =>{  setCurrentPage(p => p + 1); }}
-                >
-                  <ChevronRight size={16} />
-                </Button>
+                  {[10, 20, 30, 50, 100].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <span>bài/trang</span>
               </div>
-            )}
+
+              <div className="text-right sm:text-left">
+                <span className="font-medium text-slate-900">
+                  {totalCount ? ((currentPage - 1) * resolvedPostsPerPage) + 1 : 0}–{Math.min(currentPage * resolvedPostsPerPage, totalCount)}
+                </span>
+                <span className="mx-1 text-slate-300">/</span>
+                <span className="font-medium text-slate-900">
+                  {totalCount}{totalCountData?.hasMore ? '+' : ''}
+                </span>
+                <span className="ml-1 text-slate-500">bài viết</span>
+              </div>
+            </div>
+
+            <div className="order-1 flex w-full justify-center sm:order-2 sm:w-auto sm:justify-end">
+              <nav className="flex items-center space-x-1 sm:space-x-2" aria-label="Phân trang">
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.max(1, prev - 1)); }}
+                  disabled={currentPage === 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang trước"
+                >
+                  <ChevronDown className="h-4 w-4 rotate-90" />
+                </button>
+
+                {generatePaginationItems(currentPage, totalPages).map((item, index) => {
+                  if (item === 'ellipsis') {
+                    return (
+                      <div key={`ellipsis-${index}`} className="flex h-8 w-8 items-center justify-center text-slate-400">
+                        …
+                      </div>
+                    );
+                  }
+
+                  const pageNum = item as number;
+                  const isActive = pageNum === currentPage;
+                  const isMobileHidden = !isActive && pageNum !== 1 && pageNum !== totalPages;
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() =>{  setCurrentPage(pageNum); }}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-sm transition-all duration-200 ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-sm border font-medium'
+                          : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      } ${isMobileHidden ? 'hidden sm:inline-flex' : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() =>{  setCurrentPage((prev) => Math.min(totalPages, prev + 1)); }}
+                  disabled={currentPage >= totalPages}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  aria-label="Trang sau"
+                >
+                  <ChevronDown className="h-4 w-4 -rotate-90" />
+                </button>
+              </nav>
+            </div>
           </div>
         )}
       </Card>

@@ -44,6 +44,121 @@ export const listAll = query({
   returns: v.array(postDoc),
 });
 
+export const listAdminWithOffset = query({
+  args: {
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+    search: v.optional(v.string()),
+    status: v.optional(contentStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 10, 100);
+    const offset = args.offset ?? 0;
+    const fetchLimit = Math.min(offset + limit + 20, 500);
+    let posts: Doc<"posts">[] = [];
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      const searchQuery = ctx.db
+        .query("posts")
+        .withSearchIndex("search_title", (q) => {
+          const builder = q.search("title", searchLower);
+          return args.status ? builder.eq("status", args.status) : builder;
+        });
+      posts = await searchQuery.take(fetchLimit);
+    } else if (args.status) {
+      posts = await ctx.db
+        .query("posts")
+        .withIndex("by_status_publishedAt", (q) => q.eq("status", args.status!))
+        .order("desc")
+        .take(fetchLimit);
+    } else {
+      posts = await ctx.db
+        .query("posts")
+        .order("desc")
+        .take(fetchLimit);
+    }
+
+    if (args.search?.trim() && posts.length > 0) {
+      const searchLower = args.search.toLowerCase().trim();
+      posts = posts.filter((post) => post.title.toLowerCase().includes(searchLower));
+    }
+
+    return posts.slice(offset, offset + limit);
+  },
+  returns: v.array(postDoc),
+});
+
+export const countAdmin = query({
+  args: {
+    search: v.optional(v.string()),
+    status: v.optional(contentStatus),
+  },
+  handler: async (ctx, args) => {
+    const limit = 5000;
+    let posts: Doc<"posts">[] = [];
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      const searchQuery = ctx.db
+        .query("posts")
+        .withSearchIndex("search_title", (q) => {
+          const builder = q.search("title", searchLower);
+          return args.status ? builder.eq("status", args.status) : builder;
+        });
+      posts = await searchQuery.take(limit + 1);
+    } else if (args.status) {
+      posts = await ctx.db
+        .query("posts")
+        .withIndex("by_status_publishedAt", (q) => q.eq("status", args.status!))
+        .take(limit + 1);
+    } else {
+      posts = await ctx.db
+        .query("posts")
+        .take(limit + 1);
+    }
+
+    return { count: Math.min(posts.length, limit), hasMore: posts.length > limit };
+  },
+  returns: v.object({ count: v.number(), hasMore: v.boolean() }),
+});
+
+export const listAdminIds = query({
+  args: {
+    search: v.optional(v.string()),
+    status: v.optional(contentStatus),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 5000, 5000);
+    let posts: Doc<"posts">[] = [];
+
+    if (args.search?.trim()) {
+      const searchLower = args.search.toLowerCase().trim();
+      const searchQuery = ctx.db
+        .query("posts")
+        .withSearchIndex("search_title", (q) => {
+          const builder = q.search("title", searchLower);
+          return args.status ? builder.eq("status", args.status) : builder;
+        });
+      posts = await searchQuery.take(limit + 1);
+    } else if (args.status) {
+      posts = await ctx.db
+        .query("posts")
+        .withIndex("by_status_publishedAt", (q) => q.eq("status", args.status!))
+        .take(limit + 1);
+    } else {
+      posts = await ctx.db
+        .query("posts")
+        .take(limit + 1);
+    }
+
+    const hasMore = posts.length > limit;
+    return { ids: posts.slice(0, limit).map((post) => post._id), hasMore };
+  },
+  returns: v.object({ ids: v.array(v.id("posts")), hasMore: v.boolean() }),
+});
+
 // Efficient count using take() instead of collect()
 export const count = query({
   args: { status: v.optional(contentStatus) },

@@ -330,7 +330,8 @@ export default defineSchema({
     .index("by_category_status", ["categoryId", "status"])
     .index("by_author_name_status", ["authorName", "status"])
     .index("by_status_publishedAt", ["status", "publishedAt"])
-    .index("by_status_views", ["status", "views"]),
+    .index("by_status_views", ["status", "views"])
+    .searchIndex("search_title", { filterFields: ["status", "categoryId"], searchField: "title" }),
 
   // 13. comments - Bình luận (Polymorphic) - SVC-011: Added "service" targetType
   comments: defineTable({
