@@ -212,10 +212,15 @@ function PostsContent() {
   );
   
   // Use offset-based query for pagination mode (proper server-side pagination)
+  const useCursorPagination =
+    listConfig.paginationType === 'pagination' &&
+    !debouncedSearchQuery?.trim() &&
+    sortBy !== 'title';
+
   const offset = (urlPage - 1) * postsPerPage;
   const paginatedPosts = useQuery(
     api.posts.listPublishedWithOffset,
-    listConfig.paginationType === 'pagination' 
+    listConfig.paginationType === 'pagination' && !useCursorPagination
       ? {
           categoryId: activeCategory ?? undefined,
           limit: postsPerPage,
@@ -227,11 +232,17 @@ function PostsContent() {
   );
   
   const posts = listConfig.paginationType === 'pagination'
-    ? (paginatedPosts ?? [])
+    ? (useCursorPagination
+      ? infiniteResults.slice(offset, offset + postsPerPage)
+      : (paginatedPosts ?? []))
     : infiniteResults;
   
   // Loading state for pagination mode  
-  const isLoadingPosts = listConfig.paginationType === 'pagination' && paginatedPosts === undefined;
+  const isLoadingPosts = listConfig.paginationType === 'pagination' && (
+    useCursorPagination
+      ? infiniteStatus === 'LoadingFirstPage'
+      : paginatedPosts === undefined
+  );
   
   const totalCount = useQuery(api.posts.countPublished, {
     categoryId: activeCategory ?? undefined,
@@ -244,6 +255,15 @@ function PostsContent() {
       loadMore(postsPerPage);
     }
   }, [inView, infiniteStatus, loadMore, postsPerPage, listConfig.paginationType]);
+
+  // Ensure enough items are loaded for current page (cursor pagination mode)
+  useEffect(() => {
+    if (!useCursorPagination) return;
+    if (infiniteStatus !== 'CanLoadMore') return;
+    const requiredCount = urlPage * postsPerPage;
+    if (infiniteResults.length >= requiredCount) return;
+    loadMore(requiredCount - infiniteResults.length);
+  }, [useCursorPagination, infiniteStatus, infiniteResults.length, urlPage, postsPerPage, loadMore]);
   
   // Calculate total pages
   const totalPages = useMemo(() => {
