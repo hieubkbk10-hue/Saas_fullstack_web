@@ -262,6 +262,47 @@ export const countPublished = query({
   returns: v.number(),
 });
 
+// Paginated published posts for usePaginatedQuery hook (infinite scroll)
+export const listPublishedPaginated = query({
+  args: { 
+    paginationOpts: paginationOptsValidator,
+    categoryId: v.optional(v.id("postCategories")),
+    sortBy: v.optional(v.union(
+      v.literal("newest"),
+      v.literal("oldest"),
+      v.literal("popular"),
+    )),
+  },
+  handler: async (ctx, args) => {
+    const sortBy = args.sortBy ?? "newest";
+    
+    if (args.categoryId) {
+      return ctx.db
+        .query("posts")
+        .withIndex("by_category_status", (q) => 
+          q.eq("categoryId", args.categoryId!).eq("status", "Published")
+        )
+        .order("desc")
+        .paginate(args.paginationOpts);
+    }
+    
+    if (sortBy === "popular") {
+      return ctx.db
+        .query("posts")
+        .withIndex("by_status_views", (q) => q.eq("status", "Published"))
+        .order("desc")
+        .paginate(args.paginationOpts);
+    }
+    
+    return ctx.db
+      .query("posts")
+      .withIndex("by_status_publishedAt", (q) => q.eq("status", "Published"))
+      .order(sortBy === "oldest" ? "asc" : "desc")
+      .paginate(args.paginationOpts);
+  },
+  returns: paginatedPosts,
+});
+
 // Search published posts with cursor-based pagination
 export const searchPublishedPaginated = query({
   args: {

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'convex/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { usePaginatedQuery, useQuery } from 'convex/react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useInView } from 'react-intersection-observer';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { usePostsListConfig } from '@/lib/experiences';
@@ -80,23 +81,26 @@ function PostsContent() {
   const brandColor = useBrandColor();
   const layout = usePostsLayout();
   const enabledFields = useEnabledPostFields();
-  const listConfig = usePostsListConfig(); // New: Read experience config
+  const listConfig = usePostsListConfig();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   
-  // Filter states
+  // Read page from URL for pagination mode
+  const urlPage = Number(searchParams.get('page')) || 1;
+  
+  // Filter states (client-side for search)
   const [selectedCategory, setSelectedCategory] = useState<Id<"postCategories"> | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-  
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const [allPosts, setAllPosts] = useState<typeof posts>([]);
-  const [cursors, setCursors] = useState<(string | null)[]>([null]);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
   const postsPerPage = listConfig.postsPerPage ?? 12;
+  
+  // Intersection observer for infinite scroll
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0.1,
+    rootMargin: '100px',
+  });
 
   // Debounce search query
   useEffect(() => {
@@ -118,80 +122,60 @@ function PostsContent() {
 
   const activeCategory = selectedCategory ?? categoryFromUrl;
   
-  // Use paginated query
-  const currentCursor = cursors[currentPage - 1] ?? null;
-  const postsResult = useQuery(api.posts.searchPublishedPaginated, {
-    categoryId: activeCategory ?? undefined,
-    cursor: currentCursor ?? undefined,
-    limit: postsPerPage,
-    search: debouncedSearchQuery || undefined,
-    sortBy,
-  });
-  const posts = postsResult?.posts ?? [];
+  // Map sortBy to the limited options supported by listPublishedPaginated
+  const paginatedSortBy = sortBy === 'popular' ? 'popular' : (sortBy === 'oldest' ? 'oldest' : 'newest');
+  
+  // Use usePaginatedQuery for infinite scroll mode (reactive, accumulates results)
+  const {
+    results: infiniteResults,
+    status: infiniteStatus,
+    loadMore,
+  } = usePaginatedQuery(
+    api.posts.listPublishedPaginated,
+    { 
+      categoryId: activeCategory ?? undefined,
+      sortBy: paginatedSortBy,
+    },
+    { initialNumItems: postsPerPage }
+  );
+  
+  // Use regular query for pagination mode (page-based)
+  const paginatedPosts = useQuery(
+    api.posts.searchPublished,
+    listConfig.paginationType === 'pagination' 
+      ? {
+          categoryId: activeCategory ?? undefined,
+          limit: postsPerPage,
+          search: debouncedSearchQuery || undefined,
+          sortBy,
+        }
+      : 'skip'
+  );
+  
+  // Calculate offset-based posts for pagination mode
+  const allPaginatedPosts = paginatedPosts ?? [];
+  const startIndex = (urlPage - 1) * postsPerPage;
+  const posts = listConfig.paginationType === 'pagination'
+    ? allPaginatedPosts.slice(startIndex, startIndex + postsPerPage)
+    : infiniteResults;
   
   const totalCount = useQuery(api.posts.countPublished, {
     categoryId: activeCategory ?? undefined,
   });
   const featuredPosts = useQuery(api.posts.listFeatured, { limit: 5 });
   
-  // Reset pagination when filters change
+  // Load more when scrolling to bottom (infinite scroll mode)
   useEffect(() => {
-    setCurrentPage(1);
-    setCursors([null]);
-    setAllPosts([]);
-  }, [activeCategory, debouncedSearchQuery, sortBy]);
-  
-  // Update cursors when we get new data
-  useEffect(() => {
-    if (postsResult?.nextCursor && currentPage === cursors.length) {
-      setCursors(prev => [...prev, postsResult.nextCursor]);
+    if (listConfig.paginationType === 'infiniteScroll' && inView && infiniteStatus === 'CanLoadMore') {
+      loadMore(postsPerPage);
     }
-  }, [postsResult?.nextCursor, currentPage, cursors.length]);
-  
-  // Accumulate posts for infinite scroll
-  useEffect(() => {
-    if (listConfig.paginationType === 'infiniteScroll' && posts.length > 0) {
-      setAllPosts(prev => {
-        if (currentPage === 1) return posts;
-        const existingIds = new Set(prev.map(p => p._id));
-        const newPosts = posts.filter(p => !existingIds.has(p._id));
-        return [...prev, ...newPosts];
-      });
-      setIsLoadingMore(false);
-    }
-  }, [posts, currentPage, listConfig.paginationType]);
-  
-  // Infinite scroll observer
-  useEffect(() => {
-    if (listConfig.paginationType !== 'infiniteScroll') return;
-    
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isLoadingMore && !postsResult?.isDone) {
-          setIsLoadingMore(true);
-          setCurrentPage(prev => prev + 1);
-        }
-      },
-      { threshold: 0.1 }
-    );
-    
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current);
-    }
-    
-    return () => observer.disconnect();
-  }, [listConfig.paginationType, isLoadingMore, postsResult?.isDone]);
+  }, [inView, infiniteStatus, loadMore, postsPerPage, listConfig.paginationType]);
   
   // Calculate total pages
   const totalPages = useMemo(() => {
     if (!totalCount) return 1;
     return Math.ceil(totalCount / postsPerPage);
   }, [totalCount, postsPerPage]);
-  
-  // Get display posts based on pagination type
-  const displayPosts = listConfig.paginationType === 'infiniteScroll' 
-    ? (allPosts.length > 0 ? allPosts : posts)
-    : posts;
 
   // Build category map for O(1) lookup
   const categoryMap = useMemo(() => {
@@ -226,10 +210,26 @@ function PostsContent() {
     setSortBy(sort);
   }, []);
   
+  // Update URL when page changes (pagination mode)
   const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
+    const params = new URLSearchParams(searchParams.toString());
+    if (page === 1) {
+      params.delete('page');
+    } else {
+      params.set('page', page.toString());
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+  }, [searchParams, pathname, router]);
+  
+  // Reset page to 1 when search/filter changes
+  useEffect(() => {
+    if (listConfig.paginationType === 'pagination' && urlPage !== 1) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete('page');
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  }, [debouncedSearchQuery, sortBy, activeCategory]);
 
   // Initial loading state only (not on search/filter changes)
   const isInitialLoading = categories === undefined;
@@ -272,7 +272,7 @@ function PostsContent() {
 
             {/* Posts */}
             <FullWidthLayout
-              posts={displayPosts}
+              posts={posts}
               brandColor={brandColor}
               categoryMap={categoryMap}
               enabledFields={enabledFields}
@@ -282,7 +282,7 @@ function PostsContent() {
 
         {layout === 'sidebar' && (
           <SidebarLayout
-            posts={displayPosts}
+            posts={posts}
             brandColor={brandColor}
             categoryMap={categoryMap}
             categories={categories}
@@ -300,7 +300,7 @@ function PostsContent() {
 
         {layout === 'magazine' && (
           <MagazineLayout
-            posts={displayPosts}
+            posts={posts}
             brandColor={brandColor}
             categoryMap={categoryMap}
             categories={categories}
@@ -323,8 +323,8 @@ function PostsContent() {
             <nav className="inline-flex items-center gap-1">
               {/* Previous button */}
               <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
+                onClick={() => handlePageChange(urlPage - 1)}
+                disabled={urlPage === 1}
                 className="px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
               >
                 &larr;
@@ -335,19 +335,19 @@ function PostsContent() {
                 let pageNum: number;
                 if (totalPages <= 5) {
                   pageNum = i + 1;
-                } else if (currentPage <= 3) {
+                } else if (urlPage <= 3) {
                   pageNum = i + 1;
-                } else if (currentPage >= totalPages - 2) {
+                } else if (urlPage >= totalPages - 2) {
                   pageNum = totalPages - 4 + i;
                 } else {
-                  pageNum = currentPage - 2 + i;
+                  pageNum = urlPage - 2 + i;
                 }
                 return (
                   <button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
                     className="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-                    style={currentPage === pageNum 
+                    style={urlPage === pageNum 
                       ? { backgroundColor: brandColor, color: 'white' }
                       : undefined
                     }
@@ -358,7 +358,7 @@ function PostsContent() {
               })}
               
               {/* Ellipsis and last page */}
-              {totalPages > 5 && currentPage < totalPages - 2 && (
+              {totalPages > 5 && urlPage < totalPages - 2 && (
                 <>
                   <span className="px-2 text-slate-400">...</span>
                   <button
@@ -372,8 +372,8 @@ function PostsContent() {
               
               {/* Next button */}
               <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(urlPage + 1)}
+                disabled={urlPage === totalPages}
                 className="px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
               >
                 &rarr;
@@ -383,24 +383,24 @@ function PostsContent() {
         )}
         
         {/* Infinite scroll trigger */}
-        {listConfig.paginationType === 'infiniteScroll' && !postsResult?.isDone && (
-          <div ref={loadMoreRef} className="text-center mt-6 py-4">
-            {isLoadingMore ? (
+        {listConfig.paginationType === 'infiniteScroll' && infiniteStatus !== 'Exhausted' && (
+          <div ref={loadMoreRef} className="text-center mt-6 py-8">
+            {infiniteStatus === 'LoadingMore' ? (
               <div className="flex justify-center gap-1">
                 <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
                 <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
                 <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
               </div>
-            ) : (
+            ) : infiniteStatus === 'CanLoadMore' ? (
               <p className="text-sm text-slate-400">Cuộn để xem thêm...</p>
-            )}
+            ) : null}
           </div>
         )}
         
         {/* Show "All loaded" message for infinite scroll */}
-        {listConfig.paginationType === 'infiniteScroll' && postsResult?.isDone && displayPosts.length > 0 && (
+        {listConfig.paginationType === 'infiniteScroll' && infiniteStatus === 'Exhausted' && posts.length > 0 && (
           <div className="text-center mt-6">
-            <p className="text-sm text-slate-400">Đã hiển thị tất cả {displayPosts.length} bài viết</p>
+            <p className="text-sm text-slate-400">Đã hiển thị tất cả {posts.length} bài viết</p>
           </div>
         )}
       </div>
