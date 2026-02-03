@@ -494,7 +494,7 @@ function ProductsContent() {
                 <select
                   value={selectedCategory ?? ''}
                   onChange={(e) =>{  handleCategoryChange(e.target.value ? e.target.value as Id<"productCategories"> : null); }}
-                  className="h-10 pl-3 pr-8 rounded-lg border border-slate-200 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none min-w-[180px]"
+                  className="h-10 w-[220px] pl-3 pr-8 rounded-lg border border-slate-200 text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none appearance-none truncate"
                 >
                   <option value="">Tất cả danh mục</option>
                   {categories.map((cat) => (
