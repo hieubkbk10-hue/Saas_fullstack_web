@@ -111,7 +111,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     await clearCartMutation({ cartId: cart._id });
-  }, [cart?._id, clearCartMutation, ensureAuthenticated]);
+  }, [cart, clearCartMutation, ensureAuthenticated]);
 
   const updateNote = useCallback(async (note?: string) => {
     if (!ensureAuthenticated()) {
@@ -121,7 +121,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     await updateNoteMutation({ id: cart._id, note });
-  }, [cart?._id, ensureAuthenticated, updateNoteMutation]);
+  }, [cart, ensureAuthenticated, updateNoteMutation]);
 
   const openDrawer = useCallback(() => setIsDrawerOpen(true), []);
   const closeDrawer = useCallback(() => setIsDrawerOpen(false), []);

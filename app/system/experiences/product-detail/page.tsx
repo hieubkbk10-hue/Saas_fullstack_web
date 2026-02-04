@@ -42,7 +42,7 @@ type ClassicLayoutConfig = {
   showRating: boolean;
   showWishlist: boolean;
   showAddToCart: boolean;
-  showHighlights: boolean;
+  showClassicHighlights: boolean;
 };
 
 type ModernLayoutConfig = {
@@ -72,7 +72,7 @@ const LAYOUT_STYLES: LayoutOption<ProductsDetailStyle>[] = [
 const DEFAULT_CONFIG: ProductDetailExperienceConfig = {
   layoutStyle: 'classic',
   layouts: {
-    classic: { showRating: true, showWishlist: true, showAddToCart: true, showHighlights: true },
+    classic: { showRating: true, showWishlist: true, showAddToCart: true, showClassicHighlights: true },
     modern: { showRating: true, showWishlist: true, showAddToCart: true, heroStyle: 'full' },
     minimal: { showRating: true, showWishlist: true, showAddToCart: true, contentWidth: 'medium' },
   },
@@ -109,7 +109,7 @@ export default function ProductDetailExperiencePage() {
     return {
       layoutStyle: raw?.layoutStyle ?? legacyStyle ?? DEFAULT_CONFIG.layoutStyle,
       layouts: {
-        classic: { ...DEFAULT_CONFIG.layouts.classic, showHighlights: legacyHighlights, ...raw?.layouts?.classic },
+        classic: { ...DEFAULT_CONFIG.layouts.classic, showClassicHighlights: legacyHighlights, ...raw?.layouts?.classic },
         modern: { ...DEFAULT_CONFIG.layouts.modern, ...raw?.layouts?.modern },
         minimal: { ...DEFAULT_CONFIG.layouts.minimal, ...raw?.layouts?.minimal },
       },
@@ -142,9 +142,9 @@ export default function ProductDetailExperiencePage() {
   const additionalSettings = useMemo(() => {
     return [
       { group: 'products', key: LEGACY_DETAIL_STYLE_KEY, value: config.layoutStyle },
-      { group: 'products', key: LEGACY_HIGHLIGHTS_KEY, value: config.layouts.classic.showHighlights },
+      { group: 'products', key: LEGACY_HIGHLIGHTS_KEY, value: config.layouts.classic.showClassicHighlights },
     ];
-  }, [config.layoutStyle, config.layouts.classic.showHighlights]);
+  }, [config.layoutStyle, config.layouts.classic.showClassicHighlights]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -170,7 +170,7 @@ export default function ProductDetailExperiencePage() {
       showAddToCart: currentLayoutConfig.showAddToCart,
       showBuyNow: config.showBuyNow,
       showClassicHighlights: config.layoutStyle === 'classic' 
-        ? (currentLayoutConfig as ClassicLayoutConfig).showHighlights 
+        ? (currentLayoutConfig as ClassicLayoutConfig).showClassicHighlights 
         : false,
       device: previewDevice,
       brandColor: '#06b6d4',
@@ -186,8 +186,8 @@ export default function ProductDetailExperiencePage() {
         <ToggleRow
           label="Highlights"
           description="Hiện tính năng nổi bật"
-          checked={layoutConfig.showHighlights}
-          onChange={(v) => updateLayoutConfig('showHighlights' as keyof typeof currentLayoutConfig, v as never)}
+          checked={layoutConfig.showClassicHighlights}
+          onChange={(v) => updateLayoutConfig('showClassicHighlights' as keyof typeof currentLayoutConfig, v as never)}
           accentColor="#06b6d4"
         />
       );

@@ -20,19 +20,14 @@ export function CartDrawer() {
   const { layoutStyle, showExpiry, showNote } = useCartConfig();
   const { isAuthenticated, openLoginModal } = useCustomerAuth();
 
+  const expiresAt = cart?.expiresAt ?? null;
   const expiresInText = useMemo(() => {
-    if (!cart?.expiresAt) {
+    if (!expiresAt) {
       return null;
     }
-    const diff = cart.expiresAt - Date.now();
-    if (diff <= 0) {
-      return 'Giỏ hàng đã hết hạn';
-    }
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const remainMinutes = minutes % 60;
-    return hours > 0 ? `Giỏ hàng hết hạn sau ${hours}h ${remainMinutes}m` : `Giỏ hàng hết hạn sau ${remainMinutes}m`;
-  }, [cart?.expiresAt]);
+    const expiry = new Date(expiresAt);
+    return `Giỏ hàng hết hạn lúc ${expiry.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+  }, [expiresAt]);
 
   if (layoutStyle !== 'drawer' || !isDrawerOpen) {
     return null;

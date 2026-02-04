@@ -14,6 +14,30 @@ import { ArrowLeft, Award, BadgeCheck, Bell, Bolt, Calendar, Camera, Check, Chec
 import type { Id } from '@/convex/_generated/dataModel';
 
 type ProductDetailStyle = 'classic' | 'modern' | 'minimal';
+type ModernHeroStyle = 'full' | 'split' | 'minimal';
+type MinimalContentWidth = 'narrow' | 'medium' | 'wide';
+
+type ClassicLayoutConfig = {
+  showRating: boolean;
+  showWishlist: boolean;
+  showAddToCart: boolean;
+  showClassicHighlights: boolean;
+};
+
+type ModernLayoutConfig = {
+  showRating: boolean;
+  showWishlist: boolean;
+  showAddToCart: boolean;
+  heroStyle: ModernHeroStyle;
+};
+
+type MinimalLayoutConfig = {
+  showRating: boolean;
+  showWishlist: boolean;
+  showAddToCart: boolean;
+  contentWidth: MinimalContentWidth;
+};
+
 type ProductDetailExperienceConfig = {
   layoutStyle: ProductDetailStyle;
   showAddToCart: boolean;
@@ -21,6 +45,8 @@ type ProductDetailExperienceConfig = {
   showRating: boolean;
   showWishlist: boolean;
   showBuyNow: boolean;
+  heroStyle: ModernHeroStyle;
+  contentWidth: MinimalContentWidth;
 };
 type ClassicHighlightIcon =
   | 'Award'
@@ -88,15 +114,40 @@ function useProductDetailExperienceConfig(): ProductDetailExperienceConfig {
   const cartAvailable = (cartModule?.enabled ?? false) && (ordersModule?.enabled ?? false);
 
   return useMemo(() => {
-    const raw = experienceSetting?.value as Partial<ProductDetailExperienceConfig> | undefined;
-    const configShowAddToCart = raw?.showAddToCart ?? true;
+    const raw = experienceSetting?.value as Partial<{
+      layoutStyle: ProductDetailStyle;
+      layouts: Partial<Record<ProductDetailStyle, Partial<ClassicLayoutConfig & ModernLayoutConfig & MinimalLayoutConfig>>>;
+      showAddToCart: boolean;
+      showClassicHighlights: boolean;
+      showHighlights: boolean;
+      showRating: boolean;
+      showWishlist: boolean;
+      showBuyNow: boolean;
+      heroStyle: ModernHeroStyle;
+      contentWidth: MinimalContentWidth;
+    }> | undefined;
+    const layoutStyle = raw?.layoutStyle ?? legacyStyle;
+    const layoutConfig = raw?.layouts?.[layoutStyle];
+    const configShowAddToCart = layoutConfig?.showAddToCart ?? raw?.showAddToCart ?? true;
+    const layoutHighlights = layoutStyle === 'classic'
+      ? (layoutConfig as Partial<ClassicLayoutConfig>)?.showClassicHighlights
+      : undefined;
+    const legacyLayoutHighlights = layoutStyle === 'classic'
+      ? (layoutConfig as Partial<Record<'showHighlights', boolean>>)?.showHighlights
+      : undefined;
     return {
-      layoutStyle: raw?.layoutStyle ?? legacyStyle,
+      layoutStyle,
       showAddToCart: configShowAddToCart && cartAvailable,
-      showClassicHighlights: raw?.showClassicHighlights ?? legacyHighlightsEnabled,
-      showRating: raw?.showRating ?? true,
-      showWishlist: raw?.showWishlist ?? true,
+      showClassicHighlights: layoutHighlights ?? legacyLayoutHighlights ?? raw?.showClassicHighlights ?? raw?.showHighlights ?? legacyHighlightsEnabled,
+      showRating: layoutConfig?.showRating ?? raw?.showRating ?? true,
+      showWishlist: layoutConfig?.showWishlist ?? raw?.showWishlist ?? true,
       showBuyNow: raw?.showBuyNow ?? true,
+      heroStyle: layoutStyle === 'modern'
+        ? (layoutConfig as Partial<ModernLayoutConfig>)?.heroStyle ?? raw?.heroStyle ?? 'full'
+        : 'full',
+      contentWidth: layoutStyle === 'minimal'
+        ? (layoutConfig as Partial<MinimalLayoutConfig>)?.contentWidth ?? raw?.contentWidth ?? 'medium'
+        : 'medium',
     };
   }, [experienceSetting?.value, legacyHighlightsEnabled, legacyStyle, cartAvailable]);
 }
@@ -301,6 +352,7 @@ export default function ProductDetailPage({ params }: PageProps) {
           showRating={experienceConfig.showRating}
           showWishlist={canUseWishlist}
           showBuyNow={canBuyNow}
+          heroStyle={experienceConfig.heroStyle}
           isWishlisted={isWishlisted}
           onToggleWishlist={handleWishlistToggle}
           onAddToCart={handleAddToCart}
@@ -318,6 +370,7 @@ export default function ProductDetailPage({ params }: PageProps) {
           showRating={experienceConfig.showRating}
           showWishlist={canUseWishlist}
           showBuyNow={canBuyNow}
+          contentWidth={experienceConfig.contentWidth}
           isWishlisted={isWishlisted}
           onToggleWishlist={handleWishlistToggle}
           onAddToCart={handleAddToCart}
@@ -590,7 +643,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
 // ====================================================================================
 // STYLE 2: MODERN - Landing page style with hero
 // ====================================================================================
-function ModernStyle({ product, brandColor, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow }: StyleProps & ExperienceBlocksProps) {
+function ModernStyle({ product, brandColor, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, heroStyle, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow }: StyleProps & ExperienceBlocksProps & { heroStyle: ModernHeroStyle }) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -602,6 +655,22 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
   const images = product.images?.length ? product.images : (product.image ? [product.image] : []);
   const discountPercent = product.salePrice ? Math.round((1 - product.salePrice / product.price) * 100) : 0;
   const inStock = !showStock || product.stock > 0;
+
+  const heroContainerClass = heroStyle === 'full'
+    ? 'border border-slate-100 rounded-2xl bg-slate-50'
+    : heroStyle === 'split'
+      ? 'border border-slate-200 rounded-2xl bg-white'
+      : 'border border-slate-200 rounded-xl bg-white';
+
+  const heroImageClass = heroStyle === 'minimal'
+    ? 'max-w-full max-h-full object-contain'
+    : 'max-w-full max-h-full object-contain';
+
+  const heroImageWrapperClass = heroStyle === 'split'
+    ? 'aspect-square flex items-center justify-center p-6'
+    : heroStyle === 'minimal'
+      ? 'aspect-square flex items-center justify-center p-3'
+      : 'aspect-square flex items-center justify-center p-6';
 
   return (
     <div className="min-h-screen bg-white">
@@ -630,26 +699,57 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
       <main className="max-w-6xl mx-auto px-4 py-8 lg:py-12">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           <div className="space-y-4">
-            <div className="overflow-hidden border border-slate-100 rounded-2xl bg-slate-50">
-              <div className="aspect-square flex items-center justify-center p-6">
-                {images[selectedImageIndex] ? (
-                  <Image
-                    src={images[selectedImageIndex]}
-                    alt={product.name}
-                    width={560}
-                    height={560}
-                    className="max-w-full max-h-full object-contain"
-                  />
-                ) : (
-                  <div className="text-center">
-                    <div className="bg-slate-200 rounded-lg w-64 h-64 mx-auto mb-4" />
-                    <p className="text-sm text-slate-400">Chưa có hình ảnh sản phẩm</p>
+            {heroStyle === 'split' ? (
+              <div className={`overflow-hidden ${heroContainerClass}`}>
+                <div className="grid md:grid-cols-2 gap-4 items-center p-4 md:p-6">
+                  <div className="relative aspect-square rounded-xl bg-slate-50 flex items-center justify-center">
+                    {images[selectedImageIndex] ? (
+                      <Image
+                        src={images[selectedImageIndex]}
+                        alt={product.name}
+                        width={520}
+                        height={520}
+                        className={heroImageClass}
+                      />
+                    ) : (
+                      <div className="text-center">
+                        <div className="bg-slate-200 rounded-lg w-48 h-48 mx-auto mb-3" />
+                        <p className="text-sm text-slate-400">Chưa có hình ảnh sản phẩm</p>
+                      </div>
+                    )}
                   </div>
-                )}
+                  <div className="hidden md:flex flex-col gap-3 text-sm text-slate-500">
+                    <span className="text-xs uppercase tracking-widest text-slate-400">Điểm nổi bật</span>
+                    <ul className="space-y-2">
+                      <li>• Thiết kế cao cấp, hoàn thiện tinh tế</li>
+                      <li>• Công nghệ mới nhất, hiệu năng ổn định</li>
+                      <li>• Bảo hành chính hãng toàn quốc</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className={`overflow-hidden ${heroContainerClass}`}>
+                <div className={heroImageWrapperClass}>
+                  {images[selectedImageIndex] ? (
+                    <Image
+                      src={images[selectedImageIndex]}
+                      alt={product.name}
+                      width={560}
+                      height={560}
+                      className={heroImageClass}
+                    />
+                  ) : (
+                    <div className="text-center">
+                      <div className="bg-slate-200 rounded-lg w-64 h-64 mx-auto mb-4" />
+                      <p className="text-sm text-slate-400">Chưa có hình ảnh sản phẩm</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
-            {images.length > 0 && (
+            {images.length > 0 && heroStyle !== 'minimal' && (
               <div className="grid grid-cols-3 gap-3">
                 {images.map((image, index) => (
                   <button
@@ -828,7 +928,7 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
 // ====================================================================================
 // STYLE 3: MINIMAL - Clean, focused design
 // ====================================================================================
-function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow }: StyleProps & ExperienceBlocksProps) {
+function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, contentWidth, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow }: StyleProps & ExperienceBlocksProps & { contentWidth: MinimalContentWidth }) {
   const [selectedImage, setSelectedImage] = useState(0);
 
   const showPrice = enabledFields.has('price') || enabledFields.size === 0;
@@ -839,9 +939,15 @@ function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, 
   const images = product.images?.length ? product.images : (product.image ? [product.image] : []);
   const inStock = !showStock || product.stock > 0;
 
+  const contentWidthClass = contentWidth === 'narrow'
+    ? 'max-w-4xl'
+    : contentWidth === 'wide'
+      ? 'max-w-7xl'
+      : 'max-w-6xl';
+
   return (
     <div className="min-h-screen bg-white">
-      <main className="max-w-7xl mx-auto px-0 md:px-6 py-10">
+      <main className={`${contentWidthClass} mx-auto px-0 md:px-6 py-10`}>
         <div className="px-6 md:px-0 mb-6">
           <nav className="flex items-center gap-2 text-xs text-slate-400">
             <Link href="/" className="hover:text-slate-600 transition-colors">Trang chủ</Link>
