@@ -4,7 +4,39 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
-import { AlertCircle, Heart, LayoutTemplate, Loader2, MessageSquare, Package, Plus, Save, ShoppingCart, Trash2 } from 'lucide-react';
+import {
+  AlertCircle,
+  Award,
+  BadgeCheck,
+  Bell,
+  Bolt,
+  Calendar,
+  Camera,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Gift,
+  Globe,
+  Heart,
+  HeartHandshake,
+  LayoutTemplate,
+  Leaf,
+  Loader2,
+  Lock,
+  MapPin,
+  MessageSquare,
+  Package,
+  Phone,
+  Plus,
+  RotateCcw,
+  Save,
+  Shield,
+  ShoppingCart,
+  Star,
+  ThumbsUp,
+  Trash2,
+  Truck,
+} from 'lucide-react';
 import { Button, Card, Input } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
@@ -119,29 +151,53 @@ const DEFAULT_CLASSIC_HIGHLIGHTS: ClassicHighlightItem[] = [
   { icon: 'RotateCcw', text: 'Đổi trả 30 ngày' },
 ];
 
-const HIGHLIGHT_ICON_OPTIONS: { label: string; value: ClassicHighlightIcon }[] = [
-  { label: 'Award', value: 'Award' },
-  { label: 'BadgeCheck', value: 'BadgeCheck' },
-  { label: 'Bell', value: 'Bell' },
-  { label: 'Bolt', value: 'Bolt' },
-  { label: 'Calendar', value: 'Calendar' },
-  { label: 'Camera', value: 'Camera' },
-  { label: 'CheckCircle2', value: 'CheckCircle2' },
-  { label: 'Clock', value: 'Clock' },
-  { label: 'CreditCard', value: 'CreditCard' },
-  { label: 'Gift', value: 'Gift' },
-  { label: 'Globe', value: 'Globe' },
-  { label: 'HeartHandshake', value: 'HeartHandshake' },
-  { label: 'Leaf', value: 'Leaf' },
-  { label: 'Lock', value: 'Lock' },
-  { label: 'MapPin', value: 'MapPin' },
-  { label: 'Phone', value: 'Phone' },
-  { label: 'RotateCcw', value: 'RotateCcw' },
-  { label: 'Shield', value: 'Shield' },
-  { label: 'Star', value: 'Star' },
-  { label: 'ThumbsUp', value: 'ThumbsUp' },
-  { label: 'Truck', value: 'Truck' },
+const HIGHLIGHT_ICON_OPTIONS: ClassicHighlightIcon[] = [
+  'Award',
+  'BadgeCheck',
+  'Bell',
+  'Bolt',
+  'Calendar',
+  'Camera',
+  'CheckCircle2',
+  'Clock',
+  'CreditCard',
+  'Gift',
+  'Globe',
+  'HeartHandshake',
+  'Leaf',
+  'Lock',
+  'MapPin',
+  'Phone',
+  'RotateCcw',
+  'Shield',
+  'Star',
+  'ThumbsUp',
+  'Truck',
 ];
+
+const CLASSIC_HIGHLIGHT_ICON_MAP: Record<ClassicHighlightIcon, React.ElementType> = {
+  Award,
+  BadgeCheck,
+  Bell,
+  Bolt,
+  Calendar,
+  Camera,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Gift,
+  Globe,
+  HeartHandshake,
+  Leaf,
+  Lock,
+  MapPin,
+  Phone,
+  RotateCcw,
+  Shield,
+  Star,
+  ThumbsUp,
+  Truck,
+};
 
 const normalizeClassicHighlights = (value: unknown): ClassicHighlightItem[] => {
   if (!Array.isArray(value)) {
@@ -150,7 +206,7 @@ const normalizeClassicHighlights = (value: unknown): ClassicHighlightItem[] => {
   const normalized = value
     .filter((item): item is { icon: unknown; text: unknown } => typeof item === 'object' && item !== null && 'icon' in item && 'text' in item)
     .map((item) => {
-      const icon = typeof item.icon === 'string' && HIGHLIGHT_ICON_OPTIONS.some(opt => opt.value === item.icon)
+      const icon = typeof item.icon === 'string' && HIGHLIGHT_ICON_OPTIONS.includes(item.icon as ClassicHighlightIcon)
         ? (item.icon as ClassicHighlightIcon)
         : null;
       const text = typeof item.text === 'string' ? item.text.trim() : '';
@@ -289,13 +345,72 @@ export default function ProductDetailExperiencePage() {
     if (config.layoutStyle === 'classic') {
       const layoutConfig = currentLayoutConfig as ClassicLayoutConfig;
       return (
-        <ToggleRow
-          label="Highlights"
-          description="Hiện tính năng nổi bật"
-          checked={layoutConfig.showClassicHighlights}
-          onChange={(v) => updateLayoutConfig('showClassicHighlights' as keyof typeof currentLayoutConfig, v as never)}
-          accentColor="#06b6d4"
-        />
+        <div className="space-y-3">
+          <ToggleRow
+            label="Highlights"
+            description="Hiện tính năng nổi bật"
+            checked={layoutConfig.showClassicHighlights}
+            onChange={(v) => updateLayoutConfig('showClassicHighlights' as keyof typeof currentLayoutConfig, v as never)}
+            accentColor="#06b6d4"
+          />
+          {classicHighlights.map((item, index) => {
+            const Icon = CLASSIC_HIGHLIGHT_ICON_MAP[item.icon];
+            return (
+              <div key={`${item.icon}-${index}`} className="space-y-2 rounded-md border border-slate-200 bg-white p-2">
+                <div className="grid grid-cols-6 gap-1">
+                  {HIGHLIGHT_ICON_OPTIONS.map((icon) => {
+                    const IconOption = CLASSIC_HIGHLIGHT_ICON_MAP[icon];
+                    const isActive = icon === item.icon;
+                    return (
+                      <button
+                        key={`${icon}-${index}`}
+                        type="button"
+                        aria-label={icon}
+                        onClick={() => updateHighlight(index, { icon })}
+                        className={`h-7 w-7 rounded border flex items-center justify-center transition-colors ${
+                          isActive
+                            ? 'border-cyan-500 bg-cyan-50 text-cyan-600'
+                            : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                        }`}
+                      >
+                        <IconOption size={14} />
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded border border-slate-200 flex items-center justify-center text-slate-600">
+                    <Icon size={14} />
+                  </div>
+                  <Input
+                    value={item.text}
+                    onChange={(e) => updateHighlight(index, { text: e.target.value })}
+                    className="h-8 text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeHighlight(index)}
+                    className="h-8 w-8"
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addHighlight}
+            className="gap-1.5 text-xs"
+          >
+            <Plus size={12} />
+            Thêm highlight
+          </Button>
+        </div>
       );
     }
     if (config.layoutStyle === 'modern') {
@@ -416,47 +531,8 @@ export default function ProductDetailExperiencePage() {
             />
           </ControlCard>
 
-          <ControlCard title={`Cấu hình ${config.layoutStyle}`}>
+          <ControlCard title={config.layoutStyle === 'classic' ? 'Highlights (Classic)' : `Cấu hình ${config.layoutStyle}`}>
             {renderLayoutSpecificControls()}
-          </ControlCard>
-
-          <ControlCard title="Highlights (Classic)">
-            {classicHighlights.map((item, index) => (
-              <div key={`${item.icon}-${index}`} className="space-y-1 rounded-md border border-slate-200 bg-white p-2">
-                <SelectRow
-                  label="Icon"
-                  value={item.icon}
-                  options={HIGHLIGHT_ICON_OPTIONS.map(option => ({ label: option.label, value: option.value }))}
-                  onChange={(value) => updateHighlight(index, { icon: value as ClassicHighlightIcon })}
-                />
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={item.text}
-                    onChange={(e) => updateHighlight(index, { text: e.target.value })}
-                    className="h-8 text-xs"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeHighlight(index)}
-                    className="h-8 w-8"
-                  >
-                    <Trash2 size={14} />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addHighlight}
-              className="mt-1 gap-1.5 text-xs"
-            >
-              <Plus size={12} />
-              Thêm highlight
-            </Button>
           </ControlCard>
 
           <ControlCard title="Module liên quan">
