@@ -6,6 +6,7 @@ type WishlistPreviewProps = {
   showWishlistButton: boolean;
   showNote: boolean;
   showNotification: boolean;
+  showAddToCartButton?: boolean;
   device?: 'desktop' | 'tablet' | 'mobile';
   brandColor?: string;
 };
@@ -23,6 +24,7 @@ export function WishlistPreview({
   showWishlistButton,
   showNote,
   showNotification,
+  showAddToCartButton = true,
   device = 'desktop',
   brandColor = '#ec4899',
 }: WishlistPreviewProps) {
@@ -81,14 +83,16 @@ export function WishlistPreview({
                       <span>Thông báo khi giảm giá</span>
                     </div>
                   )}
-                  <button 
-                    className="w-full py-2 rounded-lg text-sm font-medium text-white flex items-center justify-center gap-1.5 disabled:opacity-50"
-                    style={{ backgroundColor: brandColor }}
-                    disabled={!item.inStock}
-                  >
-                    <ShoppingCart size={14} />
-                    {item.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
-                  </button>
+                  {showAddToCartButton && (
+                    <button 
+                      className="w-full py-2 rounded-lg text-sm font-medium text-white flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      style={{ backgroundColor: brandColor }}
+                      disabled={!item.inStock}
+                    >
+                      <ShoppingCart size={14} />
+                      {item.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -131,14 +135,16 @@ export function WishlistPreview({
                   <button className="p-1.5 hover:bg-red-50 rounded">
                     <X size={16} className="text-slate-400 hover:text-red-500" />
                   </button>
-                  <button 
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-white flex items-center gap-1 disabled:opacity-50"
-                    style={{ backgroundColor: brandColor }}
-                    disabled={!item.inStock}
-                  >
-                    <ShoppingCart size={12} />
-                    Thêm
-                  </button>
+                  {showAddToCartButton && (
+                    <button 
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium text-white flex items-center gap-1 disabled:opacity-50"
+                      style={{ backgroundColor: brandColor }}
+                      disabled={!item.inStock}
+                    >
+                      <ShoppingCart size={12} />
+                      Thêm
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

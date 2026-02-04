@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Heart, LayoutTemplate, Loader2, Save } from 'lucide-react';
+import { AlertCircle, Heart, LayoutTemplate, Loader2, Package, Save, ShoppingCart } from 'lucide-react';
 import { Button, Card } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
@@ -37,6 +37,7 @@ type LayoutConfig = {
   showWishlistButton: boolean;
   showNote: boolean;
   showNotification: boolean;
+  showAddToCartButton: boolean;
 };
 
 const EXPERIENCE_KEY = 'wishlist_ui';
@@ -50,6 +51,7 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   showWishlistButton: true,
   showNote: true,
   showNotification: true,
+  showAddToCartButton: true,
 };
 
 const DEFAULT_CONFIG: WishlistExperienceConfig = {
@@ -64,16 +66,21 @@ const HINTS = [
   'Bật module Wishlist trước khi cấu hình UX.',
   'Nút wishlist sẽ xuất hiện trên product cards và detail.',
   'Note và notification tùy chọn theo nhu cầu.',
+  'Nút Add to Cart phụ thuộc vào Cart + Orders module.',
   'Mỗi layout có config riêng - chuyển tab để chỉnh.',
 ];
 
 export default function WishlistExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
+  const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
+  const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const noteFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableNote', moduleKey: 'wishlist' });
   const notificationFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableNotification', moduleKey: 'wishlist' });
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
+
+  const cartAvailable = (cartModule?.enabled ?? false) && (ordersModule?.enabled ?? false);
 
   const serverConfig = useMemo<WishlistExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<WishlistExperienceConfig> | undefined;
@@ -86,7 +93,7 @@ export default function WishlistExperiencePage() {
     };
   }, [experienceSetting?.value, noteFeature?.enabled, notificationFeature?.enabled]);
 
-  const isLoading = experienceSetting === undefined || wishlistModule === undefined;
+  const isLoading = experienceSetting === undefined || wishlistModule === undefined || cartModule === undefined || ordersModule === undefined;
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
   const { handleSave, isSaving } = useExperienceSave(
@@ -152,6 +159,7 @@ export default function WishlistExperiencePage() {
               showWishlistButton={currentLayoutConfig.showWishlistButton}
               showNote={currentLayoutConfig.showNote}
               showNotification={currentLayoutConfig.showNotification}
+              showAddToCartButton={currentLayoutConfig.showAddToCartButton && cartAvailable}
               device={previewDevice}
               brandColor="#ec4899"
             />
@@ -196,14 +204,42 @@ export default function WishlistExperiencePage() {
               accentColor="#ec4899"
               disabled={!wishlistModule?.enabled}
             />
+            <ToggleRow
+              label="Nút thêm giỏ hàng"
+              description="Hiện nút add to cart"
+              checked={currentLayoutConfig.showAddToCartButton}
+              onChange={(v) => updateLayoutConfig('showAddToCartButton', v)}
+              accentColor="#ec4899"
+              disabled={!cartAvailable}
+            />
           </ControlCard>
 
           <ControlCard title="Module liên quan">
+            {(!wishlistModule?.enabled || !cartAvailable) && (
+              <div className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-xs text-amber-700 dark:text-amber-300 mb-2">
+                <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
+                <span>Một số module chưa bật.</span>
+              </div>
+            )}
             <ExperienceModuleLink
               enabled={wishlistModule?.enabled ?? false}
               href="/system/modules/wishlist"
               icon={Heart}
               title="Sản phẩm yêu thích"
+              colorScheme="pink"
+            />
+            <ExperienceModuleLink
+              enabled={cartModule?.enabled ?? false}
+              href="/system/modules/cart"
+              icon={ShoppingCart}
+              title="Giỏ hàng"
+              colorScheme="pink"
+            />
+            <ExperienceModuleLink
+              enabled={ordersModule?.enabled ?? false}
+              href="/system/modules/orders"
+              icon={Package}
+              title="Đơn hàng"
               colorScheme="pink"
             />
           </ControlCard>

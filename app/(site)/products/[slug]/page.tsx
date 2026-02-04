@@ -76,20 +76,24 @@ function useProductDetailExperienceConfig(): ProductDetailExperienceConfig {
   const experienceSetting = useQuery(api.settings.getByKey, { key: 'product_detail_ui' });
   const detailStyleSetting = useQuery(api.settings.getByKey, { key: 'products_detail_style' });
   const highlightsSetting = useQuery(api.settings.getByKey, { key: 'products_detail_classic_highlights_enabled' });
+  const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
+  const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
 
   const legacyStyle = (detailStyleSetting?.value as ProductDetailStyle) || 'classic';
   const legacyHighlightsEnabled = (highlightsSetting?.value as boolean) ?? true;
+  const cartAvailable = (cartModule?.enabled ?? false) && (ordersModule?.enabled ?? false);
 
   return useMemo(() => {
     const raw = experienceSetting?.value as Partial<ProductDetailExperienceConfig> | undefined;
+    const configShowAddToCart = raw?.showAddToCart ?? true;
     return {
       layoutStyle: raw?.layoutStyle ?? legacyStyle,
-      showAddToCart: raw?.showAddToCart ?? true,
+      showAddToCart: configShowAddToCart && cartAvailable,
       showClassicHighlights: raw?.showClassicHighlights ?? legacyHighlightsEnabled,
       showRating: raw?.showRating ?? true,
       showWishlist: raw?.showWishlist ?? true,
     };
-  }, [experienceSetting?.value, legacyHighlightsEnabled, legacyStyle]);
+  }, [experienceSetting?.value, legacyHighlightsEnabled, legacyStyle, cartAvailable]);
 }
 
 function useClassicHighlightsEnabled(): boolean {

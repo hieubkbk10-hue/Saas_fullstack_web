@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useMutation, useQuery } from 'convex/react';
-import { Heart, Package } from 'lucide-react';
+import { Heart, Package, ShoppingCart } from 'lucide-react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
@@ -156,6 +156,17 @@ export default function WishlistPage() {
                     {config.showNote && item.note && (
                       <p className="mt-2 text-xs text-slate-500 line-clamp-2">{item.note}</p>
                     )}
+                    {config.showAddToCartButton && (
+                      <button
+                        onClick={(event) => { event.preventDefault(); }}
+                        className="mt-3 w-full py-2 rounded-lg text-sm font-medium text-white flex items-center justify-center gap-1.5 disabled:opacity-50"
+                        style={{ backgroundColor: brandColor }}
+                        disabled={product.stock === 0}
+                      >
+                        <ShoppingCart size={14} />
+                        {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ'}
+                      </button>
+                    )}
                   </div>
                 </Link>
               );
@@ -187,6 +198,17 @@ export default function WishlistPage() {
                 >
                   Bỏ thích
                 </button>
+                {config.showAddToCartButton && (
+                  <button
+                    onClick={() => { }}
+                    className="self-start px-3 py-1.5 rounded-lg text-xs font-medium text-white flex items-center gap-1 disabled:opacity-50"
+                    style={{ backgroundColor: brandColor }}
+                    disabled={product.stock === 0}
+                  >
+                    <ShoppingCart size={12} />
+                    {product.stock === 0 ? 'Hết hàng' : 'Thêm'}
+                  </button>
+                )}
               </div>
             );
           })}

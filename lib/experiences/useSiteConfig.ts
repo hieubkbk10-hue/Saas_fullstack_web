@@ -1,6 +1,7 @@
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useMemo } from 'react';
+import { useCartAvailable } from './useCartAvailable';
 
 type PaginationType = 'pagination' | 'infiniteScroll';
 type FilterPosition = 'sidebar' | 'top' | 'none';
@@ -50,6 +51,7 @@ type ProductsListConfig = {
 
 export function useProductsListConfig(): ProductsListConfig {
   const experienceSetting = useQuery(api.settings.getByKey, { key: 'products_list_ui' });
+  const { isAvailable: cartAvailable } = useCartAvailable();
   
   return useMemo(() => {
     const raw = experienceSetting?.value as {
@@ -70,6 +72,9 @@ export function useProductsListConfig(): ProductsListConfig {
     const layoutConfig = layoutStyle === 'sidebar'
       ? (raw?.layouts?.sidebar ?? raw?.layouts?.masonry)
       : raw?.layouts?.[layoutStyle];
+    
+    const configShowAddToCart = raw?.showAddToCartButton ?? true;
+    
     return {
       layoutStyle,
       paginationType: normalizePaginationType(layoutConfig?.paginationType ?? raw?.paginationType ?? layoutConfig?.showPagination ?? raw?.showPagination),
@@ -77,10 +82,10 @@ export function useProductsListConfig(): ProductsListConfig {
       showCategories: layoutConfig?.showCategories ?? raw?.showCategories ?? true,
       postsPerPage: layoutConfig?.postsPerPage ?? raw?.postsPerPage ?? 12,
       showWishlistButton: raw?.showWishlistButton ?? true,
-      showAddToCartButton: raw?.showAddToCartButton ?? true,
+      showAddToCartButton: configShowAddToCart && cartAvailable,
       showPromotionBadge: raw?.showPromotionBadge ?? true,
     };
-  }, [experienceSetting?.value]);
+  }, [experienceSetting?.value, cartAvailable]);
 }
 
 type WishlistConfig = {
@@ -88,31 +93,36 @@ type WishlistConfig = {
   showWishlistButton: boolean;
   showNote: boolean;
   showNotification: boolean;
+  showAddToCartButton: boolean;
 };
 
 export function useWishlistConfig(): WishlistConfig {
   const experienceSetting = useQuery(api.settings.getByKey, { key: 'wishlist_ui' });
   const noteFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableNote', moduleKey: 'wishlist' });
   const notificationFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableNotification', moduleKey: 'wishlist' });
+  const { isAvailable: cartAvailable } = useCartAvailable();
 
   return useMemo(() => {
     const raw = experienceSetting?.value as {
       layoutStyle?: WishlistConfig['layoutStyle'];
       layouts?: Record<string, Partial<Omit<WishlistConfig, 'layoutStyle'>>>;
+      showAddToCartButton?: boolean;
     } | undefined;
 
     const layoutStyle: WishlistConfig['layoutStyle'] = raw?.layoutStyle ?? 'grid';
     const layoutConfig = raw?.layouts?.[layoutStyle] ?? {};
     const showNote = layoutConfig.showNote ?? true;
     const showNotification = layoutConfig.showNotification ?? true;
+    const configShowAddToCart = layoutConfig.showAddToCartButton ?? raw?.showAddToCartButton ?? true;
 
     return {
       layoutStyle,
       showWishlistButton: layoutConfig.showWishlistButton ?? true,
       showNote: (noteFeature?.enabled ?? true) && showNote,
       showNotification: (notificationFeature?.enabled ?? true) && showNotification,
+      showAddToCartButton: configShowAddToCart && cartAvailable,
     };
-  }, [experienceSetting?.value, noteFeature?.enabled, notificationFeature?.enabled]);
+  }, [experienceSetting?.value, noteFeature?.enabled, notificationFeature?.enabled, cartAvailable]);
 }
 
 type ServicesListConfig = {

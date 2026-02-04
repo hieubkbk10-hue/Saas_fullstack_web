@@ -19,3 +19,4 @@ export {
   useServicesListConfig,
   useWishlistConfig,
 } from './useSiteConfig';
+export { useCartAvailable } from './useCartAvailable';
