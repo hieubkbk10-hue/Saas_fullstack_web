@@ -325,36 +325,6 @@ export function ProductDetailPreview({
                   </div>
                 )}
 
-                <div className="grid grid-cols-3 gap-4 pt-2">
-                  <div className="text-center space-y-2">
-                    <div className="mx-auto w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
-                      <Truck className="w-4 h-4 text-slate-500" />
-                    </div>
-                    <p className="text-xs text-slate-500">Miễn phí vận chuyển</p>
-                  </div>
-                  <div className="text-center space-y-2">
-                    <div className="mx-auto w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
-                      <Shield className="w-4 h-4 text-slate-500" />
-                    </div>
-                    <p className="text-xs text-slate-500">Bảo hành 12 tháng</p>
-                  </div>
-                  <div className="text-center space-y-2">
-                    <div className="mx-auto w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
-                      <ShoppingBag className="w-4 h-4 text-slate-500" />
-                    </div>
-                    <p className="text-xs text-slate-500">Đổi trả 30 ngày</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <div className="grid w-full grid-cols-2 gap-2">
-                <div className="text-center py-3 border border-slate-200 text-sm font-medium">Mô tả</div>
-                <div className="text-center py-3 border border-slate-200 text-sm font-medium">Thông tin</div>
-              </div>
-              <div className="mt-6 border border-slate-100 rounded-2xl p-6 text-sm text-slate-600">
-                Chi tiết sản phẩm, cấu hình và thông tin bảo hành.
               </div>
             </div>
           </div>
