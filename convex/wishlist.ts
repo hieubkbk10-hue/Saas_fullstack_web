@@ -333,7 +333,18 @@ export const listByCustomerWithProducts = query({
 
     return items.map((item, index) => ({
       ...item,
-      product: products[index],
+      product: products[index]
+        ? {
+            _id: products[index]!._id,
+            categoryId: products[index]!.categoryId,
+            image: products[index]!.image,
+            name: products[index]!.name,
+            price: products[index]!.price,
+            salePrice: products[index]!.salePrice,
+            slug: products[index]!.slug,
+            stock: products[index]!.stock,
+          }
+        : null,
     }));
   },
   returns: v.array(v.object({
