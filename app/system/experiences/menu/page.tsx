@@ -238,7 +238,7 @@ export default function HeaderMenuExperiencePage() {
           />
         }
       >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
           <ControlCard title="Hiển thị">
             <ToggleRow
               label="Topbar"
@@ -279,12 +279,8 @@ export default function HeaderMenuExperiencePage() {
               accentColor={brandColor}
             />
           </ControlCard>
-          <ControlCard title="Cấu hình chi tiết">
+          <ControlCard title="Topbar & Search">
             <div className="space-y-2">
-              <div className="space-y-1">
-                <Label className="text-xs">Brand name</Label>
-                <Input value={config.brandName} onChange={(e) => updateBrandName(e.target.value)} className="h-8 text-sm" />
-              </div>
               <ToggleRow
                 label="Dùng settings liên hệ"
                 checked={config.topbar.useSettingsData}
@@ -344,6 +340,14 @@ export default function HeaderMenuExperiencePage() {
                 accentColor={brandColor}
                 disabled={!postsModule?.enabled || !config.search.show}
               />
+            </div>
+          </ControlCard>
+          <ControlCard title="CTA & Brand">
+            <div className="space-y-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Brand name</Label>
+                <Input value={config.brandName} onChange={(e) => updateBrandName(e.target.value)} className="h-8 text-sm" />
+              </div>
               <div className="space-y-1">
                 <Label className="text-xs">CTA text</Label>
                 <Input
@@ -362,7 +366,12 @@ export default function HeaderMenuExperiencePage() {
                   disabled={!config.login.show}
                 />
               </div>
-              {previewStyle === 'classic' && (
+            </div>
+          </ControlCard>
+
+          {previewStyle === 'classic' && (
+            <ControlCard title="Giao diện Classic">
+              <div className="space-y-2">
                 <div className="space-y-2">
                   <Label className="text-xs">Classic background</Label>
                   <div className="grid grid-cols-3 gap-2">
@@ -386,50 +395,63 @@ export default function HeaderMenuExperiencePage() {
                       </button>
                     ))}
                   </div>
-                  <ToggleRow
-                    label="Brand accent line"
-                    checked={config.showBrandAccent}
-                    onChange={updateShowBrandAccent}
-                    accentColor={brandColor}
-                  />
-                  <div className="space-y-2">
-                    <Label className="text-xs">Header separator</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {([
-                        { id: 'none', label: 'None' },
-                        { id: 'shadow', label: 'Shadow' },
-                        { id: 'border', label: 'Border' },
-                        { id: 'gradient', label: 'Gradient' },
-                      ] as const).map((option) => (
-                        <button
-                          key={option.id}
-                          type="button"
-                          onClick={() => updateHeaderSeparator(option.id)}
-                          className={cn(
-                            'h-8 rounded-md border text-xs font-medium transition-colors',
-                            config.headerSeparator === option.id
-                              ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
-                              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
-                          )}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <ToggleRow
-                    label="Sticky header"
-                    checked={config.headerSticky}
-                    onChange={updateHeaderSticky}
-                    accentColor={brandColor}
-                  />
                 </div>
-              )}
-            </div>
-          </ControlCard>
+                <ToggleRow
+                  label="Brand accent line"
+                  checked={config.showBrandAccent}
+                  onChange={updateShowBrandAccent}
+                  accentColor={brandColor}
+                />
+                <div className="space-y-2">
+                  <Label className="text-xs">Header separator</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {([
+                      { id: 'none', label: 'None' },
+                      { id: 'shadow', label: 'Shadow' },
+                      { id: 'border', label: 'Border' },
+                      { id: 'gradient', label: 'Gradient' },
+                    ] as const).map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => updateHeaderSeparator(option.id)}
+                        className={cn(
+                          'h-8 rounded-md border text-xs font-medium transition-colors',
+                          config.headerSeparator === option.id
+                            ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
+                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <ToggleRow
+                  label="Sticky header"
+                  checked={config.headerSticky}
+                  onChange={updateHeaderSticky}
+                  accentColor={brandColor}
+                />
+              </div>
+            </ControlCard>
+          )}
 
+          <Card className="p-2 lg:col-span-4">
+            <div className="mb-2">
+              <ExampleLinks
+                links={[{ label: 'Trang chủ', url: '/' }]}
+                color={brandColor}
+                compact
+              />
+            </div>
+            <ExperienceHintCard hints={HINTS} />
+          </Card>
+        </div>
+
+        <div className="mt-3">
           <ControlCard title="Module & Experience liên quan">
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
               <ExperienceModuleLink
                 enabled={cartModule?.enabled ?? false}
                 href="/system/modules/cart"
@@ -474,17 +496,6 @@ export default function HeaderMenuExperiencePage() {
               />
             </div>
           </ControlCard>
-
-          <Card className="p-2 lg:col-span-3">
-            <div className="mb-2">
-              <ExampleLinks
-                links={[{ label: 'Trang chủ', url: '/' }]}
-                color={brandColor}
-                compact
-              />
-            </div>
-            <ExperienceHintCard hints={HINTS} />
-          </Card>
         </div>
       </ConfigPanel>
     </div>
