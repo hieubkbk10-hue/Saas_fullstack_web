@@ -29,6 +29,7 @@ const DEFAULT_CONFIG: HeaderMenuConfig = {
   brandName: 'YourBrand',
   headerBackground: 'white',
   headerSeparator: 'none',
+  headerSticky: true,
   showBrandAccent: false,
   cart: { show: true },
   cta: { show: true, text: 'Liên hệ' },
@@ -151,6 +152,10 @@ export default function HeaderMenuExperiencePage() {
 
   const updateShowBrandAccent = (value: boolean) => {
     setConfig(prev => ({ ...prev, showBrandAccent: value }));
+  };
+
+  const updateHeaderSticky = (value: boolean) => {
+    setConfig(prev => ({ ...prev, headerSticky: value }));
   };
 
   const updateBrandName = (value: string) => {
@@ -412,6 +417,12 @@ export default function HeaderMenuExperiencePage() {
                       ))}
                     </div>
                   </div>
+                  <ToggleRow
+                    label="Sticky header"
+                    checked={config.headerSticky}
+                    onChange={updateHeaderSticky}
+                    accentColor={brandColor}
+                  />
                 </div>
               )}
             </div>

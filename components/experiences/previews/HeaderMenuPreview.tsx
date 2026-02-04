@@ -11,6 +11,7 @@ export type HeaderMenuConfig = {
   brandName: string;
   headerBackground: 'white' | 'dots' | 'stripes';
   headerSeparator: 'none' | 'shadow' | 'border' | 'gradient';
+  headerSticky: boolean;
   showBrandAccent: boolean;
   cart: { show: boolean };
   cta: { show: boolean; text: string };
@@ -155,6 +156,8 @@ export function HeaderMenuPreview({
     )
     : null;
 
+  const classicPositionClass = config.headerSticky ? 'sticky top-0 z-40' : 'relative z-40';
+
   const toggleMobileItem = (id: string) => {
     setExpandedMobileItems(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
   };
@@ -193,7 +196,7 @@ export function HeaderMenuPreview({
   }
 
   const renderClassicStyle = () => (
-    <div className={cn('dark:bg-slate-900', classicSeparatorClass)} style={classicBackgroundStyle}>
+    <div className={cn('dark:bg-slate-900', classicSeparatorClass, classicPositionClass)} style={classicBackgroundStyle}>
       {config.showBrandAccent && (
         <div className="h-0.5" style={{ backgroundColor: brandColor }} />
       )}
@@ -295,7 +298,7 @@ export function HeaderMenuPreview({
   );
 
   const renderTopbarStyle = () => (
-    <div className="bg-white dark:bg-slate-900">
+    <div className={cn('bg-white dark:bg-slate-900', classicPositionClass)}>
       {displayTopbar.show && (
         <div className="px-4 py-2 text-xs" style={{ backgroundColor: brandColor }}>
           <div className="flex items-center justify-between text-white">

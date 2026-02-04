@@ -47,6 +47,7 @@ interface HeaderConfig {
   brandName?: string;
   headerBackground?: 'white' | 'dots' | 'stripes';
   headerSeparator?: 'none' | 'shadow' | 'border' | 'gradient';
+  headerSticky?: boolean;
   showBrandAccent?: boolean;
   cta?: { show?: boolean; text?: string };
   topbar?: TopbarConfig;
@@ -60,6 +61,7 @@ const DEFAULT_CONFIG: HeaderConfig = {
   brandName: 'YourBrand',
   headerBackground: 'white',
   headerSeparator: 'none',
+  headerSticky: true,
   showBrandAccent: false,
   cart: { show: true },
   cta: { show: true, text: 'Liên hệ' },
@@ -196,6 +198,8 @@ export function Header() {
       <div className="h-3 bg-gradient-to-b from-slate-200/80 to-transparent dark:from-slate-800/80" />
     )
     : null;
+
+  const classicPositionClass = config.headerSticky ? 'sticky top-0 z-50' : 'relative z-50';
   const menuTree = useMemo((): MenuItemWithChildren[] => {
     if (!menuItems) {return [];}
     
@@ -261,7 +265,7 @@ export function Header() {
   // Classic Style
   if (headerStyle === 'classic') {
     return (
-      <header className={cn("sticky top-0 z-50 dark:bg-slate-900", classicSeparatorClass)} style={classicBackgroundStyle}>
+      <header className={cn("dark:bg-slate-900", classicSeparatorClass, classicPositionClass)} style={classicBackgroundStyle}>
         {config.showBrandAccent && (
           <div className="h-0.5" style={{ backgroundColor: brandColor }} />
         )}
@@ -408,7 +412,7 @@ export function Header() {
   // Topbar Style
   if (headerStyle === 'topbar') {
     return (
-      <header className="sticky top-0 z-50 bg-white dark:bg-slate-900">
+      <header className={cn('bg-white dark:bg-slate-900', classicPositionClass)}>
         {/* Topbar */}
         {topbarConfig.show !== false && (
           <div className="px-4 py-2 text-xs" style={{ backgroundColor: brandColor }}>
