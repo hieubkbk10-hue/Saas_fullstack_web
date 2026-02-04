@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Briefcase, CreditCard, FileText, Heart, LayoutTemplate, Mail, MessageSquare, Package, Search, ShoppingCart } from 'lucide-react';
+import { Briefcase, CreditCard, FileText, Heart, LayoutTemplate, Mail, Menu, MessageSquare, Package, Search, ShoppingCart } from 'lucide-react';
 import { Card, CardContent } from '@/app/admin/components/ui';
 import { useI18n } from '../i18n/context';
 
@@ -42,6 +42,12 @@ const experiences = [
     href: '/system/experiences/product-detail',
     icon: Package,
     title: 'Chi tiết sản phẩm',
+  },
+  {
+    description: 'Style header, topbar, search, cart, wishlist, login.',
+    href: '/system/experiences/menu',
+    icon: Menu,
+    title: 'Header Menu',
   },
   {
     description: 'Layout trang wishlist, nút wishlist, note và notification.',

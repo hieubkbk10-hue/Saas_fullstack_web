@@ -13,7 +13,7 @@ import {
   ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ExternalLink, Eye, EyeOff, 
   GripVertical, Loader2, Menu, Plus, Save, Trash2
 } from 'lucide-react';
-import { MenuPreview } from './MenuPreview';
+import { SimpleMenuPreview } from './SimpleMenuPreview';
 
 const MODULE_KEY = 'menus';
 
@@ -513,7 +513,7 @@ function MenuItemsEditor({ menuId }: { menuId: Id<"menus"> }) {
 
       {/* Menu Preview Section */}
       <div className="lg:col-span-3">
-        <MenuPreview items={items} />
+        <SimpleMenuPreview items={items} />
       </div>
     </div>
   );
