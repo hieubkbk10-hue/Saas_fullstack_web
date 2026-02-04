@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { cn } from '@/app/admin/components/ui';
 
-type ColorScheme = 'pink' | 'orange' | 'green' | 'purple' | 'cyan';
+type ColorScheme = 'pink' | 'orange' | 'green' | 'purple' | 'cyan' | 'blue';
 
 interface ExperienceModuleLinkProps {
   enabled: boolean;
@@ -37,6 +37,11 @@ const COLOR_CLASSES: Record<ColorScheme, { border: string; bg: string; text: str
     bg: 'bg-cyan-500/10',
     border: 'hover:border-cyan-500/60 dark:hover:border-cyan-500/60',
     text: 'text-cyan-600 dark:text-cyan-400',
+  },
+  blue: {
+    bg: 'bg-blue-500/10',
+    border: 'hover:border-blue-500/60 dark:hover:border-blue-500/60',
+    text: 'text-blue-600 dark:text-blue-400',
   },
 };
 

@@ -9,9 +9,11 @@ export type HeaderLayoutStyle = 'classic' | 'topbar' | 'transparent';
 
 export type HeaderMenuConfig = {
   brandName: string;
-  cart: { show: boolean; url: string };
-  cta: { show: boolean; text: string; url: string };
-  login: { show: boolean; url: string; text: string };
+  headerBackground: 'white' | 'brand-subtle' | 'gradient-light';
+  showBrandAccent: boolean;
+  cart: { show: boolean };
+  cta: { show: boolean; text: string };
+  login: { show: boolean; text: string };
   search: { show: boolean; placeholder: string; searchProducts: boolean; searchPosts: boolean };
   topbar: {
     email: string;
@@ -19,11 +21,9 @@ export type HeaderMenuConfig = {
     show: boolean;
     showStoreSystem: boolean;
     showTrackOrder: boolean;
-    storeSystemUrl: string;
-    trackOrderUrl: string;
     useSettingsData: boolean;
   };
-  wishlist: { show: boolean; url: string };
+  wishlist: { show: boolean };
 };
 
 type MenuItem = {
@@ -58,6 +58,15 @@ export function HeaderMenuPreview({
   settingsEmail,
   settingsPhone,
 }: HeaderMenuPreviewProps) {
+  const defaultLinks = useMemo(() => ({
+    cart: '/cart',
+    wishlist: '/wishlist',
+    login: '/login',
+    cta: '/contact',
+    trackOrder: '/orders/tracking',
+    storeSystem: '/stores',
+  }), []);
+
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMobileItems, setExpandedMobileItems] = useState<string[]>([]);
@@ -97,6 +106,39 @@ export function HeaderMenuPreview({
     return config.topbar;
   }, [config.topbar, settingsEmail, settingsPhone]);
 
+  const brandRgba = (alpha: number) => {
+    if (!brandColor.startsWith('#')) {
+      return brandColor;
+    }
+
+    const hex = brandColor.replace('#', '');
+    const normalized = hex.length === 3
+      ? hex.split('').map((char) => `${char}${char}`).join('')
+      : hex.slice(0, 6);
+    const value = Number.parseInt(normalized, 16);
+    if (Number.isNaN(value) || normalized.length !== 6) {
+      return brandColor;
+    }
+    const r = (value >> 16) & 255;
+    const g = (value >> 8) & 255;
+    const b = value & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  const classicBackgroundStyle: React.CSSProperties = (() => {
+    if (config.headerBackground === 'brand-subtle') {
+      return {
+        backgroundImage: `linear-gradient(90deg, ${brandRgba(0.08)} 0%, #ffffff 70%)`,
+      };
+    }
+    if (config.headerBackground === 'gradient-light') {
+      return {
+        backgroundImage: `linear-gradient(180deg, ${brandRgba(0.08)} 0%, #ffffff 60%)`,
+      };
+    }
+    return { backgroundColor: '#ffffff' };
+  })();
+
   const toggleMobileItem = (id: string) => {
     setExpandedMobileItems(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
   };
@@ -135,7 +177,10 @@ export function HeaderMenuPreview({
   }
 
   const renderClassicStyle = () => (
-    <div className="bg-white dark:bg-slate-900">
+    <div className="dark:bg-slate-900" style={classicBackgroundStyle}>
+      {config.showBrandAccent && (
+        <div className="h-0.5" style={{ backgroundColor: brandColor }} />
+      )}
       <div className="px-6 py-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: brandColor }}></div>
@@ -197,7 +242,7 @@ export function HeaderMenuPreview({
         )}
 
         {device !== 'mobile' && config.cta.show && (
-          <a href={config.cta.url} className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90" style={{ backgroundColor: brandColor }}>
+          <a href={defaultLinks.cta} className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90" style={{ backgroundColor: brandColor }}>
             {config.cta.text}
           </a>
         )}
@@ -224,7 +269,7 @@ export function HeaderMenuPreview({
           ))}
           {config.cta.show && (
             <div className="p-4">
-              <a href={config.cta.url} className="block w-full py-2.5 text-sm font-medium text-white rounded-lg text-center" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
+              <a href={defaultLinks.cta} className="block w-full py-2.5 text-sm font-medium text-white rounded-lg text-center" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
             </div>
           )}
         </div>
@@ -248,14 +293,14 @@ export function HeaderMenuPreview({
             <div className="flex items-center gap-3">
               {device !== 'mobile' && (
                 <>
-                  {displayTopbar.showTrackOrder && <a href={displayTopbar.trackOrderUrl} className="hover:underline">Theo dõi đơn hàng</a>}
+                  {displayTopbar.showTrackOrder && <a href={defaultLinks.trackOrder} className="hover:underline">Theo dõi đơn hàng</a>}
                   {displayTopbar.showTrackOrder && displayTopbar.showStoreSystem && <span>|</span>}
-                  {displayTopbar.showStoreSystem && <a href={displayTopbar.storeSystemUrl} className="hover:underline">Hệ thống cửa hàng</a>}
+                  {displayTopbar.showStoreSystem && <a href={defaultLinks.storeSystem} className="hover:underline">Hệ thống cửa hàng</a>}
                   {(displayTopbar.showTrackOrder || displayTopbar.showStoreSystem) && config.login.show && <span>|</span>}
                 </>
               )}
               {config.login.show && (
-                <a href={config.login.url} className="hover:underline flex items-center gap-1"><User size={12} />{config.login.text}</a>
+                <a href={defaultLinks.login} className="hover:underline flex items-center gap-1"><User size={12} />{config.login.text}</a>
               )}
             </div>
           </div>
@@ -283,7 +328,7 @@ export function HeaderMenuPreview({
               <>
                 {config.search.show && (<button className="p-2 text-slate-600 dark:text-slate-400"><Search size={20} /></button>)}
                 {config.cart.show && (
-                  <a href={config.cart.url} className="p-2 text-slate-600 dark:text-slate-400 relative">
+                  <a href={defaultLinks.cart} className="p-2 text-slate-600 dark:text-slate-400 relative">
                     <ShoppingCart size={20} />
                     <span className="absolute -top-1 -right-1 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
                   </a>
@@ -293,12 +338,12 @@ export function HeaderMenuPreview({
             ) : (
               <>
                 {config.wishlist.show && (
-                  <a href={config.wishlist.url} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5">
+                  <a href={defaultLinks.wishlist} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5">
                     <Heart size={20} /><span>Yêu thích</span>
                   </a>
                 )}
                 {config.cart.show && (
-                  <a href={config.cart.url} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5 relative">
+                  <a href={defaultLinks.cart} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5 relative">
                     <ShoppingCart size={20} /><span>Giỏ hàng</span>
                     <span className="absolute top-0 right-0 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
                   </a>
@@ -400,7 +445,7 @@ export function HeaderMenuPreview({
               ))}
             </nav>
             {config.cta.show && (
-              <a href={config.cta.url} className="px-5 py-2 text-sm font-medium text-white rounded-full transition-all hover:scale-105 shadow-lg" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
+              <a href={defaultLinks.cta} className="px-5 py-2 text-sm font-medium text-white rounded-full transition-all hover:scale-105 shadow-lg" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
             )}
           </>
         ) : (
@@ -425,7 +470,7 @@ export function HeaderMenuPreview({
           ))}
           {config.cta.show && (
             <div className="p-4">
-              <a href={config.cta.url} className="block w-full py-3 text-sm font-medium text-white rounded-full text-center shadow-lg" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
+              <a href={defaultLinks.cta} className="block w-full py-3 text-sm font-medium text-white rounded-full text-center shadow-lg" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
             </div>
           )}
         </div>
