@@ -10,6 +10,7 @@ export type HeaderLayoutStyle = 'classic' | 'topbar' | 'transparent';
 export type HeaderMenuConfig = {
   brandName: string;
   headerBackground: 'white' | 'dots' | 'stripes';
+  headerSeparator: 'none' | 'shadow' | 'border' | 'gradient';
   showBrandAccent: boolean;
   cart: { show: boolean };
   cta: { show: boolean; text: string };
@@ -142,6 +143,18 @@ export function HeaderMenuPreview({
     return { backgroundColor: '#ffffff' };
   })();
 
+  const classicSeparatorClass = config.headerSeparator === 'shadow'
+    ? 'shadow-[0_10px_18px_-12px_rgba(15,23,42,0.35)] dark:shadow-[0_10px_18px_-12px_rgba(0,0,0,0.7)]'
+    : config.headerSeparator === 'border'
+      ? 'border-b border-slate-200 dark:border-slate-700'
+      : '';
+
+  const classicSeparatorElement = config.headerSeparator === 'gradient'
+    ? (
+      <div className="h-3 bg-gradient-to-b from-slate-200/80 to-transparent dark:from-slate-800/80" />
+    )
+    : null;
+
   const toggleMobileItem = (id: string) => {
     setExpandedMobileItems(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
   };
@@ -180,7 +193,7 @@ export function HeaderMenuPreview({
   }
 
   const renderClassicStyle = () => (
-    <div className="dark:bg-slate-900" style={classicBackgroundStyle}>
+    <div className={cn('dark:bg-slate-900', classicSeparatorClass)} style={classicBackgroundStyle}>
       {config.showBrandAccent && (
         <div className="h-0.5" style={{ backgroundColor: brandColor }} />
       )}
@@ -277,6 +290,7 @@ export function HeaderMenuPreview({
           )}
         </div>
       )}
+      {classicSeparatorElement}
     </div>
   );
 

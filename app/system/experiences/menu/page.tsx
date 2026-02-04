@@ -28,6 +28,7 @@ import { MESSAGES, useExperienceConfig } from '@/lib/experiences';
 const DEFAULT_CONFIG: HeaderMenuConfig = {
   brandName: 'YourBrand',
   headerBackground: 'white',
+  headerSeparator: 'none',
   showBrandAccent: false,
   cart: { show: true },
   cta: { show: true, text: 'Liên hệ' },
@@ -142,6 +143,10 @@ export default function HeaderMenuExperiencePage() {
 
   const updateHeaderBackground = (value: HeaderMenuConfig['headerBackground']) => {
     setConfig(prev => ({ ...prev, headerBackground: value }));
+  };
+
+  const updateHeaderSeparator = (value: HeaderMenuConfig['headerSeparator']) => {
+    setConfig(prev => ({ ...prev, headerSeparator: value }));
   };
 
   const updateShowBrandAccent = (value: boolean) => {
@@ -382,6 +387,31 @@ export default function HeaderMenuExperiencePage() {
                     onChange={updateShowBrandAccent}
                     accentColor={brandColor}
                   />
+                  <div className="space-y-2">
+                    <Label className="text-xs">Header separator</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {([
+                        { id: 'none', label: 'None' },
+                        { id: 'shadow', label: 'Shadow' },
+                        { id: 'border', label: 'Border' },
+                        { id: 'gradient', label: 'Gradient' },
+                      ] as const).map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => updateHeaderSeparator(option.id)}
+                          className={cn(
+                            'h-8 rounded-md border text-xs font-medium transition-colors',
+                            config.headerSeparator === option.id
+                              ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
+                              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

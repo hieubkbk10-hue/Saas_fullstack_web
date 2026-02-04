@@ -45,7 +45,8 @@ interface SearchConfig {
 
 interface HeaderConfig {
   brandName?: string;
-  headerBackground?: 'white' | 'brand-subtle' | 'gradient-light';
+  headerBackground?: 'white' | 'dots' | 'stripes';
+  headerSeparator?: 'none' | 'shadow' | 'border' | 'gradient';
   showBrandAccent?: boolean;
   cta?: { show?: boolean; text?: string };
   topbar?: TopbarConfig;
@@ -58,6 +59,7 @@ interface HeaderConfig {
 const DEFAULT_CONFIG: HeaderConfig = {
   brandName: 'YourBrand',
   headerBackground: 'white',
+  headerSeparator: 'none',
   showBrandAccent: false,
   cart: { show: true },
   cta: { show: true, text: 'Liên hệ' },
@@ -167,18 +169,33 @@ export function Header() {
   };
 
   const classicBackgroundStyle: React.CSSProperties = (() => {
-    if (config.headerBackground === 'brand-subtle') {
+    if (config.headerBackground === 'dots') {
       return {
-        backgroundImage: `linear-gradient(90deg, ${brandRgba(0.08)} 0%, #ffffff 70%)`,
+        backgroundColor: '#ffffff',
+        backgroundImage: `radial-gradient(circle, ${brandRgba(0.16)} 1px, transparent 1px)`,
+        backgroundSize: '18px 18px',
       };
     }
-    if (config.headerBackground === 'gradient-light') {
+    if (config.headerBackground === 'stripes') {
       return {
-        backgroundImage: `linear-gradient(180deg, ${brandRgba(0.08)} 0%, #ffffff 60%)`,
+        backgroundColor: '#ffffff',
+        backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, ${brandRgba(0.12)} 10px, ${brandRgba(0.12)} 20px)`,
       };
     }
     return { backgroundColor: '#ffffff' };
   })();
+
+  const classicSeparatorClass = config.headerSeparator === 'shadow'
+    ? 'shadow-[0_10px_18px_-12px_rgba(15,23,42,0.35)] dark:shadow-[0_10px_18px_-12px_rgba(0,0,0,0.7)]'
+    : config.headerSeparator === 'border'
+      ? 'border-b border-slate-200 dark:border-slate-700'
+      : '';
+
+  const classicSeparatorElement = config.headerSeparator === 'gradient'
+    ? (
+      <div className="h-3 bg-gradient-to-b from-slate-200/80 to-transparent dark:from-slate-800/80" />
+    )
+    : null;
   const menuTree = useMemo((): MenuItemWithChildren[] => {
     if (!menuItems) {return [];}
     
@@ -244,7 +261,7 @@ export function Header() {
   // Classic Style
   if (headerStyle === 'classic') {
     return (
-      <header className="sticky top-0 z-50 dark:bg-slate-900 shadow-sm" style={classicBackgroundStyle}>
+      <header className={cn("sticky top-0 z-50 dark:bg-slate-900", classicSeparatorClass)} style={classicBackgroundStyle}>
         {config.showBrandAccent && (
           <div className="h-0.5" style={{ backgroundColor: brandColor }} />
         )}
@@ -383,6 +400,7 @@ export function Header() {
             )}
           </div>
         )}
+        {classicSeparatorElement}
       </header>
     );
   }
