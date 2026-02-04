@@ -35,6 +35,8 @@ export default function WishlistPage() {
       : 'skip'
   );
 
+  const isLoadingWishlist = isAuthenticated && (wishlistModule?.enabled ?? true) && wishlistItems === undefined;
+
   if (wishlistModule && !wishlistModule.enabled) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-16 text-center">
@@ -61,6 +63,28 @@ export default function WishlistPage() {
         >
           Đăng nhập ngay
         </button>
+      </div>
+    );
+  }
+
+  if (isLoadingWishlist) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        <div className="mb-8">
+          <div className="h-8 w-48 bg-slate-200 rounded-lg animate-pulse" />
+          <div className="h-4 w-64 bg-slate-200 rounded-lg animate-pulse mt-3" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div key={index} className="bg-white rounded-2xl border border-slate-200 overflow-hidden animate-pulse">
+              <div className="aspect-square bg-slate-200" />
+              <div className="p-4 space-y-2">
+                <div className="h-4 bg-slate-200 rounded" />
+                <div className="h-4 w-2/3 bg-slate-200 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
