@@ -318,6 +318,12 @@ export default function ProductDetailExperiencePage() {
       showWishlist: currentLayoutConfig.showWishlist,
       showAddToCart: currentLayoutConfig.showAddToCart,
       showBuyNow: config.showBuyNow,
+      heroStyle: config.layoutStyle === 'modern'
+        ? (currentLayoutConfig as ModernLayoutConfig).heroStyle
+        : 'full',
+      contentWidth: config.layoutStyle === 'minimal'
+        ? (currentLayoutConfig as MinimalLayoutConfig).contentWidth
+        : 'medium',
       showClassicHighlights: config.layoutStyle === 'classic' 
         ? (currentLayoutConfig as ClassicLayoutConfig).showClassicHighlights 
         : false,
