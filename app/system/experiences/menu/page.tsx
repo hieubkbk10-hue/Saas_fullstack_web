@@ -317,15 +317,6 @@ export default function HeaderMenuExperiencePage() {
                 onChange={(v) => updateTopbar('showStoreSystem', v)}
                 accentColor={brandColor}
               />
-              <div className="space-y-1">
-                <Label className="text-xs">Placeholder search</Label>
-                <Input
-                  value={config.search.placeholder}
-                  onChange={(e) => updateSearch('placeholder', e.target.value)}
-                  className="h-8 text-sm"
-                  disabled={!config.search.show}
-                />
-              </div>
               <ToggleRow
                 label="Search sản phẩm"
                 checked={config.search.searchProducts}
