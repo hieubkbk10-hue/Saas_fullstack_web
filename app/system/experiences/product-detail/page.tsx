@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
-import { AlertCircle, Heart, LayoutTemplate, Loader2, MessageSquare, Package, Save, ShoppingCart } from 'lucide-react';
-import { Button, Card } from '@/app/admin/components/ui';
+import { AlertCircle, Heart, LayoutTemplate, Loader2, MessageSquare, Package, Plus, Save, ShoppingCart, Trash2 } from 'lucide-react';
+import { Button, Card, Input } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
   ExperienceHintCard,
@@ -59,9 +59,35 @@ type MinimalLayoutConfig = {
   contentWidth: 'narrow' | 'medium' | 'wide';
 };
 
+type ClassicHighlightIcon =
+  | 'Award'
+  | 'BadgeCheck'
+  | 'Bell'
+  | 'Bolt'
+  | 'Calendar'
+  | 'Camera'
+  | 'CheckCircle2'
+  | 'Clock'
+  | 'CreditCard'
+  | 'Gift'
+  | 'Globe'
+  | 'HeartHandshake'
+  | 'Leaf'
+  | 'Lock'
+  | 'MapPin'
+  | 'Phone'
+  | 'RotateCcw'
+  | 'Shield'
+  | 'Star'
+  | 'ThumbsUp'
+  | 'Truck';
+
+type ClassicHighlightItem = { icon: ClassicHighlightIcon; text: string };
+
 const EXPERIENCE_KEY = 'product_detail_ui';
 const LEGACY_DETAIL_STYLE_KEY = 'products_detail_style';
 const LEGACY_HIGHLIGHTS_KEY = 'products_detail_classic_highlights_enabled';
+const CLASSIC_HIGHLIGHTS_KEY = 'products_detail_classic_highlights';
 
 const LAYOUT_STYLES: LayoutOption<ProductsDetailStyle>[] = [
   { description: 'Layout 2 cột với gallery và info', id: 'classic', label: 'Classic' },
@@ -87,10 +113,62 @@ const HINTS = [
   'Có thể kiểm tra UI tại đường dẫn sản phẩm thật.',
 ];
 
+const DEFAULT_CLASSIC_HIGHLIGHTS: ClassicHighlightItem[] = [
+  { icon: 'Truck', text: 'Giao hàng nhanh' },
+  { icon: 'Shield', text: 'Bảo hành chính hãng' },
+  { icon: 'RotateCcw', text: 'Đổi trả 30 ngày' },
+];
+
+const HIGHLIGHT_ICON_OPTIONS: { label: string; value: ClassicHighlightIcon }[] = [
+  { label: 'Award', value: 'Award' },
+  { label: 'BadgeCheck', value: 'BadgeCheck' },
+  { label: 'Bell', value: 'Bell' },
+  { label: 'Bolt', value: 'Bolt' },
+  { label: 'Calendar', value: 'Calendar' },
+  { label: 'Camera', value: 'Camera' },
+  { label: 'CheckCircle2', value: 'CheckCircle2' },
+  { label: 'Clock', value: 'Clock' },
+  { label: 'CreditCard', value: 'CreditCard' },
+  { label: 'Gift', value: 'Gift' },
+  { label: 'Globe', value: 'Globe' },
+  { label: 'HeartHandshake', value: 'HeartHandshake' },
+  { label: 'Leaf', value: 'Leaf' },
+  { label: 'Lock', value: 'Lock' },
+  { label: 'MapPin', value: 'MapPin' },
+  { label: 'Phone', value: 'Phone' },
+  { label: 'RotateCcw', value: 'RotateCcw' },
+  { label: 'Shield', value: 'Shield' },
+  { label: 'Star', value: 'Star' },
+  { label: 'ThumbsUp', value: 'ThumbsUp' },
+  { label: 'Truck', value: 'Truck' },
+];
+
+const normalizeClassicHighlights = (value: unknown): ClassicHighlightItem[] => {
+  if (!Array.isArray(value)) {
+    return DEFAULT_CLASSIC_HIGHLIGHTS;
+  }
+  const normalized = value
+    .filter((item): item is { icon: unknown; text: unknown } => typeof item === 'object' && item !== null && 'icon' in item && 'text' in item)
+    .map((item) => {
+      const icon = typeof item.icon === 'string' && HIGHLIGHT_ICON_OPTIONS.some(opt => opt.value === item.icon)
+        ? (item.icon as ClassicHighlightIcon)
+        : null;
+      const text = typeof item.text === 'string' ? item.text.trim() : '';
+      if (!icon || text.length === 0) {
+        return null;
+      }
+      return { icon, text } satisfies ClassicHighlightItem;
+    })
+    .filter((item): item is ClassicHighlightItem => item !== null);
+
+  return normalized.length > 0 ? normalized : DEFAULT_CLASSIC_HIGHLIGHTS;
+};
+
 export default function ProductDetailExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const legacyStyleSetting = useQuery(api.settings.getByKey, { key: LEGACY_DETAIL_STYLE_KEY });
   const legacyHighlightsSetting = useQuery(api.settings.getByKey, { key: LEGACY_HIGHLIGHTS_KEY });
+  const highlightsSetting = useQuery(api.settings.getByKey, { key: CLASSIC_HIGHLIGHTS_KEY });
   const commentsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'comments' });
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
@@ -103,6 +181,15 @@ export default function ProductDetailExperiencePage() {
 
   const legacyStyle = legacyStyleSetting?.value as ProductsDetailStyle | undefined;
   const legacyHighlights = (legacyHighlightsSetting?.value as boolean) ?? true;
+  const serverHighlights = useMemo(
+    () => normalizeClassicHighlights(highlightsSetting?.value),
+    [highlightsSetting?.value]
+  );
+  const [classicHighlights, setClassicHighlights] = useState<ClassicHighlightItem[]>(serverHighlights);
+
+  useEffect(() => {
+    setClassicHighlights(serverHighlights);
+  }, [serverHighlights]);
 
   const serverConfig = useMemo<ProductDetailExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<ProductDetailExperienceConfig> | undefined;
@@ -117,7 +204,7 @@ export default function ProductDetailExperiencePage() {
     };
   }, [experienceSetting?.value, legacyStyle, legacyHighlights]);
 
-  const isLoading = experienceSetting === undefined || legacyStyleSetting === undefined || legacyHighlightsSetting === undefined;
+  const isLoading = experienceSetting === undefined || legacyStyleSetting === undefined || legacyHighlightsSetting === undefined || highlightsSetting === undefined;
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
 
@@ -146,11 +233,17 @@ export default function ProductDetailExperiencePage() {
     ];
   }, [config.layoutStyle, config.layouts.classic.showClassicHighlights]);
 
+  const hasHighlightsChanges = useMemo(
+    () => JSON.stringify(classicHighlights) !== JSON.stringify(serverHighlights),
+    [classicHighlights, serverHighlights]
+  );
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
       const settingsToSave = [
         { group: EXPERIENCE_GROUP, key: EXPERIENCE_KEY, value: config },
+        { group: 'products', key: CLASSIC_HIGHLIGHTS_KEY, value: classicHighlights },
         ...additionalSettings,
       ];
       await setMultipleSettings({ settings: settingsToSave });
@@ -172,11 +265,24 @@ export default function ProductDetailExperiencePage() {
       showClassicHighlights: config.layoutStyle === 'classic' 
         ? (currentLayoutConfig as ClassicLayoutConfig).showClassicHighlights 
         : false,
+      classicHighlights,
       device: previewDevice,
       brandColor: '#06b6d4',
     };
 
     return base;
+  };
+
+  const updateHighlight = (index: number, value: Partial<ClassicHighlightItem>) => {
+    setClassicHighlights(prev => prev.map((item, i) => (i === index ? { ...item, ...value } : item)));
+  };
+
+  const addHighlight = () => {
+    setClassicHighlights(prev => ([...prev, { icon: 'Star', text: 'Điểm nổi bật mới' }]));
+  };
+
+  const removeHighlight = (index: number) => {
+    setClassicHighlights(prev => prev.filter((_, i) => i !== index));
   };
 
   const renderLayoutSpecificControls = () => {
@@ -246,11 +352,11 @@ export default function ProductDetailExperiencePage() {
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={!hasChanges || isSaving}
+            disabled={(!hasChanges && !hasHighlightsChanges) || isSaving}
             className="bg-cyan-600 hover:bg-cyan-500 gap-1.5"
           >
             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
+            <span>{hasChanges || hasHighlightsChanges ? 'Lưu' : 'Đã lưu'}</span>
           </Button>
         </div>
       </header>
@@ -312,6 +418,45 @@ export default function ProductDetailExperiencePage() {
 
           <ControlCard title={`Cấu hình ${config.layoutStyle}`}>
             {renderLayoutSpecificControls()}
+          </ControlCard>
+
+          <ControlCard title="Highlights (Classic)">
+            {classicHighlights.map((item, index) => (
+              <div key={`${item.icon}-${index}`} className="space-y-1 rounded-md border border-slate-200 bg-white p-2">
+                <SelectRow
+                  label="Icon"
+                  value={item.icon}
+                  options={HIGHLIGHT_ICON_OPTIONS.map(option => ({ label: option.label, value: option.value }))}
+                  onChange={(value) => updateHighlight(index, { icon: value as ClassicHighlightIcon })}
+                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={item.text}
+                    onChange={(e) => updateHighlight(index, { text: e.target.value })}
+                    className="h-8 text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeHighlight(index)}
+                    className="h-8 w-8"
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addHighlight}
+              className="mt-1 gap-1.5 text-xs"
+            >
+              <Plus size={12} />
+              Thêm highlight
+            </Button>
           </ControlCard>
 
           <ControlCard title="Module liên quan">

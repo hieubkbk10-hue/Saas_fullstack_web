@@ -8,6 +8,7 @@ type ProductDetailPreviewProps = {
   showAddToCart: boolean;
   showBuyNow: boolean;
   showClassicHighlights: boolean;
+  classicHighlights?: { icon: string; text: string }[];
   device?: 'desktop' | 'tablet' | 'mobile';
   brandColor?: string;
 };
@@ -21,6 +22,7 @@ export function ProductDetailPreview({
   showAddToCart,
   showBuyNow,
   showClassicHighlights,
+  classicHighlights = [],
   device = 'desktop',
   brandColor = '#06b6d4',
 }: ProductDetailPreviewProps) {
@@ -69,9 +71,13 @@ export function ProductDetailPreview({
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                   <h4 className="font-medium text-amber-800 mb-2">Điểm nổi bật</h4>
                   <ul className="text-sm text-amber-700 space-y-1">
-                    <li>• Chip A17 Pro mạnh mẽ</li>
-                    <li>• Camera 48MP chuyên nghiệp</li>
-                    <li>• Titanium siêu bền</li>
+                    {(classicHighlights.length > 0 ? classicHighlights : [
+                      { icon: 'Star', text: 'Chip A17 Pro mạnh mẽ' },
+                      { icon: 'Star', text: 'Camera 48MP chuyên nghiệp' },
+                      { icon: 'Star', text: 'Titanium siêu bền' },
+                    ]).map((item, index) => (
+                      <li key={`${item.icon}-${index}`}>• {item.text}</li>
+                    ))}
                   </ul>
                 </div>
               )}
