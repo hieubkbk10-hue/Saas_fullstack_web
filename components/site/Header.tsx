@@ -266,6 +266,46 @@ export function Header() {
   if (headerStyle === 'classic') {
     return (
       <header className={cn("dark:bg-slate-900", classicSeparatorClass, classicPositionClass)} style={classicBackgroundStyle}>
+        {topbarConfig.show !== false && (
+          <div className="px-4 py-2 text-xs" style={{ backgroundColor: brandColor }}>
+            <div className="max-w-7xl mx-auto flex items-center justify-between text-white">
+              <div className="flex items-center gap-4">
+                {topbarConfig.hotline && (
+                  <a href={`tel:${topbarConfig.hotline}`} className="flex items-center gap-1 hover:opacity-80">
+                    <Phone size={12} />
+                    <span>{topbarConfig.hotline}</span>
+                  </a>
+                )}
+                {topbarConfig.email && (
+                  <a href={`mailto:${topbarConfig.email}`} className="hidden sm:flex items-center gap-1 hover:opacity-80">
+                    <Mail size={12} />
+                    <span>{topbarConfig.email}</span>
+                  </a>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                {topbarConfig.showTrackOrder && (
+                  <>
+                    <Link href={DEFAULT_LINKS.trackOrder} className="hover:underline hidden sm:inline">Theo dõi đơn hàng</Link>
+                    {topbarConfig.showStoreSystem && <span className="hidden sm:inline">|</span>}
+                  </>
+                )}
+                {topbarConfig.showStoreSystem && (
+                  <>
+                    <Link href={DEFAULT_LINKS.storeSystem} className="hover:underline hidden sm:inline">Hệ thống cửa hàng</Link>
+                    {config.login?.show && <span className="hidden sm:inline">|</span>}
+                  </>
+                )}
+                {config.login?.show && (
+                  <Link href={DEFAULT_LINKS.login} className="hover:underline flex items-center gap-1">
+                    <User size={12} />
+                    {config.login.text ?? 'Đăng nhập'}
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         {config.showBrandAccent && (
           <div className="h-0.5" style={{ backgroundColor: brandColor }} />
         )}

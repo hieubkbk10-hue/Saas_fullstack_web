@@ -197,6 +197,33 @@ export function HeaderMenuPreview({
 
   const renderClassicStyle = () => (
     <div className={cn('dark:bg-slate-900', classicSeparatorClass, classicPositionClass)} style={classicBackgroundStyle}>
+      {config.topbar.show && (
+        <div className="px-4 py-2 text-xs" style={{ backgroundColor: brandColor }}>
+          <div className="flex items-center justify-between text-white">
+            <div className="flex items-center gap-4">
+              {displayTopbar.hotline && (
+                <span className="flex items-center gap-1"><Phone size={12} /><span>{displayTopbar.hotline}</span></span>
+              )}
+              {device !== 'mobile' && displayTopbar.email && (
+                <span className="flex items-center gap-1"><Mail size={12} /><span>{displayTopbar.email}</span></span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              {device !== 'mobile' && (
+                <>
+                  {displayTopbar.showTrackOrder && <a href={defaultLinks.trackOrder} className="hover:underline">Theo dõi đơn hàng</a>}
+                  {displayTopbar.showTrackOrder && displayTopbar.showStoreSystem && <span>|</span>}
+                  {displayTopbar.showStoreSystem && <a href={defaultLinks.storeSystem} className="hover:underline">Hệ thống cửa hàng</a>}
+                  {(displayTopbar.showTrackOrder || displayTopbar.showStoreSystem) && config.login.show && <span>|</span>}
+                </>
+              )}
+              {config.login.show && (
+                <a href={defaultLinks.login} className="hover:underline flex items-center gap-1"><User size={12} />{config.login.text}</a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {config.showBrandAccent && (
         <div className="h-0.5" style={{ backgroundColor: brandColor }} />
       )}
