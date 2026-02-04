@@ -32,9 +32,7 @@ interface TopbarConfig {
   hotline?: string;
   email?: string;
   showTrackOrder?: boolean;
-  trackOrderUrl?: string;
   showStoreSystem?: boolean;
-  storeSystemUrl?: string;
   useSettingsData?: boolean;
 }
 
@@ -47,19 +45,23 @@ interface SearchConfig {
 
 interface HeaderConfig {
   brandName?: string;
-  cta?: { show?: boolean; text?: string; url?: string };
+  headerBackground?: 'white' | 'brand-subtle' | 'gradient-light';
+  showBrandAccent?: boolean;
+  cta?: { show?: boolean; text?: string };
   topbar?: TopbarConfig;
   search?: SearchConfig;
-  cart?: { show?: boolean; url?: string };
-  wishlist?: { show?: boolean; url?: string };
-  login?: { show?: boolean; url?: string; text?: string };
+  cart?: { show?: boolean };
+  wishlist?: { show?: boolean };
+  login?: { show?: boolean; text?: string };
 }
 
 const DEFAULT_CONFIG: HeaderConfig = {
   brandName: 'YourBrand',
-  cart: { show: true, url: '/cart' },
-  cta: { show: true, text: 'Liên hệ', url: '/contact' },
-  login: { show: true, text: 'Đăng nhập', url: '/login' },
+  headerBackground: 'white',
+  showBrandAccent: false,
+  cart: { show: true },
+  cta: { show: true, text: 'Liên hệ' },
+  login: { show: true, text: 'Đăng nhập' },
   search: { placeholder: 'Tìm kiếm...', searchPosts: true, searchProducts: true, show: true },
   topbar: {
     email: 'contact@example.com',
@@ -67,11 +69,18 @@ const DEFAULT_CONFIG: HeaderConfig = {
     show: true,
     showStoreSystem: true,
     showTrackOrder: true,
-    storeSystemUrl: '/stores',
-    trackOrderUrl: '/orders/tracking',
     useSettingsData: false,
   },
-  wishlist: { show: true, url: '/wishlist' },
+  wishlist: { show: true },
+};
+
+const DEFAULT_LINKS = {
+  cart: '/cart',
+  wishlist: '/wishlist',
+  login: '/login',
+  cta: '/contact',
+  trackOrder: '/orders/tracking',
+  storeSystem: '/stores',
 };
 
 function cn(...classes: (string | boolean | undefined)[]) {
@@ -88,7 +97,16 @@ export function Header() {
   
   const headerStyle: HeaderStyle = (headerStyleSetting?.value as HeaderStyle) || 'classic';
   const savedConfig = (headerConfigSetting?.value as HeaderConfig) || {};
-  const config: HeaderConfig = { ...DEFAULT_CONFIG, ...savedConfig };
+  const config: HeaderConfig = {
+    ...DEFAULT_CONFIG,
+    ...savedConfig,
+    topbar: { ...DEFAULT_CONFIG.topbar, ...savedConfig.topbar },
+    search: { ...DEFAULT_CONFIG.search, ...savedConfig.search },
+    cta: { ...DEFAULT_CONFIG.cta, ...savedConfig.cta },
+    cart: { ...DEFAULT_CONFIG.cart, ...savedConfig.cart },
+    wishlist: { ...DEFAULT_CONFIG.wishlist, ...savedConfig.wishlist },
+    login: { ...DEFAULT_CONFIG.login, ...savedConfig.login },
+  };
   
   // Get contact settings when useSettingsData is enabled
   const settingsPhone = contactSettings?.find(s => s.key === 'contact_phone')?.value as string | undefined;
@@ -129,6 +147,38 @@ export function Header() {
   }, []);
 
   const menuItems = menuData?.items;
+  const brandRgba = (alpha: number) => {
+    if (!brandColor.startsWith('#')) {
+      return brandColor;
+    }
+
+    const hex = brandColor.replace('#', '');
+    const normalized = hex.length === 3
+      ? hex.split('').map((char) => `${char}${char}`).join('')
+      : hex.slice(0, 6);
+    const value = Number.parseInt(normalized, 16);
+    if (Number.isNaN(value) || normalized.length !== 6) {
+      return brandColor;
+    }
+    const r = (value >> 16) & 255;
+    const g = (value >> 8) & 255;
+    const b = value & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
+  const classicBackgroundStyle: React.CSSProperties = (() => {
+    if (config.headerBackground === 'brand-subtle') {
+      return {
+        backgroundImage: `linear-gradient(90deg, ${brandRgba(0.08)} 0%, #ffffff 70%)`,
+      };
+    }
+    if (config.headerBackground === 'gradient-light') {
+      return {
+        backgroundImage: `linear-gradient(180deg, ${brandRgba(0.08)} 0%, #ffffff 60%)`,
+      };
+    }
+    return { backgroundColor: '#ffffff' };
+  })();
   const menuTree = useMemo((): MenuItemWithChildren[] => {
     if (!menuItems) {return [];}
     
@@ -194,7 +244,10 @@ export function Header() {
   // Classic Style
   if (headerStyle === 'classic') {
     return (
-      <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 shadow-sm">
+      <header className="sticky top-0 z-50 dark:bg-slate-900 shadow-sm" style={classicBackgroundStyle}>
+        {config.showBrandAccent && (
+          <div className="h-0.5" style={{ backgroundColor: brandColor }} />
+        )}
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
@@ -274,7 +327,7 @@ export function Header() {
           <div className="flex items-center gap-2">
             {config.cta?.show && (
               <Link
-                href={config.cta.url ?? '/contact'}
+                href={DEFAULT_LINKS.cta}
                 className="hidden lg:inline-flex px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
                 style={{ backgroundColor: brandColor }}
               >
@@ -318,8 +371,8 @@ export function Header() {
             ))}
             {config.cta?.show && (
               <div className="p-4">
-                <Link 
-                  href={config.cta.url ?? '/contact'} 
+              <Link 
+                  href={DEFAULT_LINKS.cta} 
                   onClick={() =>{  setMobileMenuOpen(false); }}
                   className="block w-full py-2.5 text-sm font-medium text-white rounded-lg text-center" 
                   style={{ backgroundColor: brandColor }}
@@ -359,18 +412,18 @@ export function Header() {
               <div className="flex items-center gap-3">
                 {topbarConfig.showTrackOrder && (
                   <>
-                    <Link href={topbarConfig.trackOrderUrl ?? '/orders/tracking'} className="hover:underline hidden sm:inline">Theo dõi đơn hàng</Link>
+                    <Link href={DEFAULT_LINKS.trackOrder} className="hover:underline hidden sm:inline">Theo dõi đơn hàng</Link>
                     {topbarConfig.showStoreSystem && <span className="hidden sm:inline">|</span>}
                   </>
                 )}
                 {topbarConfig.showStoreSystem && (
                   <>
-                    <Link href={topbarConfig.storeSystemUrl ?? '/stores'} className="hover:underline hidden sm:inline">Hệ thống cửa hàng</Link>
+                    <Link href={DEFAULT_LINKS.storeSystem} className="hover:underline hidden sm:inline">Hệ thống cửa hàng</Link>
                     {config.login?.show && <span className="hidden sm:inline">|</span>}
                   </>
                 )}
                 {config.login?.show && (
-                  <Link href={config.login.url ?? '/login'} className="hover:underline flex items-center gap-1">
+                  <Link href={DEFAULT_LINKS.login} className="hover:underline flex items-center gap-1">
                     <User size={12} />
                     {config.login.text ?? 'Đăng nhập'}
                   </Link>
@@ -435,7 +488,7 @@ export function Header() {
               {/* Desktop: Wishlist + Cart */}
               <div className="hidden lg:flex items-center gap-2">
                 {config.wishlist?.show && (
-                  <Link href={config.wishlist.url ?? '/wishlist'} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5">
+                  <Link href={DEFAULT_LINKS.wishlist} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5">
                     <Heart size={20} />
                     <span>Yêu thích</span>
                   </Link>
@@ -601,7 +654,7 @@ export function Header() {
           <div className="flex items-center gap-2">
             {config.cta?.show && (
               <Link
-                href={config.cta.url ?? '/contact'}
+                href={DEFAULT_LINKS.cta}
                 className="hidden lg:inline-flex px-5 py-2 text-sm font-medium text-white rounded-full transition-all hover:scale-105 shadow-lg"
                 style={{ backgroundColor: brandColor }}
               >
@@ -647,7 +700,7 @@ export function Header() {
           {config.cta?.show && (
             <div className="p-4">
               <Link 
-                href={config.cta.url ?? '/contact'} 
+                href={DEFAULT_LINKS.cta} 
                 onClick={() =>{  setMobileMenuOpen(false); }}
                 className="block w-full py-3 text-sm font-medium text-white rounded-full text-center" 
                 style={{ backgroundColor: brandColor }}

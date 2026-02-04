@@ -20,21 +20,36 @@ export function useExperienceConfig<T>(
   defaultConfig: T,
   isLoading: boolean
 ): UseExperienceConfigResult<T> {
-  const [draftConfig, setDraftConfig] = useState<T | null>(null);
+  const [draftConfig, setDraftConfig] = useState<{ value: T; serverSnapshot: T } | null>(null);
+
+  const isDraftValid = useMemo(() => {
+    if (!draftConfig) {
+      return false;
+    }
+    return JSON.stringify(draftConfig.serverSnapshot) === JSON.stringify(serverConfig);
+  }, [draftConfig, serverConfig]);
 
   const resolvedConfig = useMemo(() => {
-    if (draftConfig) {return draftConfig;}
+    if (isDraftValid && draftConfig) {return draftConfig.value;}
     if (!isLoading) {return serverConfig;}
     return defaultConfig;
-  }, [defaultConfig, draftConfig, isLoading, serverConfig]);
+  }, [defaultConfig, draftConfig, isDraftValid, isLoading, serverConfig]);
 
   const setConfig: Dispatch<SetStateAction<T>> = useCallback((next) => {
     setDraftConfig(prevDraft => {
-      const baseConfig = prevDraft ?? (!isLoading ? serverConfig : defaultConfig);
+      const baseConfig = prevDraft && JSON.stringify(prevDraft.serverSnapshot) === JSON.stringify(serverConfig)
+        ? prevDraft.value
+        : (!isLoading ? serverConfig : defaultConfig);
       if (typeof next === 'function') {
-        return (next as (prevState: T) => T)(baseConfig);
+        return {
+          value: (next as (prevState: T) => T)(baseConfig),
+          serverSnapshot: serverConfig,
+        };
       }
-      return next;
+      return {
+        value: next,
+        serverSnapshot: serverConfig,
+      };
     });
   }, [defaultConfig, isLoading, serverConfig]);
 
