@@ -158,7 +158,6 @@ const SEED_SETTINGS = [
     value: {
       layoutStyle: "drawer",
       showExpiry: false,
-      showGuestCart: true,
       showNote: false,
     },
   },

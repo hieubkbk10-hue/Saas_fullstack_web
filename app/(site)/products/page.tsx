@@ -10,6 +10,7 @@ import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { useProductsListConfig } from '@/lib/experiences';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
+import { useCart } from '@/lib/cart';
 import { ChevronDown, Heart, Package, Search, ShoppingCart, SlidersHorizontal, X } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
@@ -140,6 +141,7 @@ function ProductsContent() {
   const showAddToCartButton = listConfig.showAddToCartButton ?? true;
   const showPromotionBadge = listConfig.showPromotionBadge ?? true;
   const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
+  const { addItem } = useCart();
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const toggleWishlist = useMutation(api.wishlist.toggle);
   const enabledFields = useEnabledProductFields();
@@ -341,6 +343,10 @@ function ProductsContent() {
     await toggleWishlist({ customerId: customer.id as Id<'customers'>, productId });
   };
 
+  const handleAddToCart = async (productId: Id<'products'>) => {
+    await addItem(productId, 1);
+  };
+
   const paginationNode = (
     <>
       {listConfig.paginationType === 'pagination' && totalCount && totalCount > postsPerPage && (
@@ -475,6 +481,7 @@ function ProductsContent() {
         showPromotionBadge={showPromotionBadge}
         wishlistIdSet={wishlistIdSet}
         onToggleWishlist={handleWishlistToggle}
+        onAddToCart={handleAddToCart}
         canUseWishlist={canUseWishlist}
       />
     );
@@ -504,6 +511,7 @@ function ProductsContent() {
         showPromotionBadge={showPromotionBadge}
         wishlistIdSet={wishlistIdSet}
         onToggleWishlist={handleWishlistToggle}
+        onAddToCart={handleAddToCart}
         canUseWishlist={canUseWishlist}
       />
     );
@@ -600,7 +608,7 @@ function ProductsContent() {
         ) : products.length === 0 ? (
           <EmptyState brandColor={brandColor} onReset={() => { setSearchQuery(''); handleCategoryChange(null); }} />
         ) : (
-          <ProductGrid products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showPromotionBadge={showPromotionBadge} wishlistIdSet={wishlistIdSet} onToggleWishlist={handleWishlistToggle} canUseWishlist={canUseWishlist} />
+          <ProductGrid products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showPromotionBadge={showPromotionBadge} wishlistIdSet={wishlistIdSet} onToggleWishlist={handleWishlistToggle} onAddToCart={handleAddToCart} canUseWishlist={canUseWishlist} />
         )}
 
         {paginationNode}
@@ -631,7 +639,7 @@ interface ProductCardProps {
   formatPrice: (price: number) => string;
 }
 
-function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; canUseWishlist: boolean }) {
+function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; onAddToCart: (id: Id<'products'>) => void; canUseWishlist: boolean }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {products.map((product) => (
@@ -670,7 +678,7 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
               <button
                 className="mt-3 w-full rounded-lg py-2 text-sm font-medium text-white transition-colors flex items-center justify-center gap-1.5"
                 style={{ backgroundColor: brandColor }}
-                onClick={(event) => { event.preventDefault(); }}
+                onClick={(event) => { event.preventDefault(); onAddToCart(product._id); }}
               >
                 <ShoppingCart size={14} />
                 Thêm vào giỏ
@@ -683,7 +691,7 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
   );
 }
 
-function ProductList({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; canUseWishlist: boolean }) {
+function ProductList({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; onAddToCart: (id: Id<'products'>) => void; canUseWishlist: boolean }) {
   return (
     <div className="space-y-4">
       {products.map((product) => (
@@ -724,7 +732,7 @@ function ProductList({ products, categoryMap, brandColor, showPrice, showSalePri
           </div>
           {showAddToCartButton && (
             <div className="hidden md:flex items-center">
-              <button className="p-3 rounded-full border-2 transition-colors hover:bg-slate-50" style={{ borderColor: brandColor, color: brandColor }} onClick={(e) => { e.preventDefault(); }}>
+              <button className="p-3 rounded-full border-2 transition-colors hover:bg-slate-50" style={{ borderColor: brandColor, color: brandColor }} onClick={(e) => { e.preventDefault(); onAddToCart(product._id); }}>
                 <ShoppingCart size={20} />
               </button>
             </div>
@@ -774,10 +782,11 @@ interface LayoutProps {
   showPromotionBadge: boolean;
   wishlistIdSet: Set<Id<'products'>>;
   onToggleWishlist: (id: Id<'products'>) => void;
+  onAddToCart: (id: Id<'products'>) => void;
   canUseWishlist: boolean;
 }
 
-function CatalogLayout({ products, categories, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, canUseWishlist }: LayoutProps) {
+function CatalogLayout({ products, categories, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, canUseWishlist }: LayoutProps) {
   return (
     <div className="py-8 md:py-12 px-4">
       <div className="max-w-7xl mx-auto">
@@ -864,7 +873,7 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
                         <button
                           className="mt-3 w-full rounded-lg py-2 text-sm font-medium text-white transition-colors flex items-center justify-center gap-1.5"
                           style={{ backgroundColor: brandColor }}
-                          onClick={(event) => { event.preventDefault(); }}
+                          onClick={(event) => { event.preventDefault(); onAddToCart(product._id); }}
                         >
                           <ShoppingCart size={14} />
                           Thêm vào giỏ
@@ -886,7 +895,7 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
 
 // ========== LIST LAYOUT (Full width list view) ==========
 
-function ListLayout({ products, categories, categoryMap, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, showStock, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, canUseWishlist }: LayoutProps) {
+function ListLayout({ products, categories, categoryMap, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, showStock, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, canUseWishlist }: LayoutProps) {
   return (
     <div className="py-8 md:py-12 px-4">
       <div className="max-w-5xl mx-auto">
@@ -925,7 +934,7 @@ function ListLayout({ products, categories, categoryMap, selectedCategory, onCat
         {products.length === 0 ? (
           <EmptyState brandColor={brandColor} onReset={() => { onSearchChange(''); onCategoryChange(null); }} />
         ) : (
-          <ProductList products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showPromotionBadge={showPromotionBadge} wishlistIdSet={wishlistIdSet} onToggleWishlist={onToggleWishlist} canUseWishlist={canUseWishlist} />
+          <ProductList products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showPromotionBadge={showPromotionBadge} wishlistIdSet={wishlistIdSet} onToggleWishlist={onToggleWishlist} onAddToCart={onAddToCart} canUseWishlist={canUseWishlist} />
         )}
 
         {paginationNode}

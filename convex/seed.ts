@@ -18,7 +18,7 @@ export const seedModules = mutation({
       
       { category: "commerce" as const, description: "Quản lý sản phẩm, danh mục sản phẩm, kho hàng", enabled: true, icon: "Package", isCore: false, key: "products", name: "Sản phẩm & Danh mục", order: 4 },
       { category: "commerce" as const, dependencies: ["products", "customers"], dependencyType: "all" as const, description: "Quản lý đơn hàng, vận chuyển", enabled: true, icon: "ShoppingBag", isCore: false, key: "orders", name: "Đơn hàng", order: 5 },
-      { category: "commerce" as const, dependencies: ["products"], dependencyType: "all" as const, description: "Chức năng giỏ hàng cho khách", enabled: true, icon: "ShoppingCart", isCore: false, key: "cart", name: "Giỏ hàng", order: 6 },
+      { category: "commerce" as const, dependencies: ["products"], dependencyType: "all" as const, description: "Chức năng giỏ hàng cho khách đã đăng nhập", enabled: true, icon: "ShoppingCart", isCore: false, key: "cart", name: "Giỏ hàng", order: 6 },
       { category: "commerce" as const, dependencies: ["products", "customers"], dependencyType: "all" as const, description: "Danh sách sản phẩm yêu thích của khách", enabled: false, icon: "Heart", isCore: false, key: "wishlist", name: "Sản phẩm yêu thích", order: 7 },
       
       { category: "user" as const, description: "Quản lý thông tin khách hàng", enabled: true, icon: "Users", isCore: true, key: "customers", name: "Khách hàng", order: 8 },
@@ -1449,7 +1449,6 @@ export const seedCartModule = mutation({
     if (!existingFeatures) {
       const features = [
         { description: "Tự động đánh dấu abandoned sau N ngày", enabled: true, featureKey: "enableExpiry", linkedFieldKey: "expiresAt", moduleKey: "cart", name: "Hết hạn giỏ hàng" },
-        { description: "Cho phép khách chưa đăng nhập thêm giỏ hàng", enabled: true, featureKey: "enableGuestCart", linkedFieldKey: "sessionId", moduleKey: "cart", name: "Giỏ hàng khách" },
         { description: "Cho phép thêm ghi chú vào giỏ hàng", enabled: false, featureKey: "enableNote", linkedFieldKey: "note", moduleKey: "cart", name: "Ghi chú" },
       ];
       for (const feature of features) {
@@ -1462,12 +1461,11 @@ export const seedCartModule = mutation({
     if (!existingFields) {
       const cartFields = [
         { enabled: true, fieldKey: "customerId", isSystem: true, moduleKey: "cart", name: "Khách hàng", order: 0, required: false, type: "select" as const },
-        { enabled: true, fieldKey: "sessionId", isSystem: false, linkedFeature: "enableGuestCart", moduleKey: "cart", name: "Session ID", order: 1, required: false, type: "text" as const },
-        { enabled: true, fieldKey: "status", isSystem: true, moduleKey: "cart", name: "Trạng thái", order: 2, required: true, type: "select" as const },
-        { enabled: true, fieldKey: "itemsCount", isSystem: true, moduleKey: "cart", name: "Số lượng SP", order: 3, required: true, type: "number" as const },
-        { enabled: true, fieldKey: "totalAmount", isSystem: true, moduleKey: "cart", name: "Tổng tiền", order: 4, required: true, type: "price" as const },
-        { enabled: true, fieldKey: "expiresAt", isSystem: false, linkedFeature: "enableExpiry", moduleKey: "cart", name: "Thời gian hết hạn", order: 5, required: false, type: "date" as const },
-        { enabled: false, fieldKey: "note", isSystem: false, linkedFeature: "enableNote", moduleKey: "cart", name: "Ghi chú", order: 6, required: false, type: "textarea" as const },
+        { enabled: true, fieldKey: "status", isSystem: true, moduleKey: "cart", name: "Trạng thái", order: 1, required: true, type: "select" as const },
+        { enabled: true, fieldKey: "itemsCount", isSystem: true, moduleKey: "cart", name: "Số lượng SP", order: 2, required: true, type: "number" as const },
+        { enabled: true, fieldKey: "totalAmount", isSystem: true, moduleKey: "cart", name: "Tổng tiền", order: 3, required: true, type: "price" as const },
+        { enabled: true, fieldKey: "expiresAt", isSystem: false, linkedFeature: "enableExpiry", moduleKey: "cart", name: "Thời gian hết hạn", order: 4, required: false, type: "date" as const },
+        { enabled: false, fieldKey: "note", isSystem: false, linkedFeature: "enableNote", moduleKey: "cart", name: "Ghi chú", order: 5, required: false, type: "textarea" as const },
       ];
       for (const field of cartFields) {
         await ctx.db.insert("moduleFields", field);
@@ -1939,7 +1937,6 @@ export const seedSettingsModule = mutation({
           value: {
             layoutStyle: "drawer",
             showExpiry: false,
-            showGuestCart: true,
             showNote: false,
           },
         },

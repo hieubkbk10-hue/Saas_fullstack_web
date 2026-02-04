@@ -7,7 +7,8 @@ import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useBrandColor, useSiteSettings } from './hooks';
-import { ChevronDown, ChevronRight, Heart, Mail, Phone, Search, ShoppingCart, User } from 'lucide-react';
+import { ChevronDown, ChevronRight, Heart, Mail, Phone, Search, User } from 'lucide-react';
+import { CartIcon } from './CartIcon';
 
 interface MenuItem {
   _id: Id<"menuItems">;
@@ -426,15 +427,7 @@ export function Header() {
                   </button>
                 )}
                 {config.cart?.show && (
-                  <Link href={config.cart.url ?? '/cart'} className="p-2 text-slate-600 dark:text-slate-400 relative">
-                    <ShoppingCart size={20} />
-                    <span 
-                      className="absolute -top-1 -right-1 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" 
-                      style={{ backgroundColor: brandColor }}
-                    >
-                      0
-                    </span>
-                  </Link>
+                  <CartIcon variant="mobile" />
                 )}
                 {renderMobileMenuButton(false)}
               </div>
@@ -448,16 +441,7 @@ export function Header() {
                   </Link>
                 )}
                 {config.cart?.show && (
-                  <Link href={config.cart.url ?? '/cart'} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors flex flex-col items-center text-xs gap-0.5 relative">
-                    <ShoppingCart size={20} />
-                    <span>Giỏ hàng</span>
-                    <span 
-                      className="absolute top-0 right-0 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" 
-                      style={{ backgroundColor: brandColor }}
-                    >
-                      0
-                    </span>
-                  </Link>
+                  <CartIcon />
                 )}
               </div>
             </div>

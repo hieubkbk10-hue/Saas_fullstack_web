@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { LayoutTemplate, Loader2, Save, ShoppingCart } from 'lucide-react';
+import { LayoutTemplate, Loader2, Package, Save, ShoppingBag, ShoppingCart } from 'lucide-react';
 import { Button, Card } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
@@ -35,7 +35,6 @@ type CartExperienceConfig = {
 
 type LayoutConfig = {
   showExpiry: boolean;
-  showGuestCart: boolean;
   showNote: boolean;
 };
 
@@ -48,7 +47,6 @@ const LAYOUT_STYLES: LayoutOption<CartLayoutStyle>[] = [
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   showExpiry: false,
-  showGuestCart: true,
   showNote: false,
 };
 
@@ -63,15 +61,16 @@ const DEFAULT_CONFIG: CartExperienceConfig = {
 const HINTS = [
   'Drawer phù hợp cho quick checkout.',
   'Page layout cho cart phức tạp với nhiều options.',
-  'Guest cart cần session management.',
+  'Cart yêu cầu đăng nhập để thêm sản phẩm.',
   'Mỗi layout có config riêng - chuyển tab để chỉnh.',
 ];
 
 export default function CartExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
+  const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
+  const productsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'products' });
   const expiryFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableExpiry', moduleKey: 'cart' });
-  const guestCartFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableGuestCart', moduleKey: 'cart' });
   const noteFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableNote', moduleKey: 'cart' });
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
@@ -80,7 +79,6 @@ export default function CartExperiencePage() {
     const raw = experienceSetting?.value as Partial<CartExperienceConfig> | undefined;
     const defaultLayoutWithModuleFeatures: LayoutConfig = {
       showExpiry: expiryFeature?.enabled ?? false,
-      showGuestCart: guestCartFeature?.enabled ?? true,
       showNote: noteFeature?.enabled ?? false,
     };
     return {
@@ -90,7 +88,7 @@ export default function CartExperiencePage() {
         page: { ...defaultLayoutWithModuleFeatures, ...raw?.layouts?.page },
       },
     };
-  }, [experienceSetting?.value, expiryFeature?.enabled, guestCartFeature?.enabled, noteFeature?.enabled]);
+  }, [experienceSetting?.value, expiryFeature?.enabled, noteFeature?.enabled]);
 
   const isLoading = experienceSetting === undefined || cartModule === undefined;
 
@@ -155,7 +153,6 @@ export default function CartExperiencePage() {
           <BrowserFrame url="yoursite.com/cart" maxHeight="calc(100vh - 320px)">
             <CartPreview
               layoutStyle={config.layoutStyle}
-              showGuestCart={currentLayoutConfig.showGuestCart}
               showExpiry={currentLayoutConfig.showExpiry}
               showNote={currentLayoutConfig.showNote}
               device={previewDevice}
@@ -182,13 +179,6 @@ export default function CartExperiencePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <ControlCard title="Khối hiển thị">
             <ToggleRow
-              label="Guest Cart"
-              checked={currentLayoutConfig.showGuestCart}
-              onChange={(v) => updateLayoutConfig('showGuestCart', v)}
-              accentColor="#f97316"
-              disabled={!cartModule?.enabled}
-            />
-            <ToggleRow
               label="Hết hạn giỏ"
               checked={currentLayoutConfig.showExpiry}
               onChange={(v) => updateLayoutConfig('showExpiry', v)}
@@ -210,6 +200,27 @@ export default function CartExperiencePage() {
               href="/system/modules/cart"
               icon={ShoppingCart}
               title="Giỏ hàng"
+              colorScheme="orange"
+            />
+            <ExperienceModuleLink
+              enabled={ordersModule?.enabled ?? false}
+              href="/system/modules/orders"
+              icon={ShoppingBag}
+              title="Đơn hàng"
+              colorScheme="orange"
+            />
+            <ExperienceModuleLink
+              enabled={productsModule?.enabled ?? false}
+              href="/system/modules/products"
+              icon={Package}
+              title="Sản phẩm"
+              colorScheme="orange"
+            />
+            <ExperienceModuleLink
+              enabled={true}
+              href="/system/experiences/checkout"
+              icon={ShoppingCart}
+              title="Checkout"
               colorScheme="orange"
             />
           </ControlCard>

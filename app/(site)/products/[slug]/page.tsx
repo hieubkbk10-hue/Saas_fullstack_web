@@ -7,6 +7,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
+import { useCart } from '@/lib/cart';
 import { ArrowLeft, Award, BadgeCheck, Bell, Bolt, Calendar, Camera, Check, CheckCircle2, ChevronRight, Clock, CreditCard, Gift, Globe, Heart, HeartHandshake, Leaf, Lock, MapPin, Minus, Package, Phone, Plus, RotateCcw, Share2, Shield, ShoppingBag, ShoppingCart, Star, ThumbsUp, Truck } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
@@ -167,6 +168,7 @@ export default function ProductDetailPage({ params }: PageProps) {
   const classicHighlightsEnabled = useClassicHighlightsEnabled() && experienceConfig.showClassicHighlights;
   const enabledFields = useEnabledProductFields();
   const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
+  const { addItem } = useCart();
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const toggleWishlist = useMutation(api.wishlist.toggle);
   
@@ -196,6 +198,13 @@ export default function ProductDetailPage({ params }: PageProps) {
       return;
     }
     await toggleWishlist({ customerId: customer.id as Id<'customers'>, productId: product._id });
+  };
+
+  const handleAddToCart = async (quantity: number) => {
+    if (!product?._id) {
+      return;
+    }
+    await addItem(product._id, quantity);
   };
 
   const ratingSummary = useProductRatingSummary(product?._id, experienceConfig.showRating);
@@ -245,6 +254,7 @@ export default function ProductDetailPage({ params }: PageProps) {
           showWishlist={canUseWishlist}
           isWishlisted={isWishlisted}
           onToggleWishlist={handleWishlistToggle}
+          onAddToCart={handleAddToCart}
         />
       )}
       {experienceConfig.layoutStyle === 'modern' && (
@@ -259,6 +269,7 @@ export default function ProductDetailPage({ params }: PageProps) {
           showWishlist={canUseWishlist}
           isWishlisted={isWishlisted}
           onToggleWishlist={handleWishlistToggle}
+          onAddToCart={handleAddToCart}
         />
       )}
       {experienceConfig.layoutStyle === 'minimal' && (
@@ -273,6 +284,7 @@ export default function ProductDetailPage({ params }: PageProps) {
           showWishlist={canUseWishlist}
           isWishlisted={isWishlisted}
           onToggleWishlist={handleWishlistToggle}
+          onAddToCart={handleAddToCart}
         />
       )}
     </>
@@ -318,6 +330,7 @@ interface ExperienceBlocksProps {
   showWishlist: boolean;
   isWishlisted: boolean;
   onToggleWishlist: () => void;
+  onAddToCart: (quantity: number) => void;
 }
 
 interface ClassicStyleProps extends StyleProps, ExperienceBlocksProps {
@@ -354,7 +367,7 @@ function RatingInline({ summary }: { summary: RatingSummary }) {
 // ====================================================================================
 // STYLE 1: CLASSIC - Standard e-commerce product page
 // ====================================================================================
-function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, highlights, highlightsEnabled, ratingSummary, showAddToCart, showRating, showWishlist, isWishlisted, onToggleWishlist }: ClassicStyleProps) {
+function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, highlights, highlightsEnabled, ratingSummary, showAddToCart, showRating, showWishlist, isWishlisted, onToggleWishlist, onAddToCart }: ClassicStyleProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
 
@@ -463,7 +476,12 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
               </div>
 
               {showAddToCart && (
-                <button className={`flex-1 py-3.5 px-8 rounded-xl text-white font-semibold flex items-center justify-center gap-2 transition-all ${inStock ? 'hover:shadow-lg hover:scale-[1.02]' : 'opacity-50 cursor-not-allowed'}`} style={{ backgroundColor: brandColor }} disabled={!inStock}>
+                <button
+                  className={`flex-1 py-3.5 px-8 rounded-xl text-white font-semibold flex items-center justify-center gap-2 transition-all ${inStock ? 'hover:shadow-lg hover:scale-[1.02]' : 'opacity-50 cursor-not-allowed'}`}
+                  style={{ backgroundColor: brandColor }}
+                  disabled={!inStock}
+                  onClick={() => { if (inStock) { onAddToCart(quantity); } }}
+                >
                   <ShoppingCart size={20} />
                   {inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
                 </button>
@@ -521,7 +539,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
 // ====================================================================================
 // STYLE 2: MODERN - Landing page style with hero
 // ====================================================================================
-function ModernStyle({ product, brandColor, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist, isWishlisted, onToggleWishlist }: StyleProps & ExperienceBlocksProps) {
+function ModernStyle({ product, brandColor, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist, isWishlisted, onToggleWishlist, onAddToCart }: StyleProps & ExperienceBlocksProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -671,6 +689,7 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
                     className={`w-full h-12 text-base font-semibold text-white transition-all ${inStock ? 'hover:shadow-lg hover:scale-[1.01]' : 'opacity-50 cursor-not-allowed'}`}
                     style={{ backgroundColor: brandColor }}
                     disabled={!inStock}
+                    onClick={() => { if (inStock) { onAddToCart(quantity); } }}
                   >
                     <ShoppingBag className="w-5 h-5 mr-2 inline-block" />
                     {inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
@@ -748,7 +767,7 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
 // ====================================================================================
 // STYLE 3: MINIMAL - Clean, focused design
 // ====================================================================================
-function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist, isWishlisted, onToggleWishlist }: StyleProps & ExperienceBlocksProps) {
+function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist, isWishlisted, onToggleWishlist, onAddToCart }: StyleProps & ExperienceBlocksProps) {
   const [selectedImage, setSelectedImage] = useState(0);
 
   const showPrice = enabledFields.has('price') || enabledFields.size === 0;
@@ -833,6 +852,7 @@ function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, 
                   <button
                     className={`flex-1 bg-black text-white h-14 uppercase tracking-wider text-sm font-medium transition-colors ${inStock ? 'hover:bg-slate-900' : 'opacity-50 cursor-not-allowed'}`}
                     disabled={!inStock}
+                    onClick={() => { if (inStock) { onAddToCart(1); } }}
                   >
                     {inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
                   </button>

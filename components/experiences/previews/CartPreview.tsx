@@ -3,7 +3,6 @@ import { Clock, Minus, Plus, ShoppingCart, Trash2, X } from 'lucide-react';
 
 type CartPreviewProps = {
   layoutStyle: 'drawer' | 'page';
-  showGuestCart: boolean;
   showExpiry: boolean;
   showNote: boolean;
   device?: 'desktop' | 'tablet' | 'mobile';
@@ -73,7 +72,6 @@ function CartSummary({ subtotal, brandColor }: { subtotal: number; brandColor: s
 
 export function CartPreview({
   layoutStyle,
-  showGuestCart,
   showExpiry,
   showNote,
   device = 'desktop',
@@ -104,11 +102,6 @@ export function CartPreview({
                 <X size={18} className="text-slate-400" />
               </button>
             </div>
-            {showGuestCart && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3 text-xs text-amber-700 text-center">
-                Đăng nhập để lưu giỏ hàng
-              </div>
-            )}
             {showExpiry && (
               <div className="flex items-center justify-center gap-1.5 text-xs text-red-500 mb-3">
                 <Clock size={12} />
@@ -148,11 +141,6 @@ export function CartPreview({
                 <p className="text-sm text-slate-500">{mockCartItems.length} sản phẩm</p>
               </div>
             </div>
-            {showGuestCart && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm text-amber-700 text-center">
-                Bạn đang mua với tư cách khách. Đăng nhập để lưu giỏ hàng!
-              </div>
-            )}
             {showExpiry && (
               <div className="flex items-center justify-center gap-2 text-sm text-red-500 mb-4">
                 <Clock size={14} />

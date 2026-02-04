@@ -14,6 +14,7 @@ export {
   useExamplePostCategorySlug,
 } from './useExampleSlugs';
 export {
+  useCartConfig,
   usePostsListConfig,
   useProductsListConfig,
   useServicesListConfig,

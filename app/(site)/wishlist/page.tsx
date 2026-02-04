@@ -9,6 +9,7 @@ import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { useWishlistConfig } from '@/lib/experiences/useSiteConfig';
+import { useCart } from '@/lib/cart';
 import type { Id } from '@/convex/_generated/dataModel';
 
 function formatPrice(price: number): string {
@@ -18,6 +19,7 @@ function formatPrice(price: number): string {
 export default function WishlistPage() {
   const brandColor = useBrandColor();
   const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
+  const { addItem } = useCart();
   const config = useWishlistConfig();
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const itemsPerPageSetting = useQuery(api.admin.modules.getModuleSetting, { moduleKey: 'wishlist', settingKey: 'itemsPerPage' });
@@ -158,7 +160,7 @@ export default function WishlistPage() {
                     )}
                     {config.showAddToCartButton && (
                       <button
-                        onClick={(event) => { event.preventDefault(); }}
+                        onClick={(event) => { event.preventDefault(); void addItem(product._id, 1); }}
                         className="mt-3 w-full py-2 rounded-lg text-sm font-medium text-white flex items-center justify-center gap-1.5 disabled:opacity-50"
                         style={{ backgroundColor: brandColor }}
                         disabled={product.stock === 0}
@@ -200,7 +202,7 @@ export default function WishlistPage() {
                 </button>
                 {config.showAddToCartButton && (
                   <button
-                    onClick={() => { }}
+                    onClick={() => { void addItem(product._id, 1); }}
                     className="self-start px-3 py-1.5 rounded-lg text-xs font-medium text-white flex items-center gap-1 disabled:opacity-50"
                     style={{ backgroundColor: brandColor }}
                     disabled={product.stock === 0}

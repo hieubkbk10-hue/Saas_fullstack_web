@@ -1,6 +1,6 @@
-import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useMemo } from 'react';
+import { useQuery } from 'convex/react';
 import { useCartAvailable } from './useCartAvailable';
 
 type PaginationType = 'pagination' | 'infiniteScroll';
@@ -161,4 +161,32 @@ export function useServicesListConfig(): ServicesListConfig {
       postsPerPage: layoutConfig?.postsPerPage ?? raw?.postsPerPage ?? 12,
     };
   }, [experienceSetting?.value]);
+}
+
+type CartConfig = {
+  layoutStyle: 'drawer' | 'page';
+  showExpiry: boolean;
+  showNote: boolean;
+};
+
+export function useCartConfig(): CartConfig {
+  const experienceSetting = useQuery(api.settings.getByKey, { key: 'cart_ui' });
+  const expiryFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableExpiry', moduleKey: 'cart' });
+  const noteFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableNote', moduleKey: 'cart' });
+
+  return useMemo(() => {
+    const raw = experienceSetting?.value as {
+      layoutStyle?: CartConfig['layoutStyle'];
+      layouts?: Record<string, Partial<Omit<CartConfig, 'layoutStyle'>>>;
+    } | undefined;
+
+    const layoutStyle: CartConfig['layoutStyle'] = raw?.layoutStyle ?? 'drawer';
+    const layoutConfig = raw?.layouts?.[layoutStyle] ?? {};
+
+    return {
+      layoutStyle,
+      showExpiry: (expiryFeature?.enabled ?? false) && (layoutConfig.showExpiry ?? false),
+      showNote: (noteFeature?.enabled ?? false) && (layoutConfig.showNote ?? false),
+    };
+  }, [experienceSetting?.value, expiryFeature?.enabled, noteFeature?.enabled]);
 }
