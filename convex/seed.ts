@@ -19,7 +19,7 @@ export const seedModules = mutation({
       { category: "commerce" as const, description: "Quản lý sản phẩm, danh mục sản phẩm, kho hàng", enabled: true, icon: "Package", isCore: false, key: "products", name: "Sản phẩm & Danh mục", order: 4 },
       { category: "commerce" as const, dependencies: ["products", "customers"], dependencyType: "all" as const, description: "Quản lý đơn hàng, vận chuyển", enabled: true, icon: "ShoppingBag", isCore: false, key: "orders", name: "Đơn hàng", order: 5 },
       { category: "commerce" as const, dependencies: ["products"], dependencyType: "all" as const, description: "Chức năng giỏ hàng cho khách", enabled: true, icon: "ShoppingCart", isCore: false, key: "cart", name: "Giỏ hàng", order: 6 },
-      { category: "commerce" as const, dependencies: ["products"], dependencyType: "all" as const, description: "Danh sách sản phẩm yêu thích của khách", enabled: false, icon: "Heart", isCore: false, key: "wishlist", name: "Sản phẩm yêu thích", order: 7 },
+      { category: "commerce" as const, dependencies: ["products", "customers"], dependencyType: "all" as const, description: "Danh sách sản phẩm yêu thích của khách", enabled: false, icon: "Heart", isCore: false, key: "wishlist", name: "Sản phẩm yêu thích", order: 7 },
       
       { category: "user" as const, description: "Quản lý thông tin khách hàng", enabled: true, icon: "Users", isCore: true, key: "customers", name: "Khách hàng", order: 8 },
       { category: "user" as const, description: "Quản lý tài khoản admin", enabled: true, icon: "UserCog", isCore: true, key: "users", name: "Người dùng Admin", order: 9 },

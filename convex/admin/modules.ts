@@ -137,6 +137,15 @@ export const toggleModule = mutation({
     if (moduleRecord.isCore && !args.enabled) {
       throw new Error("Cannot disable core module");
     }
+    if (args.enabled && args.key === "wishlist") {
+      const [products, customers] = await Promise.all([
+        ctx.db.query("adminModules").withIndex("by_key", (q) => q.eq("key", "products")).unique(),
+        ctx.db.query("adminModules").withIndex("by_key", (q) => q.eq("key", "customers")).unique(),
+      ]);
+      if (!products?.enabled || !customers?.enabled) {
+        throw new Error("Cần bật module Sản phẩm và Khách hàng trước");
+      }
+    }
     if (args.enabled && moduleRecord.dependencies?.length) {
       for (const depKey of moduleRecord.dependencies) {
         const dep = await ctx.db
@@ -172,6 +181,16 @@ export const toggleModuleWithCascade = mutation({
     if (!moduleRecord) {throw new Error("Module not found");}
     if (moduleRecord.isCore && !args.enabled) {
       throw new Error("Cannot disable core module");
+    }
+
+    if (args.enabled && args.key === "wishlist") {
+      const [products, customers] = await Promise.all([
+        ctx.db.query("adminModules").withIndex("by_key", (q) => q.eq("key", "products")).unique(),
+        ctx.db.query("adminModules").withIndex("by_key", (q) => q.eq("key", "customers")).unique(),
+      ]);
+      if (!products?.enabled || !customers?.enabled) {
+        throw new Error("Cần bật module Sản phẩm và Khách hàng trước");
+      }
     }
     
     // Khi enable, check dependencies

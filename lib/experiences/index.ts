@@ -17,4 +17,5 @@ export {
   usePostsListConfig,
   useProductsListConfig,
   useServicesListConfig,
+  useWishlistConfig,
 } from './useSiteConfig';

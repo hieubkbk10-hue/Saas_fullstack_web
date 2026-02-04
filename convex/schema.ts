@@ -226,6 +226,7 @@ export default defineSchema({
     name: v.string(),
     notes: v.optional(v.string()),
     ordersCount: v.number(),
+    passwordHash: v.optional(v.string()),
     phone: v.string(),
     status: v.union(v.literal("Active"), v.literal("Inactive")),
     totalSpent: v.number(),
@@ -234,6 +235,16 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_status_totalSpent", ["status", "totalSpent"])
     .index("by_city_status", ["city", "status"]),
+
+  // 8a. customerSessions - Sessions cho khách hàng
+  customerSessions: defineTable({
+    createdAt: v.number(),
+    customerId: v.id("customers"),
+    expiresAt: v.number(),
+    token: v.string(),
+  })
+    .index("by_token", ["token"])
+    .index("by_customer", ["customerId"]),
 
   // 9. productCategories - Danh mục sản phẩm (Hierarchical)
   productCategories: defineTable({

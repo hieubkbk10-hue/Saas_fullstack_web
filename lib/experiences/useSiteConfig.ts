@@ -83,6 +83,38 @@ export function useProductsListConfig(): ProductsListConfig {
   }, [experienceSetting?.value]);
 }
 
+type WishlistConfig = {
+  layoutStyle: 'grid' | 'list';
+  showWishlistButton: boolean;
+  showNote: boolean;
+  showNotification: boolean;
+};
+
+export function useWishlistConfig(): WishlistConfig {
+  const experienceSetting = useQuery(api.settings.getByKey, { key: 'wishlist_ui' });
+  const noteFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableNote', moduleKey: 'wishlist' });
+  const notificationFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableNotification', moduleKey: 'wishlist' });
+
+  return useMemo(() => {
+    const raw = experienceSetting?.value as {
+      layoutStyle?: WishlistConfig['layoutStyle'];
+      layouts?: Record<string, Partial<Omit<WishlistConfig, 'layoutStyle'>>>;
+    } | undefined;
+
+    const layoutStyle: WishlistConfig['layoutStyle'] = raw?.layoutStyle ?? 'grid';
+    const layoutConfig = raw?.layouts?.[layoutStyle] ?? {};
+    const showNote = layoutConfig.showNote ?? true;
+    const showNotification = layoutConfig.showNotification ?? true;
+
+    return {
+      layoutStyle,
+      showWishlistButton: layoutConfig.showWishlistButton ?? true,
+      showNote: (noteFeature?.enabled ?? true) && showNote,
+      showNotification: (notificationFeature?.enabled ?? true) && showNotification,
+    };
+  }, [experienceSetting?.value, noteFeature?.enabled, notificationFeature?.enabled]);
+}
+
 type ServicesListConfig = {
    layoutStyle: 'grid' | 'sidebar' | 'masonry';
   filterPosition: 'sidebar' | 'top' | 'none';

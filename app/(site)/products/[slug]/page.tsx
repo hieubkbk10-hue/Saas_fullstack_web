@@ -3,9 +3,10 @@
 import React, { use, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
+import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { ArrowLeft, Award, BadgeCheck, Bell, Bolt, Calendar, Camera, Check, CheckCircle2, ChevronRight, Clock, CreditCard, Gift, Globe, Heart, HeartHandshake, Leaf, Lock, MapPin, Minus, Package, Phone, Plus, RotateCcw, Share2, Shield, ShoppingBag, ShoppingCart, Star, ThumbsUp, Truck } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
@@ -161,6 +162,9 @@ export default function ProductDetailPage({ params }: PageProps) {
   const classicHighlights = useClassicHighlights();
   const classicHighlightsEnabled = useClassicHighlightsEnabled() && experienceConfig.showClassicHighlights;
   const enabledFields = useEnabledProductFields();
+  const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
+  const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
+  const toggleWishlist = useMutation(api.wishlist.toggle);
   
   const product = useQuery(api.products.getBySlug, { slug });
   const category = useQuery(
@@ -172,6 +176,23 @@ export default function ProductDetailPage({ params }: PageProps) {
     api.products.searchPublished,
     product?.categoryId ? { categoryId: product.categoryId, limit: 4 } : 'skip'
   );
+
+  const wishlistStatus = useQuery(
+    api.wishlist.isInWishlist,
+    isAuthenticated && customer && product?._id && (wishlistModule?.enabled ?? false)
+      ? { customerId: customer.id as Id<'customers'>, productId: product._id }
+      : 'skip'
+  );
+  const isWishlisted = wishlistStatus ?? false;
+  const canUseWishlist = experienceConfig.showWishlist && (wishlistModule?.enabled ?? false);
+
+  const handleWishlistToggle = async () => {
+    if (!isAuthenticated || !customer || !product?._id) {
+      openLoginModal();
+      return;
+    }
+    await toggleWishlist({ customerId: customer.id as Id<'customers'>, productId: product._id });
+  };
 
   const ratingSummary = useProductRatingSummary(product?._id, experienceConfig.showRating);
 
@@ -217,7 +238,9 @@ export default function ProductDetailPage({ params }: PageProps) {
           ratingSummary={ratingSummary}
           showAddToCart={experienceConfig.showAddToCart}
           showRating={experienceConfig.showRating}
-          showWishlist={experienceConfig.showWishlist}
+          showWishlist={canUseWishlist}
+          isWishlisted={isWishlisted}
+          onToggleWishlist={handleWishlistToggle}
         />
       )}
       {experienceConfig.layoutStyle === 'modern' && (
@@ -229,7 +252,9 @@ export default function ProductDetailPage({ params }: PageProps) {
           ratingSummary={ratingSummary}
           showAddToCart={experienceConfig.showAddToCart}
           showRating={experienceConfig.showRating}
-          showWishlist={experienceConfig.showWishlist}
+          showWishlist={canUseWishlist}
+          isWishlisted={isWishlisted}
+          onToggleWishlist={handleWishlistToggle}
         />
       )}
       {experienceConfig.layoutStyle === 'minimal' && (
@@ -241,7 +266,9 @@ export default function ProductDetailPage({ params }: PageProps) {
           ratingSummary={ratingSummary}
           showAddToCart={experienceConfig.showAddToCart}
           showRating={experienceConfig.showRating}
-          showWishlist={experienceConfig.showWishlist}
+          showWishlist={canUseWishlist}
+          isWishlisted={isWishlisted}
+          onToggleWishlist={handleWishlistToggle}
         />
       )}
     </>
@@ -285,6 +312,8 @@ interface ExperienceBlocksProps {
   showAddToCart: boolean;
   showRating: boolean;
   showWishlist: boolean;
+  isWishlisted: boolean;
+  onToggleWishlist: () => void;
 }
 
 interface ClassicStyleProps extends StyleProps, ExperienceBlocksProps {
@@ -321,7 +350,7 @@ function RatingInline({ summary }: { summary: RatingSummary }) {
 // ====================================================================================
 // STYLE 1: CLASSIC - Standard e-commerce product page
 // ====================================================================================
-function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, highlights, highlightsEnabled, ratingSummary, showAddToCart, showRating, showWishlist }: ClassicStyleProps) {
+function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, highlights, highlightsEnabled, ratingSummary, showAddToCart, showRating, showWishlist, isWishlisted, onToggleWishlist }: ClassicStyleProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
 
@@ -437,8 +466,12 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
               )}
 
               {showWishlist && (
-                <button className="p-3.5 rounded-xl border border-slate-200 hover:border-red-200 hover:bg-red-50 transition-colors group">
-                  <Heart size={20} className="text-slate-400 group-hover:text-red-500 transition-colors" />
+                <button
+                  onClick={onToggleWishlist}
+                  className={`p-3.5 rounded-xl border transition-colors group ${isWishlisted ? 'border-red-200 bg-red-50' : 'border-slate-200 hover:border-red-200 hover:bg-red-50'}`}
+                  aria-label="Thêm vào yêu thích"
+                >
+                  <Heart size={20} className={`transition-colors ${isWishlisted ? 'text-red-500 fill-red-500' : 'text-slate-400 group-hover:text-red-500'}`} />
                 </button>
               )}
               <button className="p-3.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors">
@@ -484,10 +517,9 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
 // ====================================================================================
 // STYLE 2: MODERN - Landing page style with hero
 // ====================================================================================
-function ModernStyle({ product, brandColor, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist }: StyleProps & ExperienceBlocksProps) {
+function ModernStyle({ product, brandColor, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist, isWishlisted, onToggleWishlist }: StyleProps & ExperienceBlocksProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isWishlisted, setIsWishlisted] = useState(false);
 
   const showPrice = enabledFields.has('price') || enabledFields.size === 0;
   const showSalePrice = enabledFields.has('salePrice');
@@ -512,7 +544,7 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
             </div>
             <button
               type="button"
-              onClick={() => setIsWishlisted(prev => !prev)}
+              onClick={onToggleWishlist}
               className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700"
             >
               <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
@@ -643,10 +675,10 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
                 {showWishlist && (
                   <button
                     type="button"
-                    onClick={() =>{  setIsWishlisted(prev => !prev); }}
+                    onClick={onToggleWishlist}
                     className="w-full h-12 text-base border border-slate-200 text-slate-700 hover:bg-slate-50"
                   >
-                    <Heart className={`w-5 h-5 mr-2 inline-block ${isWishlisted ? 'fill-current' : ''}`} />
+                    <Heart className={`w-5 h-5 mr-2 inline-block ${isWishlisted ? 'fill-current text-red-500' : ''}`} />
                     {isWishlisted ? 'Đã yêu thích' : 'Thêm vào yêu thích'}
                   </button>
                 )}
@@ -712,7 +744,7 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
 // ====================================================================================
 // STYLE 3: MINIMAL - Clean, focused design
 // ====================================================================================
-function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist }: StyleProps & ExperienceBlocksProps) {
+function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist, isWishlisted, onToggleWishlist }: StyleProps & ExperienceBlocksProps) {
   const [selectedImage, setSelectedImage] = useState(0);
 
   const showPrice = enabledFields.has('price') || enabledFields.size === 0;
@@ -802,8 +834,12 @@ function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, 
                   </button>
                 )}
                 {showWishlist && (
-                  <button className="w-14 h-14 border border-slate-200 flex items-center justify-center hover:border-black transition-colors text-slate-400 hover:text-black">
-                    <Heart size={20} />
+                  <button
+                    onClick={onToggleWishlist}
+                    className={`w-14 h-14 border flex items-center justify-center transition-colors ${isWishlisted ? 'border-red-200 text-red-500' : 'border-slate-200 text-slate-400 hover:text-black hover:border-black'}`}
+                    aria-label="Thêm vào yêu thích"
+                  >
+                    <Heart size={20} className={isWishlisted ? 'fill-current' : ''} />
                   </button>
                 )}
               </div>

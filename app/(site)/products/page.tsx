@@ -3,12 +3,13 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePaginatedQuery, useQuery } from 'convex/react';
+import { useMutation, usePaginatedQuery, useQuery } from 'convex/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { useProductsListConfig } from '@/lib/experiences';
+import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { ChevronDown, Heart, Package, Search, ShoppingCart, SlidersHorizontal, X } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
@@ -138,6 +139,9 @@ function ProductsContent() {
   const showWishlistButton = listConfig.showWishlistButton ?? true;
   const showAddToCartButton = listConfig.showAddToCartButton ?? true;
   const showPromotionBadge = listConfig.showPromotionBadge ?? true;
+  const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
+  const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
+  const toggleWishlist = useMutation(api.wishlist.toggle);
   const enabledFields = useEnabledProductFields();
   const router = useRouter();
   const pathname = usePathname();
@@ -214,11 +218,24 @@ function ProductsContent() {
       : 'skip'
   );
 
-  const products = isPaginationMode
-    ? (useCursorPagination
-      ? infiniteResults.slice(offset, offset + postsPerPage)
-      : (paginatedProducts ?? []))
-    : infiniteResults;
+  const products = useMemo(() => {
+    if (isPaginationMode) {
+      if (useCursorPagination) {
+        return infiniteResults.slice(offset, offset + postsPerPage);
+      }
+      return paginatedProducts ?? [];
+    }
+    return infiniteResults;
+  }, [infiniteResults, isPaginationMode, offset, paginatedProducts, postsPerPage, useCursorPagination]);
+
+  const productIds = useMemo(() => products.map((product) => product._id), [products]);
+  const wishlistProductIds = useQuery(
+    api.wishlist.listCustomerProductIds,
+    isAuthenticated && customer && productIds.length > 0 && (wishlistModule?.enabled ?? false)
+      ? { customerId: customer.id as Id<'customers'>, productIds }
+      : 'skip'
+  );
+  const wishlistIdSet = useMemo(() => new Set<Id<'products'>>(wishlistProductIds ?? []), [wishlistProductIds]);
 
   const totalCountRaw = useQuery(api.products.countPublished, {
     categoryId: activeCategory ?? undefined,
@@ -314,6 +331,15 @@ function ProductsContent() {
   const showPrice = enabledFields.has('price') || enabledFields.size === 0;
   const showSalePrice = enabledFields.has('salePrice');
   const showStock = enabledFields.has('stock');
+  const canUseWishlist = showWishlistButton && (wishlistModule?.enabled ?? false);
+
+  const handleWishlistToggle = async (productId: Id<'products'>) => {
+    if (!isAuthenticated || !customer) {
+      openLoginModal();
+      return;
+    }
+    await toggleWishlist({ customerId: customer.id as Id<'customers'>, productId });
+  };
 
   const paginationNode = (
     <>
@@ -447,6 +473,9 @@ function ProductsContent() {
         showWishlistButton={showWishlistButton}
         showAddToCartButton={showAddToCartButton}
         showPromotionBadge={showPromotionBadge}
+        wishlistIdSet={wishlistIdSet}
+        onToggleWishlist={handleWishlistToggle}
+        canUseWishlist={canUseWishlist}
       />
     );
   }
@@ -473,6 +502,9 @@ function ProductsContent() {
         showWishlistButton={showWishlistButton}
         showAddToCartButton={showAddToCartButton}
         showPromotionBadge={showPromotionBadge}
+        wishlistIdSet={wishlistIdSet}
+        onToggleWishlist={handleWishlistToggle}
+        canUseWishlist={canUseWishlist}
       />
     );
   }
@@ -568,7 +600,7 @@ function ProductsContent() {
         ) : products.length === 0 ? (
           <EmptyState brandColor={brandColor} onReset={() => { setSearchQuery(''); handleCategoryChange(null); }} />
         ) : (
-          <ProductGrid products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showPromotionBadge={showPromotionBadge} />
+          <ProductGrid products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showPromotionBadge={showPromotionBadge} wishlistIdSet={wishlistIdSet} onToggleWishlist={handleWishlistToggle} canUseWishlist={canUseWishlist} />
         )}
 
         {paginationNode}
@@ -581,7 +613,7 @@ function ProductsContent() {
 
 interface ProductCardProps {
   product: {
-    _id: string;
+    _id: Id<'products'>;
     name: string;
     slug: string;
     image?: string;
@@ -599,7 +631,7 @@ interface ProductCardProps {
   formatPrice: (price: number) => string;
 }
 
-function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showPromotionBadge }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showPromotionBadge: boolean }) {
+function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; canUseWishlist: boolean }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {products.map((product) => (
@@ -613,10 +645,10 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
             {showPromotionBadge && showSalePrice && product.salePrice && (
               <span className="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded">-{Math.round((1 - product.salePrice / product.price) * 100)}%</span>
             )}
-            {showWishlistButton && (
+            {showWishlistButton && canUseWishlist && (
               <button
-                className="absolute top-2 right-2 p-2 rounded-full bg-white/90 text-slate-400 shadow-sm hover:text-red-500"
-                onClick={(event) => { event.preventDefault(); }}
+                className={`absolute top-2 right-2 p-2 rounded-full bg-white/90 shadow-sm transition-colors ${wishlistIdSet.has(product._id) ? 'text-red-500' : 'text-slate-400 hover:text-red-500'}`}
+                onClick={(event) => { event.preventDefault(); onToggleWishlist(product._id); }}
                 aria-label="Thêm vào yêu thích"
               >
                 <Heart size={16} />
@@ -651,7 +683,7 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
   );
 }
 
-function ProductList({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showPromotionBadge }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showPromotionBadge: boolean }) {
+function ProductList({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; canUseWishlist: boolean }) {
   return (
     <div className="space-y-4">
       {products.map((product) => (
@@ -665,10 +697,10 @@ function ProductList({ products, categoryMap, brandColor, showPrice, showSalePri
             {showPromotionBadge && showSalePrice && product.salePrice && (
               <span className="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded">-{Math.round((1 - product.salePrice / product.price) * 100)}%</span>
             )}
-            {showWishlistButton && (
+            {showWishlistButton && canUseWishlist && (
               <button
-                className="absolute top-2 right-2 p-2 rounded-full bg-white/90 text-slate-400 shadow-sm hover:text-red-500"
-                onClick={(event) => { event.preventDefault(); }}
+                className={`absolute top-2 right-2 p-2 rounded-full bg-white/90 shadow-sm transition-colors ${wishlistIdSet.has(product._id) ? 'text-red-500' : 'text-slate-400 hover:text-red-500'}`}
+                onClick={(event) => { event.preventDefault(); onToggleWishlist(product._id); }}
                 aria-label="Thêm vào yêu thích"
               >
                 <Heart size={16} />
@@ -740,9 +772,12 @@ interface LayoutProps {
   showWishlistButton: boolean;
   showAddToCartButton: boolean;
   showPromotionBadge: boolean;
+  wishlistIdSet: Set<Id<'products'>>;
+  onToggleWishlist: (id: Id<'products'>) => void;
+  canUseWishlist: boolean;
 }
 
-function CatalogLayout({ products, categories, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showPromotionBadge }: LayoutProps) {
+function CatalogLayout({ products, categories, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, canUseWishlist }: LayoutProps) {
   return (
     <div className="py-8 md:py-12 px-4">
       <div className="max-w-7xl mx-auto">
@@ -812,10 +847,10 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
                       {showPromotionBadge && showSalePrice && product.salePrice && (
                         <span className="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded">Sale</span>
                       )}
-                      {showWishlistButton && (
+                      {showWishlistButton && canUseWishlist && (
                         <button
-                          className="absolute top-2 right-2 p-2 rounded-full bg-white/90 text-slate-400 shadow-sm hover:text-red-500"
-                          onClick={(event) => { event.preventDefault(); }}
+                          className={`absolute top-2 right-2 p-2 rounded-full bg-white/90 shadow-sm transition-colors ${wishlistIdSet.has(product._id) ? 'text-red-500' : 'text-slate-400 hover:text-red-500'}`}
+                          onClick={(event) => { event.preventDefault(); onToggleWishlist(product._id); }}
                           aria-label="Thêm vào yêu thích"
                         >
                           <Heart size={16} />
@@ -851,7 +886,7 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
 
 // ========== LIST LAYOUT (Full width list view) ==========
 
-function ListLayout({ products, categories, categoryMap, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, showStock, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showPromotionBadge }: LayoutProps) {
+function ListLayout({ products, categories, categoryMap, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, showStock, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, canUseWishlist }: LayoutProps) {
   return (
     <div className="py-8 md:py-12 px-4">
       <div className="max-w-5xl mx-auto">
@@ -890,7 +925,7 @@ function ListLayout({ products, categories, categoryMap, selectedCategory, onCat
         {products.length === 0 ? (
           <EmptyState brandColor={brandColor} onReset={() => { onSearchChange(''); onCategoryChange(null); }} />
         ) : (
-          <ProductList products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showPromotionBadge={showPromotionBadge} />
+          <ProductList products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showPromotionBadge={showPromotionBadge} wishlistIdSet={wishlistIdSet} onToggleWishlist={onToggleWishlist} canUseWishlist={canUseWishlist} />
         )}
 
         {paginationNode}

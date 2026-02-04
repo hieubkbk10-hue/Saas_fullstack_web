@@ -246,6 +246,177 @@ export const logoutAdmin = mutation({
 });
 
 // ============================================================
+// CUSTOMER AUTH - End user account
+// ============================================================
+
+export const registerCustomer = mutation({
+  args: {
+    email: v.string(),
+    name: v.string(),
+    password: v.string(),
+    phone: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("customers")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .unique();
+    if (existing) {
+      return { message: "Email đã tồn tại", success: false };
+    }
+
+    const customerId = await ctx.db.insert("customers", {
+      email: args.email,
+      name: args.name,
+      ordersCount: 0,
+      passwordHash: simpleHash(args.password),
+      phone: args.phone,
+      status: "Active",
+      totalSpent: 0,
+    });
+
+    const token = `cus_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    await ctx.db.insert("customerSessions", {
+      createdAt: Date.now(),
+      customerId,
+      expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+      token,
+    });
+
+    return {
+      customer: { email: args.email, id: customerId, name: args.name, phone: args.phone },
+      message: "Đăng ký thành công",
+      success: true,
+      token,
+    };
+  },
+  returns: v.object({
+    customer: v.optional(v.object({
+      email: v.string(),
+      id: v.id("customers"),
+      name: v.string(),
+      phone: v.string(),
+    })),
+    message: v.string(),
+    success: v.boolean(),
+    token: v.optional(v.string()),
+  }),
+});
+
+export const verifyCustomerLogin = mutation({
+  args: {
+    email: v.string(),
+    password: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const customer = await ctx.db
+      .query("customers")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .unique();
+
+    if (!customer || !customer.passwordHash) {
+      return { message: "Email hoặc mật khẩu không đúng", success: false };
+    }
+    if (customer.status !== "Active") {
+      return { message: "Tài khoản đã bị vô hiệu hóa", success: false };
+    }
+    if (!verifyPassword(args.password, customer.passwordHash)) {
+      return { message: "Email hoặc mật khẩu không đúng", success: false };
+    }
+
+    const token = `cus_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    await ctx.db.insert("customerSessions", {
+      createdAt: Date.now(),
+      customerId: customer._id,
+      expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+      token,
+    });
+
+    return {
+      customer: { email: customer.email, id: customer._id, name: customer.name, phone: customer.phone },
+      message: "Đăng nhập thành công",
+      success: true,
+      token,
+    };
+  },
+  returns: v.object({
+    customer: v.optional(v.object({
+      email: v.string(),
+      id: v.id("customers"),
+      name: v.string(),
+      phone: v.string(),
+    })),
+    message: v.string(),
+    success: v.boolean(),
+    token: v.optional(v.string()),
+  }),
+});
+
+export const verifyCustomerSession = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    if (!args.token || !args.token.startsWith("cus_")) {
+      return { message: "Token không hợp lệ", valid: false };
+    }
+
+    const session = await ctx.db
+      .query("customerSessions")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+
+    if (!session) {
+      return { message: "Session không tồn tại", valid: false };
+    }
+
+    if (session.expiresAt < Date.now()) {
+      return { message: "Session đã hết hạn", valid: false };
+    }
+
+    const customer = await ctx.db.get(session.customerId);
+    if (!customer || customer.status !== "Active") {
+      return { message: "Tài khoản không hợp lệ", valid: false };
+    }
+
+    return {
+      customer: {
+        email: customer.email,
+        id: customer._id,
+        name: customer.name,
+        phone: customer.phone,
+      },
+      message: "Session hợp lệ",
+      valid: true,
+    };
+  },
+  returns: v.object({
+    customer: v.optional(v.object({
+      email: v.string(),
+      id: v.id("customers"),
+      name: v.string(),
+      phone: v.string(),
+    })),
+    message: v.string(),
+    valid: v.boolean(),
+  }),
+});
+
+export const logoutCustomer = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("customerSessions")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+
+    if (session) {
+      await ctx.db.delete(session._id);
+    }
+    return null;
+  },
+  returns: v.null(),
+});
+
+// ============================================================
 // ADMIN USER MANAGEMENT (called from /system)
 // ============================================================
 

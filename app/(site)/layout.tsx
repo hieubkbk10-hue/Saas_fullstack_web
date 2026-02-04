@@ -1,6 +1,7 @@
 import { JsonLd, generateOrganizationSchema, generateWebsiteSchema } from '@/components/seo/JsonLd';
 import { DynamicFooter } from '@/components/site/DynamicFooter';
 import { Header } from '@/components/site/Header';
+import { SiteProviders } from '@/components/site/SiteProviders';
 import { getContactSettings, getSEOSettings, getSiteSettings } from '@/lib/get-settings';
 import type { Metadata } from 'next';
 
@@ -118,15 +119,17 @@ const SiteLayout = ({
     });
 
     return (
-      <div className="min-h-screen flex flex-col overflow-x-hidden">
-        <JsonLd data={organizationSchema} />
-        <JsonLd data={websiteSchema} />
-        <Header />
-        <main className="flex-1 overflow-x-hidden">
-          {children}
-        </main>
-        <DynamicFooter />
-      </div>
+      <SiteProviders>
+        <div className="min-h-screen flex flex-col overflow-x-hidden">
+          <JsonLd data={organizationSchema} />
+          <JsonLd data={websiteSchema} />
+          <Header />
+          <main className="flex-1 overflow-x-hidden">
+            {children}
+          </main>
+          <DynamicFooter />
+        </div>
+      </SiteProviders>
     );
   });
 };

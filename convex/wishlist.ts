@@ -50,6 +50,17 @@ const wishlistDoc = v.object({
   productId: v.id("products"),
 });
 
+const productPreviewDoc = v.object({
+  _id: v.id("products"),
+  categoryId: v.id("productCategories"),
+  image: v.optional(v.string()),
+  name: v.string(),
+  price: v.number(),
+  salePrice: v.optional(v.number()),
+  slug: v.string(),
+  stock: v.number(),
+});
+
 const SEARCH_LOOKUP_LIMIT = 2000;
 
 async function getSearchIdSets(ctx: QueryCtx, search: string) {
@@ -292,6 +303,47 @@ export const isInWishlist = query({
     return item !== null;
   },
   returns: v.boolean(),
+});
+
+export const listCustomerProductIds = query({
+  args: { customerId: v.id("customers"), productIds: v.array(v.id("products")) },
+  handler: async (ctx, args) => {
+    if (args.productIds.length === 0) {return [];}
+    const items = await ctx.db
+      .query("wishlist")
+      .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
+      .collect();
+    const productSet = new Set(args.productIds.map((id) => id));
+    return items.filter(item => productSet.has(item.productId)).map(item => item.productId);
+  },
+  returns: v.array(v.id("products")),
+});
+
+export const listByCustomerWithProducts = query({
+  args: { customerId: v.id("customers"), limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit ?? 50, 200);
+    const items = await ctx.db
+      .query("wishlist")
+      .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
+      .order("desc")
+      .take(limit);
+
+    const products = await Promise.all(items.map(item => ctx.db.get(item.productId)));
+
+    return items.map((item, index) => ({
+      ...item,
+      product: products[index],
+    }));
+  },
+  returns: v.array(v.object({
+    _creationTime: v.number(),
+    _id: v.id("wishlist"),
+    customerId: v.id("customers"),
+    note: v.optional(v.string()),
+    productId: v.id("products"),
+    product: v.union(productPreviewDoc, v.null()),
+  })),
 });
 
 // Mutations
