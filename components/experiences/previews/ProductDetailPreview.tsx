@@ -6,6 +6,7 @@ type ProductDetailPreviewProps = {
   showRating: boolean;
   showWishlist: boolean;
   showAddToCart: boolean;
+  showBuyNow: boolean;
   showClassicHighlights: boolean;
   device?: 'desktop' | 'tablet' | 'mobile';
   brandColor?: string;
@@ -18,6 +19,7 @@ export function ProductDetailPreview({
   showRating,
   showWishlist,
   showAddToCart,
+  showBuyNow,
   showClassicHighlights,
   device = 'desktop',
   brandColor = '#06b6d4',
@@ -73,7 +75,7 @@ export function ProductDetailPreview({
                   </ul>
                 </div>
               )}
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3">
                 {showWishlist && (
                   <button className="p-3 border border-slate-200 rounded-xl hover:bg-pink-50 hover:border-pink-300">
                     <Heart size={20} className="text-pink-500" />
@@ -83,6 +85,11 @@ export function ProductDetailPreview({
                   <button className="flex-1 py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2" style={{ backgroundColor: brandColor }}>
                     <ShoppingCart size={18} />
                     Thêm vào giỏ hàng
+                  </button>
+                )}
+                {showBuyNow && (
+                  <button className="flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 border" style={{ borderColor: brandColor, color: brandColor }}>
+                    Mua ngay
                   </button>
                 )}
               </div>
@@ -117,11 +124,20 @@ export function ProductDetailPreview({
                 )}
                 <span className="text-xl font-bold" style={{ color: brandColor }}>{formatVND(price)}</span>
               </div>
-              {showAddToCart && (
-                <button className="w-full py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2" style={{ backgroundColor: brandColor }}>
-                  <ShoppingCart size={18} />
-                  Mua ngay
-                </button>
+              {(showAddToCart || showBuyNow) && (
+                <div className="space-y-2">
+                  {showAddToCart && (
+                    <button className="w-full py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2" style={{ backgroundColor: brandColor }}>
+                      <ShoppingCart size={18} />
+                      Thêm vào giỏ hàng
+                    </button>
+                  )}
+                  {showBuyNow && (
+                    <button className="w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 border" style={{ borderColor: brandColor, color: brandColor }}>
+                      Mua ngay
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -142,7 +158,7 @@ export function ProductDetailPreview({
                 </div>
               )}
               <span className="text-xl font-bold block" style={{ color: brandColor }}>{formatVND(price)}</span>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2">
                 {showWishlist && (
                   <button className="p-2.5 border border-pink-200 rounded-lg">
                     <Heart size={16} className="text-pink-500" />
@@ -151,7 +167,12 @@ export function ProductDetailPreview({
                 {showAddToCart && (
                   <button className="flex-1 py-2.5 rounded-lg text-white font-medium flex items-center justify-center gap-1.5 text-sm" style={{ backgroundColor: brandColor }}>
                     <ShoppingCart size={14} />
-                    Mua
+                    Thêm vào giỏ
+                  </button>
+                )}
+                {showBuyNow && (
+                  <button className="flex-1 py-2.5 rounded-lg font-medium flex items-center justify-center gap-1.5 text-sm border" style={{ borderColor: brandColor, color: brandColor }}>
+                    Mua ngay
                   </button>
                 )}
               </div>

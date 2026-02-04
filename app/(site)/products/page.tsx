@@ -8,7 +8,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { useCartConfig, useProductsListConfig } from '@/lib/experiences';
+import { useCartConfig, useCheckoutConfig, useProductsListConfig } from '@/lib/experiences';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { notifyAddToCart, useCart } from '@/lib/cart';
 import { ChevronDown, Heart, Package, Search, ShoppingCart, SlidersHorizontal, X } from 'lucide-react';
@@ -139,6 +139,8 @@ function ProductsContent() {
   const layout: ProductsListLayout = listConfig.layoutStyle === 'sidebar' ? 'catalog' : listConfig.layoutStyle;
   const showWishlistButton = listConfig.showWishlistButton ?? true;
   const showAddToCartButton = listConfig.showAddToCartButton ?? true;
+  const checkoutConfig = useCheckoutConfig();
+  const showBuyNowButton = (listConfig.showBuyNowButton ?? true) && checkoutConfig.showBuyNow;
   const showPromotionBadge = listConfig.showPromotionBadge ?? true;
   const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
   const { addItem, openDrawer } = useCart();
@@ -359,6 +361,14 @@ function ProductsContent() {
     }
   };
 
+  const handleBuyNow = (productId: Id<'products'>) => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+    router.push(`/checkout?productId=${productId}&quantity=1`);
+  };
+
   const paginationNode = (
     <>
       {listConfig.paginationType === 'pagination' && totalCount && totalCount > postsPerPage && (
@@ -490,10 +500,12 @@ function ProductsContent() {
         paginationNode={paginationNode}
         showWishlistButton={showWishlistButton}
         showAddToCartButton={showAddToCartButton}
+        showBuyNowButton={showBuyNowButton}
         showPromotionBadge={showPromotionBadge}
         wishlistIdSet={wishlistIdSet}
         onToggleWishlist={handleWishlistToggle}
         onAddToCart={handleAddToCart}
+        onBuyNow={handleBuyNow}
         canUseWishlist={canUseWishlist}
       />
     );
@@ -520,10 +532,12 @@ function ProductsContent() {
         paginationNode={paginationNode}
         showWishlistButton={showWishlistButton}
         showAddToCartButton={showAddToCartButton}
+        showBuyNowButton={showBuyNowButton}
         showPromotionBadge={showPromotionBadge}
         wishlistIdSet={wishlistIdSet}
         onToggleWishlist={handleWishlistToggle}
         onAddToCart={handleAddToCart}
+        onBuyNow={handleBuyNow}
         canUseWishlist={canUseWishlist}
       />
     );
@@ -620,7 +634,7 @@ function ProductsContent() {
         ) : products.length === 0 ? (
           <EmptyState brandColor={brandColor} onReset={() => { setSearchQuery(''); handleCategoryChange(null); }} />
         ) : (
-          <ProductGrid products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showPromotionBadge={showPromotionBadge} wishlistIdSet={wishlistIdSet} onToggleWishlist={handleWishlistToggle} onAddToCart={handleAddToCart} canUseWishlist={canUseWishlist} />
+          <ProductGrid products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showBuyNowButton={showBuyNowButton} showPromotionBadge={showPromotionBadge} wishlistIdSet={wishlistIdSet} onToggleWishlist={handleWishlistToggle} onAddToCart={handleAddToCart} onBuyNow={handleBuyNow} canUseWishlist={canUseWishlist} />
         )}
 
         {paginationNode}
@@ -651,7 +665,7 @@ interface ProductCardProps {
   formatPrice: (price: number) => string;
 }
 
-function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; onAddToCart: (id: Id<'products'>) => void; canUseWishlist: boolean }) {
+function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showBuyNowButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, onBuyNow, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showBuyNowButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; onAddToCart: (id: Id<'products'>) => void; onBuyNow: (id: Id<'products'>) => void; canUseWishlist: boolean }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {products.map((product) => (
@@ -686,15 +700,28 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
             )}
             {showStock && product.stock <= 5 && product.stock > 0 && <p className="text-xs text-orange-600 mt-2">Chỉ còn {product.stock} sản phẩm</p>}
             {showStock && product.stock === 0 && <p className="text-xs text-red-500 mt-2">Hết hàng</p>}
-            {showAddToCartButton && (
-              <button
-                className="mt-3 w-full rounded-lg py-2 text-sm font-medium text-white transition-colors flex items-center justify-center gap-1.5"
-                style={{ backgroundColor: brandColor }}
-                onClick={(event) => { event.preventDefault(); onAddToCart(product._id); }}
-              >
-                <ShoppingCart size={14} />
-                Thêm vào giỏ
-              </button>
+            {(showAddToCartButton || showBuyNowButton) && (
+              <div className="mt-3 space-y-2">
+                {showAddToCartButton && (
+                  <button
+                    className="w-full rounded-lg py-2 text-sm font-medium text-white transition-colors flex items-center justify-center gap-1.5"
+                    style={{ backgroundColor: brandColor }}
+                    onClick={(event) => { event.preventDefault(); onAddToCart(product._id); }}
+                  >
+                    <ShoppingCart size={14} />
+                    Thêm vào giỏ
+                  </button>
+                )}
+                {showBuyNowButton && (
+                  <button
+                    className="w-full rounded-lg py-2 text-sm font-medium border transition-colors"
+                    style={{ borderColor: brandColor, color: brandColor }}
+                    onClick={(event) => { event.preventDefault(); onBuyNow(product._id); }}
+                  >
+                    Mua ngay
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </Link>
@@ -703,7 +730,7 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
   );
 }
 
-function ProductList({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; onAddToCart: (id: Id<'products'>) => void; canUseWishlist: boolean }) {
+function ProductList({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showBuyNowButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, onBuyNow, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showBuyNowButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; onAddToCart: (id: Id<'products'>) => void; onBuyNow: (id: Id<'products'>) => void; canUseWishlist: boolean }) {
   return (
     <div className="space-y-4">
       {products.map((product) => (
@@ -742,11 +769,18 @@ function ProductList({ products, categoryMap, brandColor, showPrice, showSalePri
               {showStock && product.stock === 0 && <span className="text-xs text-red-500">Hết hàng</span>}
             </div>
           </div>
-          {showAddToCartButton && (
-            <div className="hidden md:flex items-center">
-              <button className="p-3 rounded-full border-2 transition-colors hover:bg-slate-50" style={{ borderColor: brandColor, color: brandColor }} onClick={(e) => { e.preventDefault(); onAddToCart(product._id); }}>
-                <ShoppingCart size={20} />
-              </button>
+          {(showAddToCartButton || showBuyNowButton) && (
+            <div className="hidden md:flex items-center gap-2">
+              {showAddToCartButton && (
+                <button className="p-3 rounded-full border-2 transition-colors hover:bg-slate-50" style={{ borderColor: brandColor, color: brandColor }} onClick={(e) => { e.preventDefault(); onAddToCart(product._id); }}>
+                  <ShoppingCart size={20} />
+                </button>
+              )}
+              {showBuyNowButton && (
+                <button className="px-3 py-2 rounded-full border-2 text-xs font-medium transition-colors hover:bg-slate-50" style={{ borderColor: brandColor, color: brandColor }} onClick={(e) => { e.preventDefault(); onBuyNow(product._id); }}>
+                  Mua ngay
+                </button>
+              )}
             </div>
           )}
         </Link>
@@ -791,14 +825,16 @@ interface LayoutProps {
   paginationNode?: React.ReactNode;
   showWishlistButton: boolean;
   showAddToCartButton: boolean;
+  showBuyNowButton: boolean;
   showPromotionBadge: boolean;
   wishlistIdSet: Set<Id<'products'>>;
   onToggleWishlist: (id: Id<'products'>) => void;
   onAddToCart: (id: Id<'products'>) => void;
+  onBuyNow: (id: Id<'products'>) => void;
   canUseWishlist: boolean;
 }
 
-function CatalogLayout({ products, categories, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, canUseWishlist }: LayoutProps) {
+function CatalogLayout({ products, categories, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showBuyNowButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, onBuyNow, canUseWishlist }: LayoutProps) {
   return (
     <div className="py-8 md:py-12 px-4">
       <div className="max-w-7xl mx-auto">
@@ -881,15 +917,28 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
                     <div className="p-3">
                       <h3 className="font-medium text-sm text-slate-900 line-clamp-2 group-hover:text-orange-600 transition-colors">{product.name}</h3>
                       {showPrice && <span className="font-bold text-sm block mt-1" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>}
-                      {showAddToCartButton && (
-                        <button
-                          className="mt-3 w-full rounded-lg py-2 text-sm font-medium text-white transition-colors flex items-center justify-center gap-1.5"
-                          style={{ backgroundColor: brandColor }}
-                          onClick={(event) => { event.preventDefault(); onAddToCart(product._id); }}
-                        >
-                          <ShoppingCart size={14} />
-                          Thêm vào giỏ
-                        </button>
+                      {(showAddToCartButton || showBuyNowButton) && (
+                        <div className="mt-3 space-y-2">
+                          {showAddToCartButton && (
+                            <button
+                              className="w-full rounded-lg py-2 text-sm font-medium text-white transition-colors flex items-center justify-center gap-1.5"
+                              style={{ backgroundColor: brandColor }}
+                              onClick={(event) => { event.preventDefault(); onAddToCart(product._id); }}
+                            >
+                              <ShoppingCart size={14} />
+                              Thêm vào giỏ
+                            </button>
+                          )}
+                          {showBuyNowButton && (
+                            <button
+                              className="w-full rounded-lg py-2 text-sm font-medium border transition-colors"
+                              style={{ borderColor: brandColor, color: brandColor }}
+                              onClick={(event) => { event.preventDefault(); onBuyNow(product._id); }}
+                            >
+                              Mua ngay
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </Link>
@@ -907,7 +956,7 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
 
 // ========== LIST LAYOUT (Full width list view) ==========
 
-function ListLayout({ products, categories, categoryMap, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, showStock, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, canUseWishlist }: LayoutProps) {
+function ListLayout({ products, categories, categoryMap, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, showStock, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showBuyNowButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, onBuyNow, canUseWishlist }: LayoutProps) {
   return (
     <div className="py-8 md:py-12 px-4">
       <div className="max-w-5xl mx-auto">
@@ -946,7 +995,7 @@ function ListLayout({ products, categories, categoryMap, selectedCategory, onCat
         {products.length === 0 ? (
           <EmptyState brandColor={brandColor} onReset={() => { onSearchChange(''); onCategoryChange(null); }} />
         ) : (
-          <ProductList products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showPromotionBadge={showPromotionBadge} wishlistIdSet={wishlistIdSet} onToggleWishlist={onToggleWishlist} onAddToCart={onAddToCart} canUseWishlist={canUseWishlist} />
+          <ProductList products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showBuyNowButton={showBuyNowButton} showPromotionBadge={showPromotionBadge} wishlistIdSet={wishlistIdSet} onToggleWishlist={onToggleWishlist} onAddToCart={onAddToCart} onBuyNow={onBuyNow} canUseWishlist={canUseWishlist} />
         )}
 
         {paginationNode}

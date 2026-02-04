@@ -35,6 +35,7 @@ type ProductDetailExperienceConfig = {
     modern: ModernLayoutConfig;
     minimal: MinimalLayoutConfig;
   };
+  showBuyNow: boolean;
 };
 
 type ClassicLayoutConfig = {
@@ -75,12 +76,14 @@ const DEFAULT_CONFIG: ProductDetailExperienceConfig = {
     modern: { showRating: true, showWishlist: true, showAddToCart: true, heroStyle: 'full' },
     minimal: { showRating: true, showWishlist: true, showAddToCart: true, contentWidth: 'medium' },
   },
+  showBuyNow: true,
 };
 
 const HINTS = [
   'Classic layout phù hợp shop truyền thống.',
   'Modern layout tốt cho landing page sản phẩm.',
   'Mỗi layout có config riêng - chuyển tab để chỉnh.',
+  'Buy now phụ thuộc module Orders + Checkout.',
   'Có thể kiểm tra UI tại đường dẫn sản phẩm thật.',
 ];
 
@@ -110,6 +113,7 @@ export default function ProductDetailExperiencePage() {
         modern: { ...DEFAULT_CONFIG.layouts.modern, ...raw?.layouts?.modern },
         minimal: { ...DEFAULT_CONFIG.layouts.minimal, ...raw?.layouts?.minimal },
       },
+      showBuyNow: raw?.showBuyNow ?? true,
     };
   }, [experienceSetting?.value, legacyStyle, legacyHighlights]);
 
@@ -164,6 +168,7 @@ export default function ProductDetailExperiencePage() {
       showRating: currentLayoutConfig.showRating,
       showWishlist: currentLayoutConfig.showWishlist,
       showAddToCart: currentLayoutConfig.showAddToCart,
+      showBuyNow: config.showBuyNow,
       showClassicHighlights: config.layoutStyle === 'classic' 
         ? (currentLayoutConfig as ClassicLayoutConfig).showHighlights 
         : false,
@@ -295,6 +300,13 @@ export default function ProductDetailExperiencePage() {
               onChange={(v) => updateLayoutConfig('showAddToCart', v)}
               accentColor="#06b6d4"
               disabled={!cartModule?.enabled || !ordersModule?.enabled}
+            />
+            <ToggleRow
+              label="Buy Now"
+              checked={config.showBuyNow}
+              onChange={(v) => setConfig(prev => ({ ...prev, showBuyNow: v }))}
+              accentColor="#06b6d4"
+              disabled={!ordersModule?.enabled}
             />
           </ControlCard>
 

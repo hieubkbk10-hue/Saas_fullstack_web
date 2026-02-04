@@ -516,6 +516,7 @@ type ProductsListPreviewProps = {
   device?: PreviewDevice;
   showWishlistButton?: boolean;
   showAddToCartButton?: boolean;
+  showBuyNowButton?: boolean;
   showPromotionBadge?: boolean;
 };
 
@@ -537,6 +538,7 @@ export function ProductsListPreview({
   device = 'desktop',
   showWishlistButton = true,
   showAddToCartButton = true,
+  showBuyNowButton = true,
   showPromotionBadge = true,
 }: ProductsListPreviewProps) {
   const categories = ['Tất cả', 'Điện thoại', 'Laptop', 'Tablet', 'Phụ kiện'];
@@ -589,15 +591,28 @@ export function ProductsListPreview({
             )}
           </div>
         </div>
-        {showAddToCartButton && (
-          <button 
-            className="mt-2.5 w-full py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
-            style={{ backgroundColor: brandColor }}
-            disabled={!product.inStock}
-          >
-            <ShoppingCart size={14} />
-            {product.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
-          </button>
+        {(showAddToCartButton || showBuyNowButton) && (
+          <div className="mt-2.5 space-y-2">
+            {showAddToCartButton && (
+              <button
+                className="w-full py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                style={{ backgroundColor: brandColor }}
+                disabled={!product.inStock}
+              >
+                <ShoppingCart size={14} />
+                {product.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
+              </button>
+            )}
+            {showBuyNowButton && (
+              <button
+                className="w-full py-2 rounded-lg text-sm font-medium border transition-colors disabled:opacity-50"
+                style={{ borderColor: brandColor, color: brandColor }}
+                disabled={!product.inStock}
+              >
+                Mua ngay
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>

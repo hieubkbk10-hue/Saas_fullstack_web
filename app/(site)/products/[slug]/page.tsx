@@ -20,6 +20,7 @@ type ProductDetailExperienceConfig = {
   showClassicHighlights: boolean;
   showRating: boolean;
   showWishlist: boolean;
+  showBuyNow: boolean;
 };
 type ClassicHighlightIcon =
   | 'Award'
@@ -95,6 +96,7 @@ function useProductDetailExperienceConfig(): ProductDetailExperienceConfig {
       showClassicHighlights: raw?.showClassicHighlights ?? legacyHighlightsEnabled,
       showRating: raw?.showRating ?? true,
       showWishlist: raw?.showWishlist ?? true,
+      showBuyNow: raw?.showBuyNow ?? true,
     };
   }, [experienceSetting?.value, legacyHighlightsEnabled, legacyStyle, cartAvailable]);
 }
@@ -234,7 +236,7 @@ export default function ProductDetailPage({ params }: PageProps) {
     router.push(`/checkout?productId=${product._id}&quantity=${quantity}`);
   };
 
-  const canBuyNow = checkoutConfig.showBuyNow && (ordersModule?.enabled ?? false);
+  const canBuyNow = experienceConfig.showBuyNow && checkoutConfig.showBuyNow && (ordersModule?.enabled ?? false);
 
   const ratingSummary = useProductRatingSummary(product?._id, experienceConfig.showRating);
 

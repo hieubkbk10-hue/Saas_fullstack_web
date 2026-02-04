@@ -46,12 +46,13 @@ type ProductsListConfig = {
   postsPerPage: number;
   showWishlistButton: boolean;
   showAddToCartButton: boolean;
+  showBuyNowButton: boolean;
   showPromotionBadge: boolean;
 };
 
 export function useProductsListConfig(): ProductsListConfig {
   const experienceSetting = useQuery(api.settings.getByKey, { key: 'products_list_ui' });
-  const { isAvailable: cartAvailable } = useCartAvailable();
+  const { isAvailable: cartAvailable, ordersEnabled } = useCartAvailable();
   
   return useMemo(() => {
     const raw = experienceSetting?.value as {
@@ -64,6 +65,7 @@ export function useProductsListConfig(): ProductsListConfig {
       postsPerPage?: number;
       showWishlistButton?: boolean;
       showAddToCartButton?: boolean;
+      showBuyNowButton?: boolean;
       showPromotionBadge?: boolean;
     } | undefined;
 
@@ -74,6 +76,7 @@ export function useProductsListConfig(): ProductsListConfig {
       : raw?.layouts?.[layoutStyle];
     
     const configShowAddToCart = raw?.showAddToCartButton ?? true;
+    const configShowBuyNow = raw?.showBuyNowButton ?? true;
     
     return {
       layoutStyle,
@@ -83,9 +86,10 @@ export function useProductsListConfig(): ProductsListConfig {
       postsPerPage: layoutConfig?.postsPerPage ?? raw?.postsPerPage ?? 12,
       showWishlistButton: raw?.showWishlistButton ?? true,
       showAddToCartButton: configShowAddToCart && cartAvailable,
+      showBuyNowButton: configShowBuyNow && ordersEnabled,
       showPromotionBadge: raw?.showPromotionBadge ?? true,
     };
-  }, [experienceSetting?.value, cartAvailable]);
+  }, [experienceSetting?.value, cartAvailable, ordersEnabled]);
 }
 
 type WishlistConfig = {

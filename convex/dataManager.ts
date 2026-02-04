@@ -140,6 +140,7 @@ const SEED_SETTINGS = [
       showClassicHighlights: true,
       showRating: true,
       showWishlist: true,
+      showBuyNow: true,
     },
   },
   {

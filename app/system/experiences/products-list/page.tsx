@@ -37,6 +37,7 @@ type ProductsListExperienceConfig = {
   };
   showWishlistButton: boolean;
   showAddToCartButton: boolean;
+  showBuyNowButton: boolean;
   showPromotionBadge: boolean;
 };
 
@@ -71,6 +72,7 @@ const DEFAULT_CONFIG: ProductsListExperienceConfig = {
   },
   showWishlistButton: true,
   showAddToCartButton: true,
+  showBuyNowButton: true,
   showPromotionBadge: true,
 };
 
@@ -79,7 +81,7 @@ const HINTS = [
   'Sidebar filters quan trọng cho shop có nhiều sản phẩm.',
   'Search giúp user tìm sản phẩm nhanh.',
   'Mỗi layout có config riêng - chuyển tab để chỉnh.',
-  'Wishlist và Add to Cart có thể toggle từ đây.',
+  'Wishlist, Add to Cart và Buy Now có thể toggle từ đây.',
 ];
 
 export default function ProductsListExperiencePage() {
@@ -99,6 +101,7 @@ export default function ProductsListExperiencePage() {
       layouts?: Partial<Record<'grid' | 'list' | 'sidebar' | 'masonry', Partial<LayoutConfig & { showPagination?: boolean }>>>;
       showWishlistButton?: boolean;
       showAddToCartButton?: boolean;
+      showBuyNowButton?: boolean;
       showPromotionBadge?: boolean;
     } | undefined;
     
@@ -128,6 +131,7 @@ export default function ProductsListExperiencePage() {
       },
       showWishlistButton: raw?.showWishlistButton ?? true,
       showAddToCartButton: raw?.showAddToCartButton ?? true,
+      showBuyNowButton: raw?.showBuyNowButton ?? true,
       showPromotionBadge: raw?.showPromotionBadge ?? true,
     };
   }, [experienceSetting?.value]);
@@ -205,6 +209,7 @@ export default function ProductsListExperiencePage() {
               device={previewDevice}
               showWishlistButton={config.showWishlistButton && (wishlistModule?.enabled ?? false)}
               showAddToCartButton={config.showAddToCartButton && (cartModule?.enabled ?? false) && (ordersModule?.enabled ?? false)}
+              showBuyNowButton={config.showBuyNowButton && (ordersModule?.enabled ?? false)}
               showPromotionBadge={config.showPromotionBadge && (promotionsModule?.enabled ?? false)}
             />
           </BrowserFrame>
@@ -233,6 +238,13 @@ export default function ProductsListExperiencePage() {
               onChange={(v) => updateLayoutConfig('showSearch', v)}
               accentColor="#10b981"
               disabled={!productsModule?.enabled}
+            />
+            <ToggleRow
+              label="Buy Now"
+              checked={config.showBuyNowButton}
+              onChange={(v) => setConfig(prev => ({ ...prev, showBuyNowButton: v }))}
+              accentColor="#10b981"
+              disabled={!ordersModule?.enabled}
             />
             <ToggleRow
               label="Danh mục"

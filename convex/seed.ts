@@ -1919,6 +1919,7 @@ export const seedSettingsModule = mutation({
             showClassicHighlights: true,
             showRating: true,
             showWishlist: true,
+            showBuyNow: true,
           },
         },
         {
