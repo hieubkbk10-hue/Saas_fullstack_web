@@ -384,8 +384,19 @@ export function Header() {
             ))}
           </nav>
 
-          {/* CTA Button */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {config.search?.show && (
+              <div className="hidden lg:block relative">
+                <input
+                  type="text"
+                  placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
+                  className="w-48 pl-4 pr-10 py-2 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none text-slate-700 dark:text-slate-300"
+                />
+                <button className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-white" style={{ backgroundColor: brandColor }}>
+                  <Search size={14} />
+                </button>
+              </div>
+            )}
             {config.cta?.show && (
               <Link
                 href={DEFAULT_LINKS.cta}
@@ -395,7 +406,14 @@ export function Header() {
                 {config.cta.text ?? 'Liên hệ'}
               </Link>
             )}
-            {renderMobileMenuButton(false)}
+            <div className="flex items-center gap-1 lg:hidden">
+              {config.search?.show && (
+                <button className="p-2 text-slate-600 dark:text-slate-400">
+                  <Search size={20} />
+                </button>
+              )}
+              {renderMobileMenuButton(false)}
+            </div>
           </div>
         </div>
 

@@ -234,63 +234,81 @@ export function HeaderMenuPreview({
         </div>
 
         {device !== 'mobile' ? (
-          <nav className="flex items-center gap-1">
-            {menuTree.map((item) => (
-              <div
-                key={item._id}
-                className="relative"
-                onMouseEnter={() => setHoveredItem(item._id)}
-                onMouseLeave={() => setHoveredItem(null)}
-              >
-                <button
-                  className={cn(
-                    'px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1',
-                    hoveredItem === item._id
-                      ? 'text-white'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                  )}
-                  style={hoveredItem === item._id ? { backgroundColor: brandColor } : {}}
+          <>
+            <nav className="flex items-center gap-1">
+              {menuTree.map((item) => (
+                <div
+                  key={item._id}
+                  className="relative"
+                  onMouseEnter={() => setHoveredItem(item._id)}
+                  onMouseLeave={() => setHoveredItem(null)}
                 >
-                  {item.label}
-                  {item.children.length > 0 && (
-                    <ChevronDown size={14} className={cn('transition-transform', hoveredItem === item._id && 'rotate-180')} />
+                  <button
+                    className={cn(
+                      'px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1',
+                      hoveredItem === item._id
+                        ? 'text-white'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    )}
+                    style={hoveredItem === item._id ? { backgroundColor: brandColor } : {}}
+                  >
+                    {item.label}
+                    {item.children.length > 0 && (
+                      <ChevronDown size={14} className={cn('transition-transform', hoveredItem === item._id && 'rotate-180')} />
+                    )}
+                  </button>
+
+                  {item.children.length > 0 && hoveredItem === item._id && (
+                    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[200px] z-50">
+                      {item.children.map((child) => (
+                        <div key={child._id} className="relative group">
+                          {renderLink(child, 'flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors', (
+                            <>
+                              {child.label}
+                              {child.children?.length > 0 && <ChevronRight size={14} />}
+                            </>
+                          ))}
+                          {child.children?.length > 0 && (
+                            <div className="absolute left-full top-0 ml-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[180px] hidden group-hover:block">
+                              {child.children.map((sub) => (
+                                <a key={sub._id} href={sub.url} className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                  {sub.label}
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   )}
-                </button>
-
-                {item.children.length > 0 && hoveredItem === item._id && (
-                  <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[200px] z-50">
-                    {item.children.map((child) => (
-                      <div key={child._id} className="relative group">
-                        {renderLink(child, 'flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors', (
-                          <>
-                            {child.label}
-                            {child.children?.length > 0 && <ChevronRight size={14} />}
-                          </>
-                        ))}
-                        {child.children?.length > 0 && (
-                          <div className="absolute left-full top-0 ml-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[180px] hidden group-hover:block">
-                            {child.children.map((sub) => (
-                              <a key={sub._id} href={sub.url} className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                                {sub.label}
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </nav>
+                </div>
+              ))}
+            </nav>
+            <div className="flex items-center gap-3">
+              {config.search.show && (
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder={config.search.placeholder}
+                    className="w-48 pl-4 pr-10 py-2 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none text-slate-700 dark:text-slate-300"
+                  />
+                  <button className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-white" style={{ backgroundColor: brandColor }}>
+                    <Search size={14} />
+                  </button>
+                </div>
+              )}
+              {config.cta.show && (
+                <a href={defaultLinks.cta} className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90" style={{ backgroundColor: brandColor }}>
+                  {config.cta.text}
+                </a>
+              )}
+            </div>
+          </>
         ) : (
-          renderMobileMenuButton(false)
-        )}
-
-        {device !== 'mobile' && config.cta.show && (
-          <a href={defaultLinks.cta} className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90" style={{ backgroundColor: brandColor }}>
-            {config.cta.text}
-          </a>
+          <div className="flex items-center gap-2">
+            {config.search.show && (<button className="p-2 text-slate-600 dark:text-slate-400"><Search size={20} /></button>)}
+            {renderMobileMenuButton(false)}
+          </div>
         )}
       </div>
 
