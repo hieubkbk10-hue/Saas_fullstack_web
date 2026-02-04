@@ -199,7 +199,7 @@ export function Header() {
     )
     : null;
 
-  const classicPositionClass = config.headerSticky ? 'sticky top-0 z-50' : 'relative z-50';
+  const classicPositionClass = (config.headerSticky ?? true) ? 'sticky top-0 z-50' : 'relative z-50';
   const menuTree = useMemo((): MenuItemWithChildren[] => {
     if (!menuItems) {return [];}
     
