@@ -357,9 +357,9 @@ export default function HeaderMenuExperiencePage() {
                   <Label className="text-xs">Classic background</Label>
                   <div className="grid grid-cols-3 gap-2">
                     {([
-                      { id: 'white', label: 'White' },
-                      { id: 'brand-subtle', label: 'Brand' },
-                      { id: 'gradient-light', label: 'Gradient' },
+                      { id: 'white', label: 'Solid' },
+                      { id: 'dots', label: 'Dots' },
+                      { id: 'stripes', label: 'Stripes' },
                     ] as const).map((option) => (
                       <button
                         key={option.id}

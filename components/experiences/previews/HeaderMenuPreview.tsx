@@ -9,7 +9,7 @@ export type HeaderLayoutStyle = 'classic' | 'topbar' | 'transparent';
 
 export type HeaderMenuConfig = {
   brandName: string;
-  headerBackground: 'white' | 'brand-subtle' | 'gradient-light';
+  headerBackground: 'white' | 'dots' | 'stripes';
   showBrandAccent: boolean;
   cart: { show: boolean };
   cta: { show: boolean; text: string };
@@ -126,14 +126,17 @@ export function HeaderMenuPreview({
   };
 
   const classicBackgroundStyle: React.CSSProperties = (() => {
-    if (config.headerBackground === 'brand-subtle') {
+    if (config.headerBackground === 'dots') {
       return {
-        backgroundImage: `linear-gradient(90deg, ${brandRgba(0.08)} 0%, #ffffff 70%)`,
+        backgroundColor: '#ffffff',
+        backgroundImage: `radial-gradient(circle, ${brandRgba(0.16)} 1px, transparent 1px)`,
+        backgroundSize: '18px 18px',
       };
     }
-    if (config.headerBackground === 'gradient-light') {
+    if (config.headerBackground === 'stripes') {
       return {
-        backgroundImage: `linear-gradient(180deg, ${brandRgba(0.08)} 0%, #ffffff 60%)`,
+        backgroundColor: '#ffffff',
+        backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, ${brandRgba(0.12)} 10px, ${brandRgba(0.12)} 20px)`,
       };
     }
     return { backgroundColor: '#ffffff' };
