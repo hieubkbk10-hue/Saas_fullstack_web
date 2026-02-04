@@ -8,6 +8,7 @@ import { Button, Card } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
   ExperienceHintCard,
+  ExampleLinks,
   WishlistPreview,
 } from '@/components/experiences';
 import {
@@ -245,6 +246,13 @@ export default function WishlistExperiencePage() {
           </ControlCard>
 
           <Card className="p-2 lg:col-span-2">
+            <div className="mb-2">
+              <ExampleLinks
+                links={[{ label: 'Trang wishlist', url: '/wishlist' }]}
+                color="#ec4899"
+                compact
+              />
+            </div>
             <ExperienceHintCard hints={HINTS} />
           </Card>
         </div>
