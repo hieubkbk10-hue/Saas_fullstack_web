@@ -142,7 +142,7 @@ export default function ProductDetailExperiencePage() {
   const additionalSettings = useMemo(() => {
     return [
       { group: 'products', key: LEGACY_DETAIL_STYLE_KEY, value: config.layoutStyle },
-      { group: 'products', key: LEGACY_HIGHLIGHTS_KEY, value: config.layouts.classic.showClassicHighlights },
+      { group: 'products', key: LEGACY_HIGHLIGHTS_KEY, value: config.layouts.classic.showClassicHighlights ?? true },
     ];
   }, [config.layoutStyle, config.layouts.classic.showClassicHighlights]);
 
