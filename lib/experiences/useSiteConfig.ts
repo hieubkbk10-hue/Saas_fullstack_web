@@ -43,6 +43,9 @@ type ProductsListConfig = {
   showSearch: boolean;
   showCategories: boolean;
   postsPerPage: number;
+  showWishlistButton: boolean;
+  showAddToCartButton: boolean;
+  showPromotionBadge: boolean;
 };
 
 export function useProductsListConfig(): ProductsListConfig {
@@ -57,6 +60,9 @@ export function useProductsListConfig(): ProductsListConfig {
       showSearch?: boolean;
       showCategories?: boolean;
       postsPerPage?: number;
+      showWishlistButton?: boolean;
+      showAddToCartButton?: boolean;
+      showPromotionBadge?: boolean;
     } | undefined;
 
     const rawLayout = raw?.layoutStyle;
@@ -70,6 +76,9 @@ export function useProductsListConfig(): ProductsListConfig {
       showSearch: layoutConfig?.showSearch ?? raw?.showSearch ?? true,
       showCategories: layoutConfig?.showCategories ?? raw?.showCategories ?? true,
       postsPerPage: layoutConfig?.postsPerPage ?? raw?.postsPerPage ?? 12,
+      showWishlistButton: raw?.showWishlistButton ?? true,
+      showAddToCartButton: raw?.showAddToCartButton ?? true,
+      showPromotionBadge: raw?.showPromotionBadge ?? true,
     };
   }, [experienceSetting?.value]);
 }

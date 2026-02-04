@@ -9,7 +9,7 @@ import { useInView } from 'react-intersection-observer';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { useProductsListConfig } from '@/lib/experiences';
-import { ChevronDown, Package, Search, ShoppingCart, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronDown, Heart, Package, Search, ShoppingCart, SlidersHorizontal, X } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
 type ProductSortOption = 'newest' | 'oldest' | 'popular' | 'price_asc' | 'price_desc' | 'name';
@@ -135,6 +135,9 @@ function ProductsContent() {
   const brandColor = useBrandColor();
   const listConfig = useProductsListConfig();
   const layout: ProductsListLayout = listConfig.layoutStyle === 'sidebar' ? 'catalog' : listConfig.layoutStyle;
+  const showWishlistButton = listConfig.showWishlistButton ?? true;
+  const showAddToCartButton = listConfig.showAddToCartButton ?? true;
+  const showPromotionBadge = listConfig.showPromotionBadge ?? true;
   const enabledFields = useEnabledProductFields();
   const router = useRouter();
   const pathname = usePathname();
@@ -441,6 +444,9 @@ function ProductsContent() {
         formatPrice={formatPrice}
         totalCount={totalCount}
         paginationNode={paginationNode}
+        showWishlistButton={showWishlistButton}
+        showAddToCartButton={showAddToCartButton}
+        showPromotionBadge={showPromotionBadge}
       />
     );
   }
@@ -464,6 +470,9 @@ function ProductsContent() {
         formatPrice={formatPrice}
         totalCount={totalCount}
         paginationNode={paginationNode}
+        showWishlistButton={showWishlistButton}
+        showAddToCartButton={showAddToCartButton}
+        showPromotionBadge={showPromotionBadge}
       />
     );
   }
@@ -559,7 +568,7 @@ function ProductsContent() {
         ) : products.length === 0 ? (
           <EmptyState brandColor={brandColor} onReset={() => { setSearchQuery(''); handleCategoryChange(null); }} />
         ) : (
-          <ProductGrid products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} />
+          <ProductGrid products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showPromotionBadge={showPromotionBadge} />
         )}
 
         {paginationNode}
@@ -590,7 +599,7 @@ interface ProductCardProps {
   formatPrice: (price: number) => string;
 }
 
-function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string }) {
+function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showPromotionBadge }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showPromotionBadge: boolean }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {products.map((product) => (
@@ -601,8 +610,17 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
             ) : (
               <div className="w-full h-full flex items-center justify-center"><Package size={48} className="text-slate-300" /></div>
             )}
-            {showSalePrice && product.salePrice && (
+            {showPromotionBadge && showSalePrice && product.salePrice && (
               <span className="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded">-{Math.round((1 - product.salePrice / product.price) * 100)}%</span>
+            )}
+            {showWishlistButton && (
+              <button
+                className="absolute top-2 right-2 p-2 rounded-full bg-white/90 text-slate-400 shadow-sm hover:text-red-500"
+                onClick={(event) => { event.preventDefault(); }}
+                aria-label="Thêm vào yêu thích"
+              >
+                <Heart size={16} />
+              </button>
             )}
           </div>
           <div className="p-4">
@@ -616,6 +634,16 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
             )}
             {showStock && product.stock <= 5 && product.stock > 0 && <p className="text-xs text-orange-600 mt-2">Chỉ còn {product.stock} sản phẩm</p>}
             {showStock && product.stock === 0 && <p className="text-xs text-red-500 mt-2">Hết hàng</p>}
+            {showAddToCartButton && (
+              <button
+                className="mt-3 w-full rounded-lg py-2 text-sm font-medium text-white transition-colors flex items-center justify-center gap-1.5"
+                style={{ backgroundColor: brandColor }}
+                onClick={(event) => { event.preventDefault(); }}
+              >
+                <ShoppingCart size={14} />
+                Thêm vào giỏ
+              </button>
+            )}
           </div>
         </Link>
       ))}
@@ -623,7 +651,7 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
   );
 }
 
-function ProductList({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string }) {
+function ProductList({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showPromotionBadge }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showPromotionBadge: boolean }) {
   return (
     <div className="space-y-4">
       {products.map((product) => (
@@ -634,8 +662,17 @@ function ProductList({ products, categoryMap, brandColor, showPrice, showSalePri
             ) : (
               <div className="w-full h-full flex items-center justify-center"><Package size={32} className="text-slate-300" /></div>
             )}
-            {showSalePrice && product.salePrice && (
+            {showPromotionBadge && showSalePrice && product.salePrice && (
               <span className="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded">-{Math.round((1 - product.salePrice / product.price) * 100)}%</span>
+            )}
+            {showWishlistButton && (
+              <button
+                className="absolute top-2 right-2 p-2 rounded-full bg-white/90 text-slate-400 shadow-sm hover:text-red-500"
+                onClick={(event) => { event.preventDefault(); }}
+                aria-label="Thêm vào yêu thích"
+              >
+                <Heart size={16} />
+              </button>
             )}
           </div>
           <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -653,11 +690,13 @@ function ProductList({ products, categoryMap, brandColor, showPrice, showSalePri
               {showStock && product.stock === 0 && <span className="text-xs text-red-500">Hết hàng</span>}
             </div>
           </div>
-          <div className="hidden md:flex items-center">
-            <button className="p-3 rounded-full border-2 transition-colors hover:bg-slate-50" style={{ borderColor: brandColor, color: brandColor }} onClick={(e) => { e.preventDefault(); }}>
-              <ShoppingCart size={20} />
-            </button>
-          </div>
+          {showAddToCartButton && (
+            <div className="hidden md:flex items-center">
+              <button className="p-3 rounded-full border-2 transition-colors hover:bg-slate-50" style={{ borderColor: brandColor, color: brandColor }} onClick={(e) => { e.preventDefault(); }}>
+                <ShoppingCart size={20} />
+              </button>
+            </div>
+          )}
         </Link>
       ))}
     </div>
@@ -698,9 +737,12 @@ interface LayoutProps {
   formatPrice: (price: number) => string;
   totalCount: number | undefined;
   paginationNode?: React.ReactNode;
+  showWishlistButton: boolean;
+  showAddToCartButton: boolean;
+  showPromotionBadge: boolean;
 }
 
-function CatalogLayout({ products, categories, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, formatPrice, totalCount, paginationNode }: LayoutProps) {
+function CatalogLayout({ products, categories, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showPromotionBadge }: LayoutProps) {
   return (
     <div className="py-8 md:py-12 px-4">
       <div className="max-w-7xl mx-auto">
@@ -767,13 +809,32 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
                       ) : (
                         <div className="w-full h-full flex items-center justify-center"><Package size={32} className="text-slate-300" /></div>
                       )}
-                      {showSalePrice && product.salePrice && (
+                      {showPromotionBadge && showSalePrice && product.salePrice && (
                         <span className="absolute top-2 left-2 px-2 py-1 bg-red-500 text-white text-xs font-semibold rounded">Sale</span>
+                      )}
+                      {showWishlistButton && (
+                        <button
+                          className="absolute top-2 right-2 p-2 rounded-full bg-white/90 text-slate-400 shadow-sm hover:text-red-500"
+                          onClick={(event) => { event.preventDefault(); }}
+                          aria-label="Thêm vào yêu thích"
+                        >
+                          <Heart size={16} />
+                        </button>
                       )}
                     </div>
                     <div className="p-3">
                       <h3 className="font-medium text-sm text-slate-900 line-clamp-2 group-hover:text-orange-600 transition-colors">{product.name}</h3>
                       {showPrice && <span className="font-bold text-sm block mt-1" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>}
+                      {showAddToCartButton && (
+                        <button
+                          className="mt-3 w-full rounded-lg py-2 text-sm font-medium text-white transition-colors flex items-center justify-center gap-1.5"
+                          style={{ backgroundColor: brandColor }}
+                          onClick={(event) => { event.preventDefault(); }}
+                        >
+                          <ShoppingCart size={14} />
+                          Thêm vào giỏ
+                        </button>
+                      )}
                     </div>
                   </Link>
                 ))}
@@ -790,7 +851,7 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
 
 // ========== LIST LAYOUT (Full width list view) ==========
 
-function ListLayout({ products, categories, categoryMap, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, showStock, formatPrice, totalCount, paginationNode }: LayoutProps) {
+function ListLayout({ products, categories, categoryMap, selectedCategory, onCategoryChange, searchQuery, onSearchChange, sortBy, onSortChange, brandColor, showPrice, showSalePrice, showStock, formatPrice, totalCount, paginationNode, showWishlistButton, showAddToCartButton, showPromotionBadge }: LayoutProps) {
   return (
     <div className="py-8 md:py-12 px-4">
       <div className="max-w-5xl mx-auto">
@@ -829,7 +890,7 @@ function ListLayout({ products, categories, categoryMap, selectedCategory, onCat
         {products.length === 0 ? (
           <EmptyState brandColor={brandColor} onReset={() => { onSearchChange(''); onCategoryChange(null); }} />
         ) : (
-          <ProductList products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} />
+          <ProductList products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showPromotionBadge={showPromotionBadge} />
         )}
 
         {paginationNode}
