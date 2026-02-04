@@ -2,7 +2,8 @@
 Trả lời bằng Tiếng Việt
 Tuân thủ nghiêm ngặc KISS, YAGNI, DRY
 Tuân thủ Rails Convention Over Configuration
-Mọi thay đổi code khi hoàn thành đều phải commit (nhưng không được push nha). Trước khi commit nhớ chạy bunx oxlint --type-aware --type-check --fix để xem còn lỗi gì k và fix đến khi hết . Dĩ nhiên khi code k có gì thay đổi thì k được chạy cái lệnh trên nha
+Khi user đưa URL localhost (ví dụ http://localhost:3000/...), hãy đọc route tương ứng trong Next.js để hiểu, không hỏi lại.
+Mọi thay đổi code khi hoàn thành đều phải commit (nhưng không được push nha). Trước khi commit chỉ chạy bunx oxlint --type-aware --type-check --fix khi có thay đổi code/TS; không chạy khi chỉ sửa docs/cấu hình không liên quan.
 
 # Prompt Best Practices (để tăng độ chính xác)
 * Nêu rõ yêu cầu + phạm vi; không mở rộng tính năng ngoài yêu cầu.
