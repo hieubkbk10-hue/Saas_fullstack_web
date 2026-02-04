@@ -297,6 +297,12 @@ export function HeaderMenuPreview({
                   </button>
                 </div>
               )}
+              {config.cart.show && (
+                <a href={defaultLinks.cart} className="p-2 text-slate-600 dark:text-slate-400 relative">
+                  <ShoppingCart size={20} />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
+                </a>
+              )}
               {config.cta.show && (
                 <a href={defaultLinks.cta} className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90" style={{ backgroundColor: brandColor }}>
                   {config.cta.text}
@@ -307,6 +313,12 @@ export function HeaderMenuPreview({
         ) : (
           <div className="flex items-center gap-2">
             {config.search.show && (<button className="p-2 text-slate-600 dark:text-slate-400"><Search size={20} /></button>)}
+            {config.cart.show && (
+              <a href={defaultLinks.cart} className="p-2 text-slate-600 dark:text-slate-400 relative">
+                <ShoppingCart size={20} />
+                <span className="absolute -top-1 -right-1 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
+              </a>
+            )}
             {renderMobileMenuButton(false)}
           </div>
         )}

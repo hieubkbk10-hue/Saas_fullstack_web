@@ -397,6 +397,9 @@ export function Header() {
                 </button>
               </div>
             )}
+            {config.cart?.show && (
+              <CartIcon variant="mobile" className="hidden lg:flex" />
+            )}
             {config.cta?.show && (
               <Link
                 href={DEFAULT_LINKS.cta}
@@ -411,6 +414,9 @@ export function Header() {
                 <button className="p-2 text-slate-600 dark:text-slate-400">
                   <Search size={20} />
                 </button>
+              )}
+              {config.cart?.show && (
+                <CartIcon variant="mobile" />
               )}
               {renderMobileMenuButton(false)}
             </div>
