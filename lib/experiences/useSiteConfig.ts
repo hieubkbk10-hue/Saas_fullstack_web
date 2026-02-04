@@ -190,3 +190,37 @@ export function useCartConfig(): CartConfig {
     };
   }, [experienceSetting?.value, expiryFeature?.enabled, noteFeature?.enabled]);
 }
+
+type CheckoutConfig = {
+  flowStyle: 'single-page' | 'multi-step';
+  orderSummaryPosition: 'right' | 'bottom';
+  showPaymentMethods: boolean;
+  showShippingOptions: boolean;
+  showBuyNow: boolean;
+};
+
+export function useCheckoutConfig(): CheckoutConfig {
+  const experienceSetting = useQuery(api.settings.getByKey, { key: 'checkout_ui' });
+
+  return useMemo(() => {
+    const raw = experienceSetting?.value as {
+      flowStyle?: CheckoutConfig['flowStyle'];
+      layouts?: Record<string, Partial<Omit<CheckoutConfig, 'flowStyle' | 'showBuyNow'>>>;
+      showBuyNow?: boolean;
+      orderSummaryPosition?: CheckoutConfig['orderSummaryPosition'];
+      showPaymentMethods?: boolean;
+      showShippingOptions?: boolean;
+    } | undefined;
+
+    const flowStyle: CheckoutConfig['flowStyle'] = raw?.flowStyle ?? 'multi-step';
+    const layoutConfig = raw?.layouts?.[flowStyle] ?? {};
+
+    return {
+      flowStyle,
+      orderSummaryPosition: layoutConfig.orderSummaryPosition ?? raw?.orderSummaryPosition ?? 'right',
+      showPaymentMethods: layoutConfig.showPaymentMethods ?? raw?.showPaymentMethods ?? true,
+      showShippingOptions: layoutConfig.showShippingOptions ?? raw?.showShippingOptions ?? true,
+      showBuyNow: raw?.showBuyNow ?? true,
+    };
+  }, [experienceSetting?.value]);
+}

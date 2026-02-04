@@ -9,7 +9,9 @@ import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { useWishlistConfig } from '@/lib/experiences/useSiteConfig';
-import { useCart } from '@/lib/cart';
+import { notifyAddToCart, useCart } from '@/lib/cart';
+import { useCartConfig } from '@/lib/experiences';
+import { useRouter } from 'next/navigation';
 import type { Id } from '@/convex/_generated/dataModel';
 
 function formatPrice(price: number): string {
@@ -19,7 +21,9 @@ function formatPrice(price: number): string {
 export default function WishlistPage() {
   const brandColor = useBrandColor();
   const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
-  const { addItem } = useCart();
+  const { addItem, openDrawer } = useCart();
+  const cartConfig = useCartConfig();
+  const router = useRouter();
   const config = useWishlistConfig();
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const itemsPerPageSetting = useQuery(api.admin.modules.getModuleSetting, { moduleKey: 'wishlist', settingKey: 'itemsPerPage' });
@@ -94,6 +98,21 @@ export default function WishlistPage() {
   const items = wishlistItems ?? [];
   const isGrid = config.layoutStyle === 'grid';
 
+  const handleAddToCart = async (productId: Id<'products'>) => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
+    await addItem(productId, 1);
+    notifyAddToCart();
+    if (cartConfig.layoutStyle === 'drawer') {
+      openDrawer();
+    } else {
+      router.push('/cart');
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       <div className="mb-8">
@@ -160,7 +179,7 @@ export default function WishlistPage() {
                     )}
                     {config.showAddToCartButton && (
                       <button
-                        onClick={(event) => { event.preventDefault(); void addItem(product._id, 1); }}
+                        onClick={(event) => { event.preventDefault(); void handleAddToCart(product._id); }}
                         className="mt-3 w-full py-2 rounded-lg text-sm font-medium text-white flex items-center justify-center gap-1.5 disabled:opacity-50"
                         style={{ backgroundColor: brandColor }}
                         disabled={product.stock === 0}
@@ -202,7 +221,7 @@ export default function WishlistPage() {
                 </button>
                 {config.showAddToCartButton && (
                   <button
-                    onClick={() => { void addItem(product._id, 1); }}
+                    onClick={() => { void handleAddToCart(product._id); }}
                     className="self-start px-3 py-1.5 rounded-lg text-xs font-medium text-white flex items-center gap-1 disabled:opacity-50"
                     style={{ backgroundColor: brandColor }}
                     disabled={product.stock === 0}

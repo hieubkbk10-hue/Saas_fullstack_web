@@ -166,9 +166,19 @@ const SEED_SETTINGS = [
     key: "checkout_ui",
     value: {
       flowStyle: "multi-step",
-      orderSummaryPosition: "right",
-      showPaymentMethods: true,
-      showShippingOptions: true,
+      showBuyNow: true,
+      layouts: {
+        "single-page": {
+          orderSummaryPosition: "right",
+          showPaymentMethods: true,
+          showShippingOptions: true,
+        },
+        "multi-step": {
+          orderSummaryPosition: "right",
+          showPaymentMethods: true,
+          showShippingOptions: true,
+        },
+      },
     },
   },
   {

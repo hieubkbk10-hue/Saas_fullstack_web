@@ -29,6 +29,7 @@ type OrderSummaryPosition = 'right' | 'bottom';
 
 type CheckoutExperienceConfig = {
   flowStyle: CheckoutFlowStyle;
+  showBuyNow: boolean;
   layouts: {
     'single-page': LayoutConfig;
     'multi-step': LayoutConfig;
@@ -61,6 +62,7 @@ const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
 
 const DEFAULT_CONFIG: CheckoutExperienceConfig = {
   flowStyle: 'multi-step',
+  showBuyNow: true,
   layouts: {
     'single-page': { ...DEFAULT_LAYOUT_CONFIG },
     'multi-step': { ...DEFAULT_LAYOUT_CONFIG },
@@ -71,6 +73,7 @@ const HINTS = [
   'Multi-step dễ theo dõi, single-page nhanh hơn.',
   'Right sidebar phù hợp desktop, bottom cho mobile.',
   'Payment/shipping cần bật module Orders trước.',
+  'Buy now phụ thuộc cấu hình checkout.',
   'Mỗi flow có config riêng - chuyển tab để chỉnh.',
 ];
 
@@ -85,6 +88,7 @@ export default function CheckoutExperiencePage() {
     const raw = experienceSetting?.value as Partial<CheckoutExperienceConfig> | undefined;
     return {
       flowStyle: raw?.flowStyle ?? 'multi-step',
+      showBuyNow: raw?.showBuyNow ?? true,
       layouts: {
         'single-page': { ...DEFAULT_LAYOUT_CONFIG, ...raw?.layouts?.['single-page'] },
         'multi-step': { ...DEFAULT_LAYOUT_CONFIG, ...raw?.layouts?.['multi-step'] },
@@ -181,6 +185,13 @@ export default function CheckoutExperiencePage() {
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <ControlCard title="Khối hiển thị">
+            <ToggleRow
+              label="Buy Now"
+              checked={config.showBuyNow}
+              onChange={(v) => setConfig(prev => ({ ...prev, showBuyNow: v }))}
+              accentColor="#22c55e"
+              disabled={!ordersModule?.enabled}
+            />
             <ToggleRow
               label="Payment Methods"
               checked={currentLayoutConfig.showPaymentMethods}

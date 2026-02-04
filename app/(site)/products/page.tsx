@@ -8,9 +8,9 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { useProductsListConfig } from '@/lib/experiences';
+import { useCartConfig, useProductsListConfig } from '@/lib/experiences';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
-import { useCart } from '@/lib/cart';
+import { notifyAddToCart, useCart } from '@/lib/cart';
 import { ChevronDown, Heart, Package, Search, ShoppingCart, SlidersHorizontal, X } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
@@ -141,7 +141,8 @@ function ProductsContent() {
   const showAddToCartButton = listConfig.showAddToCartButton ?? true;
   const showPromotionBadge = listConfig.showPromotionBadge ?? true;
   const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
-  const { addItem } = useCart();
+  const { addItem, openDrawer } = useCart();
+  const cartConfig = useCartConfig();
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const toggleWishlist = useMutation(api.wishlist.toggle);
   const enabledFields = useEnabledProductFields();
@@ -344,7 +345,18 @@ function ProductsContent() {
   };
 
   const handleAddToCart = async (productId: Id<'products'>) => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+
     await addItem(productId, 1);
+    notifyAddToCart();
+    if (cartConfig.layoutStyle === 'drawer') {
+      openDrawer();
+    } else {
+      router.push('/cart');
+    }
   };
 
   const paginationNode = (

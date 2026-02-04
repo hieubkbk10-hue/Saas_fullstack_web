@@ -62,6 +62,7 @@ const HINTS = [
   'Drawer phù hợp cho quick checkout.',
   'Page layout cho cart phức tạp với nhiều options.',
   'Cart yêu cầu đăng nhập để thêm sản phẩm.',
+  'Add to cart sẽ hiển thị toast và mở drawer/redirect theo layout.',
   'Mỗi layout có config riêng - chuyển tab để chỉnh.',
 ];
 

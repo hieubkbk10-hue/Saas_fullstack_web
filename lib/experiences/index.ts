@@ -15,6 +15,7 @@ export {
 } from './useExampleSlugs';
 export {
   useCartConfig,
+  useCheckoutConfig,
   usePostsListConfig,
   useProductsListConfig,
   useServicesListConfig,
