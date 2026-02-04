@@ -1,5 +1,32 @@
 import React from 'react';
-import { Heart, ShoppingCart, Star } from 'lucide-react';
+import {
+  Award,
+  BadgeCheck,
+  Bell,
+  Bolt,
+  Calendar,
+  Camera,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Gift,
+  Globe,
+  Heart,
+  HeartHandshake,
+  Leaf,
+  Lock,
+  MapPin,
+  Minus,
+  Phone,
+  Plus,
+  RotateCcw,
+  Share2,
+  Shield,
+  ShoppingCart,
+  Star,
+  ThumbsUp,
+  Truck,
+} from 'lucide-react';
 
 type ProductDetailPreviewProps = {
   layoutStyle: 'classic' | 'modern' | 'minimal';
@@ -14,6 +41,30 @@ type ProductDetailPreviewProps = {
 };
 
 const formatVND = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+
+const CLASSIC_HIGHLIGHT_ICON_MAP: Record<string, React.ElementType> = {
+  Award,
+  BadgeCheck,
+  Bell,
+  Bolt,
+  Calendar,
+  Camera,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Gift,
+  Globe,
+  HeartHandshake,
+  Leaf,
+  Lock,
+  MapPin,
+  Phone,
+  RotateCcw,
+  Shield,
+  Star,
+  ThumbsUp,
+  Truck,
+};
 
 export function ProductDetailPreview({
   layoutStyle,
@@ -67,38 +118,58 @@ export function ProductDetailPreview({
                 <span className="text-lg text-slate-400 line-through">{formatVND(originalPrice)}</span>
                 <span className="px-2 py-0.5 bg-red-100 text-red-600 text-sm font-medium rounded">-{Math.round((1 - price / originalPrice) * 100)}%</span>
               </div>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center border border-slate-200 rounded-lg">
+                  <button className="p-3" disabled>
+                    <Minus size={18} className="text-slate-300" />
+                  </button>
+                  <span className="w-12 text-center font-medium">1</span>
+                  <button className="p-3" disabled>
+                    <Plus size={18} className="text-slate-300" />
+                  </button>
+                </div>
+
+                <div className="flex flex-1 flex-col gap-2">
+                  {showAddToCart && (
+                    <button className="py-3.5 px-8 rounded-xl text-white font-semibold flex items-center justify-center gap-2" style={{ backgroundColor: brandColor }}>
+                      <ShoppingCart size={20} />
+                      Thêm vào giỏ hàng
+                    </button>
+                  )}
+                  {showBuyNow && (
+                    <button className="py-3.5 px-8 rounded-xl font-semibold flex items-center justify-center gap-2 border" style={{ borderColor: brandColor, color: brandColor }}>
+                      Mua ngay
+                    </button>
+                  )}
+                </div>
+
+                {showWishlist && (
+                  <button className="p-3.5 rounded-xl border border-slate-200">
+                    <Heart size={20} className="text-slate-400" />
+                  </button>
+                )}
+                <button className="p-3.5 rounded-xl border border-slate-200">
+                  <Share2 size={20} className="text-slate-400" />
+                </button>
+              </div>
+
               {showClassicHighlights && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <h4 className="font-medium text-amber-800 mb-2">Điểm nổi bật</h4>
-                  <ul className="text-sm text-amber-700 space-y-1">
-                    {(classicHighlights.length > 0 ? classicHighlights : [
-                      { icon: 'Star', text: 'Chip A17 Pro mạnh mẽ' },
-                      { icon: 'Star', text: 'Camera 48MP chuyên nghiệp' },
-                      { icon: 'Star', text: 'Titanium siêu bền' },
-                    ]).map((item, index) => (
-                      <li key={`${item.icon}-${index}`}>• {item.text}</li>
-                    ))}
-                  </ul>
+                <div className="grid grid-cols-3 gap-4 p-4 bg-slate-50 rounded-xl">
+                  {(classicHighlights.length > 0 ? classicHighlights : [
+                    { icon: 'Star', text: 'Chip A17 Pro mạnh mẽ' },
+                    { icon: 'Star', text: 'Camera 48MP chuyên nghiệp' },
+                    { icon: 'Star', text: 'Titanium siêu bền' },
+                  ]).map((item, index) => {
+                    const Icon = CLASSIC_HIGHLIGHT_ICON_MAP[item.icon] ?? Star;
+                    return (
+                      <div key={`${item.icon}-${index}`} className="text-center">
+                        <Icon size={24} className="mx-auto mb-2 text-slate-600" />
+                        <p className="text-xs text-slate-600">{item.text}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
-              <div className="flex flex-col gap-3">
-                {showWishlist && (
-                  <button className="p-3 border border-slate-200 rounded-xl hover:bg-pink-50 hover:border-pink-300">
-                    <Heart size={20} className="text-pink-500" />
-                  </button>
-                )}
-                {showAddToCart && (
-                  <button className="flex-1 py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2" style={{ backgroundColor: brandColor }}>
-                    <ShoppingCart size={18} />
-                    Thêm vào giỏ hàng
-                  </button>
-                )}
-                {showBuyNow && (
-                  <button className="flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 border" style={{ borderColor: brandColor, color: brandColor }}>
-                    Mua ngay
-                  </button>
-                )}
-              </div>
             </div>
           </div>
         )}
