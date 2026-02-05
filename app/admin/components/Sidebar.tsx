@@ -4,12 +4,14 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { useQuery } from 'convex/react';
 import { 
   Bell, Briefcase, ChevronRight, ChevronsLeft, 
   ChevronsRight, FileText, Globe, Image as ImageIcon, LayoutDashboard, Loader2,
   LogOut, Settings, ShoppingCart, Ticket, Users, X
 } from 'lucide-react';
 import { cn } from './ui';
+import { api } from '@/convex/_generated/api';
 import { useAdminModules } from '../context/AdminModulesContext';
 
 interface SidebarItemProps {
@@ -131,6 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const pathname = usePathname();
   const { isModuleEnabled, isLoading } = useAdminModules();
+  const productSettings = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'products' });
 
   const isActive = (route: string) => pathname.startsWith(route);
 
@@ -138,7 +141,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
     if (pathname.startsWith('/admin/posts') || pathname.startsWith('/admin/post-categories') || pathname.startsWith('/admin/comments')) {
       return 'Quản lý bài viết';
     }
-    if (pathname.startsWith('/admin/products') || pathname.startsWith('/admin/categories') || pathname.startsWith('/admin/customers') || pathname.startsWith('/admin/reviews') || pathname.startsWith('/admin/orders') || pathname.startsWith('/admin/wishlist')) {
+    if (
+      pathname.startsWith('/admin/products') ||
+      pathname.startsWith('/admin/categories') ||
+      pathname.startsWith('/admin/product-options') ||
+      pathname.startsWith('/admin/customers') ||
+      pathname.startsWith('/admin/reviews') ||
+      pathname.startsWith('/admin/orders') ||
+      pathname.startsWith('/admin/wishlist')
+    ) {
       return 'E-Commerce';
     }
     if (pathname.startsWith('/admin/users') || pathname.startsWith('/admin/roles')) {
@@ -177,6 +188,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
   const showSettingsSection = isModuleEnabled('settings');
   const showNotificationsSection = isModuleEnabled('notifications');
   const showPromotionsSection = isModuleEnabled('promotions');
+  const variantEnabled = Boolean(productSettings?.find(setting => setting.settingKey === 'variantEnabled')?.value);
 
   return (
     <>
@@ -284,7 +296,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   icon={ShoppingCart} 
                   label="E-Commerce" 
                   href="/admin/products"
-                  active={isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/customers') || isActive('/admin/reviews') || isActive('/admin/orders') || isActive('/admin/wishlist')}
+                  active={isActive('/admin/products') || isActive('/admin/categories') || isActive('/admin/product-options') || isActive('/admin/customers') || isActive('/admin/reviews') || isActive('/admin/orders') || isActive('/admin/wishlist')}
                   isCollapsed={isSidebarCollapsed}
                   isExpanded={currentExpandedMenu === 'E-Commerce'}
                   onToggle={() =>{  handleMenuToggle('E-Commerce'); }}
@@ -293,6 +305,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileMenuOpen, setMobileMenuO
                   subItems={[
                     { href: '/admin/products', label: 'Sản phẩm', moduleKey: 'products' },
                     { href: '/admin/categories', label: 'Danh mục sản phẩm', moduleKey: 'products' },
+                    ...(variantEnabled ? [{ href: '/admin/product-options', label: 'Loại tùy chọn', moduleKey: 'products' }] : []),
                     { href: '/admin/orders', label: 'Đơn hàng', moduleKey: 'orders' },
                     { href: '/admin/cart', label: 'Giỏ hàng', moduleKey: 'cart' },
                     { href: '/admin/wishlist', label: 'Wishlist', moduleKey: 'wishlist' },
