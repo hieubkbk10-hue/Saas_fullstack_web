@@ -939,7 +939,7 @@ export function Header() {
                         searchServices={canSearchServices}
                         brandColor={brandColor}
                         showButton={false}
-                        disabled={!searchOpen}
+                        autoFocus={searchOpen}
                         className={cn('w-48 transition-opacity', searchOpen ? 'opacity-100' : 'opacity-0')}
                         inputClassName={cn(
                           'w-48 px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 focus:outline-none transition-opacity',

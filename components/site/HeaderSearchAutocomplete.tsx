@@ -32,6 +32,7 @@ export type HeaderSearchAutocompleteProps = {
   buttonClassName?: string;
   showButton?: boolean;
   disabled?: boolean;
+  autoFocus?: boolean;
 };
 
 function cn(...classes: Array<string | undefined | false>) {
@@ -49,9 +50,11 @@ export function HeaderSearchAutocomplete({
   buttonClassName,
   showButton = true,
   disabled = false,
+  autoFocus = false,
 }: HeaderSearchAutocompleteProps) {
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -75,6 +78,12 @@ export function HeaderSearchAutocomplete({
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (autoFocus && !disabled) {
+      inputRef.current?.focus();
+    }
+  }, [autoFocus, disabled]);
 
   const canSearch = searchProducts || searchPosts || searchServices;
   const shouldSearch = !disabled && debouncedQuery.length >= 2 && canSearch;
@@ -118,6 +127,7 @@ export function HeaderSearchAutocomplete({
   return (
     <div ref={containerRef} className={cn('relative', className)}>
       <input
+        ref={inputRef}
         type="text"
         value={query}
         onFocus={() => { if (!disabled && query.trim()) { setIsOpen(true); } }}
