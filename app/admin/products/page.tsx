@@ -13,6 +13,7 @@ import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, S
 import { ModuleGuard } from '../components/ModuleGuard';
 
 const MODULE_KEY = 'products';
+const PAGE_SIZE_OPTIONS = [12, 20, 30, 50, 100];
 
 export default function ProductsListPage() {
   return (
@@ -75,7 +76,8 @@ function ProductsContent() {
   // Get productsPerPage from module settings
   const productsPerPage = useMemo(() => {
     const setting = settingsData?.find(s => s.settingKey === 'productsPerPage');
-    return (setting?.value as number) || 12;
+    const value = Number(setting?.value);
+    return PAGE_SIZE_OPTIONS.includes(value) ? value : 12;
   }, [settingsData]);
 
   const variantEnabled = useMemo(() => {
@@ -431,7 +433,7 @@ function ProductsContent() {
                   className="h-8 w-[70px] appearance-none rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900 shadow-sm focus:border-slate-300 focus:outline-none"
                   aria-label="Số sản phẩm mỗi trang"
                 >
-                  {[12, 20, 30, 50, 100].map((size) => (
+                  {PAGE_SIZE_OPTIONS.map((size) => (
                     <option key={size} value={size}>{size}</option>
                   ))}
                 </select>
