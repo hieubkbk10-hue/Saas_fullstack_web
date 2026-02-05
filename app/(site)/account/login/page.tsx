@@ -17,7 +17,7 @@ export default function CustomerLoginPage() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.push('/wishlist');
+      router.push('/account/profile');
     }
   }, [isAuthenticated, isLoading, router]);
 
@@ -29,7 +29,7 @@ export default function CustomerLoginPage() {
     try {
       const result = await login(email, password);
       if (result.success) {
-        router.push('/wishlist');
+        router.push('/account/profile');
       } else {
         setError(result.message);
       }

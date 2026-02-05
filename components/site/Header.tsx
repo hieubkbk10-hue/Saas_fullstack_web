@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useBrandColor, useSiteSettings } from './hooks';
-import { ChevronDown, ChevronRight, Heart, Mail, Phone, Search, User } from 'lucide-react';
+import { ChevronDown, ChevronRight, Heart, LogOut, Mail, Package, Phone, Search, User } from 'lucide-react';
 import { CartIcon } from './CartIcon';
+import { useCustomerAuth } from '@/app/(site)/auth/context';
 
 interface MenuItem {
   _id: Id<"menuItems">;
@@ -85,6 +87,8 @@ const DEFAULT_LINKS = {
   cta: '/contact',
   trackOrder: '/orders/tracking',
   storeSystem: '/stores',
+  accountProfile: '/account/profile',
+  accountOrders: '/account/orders',
 };
 
 function cn(...classes: (string | boolean | undefined)[]) {
@@ -101,6 +105,8 @@ export function Header() {
   const customersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'customers' });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const customerLoginFeature = useQuery(api.admin.modules.getModuleFeature, { moduleKey: 'customers', featureKey: 'enableLogin' });
+  const router = useRouter();
+  const { customer, isAuthenticated, logout } = useCustomerAuth();
   
   const headerStyleRaw = headerStyleSetting?.value as string | undefined;
   const headerStyle: HeaderStyle = (headerStyleRaw === 'transparent' || headerStyleRaw === 'centered' ? 'allbirds' : headerStyleRaw as HeaderStyle) || 'classic';
@@ -135,6 +141,8 @@ export function Header() {
 
   const canLogin = (customersModule?.enabled ?? false) && (customerLoginFeature?.enabled ?? false);
   const showLogin = Boolean(config.login?.show && canLogin);
+  const showUserMenu = showLogin && isAuthenticated;
+  const showLoginLink = showLogin && !isAuthenticated;
   const canTrackOrder = ordersModule?.enabled ?? false;
   const showTrackOrder = Boolean(topbarConfig.showTrackOrder && canTrackOrder);
   
@@ -142,9 +150,21 @@ export function Header() {
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [expandedMobileItems, setExpandedMobileItems] = useState<string[]>([]);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClick = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const handleMenuEnter = useCallback((itemId: string) => {
     if (hoverTimeoutRef.current) {
@@ -253,6 +273,73 @@ export function Header() {
     setMobileMenuOpen(prev => !prev);
   }, []);
 
+  const handleLogout = useCallback(async () => {
+    await logout();
+    setUserMenuOpen(false);
+    router.push('/');
+  }, [logout, router]);
+
+  const renderUserMenu = (variant: 'text' | 'icon', textClassName = '') => (
+    <div className="relative" ref={userMenuRef}>
+      <button
+        onClick={() => { setUserMenuOpen(prev => !prev); }}
+        className={cn(
+          variant === 'text'
+            ? `hover:underline flex items-center gap-1 ${textClassName}`
+            : 'p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
+        )}
+      >
+        <User size={variant === 'text' ? 12 : 18} />
+        {variant === 'text' && <span>{customer?.name || (config.login?.text ?? 'Tài khoản')}</span>}
+      </button>
+      {userMenuOpen && (
+        <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg z-50">
+          <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">Xin chào, {customer?.name || 'Khách hàng'}</p>
+            {customer?.email && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{customer.email}</p>
+            )}
+          </div>
+          <div className="py-2">
+            <Link
+              href={DEFAULT_LINKS.accountProfile}
+              onClick={() => { setUserMenuOpen(false); }}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <User size={16} />
+              Thông tin tài khoản
+            </Link>
+            <Link
+              href={DEFAULT_LINKS.accountOrders}
+              onClick={() => { setUserMenuOpen(false); }}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <Package size={16} />
+              Đơn hàng của tôi
+            </Link>
+            <Link
+              href={DEFAULT_LINKS.wishlist}
+              onClick={() => { setUserMenuOpen(false); }}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <Heart size={16} />
+              Danh sách yêu thích
+            </Link>
+          </div>
+          <div className="border-t border-slate-100 dark:border-slate-800">
+            <button
+              onClick={() => { void handleLogout(); }}
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
+            >
+              <LogOut size={16} />
+              Đăng xuất
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   if (menuData === undefined) {
     return (
       <header className="bg-white shadow-sm">
@@ -311,7 +398,8 @@ export function Header() {
                     {showLogin && <span className="hidden sm:inline">|</span>}
                   </>
                 )}
-                {showLogin && (
+                {showUserMenu && renderUserMenu('text', 'text-white')}
+                {showLoginLink && (
                   <Link href={DEFAULT_LINKS.login} className="hover:underline flex items-center gap-1">
                     <User size={12} />
                     {config.login?.text ?? 'Đăng nhập'}
@@ -523,7 +611,8 @@ export function Header() {
                     {showLogin && <span className="hidden sm:inline">|</span>}
                   </>
                 )}
-                {showLogin && (
+                {showUserMenu && renderUserMenu('text', 'text-white')}
+                {showLoginLink && (
                   <Link href={DEFAULT_LINKS.login} className="hover:underline flex items-center gap-1">
                     <User size={12} />
                     {config.login?.text ?? 'Đăng nhập'}
@@ -852,7 +941,8 @@ export function Header() {
                     </button>
                   </div>
                 )}
-                {showLogin && (
+                {showUserMenu && renderUserMenu('icon')}
+                {showLoginLink && (
                   <Link href={DEFAULT_LINKS.login} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
                     <User size={18} />
                   </Link>

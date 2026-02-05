@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronDown, ChevronRight, Eye, Heart, Mail, Phone, Search, ShoppingCart, User } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, Heart, LogOut, Mail, Package, Phone, Search, ShoppingCart, User } from 'lucide-react';
 import { Card, CardContent, cn } from '@/app/admin/components/ui';
 
 export type HeaderLayoutStyle = 'classic' | 'topbar' | 'allbirds';
@@ -73,12 +73,15 @@ export function HeaderMenuPreview({
     cta: '/contact',
     trackOrder: '/orders/tracking',
     storeSystem: '/stores',
+    accountProfile: '/account/profile',
+    accountOrders: '/account/orders',
   }), []);
 
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMobileItems, setExpandedMobileItems] = useState<string[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const activeItems = useMemo(() => menuItems.filter(item => item.active), [menuItems]);
 
@@ -119,6 +122,59 @@ export function HeaderMenuPreview({
   const showLogin = config.login.show && canLogin;
   const canTrackOrder = ordersEnabled;
   const showTrackOrder = displayTopbar.showTrackOrder && canTrackOrder;
+
+  const renderUserMenu = (variant: 'text' | 'icon') => (
+    <div className="relative">
+      <button
+        onClick={() => { setUserMenuOpen(prev => !prev); }}
+        className={variant === 'text'
+          ? 'hover:underline flex items-center gap-1'
+          : 'p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}
+      >
+        <User size={variant === 'text' ? 12 : 18} />
+        {variant === 'text' && <span>{config.login.text}</span>}
+      </button>
+      {userMenuOpen && (
+        <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white shadow-lg z-50">
+          <div className="px-4 py-3 border-b border-slate-100">
+            <p className="text-sm font-semibold text-slate-900">Xin chào, Nguyễn Văn A</p>
+            <p className="text-xs text-slate-500 mt-1">customer@email.com</p>
+          </div>
+          <div className="py-2">
+            <a
+              href={defaultLinks.accountProfile}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              <User size={16} />
+              Thông tin tài khoản
+            </a>
+            <a
+              href={defaultLinks.accountOrders}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              <Package size={16} />
+              Đơn hàng của tôi
+            </a>
+            <a
+              href={defaultLinks.wishlist}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              <Heart size={16} />
+              Danh sách yêu thích
+            </a>
+          </div>
+          <div className="border-t border-slate-100">
+            <button
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
+            >
+              <LogOut size={16} />
+              Đăng xuất
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   const announcementText = useMemo(() => {
     const items = [displayTopbar.hotline, displayTopbar.email].filter(Boolean);
@@ -234,9 +290,7 @@ export function HeaderMenuPreview({
                   {(showTrackOrder || displayTopbar.showStoreSystem) && showLogin && <span>|</span>}
                 </>
               )}
-              {showLogin && (
-                <a href={defaultLinks.login} className="hover:underline flex items-center gap-1"><User size={12} />{config.login.text}</a>
-              )}
+              {showLogin && renderUserMenu('text')}
             </div>
           </div>
         </div>
@@ -393,9 +447,7 @@ export function HeaderMenuPreview({
                   {(showTrackOrder || displayTopbar.showStoreSystem) && showLogin && <span>|</span>}
                 </>
               )}
-              {showLogin && (
-                <a href={defaultLinks.login} className="hover:underline flex items-center gap-1"><User size={12} />{config.login.text}</a>
-              )}
+              {showLogin && renderUserMenu('text')}
             </div>
           </div>
         </div>
@@ -615,11 +667,7 @@ export function HeaderMenuPreview({
                   </button>
                 </div>
               )}
-              {showLogin && (
-                <a href={defaultLinks.login} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                  <User size={18} />
-                </a>
-              )}
+              {showLogin && renderUserMenu('icon')}
               {config.cart.show && (
                 <a href={defaultLinks.cart} className="p-2 text-slate-600 dark:text-slate-400 relative hover:text-slate-900 dark:hover:text-white">
                   <ShoppingCart size={18} />
