@@ -36,6 +36,7 @@ type ProductDetailPreviewProps = {
   showWishlist: boolean;
   showAddToCart: boolean;
   showBuyNow: boolean;
+  showVariants?: boolean;
   showClassicHighlights: boolean;
   classicHighlights?: { icon: string; text: string }[];
   heroStyle?: 'full' | 'split' | 'minimal';
@@ -109,6 +110,7 @@ export function ProductDetailPreview({
   showWishlist,
   showAddToCart,
   showBuyNow,
+  showVariants = true,
   showClassicHighlights,
   classicHighlights = [],
   heroStyle = 'full',
@@ -176,7 +178,7 @@ export function ProductDetailPreview({
                 <span className="text-lg text-slate-400 line-through">{formatVND(originalPrice)}</span>
                 <span className="px-2 py-0.5 bg-red-100 text-red-600 text-sm font-medium rounded">-{Math.round((1 - price / originalPrice) * 100)}%</span>
               </div>
-              <VariantPreview brandColor={brandColor} />
+              {showVariants && <VariantPreview brandColor={brandColor} />}
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex items-center border border-slate-200 rounded-lg">
                   <button className="p-3" disabled>
@@ -316,7 +318,7 @@ export function ProductDetailPreview({
                   <span className="inline-flex items-center rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">Giảm {discountPercent}%</span>
                 </div>
 
-                <VariantPreview brandColor={brandColor} />
+                {showVariants && <VariantPreview brandColor={brandColor} />}
 
                 <div className="h-px w-full bg-slate-100" />
 
@@ -410,7 +412,7 @@ export function ProductDetailPreview({
                     {formatVND(price)}
                   </p>
                   <div className="mt-4">
-                    <VariantPreview brandColor={brandColor} />
+                    {showVariants && <VariantPreview brandColor={brandColor} />}
                   </div>
                 </div>
 

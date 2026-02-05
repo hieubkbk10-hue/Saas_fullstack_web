@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
@@ -199,6 +200,25 @@ const CLASSIC_HIGHLIGHT_ICON_MAP: Record<ClassicHighlightIcon, React.ElementType
   Truck,
 };
 
+function VariantFeatureStatus({ enabled, href }: { enabled: boolean; href: string }) {
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="flex items-start gap-2">
+        <span className={`mt-1 inline-flex h-2 w-2 rounded-full ${enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">Phiên bản sản phẩm</p>
+          <p className="text-xs text-slate-500">
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào Module Sản phẩm
+          </p>
+        </div>
+      </div>
+      <Link href={href} className="text-xs font-medium text-cyan-600 hover:underline">
+        Đi đến →
+      </Link>
+    </div>
+  );
+}
+
 const normalizeClassicHighlights = (value: unknown): ClassicHighlightItem[] => {
   if (!Array.isArray(value)) {
     return DEFAULT_CLASSIC_HIGHLIGHTS;
@@ -229,6 +249,7 @@ export default function ProductDetailExperiencePage() {
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
+  const variantsSetting = useQuery(api.admin.modules.getModuleSetting, { moduleKey: 'products', settingKey: 'variantEnabled' });
   const exampleProductSlug = useExampleProductSlug();
   const setMultipleSettings = useMutation(api.settings.setMultiple);
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
@@ -318,6 +339,7 @@ export default function ProductDetailExperiencePage() {
       showWishlist: currentLayoutConfig.showWishlist,
       showAddToCart: currentLayoutConfig.showAddToCart,
       showBuyNow: config.showBuyNow,
+      showVariants: (variantsSetting?.value as boolean | undefined) ?? false,
       heroStyle: config.layoutStyle === 'modern'
         ? (currentLayoutConfig as ModernLayoutConfig).heroStyle
         : 'full',
@@ -534,6 +556,10 @@ export default function ProductDetailExperiencePage() {
               onChange={(v) => setConfig(prev => ({ ...prev, showBuyNow: v }))}
               accentColor="#06b6d4"
               disabled={!ordersModule?.enabled}
+            />
+            <VariantFeatureStatus
+              enabled={(variantsSetting?.value as boolean | undefined) ?? false}
+              href="/system/modules/products"
             />
           </ControlCard>
 
