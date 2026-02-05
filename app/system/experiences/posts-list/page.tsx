@@ -150,7 +150,7 @@ export default function PostsListExperiencePage() {
         <CardHeader>
           <CardTitle className="text-base">Thiết lập hiển thị</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ControlCard title="Hiển thị">
             <ToggleRow label="Tìm kiếm" checked={config.showSearch} onChange={(v) => setConfig(prev => ({ ...prev, showSearch: v }))} accentColor="#3b82f6" />
             <ToggleRow label="Danh mục" checked={config.showCategories} onChange={(v) => setConfig(prev => ({ ...prev, showCategories: v }))} accentColor="#3b82f6" />
@@ -174,7 +174,7 @@ export default function PostsListExperiencePage() {
         <CardHeader>
           <CardTitle className="text-base">Module & liên kết</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ControlCard title="Module liên quan">
             <ExperienceModuleLink
               enabled={postsModule?.enabled ?? false}
