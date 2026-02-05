@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
+  Eye,
   Gift,
   Globe,
   Heart,
@@ -38,7 +39,7 @@ import {
   Trash2,
   Truck,
 } from 'lucide-react';
-import { Button, Card, Input } from '@/app/admin/components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
   ExperienceHintCard,
@@ -50,7 +51,6 @@ import {
   DeviceToggle,
   deviceWidths,
   LayoutTabs,
-  ConfigPanel,
   ControlCard,
   ToggleRow,
   SelectRow,
@@ -253,7 +253,6 @@ export default function ProductDetailExperiencePage() {
   const exampleProductSlug = useExampleProductSlug();
   const setMultipleSettings = useMutation(api.settings.setMultiple);
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
-  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const legacyStyle = legacyStyleSetting?.value as ProductsDetailStyle | undefined;
@@ -483,51 +482,33 @@ export default function ProductDetailExperiencePage() {
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col">
-      {/* Compact Header - 48px */}
-      <header className="h-12 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-2">
-          <LayoutTemplate className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-          <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">Chi tiết sản phẩm</span>
+    <div className="max-w-7xl mx-auto space-y-6 pb-20">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <LayoutTemplate className="w-5 h-5 text-cyan-600" />
+            <h1 className="text-2xl font-bold">Chi tiết sản phẩm</h1>
+          </div>
+          <Link href="/system/experiences" className="text-sm text-blue-600 hover:underline">
+            Quay lại danh sách
+          </Link>
         </div>
-        <div className="flex items-center gap-3">
-          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={(!hasChanges && !hasHighlightsChanges) || isSaving}
-            className="bg-cyan-600 hover:bg-cyan-500 gap-1.5"
-          >
-            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            <span>{hasChanges || hasHighlightsChanges ? 'Lưu' : 'Đã lưu'}</span>
-          </Button>
-        </div>
-      </header>
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={(!hasChanges && !hasHighlightsChanges) || isSaving}
+          className="bg-cyan-600 hover:bg-cyan-500 gap-1.5"
+        >
+          {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          <span>{hasChanges || hasHighlightsChanges ? 'Lưu' : 'Đã lưu'}</span>
+        </Button>
+      </div>
 
-      {/* Preview Area */}
-      <main className="flex-1 overflow-auto p-4 bg-slate-50 dark:bg-slate-950">
-        <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
-          <BrowserFrame url={`yoursite.com/products/${exampleProductSlug || 'example-product'}`} maxHeight="calc(100vh - 320px)">
-            <ProductDetailPreview {...getPreviewProps()} />
-          </BrowserFrame>
-        </div>
-      </main>
-
-      {/* Bottom Panel */}
-      <ConfigPanel
-        isExpanded={isPanelExpanded}
-        onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
-        expandedHeight="220px"
-        leftContent={
-          <LayoutTabs
-            layouts={LAYOUT_STYLES}
-            activeLayout={config.layoutStyle}
-            onChange={(layout) => setConfig(prev => ({ ...prev, layoutStyle: layout }))}
-            accentColor="#06b6d4"
-          />
-        }
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Thiết lập hiển thị</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ControlCard title="Khối hiển thị">
             <ToggleRow
               label="Đánh giá"
@@ -575,36 +556,43 @@ export default function ProductDetailExperiencePage() {
                 <span>Một số module chưa bật.</span>
               </div>
             )}
-              <ExperienceModuleLink
-                enabled={commentsModule?.enabled ?? false}
-                href="/system/modules/comments"
-                icon={MessageSquare}
-                title="Bình luận & đánh giá"
-                colorScheme="cyan"
-              />
-              <ExperienceModuleLink
-                enabled={wishlistModule?.enabled ?? false}
-                href="/system/modules/wishlist"
-                icon={Heart}
-                title="Sản phẩm yêu thích"
-                colorScheme="cyan"
-              />
-              <ExperienceModuleLink
-                enabled={cartModule?.enabled ?? false}
-                href="/system/modules/cart"
-                icon={ShoppingCart}
-                title="Giỏ hàng"
-                colorScheme="cyan"
-              />
-              <ExperienceModuleLink
-                enabled={ordersModule?.enabled ?? false}
-                href="/system/modules/orders"
-                icon={Package}
-                title="Đơn hàng"
-                colorScheme="cyan"
-              />
+            <ExperienceModuleLink
+              enabled={commentsModule?.enabled ?? false}
+              href="/system/modules/comments"
+              icon={MessageSquare}
+              title="Bình luận & đánh giá"
+              colorScheme="cyan"
+            />
+            <ExperienceModuleLink
+              enabled={wishlistModule?.enabled ?? false}
+              href="/system/modules/wishlist"
+              icon={Heart}
+              title="Sản phẩm yêu thích"
+              colorScheme="cyan"
+            />
+            <ExperienceModuleLink
+              enabled={cartModule?.enabled ?? false}
+              href="/system/modules/cart"
+              icon={ShoppingCart}
+              title="Giỏ hàng"
+              colorScheme="cyan"
+            />
+            <ExperienceModuleLink
+              enabled={ordersModule?.enabled ?? false}
+              href="/system/modules/orders"
+              icon={Package}
+              title="Đơn hàng"
+              colorScheme="cyan"
+            />
           </ControlCard>
+        </CardContent>
+      </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Link & ghi chú</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="p-2">
             {exampleProductSlug && (
               <div className="mb-2">
@@ -617,8 +605,38 @@ export default function ProductDetailExperiencePage() {
             )}
             <ExperienceHintCard hints={HINTS} />
           </Card>
-        </div>
-      </ConfigPanel>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Eye size={18} /> Preview
+            </CardTitle>
+            <div className="flex items-center gap-3">
+              <LayoutTabs
+                layouts={LAYOUT_STYLES}
+                activeLayout={config.layoutStyle}
+                onChange={(layout) => setConfig(prev => ({ ...prev, layoutStyle: layout }))}
+                accentColor="#06b6d4"
+              />
+              <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
+            <BrowserFrame url={`yoursite.com/products/${exampleProductSlug || 'example-product'}`}>
+              <ProductDetailPreview {...getPreviewProps()} />
+            </BrowserFrame>
+          </div>
+          <div className="mt-3 text-xs text-slate-500">
+            Style: <strong className="text-slate-700 dark:text-slate-300">{LAYOUT_STYLES.find(s => s.id === config.layoutStyle)?.label}</strong>
+            {' • '}{previewDevice === 'desktop' && 'Desktop (1920px)'}{previewDevice === 'tablet' && 'Tablet (768px)'}{previewDevice === 'mobile' && 'Mobile (375px)'}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
