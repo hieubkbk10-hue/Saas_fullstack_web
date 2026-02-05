@@ -437,6 +437,11 @@ export function HeaderMenuPreview({
                     <span className="absolute top-0 right-0 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
                   </a>
                 )}
+                {config.cta.show && (
+                  <a href={defaultLinks.cta} className="px-4 py-2 text-sm font-medium text-white rounded-full transition-colors hover:opacity-90" style={{ backgroundColor: brandColor }}>
+                    {config.cta.text}
+                  </a>
+                )}
               </>
             )}
           </div>
@@ -482,6 +487,13 @@ export function HeaderMenuPreview({
               )}
             </div>
           ))}
+          {config.cta.show && (
+            <div className="p-4">
+              <a href={defaultLinks.cta} className="block w-full py-2.5 text-sm font-medium text-white rounded-lg text-center" style={{ backgroundColor: brandColor }}>
+                {config.cta.text}
+              </a>
+            </div>
+          )}
         </div>
       )}
     </div>

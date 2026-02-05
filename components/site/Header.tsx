@@ -592,6 +592,15 @@ export function Header() {
                 {config.cart?.show && (
                   <CartIcon />
                 )}
+                {config.cta?.show && (
+                  <Link
+                    href={DEFAULT_LINKS.cta}
+                    className="hidden lg:inline-flex px-4 py-2 text-sm font-medium text-white rounded-full transition-colors hover:opacity-90"
+                    style={{ backgroundColor: brandColor }}
+                  >
+                    {config.cta.text ?? 'Liên hệ'}
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -674,6 +683,18 @@ export function Header() {
                 )}
               </div>
             ))}
+            {config.cta?.show && (
+              <div className="p-4">
+                <Link
+                  href={DEFAULT_LINKS.cta}
+                  onClick={() =>{  setMobileMenuOpen(false); }}
+                  className="block w-full py-2.5 text-sm font-medium text-white rounded-lg text-center"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {config.cta.text ?? 'Liên hệ'}
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </header>
