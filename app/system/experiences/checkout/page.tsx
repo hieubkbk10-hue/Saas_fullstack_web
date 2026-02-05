@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { LayoutTemplate, Loader2, Package, Save, ShoppingCart } from 'lucide-react';
@@ -77,24 +78,50 @@ const HINTS = [
   'Mỗi flow có config riêng - chuyển tab để chỉnh.',
 ];
 
+function ModuleFeatureStatus({ label, enabled, href, moduleName }: { label: string; enabled: boolean; href: string; moduleName: string }) {
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="flex items-start gap-2">
+        <span className={`mt-1 inline-flex h-2 w-2 rounded-full ${enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">{label}</p>
+          <p className="text-xs text-slate-500">
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào {moduleName}
+          </p>
+        </div>
+      </div>
+      <Link href={href} className="text-xs font-medium text-cyan-600 hover:underline">
+        Đi đến →
+      </Link>
+    </div>
+  );
+}
+
 export default function CheckoutExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
+  const paymentFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enablePayment', moduleKey: 'orders' });
+  const shippingFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableShipping', moduleKey: 'orders' });
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
 
   const serverConfig = useMemo<CheckoutExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<CheckoutExperienceConfig> | undefined;
+    const defaultLayoutWithFeatures: LayoutConfig = {
+      orderSummaryPosition: DEFAULT_LAYOUT_CONFIG.orderSummaryPosition,
+      showPaymentMethods: paymentFeature?.enabled ?? true,
+      showShippingOptions: shippingFeature?.enabled ?? true,
+    };
     return {
       flowStyle: raw?.flowStyle ?? 'multi-step',
       showBuyNow: raw?.showBuyNow ?? true,
       layouts: {
-        'single-page': { ...DEFAULT_LAYOUT_CONFIG, ...raw?.layouts?.['single-page'] },
-        'multi-step': { ...DEFAULT_LAYOUT_CONFIG, ...raw?.layouts?.['multi-step'] },
+        'single-page': { ...defaultLayoutWithFeatures, ...raw?.layouts?.['single-page'] },
+        'multi-step': { ...defaultLayoutWithFeatures, ...raw?.layouts?.['multi-step'] },
       },
     };
-  }, [experienceSetting?.value]);
+  }, [experienceSetting?.value, paymentFeature?.enabled, shippingFeature?.enabled]);
 
   const isLoading = experienceSetting === undefined || ordersModule === undefined || cartModule === undefined;
 
@@ -160,8 +187,8 @@ export default function CheckoutExperiencePage() {
             <CheckoutPreview
               flowStyle={config.flowStyle}
               orderSummaryPosition={currentLayoutConfig.orderSummaryPosition}
-              showPaymentMethods={currentLayoutConfig.showPaymentMethods}
-              showShippingOptions={currentLayoutConfig.showShippingOptions}
+              showPaymentMethods={currentLayoutConfig.showPaymentMethods && (paymentFeature?.enabled ?? true)}
+              showShippingOptions={currentLayoutConfig.showShippingOptions && (shippingFeature?.enabled ?? true)}
               device={previewDevice}
               brandColor="#22c55e"
             />
@@ -224,6 +251,18 @@ export default function CheckoutExperiencePage() {
               icon={Package}
               title="Đơn hàng"
               colorScheme="green"
+            />
+            <ModuleFeatureStatus
+              label="Thanh toán"
+              enabled={paymentFeature?.enabled ?? false}
+              href="/system/modules/orders"
+              moduleName="module Đơn hàng"
+            />
+            <ModuleFeatureStatus
+              label="Vận chuyển"
+              enabled={shippingFeature?.enabled ?? false}
+              href="/system/modules/orders"
+              moduleName="module Đơn hàng"
             />
             <ExperienceModuleLink
               enabled={cartModule?.enabled ?? false}

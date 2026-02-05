@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { AlertCircle, Heart, LayoutTemplate, Loader2, Package, Save, ShoppingCart } from 'lucide-react';
+import { Heart, LayoutTemplate, Loader2, Package, Save, ShoppingCart } from 'lucide-react';
 import { Button, Card } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
@@ -70,6 +71,25 @@ const HINTS = [
   'Nút Add to Cart phụ thuộc vào Cart + Orders module.',
   'Mỗi layout có config riêng - chuyển tab để chỉnh.',
 ];
+
+function ModuleFeatureStatus({ label, enabled, href, moduleName }: { label: string; enabled: boolean; href: string; moduleName: string }) {
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="flex items-start gap-2">
+        <span className={`mt-1 inline-flex h-2 w-2 rounded-full ${enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">{label}</p>
+          <p className="text-xs text-slate-500">
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào {moduleName}
+          </p>
+        </div>
+      </div>
+      <Link href={href} className="text-xs font-medium text-cyan-600 hover:underline">
+        Đi đến →
+      </Link>
+    </div>
+  );
+}
 
 export default function WishlistExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
@@ -158,8 +178,8 @@ export default function WishlistExperiencePage() {
             <WishlistPreview
               layoutStyle={config.layoutStyle}
               showWishlistButton={currentLayoutConfig.showWishlistButton}
-              showNote={currentLayoutConfig.showNote}
-              showNotification={currentLayoutConfig.showNotification}
+              showNote={currentLayoutConfig.showNote && (noteFeature?.enabled ?? true)}
+              showNotification={currentLayoutConfig.showNotification && (notificationFeature?.enabled ?? true)}
               showAddToCartButton={currentLayoutConfig.showAddToCartButton && cartAvailable}
               device={previewDevice}
               brandColor="#ec4899"
@@ -216,18 +236,24 @@ export default function WishlistExperiencePage() {
           </ControlCard>
 
           <ControlCard title="Module liên quan">
-            {(!wishlistModule?.enabled || !cartAvailable) && (
-              <div className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-xs text-amber-700 dark:text-amber-300 mb-2">
-                <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
-                <span>Một số module chưa bật.</span>
-              </div>
-            )}
             <ExperienceModuleLink
               enabled={wishlistModule?.enabled ?? false}
               href="/system/modules/wishlist"
               icon={Heart}
               title="Sản phẩm yêu thích"
               colorScheme="pink"
+            />
+            <ModuleFeatureStatus
+              label="Ghi chú"
+              enabled={noteFeature?.enabled ?? false}
+              href="/system/modules/wishlist"
+              moduleName="module Wishlist"
+            />
+            <ModuleFeatureStatus
+              label="Thông báo"
+              enabled={notificationFeature?.enabled ?? false}
+              href="/system/modules/wishlist"
+              moduleName="module Wishlist"
             />
             <ExperienceModuleLink
               enabled={cartModule?.enabled ?? false}

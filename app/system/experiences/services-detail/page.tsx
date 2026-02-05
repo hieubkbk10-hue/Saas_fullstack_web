@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import type { Id } from '@/convex/_generated/dataModel';
-import { AlertCircle, Briefcase, LayoutTemplate, Loader2, Save } from 'lucide-react';
+import { Briefcase, LayoutTemplate, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Card } from '@/app/admin/components/ui';
 import { SettingInput } from '@/components/modules/shared';
@@ -85,6 +85,25 @@ const HINTS = [
   'Related services giúp upsell.',
 ];
 
+function ModuleFeatureStatus({ label, enabled, href, moduleName }: { label: string; enabled: boolean; href: string; moduleName: string }) {
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="flex items-start gap-2">
+        <span className={`mt-1 inline-flex h-2 w-2 rounded-full ${enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">{label}</p>
+          <p className="text-xs text-slate-500">
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào {moduleName}
+          </p>
+        </div>
+      </div>
+      <Link href={href} className="text-xs font-medium text-cyan-600 hover:underline">
+        Đi đến →
+      </Link>
+    </div>
+  );
+}
+
 export default function ServiceDetailExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const servicesModule = useQuery(api.admin.modules.getModuleByKey, { key: 'services' });
@@ -93,10 +112,8 @@ export default function ServiceDetailExperiencePage() {
   const exampleServiceSlug = useExampleServiceSlug();
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
-  const [priceFieldEnabled, setPriceFieldEnabled] = useState<boolean | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const setMultipleSettings = useMutation(api.settings.setMultiple);
-  const updateField = useMutation(api.admin.modules.updateModuleField);
 
   const serverConfig = useMemo<ServiceDetailExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<ServiceDetailExperienceConfig> | undefined;
@@ -108,15 +125,7 @@ export default function ServiceDetailExperiencePage() {
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
   const priceField = useMemo(() => serviceFields?.find(field => field.fieldKey === 'price'), [serviceFields]);
-
-  useEffect(() => {
-    if (priceField) {
-      setPriceFieldEnabled(priceField.enabled);
-    }
-  }, [priceField]);
-
-  const localPriceEnabled = priceFieldEnabled ?? priceField?.enabled ?? true;
-  const isPriceSyncPending = Boolean(priceField) && localPriceEnabled !== priceField?.enabled;
+  const priceFieldEnabled = priceField?.enabled ?? true;
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -125,13 +134,7 @@ export default function ServiceDetailExperiencePage() {
         { group: EXPERIENCE_GROUP, key: EXPERIENCE_KEY, value: config }
       ];
 
-      const tasks: Promise<unknown>[] = [setMultipleSettings({ settings: settingsToSave })];
-
-      if (priceField && isPriceSyncPending) {
-        tasks.push(updateField({ enabled: localPriceEnabled, id: priceField._id as Id<'moduleFields'> }));
-      }
-
-      await Promise.all(tasks);
+      await setMultipleSettings({ settings: settingsToSave });
       toast.success(MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY]));
     } catch {
       toast.error(MESSAGES.saveError);
@@ -151,7 +154,7 @@ export default function ServiceDetailExperiencePage() {
     const base = {
       layoutStyle: config.layoutStyle,
       showRelated: config.showRelated,
-      priceFieldEnabled: localPriceEnabled,
+      priceFieldEnabled,
       brandColor,
       device: previewDevice,
     };
@@ -338,11 +341,11 @@ export default function ServiceDetailExperiencePage() {
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={(!hasChanges && !isPriceSyncPending) || isSaving}
+            disabled={!hasChanges || isSaving}
             className="bg-violet-600 hover:bg-violet-500 gap-1.5"
           >
             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            <span>{hasChanges || isPriceSyncPending ? 'Lưu' : 'Đã lưu'}</span>
+            <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
           </Button>
         </div>
       </header>
@@ -383,12 +386,6 @@ export default function ServiceDetailExperiencePage() {
           </ControlCard>
 
           <ControlCard title="Module liên quan">
-            {isPriceSyncPending && (
-              <div className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-xs text-amber-700 dark:text-amber-300 mb-2">
-                <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
-                <span>Bấm Lưu để đồng bộ trường giá của module.</span>
-              </div>
-            )}
             <ExperienceModuleLink
               enabled={servicesModule?.enabled ?? false}
               href="/system/modules/services"
@@ -396,13 +393,11 @@ export default function ServiceDetailExperiencePage() {
               title="Dịch vụ"
               colorScheme="cyan"
             />
-            <ToggleRow
-              label="Hiện giá dịch vụ"
-              description="Đồng bộ với trường giá của module Dịch vụ"
-              checked={localPriceEnabled}
-              onChange={setPriceFieldEnabled}
-              accentColor="#8b5cf6"
-              disabled={!priceField}
+            <ModuleFeatureStatus
+              label="Trường giá dịch vụ"
+              enabled={priceFieldEnabled}
+              href="/system/modules/services"
+              moduleName="module Dịch vụ"
             />
           </ControlCard>
 

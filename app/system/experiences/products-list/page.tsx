@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { AlertCircle, Heart, LayoutTemplate, Loader2, Package, Save, ShoppingCart, Tag } from 'lucide-react';
+import { Heart, LayoutTemplate, Loader2, Package, Save, ShoppingCart, Tag } from 'lucide-react';
 import { Button, Card } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
@@ -86,6 +87,25 @@ const HINTS = [
   'Wishlist, Add to Cart và Buy Now có thể toggle từ đây.',
 ];
 
+function ModuleFeatureStatus({ label, enabled, href, moduleName }: { label: string; enabled: boolean; href: string; moduleName: string }) {
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="flex items-start gap-2">
+        <span className={`mt-1 inline-flex h-2 w-2 rounded-full ${enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">{label}</p>
+          <p className="text-xs text-slate-500">
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào {moduleName}
+          </p>
+        </div>
+      </div>
+      <Link href={href} className="text-xs font-medium text-cyan-600 hover:underline">
+        Đi đến →
+      </Link>
+    </div>
+  );
+}
+
 export default function ProductsListExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const productsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'products' });
@@ -93,6 +113,7 @@ export default function ProductsListExperiencePage() {
   const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const promotionsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'promotions' });
+  const variantsSetting = useQuery(api.admin.modules.getModuleSetting, { moduleKey: 'products', settingKey: 'variantEnabled' });
   const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
@@ -140,7 +161,7 @@ export default function ProductsListExperiencePage() {
     };
   }, [experienceSetting?.value]);
 
-  const isLoading = experienceSetting === undefined || productsModule === undefined || wishlistModule === undefined || cartModule === undefined || ordersModule === undefined || promotionsModule === undefined;
+  const isLoading = experienceSetting === undefined || productsModule === undefined || wishlistModule === undefined || cartModule === undefined || ordersModule === undefined || promotionsModule === undefined || variantsSetting === undefined;
   const brandColor = (brandColorSetting?.value as string) || '#10b981';
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
@@ -151,8 +172,6 @@ export default function ProductsListExperiencePage() {
   );
 
   const currentLayoutConfig = config.layouts[config.layoutStyle] ?? DEFAULT_LAYOUT_CONFIG;
-  const hasDisabledModules = !wishlistModule?.enabled || !cartModule?.enabled || !ordersModule?.enabled || !promotionsModule?.enabled;
-
   const updateLayoutConfig = <K extends keyof LayoutConfig>(
     key: K,
     value: LayoutConfig[K]
@@ -320,18 +339,18 @@ export default function ProductsListExperiencePage() {
           </ControlCard>
 
           <ControlCard title="Module liên quan">
-            {hasDisabledModules && (
-              <div className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-xs text-amber-700 dark:text-amber-300 mb-2">
-                <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
-                <span>Một số module chưa bật.</span>
-              </div>
-            )}
             <ExperienceModuleLink
               enabled={productsModule?.enabled ?? false}
               href="/system/modules/products"
               icon={Package}
               title="Sản phẩm"
               colorScheme="cyan"
+            />
+            <ModuleFeatureStatus
+              label="Phiên bản sản phẩm"
+              enabled={(variantsSetting?.value as boolean | undefined) ?? false}
+              href="/system/modules/products"
+              moduleName="module Sản phẩm"
             />
             <ExperienceModuleLink
               enabled={wishlistModule?.enabled ?? false}
@@ -340,12 +359,24 @@ export default function ProductsListExperiencePage() {
               title="Sản phẩm yêu thích"
               colorScheme="cyan"
             />
+            <ModuleFeatureStatus
+              label="Wishlist"
+              enabled={wishlistModule?.enabled ?? false}
+              href="/system/modules/wishlist"
+              moduleName="module Wishlist"
+            />
             <ExperienceModuleLink
               enabled={cartModule?.enabled ?? false}
               href="/system/modules/cart"
               icon={ShoppingCart}
               title="Giỏ hàng"
               colorScheme="cyan"
+            />
+            <ModuleFeatureStatus
+              label="Giỏ hàng"
+              enabled={cartModule?.enabled ?? false}
+              href="/system/modules/cart"
+              moduleName="module Giỏ hàng"
             />
             <ExperienceModuleLink
               enabled={ordersModule?.enabled ?? false}
@@ -354,12 +385,24 @@ export default function ProductsListExperiencePage() {
               title="Đơn hàng"
               colorScheme="cyan"
             />
+            <ModuleFeatureStatus
+              label="Đơn hàng"
+              enabled={ordersModule?.enabled ?? false}
+              href="/system/modules/orders"
+              moduleName="module Đơn hàng"
+            />
             <ExperienceModuleLink
               enabled={promotionsModule?.enabled ?? false}
               href="/system/modules/promotions"
               icon={Tag}
               title="Khuyến mãi"
               colorScheme="cyan"
+            />
+            <ModuleFeatureStatus
+              label="Khuyến mãi"
+              enabled={promotionsModule?.enabled ?? false}
+              href="/system/modules/promotions"
+              moduleName="module Khuyến mãi"
             />
           </ControlCard>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { LayoutTemplate, Loader2, MessageSquare, Save } from 'lucide-react';
@@ -61,6 +62,25 @@ const HINTS = [
   'Most-liked sort khuyến khích tương tác.',
   'Moderation quan trọng với UGC.',
 ];
+
+function ModuleFeatureStatus({ label, enabled, href, moduleName }: { label: string; enabled: boolean; href: string; moduleName: string }) {
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="flex items-start gap-2">
+        <span className={`mt-1 inline-flex h-2 w-2 rounded-full ${enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">{label}</p>
+          <p className="text-xs text-slate-500">
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào {moduleName}
+          </p>
+        </div>
+      </div>
+      <Link href={href} className="text-xs font-medium text-cyan-600 hover:underline">
+        Đi đến →
+      </Link>
+    </div>
+  );
+}
 
 export default function CommentsRatingExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
@@ -128,9 +148,9 @@ export default function CommentsRatingExperiencePage() {
             <CommentsRatingPreview
               ratingDisplayStyle={config.ratingDisplayStyle}
               commentsSortOrder={config.commentsSortOrder}
-              showLikes={config.showLikes}
-              showReplies={config.showReplies}
-              showModeration={config.showModeration}
+              showLikes={config.showLikes && (likesFeature?.enabled ?? true)}
+              showReplies={config.showReplies && (repliesFeature?.enabled ?? true)}
+              showModeration={config.showModeration && (moderationFeature?.enabled ?? true)}
               device={previewDevice}
               brandColor="#a855f7"
             />
@@ -173,6 +193,24 @@ export default function CommentsRatingExperiencePage() {
               icon={MessageSquare}
               title="Bình luận & Đánh giá"
               colorScheme="purple"
+            />
+            <ModuleFeatureStatus
+              label="Likes"
+              enabled={likesFeature?.enabled ?? false}
+              href="/system/modules/comments"
+              moduleName="module Bình luận"
+            />
+            <ModuleFeatureStatus
+              label="Replies"
+              enabled={repliesFeature?.enabled ?? false}
+              href="/system/modules/comments"
+              moduleName="module Bình luận"
+            />
+            <ModuleFeatureStatus
+              label="Moderation"
+              enabled={moderationFeature?.enabled ?? false}
+              href="/system/modules/comments"
+              moduleName="module Bình luận"
             />
           </ControlCard>
 

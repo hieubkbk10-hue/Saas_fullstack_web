@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { LayoutTemplate, Loader2, Package, Save, ShoppingBag, ShoppingCart } from 'lucide-react';
@@ -65,6 +66,25 @@ const HINTS = [
   'Add to cart sẽ hiển thị toast và mở drawer/redirect theo layout.',
   'Mỗi layout có config riêng - chuyển tab để chỉnh.',
 ];
+
+function ModuleFeatureStatus({ label, enabled, href, moduleName }: { label: string; enabled: boolean; href: string; moduleName: string }) {
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="flex items-start gap-2">
+        <span className={`mt-1 inline-flex h-2 w-2 rounded-full ${enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">{label}</p>
+          <p className="text-xs text-slate-500">
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào {moduleName}
+          </p>
+        </div>
+      </div>
+      <Link href={href} className="text-xs font-medium text-cyan-600 hover:underline">
+        Đi đến →
+      </Link>
+    </div>
+  );
+}
 
 export default function CartExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
@@ -154,8 +174,8 @@ export default function CartExperiencePage() {
           <BrowserFrame url="yoursite.com/cart" maxHeight="calc(100vh - 320px)">
             <CartPreview
               layoutStyle={config.layoutStyle}
-              showExpiry={currentLayoutConfig.showExpiry}
-              showNote={currentLayoutConfig.showNote}
+              showExpiry={currentLayoutConfig.showExpiry && (expiryFeature?.enabled ?? false)}
+              showNote={currentLayoutConfig.showNote && (noteFeature?.enabled ?? false)}
               device={previewDevice}
               brandColor="#f97316"
             />
@@ -223,6 +243,18 @@ export default function CartExperiencePage() {
               icon={ShoppingCart}
               title="Checkout"
               colorScheme="orange"
+            />
+            <ModuleFeatureStatus
+              label="Hết hạn giỏ"
+              enabled={expiryFeature?.enabled ?? false}
+              href="/system/modules/cart"
+              moduleName="module Giỏ hàng"
+            />
+            <ModuleFeatureStatus
+              label="Ghi chú"
+              enabled={noteFeature?.enabled ?? false}
+              href="/system/modules/cart"
+              moduleName="module Giỏ hàng"
             />
           </ControlCard>
 

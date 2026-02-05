@@ -200,7 +200,7 @@ const CLASSIC_HIGHLIGHT_ICON_MAP: Record<ClassicHighlightIcon, React.ElementType
   Truck,
 };
 
-function VariantFeatureStatus({ enabled, href }: { enabled: boolean; href: string }) {
+function VariantFeatureStatus({ enabled, href, moduleName }: { enabled: boolean; href: string; moduleName: string }) {
   return (
     <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
       <div className="flex items-start gap-2">
@@ -208,7 +208,7 @@ function VariantFeatureStatus({ enabled, href }: { enabled: boolean; href: strin
         <div>
           <p className="text-sm font-medium text-slate-700">Phiên bản sản phẩm</p>
           <p className="text-xs text-slate-500">
-            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào Module Sản phẩm
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào {moduleName}
           </p>
         </div>
       </div>
@@ -560,6 +560,7 @@ export default function ProductDetailExperiencePage() {
             <VariantFeatureStatus
               enabled={(variantsSetting?.value as boolean | undefined) ?? false}
               href="/system/modules/products"
+              moduleName="module Sản phẩm"
             />
           </ControlCard>
 
