@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
-import { CreditCard, FileText, Heart, LayoutTemplate, Loader2, Mail, Package, Save, ShoppingCart } from 'lucide-react';
+import { CreditCard, FileText, Heart, LayoutTemplate, Loader2, Mail, Package, Save, ShoppingCart, Users } from 'lucide-react';
 import { Button, Card, Input, Label, cn } from '@/app/admin/components/ui';
 import {
   ExperienceHintCard,
@@ -31,6 +32,7 @@ const DEFAULT_CONFIG: HeaderMenuConfig = {
   headerSeparator: 'none',
   headerSticky: true,
   showBrandAccent: false,
+  transparentOverlay: 'dark',
   cart: { show: true },
   cta: { show: true, text: 'Liên hệ' },
   login: { show: true, text: 'Đăng nhập' },
@@ -56,8 +58,28 @@ const HINTS = [
   'Menu items được quản lý ở /admin/menus.',
   'Topbar phù hợp site bán hàng cần hotline + search.',
   'Transparent nên dùng khi có hero/banner lớn.',
+  'Login chỉ hiển thị khi bật Module Khách hàng + tính năng Đăng nhập KH.',
   'Cart/Wishlist chỉ bật khi module tương ứng đang active.',
 ];
+
+function ModuleFeatureStatus({ label, enabled, href, moduleName }: { label: string; enabled: boolean; href: string; moduleName: string }) {
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="flex items-start gap-2">
+        <span className={`mt-1 inline-flex h-2 w-2 rounded-full ${enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">{label}</p>
+          <p className="text-xs text-slate-500">
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào {moduleName}
+          </p>
+        </div>
+      </div>
+      <Link href={href} className="text-xs font-medium text-cyan-600 hover:underline">
+        Đi đến →
+      </Link>
+    </div>
+  );
+}
 
 export default function HeaderMenuExperiencePage() {
   const headerStyleSetting = useQuery(api.settings.getByKey, { key: 'header_style' });
@@ -70,6 +92,9 @@ export default function HeaderMenuExperiencePage() {
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const productsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'products' });
   const postsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'posts' });
+  const customersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'customers' });
+  const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
+  const customerLoginFeature = useQuery(api.admin.modules.getModuleFeature, { moduleKey: 'customers', featureKey: 'enableLogin' });
 
   const setMultipleSettings = useMutation(api.settings.setMultiple);
 
@@ -106,7 +131,10 @@ export default function HeaderMenuExperiencePage() {
     || cartModule === undefined
     || wishlistModule === undefined
     || productsModule === undefined
-    || postsModule === undefined;
+    || postsModule === undefined
+    || customersModule === undefined
+    || ordersModule === undefined
+    || customerLoginFeature === undefined;
 
   const brandColor = typeof brandColorSetting?.value === 'string' ? brandColorSetting.value : '#f97316';
 
@@ -156,6 +184,10 @@ export default function HeaderMenuExperiencePage() {
 
   const updateHeaderSticky = (value: boolean) => {
     setConfig(prev => ({ ...prev, headerSticky: value }));
+  };
+
+  const updateTransparentOverlay = (value: HeaderMenuConfig['transparentOverlay']) => {
+    setConfig(prev => ({ ...prev, transparentOverlay: value }));
   };
 
   const updateBrandName = (value: string) => {
@@ -220,6 +252,9 @@ export default function HeaderMenuExperiencePage() {
               menuItems={menuItems}
               settingsEmail={settingsEmail}
               settingsPhone={settingsPhone}
+              customersEnabled={customersModule?.enabled ?? false}
+              loginFeatureEnabled={customerLoginFeature?.enabled ?? false}
+              ordersEnabled={ordersModule?.enabled ?? false}
             />
           </BrowserFrame>
         </div>
@@ -428,6 +463,34 @@ export default function HeaderMenuExperiencePage() {
             </ControlCard>
           )}
 
+          {previewStyle === 'transparent' && (
+            <ControlCard title="Giao diện Transparent">
+              <div className="space-y-2">
+                <Label className="text-xs">Overlay tone</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { id: 'dark', label: 'Dark' },
+                    { id: 'light', label: 'Light' },
+                  ] as const).map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => updateTransparentOverlay(option.id)}
+                      className={cn(
+                        'h-8 rounded-md border text-xs font-medium transition-colors',
+                        config.transparentOverlay === option.id
+                          ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
+                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </ControlCard>
+          )}
+
           <Card className="p-2 lg:col-span-4">
             <div className="mb-2">
               <ExampleLinks
@@ -472,6 +535,13 @@ export default function HeaderMenuExperiencePage() {
                 colorScheme="purple"
               />
               <ExperienceModuleLink
+                enabled={customersModule?.enabled ?? false}
+                href="/system/modules/customers"
+                icon={Users}
+                title="Khách hàng"
+                colorScheme="purple"
+              />
+              <ExperienceModuleLink
                 enabled
                 href="/system/experiences/contact"
                 icon={Mail}
@@ -486,6 +556,28 @@ export default function HeaderMenuExperiencePage() {
                 colorScheme="cyan"
               />
             </div>
+          </ControlCard>
+        </div>
+        <div className="mt-3">
+          <ControlCard title="Trạng thái đăng nhập">
+            <ModuleFeatureStatus
+              label="Module Khách hàng"
+              enabled={customersModule?.enabled ?? false}
+              href="/system/modules/customers"
+              moduleName="Module Khách hàng"
+            />
+            <ModuleFeatureStatus
+              label="Tính năng đăng nhập"
+              enabled={customerLoginFeature?.enabled ?? false}
+              href="/system/modules/customers"
+              moduleName="Module Khách hàng"
+            />
+            <ModuleFeatureStatus
+              label="Theo dõi đơn hàng"
+              enabled={ordersModule?.enabled ?? false}
+              href="/system/modules/orders"
+              moduleName="Module Đơn hàng"
+            />
           </ControlCard>
         </div>
       </ConfigPanel>

@@ -49,6 +49,7 @@ interface HeaderConfig {
   headerSeparator?: 'none' | 'shadow' | 'border' | 'gradient';
   headerSticky?: boolean;
   showBrandAccent?: boolean;
+  transparentOverlay?: 'dark' | 'light';
   cta?: { show?: boolean; text?: string };
   topbar?: TopbarConfig;
   search?: SearchConfig;
@@ -63,6 +64,7 @@ const DEFAULT_CONFIG: HeaderConfig = {
   headerSeparator: 'none',
   headerSticky: true,
   showBrandAccent: false,
+  transparentOverlay: 'dark',
   cart: { show: true },
   cta: { show: true, text: 'Liên hệ' },
   login: { show: true, text: 'Đăng nhập' },
@@ -98,6 +100,9 @@ export function Header() {
   const headerStyleSetting = useQuery(api.settings.getByKey, { key: 'header_style' });
   const headerConfigSetting = useQuery(api.settings.getByKey, { key: 'header_config' });
   const contactSettings = useQuery(api.settings.listByGroup, { group: 'contact' });
+  const customersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'customers' });
+  const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
+  const customerLoginFeature = useQuery(api.admin.modules.getModuleFeature, { moduleKey: 'customers', featureKey: 'enableLogin' });
   
   const headerStyle: HeaderStyle = (headerStyleSetting?.value as HeaderStyle) || 'classic';
   const savedConfig = (headerConfigSetting?.value as HeaderConfig) || {};
@@ -128,6 +133,11 @@ export function Header() {
     }
     return base;
   }, [config.topbar, settingsPhone, settingsEmail]);
+
+  const canLogin = (customersModule?.enabled ?? false) && (customerLoginFeature?.enabled ?? false);
+  const showLogin = Boolean(config.login?.show && canLogin);
+  const canTrackOrder = ordersModule?.enabled ?? false;
+  const showTrackOrder = Boolean(topbarConfig.showTrackOrder && canTrackOrder);
   
   const displayName = (config.brandName ?? siteName) ?? 'YourBrand';
   
@@ -284,7 +294,7 @@ export function Header() {
                 )}
               </div>
               <div className="flex items-center gap-3">
-                {topbarConfig.showTrackOrder && (
+                {showTrackOrder && (
                   <>
                     <Link href={DEFAULT_LINKS.trackOrder} className="hover:underline hidden sm:inline">Theo dõi đơn hàng</Link>
                     {topbarConfig.showStoreSystem && <span className="hidden sm:inline">|</span>}
@@ -293,13 +303,13 @@ export function Header() {
                 {topbarConfig.showStoreSystem && (
                   <>
                     <Link href={DEFAULT_LINKS.storeSystem} className="hover:underline hidden sm:inline">Hệ thống cửa hàng</Link>
-                    {config.login?.show && <span className="hidden sm:inline">|</span>}
+                    {showLogin && <span className="hidden sm:inline">|</span>}
                   </>
                 )}
-                {config.login?.show && (
+                {showLogin && (
                   <Link href={DEFAULT_LINKS.login} className="hover:underline flex items-center gap-1">
                     <User size={12} />
-                    {config.login.text ?? 'Đăng nhập'}
+                    {config.login?.text ?? 'Đăng nhập'}
                   </Link>
                 )}
               </div>
@@ -496,7 +506,7 @@ export function Header() {
                 )}
               </div>
               <div className="flex items-center gap-3">
-                {topbarConfig.showTrackOrder && (
+                {showTrackOrder && (
                   <>
                     <Link href={DEFAULT_LINKS.trackOrder} className="hover:underline hidden sm:inline">Theo dõi đơn hàng</Link>
                     {topbarConfig.showStoreSystem && <span className="hidden sm:inline">|</span>}
@@ -505,13 +515,13 @@ export function Header() {
                 {topbarConfig.showStoreSystem && (
                   <>
                     <Link href={DEFAULT_LINKS.storeSystem} className="hover:underline hidden sm:inline">Hệ thống cửa hàng</Link>
-                    {config.login?.show && <span className="hidden sm:inline">|</span>}
+                    {showLogin && <span className="hidden sm:inline">|</span>}
                   </>
                 )}
-                {config.login?.show && (
+                {showLogin && (
                   <Link href={DEFAULT_LINKS.login} className="hover:underline flex items-center gap-1">
                     <User size={12} />
-                    {config.login.text ?? 'Đăng nhập'}
+                    {config.login?.text ?? 'Đăng nhập'}
                   </Link>
                 )}
               </div>
@@ -673,8 +683,48 @@ export function Header() {
   // Transparent Style - header với nền mờ, không có hero (hero do HomeComponents render)
   return (
     <header className="absolute top-0 left-0 right-0 z-50">
+      {topbarConfig.show !== false && (
+        <div className="px-4 py-2 text-xs" style={{ backgroundColor: brandColor }}>
+          <div className="max-w-7xl mx-auto flex items-center justify-between text-white">
+            <div className="flex items-center gap-4">
+              {topbarConfig.hotline && (
+                <a href={`tel:${topbarConfig.hotline}`} className="flex items-center gap-1 hover:opacity-80">
+                  <Phone size={12} />
+                  <span>{topbarConfig.hotline}</span>
+                </a>
+              )}
+              {topbarConfig.email && (
+                <a href={`mailto:${topbarConfig.email}`} className="hidden sm:flex items-center gap-1 hover:opacity-80">
+                  <Mail size={12} />
+                  <span>{topbarConfig.email}</span>
+                </a>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              {showTrackOrder && (
+                <>
+                  <Link href={DEFAULT_LINKS.trackOrder} className="hover:underline hidden sm:inline">Theo dõi đơn hàng</Link>
+                  {topbarConfig.showStoreSystem && <span className="hidden sm:inline">|</span>}
+                </>
+              )}
+              {topbarConfig.showStoreSystem && (
+                <>
+                  <Link href={DEFAULT_LINKS.storeSystem} className="hover:underline hidden sm:inline">Hệ thống cửa hàng</Link>
+                  {showLogin && <span className="hidden sm:inline">|</span>}
+                </>
+              )}
+              {showLogin && (
+                <Link href={DEFAULT_LINKS.login} className="hover:underline flex items-center gap-1">
+                  <User size={12} />
+                  {config.login?.text ?? 'Đăng nhập'}
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header bar với lớp phủ nền mờ */}
-      <div className="bg-black/40 backdrop-blur-md">
+      <div className={cn('backdrop-blur-md', config.transparentOverlay === 'light' ? 'bg-white/40' : 'bg-black/40')}>
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
@@ -688,7 +738,7 @@ export function Header() {
                 {displayName.charAt(0)}
               </div>
             )}
-            <span className="font-bold text-lg text-white">{displayName}</span>
+            <span className={cn('font-bold text-lg', config.transparentOverlay === 'light' ? 'text-slate-900' : 'text-white')}>{displayName}</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -706,8 +756,8 @@ export function Header() {
                   className={cn(
                     "px-4 py-2 text-sm font-medium transition-all flex items-center gap-1 rounded-lg",
                     hoveredItem === item._id 
-                      ? "text-white bg-white/20" 
-                      : "text-white/90 hover:text-white hover:bg-white/10"
+                      ? (config.transparentOverlay === 'light' ? 'text-slate-900 bg-black/10' : 'text-white bg-white/20')
+                      : (config.transparentOverlay === 'light' ? 'text-slate-800/90 hover:text-slate-900 hover:bg-black/5' : 'text-white/90 hover:text-white hover:bg-white/10')
                   )}
                 >
                   {item.label}
@@ -718,13 +768,13 @@ export function Header() {
 
                 {item.children.length > 0 && hoveredItem === item._id && (
                   <div className="absolute top-full left-0 pt-2 z-50">
-                    <div className="backdrop-blur-xl bg-black/80 rounded-xl shadow-2xl border border-white/10 py-2 min-w-[200px]">
+                    <div className={cn('backdrop-blur-xl rounded-xl shadow-2xl py-2 min-w-[200px]', config.transparentOverlay === 'light' ? 'bg-white/90 border border-slate-200' : 'bg-black/80 border border-white/10')}>
                       {item.children.map((child) => (
                         <Link
                           key={child._id}
                           href={child.url}
                           target={child.openInNewTab ? '_blank' : undefined}
-                          className="block px-4 py-2.5 text-sm text-white/90 hover:bg-white/10 hover:text-white transition-colors"
+                          className={cn('block px-4 py-2.5 text-sm transition-colors', config.transparentOverlay === 'light' ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' : 'text-white/90 hover:bg-white/10 hover:text-white')}
                         >
                           {child.label}
                         </Link>
@@ -738,6 +788,34 @@ export function Header() {
 
           {/* CTA + Mobile Button */}
           <div className="flex items-center gap-2">
+            {config.search?.show && (
+              <div className="hidden lg:block relative">
+                <input
+                  type="text"
+                  placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
+                  className={cn(
+                    'w-40 pl-4 pr-10 py-2 rounded-full border text-sm focus:outline-none',
+                    config.transparentOverlay === 'light'
+                      ? 'border-slate-200 bg-white/70 text-slate-700'
+                      : 'border-white/20 bg-white/10 text-white placeholder:text-white/70'
+                  )}
+                />
+                <button className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-white" style={{ backgroundColor: brandColor }}>
+                  <Search size={14} />
+                </button>
+              </div>
+            )}
+            {config.wishlist?.show && (
+              <Link
+                href={DEFAULT_LINKS.wishlist}
+                className={cn('hidden lg:inline-flex p-2 rounded-full transition-colors', config.transparentOverlay === 'light' ? 'text-slate-700 hover:text-slate-900' : 'text-white/80 hover:text-white')}
+              >
+                <Heart size={18} />
+              </Link>
+            )}
+            {config.cart?.show && (
+              <CartIcon className={cn('hidden lg:flex', config.transparentOverlay === 'light' ? 'text-slate-700 hover:text-slate-900' : 'text-white/80 hover:text-white')} />
+            )}
             {config.cta?.show && (
               <Link
                 href={DEFAULT_LINKS.cta}
@@ -747,19 +825,29 @@ export function Header() {
                 {config.cta.text ?? 'Liên hệ'}
               </Link>
             )}
-            {renderMobileMenuButton(true)}
+            <div className="flex items-center gap-1 lg:hidden">
+              {config.search?.show && (
+                <button className={cn('p-2', config.transparentOverlay === 'light' ? 'text-slate-700' : 'text-white/80')}>
+                  <Search size={20} />
+                </button>
+              )}
+              {config.cart?.show && (
+                <CartIcon variant="mobile" className={cn(config.transparentOverlay === 'light' ? 'text-slate-700' : 'text-white/80')} />
+              )}
+              {renderMobileMenuButton(true)}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden backdrop-blur-xl bg-black/80 border-t border-white/10">
+        <div className={cn('lg:hidden backdrop-blur-xl border-t', config.transparentOverlay === 'light' ? 'bg-white/90 border-slate-200' : 'bg-black/80 border-white/10')}>
           {menuTree.map((item) => (
             <div key={item._id}>
               <button
                 onClick={() => item.children.length > 0 && toggleMobileItem(item._id)}
-                className="w-full px-6 py-4 text-left flex items-center justify-between text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 transition-colors"
+                className={cn('w-full px-6 py-4 text-left flex items-center justify-between text-sm font-medium transition-colors', config.transparentOverlay === 'light' ? 'text-slate-700 hover:text-slate-900 hover:bg-slate-100' : 'text-white/90 hover:text-white hover:bg-white/10')}
               >
                 {item.label}
                 {item.children.length > 0 && (
@@ -767,14 +855,14 @@ export function Header() {
                 )}
               </button>
               {item.children.length > 0 && expandedMobileItems.includes(item._id) && (
-                <div className="bg-white/5">
+                <div className={cn(config.transparentOverlay === 'light' ? 'bg-slate-50' : 'bg-white/5')}>
                   {item.children.map((child) => (
                     <Link 
                       key={child._id} 
                       href={child.url}
                       target={child.openInNewTab ? '_blank' : undefined}
                       onClick={() =>{  setMobileMenuOpen(false); }}
-                      className="block px-8 py-3 text-sm text-white/70 hover:text-white border-l-2 border-white/20 ml-6"
+                      className={cn('block px-8 py-3 text-sm border-l-2 ml-6', config.transparentOverlay === 'light' ? 'text-slate-600 hover:text-slate-900 border-slate-200' : 'text-white/70 hover:text-white border-white/20')}
                     >
                       {child.label}
                     </Link>

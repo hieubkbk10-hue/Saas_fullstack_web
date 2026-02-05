@@ -13,6 +13,7 @@ export type HeaderMenuConfig = {
   headerSeparator: 'none' | 'shadow' | 'border' | 'gradient';
   headerSticky: boolean;
   showBrandAccent: boolean;
+  transparentOverlay: 'dark' | 'light';
   cart: { show: boolean };
   cta: { show: boolean; text: string };
   login: { show: boolean; text: string };
@@ -49,6 +50,9 @@ export type HeaderMenuPreviewProps = {
   menuItems: MenuItem[];
   settingsEmail?: string;
   settingsPhone?: string;
+  customersEnabled: boolean;
+  loginFeatureEnabled: boolean;
+  ordersEnabled: boolean;
 };
 
 export function HeaderMenuPreview({
@@ -59,6 +63,9 @@ export function HeaderMenuPreview({
   menuItems,
   settingsEmail,
   settingsPhone,
+  customersEnabled,
+  loginFeatureEnabled,
+  ordersEnabled,
 }: HeaderMenuPreviewProps) {
   const defaultLinks = useMemo(() => ({
     cart: '/cart',
@@ -107,6 +114,11 @@ export function HeaderMenuPreview({
     }
     return config.topbar;
   }, [config.topbar, settingsEmail, settingsPhone]);
+
+  const canLogin = customersEnabled && loginFeatureEnabled;
+  const showLogin = config.login.show && canLogin;
+  const canTrackOrder = ordersEnabled;
+  const showTrackOrder = displayTopbar.showTrackOrder && canTrackOrder;
 
   const brandRgba = (alpha: number) => {
     if (!brandColor.startsWith('#')) {
@@ -211,13 +223,13 @@ export function HeaderMenuPreview({
             <div className="flex items-center gap-3">
               {device !== 'mobile' && (
                 <>
-                  {displayTopbar.showTrackOrder && <a href={defaultLinks.trackOrder} className="hover:underline">Theo dõi đơn hàng</a>}
-                  {displayTopbar.showTrackOrder && displayTopbar.showStoreSystem && <span>|</span>}
+                  {showTrackOrder && <a href={defaultLinks.trackOrder} className="hover:underline">Theo dõi đơn hàng</a>}
+                  {showTrackOrder && displayTopbar.showStoreSystem && <span>|</span>}
                   {displayTopbar.showStoreSystem && <a href={defaultLinks.storeSystem} className="hover:underline">Hệ thống cửa hàng</a>}
-                  {(displayTopbar.showTrackOrder || displayTopbar.showStoreSystem) && config.login.show && <span>|</span>}
+                  {(showTrackOrder || displayTopbar.showStoreSystem) && showLogin && <span>|</span>}
                 </>
               )}
-              {config.login.show && (
+              {showLogin && (
                 <a href={defaultLinks.login} className="hover:underline flex items-center gap-1"><User size={12} />{config.login.text}</a>
               )}
             </div>
@@ -370,13 +382,13 @@ export function HeaderMenuPreview({
             <div className="flex items-center gap-3">
               {device !== 'mobile' && (
                 <>
-                  {displayTopbar.showTrackOrder && <a href={defaultLinks.trackOrder} className="hover:underline">Theo dõi đơn hàng</a>}
-                  {displayTopbar.showTrackOrder && displayTopbar.showStoreSystem && <span>|</span>}
+                  {showTrackOrder && <a href={defaultLinks.trackOrder} className="hover:underline">Theo dõi đơn hàng</a>}
+                  {showTrackOrder && displayTopbar.showStoreSystem && <span>|</span>}
                   {displayTopbar.showStoreSystem && <a href={defaultLinks.storeSystem} className="hover:underline">Hệ thống cửa hàng</a>}
-                  {(displayTopbar.showTrackOrder || displayTopbar.showStoreSystem) && config.login.show && <span>|</span>}
+                  {(showTrackOrder || displayTopbar.showStoreSystem) && showLogin && <span>|</span>}
                 </>
               )}
-              {config.login.show && (
+              {showLogin && (
                 <a href={defaultLinks.login} className="hover:underline flex items-center gap-1"><User size={12} />{config.login.text}</a>
               )}
             </div>
@@ -481,7 +493,9 @@ export function HeaderMenuPreview({
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(135deg, ${brandColor}25 0%, transparent 50%), linear-gradient(225deg, ${brandColor}30 0%, transparent 50%), linear-gradient(180deg, #0f172a 0%, #1e293b 100%)`
+            background: config.transparentOverlay === 'light'
+              ? `linear-gradient(135deg, ${brandColor}20 0%, transparent 50%), linear-gradient(225deg, ${brandColor}20 0%, transparent 50%), linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)`
+              : `linear-gradient(135deg, ${brandColor}25 0%, transparent 50%), linear-gradient(225deg, ${brandColor}30 0%, transparent 50%), linear-gradient(180deg, #0f172a 0%, #1e293b 100%)`
           }}
         />
         <div className="absolute top-10 left-10 w-72 h-72 rounded-full blur-3xl opacity-30" style={{ backgroundColor: brandColor }} />
@@ -490,10 +504,38 @@ export function HeaderMenuPreview({
         <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
       </div>
 
-      <div className="relative z-10 px-6 py-4 flex items-center justify-between bg-black/40 backdrop-blur-md">
+      {displayTopbar.show && (
+        <div className="relative z-10 px-4 py-2 text-xs" style={{ backgroundColor: brandColor }}>
+          <div className="flex items-center justify-between text-white">
+            <div className="flex items-center gap-4">
+              {displayTopbar.hotline && (
+                <span className="flex items-center gap-1"><Phone size={12} /><span>{displayTopbar.hotline}</span></span>
+              )}
+              {device !== 'mobile' && displayTopbar.email && (
+                <span className="flex items-center gap-1"><Mail size={12} /><span>{displayTopbar.email}</span></span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              {device !== 'mobile' && (
+                <>
+                  {showTrackOrder && <a href={defaultLinks.trackOrder} className="hover:underline">Theo dõi đơn hàng</a>}
+                  {showTrackOrder && displayTopbar.showStoreSystem && <span>|</span>}
+                  {displayTopbar.showStoreSystem && <a href={defaultLinks.storeSystem} className="hover:underline">Hệ thống cửa hàng</a>}
+                  {(showTrackOrder || displayTopbar.showStoreSystem) && showLogin && <span>|</span>}
+                </>
+              )}
+              {showLogin && (
+                <a href={defaultLinks.login} className="hover:underline flex items-center gap-1"><User size={12} />{config.login.text}</a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={cn('relative z-10 px-6 py-4 flex items-center justify-between backdrop-blur-md', config.transparentOverlay === 'light' ? 'bg-white/40' : 'bg-black/40')}>
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold shadow-lg" style={{ backgroundColor: brandColor }}>{config.brandName.charAt(0)}</div>
-          <span className="font-bold text-lg text-white">{config.brandName}</span>
+          <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center font-bold shadow-lg', config.transparentOverlay === 'light' ? 'text-white' : 'text-white')} style={{ backgroundColor: brandColor }}>{config.brandName.charAt(0)}</div>
+          <span className={cn('font-bold text-lg', config.transparentOverlay === 'light' ? 'text-slate-900' : 'text-white')}>{config.brandName}</span>
         </div>
 
         {device !== 'mobile' ? (
@@ -506,41 +548,106 @@ export function HeaderMenuPreview({
                     className={cn(
                       'px-4 py-2 text-sm font-medium transition-all flex items-center gap-1 rounded-lg',
                       hoveredItem === item._id
-                        ? 'text-white bg-white/20'
-                        : 'text-white/90 hover:text-white hover:bg-white/10'
+                        ? (config.transparentOverlay === 'light' ? 'text-slate-900 bg-black/10' : 'text-white bg-white/20')
+                        : (config.transparentOverlay === 'light' ? 'text-slate-800/90 hover:text-slate-900 hover:bg-black/5' : 'text-white/90 hover:text-white hover:bg-white/10')
                     )}
                   >
                     {item.label}
                     {item.children.length > 0 && (<ChevronDown size={14} className={cn('transition-transform', hoveredItem === item._id && 'rotate-180')} />)}
                   </a>
                   {item.children.length > 0 && hoveredItem === item._id && (
-                    <div className="absolute top-full left-0 mt-2 backdrop-blur-xl bg-black/80 rounded-xl shadow-2xl border border-white/10 py-2 min-w-[200px] z-50">
-                      {item.children.map((child) => (<a key={child._id} href={child.url} className="block px-4 py-2.5 text-sm text-white/90 hover:bg-white/10 hover:text-white transition-colors">{child.label}</a>))}
+                    <div className={cn('absolute top-full left-0 mt-2 backdrop-blur-xl rounded-xl shadow-2xl py-2 min-w-[200px] z-50', config.transparentOverlay === 'light' ? 'bg-white/90 border border-slate-200' : 'bg-black/80 border border-white/10')}>
+                      {item.children.map((child) => (
+                        <a
+                          key={child._id}
+                          href={child.url}
+                          className={cn('block px-4 py-2.5 text-sm transition-colors', config.transparentOverlay === 'light' ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' : 'text-white/90 hover:bg-white/10 hover:text-white')}
+                        >
+                          {child.label}
+                        </a>
+                      ))}
                     </div>
                   )}
                 </div>
               ))}
             </nav>
-            {config.cta.show && (
-              <a href={defaultLinks.cta} className="px-5 py-2 text-sm font-medium text-white rounded-full transition-all hover:scale-105 shadow-lg" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
-            )}
+            <div className="flex items-center gap-3">
+              {config.search.show && (
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder={config.search.placeholder}
+                    className={cn(
+                      'w-40 pl-4 pr-10 py-2 rounded-full border text-sm focus:outline-none',
+                      config.transparentOverlay === 'light'
+                        ? 'border-slate-200 bg-white/70 text-slate-700'
+                        : 'border-white/20 bg-white/10 text-white placeholder:text-white/70'
+                    )}
+                  />
+                  <button className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-white" style={{ backgroundColor: brandColor }}>
+                    <Search size={14} />
+                  </button>
+                </div>
+              )}
+              {config.wishlist.show && (
+                <a
+                  href={defaultLinks.wishlist}
+                  className={cn('p-2 rounded-full transition-colors', config.transparentOverlay === 'light' ? 'text-slate-700 hover:text-slate-900' : 'text-white/80 hover:text-white')}
+                >
+                  <Heart size={18} />
+                </a>
+              )}
+              {config.cart.show && (
+                <a href={defaultLinks.cart} className={cn('p-2 rounded-full relative', config.transparentOverlay === 'light' ? 'text-slate-700 hover:text-slate-900' : 'text-white/80 hover:text-white')}>
+                  <ShoppingCart size={18} />
+                  <span className="absolute -top-1 -right-1 w-4 h-4 text-[9px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
+                </a>
+              )}
+              {config.cta.show && (
+                <a href={defaultLinks.cta} className="px-5 py-2 text-sm font-medium text-white rounded-full transition-all hover:scale-105 shadow-lg" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
+              )}
+            </div>
           </>
         ) : (
-          renderMobileMenuButton(true)
+          <div className="flex items-center gap-2">
+            {config.search.show && (
+              <button className={cn('p-2 rounded-full', config.transparentOverlay === 'light' ? 'text-slate-700' : 'text-white/80')}>
+                <Search size={18} />
+              </button>
+            )}
+            {config.cart.show && (
+              <a href={defaultLinks.cart} className={cn('p-2 rounded-full relative', config.transparentOverlay === 'light' ? 'text-slate-700' : 'text-white/80')}>
+                <ShoppingCart size={18} />
+                <span className="absolute -top-1 -right-1 w-4 h-4 text-[9px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
+              </a>
+            )}
+            {renderMobileMenuButton(true)}
+          </div>
         )}
       </div>
 
       {device === 'mobile' && mobileMenuOpen && (
-        <div className="relative z-10 backdrop-blur-xl bg-slate-900/95 border-t border-white/10">
+        <div className={cn('relative z-10 backdrop-blur-xl border-t', config.transparentOverlay === 'light' ? 'bg-white/90 border-slate-200' : 'bg-slate-900/95 border-white/10')}>
           {menuTree.map((item) => (
             <div key={item._id}>
-              <button onClick={() => item.children.length > 0 && toggleMobileItem(item._id)} className="w-full px-6 py-4 text-left flex items-center justify-between text-sm font-medium text-white/90 hover:text-white hover:bg-white/5 transition-colors">
+              <button
+                onClick={() => item.children.length > 0 && toggleMobileItem(item._id)}
+                className={cn('w-full px-6 py-4 text-left flex items-center justify-between text-sm font-medium transition-colors', config.transparentOverlay === 'light' ? 'text-slate-700 hover:text-slate-900 hover:bg-slate-100' : 'text-white/90 hover:text-white hover:bg-white/5')}
+              >
                 {item.label}
                 {item.children.length > 0 && (<ChevronDown size={16} className={cn('transition-transform', expandedMobileItems.includes(item._id) && 'rotate-180')} />)}
               </button>
               {item.children.length > 0 && expandedMobileItems.includes(item._id) && (
-                <div className="bg-white/5">
-                  {item.children.map((child) => (<a key={child._id} href={child.url} className="block px-8 py-3 text-sm text-white/70 hover:text-white border-l-2 border-white/20 ml-6">{child.label}</a>))}
+                <div className={cn(config.transparentOverlay === 'light' ? 'bg-slate-50' : 'bg-white/5')}>
+                  {item.children.map((child) => (
+                    <a
+                      key={child._id}
+                      href={child.url}
+                      className={cn('block px-8 py-3 text-sm border-l-2 ml-6', config.transparentOverlay === 'light' ? 'text-slate-600 hover:text-slate-900 border-slate-200' : 'text-white/70 hover:text-white border-white/20')}
+                    >
+                      {child.label}
+                    </a>
+                  ))}
                 </div>
               )}
             </div>
@@ -555,21 +662,21 @@ export function HeaderMenuPreview({
 
       {!mobileMenuOpen && (
         <div className="relative z-10 px-6 py-16 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium text-white/80 bg-white/10 backdrop-blur-sm mb-6">
+          <div className={cn('inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium backdrop-blur-sm mb-6', config.transparentOverlay === 'light' ? 'text-slate-700 bg-white/70' : 'text-white/80 bg-white/10')}>
             <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
             Hero Section Preview
           </div>
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+          <h2 className={cn('text-2xl md:text-3xl font-bold mb-3', config.transparentOverlay === 'light' ? 'text-slate-900' : 'text-white')}>
             Welcome to <span style={{ color: brandColor }}>{config.brandName}</span>
           </h2>
-          <p className="text-white/60 text-sm max-w-md mx-auto mb-6">
+          <p className={cn('text-sm max-w-md mx-auto mb-6', config.transparentOverlay === 'light' ? 'text-slate-600' : 'text-white/60')}>
             Header trong suốt overlay trên nội dung. Phù hợp với hero banner, slider hoặc video background.
           </p>
           <div className="flex items-center justify-center gap-3">
             <div className="px-6 py-2.5 rounded-full text-sm font-medium text-white" style={{ backgroundColor: brandColor }}>
               Primary CTA
             </div>
-            <div className="px-6 py-2.5 rounded-full text-sm font-medium text-white border border-white/30 hover:bg-white/10 transition-colors cursor-pointer">
+            <div className={cn('px-6 py-2.5 rounded-full text-sm font-medium transition-colors cursor-pointer', config.transparentOverlay === 'light' ? 'text-slate-700 border border-slate-300 hover:bg-slate-100' : 'text-white border border-white/30 hover:bg-white/10')}>
               Secondary
             </div>
           </div>
