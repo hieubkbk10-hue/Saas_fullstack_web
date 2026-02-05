@@ -8,6 +8,7 @@ type DeviceType = 'desktop' | 'tablet' | 'mobile';
 type PostDetailPreviewProps = {
   layoutStyle: DetailLayoutStyle;
   showAuthor?: boolean;
+  showTags?: boolean;
   showRelated: boolean;
   showShare: boolean;
   showComments?: boolean;
@@ -61,6 +62,8 @@ const MOCK_POST = {
   excerpt: 'Next.js 14 ra mắt với nhiều cải tiến về performance và developer experience. Bài viết này sẽ hướng dẫn chi tiết cách sử dụng App Router trong dự án thực tế.',
   content: '<p>Next.js App Router là một trong những tính năng quan trọng nhất được giới thiệu trong phiên bản 13. Nó mang đến cách tổ chức routing hoàn toàn mới, linh hoạt và mạnh mẽ hơn.</p><p>Server Components cho phép rendering phía server một cách hiệu quả, giảm bundle size và cải thiện performance đáng kể.</p>',
 };
+
+const MOCK_TAGS = ['Next.js', 'App Router', 'Performance'];
 
 const MOCK_RELATED = [
   { _id: '1', slug: 'post-1', title: 'React Server Components: Tương lai của React', thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=200', publishedAt: new Date('2026-01-10').getTime() },
@@ -303,6 +306,7 @@ function ClassicStylePreview({
   showRelated,
   showShare,
   showAuthor = true,
+  showTags = true,
   showComments = true,
   showCommentLikes = true,
   showCommentReplies = true,
@@ -310,6 +314,7 @@ function ClassicStylePreview({
 }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const readingTime = 5;
   const [isCopied] = React.useState(false);
+  const visibleTags = showTags ? MOCK_TAGS : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -348,6 +353,20 @@ function ClassicStylePreview({
                   {MOCK_POST.categoryName}
                 </span>
               </div>
+
+              {visibleTags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {visibleTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                      style={{ borderColor: `${brandColor}20`, color: brandColor }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.15]">
                 {MOCK_POST.title}
@@ -473,9 +492,10 @@ function ClassicStylePreview({
 }
 
 // Modern Style Preview - Extracted from ModernStyle
-function ModernStylePreview({ showRelated, showShare, showAuthor = true, showComments = true, showCommentLikes = true, showCommentReplies = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
+function ModernStylePreview({ showRelated, showShare, showAuthor = true, showTags = true, showComments = true, showCommentLikes = true, showCommentReplies = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const readingTime = 5;
   const [isCopied] = React.useState(false);
+  const visibleTags = showTags ? MOCK_TAGS : [];
 
   return (
     <div className="min-h-screen bg-background pb-12 selection:bg-accent/30">
@@ -518,6 +538,20 @@ function ModernStylePreview({ showRelated, showShare, showAuthor = true, showCom
                 {MOCK_POST.categoryName}
               </span>
             </div>
+
+            {visibleTags.length > 0 && (
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                {visibleTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                    style={{ borderColor: `${brandColor}20`, color: brandColor }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
 
             <h1 className="text-[clamp(1.75rem,4vw,3rem)] font-semibold tracking-tight text-foreground leading-[1.2] text-balance">
               {MOCK_POST.title}
@@ -636,9 +670,10 @@ function ModernStylePreview({ showRelated, showShare, showAuthor = true, showCom
 }
 
 // Minimal Style Preview - Extracted from MinimalStyle
-function MinimalStylePreview({ showRelated, showShare, showAuthor = true, showComments = true, showCommentLikes = true, showCommentReplies = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
+function MinimalStylePreview({ showRelated, showShare, showAuthor = true, showTags = true, showComments = true, showCommentLikes = true, showCommentReplies = true, brandColor = '#3b82f6' }: Omit<PostDetailPreviewProps, 'layoutStyle' | 'device' | 'quickContactEnabled' | 'quickContactTitle' | 'quickContactDescription' | 'quickContactShowPrice' | 'quickContactButtonText' | 'quickContactButtonLink'>) {
   const [isCopied] = React.useState(false);
   const readingTime = 5;
+  const visibleTags = showTags ? MOCK_TAGS : [];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -688,6 +723,19 @@ function MinimalStylePreview({ showRelated, showShare, showAuthor = true, showCo
                   <h1 className="text-[clamp(1.6rem,4vw,2.9rem)] font-semibold leading-[1.2] text-foreground">
                     {MOCK_POST.title}
                   </h1>
+                  {visibleTags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {visibleTags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
+                          style={{ borderColor: `${brandColor}20`, color: brandColor }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   {showAuthor && (
                     <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                       <div className="flex items-center gap-2">
@@ -789,6 +837,7 @@ function MinimalStylePreview({ showRelated, showShare, showAuthor = true, showCo
 export function PostDetailPreview({
   layoutStyle,
   showAuthor = true,
+  showTags = true,
   showComments = true,
   showCommentLikes = true,
   showCommentReplies = true,
@@ -797,7 +846,7 @@ export function PostDetailPreview({
   device = 'desktop',
   brandColor = '#3b82f6',
 }: PostDetailPreviewProps) {
-  const props = { showAuthor, showComments, showCommentLikes, showCommentReplies, showRelated, showShare, brandColor, device };
+  const props = { showAuthor, showTags, showComments, showCommentLikes, showCommentReplies, showRelated, showShare, brandColor, device };
 
   return (
     <div className="w-full">

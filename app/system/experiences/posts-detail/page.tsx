@@ -6,10 +6,9 @@ import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { FileText, LayoutTemplate, Loader2, MessageSquare, Save, AlertCircle } from 'lucide-react';
+import { LayoutTemplate, Loader2, Save, AlertCircle } from 'lucide-react';
 import { Button, Card } from '@/app/admin/components/ui';
 import {
-  ExperienceModuleLink, 
   ExperienceHintCard,
   PostDetailPreview,
   ExampleLinks,
@@ -40,6 +39,7 @@ type PostDetailExperienceConfig = {
 
 type ClassicLayoutConfig = {
   showAuthor: boolean;
+  showTags: boolean;
   showShare: boolean;
   showComments: boolean;
   showCommentLikes: boolean;
@@ -49,6 +49,7 @@ type ClassicLayoutConfig = {
 
 type ModernLayoutConfig = {
   showAuthor: boolean;
+  showTags: boolean;
   showShare: boolean;
   showComments: boolean;
   showCommentLikes: boolean;
@@ -58,6 +59,7 @@ type ModernLayoutConfig = {
 
 type MinimalLayoutConfig = {
   showAuthor: boolean;
+  showTags: boolean;
   showShare: boolean;
   showComments: boolean;
   showCommentLikes: boolean;
@@ -80,9 +82,9 @@ const LAYOUT_STYLES: LayoutOption<DetailLayoutStyle>[] = [
 const DEFAULT_CONFIG: PostDetailExperienceConfig = {
   layoutStyle: 'classic',
   layouts: {
-    classic: { showAuthor: true, showShare: true, showComments: true, showCommentLikes: true, showCommentReplies: true, showRelated: true },
-    modern: { showAuthor: true, showShare: true, showComments: true, showCommentLikes: true, showCommentReplies: true, showRelated: true },
-    minimal: { showAuthor: false, showShare: true, showComments: true, showCommentLikes: true, showCommentReplies: true, showRelated: true },
+    classic: { showAuthor: true, showTags: true, showShare: true, showComments: true, showCommentLikes: true, showCommentReplies: true, showRelated: true },
+    modern: { showAuthor: true, showTags: true, showShare: true, showComments: true, showCommentLikes: true, showCommentReplies: true, showRelated: true },
+    minimal: { showAuthor: false, showTags: true, showShare: true, showComments: true, showCommentLikes: true, showCommentReplies: true, showRelated: true },
   },
 };
 
@@ -94,7 +96,7 @@ const HINTS = [
   'Mỗi layout có config riêng - chuyển tab để chỉnh.',
 ];
 
-function ModuleFeatureStatus({ label, enabled, href }: { label: string; enabled: boolean; href: string }) {
+function ModuleFeatureStatus({ label, enabled, href, moduleName }: { label: string; enabled: boolean; href: string; moduleName: string }) {
   return (
     <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
       <div className="flex items-start gap-2">
@@ -102,7 +104,7 @@ function ModuleFeatureStatus({ label, enabled, href }: { label: string; enabled:
         <div>
           <p className="text-sm font-medium text-slate-700">{label}</p>
           <p className="text-xs text-slate-500">
-            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào Module Bài viết
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào {moduleName}
           </p>
         </div>
       </div>
@@ -125,8 +127,6 @@ export default function PostDetailExperiencePage() {
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
   const setMultipleSettings = useMutation(api.settings.setMultiple);
   const updateField = useMutation(api.admin.modules.updateModuleField);
-  const toggleModule = useMutation(api.admin.modules.toggleModule);
-  const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
   const commentsLikesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableLikes', moduleKey: 'comments' });
   const commentsRepliesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableReplies', moduleKey: 'comments' });
   const tagsFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableTags', moduleKey: 'posts' });
@@ -174,15 +174,7 @@ export default function PostDetailExperiencePage() {
 
   const authorField = useMemo(() => postFields?.find(field => field.fieldKey === AUTHOR_FIELD_KEY), [postFields]);
   const authorFieldEnabled = authorField?.enabled ?? false;
-  const commentsModuleEnabled = commentsModule?.enabled ?? false;
-  const commentsLikesEnabled = commentsLikesFeature?.enabled ?? false;
-  const commentsRepliesEnabled = commentsRepliesFeature?.enabled ?? false;
-  
-  // Sync checks based on active layout
   const isAuthorSyncPending = Boolean(authorField) && authorFieldEnabled !== currentLayoutConfig.showAuthor;
-  const isCommentsSyncPending = Boolean(commentsModule) && commentsModuleEnabled !== currentLayoutConfig.showComments;
-  const isCommentLikesSyncPending = Boolean(commentsLikesFeature) && commentsLikesEnabled !== (currentLayoutConfig.showCommentLikes ?? false);
-  const isCommentRepliesSyncPending = Boolean(commentsRepliesFeature) && commentsRepliesEnabled !== (currentLayoutConfig.showCommentReplies ?? false);
 
   // Sync with legacy key
   const additionalSettings = useMemo(() => [
@@ -203,18 +195,6 @@ export default function PostDetailExperiencePage() {
 
       if (authorField && authorFieldEnabled !== currentLayoutConfig.showAuthor) {
         tasks.push(updateField({ enabled: currentLayoutConfig.showAuthor, id: authorField._id as Id<'moduleFields'> }));
-      }
-
-      if (commentsModule && commentsModuleEnabled !== currentLayoutConfig.showComments) {
-        tasks.push(toggleModule({ enabled: currentLayoutConfig.showComments, key: 'comments' }));
-      }
-
-      if (commentsLikesFeature && commentsLikesEnabled !== currentLayoutConfig.showCommentLikes) {
-        tasks.push(toggleFeature({ enabled: currentLayoutConfig.showCommentLikes, featureKey: 'enableLikes', moduleKey: 'comments' }));
-      }
-
-      if (commentsRepliesFeature && commentsRepliesEnabled !== currentLayoutConfig.showCommentReplies) {
-        tasks.push(toggleFeature({ enabled: currentLayoutConfig.showCommentReplies, featureKey: 'enableReplies', moduleKey: 'comments' }));
       }
 
       await Promise.all(tasks);
@@ -263,6 +243,7 @@ export default function PostDetailExperiencePage() {
             <PostDetailPreview
               layoutStyle={config.layoutStyle}
               showAuthor={currentLayoutConfig.showAuthor}
+              showTags={currentLayoutConfig.showTags}
               showRelated={currentLayoutConfig.showRelated}
               showShare={currentLayoutConfig.showShare}
               showComments={currentLayoutConfig.showComments}
@@ -290,14 +271,19 @@ export default function PostDetailExperiencePage() {
         }
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Common controls for all layouts */}
-          <ControlCard title="Thông tin bài viết">
+          <ControlCard title="Hiển thị nội dung">
             <ToggleRow 
               label="Thông tin tác giả" 
               checked={currentLayoutConfig.showAuthor} 
               onChange={(v) => updateLayoutConfig('showAuthor', v)} 
               accentColor="#3b82f6"
               disabled={!authorField}
+            />
+            <ToggleRow 
+              label="Danh sách tags" 
+              checked={currentLayoutConfig.showTags} 
+              onChange={(v) => updateLayoutConfig('showTags', v)} 
+              accentColor="#3b82f6"
             />
             <ToggleRow 
               label="Nút chia sẻ" 
@@ -311,21 +297,6 @@ export default function PostDetailExperiencePage() {
               onChange={(v) => updateLayoutConfig('showRelated', v)} 
               accentColor="#3b82f6" 
             />
-            <ModuleFeatureStatus
-              label="Tags"
-              enabled={tagsFeature?.enabled ?? false}
-              href="/system/modules/posts"
-            />
-            <ModuleFeatureStatus
-              label="Nổi bật"
-              enabled={featuredFeature?.enabled ?? false}
-              href="/system/modules/posts"
-            />
-            <ModuleFeatureStatus
-              label="Hẹn giờ xuất bản"
-              enabled={schedulingFeature?.enabled ?? false}
-              href="/system/modules/posts"
-            />
           </ControlCard>
           
           {/* Comments section */}
@@ -335,45 +306,63 @@ export default function PostDetailExperiencePage() {
               checked={currentLayoutConfig.showComments} 
               onChange={(v) => updateLayoutConfig('showComments', v)} 
               accentColor="#3b82f6"
-              disabled={!commentsModule}
             />
             <ToggleRow 
               label="Nút thích" 
               checked={currentLayoutConfig.showCommentLikes} 
               onChange={(v) => updateLayoutConfig('showCommentLikes', v)} 
               accentColor="#3b82f6"
-              disabled={!commentsLikesFeature}
             />
             <ToggleRow 
               label="Nút trả lời" 
               checked={currentLayoutConfig.showCommentReplies} 
               onChange={(v) => updateLayoutConfig('showCommentReplies', v)} 
               accentColor="#3b82f6"
-              disabled={!commentsRepliesFeature}
+            />
+            <ModuleFeatureStatus
+              label="Module bình luận"
+              enabled={commentsModule?.enabled ?? false}
+              href="/system/modules/comments"
+              moduleName="Module Bình luận"
+            />
+            <ModuleFeatureStatus
+              label="Tính năng thích"
+              enabled={commentsLikesFeature?.enabled ?? false}
+              href="/system/modules/comments"
+              moduleName="Module Bình luận"
+            />
+            <ModuleFeatureStatus
+              label="Tính năng trả lời"
+              enabled={commentsRepliesFeature?.enabled ?? false}
+              href="/system/modules/comments"
+              moduleName="Module Bình luận"
             />
           </ControlCard>
           
-          {/* Sync status & modules */}
-          <ControlCard title="Đồng bộ module">
-            {(isAuthorSyncPending || isCommentsSyncPending || isCommentLikesSyncPending || isCommentRepliesSyncPending) && (
+          <ControlCard title="Trạng thái Module">
+            {isAuthorSyncPending && (
               <div className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-xs text-amber-700 dark:text-amber-300 mb-2">
                 <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
-                <span>Bấm Lưu để đồng bộ modules.</span>
+                <span>Cập nhật trường tác giả sẽ áp dụng khi bấm Lưu.</span>
               </div>
             )}
-            <ExperienceModuleLink
-              enabled={postsModule?.enabled ?? false}
+            <ModuleFeatureStatus
+              label="Tags"
+              enabled={tagsFeature?.enabled ?? false}
               href="/system/modules/posts"
-              icon={FileText}
-              title="Bài viết"
-              colorScheme="cyan"
+              moduleName="Module Bài viết"
             />
-            <ExperienceModuleLink
-              enabled={commentsModule?.enabled ?? false}
-              href="/system/modules/comments"
-              icon={MessageSquare}
-              title="Comments"
-              colorScheme="cyan"
+            <ModuleFeatureStatus
+              label="Nổi bật"
+              enabled={featuredFeature?.enabled ?? false}
+              href="/system/modules/posts"
+              moduleName="Module Bài viết"
+            />
+            <ModuleFeatureStatus
+              label="Hẹn giờ xuất bản"
+              enabled={schedulingFeature?.enabled ?? false}
+              href="/system/modules/posts"
+              moduleName="Module Bài viết"
             />
           </ControlCard>
           

@@ -15,6 +15,52 @@ type PostsListConfig = {
   postsPerPage: number;
 };
 
+type PostDetailLayoutStyle = 'classic' | 'modern' | 'minimal';
+
+type PostDetailLayoutConfig = {
+  showAuthor: boolean;
+  showShare: boolean;
+  showComments: boolean;
+  showCommentLikes: boolean;
+  showCommentReplies: boolean;
+  showRelated: boolean;
+  showTags: boolean;
+};
+
+type PostsDetailConfig = PostDetailLayoutConfig & {
+  layoutStyle: PostDetailLayoutStyle;
+};
+
+const DEFAULT_POST_DETAIL_LAYOUTS: Record<PostDetailLayoutStyle, PostDetailLayoutConfig> = {
+  classic: {
+    showAuthor: true,
+    showShare: true,
+    showComments: true,
+    showCommentLikes: true,
+    showCommentReplies: true,
+    showRelated: true,
+    showTags: true,
+  },
+  modern: {
+    showAuthor: true,
+    showShare: true,
+    showComments: true,
+    showCommentLikes: true,
+    showCommentReplies: true,
+    showRelated: true,
+    showTags: true,
+  },
+  minimal: {
+    showAuthor: false,
+    showShare: true,
+    showComments: true,
+    showCommentLikes: true,
+    showCommentReplies: true,
+    showRelated: true,
+    showTags: true,
+  },
+};
+
 const normalizePaginationType = (value?: string | boolean): PaginationType => {
   if (value === 'infiniteScroll') return 'infiniteScroll';
   if (value === 'pagination') return 'pagination';
@@ -36,6 +82,27 @@ export function usePostsListConfig(): PostsListConfig {
       postsPerPage: raw?.postsPerPage ?? 12,
     };
   }, [experienceSetting?.value]);
+}
+
+export function usePostsDetailConfig(): PostsDetailConfig {
+  const experienceSetting = useQuery(api.settings.getByKey, { key: 'posts_detail_ui' });
+  const legacyStyleSetting = useQuery(api.settings.getByKey, { key: 'posts_detail_style' });
+
+  return useMemo(() => {
+    const raw = experienceSetting?.value as {
+      layoutStyle?: PostDetailLayoutStyle;
+      layouts?: Record<PostDetailLayoutStyle, Partial<PostDetailLayoutConfig>>;
+    } | undefined;
+    const legacyStyle = legacyStyleSetting?.value as PostDetailLayoutStyle | undefined;
+    const layoutStyle = raw?.layoutStyle ?? legacyStyle ?? 'classic';
+    const defaultConfig = DEFAULT_POST_DETAIL_LAYOUTS[layoutStyle];
+    const layoutConfig = raw?.layouts?.[layoutStyle] ?? {};
+    return {
+      layoutStyle,
+      ...defaultConfig,
+      ...layoutConfig,
+    };
+  }, [experienceSetting?.value, legacyStyleSetting?.value]);
 }
 
 type ProductsListConfig = {

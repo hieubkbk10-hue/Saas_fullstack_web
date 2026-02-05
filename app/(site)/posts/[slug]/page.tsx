@@ -7,6 +7,7 @@ import { Noto_Sans } from 'next/font/google';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
+import { usePostsDetailConfig } from '@/lib/experiences/useSiteConfig';
 import { Button, Card, CardContent } from '@/app/admin/components/ui';
 import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Eye, FileText, Home, Link as LinkIcon, MessageSquare, Reply, Send, Share2, ThumbsUp, User } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -15,13 +16,6 @@ const notoSans = Noto_Sans({
   display: 'swap',
   subsets: ['vietnamese', 'latin'],
 });
-
-type PostDetailStyle = 'classic' | 'modern' | 'minimal';
-
-function usePostDetailStyle(): PostDetailStyle {
-  const setting = useQuery(api.settings.getByKey, { key: 'posts_detail_style' });
-  return (setting?.value as PostDetailStyle) || 'classic';
-}
 
 // Hook để lấy danh sách các fields đang bật cho posts module
 function useEnabledPostFields(): Set<string> {
@@ -52,12 +46,13 @@ interface PageProps {
 export default function PostDetailPage({ params }: PageProps) {
   const { slug } = use(params);
   const brandColor = useBrandColor();
-  const style = usePostDetailStyle();
+  const postDetailConfig = usePostsDetailConfig();
+  const style = postDetailConfig.layoutStyle;
   const enabledFields = useEnabledPostFields();
-  const experienceSetting = useQuery(api.settings.getByKey, { key: 'posts_detail_ui' });
   const commentsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'comments' });
   const commentsLikesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableLikes', moduleKey: 'comments' });
   const commentsRepliesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableReplies', moduleKey: 'comments' });
+  const tagsFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableTags', moduleKey: 'posts' });
   const commentsSettings = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'comments' });
   const post = useQuery(api.posts.getBySlug, { slug });
   const category = useQuery(
@@ -66,22 +61,19 @@ export default function PostDetailPage({ params }: PageProps) {
   );
   const incrementViews = useMutation(api.posts.incrementViews);
   const createComment = useMutation(api.comments.create);
-  const experienceConfig = useMemo(() => {
-    const raw = experienceSetting?.value as Partial<{ showAuthor?: boolean; showComments?: boolean; showCommentLikes?: boolean; showCommentReplies?: boolean }> | undefined;
-    return {
-      showAuthor: raw?.showAuthor ?? true,
-      showComments: raw?.showComments ?? true,
-      showCommentLikes: raw?.showCommentLikes ?? (commentsLikesFeature?.enabled ?? false),
-      showCommentReplies: raw?.showCommentReplies ?? (commentsRepliesFeature?.enabled ?? true),
-    };
-  }, [commentsLikesFeature?.enabled, commentsRepliesFeature?.enabled, experienceSetting?.value]);
-
-  const shouldShowAuthor = enabledFields.has('author_name') && experienceConfig.showAuthor;
+  const shouldShowAuthor = enabledFields.has('author_name') && postDetailConfig.showAuthor;
   const authorName = post?.authorName ?? '';
   const commentsEnabled = commentsModule?.enabled ?? false;
-  const shouldShowComments = commentsEnabled && experienceConfig.showComments;
-  const shouldShowCommentLikes = shouldShowComments && (commentsLikesFeature?.enabled ?? false) && experienceConfig.showCommentLikes;
-  const shouldShowCommentReplies = shouldShowComments && (commentsRepliesFeature?.enabled ?? false) && experienceConfig.showCommentReplies;
+  const shouldShowComments = commentsEnabled && postDetailConfig.showComments;
+  const shouldShowCommentLikes = shouldShowComments && (commentsLikesFeature?.enabled ?? false) && postDetailConfig.showCommentLikes;
+  const shouldShowCommentReplies = shouldShowComments && (commentsRepliesFeature?.enabled ?? false) && postDetailConfig.showCommentReplies;
+  const postTags = useMemo(() => {
+    const tags = (post as { tags?: string[] } | null | undefined)?.tags;
+    if (!Array.isArray(tags)) {return [];}
+    return tags.filter(Boolean);
+  }, [post]);
+  const tagsFieldEnabled = enabledFields.has('tags');
+  const shouldShowTags = tagsFieldEnabled && (tagsFeature?.enabled ?? false) && postDetailConfig.showTags && postTags.length > 0;
   const commentsPerPageSetting = useMemo(() => {
     const perPage = commentsSettings?.find(setting => setting.settingKey === 'commentsPerPage')?.value as number | undefined;
     return perPage ?? 20;
@@ -288,6 +280,8 @@ export default function PostDetailPage({ params }: PageProps) {
           enabledFields={enabledFields}
           showAuthor={shouldShowAuthor}
           authorName={authorName}
+          showTags={shouldShowTags}
+          tags={postTags}
           commentsSection={commentsSection}
         />
       )}
@@ -299,6 +293,8 @@ export default function PostDetailPage({ params }: PageProps) {
           enabledFields={enabledFields}
           showAuthor={shouldShowAuthor}
           authorName={authorName}
+          showTags={shouldShowTags}
+          tags={postTags}
           commentsSection={commentsSection}
         />
       )}
@@ -310,6 +306,8 @@ export default function PostDetailPage({ params }: PageProps) {
           enabledFields={enabledFields}
           showAuthor={shouldShowAuthor}
           authorName={authorName}
+          showTags={shouldShowTags}
+          tags={postTags}
           commentsSection={commentsSection}
         />
       )}
@@ -325,6 +323,7 @@ interface PostData {
   content: string;
   excerpt?: string;
   thumbnail?: string;
+  tags?: string[];
   categoryId: Id<"postCategories">;
   categoryName: string;
   views: number;
@@ -356,15 +355,18 @@ interface StyleProps {
   enabledFields: Set<string>;
   showAuthor: boolean;
   authorName: string;
+  showTags: boolean;
+  tags: string[];
   commentsSection?: React.ReactNode;
 }
 
 // Style 1: Classic - Truyền thống với sidebar
-function ClassicStyle({ post, brandColor, relatedPosts, showAuthor, authorName, commentsSection }: StyleProps) {
+function ClassicStyle({ post, brandColor, relatedPosts, showAuthor, authorName, showTags, tags, commentsSection }: StyleProps) {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isCopied, setIsCopied] = useState(false);
   const { isBroken, markBroken } = useImageFallback();
   const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
+  const visibleTags = showTags ? tags : [];
 
   const hasRelatedPosts = relatedPosts.length > 0;
 
@@ -425,6 +427,20 @@ function ClassicStyle({ post, brandColor, relatedPosts, showAuthor, authorName, 
                   {post.categoryName}
                 </span>
               </div>
+
+              {visibleTags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {visibleTags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                      style={{ borderColor: `${brandColor}20`, color: brandColor }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground leading-[1.15]">
                 {post.title}
@@ -562,11 +578,12 @@ function ClassicStyle({ post, brandColor, relatedPosts, showAuthor, authorName, 
 }
 
 // Style 2: Modern - Medium/Substack inspired - Focus on typography and reading experience
-function ModernStyle({ post, brandColor, relatedPosts, enabledFields, showAuthor, authorName, commentsSection }: StyleProps) {
+function ModernStyle({ post, brandColor, relatedPosts, enabledFields, showAuthor, authorName, showTags, tags, commentsSection }: StyleProps) {
   const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
   const showExcerpt = enabledFields.has('excerpt');
   const [isCopied, setIsCopied] = useState(false);
   const { isBroken, markBroken } = useImageFallback();
+  const visibleTags = showTags ? tags : [];
 
   const handleCopyLink = async () => {
     if (navigator?.clipboard) {
@@ -619,6 +636,20 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields, showAuthor
                 {post.categoryName}
               </span>
             </div>
+
+            {visibleTags.length > 0 && (
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                {visibleTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
+                    style={{ borderColor: `${brandColor}20`, color: brandColor }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
 
             <h1 className="text-[clamp(1.75rem,4vw,3rem)] font-semibold tracking-tight text-foreground leading-[1.2] text-balance">
               {post.title}
@@ -751,10 +782,11 @@ function ModernStyle({ post, brandColor, relatedPosts, enabledFields, showAuthor
 }
 
 // Style 3: Minimal - Tối giản, tập trung nội dung
-function MinimalStyle({ post, brandColor, relatedPosts, showAuthor, authorName, commentsSection }: StyleProps) {
+function MinimalStyle({ post, brandColor, relatedPosts, showAuthor, authorName, showTags, tags, commentsSection }: StyleProps) {
   const [isCopied, setIsCopied] = useState(false);
   const readingTime = Math.max(1, Math.ceil(post.content.length / 1000));
   const { isBroken, markBroken } = useImageFallback();
+  const visibleTags = showTags ? tags : [];
 
   const handleShare = async () => {
     if (navigator?.clipboard) {
@@ -821,6 +853,19 @@ function MinimalStyle({ post, brandColor, relatedPosts, showAuthor, authorName, 
                   <h1 className="text-[clamp(1.6rem,4vw,2.9rem)] font-semibold leading-[1.2] text-foreground">
                     {post.title}
                   </h1>
+                  {visibleTags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {visibleTags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
+                          style={{ borderColor: `${brandColor}20`, color: brandColor }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                     {showAuthor && authorName && (
                       <div className="flex items-center gap-2">
