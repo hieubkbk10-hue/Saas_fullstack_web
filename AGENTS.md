@@ -1,5 +1,5 @@
 # Custome Rule
-Sau khi chạy xong lệnh phải phát âm thanh C:\Users\VTOS\.factory\noti.mp3
+Dùng âm thanh C:\Users\VTOS\.factory\noti.mp3 thay cho Completion Sound mặc định
 Trả lời bằng Tiếng Việt
 Tuân thủ nghiêm ngặc KISS, YAGNI, DRY
 Tuân thủ Rails Convention Over Configuration
