@@ -5,7 +5,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { ChevronDown, ChevronRight, Eye, Heart, Mail, Phone, Search, ShoppingCart, User } from 'lucide-react';
 import { Card, CardContent, cn } from '@/app/admin/components/ui';
 
-export type HeaderLayoutStyle = 'classic' | 'topbar' | 'transparent';
+export type HeaderLayoutStyle = 'classic' | 'topbar' | 'centered';
 
 export type HeaderMenuConfig = {
   brandName: string;
@@ -13,7 +13,6 @@ export type HeaderMenuConfig = {
   headerSeparator: 'none' | 'shadow' | 'border' | 'gradient';
   headerSticky: boolean;
   showBrandAccent: boolean;
-  transparentOverlay: 'dark' | 'light';
   cart: { show: boolean };
   cta: { show: boolean; text: string };
   login: { show: boolean; text: string };
@@ -119,6 +118,14 @@ export function HeaderMenuPreview({
   const showLogin = config.login.show && canLogin;
   const canTrackOrder = ordersEnabled;
   const showTrackOrder = displayTopbar.showTrackOrder && canTrackOrder;
+
+  const menuSplit = useMemo(() => {
+    const midpoint = Math.ceil(menuTree.length / 2);
+    return {
+      left: menuTree.slice(0, midpoint),
+      right: menuTree.slice(midpoint),
+    };
+  }, [menuTree]);
 
   const brandRgba = (alpha: number) => {
     if (!brandColor.startsWith('#')) {
@@ -499,25 +506,10 @@ export function HeaderMenuPreview({
     </div>
   );
 
-  const renderTransparentStyle = () => (
-    <div className="relative overflow-hidden">
-      <div className="absolute inset-0">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: config.transparentOverlay === 'light'
-              ? `linear-gradient(135deg, ${brandColor}20 0%, transparent 50%), linear-gradient(225deg, ${brandColor}20 0%, transparent 50%), linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)`
-              : `linear-gradient(135deg, ${brandColor}25 0%, transparent 50%), linear-gradient(225deg, ${brandColor}30 0%, transparent 50%), linear-gradient(180deg, #0f172a 0%, #1e293b 100%)`
-          }}
-        />
-        <div className="absolute top-10 left-10 w-72 h-72 rounded-full blur-3xl opacity-30" style={{ backgroundColor: brandColor }} />
-        <div className="absolute bottom-10 right-10 w-56 h-56 rounded-full blur-3xl opacity-25" style={{ backgroundColor: brandColor }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl opacity-10" style={{ backgroundColor: brandColor }} />
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-      </div>
-
+  const renderCenteredStyle = () => (
+    <div className={cn('bg-white dark:bg-slate-900', classicSeparatorClass, classicPositionClass)}>
       {displayTopbar.show && (
-        <div className="relative z-10 px-4 py-2 text-xs" style={{ backgroundColor: brandColor }}>
+        <div className="px-4 py-2 text-xs" style={{ backgroundColor: brandColor }}>
           <div className="flex items-center justify-between text-white">
             <div className="flex items-center gap-4">
               {displayTopbar.hotline && (
@@ -543,120 +535,170 @@ export function HeaderMenuPreview({
           </div>
         </div>
       )}
-
-      <div className={cn('relative z-10 px-6 py-4 flex items-center justify-between backdrop-blur-md', config.transparentOverlay === 'light' ? 'bg-white/40' : 'bg-black/40')}>
-        <div className="flex items-center gap-2">
-          <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center font-bold shadow-lg', config.transparentOverlay === 'light' ? 'text-white' : 'text-white')} style={{ backgroundColor: brandColor }}>{config.brandName.charAt(0)}</div>
-          <span className={cn('font-bold text-lg', config.transparentOverlay === 'light' ? 'text-slate-900' : 'text-white')}>{config.brandName}</span>
-        </div>
-
+      {config.showBrandAccent && (
+        <div className="h-0.5" style={{ backgroundColor: brandColor }} />
+      )}
+      <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
         {device !== 'mobile' ? (
-          <>
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
             <nav className="flex items-center gap-1">
-              {menuTree.map((item) => (
-                <div key={item._id} className="relative" onMouseEnter={() => setHoveredItem(item._id)} onMouseLeave={() => setHoveredItem(null)}>
-                  <a
-                    href={item.url}
+              {menuSplit.left.map((item) => (
+                <div
+                  key={item._id}
+                  className="relative"
+                  onMouseEnter={() => setHoveredItem(item._id)}
+                  onMouseLeave={() => setHoveredItem(null)}
+                >
+                  <button
                     className={cn(
-                      'px-4 py-2 text-sm font-medium transition-all flex items-center gap-1 rounded-lg',
+                      'px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1',
                       hoveredItem === item._id
-                        ? (config.transparentOverlay === 'light' ? 'text-slate-900 bg-black/10' : 'text-white bg-white/20')
-                        : (config.transparentOverlay === 'light' ? 'text-slate-800/90 hover:text-slate-900 hover:bg-black/5' : 'text-white/90 hover:text-white hover:bg-white/10')
+                        ? 'text-white'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                     )}
+                    style={hoveredItem === item._id ? { backgroundColor: brandColor } : {}}
                   >
                     {item.label}
-                    {item.children.length > 0 && (<ChevronDown size={14} className={cn('transition-transform', hoveredItem === item._id && 'rotate-180')} />)}
-                  </a>
+                    {item.children.length > 0 && (
+                      <ChevronDown size={14} className={cn('transition-transform', hoveredItem === item._id && 'rotate-180')} />
+                    )}
+                  </button>
                   {item.children.length > 0 && hoveredItem === item._id && (
-                    <div className={cn('absolute top-full left-0 mt-2 backdrop-blur-xl rounded-xl shadow-2xl py-2 min-w-[200px] z-50', config.transparentOverlay === 'light' ? 'bg-white/90 border border-slate-200' : 'bg-black/80 border border-white/10')}>
+                    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[200px] z-50">
                       {item.children.map((child) => (
-                        <a
-                          key={child._id}
-                          href={child.url}
-                          className={cn('block px-4 py-2.5 text-sm transition-colors', config.transparentOverlay === 'light' ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' : 'text-white/90 hover:bg-white/10 hover:text-white')}
-                        >
-                          {child.label}
-                        </a>
+                        <div key={child._id} className="relative group">
+                          {renderLink(child, 'flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors', (
+                            <>
+                              {child.label}
+                              {child.children?.length > 0 && <ChevronRight size={14} />}
+                            </>
+                          ))}
+                          {child.children?.length > 0 && (
+                            <div className="absolute left-full top-0 ml-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[180px] hidden group-hover:block">
+                              {child.children.map((sub) => (
+                                <a key={sub._id} href={sub.url} className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                  {sub.label}
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   )}
                 </div>
               ))}
             </nav>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center gap-3">
+              <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: brandColor }}></div>
+              <span className="font-semibold text-slate-900 dark:text-white">{config.brandName}</span>
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              <nav className="flex items-center gap-1">
+                {menuSplit.right.map((item) => (
+                  <div
+                    key={item._id}
+                    className="relative"
+                    onMouseEnter={() => setHoveredItem(item._id)}
+                    onMouseLeave={() => setHoveredItem(null)}
+                  >
+                    <button
+                      className={cn(
+                        'px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1',
+                        hoveredItem === item._id
+                          ? 'text-white'
+                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      )}
+                      style={hoveredItem === item._id ? { backgroundColor: brandColor } : {}}
+                    >
+                      {item.label}
+                      {item.children.length > 0 && (
+                        <ChevronDown size={14} className={cn('transition-transform', hoveredItem === item._id && 'rotate-180')} />
+                      )}
+                    </button>
+                    {item.children.length > 0 && hoveredItem === item._id && (
+                      <div className="absolute top-full right-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[200px] z-50">
+                        {item.children.map((child) => (
+                          <div key={child._id} className="relative group">
+                            {renderLink(child, 'flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors', (
+                              <>
+                                {child.label}
+                                {child.children?.length > 0 && <ChevronRight size={14} />}
+                              </>
+                            ))}
+                            {child.children?.length > 0 && (
+                              <div className="absolute right-full top-0 mr-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[180px] hidden group-hover:block">
+                                {child.children.map((sub) => (
+                                  <a key={sub._id} href={sub.url} className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                                    {sub.label}
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </nav>
               {config.search.show && (
                 <div className="relative">
                   <input
                     type="text"
                     placeholder={config.search.placeholder}
-                    className={cn(
-                      'w-40 pl-4 pr-10 py-2 rounded-full border text-sm focus:outline-none',
-                      config.transparentOverlay === 'light'
-                        ? 'border-slate-200 bg-white/70 text-slate-700'
-                        : 'border-white/20 bg-white/10 text-white placeholder:text-white/70'
-                    )}
+                    className="w-40 pl-4 pr-10 py-2 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none text-slate-700 dark:text-slate-300"
                   />
                   <button className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-white" style={{ backgroundColor: brandColor }}>
                     <Search size={14} />
                   </button>
                 </div>
               )}
-              {config.wishlist.show && (
-                <a
-                  href={defaultLinks.wishlist}
-                  className={cn('p-2 rounded-full transition-colors', config.transparentOverlay === 'light' ? 'text-slate-700 hover:text-slate-900' : 'text-white/80 hover:text-white')}
-                >
-                  <Heart size={18} />
-                </a>
-              )}
               {config.cart.show && (
-                <a href={defaultLinks.cart} className={cn('p-2 rounded-full relative', config.transparentOverlay === 'light' ? 'text-slate-700 hover:text-slate-900' : 'text-white/80 hover:text-white')}>
-                  <ShoppingCart size={18} />
-                  <span className="absolute -top-1 -right-1 w-4 h-4 text-[9px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
+                <a href={defaultLinks.cart} className="p-2 text-slate-600 dark:text-slate-400 relative">
+                  <ShoppingCart size={20} />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
                 </a>
               )}
               {config.cta.show && (
-                <a href={defaultLinks.cta} className="px-5 py-2 text-sm font-medium text-white rounded-full transition-all hover:scale-105 shadow-lg" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
+                <a href={defaultLinks.cta} className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90" style={{ backgroundColor: brandColor }}>
+                  {config.cta.text}
+                </a>
               )}
             </div>
-          </>
+          </div>
         ) : (
-          <div className="flex items-center gap-2">
-            {config.search.show && (
-              <button className={cn('p-2 rounded-full', config.transparentOverlay === 'light' ? 'text-slate-700' : 'text-white/80')}>
-                <Search size={18} />
-              </button>
-            )}
-            {config.cart.show && (
-              <a href={defaultLinks.cart} className={cn('p-2 rounded-full relative', config.transparentOverlay === 'light' ? 'text-slate-700' : 'text-white/80')}>
-                <ShoppingCart size={18} />
-                <span className="absolute -top-1 -right-1 w-4 h-4 text-[9px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
-              </a>
-            )}
-            {renderMobileMenuButton(true)}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: brandColor }}></div>
+              <span className="font-semibold text-slate-900 dark:text-white">{config.brandName}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {config.search.show && (<button className="p-2 text-slate-600 dark:text-slate-400"><Search size={20} /></button>)}
+              {config.cart.show && (
+                <a href={defaultLinks.cart} className="p-2 text-slate-600 dark:text-slate-400 relative">
+                  <ShoppingCart size={20} />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
+                </a>
+              )}
+              {renderMobileMenuButton(false)}
+            </div>
           </div>
         )}
       </div>
 
       {device === 'mobile' && mobileMenuOpen && (
-        <div className={cn('relative z-10 backdrop-blur-xl border-t', config.transparentOverlay === 'light' ? 'bg-white/90 border-slate-200' : 'bg-slate-900/95 border-white/10')}>
+        <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
           {menuTree.map((item) => (
             <div key={item._id}>
-              <button
-                onClick={() => item.children.length > 0 && toggleMobileItem(item._id)}
-                className={cn('w-full px-6 py-4 text-left flex items-center justify-between text-sm font-medium transition-colors', config.transparentOverlay === 'light' ? 'text-slate-700 hover:text-slate-900 hover:bg-slate-100' : 'text-white/90 hover:text-white hover:bg-white/5')}
-              >
+              <button onClick={() => item.children.length > 0 && toggleMobileItem(item._id)} className="w-full px-6 py-3 text-left flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-colors">
                 {item.label}
                 {item.children.length > 0 && (<ChevronDown size={16} className={cn('transition-transform', expandedMobileItems.includes(item._id) && 'rotate-180')} />)}
               </button>
               {item.children.length > 0 && expandedMobileItems.includes(item._id) && (
-                <div className={cn(config.transparentOverlay === 'light' ? 'bg-slate-50' : 'bg-white/5')}>
+                <div className="bg-white dark:bg-slate-800">
                   {item.children.map((child) => (
-                    <a
-                      key={child._id}
-                      href={child.url}
-                      className={cn('block px-8 py-3 text-sm border-l-2 ml-6', config.transparentOverlay === 'light' ? 'text-slate-600 hover:text-slate-900 border-slate-200' : 'text-white/70 hover:text-white border-white/20')}
-                    >
+                    <a key={child._id} href={child.url} className="block px-8 py-2.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-l-2 border-slate-200 dark:border-slate-600 ml-6">
                       {child.label}
                     </a>
                   ))}
@@ -666,34 +708,12 @@ export function HeaderMenuPreview({
           ))}
           {config.cta.show && (
             <div className="p-4">
-              <a href={defaultLinks.cta} className="block w-full py-3 text-sm font-medium text-white rounded-full text-center shadow-lg" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
+              <a href={defaultLinks.cta} className="block w-full py-2.5 text-sm font-medium text-white rounded-lg text-center" style={{ backgroundColor: brandColor }}>{config.cta.text}</a>
             </div>
           )}
         </div>
       )}
-
-      {!mobileMenuOpen && (
-        <div className="relative z-10 px-6 py-16 text-center">
-          <div className={cn('inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium backdrop-blur-sm mb-6', config.transparentOverlay === 'light' ? 'text-slate-700 bg-white/70' : 'text-white/80 bg-white/10')}>
-            <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
-            Hero Section Preview
-          </div>
-          <h2 className={cn('text-2xl md:text-3xl font-bold mb-3', config.transparentOverlay === 'light' ? 'text-slate-900' : 'text-white')}>
-            Welcome to <span style={{ color: brandColor }}>{config.brandName}</span>
-          </h2>
-          <p className={cn('text-sm max-w-md mx-auto mb-6', config.transparentOverlay === 'light' ? 'text-slate-600' : 'text-white/60')}>
-            Header trong suốt overlay trên nội dung. Phù hợp với hero banner, slider hoặc video background.
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <div className="px-6 py-2.5 rounded-full text-sm font-medium text-white" style={{ backgroundColor: brandColor }}>
-              Primary CTA
-            </div>
-            <div className={cn('px-6 py-2.5 rounded-full text-sm font-medium transition-colors cursor-pointer', config.transparentOverlay === 'light' ? 'text-slate-700 border border-slate-300 hover:bg-slate-100' : 'text-white border border-white/30 hover:bg-white/10')}>
-              Secondary
-            </div>
-          </div>
-        </div>
-      )}
+      {classicSeparatorElement}
     </div>
   );
 
@@ -701,20 +721,18 @@ export function HeaderMenuPreview({
     <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-sm">
       {layoutStyle === 'classic' && renderClassicStyle()}
       {layoutStyle === 'topbar' && renderTopbarStyle()}
-      {layoutStyle === 'transparent' && renderTransparentStyle()}
+      {layoutStyle === 'centered' && renderCenteredStyle()}
 
-      {layoutStyle !== 'transparent' && (
-        <div className="p-4 space-y-3 bg-slate-50 dark:bg-slate-800/50">
-          <div className="h-32 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center">
-            <span className="text-slate-400 text-sm">Content Area</span>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="h-20 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
-            <div className="h-20 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
-            <div className="h-20 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
-          </div>
+      <div className="p-4 space-y-3 bg-slate-50 dark:bg-slate-800/50">
+        <div className="h-32 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center">
+          <span className="text-slate-400 text-sm">Content Area</span>
         </div>
-      )}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="h-20 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+          <div className="h-20 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+          <div className="h-20 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+        </div>
+      </div>
     </div>
   );
 }

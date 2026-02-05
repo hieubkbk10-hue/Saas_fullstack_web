@@ -32,7 +32,6 @@ const DEFAULT_CONFIG: HeaderMenuConfig = {
   headerSeparator: 'none',
   headerSticky: true,
   showBrandAccent: false,
-  transparentOverlay: 'dark',
   cart: { show: true },
   cta: { show: true, text: 'Liên hệ' },
   login: { show: true, text: 'Đăng nhập' },
@@ -51,13 +50,13 @@ const DEFAULT_CONFIG: HeaderMenuConfig = {
 const LAYOUT_STYLES: LayoutOption<HeaderLayoutStyle>[] = [
   { id: 'classic', label: 'Classic', description: 'Header tiêu chuẩn, menu ngang đơn giản.' },
   { id: 'topbar', label: 'Topbar', description: 'Có topbar, search, tiện ích nhanh.' },
-  { id: 'transparent', label: 'Transparent', description: 'Header trong suốt cho hero.' },
+  { id: 'centered', label: 'Centered', description: 'Logo giữa, menu cân đối hai bên.' },
 ];
 
 const HINTS = [
   'Menu items được quản lý ở /admin/menus.',
   'Topbar phù hợp site bán hàng cần hotline + search.',
-  'Transparent nên dùng khi có hero/banner lớn.',
+  'Centered phù hợp brand cần nhấn mạnh logo.',
   'Login chỉ hiển thị khi bật Module Khách hàng + tính năng Đăng nhập KH.',
   'Cart/Wishlist chỉ bật khi module tương ứng đang active.',
 ];
@@ -103,7 +102,8 @@ export default function HeaderMenuExperiencePage() {
   const [previewStyle, setPreviewStyle] = useState<HeaderLayoutStyle>('classic');
   const [isSaving, setIsSaving] = useState(false);
 
-  const savedStyle = (headerStyleSetting?.value as HeaderLayoutStyle) ?? 'classic';
+  const savedStyleRaw = headerStyleSetting?.value as string | undefined;
+  const savedStyle = (savedStyleRaw === 'transparent' ? 'centered' : savedStyleRaw) as HeaderLayoutStyle | undefined ?? 'classic';
 
   useEffect(() => {
     setPreviewStyle(savedStyle);
@@ -184,10 +184,6 @@ export default function HeaderMenuExperiencePage() {
 
   const updateHeaderSticky = (value: boolean) => {
     setConfig(prev => ({ ...prev, headerSticky: value }));
-  };
-
-  const updateTransparentOverlay = (value: HeaderMenuConfig['transparentOverlay']) => {
-    setConfig(prev => ({ ...prev, transparentOverlay: value }));
   };
 
   const updateBrandName = (value: string) => {
@@ -459,34 +455,6 @@ export default function HeaderMenuExperiencePage() {
                   onChange={updateHeaderSticky}
                   accentColor={brandColor}
                 />
-              </div>
-            </ControlCard>
-          )}
-
-          {previewStyle === 'transparent' && (
-            <ControlCard title="Giao diện Transparent">
-              <div className="space-y-2">
-                <Label className="text-xs">Overlay tone</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {([
-                    { id: 'dark', label: 'Dark' },
-                    { id: 'light', label: 'Light' },
-                  ] as const).map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => updateTransparentOverlay(option.id)}
-                      className={cn(
-                        'h-8 rounded-md border text-xs font-medium transition-colors',
-                        config.transparentOverlay === option.id
-                          ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
-                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
-                      )}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
               </div>
             </ControlCard>
           )}
