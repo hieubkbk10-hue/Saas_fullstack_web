@@ -86,7 +86,7 @@ export function HeaderSearchAutocomplete({
   }, [autoFocus, disabled]);
 
   const canSearch = searchProducts || searchPosts || searchServices;
-  const shouldSearch = !disabled && debouncedQuery.length >= 2 && canSearch;
+  const shouldSearch = !disabled && debouncedQuery.length >= 1 && canSearch;
 
   const results = useQuery(api.search.autocomplete, shouldSearch
     ? {
@@ -159,7 +159,7 @@ export function HeaderSearchAutocomplete({
         </button>
       )}
       {showDropdown && (
-        <div className="absolute left-0 right-0 mt-2 rounded-xl border border-slate-200 bg-white shadow-lg z-50 overflow-hidden">
+        <div className="absolute right-0 mt-2 min-w-[320px] rounded-xl border border-slate-200 bg-white shadow-lg z-50 overflow-hidden">
           {isLoading && (
             <div className="px-4 py-3 text-sm text-slate-500">Đang tìm kiếm...</div>
           )}
