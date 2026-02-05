@@ -15,6 +15,7 @@ type CartItem = {
   productName: string;
   quantity: number;
   subtotal: number;
+  variantId?: Id<'productVariants'>;
 };
 
 type Cart = {

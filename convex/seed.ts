@@ -640,6 +640,75 @@ export const seedProductsModule = mutation({
     // 6. Seed preset options (variants)
     await seedPresetProductOptions(ctx);
 
+    // 6a. Seed option values + sample variants
+    const existingVariants = await ctx.db.query("productVariants").first();
+    if (!existingVariants) {
+      const [colorOption, sizeOption] = await Promise.all([
+        ctx.db.query("productOptions").withIndex("by_slug", q => q.eq("slug", "color")).unique(),
+        ctx.db.query("productOptions").withIndex("by_slug", q => q.eq("slug", "size")).unique(),
+      ]);
+
+      if (colorOption && sizeOption) {
+        const existingColorValues = await ctx.db
+          .query("productOptionValues")
+          .withIndex("by_option_order", q => q.eq("optionId", colorOption._id))
+          .take(10);
+        const existingSizeValues = await ctx.db
+          .query("productOptionValues")
+          .withIndex("by_option_order", q => q.eq("optionId", sizeOption._id))
+          .take(10);
+
+        const colorValues = existingColorValues.length > 0
+          ? existingColorValues
+          : await (async () => {
+              const colorIds = await Promise.all([
+                ctx.db.insert("productOptionValues", { active: true, colorCode: "#ef4444", optionId: colorOption._id, order: 0, value: "Đỏ" }),
+                ctx.db.insert("productOptionValues", { active: true, colorCode: "#3b82f6", optionId: colorOption._id, order: 1, value: "Xanh" }),
+              ]);
+              const values = await Promise.all(colorIds.map((id) => ctx.db.get(id)));
+              return values.filter((value): value is NonNullable<typeof value> => Boolean(value));
+            })();
+
+        const sizeValues = existingSizeValues.length > 0
+          ? existingSizeValues
+          : await (async () => {
+              const sizeIds = await Promise.all([
+                ctx.db.insert("productOptionValues", { active: true, optionId: sizeOption._id, order: 0, value: "S" }),
+                ctx.db.insert("productOptionValues", { active: true, optionId: sizeOption._id, order: 1, value: "M" }),
+              ]);
+              const values = await Promise.all(sizeIds.map((id) => ctx.db.get(id)));
+              return values.filter((value): value is NonNullable<typeof value> => Boolean(value));
+            })();
+
+        const products = await ctx.db.query("products").order("asc").take(2);
+        for (const product of products) {
+          await ctx.db.patch(product._id, { hasVariants: true, optionIds: [colorOption._id, sizeOption._id] });
+
+          let order = 0;
+          for (const colorValue of colorValues) {
+            if (!colorValue) {continue;}
+            for (const sizeValue of sizeValues) {
+              if (!sizeValue) {continue;}
+              await ctx.db.insert("productVariants", {
+                optionValues: [
+                  { optionId: colorOption._id, valueId: colorValue._id },
+                  { optionId: sizeOption._id, valueId: sizeValue._id },
+                ],
+                order,
+                price: product.price,
+                productId: product._id,
+                salePrice: product.salePrice,
+                sku: `${product.sku}-${order + 1}`,
+                status: "Active",
+                stock: Math.max(0, Math.floor(product.stock / 2)),
+              });
+              order += 1;
+            }
+          }
+        }
+      }
+    }
+
     // 7. Initialize product stats (counter table)
     const existingStats = await ctx.db.query("productStats").first();
     if (!existingStats) {
@@ -1305,8 +1374,9 @@ export const seedWishlistModule = mutation({
       const fields = [
         { enabled: true, fieldKey: "customerId", isSystem: true, moduleKey: "wishlist", name: "Khách hàng", order: 0, required: true, type: "select" as const },
         { enabled: true, fieldKey: "productId", isSystem: true, moduleKey: "wishlist", name: "Sản phẩm", order: 1, required: true, type: "select" as const },
-        { enabled: true, fieldKey: "note", isSystem: false, linkedFeature: "enableNote", moduleKey: "wishlist", name: "Ghi chú", order: 2, required: false, type: "textarea" as const },
-        { enabled: true, fieldKey: "createdAt", isSystem: true, moduleKey: "wishlist", name: "Ngày thêm", order: 3, required: false, type: "date" as const },
+        { enabled: true, fieldKey: "variantId", isSystem: false, moduleKey: "wishlist", name: "Phiên bản", order: 2, required: false, type: "select" as const },
+        { enabled: true, fieldKey: "note", isSystem: false, linkedFeature: "enableNote", moduleKey: "wishlist", name: "Ghi chú", order: 3, required: false, type: "textarea" as const },
+        { enabled: true, fieldKey: "createdAt", isSystem: true, moduleKey: "wishlist", name: "Ngày thêm", order: 4, required: false, type: "date" as const },
       ];
       for (const field of fields) {
         await ctx.db.insert("moduleFields", field);
@@ -1477,11 +1547,12 @@ export const seedCartModule = mutation({
 
       const cartItemFields = [
         { enabled: true, fieldKey: "productId", isSystem: true, moduleKey: "cartItems", name: "Sản phẩm", order: 0, required: true, type: "select" as const },
-        { enabled: true, fieldKey: "productName", isSystem: true, moduleKey: "cartItems", name: "Tên sản phẩm", order: 1, required: true, type: "text" as const },
-        { enabled: true, fieldKey: "quantity", isSystem: true, moduleKey: "cartItems", name: "Số lượng", order: 2, required: true, type: "number" as const },
-        { enabled: true, fieldKey: "price", isSystem: true, moduleKey: "cartItems", name: "Đơn giá", order: 3, required: true, type: "price" as const },
-        { enabled: true, fieldKey: "subtotal", isSystem: true, moduleKey: "cartItems", name: "Thành tiền", order: 4, required: true, type: "price" as const },
-        { enabled: true, fieldKey: "productImage", isSystem: false, moduleKey: "cartItems", name: "Ảnh sản phẩm", order: 5, required: false, type: "image" as const },
+        { enabled: true, fieldKey: "variantId", isSystem: false, moduleKey: "cartItems", name: "Phiên bản", order: 1, required: false, type: "select" as const },
+        { enabled: true, fieldKey: "productName", isSystem: true, moduleKey: "cartItems", name: "Tên sản phẩm", order: 2, required: true, type: "text" as const },
+        { enabled: true, fieldKey: "quantity", isSystem: true, moduleKey: "cartItems", name: "Số lượng", order: 3, required: true, type: "number" as const },
+        { enabled: true, fieldKey: "price", isSystem: true, moduleKey: "cartItems", name: "Đơn giá", order: 4, required: true, type: "price" as const },
+        { enabled: true, fieldKey: "subtotal", isSystem: true, moduleKey: "cartItems", name: "Thành tiền", order: 5, required: true, type: "price" as const },
+        { enabled: true, fieldKey: "productImage", isSystem: false, moduleKey: "cartItems", name: "Ảnh sản phẩm", order: 6, required: false, type: "image" as const },
       ];
       for (const field of cartItemFields) {
         await ctx.db.insert("moduleFields", field);

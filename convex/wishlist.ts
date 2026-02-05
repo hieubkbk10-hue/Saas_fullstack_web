@@ -8,13 +8,21 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 async function validateWishlistAdd(
   ctx: MutationCtx,
   customerId: Id<"customers">,
-  productId: Id<"products">
+  productId: Id<"products">,
+  variantId?: Id<"productVariants">
 ) {
   const customer = await ctx.db.get(customerId);
   if (!customer) {throw new Error("Customer not found");}
 
   const product = await ctx.db.get(productId);
   if (!product) {throw new Error("Product not found");}
+
+  if (variantId) {
+    const variant = await ctx.db.get(variantId);
+    if (!variant || variant.productId !== productId) {
+      throw new Error("Phiên bản không hợp lệ");
+    }
+  }
 
   const existing = await ctx.db
     .query("wishlist")
@@ -48,6 +56,7 @@ const wishlistDoc = v.object({
   customerId: v.id("customers"),
   note: v.optional(v.string()),
   productId: v.id("products"),
+  variantId: v.optional(v.id("productVariants")),
 });
 
 const productPreviewDoc = v.object({
@@ -292,7 +301,7 @@ export const countByProduct = query({
 });
 
 export const isInWishlist = query({
-  args: { customerId: v.id("customers"), productId: v.id("products") },
+  args: { customerId: v.id("customers"), productId: v.id("products"), variantId: v.optional(v.id("productVariants")) },
   handler: async (ctx, args) => {
     const item = await ctx.db
       .query("wishlist")
@@ -300,7 +309,11 @@ export const isInWishlist = query({
         q.eq("customerId", args.customerId).eq("productId", args.productId)
       )
       .unique();
-    return item !== null;
+    if (!item) {return false;}
+    if (args.variantId) {
+      return item.variantId === args.variantId;
+    }
+    return true;
   },
   returns: v.boolean(),
 });
@@ -333,6 +346,7 @@ export const listByCustomerWithProducts = query({
 
     return items.map((item, index) => ({
       ...item,
+      variantId: item.variantId,
       product: products[index]
         ? {
             _id: products[index]!._id,
@@ -353,6 +367,7 @@ export const listByCustomerWithProducts = query({
     customerId: v.id("customers"),
     note: v.optional(v.string()),
     productId: v.id("products"),
+    variantId: v.optional(v.id("productVariants")),
     product: v.union(productPreviewDoc, v.null()),
   })),
 });
@@ -363,14 +378,16 @@ export const add = mutation({
     customerId: v.id("customers"),
     note: v.optional(v.string()),
     productId: v.id("products"),
+    variantId: v.optional(v.id("productVariants")),
   },
   handler: async (ctx, args) => {
-    await validateWishlistAdd(ctx, args.customerId, args.productId);
+    await validateWishlistAdd(ctx, args.customerId, args.productId, args.variantId);
 
     return  ctx.db.insert("wishlist", {
       customerId: args.customerId,
       note: args.note,
       productId: args.productId,
+      variantId: args.variantId,
     });
   },
   returns: v.id("wishlist"),

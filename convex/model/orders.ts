@@ -17,6 +17,8 @@ interface OrderItem {
   productName: string;
   quantity: number;
   price: number;
+  variantId?: Id<"productVariants">;
+  variantTitle?: string;
 }
 
 /**

@@ -534,6 +534,8 @@ export default defineSchema({
         productId: v.id("products"),
         productName: v.string(),
         quantity: v.number(),
+        variantId: v.optional(v.id("productVariants")),
+        variantTitle: v.optional(v.string()),
       })
     ),
     note: v.optional(v.string()),
@@ -577,6 +579,7 @@ export default defineSchema({
     customerId: v.id("customers"),
     note: v.optional(v.string()),
     productId: v.id("products"),
+    variantId: v.optional(v.id("productVariants")),
   })
     .index("by_customer", ["customerId"])
     .index("by_product", ["productId"])
@@ -613,9 +616,11 @@ export default defineSchema({
     productName: v.string(),
     quantity: v.number(),
     subtotal: v.number(),
+    variantId: v.optional(v.id("productVariants")),
   })
     .index("by_cart", ["cartId"])
-    .index("by_product", ["productId"]),
+    .index("by_product", ["productId"])
+    .index("by_cart_product_variant", ["cartId", "productId", "variantId"]),
 
   // 24. notifications - Thông báo hệ thống
   notifications: defineTable({

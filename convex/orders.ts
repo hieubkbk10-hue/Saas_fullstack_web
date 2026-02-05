@@ -1,8 +1,9 @@
+import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import * as OrdersModel from "./model/orders";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 
 const orderStatus = v.union(
   v.literal("Pending"),
@@ -31,7 +32,109 @@ const orderItemValidator = v.object({
   productId: v.id("products"),
   productName: v.string(),
   quantity: v.number(),
+  variantId: v.optional(v.id("productVariants")),
+  variantTitle: v.optional(v.string()),
 });
+
+type VariantPricingSetting = "product" | "variant";
+type VariantStockSetting = "product" | "variant";
+
+type OrderItemInput = {
+  price: number;
+  productId: Id<"products">;
+  productName: string;
+  quantity: number;
+  variantId?: Id<"productVariants">;
+  variantTitle?: string;
+};
+
+async function getVariantSettings(ctx: MutationCtx): Promise<{
+  variantPricing: VariantPricingSetting;
+  variantStock: VariantStockSetting;
+}> {
+  const [variantPricing, variantStock] = await Promise.all([
+    ctx.db
+      .query("moduleSettings")
+      .withIndex("by_module_setting", (q) => q.eq("moduleKey", "products").eq("settingKey", "variantPricing"))
+      .unique(),
+    ctx.db
+      .query("moduleSettings")
+      .withIndex("by_module_setting", (q) => q.eq("moduleKey", "products").eq("settingKey", "variantStock"))
+      .unique(),
+  ]);
+
+  return {
+    variantPricing: (variantPricing?.value as VariantPricingSetting) ?? "variant",
+    variantStock: (variantStock?.value as VariantStockSetting) ?? "variant",
+  };
+}
+
+async function buildVariantTitle(ctx: MutationCtx, variant: Doc<"productVariants">): Promise<string | undefined> {
+  if (!variant.optionValues.length) {
+    return undefined;
+  }
+  const valueDocs = await Promise.all(variant.optionValues.map((item) => ctx.db.get(item.valueId)));
+  const titleParts = variant.optionValues
+    .map((item, index) => item.customValue?.trim() || valueDocs[index]?.label || valueDocs[index]?.value)
+    .filter((value): value is string => Boolean(value));
+
+  return titleParts.length > 0 ? titleParts.join(" / ") : undefined;
+}
+
+async function normalizeOrderItems(
+  ctx: MutationCtx,
+  items: OrderItemInput[],
+  variantPricing: VariantPricingSetting
+): Promise<OrderItemInput[]> {
+  if (items.length === 0) {
+    return items;
+  }
+
+  const products = await Promise.all(items.map((item) => ctx.db.get(item.productId)));
+  const variants = await Promise.all(items.map((item) => (item.variantId ? ctx.db.get(item.variantId) : null)));
+
+  return Promise.all(items.map(async (item, index) => {
+    const product = products[index];
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    const variant = variants[index];
+    if (item.variantId) {
+      if (!variant || variant.productId !== item.productId) {
+        throw new Error("Phiên bản không hợp lệ");
+      }
+    }
+
+    const price = variantPricing === "variant" && variant
+      ? (variant.salePrice ?? variant.price ?? item.price)
+      : item.price;
+    const variantTitle = variant ? await buildVariantTitle(ctx, variant) : undefined;
+
+    return {
+      ...item,
+      price,
+      variantTitle,
+    };
+  }));
+}
+
+async function decrementVariantStock(ctx: MutationCtx, items: OrderItemInput[]) {
+  const variantItems = items.filter((item) => item.variantId);
+  if (variantItems.length === 0) {
+    return;
+  }
+
+  const variants = await Promise.all(variantItems.map((item) => ctx.db.get(item.variantId!)));
+  await Promise.all(variantItems.map((item, index) => {
+    const variant = variants[index];
+    if (!variant || variant.stock === undefined) {
+      return null;
+    }
+    const nextStock = Math.max(0, variant.stock - item.quantity);
+    return ctx.db.patch(variant._id, { stock: nextStock });
+  }));
+}
 
 const orderDoc = v.object({
   _creationTime: v.number(),
@@ -296,7 +399,20 @@ export const create = mutation({
     shippingAddress: v.optional(v.string()),
     shippingFee: v.optional(v.number()),
   },
-  handler: async (ctx, args) => OrdersModel.create(ctx, args),
+  handler: async (ctx, args) => {
+    const { variantPricing, variantStock } = await getVariantSettings(ctx);
+    const normalizedItems = await normalizeOrderItems(ctx, args.items, variantPricing);
+    const orderId = await OrdersModel.create(ctx, {
+      ...args,
+      items: normalizedItems,
+    });
+
+    if (variantStock === "variant") {
+      await decrementVariantStock(ctx, normalizedItems);
+    }
+
+    return orderId;
+  },
   returns: v.id("orders"),
 });
 

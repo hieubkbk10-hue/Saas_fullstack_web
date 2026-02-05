@@ -40,7 +40,16 @@ const cartItemDoc = v.object({
   productName: v.string(),
   quantity: v.number(),
   subtotal: v.number(),
+  variantId: v.optional(v.id("productVariants")),
 });
+
+async function getVariantPricingSetting(ctx: MutationCtx): Promise<"product" | "variant"> {
+  const setting = await ctx.db
+    .query("moduleSettings")
+    .withIndex("by_module_setting", (q) => q.eq("moduleKey", "products").eq("settingKey", "variantPricing"))
+    .unique();
+  return (setting?.value as "product" | "variant") ?? "variant";
+}
 
 // ============ CART QUERIES ============
 
@@ -335,6 +344,7 @@ export const addItem = mutation({
     cartId: v.id("carts"),
     productId: v.id("products"),
     quantity: v.number(),
+    variantId: v.optional(v.id("productVariants")),
   },
   handler: async (ctx, args) => {
     // FIX Issue #11: Validate quantity > 0
@@ -357,8 +367,9 @@ export const addItem = mutation({
 
     const existingItem = await ctx.db
       .query("cartItems")
-      .withIndex("by_cart", (q) => q.eq("cartId", args.cartId))
-      .filter((q) => q.eq(q.field("productId"), args.productId))
+      .withIndex("by_cart_product_variant", (q) =>
+        q.eq("cartId", args.cartId).eq("productId", args.productId).eq("variantId", args.variantId)
+      )
       .first();
 
     if (existingItem) {
@@ -380,7 +391,24 @@ export const addItem = mutation({
       throw new Error(`Giỏ hàng đã đạt giới hạn ${maxItems} sản phẩm`);
     }
 
-    const price = product.salePrice ?? product.price;
+    let variant = null;
+    if (product.hasVariants) {
+      if (!args.variantId) {
+        throw new Error("Vui lòng chọn phiên bản sản phẩm");
+      }
+      variant = await ctx.db.get(args.variantId);
+      if (!variant || variant.productId !== args.productId) {
+        throw new Error("Phiên bản không hợp lệ");
+      }
+    } else if (args.variantId) {
+      throw new Error("Sản phẩm không hỗ trợ phiên bản");
+    }
+
+    const variantPricing = product.hasVariants ? await getVariantPricingSetting(ctx) : "product";
+    const basePrice = variantPricing === "variant" && variant
+      ? (variant.salePrice ?? variant.price ?? product.salePrice ?? product.price)
+      : (product.salePrice ?? product.price);
+    const price = basePrice ?? product.price;
     const itemId = await ctx.db.insert("cartItems", {
       cartId: args.cartId,
       price,
@@ -389,6 +417,7 @@ export const addItem = mutation({
       productName: product.name,
       quantity: args.quantity,
       subtotal: price * args.quantity,
+      variantId: args.variantId,
     });
 
     await recalculateCart(ctx, args.cartId);
