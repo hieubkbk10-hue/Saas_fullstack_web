@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
@@ -93,6 +94,25 @@ const HINTS = [
   'Mỗi layout có config riêng - chuyển tab để chỉnh.',
 ];
 
+function ModuleFeatureStatus({ label, enabled, href }: { label: string; enabled: boolean; href: string }) {
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="flex items-start gap-2">
+        <span className={`mt-1 inline-flex h-2 w-2 rounded-full ${enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">{label}</p>
+          <p className="text-xs text-slate-500">
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào Module Bài viết
+          </p>
+        </div>
+      </div>
+      <Link href={href} className="text-xs font-medium text-cyan-600 hover:underline">
+        Đi đến →
+      </Link>
+    </div>
+  );
+}
+
 export default function PostDetailExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const postsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'posts' });
@@ -109,6 +129,9 @@ export default function PostDetailExperiencePage() {
   const toggleFeature = useMutation(api.admin.modules.toggleModuleFeature);
   const commentsLikesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableLikes', moduleKey: 'comments' });
   const commentsRepliesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableReplies', moduleKey: 'comments' });
+  const tagsFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableTags', moduleKey: 'posts' });
+  const featuredFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableFeatured', moduleKey: 'posts' });
+  const schedulingFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableScheduling', moduleKey: 'posts' });
 
   const serverConfig = useMemo<PostDetailExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<PostDetailExperienceConfig> | undefined;
@@ -287,6 +310,21 @@ export default function PostDetailExperiencePage() {
               checked={currentLayoutConfig.showRelated} 
               onChange={(v) => updateLayoutConfig('showRelated', v)} 
               accentColor="#3b82f6" 
+            />
+            <ModuleFeatureStatus
+              label="Tags"
+              enabled={tagsFeature?.enabled ?? false}
+              href="/system/modules/posts"
+            />
+            <ModuleFeatureStatus
+              label="Nổi bật"
+              enabled={featuredFeature?.enabled ?? false}
+              href="/system/modules/posts"
+            />
+            <ModuleFeatureStatus
+              label="Hẹn giờ xuất bản"
+              enabled={schedulingFeature?.enabled ?? false}
+              href="/system/modules/posts"
             />
           </ControlCard>
           
