@@ -20,7 +20,6 @@ import {
   ControlCard,
   ToggleRow,
   SelectRow,
-  ZoomSlider,
   type DeviceType,
   type LayoutOption,
 } from '@/components/experiences/editor';
@@ -69,7 +68,6 @@ export default function PostsListExperiencePage() {
   const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
   const exampleCategorySlug = useExamplePostCategorySlug();
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
-  const [previewScale, setPreviewScale] = useState(1);
   const [isPanelExpanded, setIsPanelExpanded] = useState(true);
   
   // Read legacy layout setting
@@ -138,7 +136,6 @@ export default function PostsListExperiencePage() {
         </div>
         <div className="flex items-center gap-3">
           <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
-          <ZoomSlider value={previewScale} onChange={setPreviewScale} />
           <Button 
             size="sm"
             onClick={handleSave} 
@@ -154,7 +151,7 @@ export default function PostsListExperiencePage() {
       {/* Preview Area */}
       <main className="flex-1 overflow-auto p-4 bg-slate-50 dark:bg-slate-950">
         <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
-          <BrowserFrame url="yoursite.com/posts" maxHeight="calc(100vh - 320px)" scale={previewScale}>
+          <BrowserFrame url="yoursite.com/posts" maxHeight="calc(100vh - 320px)">
             <PostsListPreview
               layoutStyle={config.layoutStyle}
               brandColor={brandColor}
