@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
-import { CreditCard, FileText, Heart, LayoutTemplate, Loader2, Mail, Package, Save, ShoppingCart, Users } from 'lucide-react';
+import { Briefcase, CreditCard, FileText, Heart, LayoutTemplate, Loader2, Mail, Package, Save, ShoppingCart, Users } from 'lucide-react';
 import { Button, Card, Input, Label, cn } from '@/app/admin/components/ui';
 import {
   ExperienceHintCard,
@@ -35,7 +35,7 @@ const DEFAULT_CONFIG: HeaderMenuConfig = {
   cart: { show: true },
   cta: { show: true, text: 'Liên hệ' },
   login: { show: true, text: 'Đăng nhập' },
-  search: { placeholder: 'Tìm kiếm...', searchPosts: true, searchProducts: true, show: true },
+  search: { placeholder: 'Tìm kiếm...', searchPosts: true, searchProducts: true, searchServices: true, show: true },
   topbar: {
     email: 'contact@example.com',
     hotline: '1900 1234',
@@ -91,6 +91,7 @@ export default function HeaderMenuExperiencePage() {
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const productsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'products' });
   const postsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'posts' });
+  const servicesModule = useQuery(api.admin.modules.getModuleByKey, { key: 'services' });
   const customersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'customers' });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const customerLoginFeature = useQuery(api.admin.modules.getModuleFeature, { moduleKey: 'customers', featureKey: 'enableLogin' });
@@ -132,6 +133,7 @@ export default function HeaderMenuExperiencePage() {
     || wishlistModule === undefined
     || productsModule === undefined
     || postsModule === undefined
+    || servicesModule === undefined
     || customersModule === undefined
     || ordersModule === undefined
     || customerLoginFeature === undefined;
@@ -362,6 +364,13 @@ export default function HeaderMenuExperiencePage() {
                 accentColor={brandColor}
                 disabled={!postsModule?.enabled || !config.search.show}
               />
+              <ToggleRow
+                label="Search dịch vụ"
+                checked={config.search.searchServices}
+                onChange={(v) => updateSearch('searchServices', v)}
+                accentColor={brandColor}
+                disabled={!servicesModule?.enabled || !config.search.show}
+              />
             </div>
           </ControlCard>
           <ControlCard title="CTA & Brand">
@@ -501,6 +510,13 @@ export default function HeaderMenuExperiencePage() {
                 icon={FileText}
                 title="Bài viết"
                 colorScheme="purple"
+              />
+              <ExperienceModuleLink
+                enabled={servicesModule?.enabled ?? false}
+                href="/system/modules/services"
+                icon={Briefcase}
+                title="Dịch vụ"
+                colorScheme="cyan"
               />
               <ExperienceModuleLink
                 enabled={customersModule?.enabled ?? false}

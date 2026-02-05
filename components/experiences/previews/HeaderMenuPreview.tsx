@@ -16,7 +16,7 @@ export type HeaderMenuConfig = {
   cart: { show: boolean };
   cta: { show: boolean; text: string };
   login: { show: boolean; text: string };
-  search: { show: boolean; placeholder: string; searchProducts: boolean; searchPosts: boolean };
+  search: { show: boolean; placeholder: string; searchProducts: boolean; searchPosts: boolean; searchServices: boolean };
   topbar: {
     email: string;
     hotline: string;

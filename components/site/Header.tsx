@@ -8,6 +8,7 @@ import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useBrandColor, useSiteSettings } from './hooks';
+import { HeaderSearchAutocomplete } from './HeaderSearchAutocomplete';
 import { ChevronDown, ChevronRight, Heart, LogOut, Mail, Package, Phone, Search, User } from 'lucide-react';
 import { CartIcon } from './CartIcon';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
@@ -43,6 +44,7 @@ interface SearchConfig {
   placeholder?: string;
   searchProducts?: boolean;
   searchPosts?: boolean;
+  searchServices?: boolean;
 }
 
 interface HeaderConfig {
@@ -68,7 +70,7 @@ const DEFAULT_CONFIG: HeaderConfig = {
   cart: { show: true },
   cta: { show: true, text: 'Liên hệ' },
   login: { show: true, text: 'Đăng nhập' },
-  search: { placeholder: 'Tìm kiếm...', searchPosts: true, searchProducts: true, show: true },
+  search: { placeholder: 'Tìm kiếm...', searchPosts: true, searchProducts: true, searchServices: true, show: true },
   topbar: {
     email: 'contact@example.com',
     hotline: '1900 1234',
@@ -104,6 +106,9 @@ export function Header() {
   const contactSettings = useQuery(api.settings.listByGroup, { group: 'contact' });
   const customersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'customers' });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
+  const productsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'products' });
+  const postsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'posts' });
+  const servicesModule = useQuery(api.admin.modules.getModuleByKey, { key: 'services' });
   const customerLoginFeature = useQuery(api.admin.modules.getModuleFeature, { moduleKey: 'customers', featureKey: 'enableLogin' });
   const router = useRouter();
   const { customer, isAuthenticated, logout } = useCustomerAuth();
@@ -145,6 +150,10 @@ export function Header() {
   const showLoginLink = showLogin && !isAuthenticated;
   const canTrackOrder = ordersModule?.enabled ?? false;
   const showTrackOrder = Boolean(topbarConfig.showTrackOrder && canTrackOrder);
+  const canSearchProducts = Boolean(config.search?.searchProducts && (productsModule?.enabled ?? false));
+  const canSearchPosts = Boolean(config.search?.searchPosts && (postsModule?.enabled ?? false));
+  const canSearchServices = Boolean(config.search?.searchServices && (servicesModule?.enabled ?? false));
+  const showSearch = Boolean(config.search?.show && (canSearchProducts || canSearchPosts || canSearchServices));
   
   const displayName = (config.brandName ?? siteName) ?? 'YourBrand';
   
@@ -488,16 +497,18 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-3">
-            {config.search?.show && (
-              <div className="hidden lg:block relative">
-                <input
-                  type="text"
-                  placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
-                  className="w-48 pl-4 pr-10 py-2 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none text-slate-700 dark:text-slate-300"
+            {showSearch && (
+              <div className="hidden lg:block">
+                <HeaderSearchAutocomplete
+                  placeholder={config.search?.placeholder}
+                  searchProducts={canSearchProducts}
+                  searchPosts={canSearchPosts}
+                  searchServices={canSearchServices}
+                  brandColor={brandColor}
+                  className="w-48"
+                  inputClassName="w-full pl-4 pr-10 py-2 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none text-slate-700 dark:text-slate-300"
+                  buttonClassName="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-white"
                 />
-                <button className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-white" style={{ backgroundColor: brandColor }}>
-                  <Search size={14} />
-                </button>
               </div>
             )}
             {config.cart?.show && (
@@ -513,7 +524,7 @@ export function Header() {
               </Link>
             )}
             <div className="flex items-center gap-1 lg:hidden">
-              {config.search?.show && (
+              {showSearch && (
                 <button className="p-2 text-slate-600 dark:text-slate-400">
                   <Search size={20} />
                 </button>
@@ -642,21 +653,18 @@ export function Header() {
             </Link>
 
             {/* Search Bar */}
-            {config.search?.show && (
+            {showSearch && (
               <div className="hidden md:block flex-1 max-w-md">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
-                    className="w-full pl-4 pr-10 py-2 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none text-slate-700 dark:text-slate-300"
-                  />
-                  <button 
-                    className="absolute right-1 top-1/2 -translate-y-1/2 p-2 rounded-full text-white" 
-                    style={{ backgroundColor: brandColor }}
-                  >
-                    <Search size={14} />
-                  </button>
-                </div>
+                <HeaderSearchAutocomplete
+                  placeholder={config.search?.placeholder}
+                  searchProducts={canSearchProducts}
+                  searchPosts={canSearchPosts}
+                  searchServices={canSearchServices}
+                  brandColor={brandColor}
+                  className="w-full"
+                  inputClassName="w-full pl-4 pr-10 py-2 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none text-slate-700 dark:text-slate-300"
+                  buttonClassName="absolute right-1 top-1/2 -translate-y-1/2 p-2 rounded-full text-white"
+                />
               </div>
             )}
 
@@ -664,7 +672,7 @@ export function Header() {
             <div className="flex items-center gap-2">
               {/* Mobile: Search + Cart */}
               <div className="flex lg:hidden items-center gap-1">
-                {config.search?.show && (
+                {showSearch && (
                   <button className="p-2 text-slate-600 dark:text-slate-400">
                     <Search size={20} />
                   </button>
@@ -921,13 +929,19 @@ export function Header() {
                     {config.cta.text ?? 'Liên hệ'}
                   </Link>
                 )}
-                {config.search?.show && (
+                {showSearch && (
                   <div className="flex items-center gap-2">
                     <div className={cn('overflow-hidden transition-all duration-200', searchOpen ? 'w-48' : 'w-0')}>
-                      <input
-                        type="text"
-                        placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
-                        className={cn(
+                      <HeaderSearchAutocomplete
+                        placeholder={config.search?.placeholder}
+                        searchProducts={canSearchProducts}
+                        searchPosts={canSearchPosts}
+                        searchServices={canSearchServices}
+                        brandColor={brandColor}
+                        showButton={false}
+                        disabled={!searchOpen}
+                        className={cn('w-48 transition-opacity', searchOpen ? 'opacity-100' : 'opacity-0')}
+                        inputClassName={cn(
                           'w-48 px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 focus:outline-none transition-opacity',
                           searchOpen ? 'opacity-100' : 'opacity-0'
                         )}
@@ -952,7 +966,7 @@ export function Header() {
                 )}
               </div>
               <div className="flex items-center gap-1 lg:hidden">
-                {config.search?.show && (
+                {showSearch && (
                   <button
                     onClick={() => { setSearchOpen((prev) => !prev); }}
                     className="p-2 text-slate-600 dark:text-slate-400"
@@ -969,12 +983,17 @@ export function Header() {
           </div>
         </div>
 
-        {config.search?.show && searchOpen && (
+        {showSearch && searchOpen && (
           <div className="lg:hidden px-4 pb-4">
-            <input
-              type="text"
-              placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
-              className="w-full px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
+            <HeaderSearchAutocomplete
+              placeholder={config.search?.placeholder}
+              searchProducts={canSearchProducts}
+              searchPosts={canSearchPosts}
+              searchServices={canSearchServices}
+              brandColor={brandColor}
+              showButton={false}
+              className="w-full"
+              inputClassName="w-full px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
             />
           </div>
         )}

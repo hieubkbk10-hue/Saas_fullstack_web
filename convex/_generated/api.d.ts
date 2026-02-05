@@ -42,6 +42,7 @@ import type * as productVariants from "../productVariants.js";
 import type * as products from "../products.js";
 import type * as promotions from "../promotions.js";
 import type * as roles from "../roles.js";
+import type * as search from "../search.js";
 import type * as seed from "../seed.js";
 import type * as seedManager from "../seedManager.js";
 import type * as seeders_base from "../seeders/base.js";
@@ -97,6 +98,7 @@ declare const fullApi: ApiFromModules<{
   products: typeof products;
   promotions: typeof promotions;
   roles: typeof roles;
+  search: typeof search;
   seed: typeof seed;
   seedManager: typeof seedManager;
   "seeders/base": typeof seeders_base;
