@@ -4,8 +4,8 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { LayoutTemplate, Loader2, MessageSquare, Save } from 'lucide-react';
-import { Button, Card } from '@/app/admin/components/ui';
+import { Eye, LayoutTemplate, Loader2, MessageSquare, Save } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
   ExperienceHintCard,
@@ -15,7 +15,6 @@ import {
   BrowserFrame,
   DeviceToggle,
   deviceWidths,
-  ConfigPanel,
   ControlCard,
   ToggleRow,
   SelectRow,
@@ -89,7 +88,6 @@ export default function CommentsRatingExperiencePage() {
   const repliesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableReplies', moduleKey: 'comments' });
   const moderationFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableModeration', moduleKey: 'comments' });
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
-  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
 
   const serverConfig = useMemo<CommentsRatingExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<CommentsRatingExperienceConfig> | undefined;
@@ -120,51 +118,33 @@ export default function CommentsRatingExperiencePage() {
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col">
-      {/* Compact Header - 48px */}
-      <header className="h-12 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-2">
-          <LayoutTemplate className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-          <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">Bình luận & Đánh giá</span>
+    <div className="max-w-7xl mx-auto space-y-6 pb-20">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <LayoutTemplate className="w-5 h-5 text-purple-600" />
+            <h1 className="text-2xl font-bold">Bình luận & Đánh giá</h1>
+          </div>
+          <Link href="/system/experiences" className="text-sm text-blue-600 hover:underline">
+            Quay lại danh sách
+          </Link>
         </div>
-        <div className="flex items-center gap-3">
-          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={!hasChanges || isSaving}
-            className="bg-purple-600 hover:bg-purple-500 gap-1.5"
-          >
-            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
-          </Button>
-        </div>
-      </header>
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={!hasChanges || isSaving}
+          className="bg-purple-600 hover:bg-purple-500 gap-1.5"
+        >
+          {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
+        </Button>
+      </div>
 
-      {/* Preview Area */}
-      <main className="flex-1 overflow-auto p-4 bg-slate-50 dark:bg-slate-950">
-        <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
-          <BrowserFrame url="yoursite.com/products/example#comments" maxHeight="calc(100vh - 320px)">
-            <CommentsRatingPreview
-              ratingDisplayStyle={config.ratingDisplayStyle}
-              commentsSortOrder={config.commentsSortOrder}
-              showLikes={config.showLikes && (likesFeature?.enabled ?? true)}
-              showReplies={config.showReplies && (repliesFeature?.enabled ?? true)}
-              showModeration={config.showModeration && (moderationFeature?.enabled ?? true)}
-              device={previewDevice}
-              brandColor="#a855f7"
-            />
-          </BrowserFrame>
-        </div>
-      </main>
-
-      {/* Bottom Panel */}
-      <ConfigPanel
-        isExpanded={isPanelExpanded}
-        onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
-        expandedHeight="220px"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Thiết lập hiển thị</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ControlCard title="Hiển thị">
             <SelectRow
               label="Kiểu rating"
@@ -217,8 +197,37 @@ export default function CommentsRatingExperiencePage() {
           <Card className="p-2">
             <ExperienceHintCard hints={HINTS} />
           </Card>
-        </div>
-      </ConfigPanel>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Eye size={18} /> Preview
+            </CardTitle>
+            <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
+            <BrowserFrame url="yoursite.com/products/example#comments">
+              <CommentsRatingPreview
+                ratingDisplayStyle={config.ratingDisplayStyle}
+                commentsSortOrder={config.commentsSortOrder}
+                showLikes={config.showLikes && (likesFeature?.enabled ?? true)}
+                showReplies={config.showReplies && (repliesFeature?.enabled ?? true)}
+                showModeration={config.showModeration && (moderationFeature?.enabled ?? true)}
+                device={previewDevice}
+                brandColor="#a855f7"
+              />
+            </BrowserFrame>
+          </div>
+          <div className="mt-3 text-xs text-slate-500">
+            {'Thiết bị: '}{previewDevice === 'desktop' && 'Desktop (1920px)'}{previewDevice === 'tablet' && 'Tablet (768px)'}{previewDevice === 'mobile' && 'Mobile (375px)'}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

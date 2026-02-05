@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { LayoutTemplate, Loader2, Mail, Save } from 'lucide-react';
-import { Button, Card } from '@/app/admin/components/ui';
+import { Eye, LayoutTemplate, Loader2, Mail, Save } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
   ExperienceHintCard,
@@ -15,7 +16,6 @@ import {
   DeviceToggle,
   deviceWidths,
   LayoutTabs,
-  ConfigPanel,
   ControlCard,
   ToggleRow,
   type DeviceType,
@@ -73,7 +73,6 @@ const HINTS = [
 export default function ContactExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
-  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
 
   const serverConfig = useMemo<ContactExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<ContactExperienceConfig> | undefined;
@@ -123,58 +122,33 @@ export default function ContactExperiencePage() {
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col">
-      {/* Compact Header - 48px */}
-      <header className="h-12 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-2">
-          <LayoutTemplate className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-          <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">Trang liên hệ</span>
+    <div className="max-w-7xl mx-auto space-y-6 pb-20">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <LayoutTemplate className="w-5 h-5 text-indigo-600" />
+            <h1 className="text-2xl font-bold">Trang liên hệ</h1>
+          </div>
+          <Link href="/system/experiences" className="text-sm text-blue-600 hover:underline">
+            Quay lại danh sách
+          </Link>
         </div>
-        <div className="flex items-center gap-3">
-          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={!hasChanges || isSaving}
-            className="bg-indigo-600 hover:bg-indigo-500 gap-1.5"
-          >
-            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
-          </Button>
-        </div>
-      </header>
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={!hasChanges || isSaving}
+          className="bg-indigo-600 hover:bg-indigo-500 gap-1.5"
+        >
+          {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
+        </Button>
+      </div>
 
-      {/* Preview Area */}
-      <main className="flex-1 overflow-auto p-4 bg-slate-50 dark:bg-slate-950">
-        <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
-          <BrowserFrame url="yoursite.com/contact" maxHeight="calc(100vh - 320px)">
-            <ContactPreview
-              layoutStyle={config.layoutStyle}
-              showMap={currentLayoutConfig.showMap}
-              showContactInfo={currentLayoutConfig.showContactInfo}
-              showSocialLinks={currentLayoutConfig.showSocialLinks}
-              device={previewDevice}
-              brandColor="#6366f1"
-            />
-          </BrowserFrame>
-        </div>
-      </main>
-
-      {/* Bottom Panel */}
-      <ConfigPanel
-        isExpanded={isPanelExpanded}
-        onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
-        expandedHeight="220px"
-        leftContent={
-          <LayoutTabs
-            layouts={LAYOUT_STYLES}
-            activeLayout={config.layoutStyle}
-            onChange={(layout) => setConfig(prev => ({ ...prev, layoutStyle: layout }))}
-            accentColor="#6366f1"
-          />
-        }
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Thiết lập hiển thị</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ControlCard title="Khối hiển thị">
             <ToggleRow label="Bản đồ (Map)" checked={currentLayoutConfig.showMap} onChange={(v) => updateLayoutConfig('showMap', v)} accentColor="#6366f1" />
             <ToggleRow label="Thông tin liên hệ" checked={currentLayoutConfig.showContactInfo} onChange={(v) => updateLayoutConfig('showContactInfo', v)} accentColor="#6366f1" />
@@ -191,11 +165,48 @@ export default function ContactExperiencePage() {
             />
           </ControlCard>
 
-          <Card className="p-2 lg:col-span-2">
+          <Card className="p-2">
             <ExperienceHintCard hints={HINTS} />
           </Card>
-        </div>
-      </ConfigPanel>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Eye size={18} /> Preview
+            </CardTitle>
+            <div className="flex items-center gap-3">
+              <LayoutTabs
+                layouts={LAYOUT_STYLES}
+                activeLayout={config.layoutStyle}
+                onChange={(layout) => setConfig(prev => ({ ...prev, layoutStyle: layout }))}
+                accentColor="#6366f1"
+              />
+              <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
+            <BrowserFrame url="yoursite.com/contact">
+              <ContactPreview
+                layoutStyle={config.layoutStyle}
+                showMap={currentLayoutConfig.showMap}
+                showContactInfo={currentLayoutConfig.showContactInfo}
+                showSocialLinks={currentLayoutConfig.showSocialLinks}
+                device={previewDevice}
+                brandColor="#6366f1"
+              />
+            </BrowserFrame>
+          </div>
+          <div className="mt-3 text-xs text-slate-500">
+            Style: <strong className="text-slate-700 dark:text-slate-300">{LAYOUT_STYLES.find(s => s.id === config.layoutStyle)?.label}</strong>
+            {' • '}{previewDevice === 'desktop' && 'Desktop (1920px)'}{previewDevice === 'tablet' && 'Tablet (768px)'}{previewDevice === 'mobile' && 'Mobile (375px)'}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
