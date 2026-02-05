@@ -40,6 +40,7 @@ const seedConfigValidator = v.object({
   locale: v.optional(v.string()),
   module: v.string(),
   quantity: v.number(),
+  variantPresetKey: v.optional(v.string()),
 });
 
 const seedProgressValidator = v.object({
@@ -76,6 +77,7 @@ export const seedModule = mutation({
     locale: v.optional(v.string()),
     module: v.string(),
     quantity: v.number(),
+    variantPresetKey: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<SeedResult> => {
     const startTime = Date.now();
@@ -118,6 +120,7 @@ export const seedModule = mutation({
         force: args.force,
         locale: args.locale || 'vi',
         quantity: args.quantity,
+        variantPresetKey: args.variantPresetKey,
       });
       
       console.log(`[SeedManager] ✅ Completed seed for ${args.module}: ${result.created} records in ${result.duration}ms`);
@@ -203,6 +206,7 @@ export const seedBulk = mutation({
             force: config.force,
             locale: config.locale || 'vi',
             quantity: config.quantity,
+            variantPresetKey: config.variantPresetKey,
           });
           
           results.push(result);

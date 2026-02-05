@@ -24,6 +24,7 @@ export interface SeedConfig {
   locale?: string;           // Faker locale (vi, en, etc.)
   dependencies?: boolean;    // Auto-seed dependencies (default: true)
   onProgress?: (current: number, total: number) => void; // Progress callback
+  variantPresetKey?: string; // Optional preset key for product variants
 }
 
 export interface SeedResult {

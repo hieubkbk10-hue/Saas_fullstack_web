@@ -6,6 +6,7 @@
 
 import { BaseSeeder, type SeedConfig, type SeedDependency } from './base';
 import { createVietnameseFaker } from './fakerVi';
+import { seedProductVariants } from './variants.seeder';
 import type { Doc, DataModel } from '../_generated/dataModel';
 import type { GenericMutationCtx } from 'convex/server';
 
@@ -82,8 +83,21 @@ export class ProductSeeder extends BaseSeeder<ProductData> {
   
   protected async afterSeed(count: number): Promise<void> {
     void count;
-    // Update product stats
+    const variantEnabled = await this.isVariantEnabled();
+    if (variantEnabled) {
+      await seedProductVariants(this.ctx, { presetKey: this.config.variantPresetKey });
+    }
+
     await this.updateStats();
+  }
+
+  private async isVariantEnabled(): Promise<boolean> {
+    const setting = await this.ctx.db
+      .query('moduleSettings')
+      .withIndex('by_module_setting', (q) => q.eq('moduleKey', 'products').eq('settingKey', 'variantEnabled'))
+      .unique();
+
+    return setting?.value === true;
   }
   
   private async updateStats(): Promise<void> {

@@ -3,6 +3,8 @@
  */
 
 export { ProductSeeder } from './products.seeder';
+export { seedProductVariants } from './variants.seeder';
+export { seedVariantPresetOptions } from './variantPresets.seeder';
 export { seedPresetProductOptions, PRESET_PRODUCT_OPTIONS } from './productOptions.seeder';
 export { ProductCategorySeeder } from './productCategories.seeder';
 export { PostSeeder } from './posts.seeder';

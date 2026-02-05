@@ -6,8 +6,8 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { useMutation } from 'convex/react';
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
 import { 
@@ -16,6 +16,12 @@ import {
   Info,
   Loader2,
 } from 'lucide-react';
+import {
+  DEFAULT_VARIANT_PRESET_KEY,
+  VARIANT_PRESET_LIST,
+  getSuggestedVariantPresetKey,
+} from '@/lib/modules/variant-presets';
+import { VariantPresetPicker } from './VariantPresetPicker';
 import {
   Badge,
   Button,
@@ -77,8 +83,22 @@ export function CustomSeedDialog({
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [isSeeding, setIsSeeding] = useState(false);
   const [force, setForce] = useState(false);
+  const [variantPresetKey, setVariantPresetKey] = useState(DEFAULT_VARIANT_PRESET_KEY);
 
   const seedBulk = useMutation(api.seedManager.seedBulk);
+  const variantSetting = useQuery(api.admin.modules.getModuleSetting, {
+    moduleKey: 'products',
+    settingKey: 'variantEnabled',
+  });
+  const productOptions = useQuery(api.productOptions.listAll, { limit: 1 });
+  const productCategories = useQuery(api.productCategories.listActive);
+
+  const variantEnabled = variantSetting?.value === true;
+  const hasProductOptions = (productOptions?.length ?? 0) > 0;
+  const suggestedPresetKey = useMemo(
+    () => getSuggestedVariantPresetKey((productCategories ?? []).map((category) => category.name)),
+    [productCategories]
+  );
 
   // Initialize quantities when dialog opens
   React.useEffect(() => {
@@ -92,6 +112,12 @@ export function CustomSeedDialog({
       setQuantities(initialQty);
     }
   }, [open, quantities]);
+
+  React.useEffect(() => {
+    if (open) {
+      setVariantPresetKey(suggestedPresetKey || DEFAULT_VARIANT_PRESET_KEY);
+    }
+  }, [open, suggestedPresetKey]);
 
   const handleToggleModule = (moduleKey: string, checked: boolean) => {
     setSelectedModules(prev => {
@@ -134,6 +160,7 @@ export function CustomSeedDialog({
         force,
         module,
         quantity: quantities[module] || 10,
+        variantPresetKey: module === 'products' && variantEnabled ? variantPresetKey : undefined,
       }));
 
       const toastId = toast.loading(`Đang seed ${configs.length} modules...`);
@@ -166,6 +193,8 @@ export function CustomSeedDialog({
     (sum, key) => sum + (quantities[key] || 0),
     0
   );
+  const isProductsSelected = selectedModules.has('products');
+  const showVariantPicker = variantEnabled && isProductsSelected;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -234,7 +263,14 @@ export function CustomSeedDialog({
                           htmlFor={module.key}
                           className="flex-1 cursor-pointer"
                         >
-                          {module.name}
+                          <span className="flex items-center gap-2">
+                            {module.name}
+                            {module.key === 'products' && variantEnabled && (
+                              <Badge variant="secondary" className="text-[10px]">
+                                +Variants
+                              </Badge>
+                            )}
+                          </span>
                         </Label>
                         
                         <Input
@@ -255,6 +291,31 @@ export function CustomSeedDialog({
                     );
                   })}
                 </div>
+
+                {group.category === 'commerce' && showVariantPicker && (
+                  <div className="mt-4 space-y-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+                    <div className="space-y-1">
+                      <h5 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        Preset phiên bản sản phẩm
+                      </h5>
+                      <p className="text-xs text-slate-500">
+                        Hệ thống sẽ tự seed options + variants theo preset đã chọn.
+                      </p>
+                    </div>
+                    <VariantPresetPicker
+                      presets={VARIANT_PRESET_LIST}
+                      selectedKey={variantPresetKey}
+                      suggestedKey={suggestedPresetKey}
+                      onSelect={setVariantPresetKey}
+                    />
+                    {!hasProductOptions && (
+                      <div className="flex gap-2 text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-2">
+                        <Info className="w-4 h-4 mt-0.5" />
+                        <span>Chưa có option phiên bản. Hệ thống sẽ tự tạo options và values theo preset.</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
 
