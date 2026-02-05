@@ -280,6 +280,8 @@ export default defineSchema({
     sales: v.number(),
     description: v.optional(v.string()),
     order: v.number(),
+    hasVariants: v.optional(v.boolean()),
+    optionIds: v.optional(v.array(v.id("productOptions"))),
     // SEO fields
     metaTitle: v.optional(v.string()),
     metaDescription: v.optional(v.string()),
@@ -293,7 +295,78 @@ export default defineSchema({
     .index("by_status_order", ["status", "order"])
     .searchIndex("search_name", { filterFields: ["status", "categoryId"], searchField: "name" }),
 
-  // 10a. productStats - Counter table cho product statistics (tránh full scan)
+  // 10a. productOptions - Loại option cho variants
+  productOptions: defineTable({
+    active: v.boolean(),
+    compareUnit: v.optional(v.string()),
+    displayType: v.union(
+      v.literal("dropdown"),
+      v.literal("buttons"),
+      v.literal("radio"),
+      v.literal("color_swatch"),
+      v.literal("image_swatch"),
+      v.literal("color_picker"),
+      v.literal("number_input"),
+      v.literal("text_input")
+    ),
+    inputType: v.optional(
+      v.union(v.literal("text"), v.literal("number"), v.literal("color"))
+    ),
+    isPreset: v.boolean(),
+    name: v.string(),
+    order: v.number(),
+    showPriceCompare: v.optional(v.boolean()),
+    slug: v.string(),
+    unit: v.optional(v.string()),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_active", ["active"])
+    .index("by_active_order", ["active", "order"]),
+
+  // 10b. productOptionValues - Giá trị của option
+  productOptionValues: defineTable({
+    active: v.boolean(),
+    badge: v.optional(v.string()),
+    colorCode: v.optional(v.string()),
+    image: v.optional(v.string()),
+    isLifetime: v.optional(v.boolean()),
+    label: v.optional(v.string()),
+    numericValue: v.optional(v.number()),
+    optionId: v.id("productOptions"),
+    order: v.number(),
+    value: v.string(),
+  })
+    .index("by_option", ["optionId"])
+    .index("by_option_active", ["optionId", "active"])
+    .index("by_option_order", ["optionId", "order"]),
+
+  // 10c. productVariants - Biến thể sản phẩm
+  productVariants: defineTable({
+    allowBackorder: v.optional(v.boolean()),
+    barcode: v.optional(v.string()),
+    image: v.optional(v.string()),
+    images: v.optional(v.array(v.string())),
+    optionValues: v.array(
+      v.object({
+        customValue: v.optional(v.string()),
+        optionId: v.id("productOptions"),
+        valueId: v.id("productOptionValues"),
+      })
+    ),
+    order: v.number(),
+    price: v.optional(v.number()),
+    productId: v.id("products"),
+    salePrice: v.optional(v.number()),
+    sku: v.string(),
+    status: v.union(v.literal("Active"), v.literal("Inactive")),
+    stock: v.optional(v.number()),
+  })
+    .index("by_sku", ["sku"])
+    .index("by_product", ["productId"])
+    .index("by_product_status", ["productId", "status"])
+    .index("by_product_order", ["productId", "order"]),
+
+  // 10d. productStats - Counter table cho product statistics (tránh full scan)
   productStats: defineTable({
     key: v.string(), // "total", "Active", "Draft", "Archived"
     count: v.number(),
