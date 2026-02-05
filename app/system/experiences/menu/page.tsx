@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
-import { Briefcase, CreditCard, FileText, Heart, LayoutTemplate, Loader2, Mail, Package, Save, ShoppingCart, Users } from 'lucide-react';
-import { Button, Card, Input, Label, cn } from '@/app/admin/components/ui';
+import { Briefcase, CreditCard, Eye, FileText, Heart, LayoutTemplate, Loader2, Mail, Package, Save, ShoppingCart, Users } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, cn } from '@/app/admin/components/ui';
 import {
   ExperienceHintCard,
   ExperienceModuleLink,
@@ -14,7 +14,6 @@ import {
 } from '@/components/experiences';
 import {
   BrowserFrame,
-  ConfigPanel,
   ControlCard,
   DeviceToggle,
   deviceWidths,
@@ -99,7 +98,6 @@ export default function HeaderMenuExperiencePage() {
   const setMultipleSettings = useMutation(api.settings.setMultiple);
 
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
-  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
   const [previewStyle, setPreviewStyle] = useState<HeaderLayoutStyle>('classic');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -227,60 +225,34 @@ export default function HeaderMenuExperiencePage() {
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col">
-      <header className="h-12 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-2">
-          <LayoutTemplate className="w-4 h-4" style={{ color: brandColor }} />
-          <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">Header Menu</span>
+    <div className="max-w-7xl mx-auto space-y-6 pb-20">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <LayoutTemplate className="w-5 h-5" style={{ color: brandColor }} />
+            <h1 className="text-2xl font-bold">Header Menu</h1>
+          </div>
+          <Link href="/system/experiences" className="text-sm text-blue-600 hover:underline">
+            Quay lại danh sách
+          </Link>
         </div>
-        <div className="flex items-center gap-3">
-          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={(!hasChanges && !hasStyleChanges) || isSaving}
-            className="gap-1.5"
-            style={{ backgroundColor: brandColor }}
-          >
-            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            <span>{hasChanges || hasStyleChanges ? 'Lưu' : 'Đã lưu'}</span>
-          </Button>
-        </div>
-      </header>
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={(!hasChanges && !hasStyleChanges) || isSaving}
+          className="gap-1.5"
+          style={{ backgroundColor: brandColor }}
+        >
+          {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          <span>{hasChanges || hasStyleChanges ? 'Lưu' : 'Đã lưu'}</span>
+        </Button>
+      </div>
 
-      <main className="flex-1 overflow-auto p-4 bg-slate-50 dark:bg-slate-950">
-        <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
-          <BrowserFrame url="yoursite.com" maxHeight="calc(100vh - 320px)">
-            <HeaderMenuPreview
-              brandColor={brandColor}
-              config={config}
-              device={previewDevice}
-              layoutStyle={previewStyle}
-              menuItems={menuItems}
-              settingsEmail={settingsEmail}
-              settingsPhone={settingsPhone}
-              customersEnabled={customersModule?.enabled ?? false}
-              loginFeatureEnabled={customerLoginFeature?.enabled ?? false}
-              ordersEnabled={ordersModule?.enabled ?? false}
-            />
-          </BrowserFrame>
-        </div>
-      </main>
-
-      <ConfigPanel
-        isExpanded={isPanelExpanded}
-        onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
-        expandedHeight="220px"
-        leftContent={
-          <LayoutTabs
-            layouts={LAYOUT_STYLES}
-            activeLayout={previewStyle}
-            onChange={setPreviewStyle}
-            accentColor={brandColor}
-          />
-        }
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Thiết lập hiển thị</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <ControlCard title="Hiển thị">
             <ToggleRow
               label="Topbar"
@@ -489,9 +461,14 @@ export default function HeaderMenuExperiencePage() {
             </div>
             <ExperienceHintCard hints={HINTS} />
           </Card>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="mt-3">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Module & Experience liên quan</CardTitle>
+        </CardHeader>
+        <CardContent>
           <ControlCard title="Module & Experience liên quan">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
               <ExperienceModuleLink
@@ -552,8 +529,14 @@ export default function HeaderMenuExperiencePage() {
               />
             </div>
           </ControlCard>
-        </div>
-        <div className="mt-3">
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Trạng thái đăng nhập</CardTitle>
+        </CardHeader>
+        <CardContent>
           <ControlCard title="Trạng thái đăng nhập">
             <ModuleFeatureStatus
               label="Module Khách hàng"
@@ -574,8 +557,49 @@ export default function HeaderMenuExperiencePage() {
               moduleName="Module Đơn hàng"
             />
           </ControlCard>
-        </div>
-      </ConfigPanel>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Eye size={18} /> Preview
+            </CardTitle>
+            <div className="flex items-center gap-3">
+              <LayoutTabs
+                layouts={LAYOUT_STYLES}
+                activeLayout={previewStyle}
+                onChange={setPreviewStyle}
+                accentColor={brandColor}
+              />
+              <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
+            <BrowserFrame url="yoursite.com">
+              <HeaderMenuPreview
+                brandColor={brandColor}
+                config={config}
+                device={previewDevice}
+                layoutStyle={previewStyle}
+                menuItems={menuItems}
+                settingsEmail={settingsEmail}
+                settingsPhone={settingsPhone}
+                customersEnabled={customersModule?.enabled ?? false}
+                loginFeatureEnabled={customerLoginFeature?.enabled ?? false}
+                ordersEnabled={ordersModule?.enabled ?? false}
+              />
+            </BrowserFrame>
+          </div>
+          <div className="mt-3 text-xs text-slate-500">
+            Style: <strong className="text-slate-700 dark:text-slate-300">{LAYOUT_STYLES.find(s => s.id === previewStyle)?.label}</strong>
+            {' • '}{previewDevice === 'desktop' && 'Desktop (1920px)'}{previewDevice === 'tablet' && 'Tablet (768px)'}{previewDevice === 'mobile' && 'Mobile (375px)'}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
