@@ -81,7 +81,7 @@ const DEFAULT_CONFIG: HeaderConfig = {
 const DEFAULT_LINKS = {
   cart: '/cart',
   wishlist: '/wishlist',
-  login: '/login',
+  login: '/account/login',
   cta: '/contact',
   trackOrder: '/orders/tracking',
   storeSystem: '/stores',

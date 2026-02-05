@@ -69,7 +69,7 @@ export function HeaderMenuPreview({
   const defaultLinks = useMemo(() => ({
     cart: '/cart',
     wishlist: '/wishlist',
-    login: '/login',
+    login: '/account/login',
     cta: '/contact',
     trackOrder: '/orders/tracking',
     storeSystem: '/stores',
