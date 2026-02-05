@@ -4,8 +4,8 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { Heart, LayoutTemplate, Loader2, Package, Save, ShoppingCart, Tag } from 'lucide-react';
-import { Button, Card } from '@/app/admin/components/ui';
+import { Eye, Heart, LayoutTemplate, Loader2, Package, Save, ShoppingCart, Tag } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
 import { 
   ExperienceModuleLink, 
   ExperienceHintCard,
@@ -17,7 +17,6 @@ import {
   DeviceToggle,
   deviceWidths,
   LayoutTabs,
-  ConfigPanel,
   ControlCard,
   ToggleRow,
   SelectRow,
@@ -116,7 +115,6 @@ export default function ProductsListExperiencePage() {
   const variantsSetting = useQuery(api.admin.modules.getModuleSetting, { moduleKey: 'products', settingKey: 'variantEnabled' });
   const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
-  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
 
   const serverConfig = useMemo<ProductsListExperienceConfig>(() => {
     const raw = experienceSetting?.value as {
@@ -198,62 +196,33 @@ export default function ProductsListExperiencePage() {
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col">
-      {/* Compact Header - 48px */}
-      <header className="h-12 px-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-        <div className="flex items-center gap-2">
-          <LayoutTemplate className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">Danh sách sản phẩm</span>
+    <div className="max-w-7xl mx-auto space-y-6 pb-20">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <LayoutTemplate className="w-5 h-5 text-emerald-600" />
+            <h1 className="text-2xl font-bold">Danh sách sản phẩm</h1>
+          </div>
+          <Link href="/system/experiences" className="text-sm text-blue-600 hover:underline">
+            Quay lại danh sách
+          </Link>
         </div>
-        <div className="flex items-center gap-3">
-          <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={!hasChanges || isSaving}
-            className="bg-emerald-600 hover:bg-emerald-500 gap-1.5"
-          >
-            {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
-          </Button>
-        </div>
-      </header>
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={!hasChanges || isSaving}
+          className="bg-emerald-600 hover:bg-emerald-500 gap-1.5"
+        >
+          {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
+        </Button>
+      </div>
 
-      {/* Preview Area */}
-      <main className="flex-1 overflow-auto p-4 bg-slate-50 dark:bg-slate-950">
-        <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
-          <BrowserFrame url="yoursite.com/products" maxHeight="calc(100vh - 320px)">
-            <ProductsListPreview
-              layoutStyle={config.layoutStyle}
-              paginationType={currentLayoutConfig.paginationType}
-              showSearch={currentLayoutConfig.showSearch}
-              showCategories={currentLayoutConfig.showCategories}
-              brandColor={brandColor}
-              device={previewDevice}
-              showWishlistButton={config.showWishlistButton && (wishlistModule?.enabled ?? false)}
-              showAddToCartButton={config.showAddToCartButton && (cartModule?.enabled ?? false) && (ordersModule?.enabled ?? false)}
-              showBuyNowButton={config.showBuyNowButton && (ordersModule?.enabled ?? false)}
-              showPromotionBadge={config.showPromotionBadge && (promotionsModule?.enabled ?? false)}
-            />
-          </BrowserFrame>
-        </div>
-      </main>
-
-      {/* Bottom Panel */}
-      <ConfigPanel
-        isExpanded={isPanelExpanded}
-        onToggle={() => setIsPanelExpanded(!isPanelExpanded)}
-        expandedHeight="220px"
-        leftContent={
-          <LayoutTabs
-            layouts={LAYOUT_STYLES}
-            activeLayout={config.layoutStyle}
-            onChange={(layout) => setConfig(prev => ({ ...prev, layoutStyle: layout }))}
-            accentColor="#10b981"
-          />
-        }
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Thiết lập hiển thị</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ControlCard title="Khối hiển thị">
             <ToggleRow
               label="Tìm kiếm"
@@ -337,7 +306,14 @@ export default function ProductsListExperiencePage() {
               disabled={!promotionsModule?.enabled}
             />
           </ControlCard>
+        </CardContent>
+      </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Module & liên kết</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ControlCard title="Module liên quan">
             <ExperienceModuleLink
               enabled={productsModule?.enabled ?? false}
@@ -416,8 +392,49 @@ export default function ProductsListExperiencePage() {
             </div>
             <ExperienceHintCard hints={HINTS} />
           </Card>
-        </div>
-      </ConfigPanel>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Eye size={18} /> Preview
+            </CardTitle>
+            <div className="flex items-center gap-3">
+              <LayoutTabs
+                layouts={LAYOUT_STYLES}
+                activeLayout={config.layoutStyle}
+                onChange={(layout) => setConfig(prev => ({ ...prev, layoutStyle: layout }))}
+                accentColor="#10b981"
+              />
+              <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
+            <BrowserFrame url="yoursite.com/products">
+              <ProductsListPreview
+                layoutStyle={config.layoutStyle}
+                paginationType={currentLayoutConfig.paginationType}
+                showSearch={currentLayoutConfig.showSearch}
+                showCategories={currentLayoutConfig.showCategories}
+                brandColor={brandColor}
+                device={previewDevice}
+                showWishlistButton={config.showWishlistButton && (wishlistModule?.enabled ?? false)}
+                showAddToCartButton={config.showAddToCartButton && (cartModule?.enabled ?? false) && (ordersModule?.enabled ?? false)}
+                showBuyNowButton={config.showBuyNowButton && (ordersModule?.enabled ?? false)}
+                showPromotionBadge={config.showPromotionBadge && (promotionsModule?.enabled ?? false)}
+              />
+            </BrowserFrame>
+          </div>
+          <div className="mt-3 text-xs text-slate-500">
+            Style: <strong className="text-slate-700 dark:text-slate-300">{LAYOUT_STYLES.find(s => s.id === config.layoutStyle)?.label}</strong>
+            {' • '}{previewDevice === 'desktop' && 'Desktop (1920px)'}{previewDevice === 'tablet' && 'Tablet (768px)'}{previewDevice === 'mobile' && 'Mobile (375px)'}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
