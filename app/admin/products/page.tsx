@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
-import { ChevronDown, Edit, ExternalLink, Loader2, Package, Plus, Search, Trash2 } from 'lucide-react';
+import { ChevronDown, Edit, ExternalLink, Layers, Loader2, Package, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
@@ -76,6 +76,11 @@ function ProductsContent() {
   const productsPerPage = useMemo(() => {
     const setting = settingsData?.find(s => s.settingKey === 'productsPerPage');
     return (setting?.value as number) || 12;
+  }, [settingsData]);
+
+  const variantEnabled = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'variantEnabled');
+    return Boolean(setting?.value);
   }, [settingsData]);
 
   const resolvedProductsPerPage = pageSizeOverride ?? productsPerPage;
@@ -394,6 +399,11 @@ function ProductsContent() {
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" className="text-blue-600 hover:text-blue-700" title="Xem trên web" onClick={() =>{  openFrontend(product.slug); }}><ExternalLink size={16}/></Button>
+                      {variantEnabled && product.hasVariants && (
+                        <Link href={`/admin/products/${product._id}/variants`}>
+                          <Button variant="ghost" size="icon" title="Quản lý phiên bản"><Layers size={16} /></Button>
+                        </Link>
+                      )}
                       <Link href={`/admin/products/${product._id}/edit`}><Button variant="ghost" size="icon"><Edit size={16}/></Button></Link>
                       <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600" onClick={ async () => handleDelete(product._id)}><Trash2 size={16}/></Button>
                     </div>

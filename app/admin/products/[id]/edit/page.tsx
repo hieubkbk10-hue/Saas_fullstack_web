@@ -31,6 +31,8 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
   const categoriesData = useQuery(api.productCategories.listActive);
   const updateProduct = useMutation(api.products.update);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
+  const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+  const optionsData = useQuery(api.productOptions.listActive);
 
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -44,12 +46,19 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
   const [status, setStatus] = useState<'Draft' | 'Active' | 'Archived'>('Draft');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [hasVariants, setHasVariants] = useState(false);
+  const [selectedOptionIds, setSelectedOptionIds] = useState<Id<'productOptions'>[]>([]);
 
   const enabledFields = useMemo(() => {
     const fields = new Set<string>();
     fieldsData?.forEach(f => fields.add(f.fieldKey));
     return fields;
   }, [fieldsData]);
+
+  const variantEnabled = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'variantEnabled');
+    return Boolean(setting?.value);
+  }, [settingsData]);
 
   useEffect(() => {
     if (productData && !isDataLoaded) {
@@ -63,9 +72,17 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
       setDescription(productData.description ?? '');
       setImage(productData.image);
       setStatus(productData.status);
+      setHasVariants(productData.hasVariants ?? false);
+      setSelectedOptionIds(productData.optionIds ?? []);
       setIsDataLoaded(true);
     }
   }, [productData, isDataLoaded]);
+
+  useEffect(() => {
+    if (!hasVariants) {
+      setSelectedOptionIds([]);
+    }
+  }, [hasVariants]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +95,10 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
       toast.error('Vui lòng nhập mã SKU');
       return;
     }
+    if (variantEnabled && hasVariants && selectedOptionIds.length === 0) {
+      toast.error('Vui lòng chọn ít nhất một tùy chọn cho phiên bản');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -85,8 +106,10 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
         categoryId: categoryId as Id<"productCategories">,
         description: description.trim() || undefined,
         id: id as Id<"products">,
+        hasVariants: variantEnabled ? hasVariants : undefined,
         image,
         name: name.trim(),
+        optionIds: variantEnabled ? (hasVariants ? selectedOptionIds : []) : undefined,
         price: parseInt(price) || 0,
         salePrice: salePrice ? parseInt(salePrice) : undefined,
         sku: (sku.trim() || productData?.sku) ?? `SKU-${Date.now()}`,
@@ -102,7 +125,7 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
     }
   };
 
-  if (productData === undefined || fieldsData === undefined) {
+  if (productData === undefined || fieldsData === undefined || settingsData === undefined) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 size={32} className="animate-spin text-orange-500" />
@@ -125,6 +148,11 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Chỉnh sửa sản phẩm</h1>
           <Link href="/admin/products" className="text-sm text-orange-600 hover:underline">Quay lại danh sách</Link>
         </div>
+        {variantEnabled && hasVariants && (
+          <Link href={`/admin/products/${id}/variants`}>
+            <Button variant="outline">Quản lý phiên bản</Button>
+          </Link>
+        )}
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -195,6 +223,49 @@ function ProductEditContent({ params }: { params: Promise<{ id: string }> }) {
               )}
             </CardContent>
           </Card>
+
+          {variantEnabled && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Phiên bản sản phẩm</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="has-variants"
+                    checked={hasVariants}
+                    onChange={(e) =>{  setHasVariants(e.target.checked); }}
+                    className="w-4 h-4 rounded border-slate-300"
+                  />
+                  <Label htmlFor="has-variants" className="cursor-pointer">Sản phẩm có nhiều phiên bản</Label>
+                </div>
+                {hasVariants && (
+                  <div className="space-y-2">
+                    <Label>Chọn tùy chọn cho phiên bản</Label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {optionsData?.map(option => (
+                        <label key={option._id} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                          <input
+                            type="checkbox"
+                            checked={selectedOptionIds.includes(option._id)}
+                            onChange={() =>{
+                              setSelectedOptionIds(prev => prev.includes(option._id)
+                                ? prev.filter(item => item !== option._id)
+                                : [...prev, option._id]);
+                            }}
+                            className="w-4 h-4 rounded border-slate-300"
+                          />
+                          <span>{option.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {optionsData?.length === 0 && (
+                      <p className="text-xs text-slate-500">Chưa có tùy chọn nào. Hãy tạo option trước.</p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
         
         <div className="space-y-6">

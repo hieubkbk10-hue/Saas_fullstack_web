@@ -109,6 +109,7 @@ function ProductCreateContent() {
   const createProduct = useMutation(api.products.create);
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+  const optionsData = useQuery(api.productOptions.listActive);
 
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -122,6 +123,8 @@ function ProductCreateContent() {
   const [status, setStatus] = useState<'Draft' | 'Active' | 'Archived'>('Draft');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [hasVariants, setHasVariants] = useState(false);
+  const [selectedOptionIds, setSelectedOptionIds] = useState<Id<'productOptions'>[]>([]);
 
   const enabledFields = useMemo(() => {
     const fields = new Set<string>();
@@ -135,11 +138,22 @@ function ProductCreateContent() {
     return (setting?.value as string) || 'Draft';
   }, [settingsData]);
 
+  const variantEnabled = useMemo(() => {
+    const setting = settingsData?.find(s => s.settingKey === 'variantEnabled');
+    return Boolean(setting?.value);
+  }, [settingsData]);
+
   useEffect(() => {
     if (defaultStatus) {
       setStatus(defaultStatus as 'Draft' | 'Active' | 'Archived');
     }
   }, [defaultStatus]);
+
+  useEffect(() => {
+    if (!hasVariants) {
+      setSelectedOptionIds([]);
+    }
+  }, [hasVariants]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -160,6 +174,10 @@ function ProductCreateContent() {
       toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
       return;
     }
+    if (variantEnabled && hasVariants && selectedOptionIds.length === 0) {
+      toast.error('Vui lòng chọn ít nhất một tùy chọn cho phiên bản');
+      return;
+    }
     // SKU required only if field is enabled
     if (enabledFields.has('sku') && !sku.trim()) {
       toast.error('Vui lòng nhập mã SKU');
@@ -171,8 +189,10 @@ function ProductCreateContent() {
       await createProduct({
         categoryId: categoryId as Id<"productCategories">,
         description: description.trim() || undefined,
+        hasVariants: variantEnabled ? hasVariants : false,
         image,
         name: name.trim(),
+        optionIds: variantEnabled && hasVariants ? selectedOptionIds : undefined,
         price: Number.parseInt(price) || 0,
         salePrice: salePrice ? Number.parseInt(salePrice) : undefined,
         sku: sku.trim() || `SKU-${Date.now()}`,
@@ -257,6 +277,49 @@ function ProductCreateContent() {
               )}
             </CardContent>
           </Card>
+
+          {variantEnabled && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Phiên bản sản phẩm</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="has-variants"
+                    checked={hasVariants}
+                    onChange={(e) =>{  setHasVariants(e.target.checked); }}
+                    className="w-4 h-4 rounded border-slate-300"
+                  />
+                  <Label htmlFor="has-variants" className="cursor-pointer">Sản phẩm có nhiều phiên bản</Label>
+                </div>
+                {hasVariants && (
+                  <div className="space-y-2">
+                    <Label>Chọn tùy chọn cho phiên bản</Label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {optionsData?.map(option => (
+                        <label key={option._id} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                          <input
+                            type="checkbox"
+                            checked={selectedOptionIds.includes(option._id)}
+                            onChange={() =>{
+                              setSelectedOptionIds(prev => prev.includes(option._id)
+                                ? prev.filter(id => id !== option._id)
+                                : [...prev, option._id]);
+                            }}
+                            className="w-4 h-4 rounded border-slate-300"
+                          />
+                          <span>{option.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {optionsData?.length === 0 && (
+                      <p className="text-xs text-slate-500">Chưa có tùy chọn nào. Hãy tạo option trước.</p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
         
         <div className="space-y-6">
