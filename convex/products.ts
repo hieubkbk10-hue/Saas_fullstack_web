@@ -75,7 +75,7 @@ export const listAdminWithOffset = query({
         )
         : args.status
           ? ctx.db.query("products").withIndex("by_status_order", (q) => q.eq("status", args.status!))
-          : ctx.db.query("products");
+          : ctx.db.query("products").withIndex("by_status_order");
 
     let products = await queryBuilder.order("desc").take(fetchLimit);
 
