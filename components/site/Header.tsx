@@ -931,7 +931,7 @@ export function Header() {
                 )}
                 {showSearch && (
                   <div className="flex items-center gap-2">
-                    <div className={cn('overflow-hidden transition-all duration-200', searchOpen ? 'w-48' : 'w-0')}>
+                    <div className={cn('transition-all duration-200', searchOpen ? 'w-48 opacity-100' : 'w-0 opacity-0 pointer-events-none')}>
                       <HeaderSearchAutocomplete
                         placeholder={config.search?.placeholder}
                         searchProducts={canSearchProducts}
