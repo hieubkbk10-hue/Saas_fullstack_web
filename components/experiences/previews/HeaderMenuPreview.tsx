@@ -78,6 +78,7 @@ export function HeaderMenuPreview({
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMobileItems, setExpandedMobileItems] = useState<string[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const activeItems = useMemo(() => menuItems.filter(item => item.active), [menuItems]);
 
@@ -527,67 +528,92 @@ export function HeaderMenuPreview({
           <div className="flex items-center justify-between gap-6">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: brandColor }}></div>
-              <span className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-900 dark:text-white">{config.brandName}</span>
+              <span className="text-base font-semibold text-slate-900 dark:text-white">{config.brandName}</span>
             </div>
             <nav className="flex items-center gap-6">
-              {menuTree.map((item) => (
-                <div
-                  key={item._id}
-                  className="relative"
-                  onMouseEnter={() => setHoveredItem(item._id)}
-                  onMouseLeave={() => setHoveredItem(null)}
-                >
-                  <a
-                    href={item.url}
-                    className={cn(
-                      'text-[11px] font-semibold uppercase tracking-[0.3em] transition-colors',
-                      hoveredItem === item._id ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-                    )}
+              {menuTree.map((item) => {
+                const hasSubItems = item.children.some((child) => child.children.length > 0);
+                const totalSubItems = item.children.reduce((acc, child) => acc + child.children.length, 0);
+                const isMega = item.children.length >= 3 || totalSubItems > 6;
+                const isMedium = !isMega && (item.children.length > 1 || hasSubItems);
+                const dropdownWidth = isMega ? 'w-[720px]' : isMedium ? 'w-[420px]' : 'w-[240px]';
+                const gridCols = isMega
+                  ? 'grid-cols-3'
+                  : item.children.length > 1
+                    ? 'grid-cols-2'
+                    : 'grid-cols-1';
+
+                return (
+                  <div
+                    key={item._id}
+                    className="relative"
+                    onMouseEnter={() => setHoveredItem(item._id)}
+                    onMouseLeave={() => setHoveredItem(null)}
                   >
-                    {item.label}
-                  </a>
-                  {item.children.length > 0 && hoveredItem === item._id && (
-                    <div className="absolute left-1/2 top-full mt-6 w-[720px] -translate-x-1/2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-xl z-50">
-                      <div className={cn(
-                        'grid gap-6',
-                        item.children.length >= 3 ? 'grid-cols-3' : item.children.length === 2 ? 'grid-cols-2' : 'grid-cols-1'
-                      )}>
-                        {item.children.map((child) => (
-                          <div key={child._id} className="space-y-3">
-                            <a href={child.url} className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-900 dark:text-white">
-                              {child.label}
-                            </a>
-                            <div className="space-y-2">
-                              {child.children.length > 0 ? (
-                                child.children.map((sub) => (
-                                  <a key={sub._id} href={sub.url} className="block text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
-                                    {sub.label}
+                    <a
+                      href={item.url}
+                      className={cn(
+                        'text-sm font-medium transition-colors',
+                        hoveredItem === item._id ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                      )}
+                    >
+                      {item.label}
+                    </a>
+                    {item.children.length > 0 && hoveredItem === item._id && (
+                      <div className={cn('absolute left-1/2 top-full mt-6 -translate-x-1/2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-xl z-50', dropdownWidth)}>
+                        <div className={cn('grid gap-6', gridCols)}>
+                          {item.children.map((child) => (
+                            <div key={child._id} className="space-y-3">
+                              <a href={child.url} className="text-sm font-semibold text-slate-900 dark:text-white">
+                                {child.label}
+                              </a>
+                              <div className="space-y-2">
+                                {child.children.length > 0 ? (
+                                  child.children.map((sub) => (
+                                    <a key={sub._id} href={sub.url} className="block text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+                                      {sub.label}
+                                    </a>
+                                  ))
+                                ) : (
+                                  <a href={child.url} className="text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+                                    Xem thêm
                                   </a>
-                                ))
-                              ) : (
-                                <a href={child.url} className="text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
-                                  Xem thêm
-                                </a>
-                              )}
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                );
+              })}
             </nav>
             <div className="flex items-center gap-3">
               {config.cta.show && (
-                <a href={defaultLinks.cta} className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+                <a href={defaultLinks.cta} className="text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
                   {config.cta.text}
                 </a>
               )}
               {config.search.show && (
-                <button className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                  <Search size={18} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <div className={cn('overflow-hidden transition-all duration-200', searchOpen ? 'w-40' : 'w-0')}>
+                    <input
+                      type="text"
+                      placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
+                      className={cn(
+                        'w-40 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 focus:outline-none transition-opacity',
+                        searchOpen ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                  </div>
+                  <button
+                    onClick={() => setSearchOpen((prev) => !prev)}
+                    className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  >
+                    <Search size={18} />
+                  </button>
+                </div>
               )}
               {showLogin && (
                 <a href={defaultLinks.login} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
@@ -606,10 +632,14 @@ export function HeaderMenuPreview({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: brandColor }}></div>
-              <span className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-900 dark:text-white">{config.brandName}</span>
+              <span className="text-base font-semibold text-slate-900 dark:text-white">{config.brandName}</span>
             </div>
             <div className="flex items-center gap-2">
-              {config.search.show && (<button className="p-2 text-slate-600 dark:text-slate-400"><Search size={18} /></button>)}
+              {config.search.show && (
+                <button onClick={() => setSearchOpen((prev) => !prev)} className="p-2 text-slate-600 dark:text-slate-400">
+                  <Search size={18} />
+                </button>
+              )}
               {config.cart.show && (
                 <a href={defaultLinks.cart} className="p-2 text-slate-600 dark:text-slate-400 relative">
                   <ShoppingCart size={18} />
@@ -621,6 +651,16 @@ export function HeaderMenuPreview({
           </div>
         )}
       </div>
+
+      {device === 'mobile' && config.search.show && searchOpen && (
+        <div className="px-6 pb-4">
+          <input
+            type="text"
+            placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
+            className="w-full px-3 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
+          />
+        </div>
+      )}
 
       {device === 'mobile' && mobileMenuOpen && (
         <div className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
