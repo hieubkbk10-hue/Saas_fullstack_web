@@ -195,10 +195,19 @@ export default function HeaderMenuExperiencePage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const normalizedConfig = {
+        ...config,
+        search: {
+          ...config.search,
+          searchProducts: true,
+          searchPosts: true,
+          searchServices: true,
+        },
+      };
       await setMultipleSettings({
         settings: [
           { group: 'site', key: 'header_style', value: previewStyle },
-          { group: 'site', key: 'header_config', value: config },
+          { group: 'site', key: 'header_config', value: normalizedConfig },
         ],
       });
       toast.success('Đã lưu cấu hình Header Menu');
@@ -350,27 +359,29 @@ export default function HeaderMenuExperiencePage() {
                 onChange={(v) => updateTopbar('showStoreSystem', v)}
                 accentColor={brandColor}
               />
-              <ToggleRow
-                label="Search sản phẩm"
-                checked={config.search.searchProducts}
-                onChange={(v) => updateSearch('searchProducts', v)}
-                accentColor={brandColor}
-                disabled={!productsModule?.enabled || !config.search.show}
-              />
-              <ToggleRow
-                label="Search bài viết"
-                checked={config.search.searchPosts}
-                onChange={(v) => updateSearch('searchPosts', v)}
-                accentColor={brandColor}
-                disabled={!postsModule?.enabled || !config.search.show}
-              />
-              <ToggleRow
-                label="Search dịch vụ"
-                checked={config.search.searchServices}
-                onChange={(v) => updateSearch('searchServices', v)}
-                accentColor={brandColor}
-                disabled={!servicesModule?.enabled || !config.search.show}
-              />
+              {config.search.show && (
+                <div className="pt-2">
+                  <p className="text-xs font-medium text-slate-500">Search theo module</p>
+                  <ModuleFeatureStatus
+                    label="Sản phẩm"
+                    enabled={productsModule?.enabled ?? false}
+                    href="/system/modules/products"
+                    moduleName="Module Sản phẩm"
+                  />
+                  <ModuleFeatureStatus
+                    label="Bài viết"
+                    enabled={postsModule?.enabled ?? false}
+                    href="/system/modules/posts"
+                    moduleName="Module Bài viết"
+                  />
+                  <ModuleFeatureStatus
+                    label="Dịch vụ"
+                    enabled={servicesModule?.enabled ?? false}
+                    href="/system/modules/services"
+                    moduleName="Module Dịch vụ"
+                  />
+                </div>
+              )}
             </div>
           </ControlCard>
           <ControlCard title="CTA & Brand">
