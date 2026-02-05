@@ -25,7 +25,7 @@ interface MenuItemWithChildren extends MenuItem {
   children: MenuItemWithChildren[];
 }
 
-type HeaderStyle = 'classic' | 'topbar' | 'centered';
+type HeaderStyle = 'classic' | 'topbar' | 'allbirds';
 
 interface TopbarConfig {
   show?: boolean;
@@ -103,7 +103,7 @@ export function Header() {
   const customerLoginFeature = useQuery(api.admin.modules.getModuleFeature, { moduleKey: 'customers', featureKey: 'enableLogin' });
   
   const headerStyleRaw = headerStyleSetting?.value as string | undefined;
-  const headerStyle: HeaderStyle = (headerStyleRaw === 'transparent' ? 'centered' : headerStyleRaw as HeaderStyle) || 'classic';
+  const headerStyle: HeaderStyle = (headerStyleRaw === 'transparent' || headerStyleRaw === 'centered' ? 'allbirds' : headerStyleRaw as HeaderStyle) || 'classic';
   const savedConfig = (headerConfigSetting?.value as HeaderConfig) || {};
   const config: HeaderConfig = {
     ...DEFAULT_CONFIG,
@@ -237,13 +237,10 @@ export function Header() {
     });
   }, [menuItems]);
 
-  const menuSplit = useMemo(() => {
-    const midpoint = Math.ceil(menuTree.length / 2);
-    return {
-      left: menuTree.slice(0, midpoint),
-      right: menuTree.slice(midpoint),
-    };
-  }, [menuTree]);
+  const announcementText = useMemo(() => {
+    const items = [topbarConfig.hotline, topbarConfig.email].filter(Boolean);
+    return items.length > 0 ? items.join(' · ') : 'Shop New Arrivals';
+  }, [topbarConfig.email, topbarConfig.hotline]);
 
   const toggleMobileItem = (id: string) => {
     setExpandedMobileItems(prev => 
@@ -708,274 +705,196 @@ export function Header() {
     );
   }
 
-  // Centered Style
+  // Allbirds Style
   return (
     <header className={cn('bg-white dark:bg-slate-900', classicSeparatorClass, classicPositionClass)}>
-      {topbarConfig.show !== false && (
-        <div className="px-4 py-2 text-xs" style={{ backgroundColor: brandColor }}>
-          <div className="max-w-7xl mx-auto flex items-center justify-between text-white">
-            <div className="flex items-center gap-4">
-              {topbarConfig.hotline && (
-                <a href={`tel:${topbarConfig.hotline}`} className="flex items-center gap-1 hover:opacity-80">
-                  <Phone size={12} />
-                  <span>{topbarConfig.hotline}</span>
-                </a>
-              )}
-              {topbarConfig.email && (
-                <a href={`mailto:${topbarConfig.email}`} className="hidden sm:flex items-center gap-1 hover:opacity-80">
-                  <Mail size={12} />
-                  <span>{topbarConfig.email}</span>
-                </a>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              {showTrackOrder && (
-                <>
-                  <Link href={DEFAULT_LINKS.trackOrder} className="hover:underline hidden sm:inline">Theo dõi đơn hàng</Link>
-                  {topbarConfig.showStoreSystem && <span className="hidden sm:inline">|</span>}
-                </>
-              )}
-              {topbarConfig.showStoreSystem && (
-                <>
-                  <Link href={DEFAULT_LINKS.storeSystem} className="hover:underline hidden sm:inline">Hệ thống cửa hàng</Link>
-                  {showLogin && <span className="hidden sm:inline">|</span>}
-                </>
-              )}
-              {showLogin && (
-                <Link href={DEFAULT_LINKS.login} className="hover:underline flex items-center gap-1">
-                  <User size={12} />
-                  {config.login?.text ?? 'Đăng nhập'}
-                </Link>
+        {topbarConfig.show !== false && (
+          <div className="px-4 py-2 text-[11px] uppercase tracking-[0.3em]" style={{ backgroundColor: brandColor }}>
+            <div className="max-w-7xl mx-auto flex items-center justify-center gap-4 text-white">
+              <span className="font-medium">{announcementText}</span>
+              {(showTrackOrder || topbarConfig.showStoreSystem) && (
+                <span className="hidden sm:flex items-center gap-2 text-[10px] tracking-[0.2em]">
+                  {showTrackOrder && (
+                    <Link href={DEFAULT_LINKS.trackOrder} className="hover:underline">Theo dõi đơn</Link>
+                  )}
+                  {showTrackOrder && topbarConfig.showStoreSystem && <span>|</span>}
+                  {topbarConfig.showStoreSystem && (
+                    <Link href={DEFAULT_LINKS.storeSystem} className="hover:underline">Cửa hàng</Link>
+                  )}
+                </span>
               )}
             </div>
           </div>
-        </div>
-      )}
-      {config.showBrandAccent && (
-        <div className="h-0.5" style={{ backgroundColor: brandColor }} />
-      )}
-      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-          <nav className="hidden lg:flex items-center gap-1">
-            {menuSplit.left.map((item) => (
-              <div
-                key={item._id}
-                className="relative"
-                onMouseEnter={() =>{  handleMenuEnter(item._id); }}
-                onMouseLeave={handleMenuLeave}
-              >
-                <Link
-                  href={item.url}
-                  target={item.openInNewTab ? '_blank' : undefined}
-                  className={cn(
-                    "px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1",
-                    hoveredItem === item._id
-                      ? "text-white"
-                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                  )}
-                  style={hoveredItem === item._id ? { backgroundColor: brandColor } : {}}
-                >
-                  {item.label}
-                  {item.children.length > 0 && (
-                    <ChevronDown size={14} className={cn("transition-transform", hoveredItem === item._id && "rotate-180")} />
-                  )}
-                </Link>
-                {item.children.length > 0 && hoveredItem === item._id && (
-                  <div className="absolute top-full left-0 pt-2 z-50">
-                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[200px]">
-                      {item.children.map((child) => (
-                        <div key={child._id} className="relative group/child">
-                          <Link
-                            href={child.url}
-                            target={child.openInNewTab ? '_blank' : undefined}
-                            className="flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                          >
-                            {child.label}
-                            {child.children?.length > 0 && <ChevronRight size={14} />}
-                          </Link>
-                          {child.children?.length > 0 && (
-                            <div className="absolute left-full top-0 pl-1 hidden group-hover/child:block">
-                              <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[180px]">
-                                {child.children.map((sub) => (
-                                  <Link
-                                    key={sub._id}
-                                    href={sub.url}
-                                    target={sub.openInNewTab ? '_blank' : undefined}
-                                    className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                                  >
-                                    {sub.label}
-                                  </Link>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </nav>
-          <Link href="/" className="flex items-center gap-2 justify-center">
-            {logo ? (
-              <Image src={logo} alt={displayName} width={36} height={36} className="h-9 w-auto" />
-            ) : (
-              <div 
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold" 
-                style={{ backgroundColor: brandColor }}
-              >
-                {displayName.charAt(0)}
-              </div>
-            )}
-            <span className="font-bold text-lg text-slate-900 dark:text-white">{displayName}</span>
-          </Link>
-          <div className="flex items-center justify-end gap-3">
-            <nav className="hidden lg:flex items-center gap-1">
-              {menuSplit.right.map((item) => (
+        )}
+        {config.showBrandAccent && (
+          <div className="h-0.5" style={{ backgroundColor: brandColor }} />
+        )}
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between gap-6">
+            <Link href="/" className="flex items-center gap-2">
+              {logo ? (
+                <Image src={logo} alt={displayName} width={24} height={24} className="h-6 w-auto" />
+              ) : (
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: brandColor }}></div>
+              )}
+              <span className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-900 dark:text-white">
+                {displayName}
+              </span>
+            </Link>
+
+            <nav className="hidden lg:flex items-center gap-6">
+              {menuTree.map((item) => (
                 <div
                   key={item._id}
                   className="relative"
-                  onMouseEnter={() =>{  handleMenuEnter(item._id); }}
+                  onMouseEnter={() => { handleMenuEnter(item._id); }}
                   onMouseLeave={handleMenuLeave}
                 >
                   <Link
                     href={item.url}
                     target={item.openInNewTab ? '_blank' : undefined}
                     className={cn(
-                      "px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1",
+                      'text-[11px] font-semibold uppercase tracking-[0.3em] transition-colors',
                       hoveredItem === item._id
-                        ? "text-white"
-                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? 'text-slate-900 dark:text-white'
+                        : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                     )}
-                    style={hoveredItem === item._id ? { backgroundColor: brandColor } : {}}
                   >
                     {item.label}
-                    {item.children.length > 0 && (
-                      <ChevronDown size={14} className={cn("transition-transform", hoveredItem === item._id && "rotate-180")} />
-                    )}
                   </Link>
+
                   {item.children.length > 0 && hoveredItem === item._id && (
-                    <div className="absolute top-full right-0 pt-2 z-50">
-                      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[200px]">
-                        {item.children.map((child) => (
-                          <div key={child._id} className="relative group/child">
-                            <Link
-                              href={child.url}
-                              target={child.openInNewTab ? '_blank' : undefined}
-                              className="flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                            >
-                              {child.label}
-                              {child.children?.length > 0 && <ChevronRight size={14} />}
-                            </Link>
-                            {child.children?.length > 0 && (
-                              <div className="absolute right-full top-0 pr-1 hidden group-hover/child:block">
-                                <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[180px]">
-                                  {child.children.map((sub) => (
+                    <div className="absolute left-1/2 top-full pt-6 -translate-x-1/2 z-50">
+                      <div className="w-[720px] rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-xl">
+                        <div className={cn(
+                          'grid gap-6',
+                          item.children.length >= 3 ? 'grid-cols-3' : item.children.length === 2 ? 'grid-cols-2' : 'grid-cols-1'
+                        )}>
+                          {item.children.map((child) => (
+                            <div key={child._id} className="space-y-3">
+                              <Link
+                                href={child.url}
+                                target={child.openInNewTab ? '_blank' : undefined}
+                                className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-900 dark:text-white"
+                              >
+                                {child.label}
+                              </Link>
+                              <div className="space-y-2">
+                                {child.children.length > 0 ? (
+                                  child.children.map((sub) => (
                                     <Link
                                       key={sub._id}
                                       href={sub.url}
                                       target={sub.openInNewTab ? '_blank' : undefined}
-                                      className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                                      className="block text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                                     >
                                       {sub.label}
                                     </Link>
-                                  ))}
-                                </div>
+                                  ))
+                                ) : (
+                                  <Link
+                                    href={child.url}
+                                    target={child.openInNewTab ? '_blank' : undefined}
+                                    className="text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                                  >
+                                    Xem thêm
+                                  </Link>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        ))}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
               ))}
             </nav>
-            {config.search?.show && (
-              <div className="hidden lg:block relative">
-                <input
-                  type="text"
-                  placeholder={config.search.placeholder ?? 'Tìm kiếm...'}
-                  className="w-40 pl-4 pr-10 py-2 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none text-slate-700 dark:text-slate-300"
-                />
-                <button className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-white" style={{ backgroundColor: brandColor }}>
-                  <Search size={14} />
-                </button>
+
+            <div className="flex items-center gap-3">
+              <div className="hidden lg:flex items-center gap-3">
+                {config.cta?.show && (
+                  <Link
+                    href={DEFAULT_LINKS.cta}
+                    className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  >
+                    {config.cta.text ?? 'Liên hệ'}
+                  </Link>
+                )}
+                {config.search?.show && (
+                  <button className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                    <Search size={18} />
+                  </button>
+                )}
+                {showLogin && (
+                  <Link href={DEFAULT_LINKS.login} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                    <User size={18} />
+                  </Link>
+                )}
+                {config.cart?.show && (
+                  <CartIcon variant="mobile" />
+                )}
               </div>
-            )}
-            {config.cart?.show && (
-              <CartIcon className="hidden lg:flex" />
-            )}
-            {config.cta?.show && (
-              <Link
-                href={DEFAULT_LINKS.cta}
-                className="hidden lg:inline-flex px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
-                style={{ backgroundColor: brandColor }}
-              >
-                {config.cta.text ?? 'Liên hệ'}
-              </Link>
-            )}
-            <div className="flex items-center gap-1 lg:hidden">
-              {config.search?.show && (
-                <button className="p-2 text-slate-600 dark:text-slate-400">
-                  <Search size={20} />
-                </button>
-              )}
-              {config.cart?.show && (
-                <CartIcon variant="mobile" />
-              )}
-              {renderMobileMenuButton(false)}
+              <div className="flex items-center gap-1 lg:hidden">
+                {config.search?.show && (
+                  <button className="p-2 text-slate-600 dark:text-slate-400">
+                    <Search size={18} />
+                  </button>
+                )}
+                {config.cart?.show && (
+                  <CartIcon variant="mobile" />
+                )}
+                {renderMobileMenuButton(false)}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-          {menuTree.map((item) => (
-            <div key={item._id}>
-              <button
-                onClick={() => item.children.length > 0 && toggleMobileItem(item._id)}
-                className="w-full px-6 py-3 text-left flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-colors"
-              >
-                {item.label}
-                {item.children.length > 0 && (
-                  <ChevronDown size={16} className={cn("transition-transform", expandedMobileItems.includes(item._id) && "rotate-180")} />
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+            {menuTree.map((item) => (
+              <div key={item._id}>
+                <button
+                  onClick={() => item.children.length > 0 && toggleMobileItem(item._id)}
+                  className="w-full px-6 py-3 text-left flex items-center justify-between text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                >
+                  {item.label}
+                  {item.children.length > 0 && (
+                    <ChevronDown size={16} className={cn("transition-transform", expandedMobileItems.includes(item._id) && "rotate-180")} />
+                  )}
+                </button>
+                {item.children.length > 0 && expandedMobileItems.includes(item._id) && (
+                  <div className="bg-white dark:bg-slate-800">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child._id}
+                        href={child.url}
+                        target={child.openInNewTab ? '_blank' : undefined}
+                        onClick={() => { setMobileMenuOpen(false); }}
+                        className="block px-8 py-2.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-l-2 border-slate-200 dark:border-slate-600 ml-6"
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
                 )}
-              </button>
-              {item.children.length > 0 && expandedMobileItems.includes(item._id) && (
-                <div className="bg-white dark:bg-slate-800">
-                  {item.children.map((child) => (
-                    <Link 
-                      key={child._id} 
-                      href={child.url}
-                      target={child.openInNewTab ? '_blank' : undefined}
-                      onClick={() =>{  setMobileMenuOpen(false); }}
-                      className="block px-8 py-2.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-l-2 border-slate-200 dark:border-slate-600 ml-6"
-                    >
-                      {child.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-          {config.cta?.show && (
-            <div className="p-4">
-              <Link 
-                href={DEFAULT_LINKS.cta} 
-                onClick={() =>{  setMobileMenuOpen(false); }}
-                className="block w-full py-2.5 text-sm font-medium text-white rounded-lg text-center" 
-                style={{ backgroundColor: brandColor }}
-              >
-                {config.cta.text ?? 'Liên hệ'}
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
-      {classicSeparatorElement}
+              </div>
+            ))}
+            {config.cta?.show && (
+              <div className="p-4">
+                <Link
+                  href={DEFAULT_LINKS.cta}
+                  onClick={() => { setMobileMenuOpen(false); }}
+                  className="block w-full py-2.5 text-sm font-medium text-white rounded-lg text-center"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  {config.cta.text ?? 'Liên hệ'}
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+        {classicSeparatorElement}
     </header>
   );
 }

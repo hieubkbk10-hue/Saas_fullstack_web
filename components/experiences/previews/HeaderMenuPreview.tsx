@@ -5,7 +5,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { ChevronDown, ChevronRight, Eye, Heart, Mail, Phone, Search, ShoppingCart, User } from 'lucide-react';
 import { Card, CardContent, cn } from '@/app/admin/components/ui';
 
-export type HeaderLayoutStyle = 'classic' | 'topbar' | 'centered';
+export type HeaderLayoutStyle = 'classic' | 'topbar' | 'allbirds';
 
 export type HeaderMenuConfig = {
   brandName: string;
@@ -119,13 +119,10 @@ export function HeaderMenuPreview({
   const canTrackOrder = ordersEnabled;
   const showTrackOrder = displayTopbar.showTrackOrder && canTrackOrder;
 
-  const menuSplit = useMemo(() => {
-    const midpoint = Math.ceil(menuTree.length / 2);
-    return {
-      left: menuTree.slice(0, midpoint),
-      right: menuTree.slice(midpoint),
-    };
-  }, [menuTree]);
+  const announcementText = useMemo(() => {
+    const items = [displayTopbar.hotline, displayTopbar.email].filter(Boolean);
+    return items.length > 0 ? items.join(' · ') : 'Shop New Arrivals';
+  }, [displayTopbar.email, displayTopbar.hotline]);
 
   const brandRgba = (alpha: number) => {
     if (!brandColor.startsWith('#')) {
@@ -506,163 +503,101 @@ export function HeaderMenuPreview({
     </div>
   );
 
-  const renderCenteredStyle = () => (
+  const renderAllbirdsStyle = () => (
     <div className={cn('bg-white dark:bg-slate-900', classicSeparatorClass, classicPositionClass)}>
       {displayTopbar.show && (
-        <div className="px-4 py-2 text-xs" style={{ backgroundColor: brandColor }}>
-          <div className="flex items-center justify-between text-white">
-            <div className="flex items-center gap-4">
-              {displayTopbar.hotline && (
-                <span className="flex items-center gap-1"><Phone size={12} /><span>{displayTopbar.hotline}</span></span>
-              )}
-              {device !== 'mobile' && displayTopbar.email && (
-                <span className="flex items-center gap-1"><Mail size={12} /><span>{displayTopbar.email}</span></span>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              {device !== 'mobile' && (
-                <>
-                  {showTrackOrder && <a href={defaultLinks.trackOrder} className="hover:underline">Theo dõi đơn hàng</a>}
-                  {showTrackOrder && displayTopbar.showStoreSystem && <span>|</span>}
-                  {displayTopbar.showStoreSystem && <a href={defaultLinks.storeSystem} className="hover:underline">Hệ thống cửa hàng</a>}
-                  {(showTrackOrder || displayTopbar.showStoreSystem) && showLogin && <span>|</span>}
-                </>
-              )}
-              {showLogin && (
-                <a href={defaultLinks.login} className="hover:underline flex items-center gap-1"><User size={12} />{config.login.text}</a>
-              )}
-            </div>
+        <div className="px-4 py-2 text-[11px] uppercase tracking-[0.3em]" style={{ backgroundColor: brandColor }}>
+          <div className="flex items-center justify-center gap-4 text-white">
+            <span className="font-medium">{announcementText}</span>
+            {device !== 'mobile' && (showTrackOrder || displayTopbar.showStoreSystem) && (
+              <span className="flex items-center gap-2 text-[10px] tracking-[0.2em]">
+                {showTrackOrder && <a href={defaultLinks.trackOrder} className="hover:underline">Theo dõi đơn</a>}
+                {showTrackOrder && displayTopbar.showStoreSystem && <span>|</span>}
+                {displayTopbar.showStoreSystem && <a href={defaultLinks.storeSystem} className="hover:underline">Cửa hàng</a>}
+              </span>
+            )}
           </div>
         </div>
       )}
       {config.showBrandAccent && (
         <div className="h-0.5" style={{ backgroundColor: brandColor }} />
       )}
-      <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+      <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
         {device !== 'mobile' ? (
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-            <nav className="flex items-center gap-1">
-              {menuSplit.left.map((item) => (
+          <div className="flex items-center justify-between gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: brandColor }}></div>
+              <span className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-900 dark:text-white">{config.brandName}</span>
+            </div>
+            <nav className="flex items-center gap-6">
+              {menuTree.map((item) => (
                 <div
                   key={item._id}
                   className="relative"
                   onMouseEnter={() => setHoveredItem(item._id)}
                   onMouseLeave={() => setHoveredItem(null)}
                 >
-                  <button
+                  <a
+                    href={item.url}
                     className={cn(
-                      'px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1',
-                      hoveredItem === item._id
-                        ? 'text-white'
-                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      'text-[11px] font-semibold uppercase tracking-[0.3em] transition-colors',
+                      hoveredItem === item._id ? 'text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
                     )}
-                    style={hoveredItem === item._id ? { backgroundColor: brandColor } : {}}
                   >
                     {item.label}
-                    {item.children.length > 0 && (
-                      <ChevronDown size={14} className={cn('transition-transform', hoveredItem === item._id && 'rotate-180')} />
-                    )}
-                  </button>
+                  </a>
                   {item.children.length > 0 && hoveredItem === item._id && (
-                    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[200px] z-50">
-                      {item.children.map((child) => (
-                        <div key={child._id} className="relative group">
-                          {renderLink(child, 'flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors', (
-                            <>
+                    <div className="absolute left-1/2 top-full mt-6 w-[720px] -translate-x-1/2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-xl z-50">
+                      <div className={cn(
+                        'grid gap-6',
+                        item.children.length >= 3 ? 'grid-cols-3' : item.children.length === 2 ? 'grid-cols-2' : 'grid-cols-1'
+                      )}>
+                        {item.children.map((child) => (
+                          <div key={child._id} className="space-y-3">
+                            <a href={child.url} className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-900 dark:text-white">
                               {child.label}
-                              {child.children?.length > 0 && <ChevronRight size={14} />}
-                            </>
-                          ))}
-                          {child.children?.length > 0 && (
-                            <div className="absolute left-full top-0 ml-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[180px] hidden group-hover:block">
-                              {child.children.map((sub) => (
-                                <a key={sub._id} href={sub.url} className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                                  {sub.label}
+                            </a>
+                            <div className="space-y-2">
+                              {child.children.length > 0 ? (
+                                child.children.map((sub) => (
+                                  <a key={sub._id} href={sub.url} className="block text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+                                    {sub.label}
+                                  </a>
+                                ))
+                              ) : (
+                                <a href={child.url} className="text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+                                  Xem thêm
                                 </a>
-                              ))}
+                              )}
                             </div>
-                          )}
-                        </div>
-                      ))}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
               ))}
             </nav>
-            <div className="flex items-center justify-center gap-3">
-              <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: brandColor }}></div>
-              <span className="font-semibold text-slate-900 dark:text-white">{config.brandName}</span>
-            </div>
-            <div className="flex items-center justify-end gap-3">
-              <nav className="flex items-center gap-1">
-                {menuSplit.right.map((item) => (
-                  <div
-                    key={item._id}
-                    className="relative"
-                    onMouseEnter={() => setHoveredItem(item._id)}
-                    onMouseLeave={() => setHoveredItem(null)}
-                  >
-                    <button
-                      className={cn(
-                        'px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1',
-                        hoveredItem === item._id
-                          ? 'text-white'
-                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                      )}
-                      style={hoveredItem === item._id ? { backgroundColor: brandColor } : {}}
-                    >
-                      {item.label}
-                      {item.children.length > 0 && (
-                        <ChevronDown size={14} className={cn('transition-transform', hoveredItem === item._id && 'rotate-180')} />
-                      )}
-                    </button>
-                    {item.children.length > 0 && hoveredItem === item._id && (
-                      <div className="absolute top-full right-0 mt-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[200px] z-50">
-                        {item.children.map((child) => (
-                          <div key={child._id} className="relative group">
-                            {renderLink(child, 'flex items-center justify-between px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors', (
-                              <>
-                                {child.label}
-                                {child.children?.length > 0 && <ChevronRight size={14} />}
-                              </>
-                            ))}
-                            {child.children?.length > 0 && (
-                              <div className="absolute right-full top-0 mr-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-2 min-w-[180px] hidden group-hover:block">
-                                {child.children.map((sub) => (
-                                  <a key={sub._id} href={sub.url} className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                                    {sub.label}
-                                  </a>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </nav>
-              {config.search.show && (
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder={config.search.placeholder}
-                    className="w-40 pl-4 pr-10 py-2 rounded-full border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none text-slate-700 dark:text-slate-300"
-                  />
-                  <button className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-white" style={{ backgroundColor: brandColor }}>
-                    <Search size={14} />
-                  </button>
-                </div>
-              )}
-              {config.cart.show && (
-                <a href={defaultLinks.cart} className="p-2 text-slate-600 dark:text-slate-400 relative">
-                  <ShoppingCart size={20} />
-                  <span className="absolute -top-1 -right-1 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
+            <div className="flex items-center gap-3">
+              {config.cta.show && (
+                <a href={defaultLinks.cta} className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+                  {config.cta.text}
                 </a>
               )}
-              {config.cta.show && (
-                <a href={defaultLinks.cta} className="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90" style={{ backgroundColor: brandColor }}>
-                  {config.cta.text}
+              {config.search.show && (
+                <button className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                  <Search size={18} />
+                </button>
+              )}
+              {showLogin && (
+                <a href={defaultLinks.login} className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                  <User size={18} />
+                </a>
+              )}
+              {config.cart.show && (
+                <a href={defaultLinks.cart} className="p-2 text-slate-600 dark:text-slate-400 relative hover:text-slate-900 dark:hover:text-white">
+                  <ShoppingCart size={18} />
+                  <span className="absolute -top-1 -right-1 w-4 h-4 text-[9px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
                 </a>
               )}
             </div>
@@ -670,14 +605,14 @@ export function HeaderMenuPreview({
         ) : (
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: brandColor }}></div>
-              <span className="font-semibold text-slate-900 dark:text-white">{config.brandName}</span>
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: brandColor }}></div>
+              <span className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-900 dark:text-white">{config.brandName}</span>
             </div>
             <div className="flex items-center gap-2">
-              {config.search.show && (<button className="p-2 text-slate-600 dark:text-slate-400"><Search size={20} /></button>)}
+              {config.search.show && (<button className="p-2 text-slate-600 dark:text-slate-400"><Search size={18} /></button>)}
               {config.cart.show && (
                 <a href={defaultLinks.cart} className="p-2 text-slate-600 dark:text-slate-400 relative">
-                  <ShoppingCart size={20} />
+                  <ShoppingCart size={18} />
                   <span className="absolute -top-1 -right-1 w-5 h-5 text-[10px] font-bold text-white rounded-full flex items-center justify-center" style={{ backgroundColor: brandColor }}>0</span>
                 </a>
               )}
@@ -721,7 +656,7 @@ export function HeaderMenuPreview({
     <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden shadow-sm">
       {layoutStyle === 'classic' && renderClassicStyle()}
       {layoutStyle === 'topbar' && renderTopbarStyle()}
-      {layoutStyle === 'centered' && renderCenteredStyle()}
+      {layoutStyle === 'allbirds' && renderAllbirdsStyle()}
 
       <div className="p-4 space-y-3 bg-slate-50 dark:bg-slate-800/50">
         <div className="h-32 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center">

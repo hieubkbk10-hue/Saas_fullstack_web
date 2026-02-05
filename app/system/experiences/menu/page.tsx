@@ -50,13 +50,13 @@ const DEFAULT_CONFIG: HeaderMenuConfig = {
 const LAYOUT_STYLES: LayoutOption<HeaderLayoutStyle>[] = [
   { id: 'classic', label: 'Classic', description: 'Header tiêu chuẩn, menu ngang đơn giản.' },
   { id: 'topbar', label: 'Topbar', description: 'Có topbar, search, tiện ích nhanh.' },
-  { id: 'centered', label: 'Centered', description: 'Logo giữa, menu cân đối hai bên.' },
+  { id: 'allbirds', label: 'Allbirds', description: 'Logo trái, menu giữa, actions bên phải.' },
 ];
 
 const HINTS = [
   'Menu items được quản lý ở /admin/menus.',
   'Topbar phù hợp site bán hàng cần hotline + search.',
-  'Centered phù hợp brand cần nhấn mạnh logo.',
+  'Allbirds phù hợp brand cần header tối giản, tập trung nav.',
   'Login chỉ hiển thị khi bật Module Khách hàng + tính năng Đăng nhập KH.',
   'Cart/Wishlist chỉ bật khi module tương ứng đang active.',
 ];
@@ -103,7 +103,7 @@ export default function HeaderMenuExperiencePage() {
   const [isSaving, setIsSaving] = useState(false);
 
   const savedStyleRaw = headerStyleSetting?.value as string | undefined;
-  const savedStyle = (savedStyleRaw === 'transparent' ? 'centered' : savedStyleRaw) as HeaderLayoutStyle | undefined ?? 'classic';
+  const savedStyle = (savedStyleRaw === 'transparent' || savedStyleRaw === 'centered' ? 'allbirds' : savedStyleRaw) as HeaderLayoutStyle | undefined ?? 'classic';
 
   useEffect(() => {
     setPreviewStyle(savedStyle);
