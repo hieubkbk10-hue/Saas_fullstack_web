@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Settings } from 'lucide-react';
+import { ToggleSwitch } from './toggle-switch';
 
 const DEFAULT_MAX = 100;
 const DEFAULT_MIN = 1;
@@ -122,5 +123,29 @@ export const SettingSelect: React.FC<SettingSelectProps> = ({
         <option key={option.value} value={option.value}>{option.label}</option>
       ))}
     </select>
+  </div>
+);
+
+interface SettingToggleProps {
+  label: string;
+  value: boolean;
+  onChange: () => void;
+  description?: string;
+}
+
+export const SettingToggle: React.FC<SettingToggleProps> = ({
+  label,
+  value,
+  onChange,
+  description,
+}) => (
+  <div className="flex items-center justify-between gap-4">
+    <div>
+      <p className="text-xs text-slate-600 dark:text-slate-300">{label}</p>
+      {description && (
+        <p className="text-xs text-slate-400 mt-1">{description}</p>
+      )}
+    </div>
+    <ToggleSwitch enabled={value} onChange={onChange} />
   </div>
 );

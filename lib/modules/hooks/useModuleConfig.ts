@@ -87,9 +87,15 @@ import type { FieldConfig, FieldType } from '@/types/module-config';
        const state: SettingsState = {};
        // Initialize from defaults
        if (config.settings) {
-         for (const s of config.settings) {
-           state[s.key] = s.default ?? (s.type === 'number' ? 0 : '');
-         }
+        for (const s of config.settings) {
+          if (s.type === 'number') {
+            state[s.key] = s.default ?? 0;
+          } else if (s.type === 'toggle') {
+            state[s.key] = s.default ?? false;
+          } else {
+            state[s.key] = s.default ?? '';
+          }
+        }
        }
        // Override with DB values
        for (const s of settingsData) {
@@ -113,9 +119,15 @@ import type { FieldConfig, FieldType } from '@/types/module-config';
    const serverSettings = useMemo<SettingsState>(() => {
      const state: SettingsState = {};
      if (config.settings) {
-       for (const s of config.settings) {
-         state[s.key] = s.default ?? (s.type === 'number' ? 0 : '');
-       }
+      for (const s of config.settings) {
+        if (s.type === 'number') {
+          state[s.key] = s.default ?? 0;
+        } else if (s.type === 'toggle') {
+          state[s.key] = s.default ?? false;
+        } else {
+          state[s.key] = s.default ?? '';
+        }
+      }
      }
      if (settingsData) {
        for (const s of settingsData) {

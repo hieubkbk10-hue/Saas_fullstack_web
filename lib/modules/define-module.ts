@@ -11,10 +11,18 @@
  export interface ModuleSetting {
    key: string;
    label: string;
-   type: 'number' | 'select' | 'toggle';
+  type: 'number' | 'select' | 'toggle' | 'text';
    default?: string | number | boolean;
    options?: { value: string; label: string }[];
+  group?: string;
+  dependsOn?: string;
  }
+
+export interface ModuleSettingGroup {
+  key: string;
+  label: string;
+  icon?: LucideIcon;
+}
  
  export interface ModuleDefinition {
    key: string;
@@ -25,6 +33,7 @@
    categoryModuleKey?: string;
    features?: ModuleFeature[];
    settings?: ModuleSetting[];
+  settingGroups?: ModuleSettingGroup[];
    conventionNote?: string;
    tabs?: ('config' | 'data' | 'appearance')[];
  }

@@ -1,6 +1,7 @@
 import { mutation } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
+import { seedPresetProductOptions } from "./seeders/productOptions.seeder";
 
 export const seedModules = mutation({
   args: {},
@@ -636,7 +637,10 @@ export const seedProductsModule = mutation({
       await ctx.db.insert("moduleSettings", { moduleKey: "products", settingKey: "lowStockThreshold", value: 10 });
     }
 
-    // 6. Initialize product stats (counter table)
+    // 6. Seed preset options (variants)
+    await seedPresetProductOptions(ctx);
+
+    // 7. Initialize product stats (counter table)
     const existingStats = await ctx.db.query("productStats").first();
     if (!existingStats) {
       const products = await ctx.db.query("products").collect();

@@ -15,9 +15,11 @@ import type { FieldConfig } from '@/types/module-config';
    SettingsCard, 
    SettingInput, 
    SettingSelect,
+  SettingToggle,
    FeaturesCard,
    FieldsCard,
  } from '@/components/modules/shared';
+import { VariantSettingsSection } from '@/components/modules/products/VariantSettingsSection';
  import { Card, Button, cn } from '@/app/admin/components/ui';
  
  type TabType = 'config' | 'data' | 'appearance';
@@ -188,7 +190,7 @@ export function ModuleConfigPage({
    );
  }
  
- function ConfigTab({ config, moduleData, localFeatures, localFields, localCategoryFields, localSettings, colorClasses, onToggleFeature, onToggleField, onToggleCategoryField, onSettingChange }: {
+function ConfigTab({ config, moduleData, localFeatures, localFields, localCategoryFields, localSettings, colorClasses, onToggleFeature, onToggleField, onToggleCategoryField, onSettingChange }: {
    config: ModuleDefinition;
    moduleData: { isCore?: boolean; enabled?: boolean } | null | undefined;
    localFeatures: Record<string, boolean>;
@@ -201,7 +203,31 @@ export function ModuleConfigPage({
    onToggleCategoryField: (key: string) => void;
    onSettingChange: (key: string, value: string | number | boolean) => void;
  }) {
-   return (
+  const settings = config.settings ?? [];
+  const normalizedSettings = settings.map((setting) => ({
+    ...setting,
+    group: setting.group ?? 'general',
+  }));
+  const definedGroups = config.settingGroups ?? [];
+  const groupKeys = new Set(definedGroups.map((group) => group.key));
+  const extraGroups = Array.from(new Set(
+    normalizedSettings
+      .map((setting) => setting.group)
+      .filter((group) => group && !groupKeys.has(group))
+  ));
+  const resolvedGroups = [
+    ...definedGroups,
+    ...extraGroups.map((key) => ({ key, label: key === 'general' ? 'Cài đặt chung' : key })),
+  ];
+
+  const settingsByGroup = resolvedGroups.map((group) => ({
+    group,
+    settings: normalizedSettings.filter((setting) => setting.group === group.key),
+  })).filter((item) => item.settings.length > 0);
+
+  const isProductModule = config.key === 'products';
+
+  return (
      <>
        <ModuleStatus 
          isCore={moduleData?.isCore ?? false} 
@@ -211,28 +237,68 @@ export function ModuleConfigPage({
        
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
          <div className="space-y-4">
-           {config.settings && config.settings.length > 0 && (
-             <SettingsCard>
-               {config.settings.map(setting => (
-                 setting.type === 'select' ? (
-                   <SettingSelect
-                     key={setting.key}
-                     label={setting.label}
-                     value={String(localSettings[setting.key] ?? '')}
-                     onChange={(v) => onSettingChange(setting.key, v)}
-                     options={setting.options ?? []}
-                   />
-                 ) : (
-                   <SettingInput
-                     key={setting.key}
-                     label={setting.label}
-                     value={Number(localSettings[setting.key] ?? 0)}
-                     onChange={(v) => onSettingChange(setting.key, v)}
-                   />
-                 )
-               ))}
-             </SettingsCard>
-           )}
+          {settingsByGroup.map(({ group, settings: groupSettings }) => (
+            <div key={group.key} className="space-y-3">
+              <SettingsCard title={group.label}>
+                {groupSettings.map(setting => {
+                  if (setting.dependsOn && !localSettings[setting.dependsOn]) {
+                    return null;
+                  }
+
+                  if (setting.type === 'select') {
+                    return (
+                      <SettingSelect
+                        key={setting.key}
+                        label={setting.label}
+                        value={String(localSettings[setting.key] ?? '')}
+                        onChange={(v) => onSettingChange(setting.key, v)}
+                        options={setting.options ?? []}
+                      />
+                    );
+                  }
+
+                  if (setting.type === 'toggle') {
+                    return (
+                      <SettingToggle
+                        key={setting.key}
+                        label={setting.label}
+                        value={Boolean(localSettings[setting.key])}
+                        onChange={() => onSettingChange(setting.key, !localSettings[setting.key])}
+                      />
+                    );
+                  }
+
+                  if (setting.type === 'text') {
+                    return (
+                      <SettingInput
+                        key={setting.key}
+                        type="text"
+                        label={setting.label}
+                        value={String(localSettings[setting.key] ?? '')}
+                        onChange={(v) => onSettingChange(setting.key, v)}
+                      />
+                    );
+                  }
+
+                  return (
+                    <SettingInput
+                      key={setting.key}
+                      label={setting.label}
+                      value={Number(localSettings[setting.key] ?? 0)}
+                      onChange={(v) => onSettingChange(setting.key, v)}
+                    />
+                  );
+                })}
+              </SettingsCard>
+              {isProductModule && group.key === 'variants' && (
+                <VariantSettingsSection
+                  enabled={Boolean(localSettings.variantEnabled)}
+                  outOfStockDisplay={String(localSettings.outOfStockDisplay ?? 'blur')}
+                  imageChangeAnimation={String(localSettings.imageChangeAnimation ?? 'fade')}
+                />
+              )}
+            </div>
+          ))}
            
            {config.features && config.features.length > 0 && (
              <FeaturesCard

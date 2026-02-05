@@ -1,4 +1,4 @@
-import { DollarSign, Image, Tag, Box, Package } from 'lucide-react';
+import { DollarSign, Image, Tag, Box, Package, Layers } from 'lucide-react';
 import { defineModule } from '../define-module';
  
 export const productsModule = defineModule({
@@ -29,6 +29,81 @@ export const productsModule = defineModule({
       ],
     },
     { key: 'lowStockThreshold', label: 'Ngưỡng tồn kho thấp', type: 'number', default: 10 },
+    {
+      key: 'variantEnabled',
+      label: 'Bật tính năng phiên bản',
+      type: 'toggle',
+      default: false,
+      group: 'variants',
+    },
+    {
+      key: 'variantPricing',
+      label: 'Giá theo',
+      type: 'select',
+      default: 'variant',
+      options: [
+        { value: 'product', label: 'Sản phẩm (giá chung)' },
+        { value: 'variant', label: 'Phiên bản (giá riêng)' },
+      ],
+      group: 'variants',
+      dependsOn: 'variantEnabled',
+    },
+    {
+      key: 'variantStock',
+      label: 'Tồn kho theo',
+      type: 'select',
+      default: 'variant',
+      options: [
+        { value: 'product', label: 'Sản phẩm (tồn chung)' },
+        { value: 'variant', label: 'Phiên bản (tồn riêng)' },
+      ],
+      group: 'variants',
+      dependsOn: 'variantEnabled',
+    },
+    {
+      key: 'variantImages',
+      label: 'Ảnh phiên bản',
+      type: 'select',
+      default: 'inherit',
+      options: [
+        { value: 'inherit', label: 'Kế thừa từ sản phẩm' },
+        { value: 'override', label: 'Ảnh riêng mỗi phiên bản' },
+        { value: 'both', label: 'Cả hai (có thể override)' },
+      ],
+      group: 'variants',
+      dependsOn: 'variantEnabled',
+    },
+    {
+      key: 'outOfStockDisplay',
+      label: 'Hiển thị hết hàng',
+      type: 'select',
+      default: 'blur',
+      options: [
+        { value: 'hide', label: 'Ẩn hoàn toàn' },
+        { value: 'disable', label: 'Vô hiệu hóa + gạch ngang' },
+        { value: 'blur', label: 'Mờ đi + Badge "Hết hàng"' },
+      ],
+      group: 'variants',
+      dependsOn: 'variantEnabled',
+    },
+    {
+      key: 'imageChangeAnimation',
+      label: 'Hiệu ứng đổi ảnh',
+      type: 'select',
+      default: 'fade',
+      options: [
+        { value: 'none', label: 'Không có' },
+        { value: 'fade', label: 'Fade (mờ dần)' },
+        { value: 'slide', label: 'Slide (trượt)' },
+      ],
+      group: 'variants',
+      dependsOn: 'variantEnabled',
+    },
+   ],
+
+   settingGroups: [
+     { key: 'general', label: 'Cài đặt chung' },
+     { key: 'variants', label: 'Phiên bản sản phẩm', icon: Layers },
    ],
 
    conventionNote: 'Slug tự động từ tên. SKU phải unique. Trường price và status bắt buộc.',

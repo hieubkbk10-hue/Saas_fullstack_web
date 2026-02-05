@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
+import { seedPresetProductOptions } from "./seeders/productOptions.seeder";
 
 const displayType = v.union(
   v.literal("dropdown"),
@@ -257,6 +258,15 @@ export const reorder = mutation({
     await Promise.all(
       args.items.map( async (item) => ctx.db.patch(item.id, { order: item.order }))
     );
+    return null;
+  },
+  returns: v.null(),
+});
+
+export const seedPresetOptions = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await seedPresetProductOptions(ctx);
     return null;
   },
   returns: v.null(),
