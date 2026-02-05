@@ -11,6 +11,7 @@ import { useBrandColor } from '@/components/site/hooks';
 import { useCartConfig, useCheckoutConfig, useProductsListConfig } from '@/lib/experiences';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { notifyAddToCart, useCart } from '@/lib/cart';
+import { QuickAddVariantModal } from '@/components/products/QuickAddVariantModal';
 import { ChevronDown, Heart, Package, Search, ShoppingCart, SlidersHorizontal, X } from 'lucide-react';
 import type { Id } from '@/convex/_generated/dataModel';
 
@@ -137,6 +138,7 @@ function ProductsContent() {
   const brandColor = useBrandColor();
   const listConfig = useProductsListConfig();
   const layout: ProductsListLayout = listConfig.layoutStyle === 'sidebar' ? 'catalog' : listConfig.layoutStyle;
+  const enableQuickAddVariant = listConfig.enableQuickAddVariant ?? true;
   const showWishlistButton = listConfig.showWishlistButton ?? true;
   const showAddToCartButton = listConfig.showAddToCartButton ?? true;
   const checkoutConfig = useCheckoutConfig();
@@ -151,6 +153,11 @@ function ProductsContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const [quickAddTarget, setQuickAddTarget] = useState<null | {
+    product: ProductCardProps['product'];
+    action: 'addToCart' | 'buyNow';
+  }>(null);
 
   const urlPage = Number(searchParams.get('page')) || 1;
 
@@ -346,13 +353,50 @@ function ProductsContent() {
     await toggleWishlist({ customerId: customer.id as Id<'customers'>, productId });
   };
 
-  const handleAddToCart = async (productId: Id<'products'>) => {
+  const openQuickAdd = (product: ProductCardProps['product'], action: 'addToCart' | 'buyNow') => {
+    setQuickAddTarget({ product, action });
+  };
+
+  const closeQuickAdd = () => setQuickAddTarget(null);
+
+  const handleQuickAddConfirm = async (variantId: Id<'productVariants'>, quantity: number) => {
+    if (!quickAddTarget) {
+      return;
+    }
+
+    const { product, action } = quickAddTarget;
+
+    if (action === 'addToCart') {
+      await addItem(product._id, quantity, variantId);
+      notifyAddToCart();
+      if (cartConfig.layoutStyle === 'drawer') {
+        openDrawer();
+      } else {
+        router.push('/cart');
+      }
+    } else {
+      router.push(`/checkout?productId=${product._id}&quantity=${quantity}&variantId=${variantId}`);
+    }
+
+    setQuickAddTarget(null);
+  };
+
+  const handleAddToCart = async (product: ProductCardProps['product']) => {
     if (!isAuthenticated) {
       openLoginModal();
       return;
     }
 
-    await addItem(productId, 1);
+    if (product.hasVariants) {
+      if (enableQuickAddVariant) {
+        openQuickAdd(product, 'addToCart');
+        return;
+      }
+      router.push(`/products/${product.slug}`);
+      return;
+    }
+
+    await addItem(product._id, 1);
     notifyAddToCart();
     if (cartConfig.layoutStyle === 'drawer') {
       openDrawer();
@@ -361,12 +405,22 @@ function ProductsContent() {
     }
   };
 
-  const handleBuyNow = (productId: Id<'products'>) => {
+  const handleBuyNow = (product: ProductCardProps['product']) => {
     if (!isAuthenticated) {
       openLoginModal();
       return;
     }
-    router.push(`/checkout?productId=${productId}&quantity=1`);
+
+    if (product.hasVariants) {
+      if (enableQuickAddVariant) {
+        openQuickAdd(product, 'buyNow');
+        return;
+      }
+      router.push(`/products/${product.slug}`);
+      return;
+    }
+
+    router.push(`/checkout?productId=${product._id}&quantity=1`);
   };
 
   const paginationNode = (
@@ -478,80 +532,99 @@ function ProductsContent() {
     </>
   );
 
+  const quickAddModal = quickAddTarget ? (
+    <QuickAddVariantModal
+      key={`${quickAddTarget.product._id}-${quickAddTarget.action}`}
+      isOpen={Boolean(quickAddTarget)}
+      product={quickAddTarget.product}
+      brandColor={brandColor}
+      actionLabel={quickAddTarget.action === 'buyNow' ? 'Mua ngay' : 'Thêm vào giỏ'}
+      onClose={closeQuickAdd}
+      onConfirm={handleQuickAddConfirm}
+    />
+  ) : null;
+
   // Render based on layout setting
   if (layout === 'catalog') {
     return (
-      <CatalogLayout
-        products={isLoadingProducts ? [] : products}
-        categories={categories}
-        categoryMap={categoryMap}
-        selectedCategory={selectedCategory}
-        onCategoryChange={handleCategoryChange}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        brandColor={brandColor}
-        showPrice={showPrice}
-        showSalePrice={showSalePrice}
-        showStock={showStock}
-        formatPrice={formatPrice}
-        totalCount={totalCount}
-        paginationNode={paginationNode}
-        showWishlistButton={showWishlistButton}
-        showAddToCartButton={showAddToCartButton}
-        showBuyNowButton={showBuyNowButton}
-        showPromotionBadge={showPromotionBadge}
-        wishlistIdSet={wishlistIdSet}
-        onToggleWishlist={handleWishlistToggle}
-        onAddToCart={handleAddToCart}
-        onBuyNow={handleBuyNow}
-        canUseWishlist={canUseWishlist}
-      />
+      <>
+        <CatalogLayout
+          products={isLoadingProducts ? [] : products}
+          categories={categories}
+          categoryMap={categoryMap}
+          selectedCategory={selectedCategory}
+          onCategoryChange={handleCategoryChange}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          brandColor={brandColor}
+          showPrice={showPrice}
+          showSalePrice={showSalePrice}
+          showStock={showStock}
+          formatPrice={formatPrice}
+          totalCount={totalCount}
+          paginationNode={paginationNode}
+          showWishlistButton={showWishlistButton}
+          showAddToCartButton={showAddToCartButton}
+          showBuyNowButton={showBuyNowButton}
+          showPromotionBadge={showPromotionBadge}
+          wishlistIdSet={wishlistIdSet}
+          onToggleWishlist={handleWishlistToggle}
+          onAddToCart={handleAddToCart}
+          onBuyNow={handleBuyNow}
+          canUseWishlist={canUseWishlist}
+        />
+        {quickAddModal}
+      </>
     );
   }
 
   if (layout === 'list') {
     return (
-      <ListLayout
-        products={isLoadingProducts ? [] : products}
-        categories={categories}
-        categoryMap={categoryMap}
-        selectedCategory={selectedCategory}
-        onCategoryChange={handleCategoryChange}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        brandColor={brandColor}
-        showPrice={showPrice}
-        showSalePrice={showSalePrice}
-        showStock={showStock}
-        formatPrice={formatPrice}
-        totalCount={totalCount}
-        paginationNode={paginationNode}
-        showWishlistButton={showWishlistButton}
-        showAddToCartButton={showAddToCartButton}
-        showBuyNowButton={showBuyNowButton}
-        showPromotionBadge={showPromotionBadge}
-        wishlistIdSet={wishlistIdSet}
-        onToggleWishlist={handleWishlistToggle}
-        onAddToCart={handleAddToCart}
-        onBuyNow={handleBuyNow}
-        canUseWishlist={canUseWishlist}
-      />
+      <>
+        <ListLayout
+          products={isLoadingProducts ? [] : products}
+          categories={categories}
+          categoryMap={categoryMap}
+          selectedCategory={selectedCategory}
+          onCategoryChange={handleCategoryChange}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          brandColor={brandColor}
+          showPrice={showPrice}
+          showSalePrice={showSalePrice}
+          showStock={showStock}
+          formatPrice={formatPrice}
+          totalCount={totalCount}
+          paginationNode={paginationNode}
+          showWishlistButton={showWishlistButton}
+          showAddToCartButton={showAddToCartButton}
+          showBuyNowButton={showBuyNowButton}
+          showPromotionBadge={showPromotionBadge}
+          wishlistIdSet={wishlistIdSet}
+          onToggleWishlist={handleWishlistToggle}
+          onAddToCart={handleAddToCart}
+          onBuyNow={handleBuyNow}
+          canUseWishlist={canUseWishlist}
+        />
+        {quickAddModal}
+      </>
     );
   }
 
   // Default: Grid Layout
   return (
-    <div className="py-8 md:py-12 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Sản phẩm</h1>
-          <p className="text-slate-500 mt-2">Khám phá các sản phẩm chất lượng của chúng tôi</p>
-        </div>
+    <>
+      <div className="py-8 md:py-12 px-4">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Sản phẩm</h1>
+            <p className="text-slate-500 mt-2">Khám phá các sản phẩm chất lượng của chúng tôi</p>
+          </div>
 
         {/* Filter Bar */}
         <div className="bg-white rounded-xl border border-slate-200 p-4 mb-8">
@@ -637,9 +710,11 @@ function ProductsContent() {
           <ProductGrid products={products} categoryMap={categoryMap} brandColor={brandColor} showPrice={showPrice} showSalePrice={showSalePrice} showStock={showStock} formatPrice={formatPrice} showWishlistButton={showWishlistButton} showAddToCartButton={showAddToCartButton} showBuyNowButton={showBuyNowButton} showPromotionBadge={showPromotionBadge} wishlistIdSet={wishlistIdSet} onToggleWishlist={handleWishlistToggle} onAddToCart={handleAddToCart} onBuyNow={handleBuyNow} canUseWishlist={canUseWishlist} />
         )}
 
-        {paginationNode}
+          {paginationNode}
+        </div>
       </div>
-    </div>
+      {quickAddModal}
+    </>
   );
 }
 
@@ -654,6 +729,7 @@ interface ProductCardProps {
     price: number;
     salePrice?: number;
     stock: number;
+    hasVariants?: boolean;
     categoryId: string;
     description?: string;
   };
@@ -665,7 +741,7 @@ interface ProductCardProps {
   formatPrice: (price: number) => string;
 }
 
-function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showBuyNowButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, onBuyNow, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showBuyNowButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; onAddToCart: (id: Id<'products'>) => void; onBuyNow: (id: Id<'products'>) => void; canUseWishlist: boolean }) {
+function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showBuyNowButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, onBuyNow, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showBuyNowButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; onAddToCart: (product: ProductCardProps['product']) => void; onBuyNow: (product: ProductCardProps['product']) => void; canUseWishlist: boolean }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {products.map((product) => (
@@ -706,7 +782,7 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
                   <button
                     className="w-full rounded-lg py-2 text-sm font-medium text-white transition-colors flex items-center justify-center gap-1.5"
                     style={{ backgroundColor: brandColor }}
-                    onClick={(event) => { event.preventDefault(); onAddToCart(product._id); }}
+                    onClick={(event) => { event.preventDefault(); onAddToCart(product); }}
                   >
                     <ShoppingCart size={14} />
                     Thêm vào giỏ
@@ -716,7 +792,7 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
                   <button
                     className="w-full rounded-lg py-2 text-sm font-medium border transition-colors"
                     style={{ borderColor: brandColor, color: brandColor }}
-                    onClick={(event) => { event.preventDefault(); onBuyNow(product._id); }}
+                    onClick={(event) => { event.preventDefault(); onBuyNow(product); }}
                   >
                     Mua ngay
                   </button>
@@ -730,7 +806,7 @@ function ProductGrid({ products, categoryMap, brandColor, showPrice, showSalePri
   );
 }
 
-function ProductList({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showBuyNowButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, onBuyNow, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showBuyNowButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; onAddToCart: (id: Id<'products'>) => void; onBuyNow: (id: Id<'products'>) => void; canUseWishlist: boolean }) {
+function ProductList({ products, categoryMap, brandColor, showPrice, showSalePrice, showStock, formatPrice, showWishlistButton, showAddToCartButton, showBuyNowButton, showPromotionBadge, wishlistIdSet, onToggleWishlist, onAddToCart, onBuyNow, canUseWishlist }: { products: ProductCardProps['product'][]; categoryMap: Map<string, string>; brandColor: string; showPrice: boolean; showSalePrice: boolean; showStock: boolean; formatPrice: (price: number) => string; showWishlistButton: boolean; showAddToCartButton: boolean; showBuyNowButton: boolean; showPromotionBadge: boolean; wishlistIdSet: Set<Id<'products'>>; onToggleWishlist: (id: Id<'products'>) => void; onAddToCart: (product: ProductCardProps['product']) => void; onBuyNow: (product: ProductCardProps['product']) => void; canUseWishlist: boolean }) {
   return (
     <div className="space-y-4">
       {products.map((product) => (
@@ -772,12 +848,12 @@ function ProductList({ products, categoryMap, brandColor, showPrice, showSalePri
           {(showAddToCartButton || showBuyNowButton) && (
             <div className="hidden md:flex items-center gap-2">
               {showAddToCartButton && (
-                <button className="p-3 rounded-full border-2 transition-colors hover:bg-slate-50" style={{ borderColor: brandColor, color: brandColor }} onClick={(e) => { e.preventDefault(); onAddToCart(product._id); }}>
+                <button className="p-3 rounded-full border-2 transition-colors hover:bg-slate-50" style={{ borderColor: brandColor, color: brandColor }} onClick={(e) => { e.preventDefault(); onAddToCart(product); }}>
                   <ShoppingCart size={20} />
                 </button>
               )}
               {showBuyNowButton && (
-                <button className="px-3 py-2 rounded-full border-2 text-xs font-medium transition-colors hover:bg-slate-50" style={{ borderColor: brandColor, color: brandColor }} onClick={(e) => { e.preventDefault(); onBuyNow(product._id); }}>
+                <button className="px-3 py-2 rounded-full border-2 text-xs font-medium transition-colors hover:bg-slate-50" style={{ borderColor: brandColor, color: brandColor }} onClick={(e) => { e.preventDefault(); onBuyNow(product); }}>
                   Mua ngay
                 </button>
               )}
@@ -829,8 +905,8 @@ interface LayoutProps {
   showPromotionBadge: boolean;
   wishlistIdSet: Set<Id<'products'>>;
   onToggleWishlist: (id: Id<'products'>) => void;
-  onAddToCart: (id: Id<'products'>) => void;
-  onBuyNow: (id: Id<'products'>) => void;
+  onAddToCart: (product: ProductCardProps['product']) => void;
+  onBuyNow: (product: ProductCardProps['product']) => void;
   canUseWishlist: boolean;
 }
 
@@ -923,7 +999,7 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
                             <button
                               className="w-full rounded-lg py-2 text-sm font-medium text-white transition-colors flex items-center justify-center gap-1.5"
                               style={{ backgroundColor: brandColor }}
-                              onClick={(event) => { event.preventDefault(); onAddToCart(product._id); }}
+                            onClick={(event) => { event.preventDefault(); onAddToCart(product); }}
                             >
                               <ShoppingCart size={14} />
                               Thêm vào giỏ
@@ -933,7 +1009,7 @@ function CatalogLayout({ products, categories, selectedCategory, onCategoryChang
                             <button
                               className="w-full rounded-lg py-2 text-sm font-medium border transition-colors"
                               style={{ borderColor: brandColor, color: brandColor }}
-                              onClick={(event) => { event.preventDefault(); onBuyNow(product._id); }}
+                            onClick={(event) => { event.preventDefault(); onBuyNow(product); }}
                             >
                               Mua ngay
                             </button>

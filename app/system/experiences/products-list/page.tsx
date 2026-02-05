@@ -39,6 +39,7 @@ type ProductsListExperienceConfig = {
   showAddToCartButton: boolean;
   showBuyNowButton: boolean;
   showPromotionBadge: boolean;
+  enableQuickAddVariant: boolean;
 };
 
 type LayoutConfig = {
@@ -74,6 +75,7 @@ const DEFAULT_CONFIG: ProductsListExperienceConfig = {
   showAddToCartButton: true,
   showBuyNowButton: true,
   showPromotionBadge: true,
+  enableQuickAddVariant: true,
 };
 
 const HINTS = [
@@ -103,6 +105,7 @@ export default function ProductsListExperiencePage() {
       showAddToCartButton?: boolean;
       showBuyNowButton?: boolean;
       showPromotionBadge?: boolean;
+      enableQuickAddVariant?: boolean;
     } | undefined;
     
     const normalizePaginationType = (value?: string | boolean): PaginationType => {
@@ -133,6 +136,7 @@ export default function ProductsListExperiencePage() {
       showAddToCartButton: raw?.showAddToCartButton ?? true,
       showBuyNowButton: raw?.showBuyNowButton ?? true,
       showPromotionBadge: raw?.showPromotionBadge ?? true,
+      enableQuickAddVariant: raw?.enableQuickAddVariant ?? true,
     };
   }, [experienceSetting?.value]);
 
@@ -294,6 +298,14 @@ export default function ProductsListExperiencePage() {
               description="Hiện nút add to cart"
               checked={config.showAddToCartButton}
               onChange={(v) => setConfig(prev => ({ ...prev, showAddToCartButton: v }))}
+              accentColor="#10b981"
+              disabled={!cartModule?.enabled || !ordersModule?.enabled}
+            />
+            <ToggleRow
+              label="Quick add phiên bản"
+              description="Mở modal chọn phiên bản khi thêm giỏ"
+              checked={config.enableQuickAddVariant}
+              onChange={(v) => setConfig(prev => ({ ...prev, enableQuickAddVariant: v }))}
               accentColor="#10b981"
               disabled={!cartModule?.enabled || !ordersModule?.enabled}
             />

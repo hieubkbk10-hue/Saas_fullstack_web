@@ -48,6 +48,7 @@ type ProductsListConfig = {
   showAddToCartButton: boolean;
   showBuyNowButton: boolean;
   showPromotionBadge: boolean;
+  enableQuickAddVariant: boolean;
 };
 
 export function useProductsListConfig(): ProductsListConfig {
@@ -67,6 +68,7 @@ export function useProductsListConfig(): ProductsListConfig {
       showAddToCartButton?: boolean;
       showBuyNowButton?: boolean;
       showPromotionBadge?: boolean;
+      enableQuickAddVariant?: boolean;
     } | undefined;
 
     const rawLayout = raw?.layoutStyle;
@@ -88,6 +90,7 @@ export function useProductsListConfig(): ProductsListConfig {
       showAddToCartButton: configShowAddToCart && cartAvailable,
       showBuyNowButton: configShowBuyNow && ordersEnabled,
       showPromotionBadge: raw?.showPromotionBadge ?? true,
+      enableQuickAddVariant: raw?.enableQuickAddVariant ?? true,
     };
   }, [experienceSetting?.value, cartAvailable, ordersEnabled]);
 }
