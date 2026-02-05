@@ -20,18 +20,73 @@ export default function CheckoutPage() {
   const checkoutConfig = useCheckoutConfig();
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
 
-  const { productId, quantity } = useMemo(() => {
+  const { productId, quantity, variantId } = useMemo(() => {
     const rawId = searchParams.get('productId');
     const rawQuantity = Number(searchParams.get('quantity'));
+    const rawVariantId = searchParams.get('variantId');
     return {
       productId: rawId as Id<'products'> | null,
       quantity: Number.isFinite(rawQuantity) && rawQuantity > 0 ? Math.min(rawQuantity, 99) : 1,
+      variantId: rawVariantId as Id<'productVariants'> | null,
     };
   }, [searchParams]);
 
   const product = useQuery(api.products.getById, productId ? { id: productId } : 'skip');
+  const variants = useQuery(
+    api.productVariants.listByIds,
+    variantId ? { ids: [variantId] } : 'skip'
+  );
 
-  const subtotal = product ? (product.salePrice ?? product.price) * quantity : 0;
+  const selectedVariant = variants?.[0] ?? null;
+  const optionIds = useMemo(() => {
+    if (!selectedVariant) {
+      return [];
+    }
+    return Array.from(new Set(selectedVariant.optionValues.map((optionValue) => optionValue.optionId)));
+  }, [selectedVariant]);
+
+  const valueIds = useMemo(() => {
+    if (!selectedVariant) {
+      return [];
+    }
+    return Array.from(new Set(selectedVariant.optionValues.map((optionValue) => optionValue.valueId)));
+  }, [selectedVariant]);
+
+  const variantOptions = useQuery(
+    api.productOptions.listByIds,
+    optionIds.length > 0 ? { ids: optionIds } : 'skip'
+  );
+
+  const variantValues = useQuery(
+    api.productOptionValues.listByIds,
+    valueIds.length > 0 ? { ids: valueIds } : 'skip'
+  );
+
+  const variantTitle = useMemo(() => {
+    if (!selectedVariant) {
+      return null;
+    }
+    const optionMap = new Map(variantOptions?.map((option) => [option._id, option]) ?? []);
+    const valueMap = new Map(variantValues?.map((value) => [value._id, value]) ?? []);
+    const parts = selectedVariant.optionValues
+      .map((optionValue) => {
+        const optionName = optionMap.get(optionValue.optionId)?.name;
+        const value = valueMap.get(optionValue.valueId);
+        const valueLabel = optionValue.customValue ?? value?.label ?? value?.value;
+        if (!valueLabel) {
+          return null;
+        }
+        return optionName ? `${optionName}: ${valueLabel}` : valueLabel;
+      })
+      .filter((part): part is string => Boolean(part));
+
+    return parts.join(' • ');
+  }, [selectedVariant, variantOptions, variantValues]);
+
+  const basePrice = selectedVariant?.price ?? product?.price ?? 0;
+  const salePrice = selectedVariant ? selectedVariant.salePrice : product?.salePrice;
+  const unitPrice = salePrice ?? basePrice;
+  const subtotal = unitPrice * quantity;
 
   if (ordersModule && !ordersModule.enabled) {
     return (
@@ -147,11 +202,12 @@ export default function CheckoutPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="font-medium text-slate-900">{product.name}</p>
+                {variantTitle && <p className="text-xs text-slate-500 mt-1">{variantTitle}</p>}
                 <p className="text-sm text-slate-500">Số lượng: {quantity}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-slate-500">Đơn giá</p>
-                <p className="font-semibold text-slate-900">{formatPrice(product.salePrice ?? product.price)}</p>
+                <p className="font-semibold text-slate-900">{formatPrice(unitPrice)}</p>
               </div>
             </div>
           </div>

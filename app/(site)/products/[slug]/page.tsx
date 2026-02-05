@@ -1,16 +1,18 @@
 'use client';
 
-import React, { use, useMemo, useState } from 'react';
+import React, { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useMutation, useQuery } from 'convex/react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { notifyAddToCart, useCart } from '@/lib/cart';
 import { useCartConfig, useCheckoutConfig } from '@/lib/experiences';
 import { ArrowLeft, Award, BadgeCheck, Bell, Bolt, Calendar, Camera, Check, CheckCircle2, ChevronRight, Clock, CreditCard, Gift, Globe, Heart, HeartHandshake, Leaf, Lock, MapPin, Minus, Package, Phone, Plus, RotateCcw, Share2, Shield, ShoppingBag, ShoppingCart, Star, ThumbsUp, Truck } from 'lucide-react';
+import { VariantSelector, type VariantSelectorOption } from '@/components/products/VariantSelector';
 import type { Id } from '@/convex/_generated/dataModel';
 
 type ProductDetailStyle = 'classic' | 'modern' | 'minimal';
@@ -47,6 +49,41 @@ type ProductDetailExperienceConfig = {
   showBuyNow: boolean;
   heroStyle: ModernHeroStyle;
   contentWidth: MinimalContentWidth;
+};
+
+type ProductVariantOptionValue = {
+  optionId: Id<'productOptions'>;
+  valueId: Id<'productOptionValues'>;
+  customValue?: string;
+};
+
+type ProductVariant = {
+  _id: Id<'productVariants'>;
+  optionValues: ProductVariantOptionValue[];
+  price?: number;
+  salePrice?: number;
+  stock?: number;
+  sku: string;
+  image?: string;
+  images?: string[];
+};
+
+type ProductOption = {
+  _id: Id<'productOptions'>;
+  name: string;
+  order: number;
+  displayType: VariantSelectorOption['displayType'];
+  inputType?: VariantSelectorOption['inputType'];
+};
+
+type ProductOptionValue = {
+  _id: Id<'productOptionValues'>;
+  optionId: Id<'productOptions'>;
+  order: number;
+  value: string;
+  label?: string;
+  colorCode?: string;
+  image?: string;
 };
 type ClassicHighlightIcon =
   | 'Award'
@@ -242,6 +279,73 @@ export default function ProductDetailPage({ params }: PageProps) {
     product?.categoryId ? { categoryId: product.categoryId, limit: 4 } : 'skip'
   );
 
+  const variants = useQuery(
+    api.productVariants.listByProductActive,
+    product?._id && product?.hasVariants ? { productId: product._id } : 'skip'
+  );
+
+  const variantOptionIds = useMemo(() => {
+    if (!variants || variants.length === 0) {
+      return [] as Id<'productOptions'>[];
+    }
+    const ids = new Set<Id<'productOptions'>>();
+    variants.forEach((variant) => variant.optionValues.forEach((item) => ids.add(item.optionId)));
+    return Array.from(ids);
+  }, [variants]);
+
+  const variantValueIds = useMemo(() => {
+    if (!variants || variants.length === 0) {
+      return [] as Id<'productOptionValues'>[];
+    }
+    const ids = new Set<Id<'productOptionValues'>>();
+    variants.forEach((variant) => variant.optionValues.forEach((item) => ids.add(item.valueId)));
+    return Array.from(ids);
+  }, [variants]);
+
+  const variantOptionsSource = useQuery(
+    api.productOptions.listByIds,
+    variantOptionIds.length > 0 ? { ids: variantOptionIds } : 'skip'
+  );
+
+  const variantValuesSource = useQuery(
+    api.productOptionValues.listByIds,
+    variantValueIds.length > 0 ? { ids: variantValueIds } : 'skip'
+  );
+
+  const variantOptions = useMemo(() => {
+    if (!variantOptionsSource || !variantValuesSource) {
+      return [] as VariantSelectorOption[];
+    }
+
+    const valuesByOption = new Map<Id<'productOptions'>, ProductOptionValue[]>();
+    variantValuesSource.forEach((value) => {
+      const existing = valuesByOption.get(value.optionId) ?? [];
+      existing.push(value);
+      valuesByOption.set(value.optionId, existing);
+    });
+
+    return (variantOptionsSource as ProductOption[])
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((option) => ({
+        id: option._id,
+        name: option.name,
+        displayType: option.displayType,
+        inputType: option.inputType,
+        values: (valuesByOption.get(option._id) ?? [])
+          .slice()
+          .sort((a, b) => a.order - b.order)
+          .map((value) => ({
+            id: value._id,
+            label: value.label ?? value.value,
+            value: value.value,
+            colorCode: value.colorCode,
+            image: value.image,
+          })),
+      }))
+      .filter((option) => option.values.length > 0);
+  }, [variantOptionsSource, variantValuesSource]);
+
   const wishlistStatus = useQuery(
     api.wishlist.isInWishlist,
     isAuthenticated && customer && product?._id && (wishlistModule?.enabled ?? false)
@@ -259,7 +363,7 @@ export default function ProductDetailPage({ params }: PageProps) {
     await toggleWishlist({ customerId: customer.id as Id<'customers'>, productId: product._id });
   };
 
-  const handleAddToCart = async (quantity: number) => {
+  const handleAddToCart = async (quantity: number, variantId?: Id<'productVariants'>) => {
     if (!product?._id) {
       return;
     }
@@ -267,7 +371,11 @@ export default function ProductDetailPage({ params }: PageProps) {
       openLoginModal();
       return;
     }
-    await addItem(product._id, quantity);
+    if (product.hasVariants && !variantId) {
+      toast.error('Vui lòng chọn phiên bản trước khi thêm vào giỏ hàng');
+      return;
+    }
+    await addItem(product._id, quantity, variantId);
     notifyAddToCart();
     if (cartConfig.layoutStyle === 'drawer') {
       openDrawer();
@@ -276,7 +384,7 @@ export default function ProductDetailPage({ params }: PageProps) {
     }
   };
 
-  const handleBuyNow = async (quantity: number) => {
+  const handleBuyNow = async (quantity: number, variantId?: Id<'productVariants'>) => {
     if (!product?._id) {
       return;
     }
@@ -284,7 +392,12 @@ export default function ProductDetailPage({ params }: PageProps) {
       openLoginModal();
       return;
     }
-    router.push(`/checkout?productId=${product._id}&quantity=${quantity}`);
+    if (product.hasVariants && !variantId) {
+      toast.error('Vui lòng chọn phiên bản trước khi thanh toán');
+      return;
+    }
+    const variantParam = variantId ? `&variantId=${variantId}` : '';
+    router.push(`/checkout?productId=${product._id}&quantity=${quantity}${variantParam}`);
   };
 
   const canBuyNow = experienceConfig.showBuyNow && checkoutConfig.showBuyNow && (ordersModule?.enabled ?? false);
@@ -318,7 +431,12 @@ export default function ProductDetailPage({ params }: PageProps) {
   }
 
   const filteredRelated = relatedProducts?.filter(p => p._id !== product._id).slice(0, 4) ?? [];
-  const productData = { ...product, categoryName: category?.name ?? 'Sản phẩm', categorySlug: category?.slug };
+  const productData = {
+    ...product,
+    categoryName: category?.name ?? 'Sản phẩm',
+    categorySlug: category?.slug,
+    hasVariants: product.hasVariants,
+  };
 
   return (
     <>
@@ -328,6 +446,8 @@ export default function ProductDetailPage({ params }: PageProps) {
           brandColor={brandColor}
           relatedProducts={filteredRelated}
           enabledFields={enabledFields}
+          variants={variants ?? []}
+          variantOptions={variantOptions}
           highlights={classicHighlights}
           highlightsEnabled={classicHighlightsEnabled}
           ratingSummary={ratingSummary}
@@ -347,6 +467,8 @@ export default function ProductDetailPage({ params }: PageProps) {
           brandColor={brandColor}
           relatedProducts={filteredRelated}
           enabledFields={enabledFields}
+          variants={variants ?? []}
+          variantOptions={variantOptions}
           ratingSummary={ratingSummary}
           showAddToCart={experienceConfig.showAddToCart}
           showRating={experienceConfig.showRating}
@@ -365,6 +487,8 @@ export default function ProductDetailPage({ params }: PageProps) {
           brandColor={brandColor}
           relatedProducts={filteredRelated}
           enabledFields={enabledFields}
+          variants={variants ?? []}
+          variantOptions={variantOptions}
           ratingSummary={ratingSummary}
           showAddToCart={experienceConfig.showAddToCart}
           showRating={experienceConfig.showRating}
@@ -392,6 +516,7 @@ interface ProductData {
   image?: string;
   images?: string[];
   description?: string;
+  hasVariants?: boolean;
   categoryId: Id<"productCategories">;
   categoryName: string;
   categorySlug?: string;
@@ -411,6 +536,8 @@ interface StyleProps {
   brandColor: string;
   relatedProducts: RelatedProduct[];
   enabledFields: Set<string>;
+  variants: ProductVariant[];
+  variantOptions: VariantSelectorOption[];
 }
 
 interface ExperienceBlocksProps {
@@ -421,8 +548,8 @@ interface ExperienceBlocksProps {
   showBuyNow: boolean;
   isWishlisted: boolean;
   onToggleWishlist: () => void;
-  onAddToCart: (quantity: number) => void;
-  onBuyNow: (quantity: number) => void;
+  onAddToCart: (quantity: number, variantId?: Id<'productVariants'>) => void;
+  onBuyNow: (quantity: number, variantId?: Id<'productVariants'>) => void;
 }
 
 interface ClassicStyleProps extends StyleProps, ExperienceBlocksProps {
@@ -433,6 +560,27 @@ interface ClassicStyleProps extends StyleProps, ExperienceBlocksProps {
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(price);
 }
+
+type VariantSelectionMap = Record<string, Id<'productOptionValues'>>;
+
+const buildSelectionFromVariant = (variant: ProductVariant): VariantSelectionMap =>
+  variant.optionValues.reduce<VariantSelectionMap>((acc, optionValue) => {
+    acc[optionValue.optionId] = optionValue.valueId;
+    return acc;
+  }, {});
+
+const findMatchingVariant = (variants: ProductVariant[], selection: VariantSelectionMap) =>
+  variants.find((variant) =>
+    variant.optionValues.every((optionValue) => {
+      const selected = selection[optionValue.optionId];
+      return !selected || selected === optionValue.valueId;
+    })
+  ) ?? null;
+
+const findExactVariant = (variants: ProductVariant[], selection: VariantSelectionMap) =>
+  variants.find((variant) =>
+    variant.optionValues.every((optionValue) => selection[optionValue.optionId] === optionValue.valueId)
+  ) ?? null;
 
 function RatingInline({ summary }: { summary: RatingSummary }) {
   const average = summary.average ?? 0;
@@ -459,9 +607,45 @@ function RatingInline({ summary }: { summary: RatingSummary }) {
 // ====================================================================================
 // STYLE 1: CLASSIC - Standard e-commerce product page
 // ====================================================================================
-function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, highlights, highlightsEnabled, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow }: ClassicStyleProps) {
+function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, highlights, highlightsEnabled, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow }: ClassicStyleProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedOptions, setSelectedOptions] = useState<VariantSelectionMap>({});
+
+  const hasVariants = Boolean(product.hasVariants && variants.length > 0 && variantOptions.length > 0);
+
+  useEffect(() => {
+    if (!hasVariants) {
+      setSelectedOptions({});
+      return;
+    }
+    setSelectedOptions(buildSelectionFromVariant(variants[0]));
+  }, [hasVariants, variants]);
+
+  const selectedVariant = useMemo(
+    () => (hasVariants ? findExactVariant(variants, selectedOptions) : null),
+    [hasVariants, variants, selectedOptions]
+  );
+
+  const handleSelectOption = (optionId: Id<'productOptions'>, valueId: Id<'productOptionValues'>) => {
+    if (!hasVariants) {
+      return;
+    }
+    const nextSelection = { ...selectedOptions, [optionId]: valueId };
+    const matching = findMatchingVariant(variants, nextSelection);
+    setSelectedOptions(matching ? buildSelectionFromVariant(matching) : nextSelection);
+  };
+
+  const isOptionValueAvailable = (optionId: Id<'productOptions'>, valueId: Id<'productOptionValues'>) =>
+    variants.some((variant) =>
+      variant.optionValues.every((optionValue) => {
+        if (optionValue.optionId === optionId) {
+          return optionValue.valueId === valueId;
+        }
+        const selected = selectedOptions[optionValue.optionId];
+        return !selected || selected === optionValue.valueId;
+      })
+    );
 
   const showPrice = enabledFields.has('price') || enabledFields.size === 0;
   const showSalePrice = enabledFields.has('salePrice');
@@ -470,8 +654,12 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
   const showSku = enabledFields.has('sku');
 
   const images = product.images?.length ? product.images : (product.image ? [product.image] : []);
-  const discountPercent = product.salePrice ? Math.round((1 - product.salePrice / product.price) * 100) : 0;
-  const inStock = !showStock || product.stock > 0;
+  const basePrice = selectedVariant?.price ?? product.price;
+  const salePrice = selectedVariant ? selectedVariant.salePrice : product.salePrice;
+  const discountPercent = salePrice ? Math.round((1 - salePrice / basePrice) * 100) : 0;
+  const displayPrice = salePrice ?? basePrice;
+  const stockValue = selectedVariant?.stock ?? product.stock;
+  const inStock = !showStock || stockValue > 0;
 
   return (
     <div className="min-h-screen bg-white">
@@ -504,7 +692,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
               ) : (
                 <div className="w-full h-full flex items-center justify-center"><Package size={64} className="text-slate-300" /></div>
               )}
-              {showSalePrice && product.salePrice && (
+              {showSalePrice && salePrice && (
                 <span className="absolute top-4 left-4 px-3 py-1.5 bg-red-500 text-white text-sm font-bold rounded-lg">-{discountPercent}%</span>
               )}
             </div>
@@ -534,22 +722,34 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
 
             {showPrice && (
               <div className="flex items-end gap-3 mb-6">
-                <span className="text-3xl font-bold" style={{ color: brandColor }}>{formatPrice(product.salePrice ?? product.price)}</span>
-                {showSalePrice && product.salePrice && (
+                <span className="text-3xl font-bold" style={{ color: brandColor }}>{formatPrice(displayPrice)}</span>
+                {showSalePrice && salePrice && (
                   <>
-                    <span className="text-xl text-slate-400 line-through">{formatPrice(product.price)}</span>
-                    <span className="px-2 py-0.5 bg-red-100 text-red-600 text-sm font-medium rounded">Tiết kiệm {formatPrice(product.price - product.salePrice)}</span>
+                    <span className="text-xl text-slate-400 line-through">{formatPrice(basePrice)}</span>
+                    <span className="px-2 py-0.5 bg-red-100 text-red-600 text-sm font-medium rounded">Tiết kiệm {formatPrice(basePrice - salePrice)}</span>
                   </>
                 )}
               </div>
             )}
 
+            {hasVariants && (
+              <div className="mb-6">
+                <VariantSelector
+                  options={variantOptions}
+                  selectedOptions={selectedOptions}
+                  onSelect={handleSelectOption}
+                  isOptionValueAvailable={isOptionValueAvailable}
+                  accentColor={brandColor}
+                />
+              </div>
+            )}
+
             {showStock && (
               <div className="flex items-center gap-2 mb-6">
-                {product.stock > 10 ? (
+                {stockValue > 10 ? (
                   <><Check size={18} className="text-green-500" /><span className="text-green-600 font-medium">Còn hàng</span></>
-                ) : (product.stock > 0 ? (
-                  <><span className="w-2 h-2 bg-orange-500 rounded-full" /><span className="text-orange-600 font-medium">Chỉ còn {product.stock} sản phẩm</span></>
+                ) : (stockValue > 0 ? (
+                  <><span className="w-2 h-2 bg-orange-500 rounded-full" /><span className="text-orange-600 font-medium">Chỉ còn {stockValue} sản phẩm</span></>
                 ) : (
                   <><span className="w-2 h-2 bg-red-500 rounded-full" /><span className="text-red-600 font-medium">Hết hàng</span></>
                 ))}
@@ -562,8 +762,8 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
                   <Minus size={18} className={quantity <= 1 ? 'text-slate-300' : 'text-slate-600'} />
                 </button>
                 <span className="w-12 text-center font-medium">{quantity}</span>
-                <button onClick={() =>{  setQuantity(q => Math.min(showStock ? product.stock : 99, q + 1)); }} className="p-3 hover:bg-slate-50 transition-colors" disabled={showStock && quantity >= product.stock}>
-                  <Plus size={18} className={showStock && quantity >= product.stock ? 'text-slate-300' : 'text-slate-600'} />
+                <button onClick={() =>{  setQuantity(q => Math.min(showStock ? stockValue : 99, q + 1)); }} className="p-3 hover:bg-slate-50 transition-colors" disabled={showStock && quantity >= stockValue}>
+                  <Plus size={18} className={showStock && quantity >= stockValue ? 'text-slate-300' : 'text-slate-600'} />
                 </button>
               </div>
 
@@ -573,7 +773,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
                     className={`py-3.5 px-8 rounded-xl text-white font-semibold flex items-center justify-center gap-2 transition-all ${inStock ? 'hover:shadow-lg hover:scale-[1.02]' : 'opacity-50 cursor-not-allowed'}`}
                     style={{ backgroundColor: brandColor }}
                     disabled={!inStock}
-                    onClick={() => { if (inStock) { onAddToCart(quantity); } }}
+                    onClick={() => { if (inStock) { onAddToCart(quantity, selectedVariant?._id); } }}
                   >
                     <ShoppingCart size={20} />
                     {inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
@@ -584,7 +784,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
                     className={`py-3.5 px-8 rounded-xl font-semibold flex items-center justify-center gap-2 border transition-all ${inStock ? 'hover:bg-slate-50' : 'opacity-50 cursor-not-allowed'}`}
                     style={{ borderColor: brandColor, color: brandColor }}
                     disabled={!inStock}
-                    onClick={() => { if (inStock) { onBuyNow(quantity); } }}
+                    onClick={() => { if (inStock) { onBuyNow(quantity, selectedVariant?._id); } }}
                   >
                     Mua ngay
                   </button>
@@ -643,9 +843,45 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, hig
 // ====================================================================================
 // STYLE 2: MODERN - Landing page style with hero
 // ====================================================================================
-function ModernStyle({ product, brandColor, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, heroStyle, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow }: StyleProps & ExperienceBlocksProps & { heroStyle: ModernHeroStyle }) {
+function ModernStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, heroStyle, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow }: StyleProps & ExperienceBlocksProps & { heroStyle: ModernHeroStyle }) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedOptions, setSelectedOptions] = useState<VariantSelectionMap>({});
+
+  const hasVariants = Boolean(product.hasVariants && variants.length > 0 && variantOptions.length > 0);
+
+  useEffect(() => {
+    if (!hasVariants) {
+      setSelectedOptions({});
+      return;
+    }
+    setSelectedOptions(buildSelectionFromVariant(variants[0]));
+  }, [hasVariants, variants]);
+
+  const selectedVariant = useMemo(
+    () => (hasVariants ? findExactVariant(variants, selectedOptions) : null),
+    [hasVariants, variants, selectedOptions]
+  );
+
+  const handleSelectOption = (optionId: Id<'productOptions'>, valueId: Id<'productOptionValues'>) => {
+    if (!hasVariants) {
+      return;
+    }
+    const nextSelection = { ...selectedOptions, [optionId]: valueId };
+    const matching = findMatchingVariant(variants, nextSelection);
+    setSelectedOptions(matching ? buildSelectionFromVariant(matching) : nextSelection);
+  };
+
+  const isOptionValueAvailable = (optionId: Id<'productOptions'>, valueId: Id<'productOptionValues'>) =>
+    variants.some((variant) =>
+      variant.optionValues.every((optionValue) => {
+        if (optionValue.optionId === optionId) {
+          return optionValue.valueId === valueId;
+        }
+        const selected = selectedOptions[optionValue.optionId];
+        return !selected || selected === optionValue.valueId;
+      })
+    );
 
   const showPrice = enabledFields.has('price') || enabledFields.size === 0;
   const showSalePrice = enabledFields.has('salePrice');
@@ -653,8 +889,13 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
   const showDescription = enabledFields.has('description');
 
   const images = product.images?.length ? product.images : (product.image ? [product.image] : []);
-  const discountPercent = product.salePrice ? Math.round((1 - product.salePrice / product.price) * 100) : 0;
-  const inStock = !showStock || product.stock > 0;
+  const basePrice = selectedVariant?.price ?? product.price;
+  const salePrice = selectedVariant ? selectedVariant.salePrice : product.salePrice;
+  const discountPercent = salePrice ? Math.round((1 - salePrice / basePrice) * 100) : 0;
+  const displayPrice = salePrice ?? basePrice;
+  const stockValue = selectedVariant?.stock ?? product.stock;
+  const inStock = !showStock || stockValue > 0;
+  const maxQuantity = showStock ? Math.min(stockValue, 10) : 10;
 
   const heroContainerClass = heroStyle === 'full'
     ? 'border border-slate-100 rounded-2xl bg-slate-50'
@@ -783,20 +1024,30 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
               <div className="space-y-2">
                 <div className="flex items-baseline gap-3">
                   <span className="text-3xl lg:text-4xl font-light" style={{ color: brandColor }}>
-                    {formatPrice(product.salePrice ?? product.price)}
+                    {formatPrice(displayPrice)}
                   </span>
-                  {showSalePrice && product.salePrice && (
+                  {showSalePrice && salePrice && (
                     <span className="text-lg text-slate-400 line-through">
-                      {formatPrice(product.price)}
+                      {formatPrice(basePrice)}
                     </span>
                   )}
                 </div>
-                {showSalePrice && product.salePrice && (
+                {showSalePrice && salePrice && (
                   <span className="inline-flex items-center rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">
                     Giảm {discountPercent}%
                   </span>
                 )}
               </div>
+            )}
+
+            {hasVariants && (
+              <VariantSelector
+                options={variantOptions}
+                selectedOptions={selectedOptions}
+                onSelect={handleSelectOption}
+                isOptionValueAvailable={isOptionValueAvailable}
+                accentColor={brandColor}
+              />
             )}
 
             <div className="h-px w-full bg-slate-100" />
@@ -824,8 +1075,8 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
                 </div>
                 <button
                   type="button"
-                  onClick={() =>{  setQuantity(q => Math.min(10, q + 1)); }}
-                  disabled={quantity >= 10}
+                  onClick={() =>{  setQuantity(q => Math.min(maxQuantity, q + 1)); }}
+                  disabled={quantity >= maxQuantity}
                   className="h-10 w-10 border border-slate-200 rounded-full flex items-center justify-center hover:bg-slate-50 disabled:opacity-50"
                 >
                   <Plus className="w-4 h-4" />
@@ -840,7 +1091,7 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
                     className={`w-full h-12 text-base font-semibold text-white transition-all ${inStock ? 'hover:shadow-lg hover:scale-[1.01]' : 'opacity-50 cursor-not-allowed'}`}
                     style={{ backgroundColor: brandColor }}
                     disabled={!inStock}
-                    onClick={() => { if (inStock) { onAddToCart(quantity); } }}
+                    onClick={() => { if (inStock) { onAddToCart(quantity, selectedVariant?._id); } }}
                   >
                     <ShoppingBag className="w-5 h-5 mr-2 inline-block" />
                     {inStock ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
@@ -851,7 +1102,7 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
                     className={`w-full h-12 text-base font-semibold border transition-all ${inStock ? 'hover:bg-slate-50' : 'opacity-50 cursor-not-allowed'}`}
                     style={{ borderColor: brandColor, color: brandColor }}
                     disabled={!inStock}
-                    onClick={() => { if (inStock) { onBuyNow(quantity); } }}
+                    onClick={() => { if (inStock) { onBuyNow(quantity, selectedVariant?._id); } }}
                   >
                     Mua ngay
                   </button>
@@ -928,8 +1179,44 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, rati
 // ====================================================================================
 // STYLE 3: MINIMAL - Clean, focused design
 // ====================================================================================
-function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, contentWidth, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow }: StyleProps & ExperienceBlocksProps & { contentWidth: MinimalContentWidth }) {
+function MinimalStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, contentWidth, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow }: StyleProps & ExperienceBlocksProps & { contentWidth: MinimalContentWidth }) {
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedOptions, setSelectedOptions] = useState<VariantSelectionMap>({});
+
+  const hasVariants = Boolean(product.hasVariants && variants.length > 0 && variantOptions.length > 0);
+
+  useEffect(() => {
+    if (!hasVariants) {
+      setSelectedOptions({});
+      return;
+    }
+    setSelectedOptions(buildSelectionFromVariant(variants[0]));
+  }, [hasVariants, variants]);
+
+  const selectedVariant = useMemo(
+    () => (hasVariants ? findExactVariant(variants, selectedOptions) : null),
+    [hasVariants, variants, selectedOptions]
+  );
+
+  const handleSelectOption = (optionId: Id<'productOptions'>, valueId: Id<'productOptionValues'>) => {
+    if (!hasVariants) {
+      return;
+    }
+    const nextSelection = { ...selectedOptions, [optionId]: valueId };
+    const matching = findMatchingVariant(variants, nextSelection);
+    setSelectedOptions(matching ? buildSelectionFromVariant(matching) : nextSelection);
+  };
+
+  const isOptionValueAvailable = (optionId: Id<'productOptions'>, valueId: Id<'productOptionValues'>) =>
+    variants.some((variant) =>
+      variant.optionValues.every((optionValue) => {
+        if (optionValue.optionId === optionId) {
+          return optionValue.valueId === valueId;
+        }
+        const selected = selectedOptions[optionValue.optionId];
+        return !selected || selected === optionValue.valueId;
+      })
+    );
 
   const showPrice = enabledFields.has('price') || enabledFields.size === 0;
   const showStock = enabledFields.has('stock');
@@ -937,7 +1224,11 @@ function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, 
   const showSku = enabledFields.has('sku');
 
   const images = product.images?.length ? product.images : (product.image ? [product.image] : []);
-  const inStock = !showStock || product.stock > 0;
+  const basePrice = selectedVariant?.price ?? product.price;
+  const salePrice = selectedVariant ? selectedVariant.salePrice : product.salePrice;
+  const displayPrice = salePrice ?? basePrice;
+  const stockValue = selectedVariant?.stock ?? product.stock;
+  const inStock = !showStock || stockValue > 0;
 
   const contentWidthClass = contentWidth === 'narrow'
     ? 'max-w-4xl'
@@ -1008,10 +1299,22 @@ function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, 
               {showRating && <RatingInline summary={ratingSummary} />}
               {showPrice && (
                 <p className="text-2xl text-slate-600 font-light">
-                  {formatPrice(product.salePrice ?? product.price)}
+                  {formatPrice(displayPrice)}
                 </p>
               )}
             </div>
+
+            {hasVariants && (
+              <div className="mb-6">
+                <VariantSelector
+                  options={variantOptions}
+                  selectedOptions={selectedOptions}
+                  onSelect={handleSelectOption}
+                  isOptionValueAvailable={isOptionValueAvailable}
+                  accentColor={brandColor}
+                />
+              </div>
+            )}
 
             {(showAddToCart || showBuyNow || showWishlist) && (
               <div className="flex flex-col gap-3 mb-8 border-t border-slate-100 pt-6">
@@ -1020,7 +1323,7 @@ function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, 
                     <button
                       className={`flex-1 bg-black text-white h-14 uppercase tracking-wider text-sm font-medium transition-colors ${inStock ? 'hover:bg-slate-900' : 'opacity-50 cursor-not-allowed'}`}
                       disabled={!inStock}
-                      onClick={() => { if (inStock) { onAddToCart(1); } }}
+                      onClick={() => { if (inStock) { onAddToCart(1, selectedVariant?._id); } }}
                     >
                       {inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
                     </button>
@@ -1040,7 +1343,7 @@ function MinimalStyle({ product, relatedProducts, enabledFields, ratingSummary, 
                     className={`h-12 uppercase tracking-wider text-xs font-medium border transition-colors ${inStock ? 'hover:bg-slate-50' : 'opacity-50 cursor-not-allowed'}`}
                     style={{ borderColor: '#0f172a', color: '#0f172a' }}
                     disabled={!inStock}
-                    onClick={() => { if (inStock) { onBuyNow(1); } }}
+                    onClick={() => { if (inStock) { onBuyNow(1, selectedVariant?._id); } }}
                   >
                     Mua ngay
                   </button>

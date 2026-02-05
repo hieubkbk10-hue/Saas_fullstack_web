@@ -10,6 +10,7 @@ import { useBrandColor } from '@/components/site/hooks';
 import { useCart } from '@/lib/cart';
 import { useCartConfig } from '@/lib/experiences';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
+import type { Id } from '@/convex/_generated/dataModel';
 
 const formatPrice = (value: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(value);
 
@@ -19,6 +20,72 @@ export default function CartPage() {
   const { isAuthenticated, openLoginModal } = useCustomerAuth();
   const cartConfig = useCartConfig();
   const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
+
+  const variantIds = useMemo(
+    () => Array.from(new Set(
+      items
+        .map((item) => item.variantId)
+        .filter((id): id is Id<'productVariants'> => Boolean(id))
+    )),
+    [items]
+  );
+
+  const variants = useQuery(
+    api.productVariants.listByIds,
+    variantIds.length > 0 ? { ids: variantIds } : 'skip'
+  );
+
+  const optionIds = useMemo(() => {
+    if (!variants) {
+      return [];
+    }
+    const ids = new Set(variants.flatMap((variant) => variant.optionValues.map((optionValue) => optionValue.optionId)));
+    return Array.from(ids);
+  }, [variants]);
+
+  const valueIds = useMemo(() => {
+    if (!variants) {
+      return [];
+    }
+    const ids = new Set(variants.flatMap((variant) => variant.optionValues.map((optionValue) => optionValue.valueId)));
+    return Array.from(ids);
+  }, [variants]);
+
+  const variantOptions = useQuery(
+    api.productOptions.listByIds,
+    optionIds.length > 0 ? { ids: optionIds } : 'skip'
+  );
+
+  const variantValues = useQuery(
+    api.productOptionValues.listByIds,
+    valueIds.length > 0 ? { ids: valueIds } : 'skip'
+  );
+
+  const variantTitleById = useMemo(() => {
+    if (!variants) {
+      return new Map();
+    }
+    const optionMap = new Map(variantOptions?.map((option) => [option._id, option]) ?? []);
+    const valueMap = new Map(variantValues?.map((value) => [value._id, value]) ?? []);
+
+    return new Map(
+      variants.map((variant) => {
+        const parts = variant.optionValues
+          .map((optionValue) => {
+            const optionName = optionMap.get(optionValue.optionId)?.name;
+            const value = valueMap.get(optionValue.valueId);
+            const valueLabel = optionValue.customValue ?? value?.label ?? value?.value;
+            if (!valueLabel) {
+              return null;
+            }
+            return optionName ? `${optionName}: ${valueLabel}` : valueLabel;
+          })
+          .filter((part): part is string => Boolean(part));
+
+        return [variant._id, parts.join(' • ')];
+      })
+    );
+  }, [variantOptions, variantValues, variants]);
 
   const expiresAt = cart?.expiresAt ?? null;
   const expiresInText = useMemo(() => {
@@ -133,6 +200,9 @@ export default function CartPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-slate-900 text-base line-clamp-2">{item.productName}</h3>
+                {item.variantId && variantTitleById.get(item.variantId) && (
+                  <p className="text-xs text-slate-500 mt-1">{variantTitleById.get(item.variantId)}</p>
+                )}
                 <div className="text-slate-900 font-bold text-sm mt-1">{formatPrice(item.price)}</div>
                 <div className="mt-4 flex items-center gap-2">
                   <button

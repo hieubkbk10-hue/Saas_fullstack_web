@@ -37,7 +37,7 @@ type CartContextValue = {
   isDrawerOpen: boolean;
   openDrawer: () => void;
   closeDrawer: () => void;
-  addItem: (productId: Id<'products'>, quantity?: number) => Promise<void>;
+  addItem: (productId: Id<'products'>, quantity?: number, variantId?: Id<'productVariants'>) => Promise<void>;
   removeItem: (itemId: Id<'cartItems'>) => Promise<void>;
   updateQuantity: (itemId: Id<'cartItems'>, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -77,7 +77,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return true;
   }, [customer, isAuthenticated, openLoginModal]);
 
-  const addItem = useCallback(async (productId: Id<'products'>, quantity = 1) => {
+  const addItem = useCallback(async (productId: Id<'products'>, quantity = 1, variantId?: Id<'productVariants'>) => {
     if (!ensureAuthenticated()) {
       return;
     }
@@ -87,7 +87,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
 
     const activeCartId = cart?._id ?? await createCart({ customerId: customer!.id as Id<'customers'> });
-    await addItemMutation({ cartId: activeCartId, productId, quantity });
+    await addItemMutation({ cartId: activeCartId, productId, quantity, variantId });
   }, [addItemMutation, cart, createCart, customer, ensureAuthenticated]);
 
   const removeItem = useCallback(async (itemId: Id<'cartItems'>) => {

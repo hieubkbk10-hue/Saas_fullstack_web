@@ -44,6 +44,19 @@ export const listByOptionActive = query({
   returns: v.array(valueDoc),
 });
 
+export const listByIds = query({
+  args: { ids: v.array(v.id("productOptionValues")) },
+  handler: async (ctx, args) => {
+    if (args.ids.length === 0) {
+      return [];
+    }
+
+    const items = await Promise.all(args.ids.map((id) => ctx.db.get(id)));
+    return items.filter((item): item is Doc<"productOptionValues"> => item !== null).sort((a, b) => a.order - b.order);
+  },
+  returns: v.array(valueDoc),
+});
+
 export const listAdminWithOffset = query({
   args: {
     active: v.optional(v.boolean()),

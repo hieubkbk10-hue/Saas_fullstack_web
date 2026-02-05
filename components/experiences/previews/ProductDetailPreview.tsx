@@ -70,6 +70,39 @@ const CLASSIC_HIGHLIGHT_ICON_MAP: Record<string, React.ElementType> = {
   Truck,
 };
 
+function VariantPreview({ brandColor }: { brandColor: string }) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="text-xs font-semibold text-slate-600">Màu sắc</p>
+        <div className="flex gap-2 mt-2">
+          {['#111827', '#e11d48', '#0ea5e9'].map((color, index) => (
+            <span
+              key={color}
+              className={`h-6 w-6 rounded-full border ${index === 0 ? 'ring-2 ring-offset-2' : 'opacity-70'}`}
+              style={{ backgroundColor: color, borderColor: index === 0 ? brandColor : '#e2e8f0', boxShadow: index === 0 ? `0 0 0 2px ${brandColor}` : undefined }}
+            />
+          ))}
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-semibold text-slate-600">Dung lượng</p>
+        <div className="flex gap-2 mt-2">
+          {['128GB', '256GB', '512GB'].map((value, index) => (
+            <span
+              key={value}
+              className={`px-3 py-1 rounded-full text-xs border ${index === 1 ? 'text-white' : 'text-slate-600'}`}
+              style={index === 1 ? { backgroundColor: brandColor, borderColor: brandColor } : { borderColor: '#e2e8f0' }}
+            >
+              {value}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ProductDetailPreview({
   layoutStyle,
   showRating,
@@ -143,6 +176,7 @@ export function ProductDetailPreview({
                 <span className="text-lg text-slate-400 line-through">{formatVND(originalPrice)}</span>
                 <span className="px-2 py-0.5 bg-red-100 text-red-600 text-sm font-medium rounded">-{Math.round((1 - price / originalPrice) * 100)}%</span>
               </div>
+              <VariantPreview brandColor={brandColor} />
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex items-center border border-slate-200 rounded-lg">
                   <button className="p-3" disabled>
@@ -282,6 +316,8 @@ export function ProductDetailPreview({
                   <span className="inline-flex items-center rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">Giảm {discountPercent}%</span>
                 </div>
 
+                <VariantPreview brandColor={brandColor} />
+
                 <div className="h-px w-full bg-slate-100" />
 
                 <div className="text-slate-600 leading-relaxed text-sm">
@@ -373,6 +409,9 @@ export function ProductDetailPreview({
                   <p className="text-2xl text-slate-600 font-light" style={{ color: brandColor }}>
                     {formatVND(price)}
                   </p>
+                  <div className="mt-4">
+                    <VariantPreview brandColor={brandColor} />
+                  </div>
                 </div>
 
                 {(showAddToCart || showBuyNow || showWishlist) && (
