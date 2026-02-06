@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -111,7 +111,16 @@ const buildVariantLabel = (
   return parts.length > 0 ? parts.join(' • ') : null;
 };
 
-export default function CheckoutPage() {
+function CheckoutSkeleton() {
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-16 text-center">
+      <div className="h-6 w-48 bg-slate-200 rounded-lg animate-pulse mx-auto" />
+      <div className="h-4 w-64 bg-slate-200 rounded-lg animate-pulse mt-3 mx-auto" />
+    </div>
+  );
+}
+
+function CheckoutContent() {
   const brandColor = useBrandColor();
   const searchParams = useSearchParams();
   const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
@@ -1038,5 +1047,13 @@ export default function CheckoutPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<CheckoutSkeleton />}>
+      <CheckoutContent />
+    </Suspense>
   );
 }
