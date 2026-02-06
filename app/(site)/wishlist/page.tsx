@@ -96,7 +96,8 @@ export default function WishlistPage() {
   }
 
   const items = wishlistItems ?? [];
-  const isGrid = config.layoutStyle === 'grid';
+  const layoutStyle = config.layoutStyle;
+  const masonryAspectRatios = ['aspect-square', 'aspect-[4/5]', 'aspect-[3/4]', 'aspect-[5/4]'];
 
   const handleAddToCart = async (productId: Id<'products'>) => {
     if (!isAuthenticated) {
@@ -142,20 +143,36 @@ export default function WishlistPage() {
           </Link>
         </div>
       ) : (
-        <div className={isGrid ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6' : 'space-y-4'}>
-          {items.map((item) => {
+        <div
+          className={
+            layoutStyle === 'grid'
+              ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6'
+              : layoutStyle === 'masonry'
+                ? 'columns-1 sm:columns-2 lg:columns-3 xl:columns-4 [column-gap:1rem]'
+                : 'space-y-4'
+          }
+        >
+          {items.map((item, index) => {
             const product = item.product;
             if (!product) {return null;}
             const price = product.salePrice ?? product.price;
 
-            if (isGrid) {
+            if (layoutStyle === 'grid' || layoutStyle === 'masonry') {
               return (
                 <Link
                   key={item._id}
                   href={`/products/${product.slug}`}
-                  className="group bg-white rounded-2xl border border-slate-200 hover:border-slate-300 transition-all overflow-hidden"
+                  className={`group bg-white rounded-2xl border border-slate-200 hover:border-slate-300 transition-all overflow-hidden ${
+                    layoutStyle === 'masonry' ? 'mb-4 break-inside-avoid' : ''
+                  }`}
                 >
-                  <div className="aspect-square bg-slate-100 relative">
+                  <div
+                    className={`${
+                      layoutStyle === 'masonry'
+                        ? masonryAspectRatios[index % masonryAspectRatios.length]
+                        : 'aspect-square'
+                    } bg-slate-100 relative`}
+                  >
                     {product.image ? (
                       <Image src={product.image} alt={product.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover group-hover:scale-105 transition-transform" />
                     ) : (

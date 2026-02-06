@@ -163,7 +163,7 @@ export function useProductsListConfig(): ProductsListConfig {
 }
 
 type WishlistConfig = {
-  layoutStyle: 'grid' | 'list';
+  layoutStyle: 'grid' | 'list' | 'masonry';
   showWishlistButton: boolean;
   showNote: boolean;
   showNotification: boolean;
