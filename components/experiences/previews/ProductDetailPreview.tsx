@@ -29,10 +29,14 @@ import {
   ThumbsUp,
   Truck,
 } from 'lucide-react';
+import { CommentsPreview } from './DetailPreview';
 
 type ProductDetailPreviewProps = {
   layoutStyle: 'classic' | 'modern' | 'minimal';
   showRating: boolean;
+  showComments?: boolean;
+  showCommentLikes?: boolean;
+  showCommentReplies?: boolean;
   showWishlist: boolean;
   showAddToCart: boolean;
   showBuyNow: boolean;
@@ -107,6 +111,9 @@ function VariantPreview({ brandColor }: { brandColor: string }) {
 export function ProductDetailPreview({
   layoutStyle,
   showRating,
+  showComments,
+  showCommentLikes,
+  showCommentReplies,
   showWishlist,
   showAddToCart,
   showBuyNow,
@@ -148,7 +155,8 @@ export function ProductDetailPreview({
     <div className="py-6 px-4 min-h-[300px]">
       <div className="max-w-6xl mx-auto">
         {layoutStyle === 'classic' && (
-          <div className={`${isMobile ? 'space-y-4' : 'grid grid-cols-2 gap-8'}`}>
+          <>
+            <div className={`${isMobile ? 'space-y-4' : 'grid grid-cols-2 gap-8'}`}>
             <div className="space-y-3">
               <div className="aspect-square bg-slate-100 rounded-xl flex items-center justify-center">
                 <div className="w-32 h-32 bg-slate-200 rounded-lg" />
@@ -233,6 +241,14 @@ export function ProductDetailPreview({
               )}
             </div>
           </div>
+
+          <CommentsPreview
+            showComments={showComments}
+            showLikes={showCommentLikes}
+            showReplies={showCommentReplies}
+            brandColor={brandColor}
+          />
+          </>
         )}
 
         {layoutStyle === 'modern' && (
@@ -363,6 +379,12 @@ export function ProductDetailPreview({
                   </div>
                 )}
 
+                <CommentsPreview
+                  showComments={showComments}
+                  showLikes={showCommentLikes}
+                  showReplies={showCommentReplies}
+                  brandColor={brandColor}
+                />
               </div>
             </div>
           </div>
@@ -455,6 +477,13 @@ export function ProductDetailPreview({
                 </div>
               </div>
             </div>
+
+            <CommentsPreview
+              showComments={showComments}
+              showLikes={showCommentLikes}
+              showReplies={showCommentReplies}
+              brandColor={brandColor}
+            />
           </div>
         )}
       </div>

@@ -191,7 +191,7 @@ function QuickContactButtonsPreview({ brandColor, label }: { brandColor: string;
   );
 }
 
-function CommentsPreview({
+export function CommentsPreview({
   showComments,
   showLikes,
   showReplies,

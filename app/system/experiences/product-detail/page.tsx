@@ -73,6 +73,9 @@ type ProductDetailExperienceConfig = {
 
 type ClassicLayoutConfig = {
   showRating: boolean;
+  showComments: boolean;
+  showCommentLikes: boolean;
+  showCommentReplies: boolean;
   showWishlist: boolean;
   showAddToCart: boolean;
   showClassicHighlights: boolean;
@@ -80,6 +83,9 @@ type ClassicLayoutConfig = {
 
 type ModernLayoutConfig = {
   showRating: boolean;
+  showComments: boolean;
+  showCommentLikes: boolean;
+  showCommentReplies: boolean;
   showWishlist: boolean;
   showAddToCart: boolean;
   heroStyle: 'full' | 'split' | 'minimal';
@@ -87,6 +93,9 @@ type ModernLayoutConfig = {
 
 type MinimalLayoutConfig = {
   showRating: boolean;
+  showComments: boolean;
+  showCommentLikes: boolean;
+  showCommentReplies: boolean;
   showWishlist: boolean;
   showAddToCart: boolean;
   contentWidth: 'narrow' | 'medium' | 'wide';
@@ -131,9 +140,9 @@ const LAYOUT_STYLES: LayoutOption<ProductsDetailStyle>[] = [
 const DEFAULT_CONFIG: ProductDetailExperienceConfig = {
   layoutStyle: 'classic',
   layouts: {
-    classic: { showRating: true, showWishlist: true, showAddToCart: true, showClassicHighlights: true },
-    modern: { showRating: true, showWishlist: true, showAddToCart: true, heroStyle: 'full' },
-    minimal: { showRating: true, showWishlist: true, showAddToCart: true, contentWidth: 'medium' },
+    classic: { showRating: true, showComments: true, showCommentLikes: true, showCommentReplies: true, showWishlist: true, showAddToCart: true, showClassicHighlights: true },
+    modern: { showRating: true, showComments: true, showCommentLikes: true, showCommentReplies: true, showWishlist: true, showAddToCart: true, heroStyle: 'full' },
+    minimal: { showRating: true, showComments: true, showCommentLikes: true, showCommentReplies: true, showWishlist: true, showAddToCart: true, contentWidth: 'medium' },
   },
   showBuyNow: true,
 };
@@ -219,6 +228,25 @@ function VariantFeatureStatus({ enabled, href, moduleName }: { enabled: boolean;
   );
 }
 
+function ModuleFeatureStatus({ label, enabled, href, moduleName }: { label: string; enabled: boolean; href: string; moduleName: string }) {
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="flex items-start gap-2">
+        <span className={`mt-1 inline-flex h-2 w-2 rounded-full ${enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">{label}</p>
+          <p className="text-xs text-slate-500">
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào {moduleName}
+          </p>
+        </div>
+      </div>
+      <Link href={href} className="text-xs font-medium text-cyan-600 hover:underline">
+        Đi đến →
+      </Link>
+    </div>
+  );
+}
+
 const normalizeClassicHighlights = (value: unknown): ClassicHighlightItem[] => {
   if (!Array.isArray(value)) {
     return DEFAULT_CLASSIC_HIGHLIGHTS;
@@ -246,6 +274,8 @@ export default function ProductDetailExperiencePage() {
   const legacyHighlightsSetting = useQuery(api.settings.getByKey, { key: LEGACY_HIGHLIGHTS_KEY });
   const highlightsSetting = useQuery(api.settings.getByKey, { key: CLASSIC_HIGHLIGHTS_KEY });
   const commentsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'comments' });
+  const commentsLikesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableLikes', moduleKey: 'comments' });
+  const commentsRepliesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableReplies', moduleKey: 'comments' });
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
@@ -338,6 +368,9 @@ export default function ProductDetailExperiencePage() {
       showWishlist: currentLayoutConfig.showWishlist,
       showAddToCart: currentLayoutConfig.showAddToCart,
       showBuyNow: config.showBuyNow,
+      showComments: currentLayoutConfig.showComments,
+      showCommentLikes: currentLayoutConfig.showCommentLikes,
+      showCommentReplies: currentLayoutConfig.showCommentReplies,
       showVariants: (variantsSetting?.value as boolean | undefined) ?? false,
       heroStyle: config.layoutStyle === 'modern'
         ? (currentLayoutConfig as ModernLayoutConfig).heroStyle
@@ -542,6 +575,48 @@ export default function ProductDetailExperiencePage() {
               enabled={(variantsSetting?.value as boolean | undefined) ?? false}
               href="/system/modules/products"
               moduleName="module Sản phẩm"
+            />
+          </ControlCard>
+
+          <ControlCard title="Bình luận">
+            <ToggleRow
+              label="Hiển thị bình luận"
+              checked={currentLayoutConfig.showComments}
+              onChange={(v) => updateLayoutConfig('showComments' as keyof typeof currentLayoutConfig, v as never)}
+              accentColor="#06b6d4"
+              disabled={!commentsModule?.enabled}
+            />
+            <ToggleRow
+              label="Nút thích"
+              checked={currentLayoutConfig.showCommentLikes}
+              onChange={(v) => updateLayoutConfig('showCommentLikes' as keyof typeof currentLayoutConfig, v as never)}
+              accentColor="#06b6d4"
+              disabled={!commentsModule?.enabled}
+            />
+            <ToggleRow
+              label="Nút trả lời"
+              checked={currentLayoutConfig.showCommentReplies}
+              onChange={(v) => updateLayoutConfig('showCommentReplies' as keyof typeof currentLayoutConfig, v as never)}
+              accentColor="#06b6d4"
+              disabled={!commentsModule?.enabled}
+            />
+            <ModuleFeatureStatus
+              label="Module bình luận"
+              enabled={commentsModule?.enabled ?? false}
+              href="/system/modules/comments"
+              moduleName="Module Bình luận"
+            />
+            <ModuleFeatureStatus
+              label="Tính năng thích"
+              enabled={commentsLikesFeature?.enabled ?? false}
+              href="/system/modules/comments"
+              moduleName="Module Bình luận"
+            />
+            <ModuleFeatureStatus
+              label="Tính năng trả lời"
+              enabled={commentsRepliesFeature?.enabled ?? false}
+              href="/system/modules/comments"
+              moduleName="Module Bình luận"
             />
           </ControlCard>
 

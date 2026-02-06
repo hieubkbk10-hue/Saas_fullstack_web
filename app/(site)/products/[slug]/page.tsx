@@ -11,7 +11,7 @@ import { useBrandColor } from '@/components/site/hooks';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { notifyAddToCart, useCart } from '@/lib/cart';
 import { useCartConfig, useCheckoutConfig } from '@/lib/experiences';
-import { ArrowLeft, Award, BadgeCheck, Bell, Bolt, Calendar, Camera, Check, CheckCircle2, ChevronRight, Clock, CreditCard, Gift, Globe, Heart, HeartHandshake, Leaf, Lock, MapPin, Minus, Package, Phone, Plus, RotateCcw, Share2, Shield, ShoppingBag, ShoppingCart, Star, ThumbsUp, Truck } from 'lucide-react';
+import { ArrowLeft, Award, BadgeCheck, Bell, Bolt, Calendar, Camera, Check, CheckCircle2, ChevronRight, Clock, CreditCard, Gift, Globe, Heart, HeartHandshake, Leaf, Lock, MapPin, MessageSquare, Minus, Package, Phone, Plus, Reply, RotateCcw, Share2, Shield, ShoppingBag, ShoppingCart, Star, ThumbsUp, Truck } from 'lucide-react';
 import { VariantSelector, type VariantSelectorOption } from '@/components/products/VariantSelector';
 import type { Id } from '@/convex/_generated/dataModel';
 
@@ -21,6 +21,9 @@ type MinimalContentWidth = 'narrow' | 'medium' | 'wide';
 
 type ClassicLayoutConfig = {
   showRating: boolean;
+  showComments: boolean;
+  showCommentLikes: boolean;
+  showCommentReplies: boolean;
   showWishlist: boolean;
   showAddToCart: boolean;
   showClassicHighlights: boolean;
@@ -28,6 +31,9 @@ type ClassicLayoutConfig = {
 
 type ModernLayoutConfig = {
   showRating: boolean;
+  showComments: boolean;
+  showCommentLikes: boolean;
+  showCommentReplies: boolean;
   showWishlist: boolean;
   showAddToCart: boolean;
   heroStyle: ModernHeroStyle;
@@ -35,6 +41,9 @@ type ModernLayoutConfig = {
 
 type MinimalLayoutConfig = {
   showRating: boolean;
+  showComments: boolean;
+  showCommentLikes: boolean;
+  showCommentReplies: boolean;
   showWishlist: boolean;
   showAddToCart: boolean;
   contentWidth: MinimalContentWidth;
@@ -45,6 +54,9 @@ type ProductDetailExperienceConfig = {
   showAddToCart: boolean;
   showClassicHighlights: boolean;
   showRating: boolean;
+  showComments: boolean;
+  showCommentLikes: boolean;
+  showCommentReplies: boolean;
   showWishlist: boolean;
   showBuyNow: boolean;
   heroStyle: ModernHeroStyle;
@@ -158,6 +170,9 @@ function useProductDetailExperienceConfig(): ProductDetailExperienceConfig {
       showClassicHighlights: boolean;
       showHighlights: boolean;
       showRating: boolean;
+      showComments: boolean;
+      showCommentLikes: boolean;
+      showCommentReplies: boolean;
       showWishlist: boolean;
       showBuyNow: boolean;
       heroStyle: ModernHeroStyle;
@@ -172,11 +187,18 @@ function useProductDetailExperienceConfig(): ProductDetailExperienceConfig {
     const legacyLayoutHighlights = layoutStyle === 'classic'
       ? (layoutConfig as Partial<Record<'showHighlights', boolean>>)?.showHighlights
       : undefined;
+    const layoutComments = layoutConfig as Partial<ClassicLayoutConfig & ModernLayoutConfig & MinimalLayoutConfig> | undefined;
+    const showComments = layoutComments?.showComments ?? raw?.showComments ?? true;
+    const showCommentLikes = layoutComments?.showCommentLikes ?? raw?.showCommentLikes ?? true;
+    const showCommentReplies = layoutComments?.showCommentReplies ?? raw?.showCommentReplies ?? true;
     return {
       layoutStyle,
       showAddToCart: configShowAddToCart && cartAvailable,
       showClassicHighlights: layoutHighlights ?? legacyLayoutHighlights ?? raw?.showClassicHighlights ?? raw?.showHighlights ?? legacyHighlightsEnabled,
       showRating: layoutConfig?.showRating ?? raw?.showRating ?? true,
+      showComments,
+      showCommentLikes,
+      showCommentReplies,
       showWishlist: layoutConfig?.showWishlist ?? raw?.showWishlist ?? true,
       showBuyNow: raw?.showBuyNow ?? true,
       heroStyle: layoutStyle === 'modern'
@@ -264,9 +286,16 @@ export default function ProductDetailPage({ params }: PageProps) {
   const cartConfig = useCartConfig();
   const checkoutConfig = useCheckoutConfig();
   const router = useRouter();
+  const commentsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'comments' });
+  const commentsLikesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableLikes', moduleKey: 'comments' });
+  const commentsRepliesFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableReplies', moduleKey: 'comments' });
+  const commentsSettings = useQuery(api.admin.modules.listModuleSettings, { moduleKey: 'comments' });
   const wishlistModule = useQuery(api.admin.modules.getModuleByKey, { key: 'wishlist' });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const toggleWishlist = useMutation(api.wishlist.toggle);
+  const createComment = useMutation(api.comments.create);
+  const incrementLike = useMutation(api.comments.incrementLike);
+  const decrementLike = useMutation(api.comments.decrementLike);
   
   const product = useQuery(api.products.getBySlug, { slug });
   const category = useQuery(
@@ -354,6 +383,45 @@ export default function ProductDetailPage({ params }: PageProps) {
   );
   const isWishlisted = wishlistStatus ?? false;
   const canUseWishlist = experienceConfig.showWishlist && (wishlistModule?.enabled ?? false);
+  const commentsEnabled = commentsModule?.enabled ?? false;
+  const shouldShowComments = commentsEnabled && experienceConfig.showComments;
+  const shouldShowCommentLikes = shouldShowComments && (commentsLikesFeature?.enabled ?? false) && experienceConfig.showCommentLikes;
+  const shouldShowCommentReplies = shouldShowComments && (commentsRepliesFeature?.enabled ?? false) && experienceConfig.showCommentReplies;
+  const commentsPerPageSetting = useMemo(() => {
+    const perPage = commentsSettings?.find(setting => setting.settingKey === 'commentsPerPage')?.value as number | undefined;
+    return perPage ?? 20;
+  }, [commentsSettings]);
+  const defaultStatus = useMemo(() => {
+    const setting = commentsSettings?.find(setting => setting.settingKey === 'defaultStatus')?.value as string | undefined;
+    return (setting === 'Approved' ? 'Approved' : 'Pending') as 'Approved' | 'Pending';
+  }, [commentsSettings]);
+  const commentsPage = useQuery(
+    api.comments.listByTarget,
+    product && shouldShowComments
+      ? { paginationOpts: { cursor: null, numItems: Math.min(commentsPerPageSetting * 2, 60) }, status: 'Approved', targetId: product._id, targetType: 'product' }
+      : 'skip'
+  );
+  const comments = useMemo(() => commentsPage?.page ?? [], [commentsPage?.page]);
+  const commentRepliesMap = useMemo(() => {
+    const map = new Map<string, CommentData[]>();
+    comments.forEach((comment) => {
+      if (!comment.parentId) {return;}
+      const list = map.get(comment.parentId) ?? [];
+      list.push(comment);
+      map.set(comment.parentId, list);
+    });
+    return map;
+  }, [comments]);
+  const rootComments = useMemo(() => comments.filter(comment => !comment.parentId), [comments]);
+  const [commentName, setCommentName] = useState('');
+  const [commentEmail, setCommentEmail] = useState('');
+  const [commentContent, setCommentContent] = useState('');
+  const [commentRating, setCommentRating] = useState(5);
+  const [commentMessage, setCommentMessage] = useState<string | null>(null);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, { content: string; email: string; name: string }>>({});
+  const [replySubmittingId, setReplySubmittingId] = useState<string | null>(null);
+  const [likingIds, setLikingIds] = useState<Set<string>>(new Set());
 
   const handleWishlistToggle = async () => {
     if (!isAuthenticated || !customer || !product?._id) {
@@ -400,9 +468,127 @@ export default function ProductDetailPage({ params }: PageProps) {
     router.push(`/checkout?productId=${product._id}&quantity=${quantity}${variantParam}`);
   };
 
+  const handleSubmitComment = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!product || !commentName.trim() || !commentContent.trim()) {return;}
+    setIsSubmittingComment(true);
+    setCommentMessage(null);
+    try {
+      await createComment({
+        authorEmail: commentEmail.trim() || undefined,
+        authorName: commentName.trim(),
+        content: commentContent.trim(),
+        rating: commentRating > 0 ? commentRating : undefined,
+        targetId: product._id,
+        targetType: 'product',
+      });
+      setCommentName('');
+      setCommentEmail('');
+      setCommentContent('');
+      setCommentRating(5);
+      setCommentMessage(defaultStatus === 'Approved' ? 'Đánh giá đã được đăng.' : 'Đánh giá đã được gửi, vui lòng chờ duyệt.');
+    } catch {
+      setCommentMessage('Không thể gửi đánh giá. Vui lòng thử lại.');
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  const handleReplyDraftChange = (parentId: Id<'comments'>, key: 'name' | 'email' | 'content', value: string) => {
+    setReplyDrafts(prev => ({
+      ...prev,
+      [parentId]: {
+        name: prev[parentId]?.name ?? '',
+        email: prev[parentId]?.email ?? '',
+        content: prev[parentId]?.content ?? '',
+        [key]: value,
+      },
+    }));
+  };
+
+  const handleSubmitReply = async (parentId: Id<'comments'>) => {
+    if (!product) {return;}
+    const draft = replyDrafts[parentId];
+    if (!draft?.name?.trim() || !draft?.content?.trim()) {return;}
+    setReplySubmittingId(parentId);
+    try {
+      await createComment({
+        authorEmail: draft.email?.trim() || undefined,
+        authorName: draft.name.trim(),
+        content: draft.content.trim(),
+        parentId,
+        targetId: product._id,
+        targetType: 'product',
+      });
+      setReplyDrafts(prev => {
+        const next = { ...prev };
+        delete next[parentId];
+        return next;
+      });
+    } finally {
+      setReplySubmittingId(null);
+    }
+  };
+
+  const handleLike = async (id: Id<'comments'>) => {
+    if (likingIds.has(id)) {return;}
+    setLikingIds(prev => new Set(prev).add(id));
+    try {
+      await incrementLike({ id });
+    } finally {
+      setLikingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  const handleUnlike = async (id: Id<'comments'>) => {
+    if (likingIds.has(id)) {return;}
+    setLikingIds(prev => new Set(prev).add(id));
+    try {
+      await decrementLike({ id });
+    } finally {
+      setLikingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
   const canBuyNow = experienceConfig.showBuyNow && checkoutConfig.showBuyNow && (ordersModule?.enabled ?? false);
 
   const ratingSummary = useProductRatingSummary(product?._id, experienceConfig.showRating);
+
+  const commentsSection = shouldShowComments ? (
+    <ProductCommentsSection
+      brandColor={brandColor}
+      ratingSummary={ratingSummary}
+      comments={rootComments}
+      replyMap={commentRepliesMap}
+      commentName={commentName}
+      commentEmail={commentEmail}
+      commentContent={commentContent}
+      commentRating={commentRating}
+      commentMessage={commentMessage}
+      isSubmitting={isSubmittingComment}
+      replyDrafts={replyDrafts}
+      replySubmittingId={replySubmittingId}
+      showLikes={shouldShowCommentLikes}
+      showReplies={shouldShowCommentReplies}
+      onNameChange={setCommentName}
+      onEmailChange={setCommentEmail}
+      onContentChange={setCommentContent}
+      onRatingChange={setCommentRating}
+      onSubmit={handleSubmitComment}
+      onLike={handleLike}
+      onUnlike={handleUnlike}
+      onReplyDraftChange={handleReplyDraftChange}
+      onReplySubmit={handleSubmitReply}
+    />
+  ) : null;
 
   if (product === undefined) {
     return <ProductDetailSkeleton />;
@@ -459,6 +645,7 @@ export default function ProductDetailPage({ params }: PageProps) {
           onToggleWishlist={handleWishlistToggle}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
+          commentsSection={commentsSection}
         />
       )}
       {experienceConfig.layoutStyle === 'modern' && (
@@ -479,6 +666,7 @@ export default function ProductDetailPage({ params }: PageProps) {
           onToggleWishlist={handleWishlistToggle}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
+          commentsSection={commentsSection}
         />
       )}
       {experienceConfig.layoutStyle === 'minimal' && (
@@ -499,6 +687,7 @@ export default function ProductDetailPage({ params }: PageProps) {
           onToggleWishlist={handleWishlistToggle}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
+          commentsSection={commentsSection}
         />
       )}
     </>
@@ -531,6 +720,16 @@ interface RelatedProduct {
   image?: string;
 }
 
+interface CommentData {
+  _id: Id<'comments'>;
+  _creationTime: number;
+  authorName: string;
+  content: string;
+  likesCount?: number;
+  parentId?: Id<'comments'>;
+  rating?: number;
+}
+
 interface StyleProps {
   product: ProductData;
   brandColor: string;
@@ -538,6 +737,7 @@ interface StyleProps {
   enabledFields: Set<string>;
   variants: ProductVariant[];
   variantOptions: VariantSelectorOption[];
+  commentsSection?: React.ReactNode;
 }
 
 interface ExperienceBlocksProps {
@@ -607,7 +807,7 @@ function RatingInline({ summary }: { summary: RatingSummary }) {
 // ====================================================================================
 // STYLE 1: CLASSIC - Standard e-commerce product page
 // ====================================================================================
-function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, highlights, highlightsEnabled, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow }: ClassicStyleProps) {
+function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, highlights, highlightsEnabled, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow, commentsSection }: ClassicStyleProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<VariantSelectionMap>({});
@@ -616,6 +816,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, var
 
   useEffect(() => {
     if (!hasVariants) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedOptions({});
       return;
     }
@@ -828,6 +1029,8 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, var
           </div>
         </div>
 
+      {commentsSection}
+
         <RelatedProductsSection products={relatedProducts} categorySlug={product.categorySlug} brandColor={brandColor} showPrice={enabledFields.has('price') || enabledFields.size === 0} showSalePrice={enabledFields.has('salePrice')} />
 
         <div className="mt-12 pt-8 border-t border-slate-100">
@@ -843,7 +1046,7 @@ function ClassicStyle({ product, brandColor, relatedProducts, enabledFields, var
 // ====================================================================================
 // STYLE 2: MODERN - Landing page style with hero
 // ====================================================================================
-function ModernStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, heroStyle, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow }: StyleProps & ExperienceBlocksProps & { heroStyle: ModernHeroStyle }) {
+function ModernStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, heroStyle, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow, commentsSection }: StyleProps & ExperienceBlocksProps & { heroStyle: ModernHeroStyle }) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<VariantSelectionMap>({});
@@ -852,6 +1055,7 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, vari
 
   useEffect(() => {
     if (!hasVariants) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedOptions({});
       return;
     }
@@ -1162,6 +1366,8 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, vari
           </div>
         </div>
 
+        {commentsSection}
+
         <div className="mt-12">
           <RelatedProductsSection
             products={relatedProducts}
@@ -1179,7 +1385,7 @@ function ModernStyle({ product, brandColor, relatedProducts, enabledFields, vari
 // ====================================================================================
 // STYLE 3: MINIMAL - Clean, focused design
 // ====================================================================================
-function MinimalStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, contentWidth, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow }: StyleProps & ExperienceBlocksProps & { contentWidth: MinimalContentWidth }) {
+function MinimalStyle({ product, brandColor, relatedProducts, enabledFields, variants, variantOptions, ratingSummary, showAddToCart, showRating, showWishlist, showBuyNow, contentWidth, isWishlisted, onToggleWishlist, onAddToCart, onBuyNow, commentsSection }: StyleProps & ExperienceBlocksProps & { contentWidth: MinimalContentWidth }) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<VariantSelectionMap>({});
 
@@ -1187,6 +1393,7 @@ function MinimalStyle({ product, brandColor, relatedProducts, enabledFields, var
 
   useEffect(() => {
     if (!hasVariants) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedOptions({});
       return;
     }
@@ -1379,6 +1586,8 @@ function MinimalStyle({ product, brandColor, relatedProducts, enabledFields, var
           </div>
         </div>
 
+        {commentsSection}
+
         {relatedProducts.length > 0 && (
           <section className="px-6 py-16 border-t border-slate-100 mt-10">
             <h2 className="text-2xl font-light mb-8 text-center">Có thể bạn sẽ thích</h2>
@@ -1412,6 +1621,344 @@ function MinimalStyle({ product, brandColor, relatedProducts, enabledFields, var
         )}
       </main>
     </div>
+  );
+}
+
+type ProductCommentsSectionProps = {
+  brandColor: string;
+  ratingSummary: RatingSummary;
+  comments: CommentData[];
+  replyMap: Map<string, CommentData[]>;
+  commentName: string;
+  commentEmail: string;
+  commentContent: string;
+  commentRating: number;
+  commentMessage: string | null;
+  isSubmitting: boolean;
+  replyDrafts: Record<string, { content: string; email: string; name: string }>;
+  replySubmittingId: string | null;
+  showLikes: boolean;
+  showReplies: boolean;
+  onNameChange: (value: string) => void;
+  onEmailChange: (value: string) => void;
+  onContentChange: (value: string) => void;
+  onRatingChange: (value: number) => void;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onLike: (id: Id<'comments'>) => void;
+  onUnlike: (id: Id<'comments'>) => void;
+  onReplyDraftChange: (parentId: Id<'comments'>, key: 'name' | 'email' | 'content', value: string) => void;
+  onReplySubmit: (parentId: Id<'comments'>) => void;
+};
+
+function RatingStars({ value, size = 14, onChange }: { value: number; size?: number; onChange?: (next: number) => void }) {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={onChange ? () => onChange(star) : undefined}
+          className={onChange ? 'transition-transform hover:scale-105' : 'cursor-default'}
+          aria-label={`${star} sao`}
+        >
+          <Star
+            size={size}
+            className={star <= Math.round(value) ? 'text-amber-400 fill-amber-400' : 'text-slate-200'}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ProductCommentsSection({
+  brandColor,
+  ratingSummary,
+  comments,
+  replyMap,
+  commentName,
+  commentEmail,
+  commentContent,
+  commentRating,
+  commentMessage,
+  isSubmitting,
+  replyDrafts,
+  replySubmittingId,
+  showLikes,
+  showReplies,
+  onNameChange,
+  onEmailChange,
+  onContentChange,
+  onRatingChange,
+  onSubmit,
+  onLike,
+  onUnlike,
+  onReplyDraftChange,
+  onReplySubmit,
+}: ProductCommentsSectionProps) {
+  const [showForm, setShowForm] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [openReplyIds, setOpenReplyIds] = useState<Set<string>>(new Set());
+  const [openReplies, setOpenReplies] = useState<Set<string>>(new Set());
+
+  const avatarColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#14b8a6'];
+  const getAvatarColor = (id: string) => avatarColors[id.charCodeAt(1) % avatarColors.length];
+  const visibleComments = showAllComments ? comments : comments.slice(0, 3);
+
+  const handleToggleLike = (id: Id<'comments'>) => {
+    if (likedIds.has(id)) {
+      setLikedIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      onUnlike(id);
+    } else {
+      setLikedIds(prev => new Set(prev).add(id));
+      onLike(id);
+    }
+  };
+
+  const toggleReplyForm = (id: Id<'comments'>) => {
+    setOpenReplyIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleReplies = (id: Id<'comments'>) => {
+    setOpenReplies(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  return (
+    <section className="mt-12 border-t border-slate-100 pt-8">
+      <div className="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-slate-100">
+        <div className="flex items-start gap-3">
+          <MessageSquare className="h-5 w-5" style={{ color: brandColor }} />
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">Đánh giá & Bình luận</h3>
+            <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+              {ratingSummary.average ? (
+                <>
+                  <RatingStars value={ratingSummary.average} size={14} />
+                  <span>{ratingSummary.average.toFixed(1)} ({ratingSummary.count} đánh giá)</span>
+                </>
+              ) : (
+                <span>Chưa có đánh giá</span>
+              )}
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowForm(!showForm)}
+          className="text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+          style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+        >
+          {showForm ? 'Đóng' : 'Viết đánh giá'}
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={onSubmit} className="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <input
+              value={commentName}
+              onChange={(e) => onNameChange(e.target.value)}
+              placeholder="Họ và tên *"
+              className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200"
+              required
+            />
+            <input
+              value={commentEmail}
+              onChange={(e) => onEmailChange(e.target.value)}
+              placeholder="Email (không bắt buộc)"
+              className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200"
+              type="email"
+            />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-600 mb-1">Chọn số sao</p>
+            <RatingStars value={commentRating} size={18} onChange={onRatingChange} />
+          </div>
+          <textarea
+            value={commentContent}
+            onChange={(e) => onContentChange(e.target.value)}
+            placeholder="Chia sẻ trải nghiệm của bạn..."
+            className="min-h-[90px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200"
+            required
+          />
+          {commentMessage && <p className="text-xs text-slate-500">{commentMessage}</p>}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="h-8 rounded-full px-4 text-xs font-medium text-white"
+              style={{ backgroundColor: brandColor }}
+            >
+              {isSubmitting ? 'Đang gửi...' : 'Gửi đánh giá'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      <div className="mt-4 space-y-2">
+        {visibleComments.length > 0 ? (
+          visibleComments.map((comment) => {
+            const replies = replyMap.get(comment._id) ?? [];
+            const showReplyForm = openReplyIds.has(comment._id);
+            const showRepliesList = openReplies.has(comment._id);
+            return (
+              <div key={comment._id} className="rounded-xl border border-slate-100 bg-white p-4">
+                <div className="flex gap-3">
+                  <div
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+                    style={{ backgroundColor: getAvatarColor(comment._id) }}
+                  >
+                    {comment.authorName.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium text-slate-900">{comment.authorName}</span>
+                      <span className="text-xs text-slate-400">• {new Date(comment._creationTime).toLocaleDateString('vi-VN')}</span>
+                    </div>
+                    {typeof comment.rating === 'number' && (
+                      <div className="mt-1">
+                        <RatingStars value={comment.rating} size={12} />
+                      </div>
+                    )}
+                    <p className="mt-2 text-sm text-slate-600">{comment.content}</p>
+                    {(showLikes || showReplies) && (
+                      <div className="mt-2 flex items-center gap-3">
+                        {showLikes && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleLike(comment._id)}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700"
+                            style={likedIds.has(comment._id) ? { color: brandColor } : undefined}
+                          >
+                            <ThumbsUp className={`h-3 w-3 ${likedIds.has(comment._id) ? 'fill-current' : ''}`} />
+                            {(comment.likesCount ?? 0) > 0 ? comment.likesCount : 'Thích'}
+                          </button>
+                        )}
+                        {showReplies && (
+                          <button
+                            type="button"
+                            onClick={() => toggleReplyForm(comment._id)}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700"
+                          >
+                            <Reply className="h-3 w-3" />
+                            {showReplyForm ? 'Đóng' : 'Trả lời'}
+                          </button>
+                        )}
+                        {showReplies && replies.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => toggleReplies(comment._id)}
+                            className="text-xs font-medium text-slate-400 hover:text-slate-600"
+                          >
+                            {showRepliesList ? 'Ẩn' : 'Xem'} {replies.length} phản hồi
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {showReplies && showReplyForm && (
+                  <div className="mt-4 rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-2">
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                      <input
+                        value={replyDrafts[comment._id]?.name ?? ''}
+                        onChange={(e) => onReplyDraftChange(comment._id, 'name', e.target.value)}
+                        placeholder="Họ và tên *"
+                        className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200"
+                        required
+                      />
+                      <input
+                        value={replyDrafts[comment._id]?.email ?? ''}
+                        onChange={(e) => onReplyDraftChange(comment._id, 'email', e.target.value)}
+                        placeholder="Email (không bắt buộc)"
+                        className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200"
+                        type="email"
+                      />
+                    </div>
+                    <textarea
+                      value={replyDrafts[comment._id]?.content ?? ''}
+                      onChange={(e) => onReplyDraftChange(comment._id, 'content', e.target.value)}
+                      placeholder="Nội dung phản hồi..."
+                      className="min-h-[70px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200"
+                      required
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        disabled={replySubmittingId === comment._id}
+                        onClick={() => onReplySubmit(comment._id)}
+                        className="h-8 rounded-full px-4 text-xs font-medium text-white"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        {replySubmittingId === comment._id ? 'Đang gửi...' : 'Gửi phản hồi'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {showReplies && showRepliesList && replies.length > 0 && (
+                  <div className="mt-4 space-y-3 border-l-2 pl-4" style={{ borderColor: `${brandColor}40` }}>
+                    {replies.map((reply) => (
+                      <div key={reply._id} className="flex gap-3">
+                        <div
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white"
+                          style={{ backgroundColor: brandColor }}
+                        >
+                          {reply.authorName.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold" style={{ color: brandColor }}>{reply.authorName}</span>
+                            <span className="text-xs text-slate-400">• {new Date(reply._creationTime).toLocaleDateString('vi-VN')}</span>
+                          </div>
+                          <p className="text-sm text-slate-600 mt-1">{reply.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+            Chưa có đánh giá nào cho sản phẩm này.
+          </div>
+        )}
+      </div>
+
+      {comments.length > 3 && (
+        <button
+          type="button"
+          onClick={() => setShowAllComments(!showAllComments)}
+          className="mt-4 w-full rounded-lg border border-dashed border-slate-200 py-2 text-sm font-medium text-slate-500 hover:text-slate-700"
+        >
+          {showAllComments ? 'Thu gọn' : `Xem thêm ${comments.length - 3} đánh giá`}
+        </button>
+      )}
+    </section>
   );
 }
 
