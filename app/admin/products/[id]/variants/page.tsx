@@ -205,7 +205,7 @@ function ProductVariantsContent({ params }: { params: Promise<{ id: string }> })
     return data.sort((a, b) => a.order - b.order);
   }, [variantsData, searchTerm, filterStatus]);
 
-  const columns = [
+  const columns = useMemo(() => [
     { key: 'select', label: 'Chọn' },
     { key: 'drag', label: '' },
     { key: 'sku', label: 'SKU', required: true },
@@ -214,7 +214,7 @@ function ProductVariantsContent({ params }: { params: Promise<{ id: string }> })
     { key: 'stock', label: 'Tồn kho' },
     { key: 'status', label: 'Trạng thái' },
     { key: 'actions', label: 'Hành động', required: true },
-  ];
+  ], []);
 
   useEffect(() => {
     if (columns.length > 0 && visibleColumns.length === 0) {

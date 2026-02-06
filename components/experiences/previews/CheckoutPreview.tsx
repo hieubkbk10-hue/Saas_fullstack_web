@@ -2,7 +2,7 @@ import React from 'react';
 import { Check, CreditCard, MapPin, Package, Truck, Wallet } from 'lucide-react';
 
 type CheckoutPreviewProps = {
-  flowStyle: 'single-page' | 'multi-step';
+  flowStyle: 'single-page' | 'multi-step' | 'wizard-accordion';
   orderSummaryPosition: 'right' | 'bottom';
   showPaymentMethods: boolean;
   showShippingOptions: boolean;
@@ -56,6 +56,88 @@ function OrderSummary({ brandColor = '#22c55e' }: { brandColor?: string }) {
   );
 }
 
+function ShippingInfoCard({ brandColor = '#22c55e' }: { brandColor?: string }) {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+        <MapPin size={16} style={{ color: brandColor }} />
+        Thông tin giao hàng
+      </h3>
+      <div className="grid gap-3">
+        <div className="grid grid-cols-2 gap-3">
+          <input type="text" placeholder="Họ tên" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" disabled />
+          <input type="text" placeholder="Số điện thoại" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" disabled />
+        </div>
+        <input type="email" placeholder="Email" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" disabled />
+        <input type="text" placeholder="Địa chỉ giao hàng" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" disabled />
+      </div>
+    </div>
+  );
+}
+
+function ShippingOptionsCard({ brandColor = '#22c55e' }: { brandColor?: string }) {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+        <Truck size={16} style={{ color: brandColor }} />
+        Phương thức vận chuyển
+      </h3>
+      <div className="space-y-2">
+        <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer" style={{ borderColor: brandColor, backgroundColor: `${brandColor}08` }}>
+          <input type="radio" name="shipping" checked readOnly className="w-4 h-4" style={{ accentColor: brandColor }} />
+          <div className="flex-1">
+            <div className="font-medium text-sm">Giao hàng nhanh</div>
+            <div className="text-xs text-slate-500">Nhận hàng trong 1-2 ngày</div>
+          </div>
+          <span className="font-semibold text-sm">{formatVND(30000)}</span>
+        </label>
+        <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+          <input type="radio" name="shipping" readOnly className="w-4 h-4" />
+          <div className="flex-1">
+            <div className="font-medium text-sm">Giao hàng tiết kiệm</div>
+            <div className="text-xs text-slate-500">Nhận hàng trong 3-5 ngày</div>
+          </div>
+          <span className="font-semibold text-sm">{formatVND(15000)}</span>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function PaymentMethodsCard({ brandColor = '#22c55e' }: { brandColor?: string }) {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+        <CreditCard size={16} style={{ color: brandColor }} />
+        Phương thức thanh toán
+      </h3>
+      <div className="space-y-2">
+        <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer" style={{ borderColor: brandColor, backgroundColor: `${brandColor}08` }}>
+          <input type="radio" name="payment" checked readOnly className="w-4 h-4" style={{ accentColor: brandColor }} />
+          <Package size={18} className="text-slate-500" />
+          <div className="flex-1">
+            <div className="font-medium text-sm">Thanh toán khi nhận hàng (COD)</div>
+          </div>
+        </label>
+        <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+          <input type="radio" name="payment" readOnly className="w-4 h-4" />
+          <CreditCard size={18} className="text-slate-500" />
+          <div className="flex-1">
+            <div className="font-medium text-sm">Thẻ ATM / Visa / Mastercard</div>
+          </div>
+        </label>
+        <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+          <input type="radio" name="payment" readOnly className="w-4 h-4" />
+          <Wallet size={18} className="text-slate-500" />
+          <div className="flex-1">
+            <div className="font-medium text-sm">Ví điện tử (MoMo, ZaloPay, VNPay)</div>
+          </div>
+        </label>
+      </div>
+    </div>
+  );
+}
+
 function CheckoutForm({ 
   flowStyle, 
   showPaymentMethods, 
@@ -93,79 +175,96 @@ function CheckoutForm({
         </div>
       )}
       
-      <div className="bg-white rounded-xl border border-slate-200 p-4">
-        <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-          <MapPin size={16} style={{ color: brandColor }} />
-          Thông tin giao hàng
-        </h3>
-        <div className="grid gap-3">
-          <div className="grid grid-cols-2 gap-3">
-            <input type="text" placeholder="Họ tên" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" disabled />
-            <input type="text" placeholder="Số điện thoại" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" disabled />
-          </div>
-          <input type="email" placeholder="Email" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" disabled />
-          <input type="text" placeholder="Địa chỉ giao hàng" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" disabled />
-        </div>
-      </div>
+      <ShippingInfoCard brandColor={brandColor} />
 
       {showShippingOptions && (
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-            <Truck size={16} style={{ color: brandColor }} />
-            Phương thức vận chuyển
-          </h3>
-          <div className="space-y-2">
-            <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer" style={{ borderColor: brandColor, backgroundColor: `${brandColor}08` }}>
-              <input type="radio" name="shipping" checked readOnly className="w-4 h-4" style={{ accentColor: brandColor }} />
-              <div className="flex-1">
-                <div className="font-medium text-sm">Giao hàng nhanh</div>
-                <div className="text-xs text-slate-500">Nhận hàng trong 1-2 ngày</div>
-              </div>
-              <span className="font-semibold text-sm">{formatVND(30000)}</span>
-            </label>
-            <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
-              <input type="radio" name="shipping" readOnly className="w-4 h-4" />
-              <div className="flex-1">
-                <div className="font-medium text-sm">Giao hàng tiết kiệm</div>
-                <div className="text-xs text-slate-500">Nhận hàng trong 3-5 ngày</div>
-              </div>
-              <span className="font-semibold text-sm">{formatVND(15000)}</span>
-            </label>
-          </div>
-        </div>
+        <ShippingOptionsCard brandColor={brandColor} />
       )}
 
       {showPaymentMethods && (
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-            <CreditCard size={16} style={{ color: brandColor }} />
-            Phương thức thanh toán
-          </h3>
-          <div className="space-y-2">
-            <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer" style={{ borderColor: brandColor, backgroundColor: `${brandColor}08` }}>
-              <input type="radio" name="payment" checked readOnly className="w-4 h-4" style={{ accentColor: brandColor }} />
-              <Package size={18} className="text-slate-500" />
-              <div className="flex-1">
-                <div className="font-medium text-sm">Thanh toán khi nhận hàng (COD)</div>
-              </div>
-            </label>
-            <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
-              <input type="radio" name="payment" readOnly className="w-4 h-4" />
-              <CreditCard size={18} className="text-slate-500" />
-              <div className="flex-1">
-                <div className="font-medium text-sm">Thẻ ATM / Visa / Mastercard</div>
-              </div>
-            </label>
-            <label className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
-              <input type="radio" name="payment" readOnly className="w-4 h-4" />
-              <Wallet size={18} className="text-slate-500" />
-              <div className="flex-1">
-                <div className="font-medium text-sm">Ví điện tử (MoMo, ZaloPay, VNPay)</div>
-              </div>
-            </label>
-          </div>
-        </div>
+        <PaymentMethodsCard brandColor={brandColor} />
       )}
+    </div>
+  );
+}
+
+type WizardStep = {
+  key: 'info' | 'shipping' | 'payment';
+  label: string;
+  content: React.ReactNode;
+};
+
+function WizardAccordion({
+  showPaymentMethods,
+  showShippingOptions,
+  brandColor = '#22c55e',
+}: {
+  showPaymentMethods: boolean;
+  showShippingOptions: boolean;
+  brandColor?: string;
+}) {
+  const steps: WizardStep[] = [
+    {
+      key: 'info',
+      label: 'Thông tin khách hàng',
+      content: <ShippingInfoCard brandColor={brandColor} />,
+    },
+    ...(showShippingOptions
+      ? [
+          {
+            key: 'shipping' as const,
+            label: 'Vận chuyển',
+            content: <ShippingOptionsCard brandColor={brandColor} />,
+          },
+        ]
+      : []),
+    ...(showPaymentMethods
+      ? [
+          {
+            key: 'payment' as const,
+            label: 'Thanh toán',
+            content: <PaymentMethodsCard brandColor={brandColor} />,
+          },
+        ]
+      : []),
+  ];
+
+  const activeIndex = Math.min(1, steps.length - 1);
+
+  return (
+    <div className="space-y-3">
+      {steps.map((step, index) => {
+        const isActive = index === activeIndex;
+        const isDone = index < activeIndex;
+        const stateLabel = isActive ? 'Đang thực hiện' : isDone ? 'Đã hoàn tất' : 'Chưa thực hiện';
+        const dotStyles = isDone ? { backgroundColor: brandColor } : undefined;
+
+        return (
+          <div key={step.key} className="rounded-xl border border-slate-200 bg-white">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
+                    isDone || isActive ? 'text-white' : 'text-slate-400 bg-slate-100'
+                  }`}
+                  style={isDone || isActive ? { backgroundColor: brandColor } : undefined}
+                >
+                  {isDone ? <Check size={16} /> : index + 1}
+                </div>
+                <div>
+                  <div className="font-semibold text-slate-900 text-sm">{step.label}</div>
+                  <div className="text-xs text-slate-500">{stateLabel}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span className={`h-2 w-2 rounded-full ${isDone ? '' : 'bg-slate-200'}`} style={dotStyles} />
+                {isActive ? 'Mở rộng' : 'Thu gọn'}
+              </div>
+            </div>
+            {isActive && <div className="px-4 pb-4">{step.content}</div>}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -180,6 +279,7 @@ export function CheckoutPreview({
 }: CheckoutPreviewProps) {
   const isMobile = device === 'mobile';
   const isRightSidebar = orderSummaryPosition === 'right' && !isMobile;
+  const isWizard = flowStyle === 'wizard-accordion';
 
   return (
     <div className="py-6 px-4 min-h-[300px]">
@@ -188,12 +288,20 @@ export function CheckoutPreview({
         
         <div className={isRightSidebar ? 'grid grid-cols-3 gap-6' : 'space-y-4'}>
           <div className={isRightSidebar ? 'col-span-2' : ''}>
-            <CheckoutForm 
-              flowStyle={flowStyle} 
-              showPaymentMethods={showPaymentMethods} 
-              showShippingOptions={showShippingOptions}
-              brandColor={brandColor}
-            />
+            {isWizard ? (
+              <WizardAccordion
+                showPaymentMethods={showPaymentMethods}
+                showShippingOptions={showShippingOptions}
+                brandColor={brandColor}
+              />
+            ) : (
+              <CheckoutForm 
+                flowStyle={flowStyle} 
+                showPaymentMethods={showPaymentMethods} 
+                showShippingOptions={showShippingOptions}
+                brandColor={brandColor}
+              />
+            )}
           </div>
           <div>
             <OrderSummary brandColor={brandColor} />

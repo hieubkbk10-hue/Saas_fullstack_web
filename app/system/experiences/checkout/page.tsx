@@ -24,7 +24,7 @@ import {
 } from '@/components/experiences/editor';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
-type CheckoutFlowStyle = 'single-page' | 'multi-step';
+type CheckoutFlowStyle = 'single-page' | 'multi-step' | 'wizard-accordion';
 type OrderSummaryPosition = 'right' | 'bottom';
 
 type CheckoutExperienceConfig = {
@@ -33,6 +33,7 @@ type CheckoutExperienceConfig = {
   layouts: {
     'single-page': LayoutConfig;
     'multi-step': LayoutConfig;
+    'wizard-accordion': LayoutConfig;
   };
 };
 
@@ -47,6 +48,7 @@ const EXPERIENCE_KEY = 'checkout_ui';
 const FLOW_STYLES: LayoutOption<CheckoutFlowStyle>[] = [
   { description: 'Tất cả trong 1 trang', id: 'single-page', label: 'Single Page' },
   { description: 'Chia thành nhiều bước', id: 'multi-step', label: 'Multi-Step' },
+  { description: 'Wizard dạng accordion', id: 'wizard-accordion', label: 'Wizard Accordion' },
 ];
 
 const SUMMARY_POSITIONS: { id: OrderSummaryPosition; label: string }[] = [
@@ -66,6 +68,7 @@ const DEFAULT_CONFIG: CheckoutExperienceConfig = {
   layouts: {
     'single-page': { ...DEFAULT_LAYOUT_CONFIG },
     'multi-step': { ...DEFAULT_LAYOUT_CONFIG },
+    'wizard-accordion': { ...DEFAULT_LAYOUT_CONFIG },
   },
 };
 
@@ -117,6 +120,7 @@ export default function CheckoutExperiencePage() {
       layouts: {
         'single-page': { ...defaultLayoutWithFeatures, ...raw?.layouts?.['single-page'] },
         'multi-step': { ...defaultLayoutWithFeatures, ...raw?.layouts?.['multi-step'] },
+        'wizard-accordion': { ...defaultLayoutWithFeatures, ...raw?.layouts?.['wizard-accordion'] },
       },
     };
   }, [experienceSetting?.value, paymentFeature?.enabled, shippingFeature?.enabled]);
