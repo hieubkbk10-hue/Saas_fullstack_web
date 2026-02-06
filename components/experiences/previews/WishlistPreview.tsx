@@ -2,7 +2,7 @@ import React from 'react';
 import { Bell, Heart, ShoppingCart, Trash2, X } from 'lucide-react';
 
 type WishlistPreviewProps = {
-  layoutStyle: 'grid' | 'list';
+  layoutStyle: 'grid' | 'list' | 'masonry';
   showWishlistButton: boolean;
   showNote: boolean;
   showNotification: boolean;
@@ -16,6 +16,8 @@ const mockWishlistItems = [
   { id: 2, name: 'MacBook Pro 14" M3 Pro', price: 52990000, originalPrice: null, inStock: true },
   { id: 3, name: 'AirPods Pro 2nd Gen', price: 6490000, originalPrice: 6990000, inStock: false },
 ];
+
+const masonryRatios = ['aspect-square', 'aspect-[4/5]', 'aspect-[3/4]', 'aspect-[16/9]'];
 
 const formatVND = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
@@ -145,6 +147,58 @@ export function WishlistPreview({
                       Thêm
                     </button>
                   )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {layoutStyle === 'masonry' && (
+          <div className="columns-1 sm:columns-2 lg:columns-3 [column-gap:1rem]">
+            {mockWishlistItems.map((item, index) => (
+              <div key={item.id} className="mb-4 break-inside-avoid">
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className={`${masonryRatios[index % masonryRatios.length]} bg-slate-100 relative flex items-center justify-center`}>
+                    <div className="w-20 h-20 bg-slate-200 rounded-lg" />
+                    {!item.inStock && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <span className="bg-slate-800 text-white text-xs px-2 py-1 rounded">Hết hàng</span>
+                      </div>
+                    )}
+                    <button className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow-sm hover:bg-red-50">
+                      <Trash2 size={14} className="text-slate-400 hover:text-red-500" />
+                    </button>
+                  </div>
+                  <div className="p-3 space-y-2">
+                    <h3 className="font-medium text-slate-900 text-sm line-clamp-2">{item.name}</h3>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-base font-bold" style={{ color: brandColor }}>{formatVND(item.price)}</span>
+                      {item.originalPrice && (
+                        <span className="text-xs text-slate-400 line-through">{formatVND(item.originalPrice)}</span>
+                      )}
+                    </div>
+                    {showNote && (
+                      <div className="bg-slate-50 rounded-lg p-2 text-xs text-slate-500">
+                        <span className="font-medium">Ghi chú:</span> Mua khi giảm giá
+                      </div>
+                    )}
+                    {showNotification && (
+                      <div className="flex items-center gap-1.5 text-xs text-amber-600">
+                        <Bell size={12} />
+                        <span>Thông báo khi giảm giá</span>
+                      </div>
+                    )}
+                    {showAddToCartButton && (
+                      <button
+                        className="w-full py-2 rounded-lg text-sm font-medium text-white flex items-center justify-center gap-1.5 disabled:opacity-50"
+                        style={{ backgroundColor: brandColor }}
+                        disabled={!item.inStock}
+                      >
+                        <ShoppingCart size={14} />
+                        {item.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

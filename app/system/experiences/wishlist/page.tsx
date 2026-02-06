@@ -24,13 +24,14 @@ import {
 } from '@/components/experiences/editor';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
-type WishlistLayoutStyle = 'grid' | 'list';
+type WishlistLayoutStyle = 'grid' | 'list' | 'masonry';
 
 type WishlistExperienceConfig = {
   layoutStyle: WishlistLayoutStyle;
   layouts: {
     grid: LayoutConfig;
     list: LayoutConfig;
+    masonry: LayoutConfig;
   };
 };
 
@@ -46,6 +47,7 @@ const EXPERIENCE_KEY = 'wishlist_ui';
 const LAYOUT_STYLES: LayoutOption<WishlistLayoutStyle>[] = [
   { description: 'Hiển thị dạng lưới cards', id: 'grid', label: 'Grid' },
   { description: 'Hiển thị dạng danh sách chi tiết', id: 'list', label: 'List' },
+  { description: 'Pinterest-style grid không đều', id: 'masonry', label: 'Masonry' },
 ];
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
@@ -60,6 +62,7 @@ const DEFAULT_CONFIG: WishlistExperienceConfig = {
   layouts: {
     grid: { ...DEFAULT_LAYOUT_CONFIG },
     list: { ...DEFAULT_LAYOUT_CONFIG },
+    masonry: { ...DEFAULT_LAYOUT_CONFIG },
   },
 };
 
@@ -108,6 +111,7 @@ export default function WishlistExperiencePage() {
       layouts: {
         grid: { ...DEFAULT_LAYOUT_CONFIG, showNote: noteFeature?.enabled ?? true, showNotification: notificationFeature?.enabled ?? true, ...raw?.layouts?.grid },
         list: { ...DEFAULT_LAYOUT_CONFIG, showNote: noteFeature?.enabled ?? true, showNotification: notificationFeature?.enabled ?? true, ...raw?.layouts?.list },
+        masonry: { ...DEFAULT_LAYOUT_CONFIG, showNote: noteFeature?.enabled ?? true, showNotification: notificationFeature?.enabled ?? true, ...raw?.layouts?.masonry },
       },
     };
   }, [experienceSetting?.value, noteFeature?.enabled, notificationFeature?.enabled]);
