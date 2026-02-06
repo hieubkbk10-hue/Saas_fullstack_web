@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Clock, Minus, Package, Plus, ShoppingCart, Trash2 } from 'lucide-react';
+import { Clock, Minus, Package, Plus, Search, ShoppingCart, Trash2 } from 'lucide-react';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
@@ -20,6 +20,9 @@ export default function CartPage() {
   const { isAuthenticated, openLoginModal } = useCustomerAuth();
   const cartConfig = useCartConfig();
   const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
+  const layoutStyle = cartConfig.layoutStyle;
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState<'newest' | 'name-asc' | 'price-asc' | 'price-desc' | 'qty-desc'>('newest');
 
   const variantIds = useMemo(
     () => Array.from(new Set(
@@ -95,6 +98,37 @@ export default function CartPage() {
     const expiry = new Date(expiresAt);
     return `Giỏ hàng hết hạn lúc ${expiry.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
   }, [expiresAt]);
+
+  const filteredItems = useMemo(() => {
+    if (layoutStyle !== 'table') {
+      return items;
+    }
+
+    let result = items;
+    const query = searchQuery.trim().toLowerCase();
+    if (query) {
+      result = result.filter((item) => item.productName.toLowerCase().includes(query));
+    }
+
+    switch (sortOption) {
+      case 'name-asc':
+        result = [...result].sort((a, b) => a.productName.localeCompare(b.productName));
+        break;
+      case 'price-asc':
+        result = [...result].sort((a, b) => a.price - b.price);
+        break;
+      case 'price-desc':
+        result = [...result].sort((a, b) => b.price - a.price);
+        break;
+      case 'qty-desc':
+        result = [...result].sort((a, b) => b.quantity - a.quantity);
+        break;
+      default:
+        break;
+    }
+
+    return result;
+  }, [items, layoutStyle, searchQuery, sortOption]);
 
   if (cartModule && !cartModule.enabled) {
     return (
@@ -185,108 +219,313 @@ export default function CartPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
-          {items.map(item => (
-            <div key={item._id} className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col sm:flex-row gap-4">
-              <div className="w-24 h-24 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
-                {item.productImage ? (
-                  <Image src={item.productImage} alt={item.productName} width={96} height={96} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package className="w-6 h-6 text-slate-300" />
+      {layoutStyle === 'table' ? (
+        <div className="space-y-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="text-sm text-slate-500">Hiển thị {filteredItems.length} sản phẩm</div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Tìm theo tên sản phẩm..."
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                />
+              </div>
+              <select
+                value={sortOption}
+                onChange={(event) => setSortOption(event.target.value as typeof sortOption)}
+                className="w-full sm:w-48 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200"
+              >
+                <option value="newest">Mới nhất</option>
+                <option value="name-asc">Tên A-Z</option>
+                <option value="price-asc">Giá tăng dần</option>
+                <option value="price-desc">Giá giảm dần</option>
+                <option value="qty-desc">Số lượng giảm dần</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <div className="hidden md:block overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-medium">Sản phẩm</th>
+                      <th className="px-4 py-3 text-left font-medium">Đơn giá</th>
+                      <th className="px-4 py-3 text-left font-medium">Số lượng</th>
+                      <th className="px-4 py-3 text-left font-medium">Thành tiền</th>
+                      <th className="px-4 py-3 text-right font-medium">Xóa</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredItems.map((item) => (
+                      <tr key={item._id} className="border-t">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-12 w-12 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
+                              {item.productImage ? (
+                                <Image src={item.productImage} alt={item.productName} width={48} height={48} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Package className="w-5 h-5 text-slate-300" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-medium text-slate-900 line-clamp-2">{item.productName}</div>
+                              {item.variantId && variantTitleById.get(item.variantId) && (
+                                <div className="text-xs text-slate-500 mt-1">{variantTitleById.get(item.variantId)}</div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 font-medium" style={{ color: brandColor }}>{formatPrice(item.price)}</td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                              onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                            >
+                              <Minus size={12} className="text-slate-500" />
+                            </button>
+                            <span className="w-7 text-center text-sm font-medium text-slate-700">{item.quantity}</span>
+                            <button
+                              type="button"
+                              className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                              onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                            >
+                              <Plus size={12} className="text-slate-500" />
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 font-semibold text-slate-900">{formatPrice(item.subtotal)}</td>
+                        <td className="px-4 py-4 text-right">
+                          <button
+                            type="button"
+                            className="p-2 rounded-lg hover:bg-red-50"
+                            onClick={() => removeItem(item._id)}
+                          >
+                            <Trash2 size={16} className="text-slate-400 hover:text-red-500" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="md:hidden space-y-4">
+                {filteredItems.map(item => (
+                  <div key={item._id} className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col sm:flex-row gap-4">
+                    <div className="w-24 h-24 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
+                      {item.productImage ? (
+                        <Image src={item.productImage} alt={item.productName} width={96} height={96} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="w-6 h-6 text-slate-300" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-slate-900 text-base line-clamp-2">{item.productName}</h3>
+                      {item.variantId && variantTitleById.get(item.variantId) && (
+                        <p className="text-xs text-slate-500 mt-1">{variantTitleById.get(item.variantId)}</p>
+                      )}
+                      <div className="text-slate-900 font-bold text-sm mt-1">{formatPrice(item.price)}</div>
+                      <div className="mt-4 flex items-center gap-2">
+                        <button
+                          type="button"
+                          className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                          onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                        >
+                          <Minus size={14} className="text-slate-500" />
+                        </button>
+                        <span className="w-8 text-center text-sm font-medium text-slate-700">{item.quantity}</span>
+                        <button
+                          type="button"
+                          className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                          onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                        >
+                          <Plus size={14} className="text-slate-500" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end justify-between">
+                      <button
+                        type="button"
+                        className="p-2 rounded-lg hover:bg-red-50"
+                        onClick={() => removeItem(item._id)}
+                      >
+                        <Trash2 size={16} className="text-slate-400 hover:text-red-500" />
+                      </button>
+                      <div className="text-sm font-semibold text-slate-900">{formatPrice(item.subtotal)}</div>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-slate-900 text-base line-clamp-2">{item.productName}</h3>
-                {item.variantId && variantTitleById.get(item.variantId) && (
-                  <p className="text-xs text-slate-500 mt-1">{variantTitleById.get(item.variantId)}</p>
-                )}
-                <div className="text-slate-900 font-bold text-sm mt-1">{formatPrice(item.price)}</div>
-                <div className="mt-4 flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
-                    onClick={() => updateQuantity(item._id, item.quantity - 1)}
-                  >
-                    <Minus size={14} className="text-slate-500" />
-                  </button>
-                  <span className="w-8 text-center text-sm font-medium text-slate-700">{item.quantity}</span>
-                  <button
-                    type="button"
-                    className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
-                    onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                  >
-                    <Plus size={14} className="text-slate-500" />
-                  </button>
-                </div>
-              </div>
-              <div className="flex flex-col items-end justify-between">
+
+              <div className="flex justify-end mt-4">
                 <button
                   type="button"
-                  className="p-2 rounded-lg hover:bg-red-50"
-                  onClick={() => removeItem(item._id)}
+                  onClick={() => clearCart()}
+                  className="text-sm text-slate-500 hover:text-slate-900"
                 >
-                  <Trash2 size={16} className="text-slate-400 hover:text-red-500" />
+                  Xóa toàn bộ giỏ hàng
                 </button>
-                <div className="text-sm font-semibold text-slate-900">{formatPrice(item.subtotal)}</div>
               </div>
             </div>
-          ))}
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => clearCart()}
-              className="text-sm text-slate-500 hover:text-slate-900"
-            >
-              Xóa toàn bộ giỏ hàng
-            </button>
-          </div>
-        </div>
 
-        <div className="space-y-4">
-          {cartConfig.showNote && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-4">
-              <h4 className="font-medium text-slate-900 text-sm mb-2">Ghi chú đơn hàng</h4>
-              <textarea
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none"
-                rows={3}
-                placeholder="Ghi chú cho shop..."
-                value={cart?.note ?? ''}
-                onChange={(event) => updateNote(event.target.value)}
-              />
+            <div className="space-y-4">
+              {cartConfig.showNote && (
+                <div className="bg-white rounded-2xl border border-slate-200 p-4">
+                  <h4 className="font-medium text-slate-900 text-sm mb-2">Ghi chú đơn hàng</h4>
+                  <textarea
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none"
+                    rows={3}
+                    placeholder="Ghi chú cho shop..."
+                    value={cart?.note ?? ''}
+                    onChange={(event) => updateNote(event.target.value)}
+                  />
+                </div>
+              )}
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Tạm tính</span>
+                  <span className="font-medium">{formatPrice(totalAmount)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Phí vận chuyển</span>
+                  <span className="text-slate-400">Tính khi checkout</span>
+                </div>
+                <div className="border-t border-slate-200 pt-3 flex justify-between">
+                  <span className="font-semibold text-slate-900">Tổng cộng</span>
+                  <span className="text-lg font-bold" style={{ color: brandColor }}>{formatPrice(totalAmount)}</span>
+                </div>
+                <button
+                  type="button"
+                  className="w-full py-3 rounded-xl text-white font-semibold text-sm"
+                  style={{ backgroundColor: brandColor }}
+                >
+                  Thanh toán
+                </button>
+                <Link
+                  href="/products"
+                  className="block text-center text-sm text-slate-500 hover:text-slate-900"
+                >
+                  Tiếp tục mua sắm
+                </Link>
+              </div>
             </div>
-          )}
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Tạm tính</span>
-              <span className="font-medium">{formatPrice(totalAmount)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Phí vận chuyển</span>
-              <span className="text-slate-400">Tính khi checkout</span>
-            </div>
-            <div className="border-t border-slate-200 pt-3 flex justify-between">
-              <span className="font-semibold text-slate-900">Tổng cộng</span>
-              <span className="text-lg font-bold" style={{ color: brandColor }}>{formatPrice(totalAmount)}</span>
-            </div>
-            <button
-              type="button"
-              className="w-full py-3 rounded-xl text-white font-semibold text-sm"
-              style={{ backgroundColor: brandColor }}
-            >
-              Thanh toán
-            </button>
-            <Link
-              href="/products"
-              className="block text-center text-sm text-slate-500 hover:text-slate-900"
-            >
-              Tiếp tục mua sắm
-            </Link>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            {items.map(item => (
+              <div key={item._id} className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col sm:flex-row gap-4">
+                <div className="w-24 h-24 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
+                  {item.productImage ? (
+                    <Image src={item.productImage} alt={item.productName} width={96} height={96} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Package className="w-6 h-6 text-slate-300" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-slate-900 text-base line-clamp-2">{item.productName}</h3>
+                  {item.variantId && variantTitleById.get(item.variantId) && (
+                    <p className="text-xs text-slate-500 mt-1">{variantTitleById.get(item.variantId)}</p>
+                  )}
+                  <div className="text-slate-900 font-bold text-sm mt-1">{formatPrice(item.price)}</div>
+                  <div className="mt-4 flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                      onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                    >
+                      <Minus size={14} className="text-slate-500" />
+                    </button>
+                    <span className="w-8 text-center text-sm font-medium text-slate-700">{item.quantity}</span>
+                    <button
+                      type="button"
+                      className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                      onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                    >
+                      <Plus size={14} className="text-slate-500" />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end justify-between">
+                  <button
+                    type="button"
+                    className="p-2 rounded-lg hover:bg-red-50"
+                    onClick={() => removeItem(item._id)}
+                  >
+                    <Trash2 size={16} className="text-slate-400 hover:text-red-500" />
+                  </button>
+                  <div className="text-sm font-semibold text-slate-900">{formatPrice(item.subtotal)}</div>
+                </div>
+              </div>
+            ))}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => clearCart()}
+                className="text-sm text-slate-500 hover:text-slate-900"
+              >
+                Xóa toàn bộ giỏ hàng
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {cartConfig.showNote && (
+              <div className="bg-white rounded-2xl border border-slate-200 p-4">
+                <h4 className="font-medium text-slate-900 text-sm mb-2">Ghi chú đơn hàng</h4>
+                <textarea
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none"
+                  rows={3}
+                  placeholder="Ghi chú cho shop..."
+                  value={cart?.note ?? ''}
+                  onChange={(event) => updateNote(event.target.value)}
+                />
+              </div>
+            )}
+            <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Tạm tính</span>
+                <span className="font-medium">{formatPrice(totalAmount)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Phí vận chuyển</span>
+                <span className="text-slate-400">Tính khi checkout</span>
+              </div>
+              <div className="border-t border-slate-200 pt-3 flex justify-between">
+                <span className="font-semibold text-slate-900">Tổng cộng</span>
+                <span className="text-lg font-bold" style={{ color: brandColor }}>{formatPrice(totalAmount)}</span>
+              </div>
+              <button
+                type="button"
+                className="w-full py-3 rounded-xl text-white font-semibold text-sm"
+                style={{ backgroundColor: brandColor }}
+              >
+                Thanh toán
+              </button>
+              <Link
+                href="/products"
+                className="block text-center text-sm text-slate-500 hover:text-slate-900"
+              >
+                Tiếp tục mua sắm
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -239,7 +239,7 @@ export function useServicesListConfig(): ServicesListConfig {
 }
 
 type CartConfig = {
-  layoutStyle: 'drawer' | 'page';
+  layoutStyle: 'drawer' | 'page' | 'table';
   showExpiry: boolean;
   showNote: boolean;
 };

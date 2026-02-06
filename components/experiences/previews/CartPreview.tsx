@@ -1,8 +1,8 @@
 import React from 'react';
-import { Clock, Minus, Plus, ShoppingCart, Trash2, X } from 'lucide-react';
+import { Clock, Minus, Plus, Search, ShoppingCart, Trash2, X } from 'lucide-react';
 
 type CartPreviewProps = {
-  layoutStyle: 'drawer' | 'page';
+  layoutStyle: 'drawer' | 'page' | 'table';
   showExpiry: boolean;
   showNote: boolean;
   device?: 'desktop' | 'tablet' | 'mobile';
@@ -130,6 +130,95 @@ export function CartPreview({
                 Thanh toán
               </button>
             </div>
+          </div>
+        </div>
+      ) : layoutStyle === 'table' ? (
+        <div className="py-6 px-4">
+          <div className="max-w-5xl mx-auto space-y-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h1 className="text-xl md:text-2xl font-bold text-slate-900">Giỏ hàng</h1>
+                <p className="text-sm text-slate-500">{mockCartItems.length} sản phẩm</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative w-full sm:w-56">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm"
+                    placeholder="Tìm sản phẩm..."
+                    disabled
+                  />
+                </div>
+                <select className="w-full sm:w-44 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" disabled>
+                  <option>Sắp xếp</option>
+                </select>
+              </div>
+            </div>
+
+            {showExpiry && (
+              <div className="flex items-center gap-2 text-sm text-red-500">
+                <Clock size={14} />
+                <span>Giỏ hàng sẽ hết hạn sau 29:45</span>
+              </div>
+            )}
+
+            {!isMobile ? (
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-medium">Sản phẩm</th>
+                      <th className="px-4 py-3 text-left font-medium">Đơn giá</th>
+                      <th className="px-4 py-3 text-left font-medium">Số lượng</th>
+                      <th className="px-4 py-3 text-left font-medium">Thành tiền</th>
+                      <th className="px-4 py-3 text-right font-medium">Xóa</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mockCartItems.map((item) => (
+                      <tr key={item.id} className="border-t">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-12 w-12 rounded-lg bg-slate-100 flex items-center justify-center">
+                              <div className="h-6 w-6 rounded bg-slate-200" />
+                            </div>
+                            <span className="font-medium text-slate-900 line-clamp-1">{item.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 font-medium" style={{ color: brandColor }}>{formatVND(item.price)}</td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            <button className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center">
+                              <Minus size={12} className="text-slate-500" />
+                            </button>
+                            <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
+                            <button className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center">
+                              <Plus size={12} className="text-slate-500" />
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 font-semibold text-slate-900">{formatVND(item.price * item.quantity)}</td>
+                        <td className="px-4 py-4 text-right">
+                          <button className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50">
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {mockCartItems.map((item) => (
+                  <div key={item.id} className="bg-white rounded-xl border border-slate-200 p-3">
+                    <CartItemRow item={item} brandColor={brandColor} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <CartSummary subtotal={subtotal} brandColor={brandColor} />
           </div>
         </div>
       ) : (

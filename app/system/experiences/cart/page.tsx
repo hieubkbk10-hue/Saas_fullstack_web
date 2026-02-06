@@ -23,13 +23,14 @@ import {
 } from '@/components/experiences/editor';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
-type CartLayoutStyle = 'drawer' | 'page';
+type CartLayoutStyle = 'drawer' | 'page' | 'table';
 
 type CartExperienceConfig = {
   layoutStyle: CartLayoutStyle;
   layouts: {
     drawer: LayoutConfig;
     page: LayoutConfig;
+    table: LayoutConfig;
   };
 };
 
@@ -43,6 +44,7 @@ const EXPERIENCE_KEY = 'cart_ui';
 const LAYOUT_STYLES: LayoutOption<CartLayoutStyle>[] = [
   { description: 'Giỏ hàng dạng drawer/sidebar', id: 'drawer', label: 'Drawer' },
   { description: 'Giỏ hàng trang riêng', id: 'page', label: 'Page' },
+  { description: 'Giỏ hàng dạng bảng dữ liệu', id: 'table', label: 'Table' },
 ];
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
@@ -55,6 +57,7 @@ const DEFAULT_CONFIG: CartExperienceConfig = {
   layouts: {
     drawer: { ...DEFAULT_LAYOUT_CONFIG },
     page: { ...DEFAULT_LAYOUT_CONFIG },
+    table: { ...DEFAULT_LAYOUT_CONFIG },
   },
 };
 
@@ -105,6 +108,7 @@ export default function CartExperiencePage() {
       layouts: {
         drawer: { ...defaultLayoutWithModuleFeatures, ...raw?.layouts?.drawer },
         page: { ...defaultLayoutWithModuleFeatures, ...raw?.layouts?.page },
+        table: { ...defaultLayoutWithModuleFeatures, ...raw?.layouts?.table },
       },
     };
   }, [experienceSetting?.value, expiryFeature?.enabled, noteFeature?.enabled]);
