@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/app/admin/components/ui';
 
 interface AddressPreviewProps {
@@ -12,53 +12,13 @@ interface ComboOption {
   name: string;
 }
 
-const SAMPLE_PROVINCES: ComboOption[] = [
-  { code: '01', name: 'Hà Nội' },
-  { code: '79', name: 'Hồ Chí Minh' },
-  { code: '48', name: 'Đà Nẵng' },
-];
+interface DistrictOption extends ComboOption {
+  parentCode: string;
+}
 
-const SAMPLE_DISTRICTS: Record<string, ComboOption[]> = {
-  '01': [
-    { code: '001', name: 'Ba Đình' },
-    { code: '002', name: 'Hoàn Kiếm' },
-  ],
-  '79': [
-    { code: '760', name: 'Quận 1' },
-    { code: '769', name: 'Quận 7' },
-  ],
-  '48': [
-    { code: '490', name: 'Hải Châu' },
-    { code: '491', name: 'Thanh Khê' },
-  ],
-};
-
-const SAMPLE_WARDS: Record<string, ComboOption[]> = {
-  '001': [
-    { code: '00001', name: 'Phúc Xá' },
-    { code: '00004', name: 'Trúc Bạch' },
-  ],
-  '002': [
-    { code: '00015', name: 'Hàng Trống' },
-    { code: '00018', name: 'Cửa Nam' },
-  ],
-  '760': [
-    { code: '26734', name: 'Bến Nghé' },
-    { code: '26737', name: 'Bến Thành' },
-  ],
-  '769': [
-    { code: '27238', name: 'Tân Phú' },
-    { code: '27247', name: 'Phú Mỹ' },
-  ],
-  '490': [
-    { code: '20194', name: 'Thạch Thang' },
-    { code: '20197', name: 'Hải Châu 1' },
-  ],
-  '491': [
-    { code: '20209', name: 'Tam Thuận' },
-    { code: '20212', name: 'Thanh Khê Tây' },
-  ],
-};
+interface WardOption extends ComboOption {
+  parentCode: string;
+}
 
 interface ComboboxProps {
   placeholder: string;
@@ -121,19 +81,107 @@ function Combobox({ placeholder, options, value, onChange }: ComboboxProps) {
 }
 
 export function AddressPreview({ format }: AddressPreviewProps) {
-  const [province, setProvince] = useState<ComboOption | null>(SAMPLE_PROVINCES[0] ?? null);
-  const districts = useMemo(() => (province ? SAMPLE_DISTRICTS[province.code] ?? [] : []), [province]);
-  const [district, setDistrict] = useState<ComboOption | null>(districts[0] ?? null);
-  const wards = useMemo(() => (district ? SAMPLE_WARDS[district.code] ?? [] : []), [district]);
-  const [ward, setWard] = useState<ComboOption | null>(wards[0] ?? null);
+  const [provinces, setProvinces] = useState<ComboOption[]>([]);
+  const [districts, setDistricts] = useState<DistrictOption[]>([]);
+  const [wards, setWards] = useState<WardOption[]>([]);
+  const [provinceCode, setProvinceCode] = useState<string | null>(null);
+  const [districtCode, setDistrictCode] = useState<string | null>(null);
+  const [wardCode, setWardCode] = useState<string | null>(null);
 
-  React.useEffect(() => {
-    setDistrict(districts[0] ?? null);
+  useEffect(() => {
+    if (format === 'text') {
+      return;
+    }
+    let active = true;
+    const loadData = async () => {
+      const [provincesRes, districtsRes, wardsRes] = await Promise.all([
+        fetch('/data/address-provinces.json'),
+        fetch('/data/address-districts.json'),
+        fetch('/data/address-wards.json'),
+      ]);
+      const provincesRaw = await provincesRes.json() as { id: string; name: string }[];
+      const districtsRaw = await districtsRes.json() as Record<string, { code: string; name: string; name_with_type?: string; parent_code: string }>;
+      const wardsRaw = await wardsRes.json() as Record<string, { code: string; name: string; name_with_type?: string; parent_code: string }>;
+
+      if (!active) return;
+
+      setProvinces(
+        provincesRaw.map((province) => ({
+          code: province.id.padStart(2, '0'),
+          name: province.name,
+        }))
+      );
+      setDistricts(
+        Object.values(districtsRaw).map((district) => ({
+          code: district.code,
+          name: district.name_with_type ?? district.name,
+          parentCode: district.parent_code,
+        }))
+      );
+      setWards(
+        Object.values(wardsRaw).map((ward) => ({
+          code: ward.code,
+          name: ward.name_with_type ?? ward.name,
+          parentCode: ward.parent_code,
+        }))
+      );
+    };
+
+    void loadData();
+    return () => {
+      active = false;
+    };
+  }, [format]);
+
+  const districtsByProvince = useMemo(() => {
+    const map = new Map<string, ComboOption[]>();
+    districts.forEach((district) => {
+      const list = map.get(district.parentCode) ?? [];
+      list.push({ code: district.code, name: district.name });
+      map.set(district.parentCode, list);
+    });
+    return map;
   }, [districts]);
 
-  React.useEffect(() => {
-    setWard(wards[0] ?? null);
+  const districtToProvince = useMemo(() => {
+    return new Map(districts.map((district) => [district.code, district.parentCode]));
+  }, [districts]);
+
+  const wardsByDistrict = useMemo(() => {
+    const map = new Map<string, ComboOption[]>();
+    wards.forEach((ward) => {
+      const list = map.get(ward.parentCode) ?? [];
+      list.push({ code: ward.code, name: ward.name });
+      map.set(ward.parentCode, list);
+    });
+    return map;
   }, [wards]);
+
+  const wardsByProvince = useMemo(() => {
+    const map = new Map<string, ComboOption[]>();
+    wards.forEach((ward) => {
+      const province = districtToProvince.get(ward.parentCode);
+      if (!province) return;
+      const list = map.get(province) ?? [];
+      list.push({ code: ward.code, name: ward.name });
+      map.set(province, list);
+    });
+    return map;
+  }, [districtToProvince, wards]);
+
+  const resolvedProvince = provinces.find((province) => province.code === provinceCode) ?? provinces[0] ?? null;
+  const activeProvinceCode = resolvedProvince?.code ?? null;
+  const availableDistricts = activeProvinceCode ? (districtsByProvince.get(activeProvinceCode) ?? []) : [];
+  const resolvedDistrict = availableDistricts.find((district) => district.code === districtCode) ?? availableDistricts[0] ?? null;
+  const activeDistrictCode = resolvedDistrict?.code ?? null;
+  const availableWards = format === '3-level'
+    ? (activeDistrictCode ? (wardsByDistrict.get(activeDistrictCode) ?? []) : [])
+    : (activeProvinceCode ? (wardsByProvince.get(activeProvinceCode) ?? []) : []);
+  const resolvedWard = availableWards.find((ward) => ward.code === wardCode) ?? availableWards[0] ?? null;
+
+  const selectedProvince = resolvedProvince;
+  const selectedDistrict = resolvedDistrict;
+  const selectedWard = resolvedWard;
 
   if (format === 'text') {
     return (
@@ -149,23 +197,30 @@ export function AddressPreview({ format }: AddressPreviewProps) {
       <div className="grid gap-3 md:grid-cols-3">
         <Combobox
           placeholder="Chọn Tỉnh/Thành"
-          options={SAMPLE_PROVINCES}
-          value={province}
-          onChange={setProvince}
+          options={provinces}
+          value={selectedProvince}
+          onChange={(option) => {
+            setProvinceCode(option.code);
+            setDistrictCode(null);
+            setWardCode(null);
+          }}
         />
         {format === '3-level' && (
           <Combobox
             placeholder="Chọn Quận/Huyện"
-            options={districts}
-            value={district}
-            onChange={setDistrict}
+            options={availableDistricts}
+            value={selectedDistrict}
+            onChange={(option) => {
+              setDistrictCode(option.code);
+              setWardCode(null);
+            }}
           />
         )}
         <Combobox
           placeholder="Chọn Phường/Xã"
-          options={format === '3-level' ? wards : districts}
-          value={format === '3-level' ? ward : district}
-          onChange={format === '3-level' ? setWard : setDistrict}
+          options={availableWards}
+          value={selectedWard}
+          onChange={(option) => setWardCode(option.code)}
         />
       </div>
       <Input placeholder="Số nhà, tên đường" />

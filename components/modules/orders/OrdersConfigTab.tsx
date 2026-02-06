@@ -164,9 +164,9 @@ export function OrdersConfigTab({
         ))}
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="space-y-4">
-          {activeTab === 'general' && (
+      <div className="mt-4 space-y-4">
+        {activeTab === 'general' && (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <SettingsCard title="Cài đặt chung">
               <div className="space-y-3">
                 {config.settings
@@ -195,21 +195,171 @@ export function OrdersConfigTab({
                   ))}
               </div>
             </SettingsCard>
-          )}
 
-          {activeTab === 'shipping' && (
-            <SettingsCard title="Vận chuyển">
-              <ShippingMethodsEditor methods={shippingMethods} onChange={handleShippingChange} />
-            </SettingsCard>
-          )}
+            <div className="space-y-4">
+              {config.features && config.features.length > 0 && (
+                <FeaturesCard
+                  features={config.features.map((f) => ({
+                    config: {
+                      key: f.key,
+                      label: f.label,
+                      icon: f.icon ?? Settings,
+                      linkedField: f.linkedField,
+                      description: f.description,
+                    },
+                    enabled: localFeatures[f.key] ?? false,
+                  }))}
+                  onToggle={onToggleFeature}
+                  toggleColor={colorClasses.toggle}
+                />
+              )}
+            </div>
 
-          {activeTab === 'payment' && (
-            <SettingsCard title="Phương thức thanh toán">
-              <PaymentMethodsEditor methods={paymentMethods} onChange={handlePaymentChange} />
-            </SettingsCard>
-          )}
+            <div className="space-y-4">
+              <FieldsCard
+                title={`Trường ${config.name}`}
+                icon={config.icon}
+                iconColorClass={colorClasses.iconText}
+                fields={localFields}
+                onToggle={onToggleField}
+                fieldColorClass={colorClasses.fieldColor}
+                toggleColor={colorClasses.toggle}
+              />
 
-          {activeTab === 'address' && (
+              {config.categoryModuleKey && localCategoryFields.length > 0 && (
+                <FieldsCard
+                  title="Trường danh mục"
+                  icon={Settings}
+                  iconColorClass="text-slate-500"
+                  fields={localCategoryFields}
+                  onToggle={onToggleCategoryField}
+                  fieldColorClass={colorClasses.fieldColor}
+                  toggleColor={colorClasses.toggle}
+                />
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'shipping' && (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="lg:col-span-3">
+              <SettingsCard title="Vận chuyển">
+                <ShippingMethodsEditor methods={shippingMethods} onChange={handleShippingChange} />
+              </SettingsCard>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'payment' && (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="space-y-4 lg:col-span-3">
+              <SettingsCard title="Phương thức thanh toán">
+                <PaymentMethodsEditor methods={paymentMethods} onChange={handlePaymentChange} />
+              </SettingsCard>
+              <SettingsCard title="Thông tin ngân hàng">
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="text-xs text-slate-500">Ngân hàng</label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setBankDropdownOpen((prev) => !prev)}
+                        className="flex h-10 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
+                      >
+                        <span className="flex items-center gap-2 truncate">
+                          {selectedBank?.logo && !isCustomBank && (
+                            <Image src={selectedBank.logo} alt={selectedBank.shortName} width={20} height={20} unoptimized />
+                          )}
+                          {isCustomBank
+                            ? (bankName || 'Nhập ngân hàng khác')
+                            : (selectedBank ? `${selectedBank.shortName} - ${selectedBank.name}` : 'Chọn ngân hàng')}
+                        </span>
+                        <span className="text-xs text-slate-400">▼</span>
+                      </button>
+                      {bankDropdownOpen && (
+                        <div className="absolute z-10 mt-2 w-full rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
+                          <Input
+                            value={bankQuery}
+                            onChange={(event) => setBankQuery(event.target.value)}
+                            placeholder="Tìm ngân hàng..."
+                            className="mb-2"
+                          />
+                          <div className="max-h-64 overflow-auto">
+                            {filteredBanks.map((bank) => (
+                              <button
+                                key={bank.code}
+                                type="button"
+                                onClick={() => handleBankSelect(bank)}
+                                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                              >
+                                {bank.logo && (
+                                  <Image src={bank.logo} alt={bank.shortName} width={20} height={20} unoptimized />
+                                )}
+                                <span className="truncate">{bank.shortName} - {bank.name}</span>
+                              </button>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={handleCustomBank}
+                              className="mt-2 w-full rounded-md border border-dashed border-slate-200 px-2 py-2 text-xs text-slate-500 hover:border-slate-300"
+                            >
+                              + Nhập ngân hàng khác
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {isCustomBank && (
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                      <Input
+                        placeholder="Mã ngân hàng (VietQR)"
+                        value={bankCode}
+                        onChange={(event) => onSettingChange('bankCode', event.target.value)}
+                      />
+                      <Input
+                        placeholder="Tên ngân hàng"
+                        value={bankName}
+                        onChange={(event) => onSettingChange('bankName', event.target.value)}
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                    <Input
+                      placeholder="Số tài khoản"
+                      value={bankAccountNumber}
+                      onChange={(event) => onSettingChange('bankAccountNumber', event.target.value)}
+                    />
+                    <Input
+                      placeholder="Tên chủ tài khoản"
+                      value={bankAccountName}
+                      onChange={(event) => onSettingChange('bankAccountName', event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs text-slate-500">Mẫu VietQR</label>
+                    <select
+                      className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
+                      value={vietQrTemplate}
+                      onChange={(event) => onSettingChange('vietQrTemplate', event.target.value)}
+                    >
+                      <option value="compact">Compact (có logo)</option>
+                      <option value="compact2">Compact 2 (đơn giản)</option>
+                      <option value="qr_only">Chỉ QR</option>
+                      <option value="print">In ấn</option>
+                    </select>
+                  </div>
+                </div>
+              </SettingsCard>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'address' && (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <SettingsCard title="Địa chỉ giao hàng">
               <div className="space-y-3">
                 <label className="text-xs text-slate-500">Định dạng</label>
@@ -224,186 +374,14 @@ export function OrdersConfigTab({
                 </select>
               </div>
             </SettingsCard>
-          )}
-        </div>
 
-        <div className="space-y-4">
-          {activeTab === 'general' && (
-            <SettingsCard title="Tóm tắt">
-              <div className="space-y-2 text-sm text-slate-600">
-                <p>Thiết lập chung áp dụng cho toàn bộ đơn hàng và luồng checkout.</p>
-                <p>Kiểm tra lại số lượng hiển thị và trạng thái mặc định.</p>
-              </div>
-            </SettingsCard>
-          )}
-
-          {activeTab === 'shipping' && (
-            <SettingsCard title="Preview vận chuyển">
-              <div className="space-y-2 text-sm text-slate-700">
-                {shippingMethods.length === 0 ? (
-                  <p className="text-xs text-slate-500">Chưa có phương thức vận chuyển.</p>
-                ) : (
-                  shippingMethods.map((method) => (
-                    <div key={method.id} className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2">
-                      <div>
-                        <p className="font-medium text-slate-700">{method.label || 'Chưa đặt tên'}</p>
-                        <p className="text-xs text-slate-500">{method.estimate || method.description || 'Chưa có mô tả'}</p>
-                      </div>
-                      <span className="text-xs text-slate-500">{Number(method.fee || 0).toLocaleString('vi-VN')}đ</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </SettingsCard>
-          )}
-
-          {activeTab === 'payment' && (
-            <SettingsCard title="Thông tin ngân hàng">
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <label className="text-xs text-slate-500">Ngân hàng</label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setBankDropdownOpen((prev) => !prev)}
-                      className="flex h-10 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
-                    >
-                      <span className="flex items-center gap-2 truncate">
-                        {selectedBank?.logo && !isCustomBank && (
-                          <Image src={selectedBank.logo} alt={selectedBank.shortName} width={20} height={20} unoptimized />
-                        )}
-                        {isCustomBank
-                          ? (bankName || 'Nhập ngân hàng khác')
-                          : (selectedBank ? `${selectedBank.shortName} - ${selectedBank.name}` : 'Chọn ngân hàng')}
-                      </span>
-                      <span className="text-xs text-slate-400">▼</span>
-                    </button>
-                    {bankDropdownOpen && (
-                      <div className="absolute z-10 mt-2 w-full rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
-                        <Input
-                          value={bankQuery}
-                          onChange={(event) => setBankQuery(event.target.value)}
-                          placeholder="Tìm ngân hàng..."
-                          className="mb-2"
-                        />
-                        <div className="max-h-64 overflow-auto">
-                          {filteredBanks.map((bank) => (
-                            <button
-                              key={bank.code}
-                              type="button"
-                              onClick={() => handleBankSelect(bank)}
-                              className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                            >
-                              {bank.logo && (
-                                <Image src={bank.logo} alt={bank.shortName} width={20} height={20} unoptimized />
-                              )}
-                              <span className="truncate">{bank.shortName} - {bank.name}</span>
-                            </button>
-                          ))}
-                          <button
-                            type="button"
-                            onClick={handleCustomBank}
-                            className="mt-2 w-full rounded-md border border-dashed border-slate-200 px-2 py-2 text-xs text-slate-500 hover:border-slate-300"
-                          >
-                            + Nhập ngân hàng khác
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {isCustomBank && (
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                    <Input
-                      placeholder="Mã ngân hàng (VietQR)"
-                      value={bankCode}
-                      onChange={(event) => onSettingChange('bankCode', event.target.value)}
-                    />
-                    <Input
-                      placeholder="Tên ngân hàng"
-                      value={bankName}
-                      onChange={(event) => onSettingChange('bankName', event.target.value)}
-                    />
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <Input
-                    placeholder="Số tài khoản"
-                    value={bankAccountNumber}
-                    onChange={(event) => onSettingChange('bankAccountNumber', event.target.value)}
-                  />
-                  <Input
-                    placeholder="Tên chủ tài khoản"
-                    value={bankAccountName}
-                    onChange={(event) => onSettingChange('bankAccountName', event.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs text-slate-500">Mẫu VietQR</label>
-                  <select
-                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
-                    value={vietQrTemplate}
-                    onChange={(event) => onSettingChange('vietQrTemplate', event.target.value)}
-                  >
-                    <option value="compact">Compact (có logo)</option>
-                    <option value="compact2">Compact 2 (đơn giản)</option>
-                    <option value="qr_only">Chỉ QR</option>
-                    <option value="print">In ấn</option>
-                  </select>
-                </div>
-              </div>
-            </SettingsCard>
-          )}
-
-          {activeTab === 'address' && (
-            <SettingsCard title="Preview địa chỉ">
-              <AddressPreview format={addressFormat} />
-            </SettingsCard>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          <FieldsCard
-            title={`Trường ${config.name}`}
-            icon={config.icon}
-            iconColorClass={colorClasses.iconText}
-            fields={localFields}
-            onToggle={onToggleField}
-            fieldColorClass={colorClasses.fieldColor}
-            toggleColor={colorClasses.toggle}
-          />
-
-          {config.categoryModuleKey && localCategoryFields.length > 0 && (
-            <FieldsCard
-              title="Trường danh mục"
-              icon={Settings}
-              iconColorClass="text-slate-500"
-              fields={localCategoryFields}
-              onToggle={onToggleCategoryField}
-              fieldColorClass={colorClasses.fieldColor}
-              toggleColor={colorClasses.toggle}
-            />
-          )}
-
-          {config.features && config.features.length > 0 && (
-            <FeaturesCard
-              features={config.features.map((f) => ({
-                config: {
-                  key: f.key,
-                  label: f.label,
-                  icon: f.icon ?? Settings,
-                  linkedField: f.linkedField,
-                  description: f.description,
-                },
-                enabled: localFeatures[f.key] ?? false,
-              }))}
-              onToggle={onToggleFeature}
-              toggleColor={colorClasses.toggle}
-            />
-          )}
-        </div>
+            <div className="lg:col-span-2">
+              <SettingsCard title="Preview địa chỉ">
+                <AddressPreview format={addressFormat} />
+              </SettingsCard>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
