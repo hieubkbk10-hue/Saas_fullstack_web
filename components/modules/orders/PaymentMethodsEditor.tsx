@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Button, Input } from '@/app/admin/components/ui';
+import { Button, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
 
 export type PaymentMethodType = 'COD' | 'BankTransfer' | 'VietQR' | 'CreditCard' | 'EWallet';
 
@@ -49,49 +49,66 @@ export function PaymentMethodsEditor({ methods, onChange }: PaymentMethodsEditor
           + Thêm
         </Button>
       </div>
-      <div className="space-y-3">
-        {methods.length === 0 && (
-          <div className="rounded-lg border border-dashed border-slate-200 p-4 text-xs text-slate-500">
-            Chưa có phương thức thanh toán. Hãy thêm mới.
-          </div>
-        )}
-        {methods.map((method, index) => (
-          <div key={`${method.id}-${index}`} className="rounded-lg border border-slate-200 p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-slate-700">Phương thức #{index + 1}</p>
-              <Button type="button" variant="ghost" size="sm" onClick={() => handleRemove(index)}>
-                Xóa
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Input
-                placeholder="Mã phương thức (id)"
-                value={method.id}
-                onChange={(event) => handleUpdate(index, { id: event.target.value })}
-              />
-              <Input
-                placeholder="Tên hiển thị"
-                value={method.label}
-                onChange={(event) => handleUpdate(index, { label: event.target.value })}
-              />
-              <Input
-                placeholder="Mô tả"
-                value={method.description ?? ''}
-                onChange={(event) => handleUpdate(index, { description: event.target.value })}
-              />
-              <select
-                className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
-                value={method.type}
-                onChange={(event) => handleUpdate(index, { type: event.target.value as PaymentMethodType })}
-              >
-                {PAYMENT_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>{type.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        ))}
-      </div>
+      {methods.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-slate-200 p-4 text-xs text-slate-500">
+          Chưa có phương thức thanh toán. Hãy thêm mới.
+        </div>
+      ) : (
+        <Table className="border border-slate-200 rounded-lg">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-xs">Mã</TableHead>
+              <TableHead className="text-xs">Tên</TableHead>
+              <TableHead className="text-xs">Mô tả</TableHead>
+              <TableHead className="text-xs">Loại</TableHead>
+              <TableHead className="text-xs text-right">Hành động</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {methods.map((method, index) => (
+              <TableRow key={`${method.id}-${index}`}>
+                <TableCell className="p-2">
+                  <Input
+                    placeholder="id"
+                    value={method.id}
+                    onChange={(event) => handleUpdate(index, { id: event.target.value })}
+                  />
+                </TableCell>
+                <TableCell className="p-2">
+                  <Input
+                    placeholder="Tên hiển thị"
+                    value={method.label}
+                    onChange={(event) => handleUpdate(index, { label: event.target.value })}
+                  />
+                </TableCell>
+                <TableCell className="p-2">
+                  <Input
+                    placeholder="Mô tả"
+                    value={method.description ?? ''}
+                    onChange={(event) => handleUpdate(index, { description: event.target.value })}
+                  />
+                </TableCell>
+                <TableCell className="p-2">
+                  <select
+                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
+                    value={method.type}
+                    onChange={(event) => handleUpdate(index, { type: event.target.value as PaymentMethodType })}
+                  >
+                    {PAYMENT_TYPES.map((type) => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
+                </TableCell>
+                <TableCell className="p-2 text-right">
+                  <Button type="button" variant="ghost" size="sm" onClick={() => handleRemove(index)}>
+                    Xóa
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }
