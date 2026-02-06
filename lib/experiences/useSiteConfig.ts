@@ -163,7 +163,7 @@ export function useProductsListConfig(): ProductsListConfig {
 }
 
 type WishlistConfig = {
-  layoutStyle: 'grid' | 'list' | 'masonry';
+  layoutStyle: 'grid' | 'list' | 'table';
   showWishlistButton: boolean;
   showNote: boolean;
   showNotification: boolean;
@@ -178,13 +178,14 @@ export function useWishlistConfig(): WishlistConfig {
 
   return useMemo(() => {
     const raw = experienceSetting?.value as {
-      layoutStyle?: WishlistConfig['layoutStyle'];
+      layoutStyle?: WishlistConfig['layoutStyle'] | 'masonry';
       layouts?: Record<string, Partial<Omit<WishlistConfig, 'layoutStyle'>>>;
       showAddToCartButton?: boolean;
     } | undefined;
 
-    const layoutStyle: WishlistConfig['layoutStyle'] = raw?.layoutStyle ?? 'grid';
-    const layoutConfig = raw?.layouts?.[layoutStyle] ?? {};
+    const rawLayout = raw?.layoutStyle;
+    const layoutStyle: WishlistConfig['layoutStyle'] = rawLayout === 'masonry' ? 'table' : (rawLayout ?? 'grid');
+    const layoutConfig = raw?.layouts?.[layoutStyle] ?? raw?.layouts?.masonry ?? {};
     const showNote = layoutConfig.showNote ?? true;
     const showNotification = layoutConfig.showNotification ?? true;
     const configShowAddToCart = layoutConfig.showAddToCartButton ?? raw?.showAddToCartButton ?? true;

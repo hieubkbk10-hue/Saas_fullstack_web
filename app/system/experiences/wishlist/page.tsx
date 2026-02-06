@@ -24,14 +24,14 @@ import {
 } from '@/components/experiences/editor';
 import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
-type WishlistLayoutStyle = 'grid' | 'list' | 'masonry';
+type WishlistLayoutStyle = 'grid' | 'list' | 'table';
 
 type WishlistExperienceConfig = {
   layoutStyle: WishlistLayoutStyle;
   layouts: {
     grid: LayoutConfig;
     list: LayoutConfig;
-    masonry: LayoutConfig;
+    table: LayoutConfig;
   };
 };
 
@@ -47,7 +47,7 @@ const EXPERIENCE_KEY = 'wishlist_ui';
 const LAYOUT_STYLES: LayoutOption<WishlistLayoutStyle>[] = [
   { description: 'Hiển thị dạng lưới cards', id: 'grid', label: 'Grid' },
   { description: 'Hiển thị dạng danh sách chi tiết', id: 'list', label: 'List' },
-  { description: 'Pinterest-style grid không đều', id: 'masonry', label: 'Masonry' },
+  { description: 'Hiển thị dạng bảng dữ liệu', id: 'table', label: 'Table' },
 ];
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
@@ -62,7 +62,7 @@ const DEFAULT_CONFIG: WishlistExperienceConfig = {
   layouts: {
     grid: { ...DEFAULT_LAYOUT_CONFIG },
     list: { ...DEFAULT_LAYOUT_CONFIG },
-    masonry: { ...DEFAULT_LAYOUT_CONFIG },
+    table: { ...DEFAULT_LAYOUT_CONFIG },
   },
 };
 
@@ -105,13 +105,18 @@ export default function WishlistExperiencePage() {
   const cartAvailable = (cartModule?.enabled ?? false) && (ordersModule?.enabled ?? false);
 
   const serverConfig = useMemo<WishlistExperienceConfig>(() => {
-    const raw = experienceSetting?.value as Partial<WishlistExperienceConfig> | undefined;
+    const raw = experienceSetting?.value as Omit<Partial<WishlistExperienceConfig>, 'layoutStyle' | 'layouts'> & {
+      layoutStyle?: WishlistLayoutStyle | 'masonry';
+      layouts?: Partial<Record<'grid' | 'list' | 'table' | 'masonry', Partial<LayoutConfig>>>;
+    } | undefined;
+    const layoutStyle = raw?.layoutStyle === 'masonry' ? 'table' : (raw?.layoutStyle ?? 'grid');
+    const tableOverrides = raw?.layouts?.table ?? raw?.layouts?.masonry;
     return {
-      layoutStyle: raw?.layoutStyle ?? 'grid',
+      layoutStyle,
       layouts: {
         grid: { ...DEFAULT_LAYOUT_CONFIG, showNote: noteFeature?.enabled ?? true, showNotification: notificationFeature?.enabled ?? true, ...raw?.layouts?.grid },
         list: { ...DEFAULT_LAYOUT_CONFIG, showNote: noteFeature?.enabled ?? true, showNotification: notificationFeature?.enabled ?? true, ...raw?.layouts?.list },
-        masonry: { ...DEFAULT_LAYOUT_CONFIG, showNote: noteFeature?.enabled ?? true, showNotification: notificationFeature?.enabled ?? true, ...raw?.layouts?.masonry },
+        table: { ...DEFAULT_LAYOUT_CONFIG, showNote: noteFeature?.enabled ?? true, showNotification: notificationFeature?.enabled ?? true, ...tableOverrides },
       },
     };
   }, [experienceSetting?.value, noteFeature?.enabled, notificationFeature?.enabled]);

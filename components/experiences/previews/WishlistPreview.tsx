@@ -2,7 +2,7 @@ import React from 'react';
 import { Bell, Heart, ShoppingCart, Trash2, X } from 'lucide-react';
 
 type WishlistPreviewProps = {
-  layoutStyle: 'grid' | 'list' | 'masonry';
+  layoutStyle: 'grid' | 'list' | 'table';
   showWishlistButton: boolean;
   showNote: boolean;
   showNotification: boolean;
@@ -12,12 +12,10 @@ type WishlistPreviewProps = {
 };
 
 const mockWishlistItems = [
-  { id: 1, name: 'iPhone 15 Pro Max 256GB', price: 34990000, originalPrice: 36990000, inStock: true },
-  { id: 2, name: 'MacBook Pro 14" M3 Pro', price: 52990000, originalPrice: null, inStock: true },
-  { id: 3, name: 'AirPods Pro 2nd Gen', price: 6490000, originalPrice: 6990000, inStock: false },
+  { id: 1, name: 'iPhone 15 Pro Max 256GB', category: 'Điện thoại', price: 34990000, originalPrice: 36990000, inStock: true, rating: 4.8 },
+  { id: 2, name: 'MacBook Pro 14" M3 Pro', category: 'Laptop', price: 52990000, originalPrice: null, inStock: true, rating: 4.9 },
+  { id: 3, name: 'AirPods Pro 2nd Gen', category: 'Phụ kiện', price: 6490000, originalPrice: 6990000, inStock: false, rating: 4.6 },
 ];
-
-const masonryRatios = ['aspect-square', 'aspect-[4/5]', 'aspect-[3/4]', 'aspect-[16/9]'];
 
 const formatVND = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
@@ -153,52 +151,115 @@ export function WishlistPreview({
           </div>
         )}
 
-        {layoutStyle === 'masonry' && (
-          <div className="columns-1 sm:columns-2 lg:columns-3 [column-gap:1rem]">
-            {mockWishlistItems.map((item, index) => (
-              <div key={item.id} className="mb-4 break-inside-avoid">
-                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-                  <div className={`${masonryRatios[index % masonryRatios.length]} bg-slate-100 relative flex items-center justify-center`}>
-                    <div className="w-20 h-20 bg-slate-200 rounded-lg" />
-                    {!item.inStock && (
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <span className="bg-slate-800 text-white text-xs px-2 py-1 rounded">Hết hàng</span>
+        {layoutStyle === 'table' && !isMobile && (
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-slate-600">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium">Sản phẩm</th>
+                  <th className="px-4 py-3 text-left font-medium">Giá</th>
+                  <th className="px-4 py-3 text-left font-medium">Trạng thái</th>
+                  <th className="px-4 py-3 text-left font-medium">Đánh giá</th>
+                  <th className="px-4 py-3 text-right font-medium">Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mockWishlistItems.map((item) => (
+                  <tr key={item.id} className="border-t">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-lg bg-slate-100 flex items-center justify-center">
+                          <div className="h-6 w-6 rounded bg-slate-200" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-slate-900 line-clamp-2">{item.name}</div>
+                          <div className="text-xs text-slate-500">{item.category}</div>
+                          {showNote && (
+                            <div className="text-xs text-slate-400 mt-1">Ghi chú: Mua khi giảm giá</div>
+                          )}
+                          {showNotification && (
+                            <div className="flex items-center gap-1 text-xs text-amber-600 mt-1">
+                              <Bell size={12} />
+                              <span>Thông báo khi giảm giá</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    <button className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow-sm hover:bg-red-50">
-                      <Trash2 size={14} className="text-slate-400 hover:text-red-500" />
-                    </button>
-                  </div>
-                  <div className="p-3 space-y-2">
-                    <h3 className="font-medium text-slate-900 text-sm line-clamp-2">{item.name}</h3>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-base font-bold" style={{ color: brandColor }}>{formatVND(item.price)}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-semibold" style={{ color: brandColor }}>{formatVND(item.price)}</div>
                       {item.originalPrice && (
-                        <span className="text-xs text-slate-400 line-through">{formatVND(item.originalPrice)}</span>
+                        <div className="text-xs text-slate-400 line-through">{formatVND(item.originalPrice)}</div>
                       )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${item.inStock ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                        {item.inStock ? 'Sẵn hàng' : 'Hết hàng'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-amber-600 font-medium">{item.rating.toFixed(1)} / 5</div>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50">
+                          <Trash2 size={14} />
+                        </button>
+                        {showAddToCartButton && (
+                          <button
+                            className="px-3 py-1.5 rounded-lg text-xs font-medium text-white flex items-center gap-1 disabled:opacity-50"
+                            style={{ backgroundColor: brandColor }}
+                            disabled={!item.inStock}
+                          >
+                            <ShoppingCart size={12} />
+                            Thêm
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {layoutStyle === 'table' && isMobile && (
+          <div className="space-y-3">
+            {mockWishlistItems.map((item) => (
+              <div key={item.id} className="bg-white rounded-xl border border-slate-200 p-3 flex gap-3">
+                <div className="h-20 w-20 rounded-lg bg-slate-100 flex-shrink-0 flex items-center justify-center">
+                  <div className="h-10 w-10 rounded bg-slate-200" />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <div className="text-xs text-slate-500">{item.category}</div>
+                  <div className="font-medium text-slate-900 line-clamp-2 text-sm">{item.name}</div>
+                  <div className="text-xs text-amber-600">{item.rating.toFixed(1)} / 5</div>
+                  <div className="font-semibold" style={{ color: brandColor }}>{formatVND(item.price)}</div>
+                  {showNote && (
+                    <div className="text-xs text-slate-400">Ghi chú: Mua khi giảm giá</div>
+                  )}
+                  {showNotification && (
+                    <div className="flex items-center gap-1 text-xs text-amber-600">
+                      <Bell size={12} />
+                      <span>Thông báo khi giảm giá</span>
                     </div>
-                    {showNote && (
-                      <div className="bg-slate-50 rounded-lg p-2 text-xs text-slate-500">
-                        <span className="font-medium">Ghi chú:</span> Mua khi giảm giá
-                      </div>
-                    )}
-                    {showNotification && (
-                      <div className="flex items-center gap-1.5 text-xs text-amber-600">
-                        <Bell size={12} />
-                        <span>Thông báo khi giảm giá</span>
-                      </div>
-                    )}
-                    {showAddToCartButton && (
-                      <button
-                        className="w-full py-2 rounded-lg text-sm font-medium text-white flex items-center justify-center gap-1.5 disabled:opacity-50"
-                        style={{ backgroundColor: brandColor }}
-                        disabled={!item.inStock}
-                      >
-                        <ShoppingCart size={14} />
-                        {item.inStock ? 'Thêm vào giỏ' : 'Hết hàng'}
-                      </button>
-                    )}
-                  </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 items-end">
+                  <button className="p-1.5 hover:bg-red-50 rounded">
+                    <X size={16} className="text-slate-400 hover:text-red-500" />
+                  </button>
+                  {showAddToCartButton && (
+                    <button
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium text-white flex items-center gap-1 disabled:opacity-50"
+                      style={{ backgroundColor: brandColor }}
+                      disabled={!item.inStock}
+                    >
+                      <ShoppingCart size={12} />
+                      Thêm
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
