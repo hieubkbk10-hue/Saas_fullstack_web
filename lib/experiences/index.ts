@@ -8,6 +8,7 @@ export {
 } from './constants';
 export type { ColorScheme, ExperienceKey } from './constants';
 export { 
+  useExampleProduct,
   useExamplePostSlug,
   useExampleProductSlug,
   useExampleServiceSlug,

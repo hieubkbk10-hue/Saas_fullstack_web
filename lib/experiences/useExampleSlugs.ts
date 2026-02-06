@@ -17,6 +17,11 @@ export function useExampleProductSlug(): string | null {
   return products?.[0]?.slug ?? null;
 }
 
+export function useExampleProduct() {
+  const products = useQuery(api.products.searchPublished, { limit: 1 });
+  return products?.[0] ?? null;
+}
+
 /**
  * Hook to get example service slug for preview links
  */

@@ -405,13 +405,13 @@ export default function CartPage() {
                   <span className="font-semibold text-slate-900">Tổng cộng</span>
                   <span className="text-lg font-bold" style={{ color: brandColor }}>{formatPrice(totalAmount)}</span>
                 </div>
-                <button
-                  type="button"
-                  className="w-full py-3 rounded-xl text-white font-semibold text-sm"
+                <Link
+                  href="/checkout?fromCart=true"
+                  className="w-full py-3 rounded-xl text-white font-semibold text-sm text-center"
                   style={{ backgroundColor: brandColor }}
                 >
                   Thanh toán
-                </button>
+                </Link>
                 <Link
                   href="/products"
                   className="block text-center text-sm text-slate-500 hover:text-slate-900"
@@ -509,13 +509,13 @@ export default function CartPage() {
                 <span className="font-semibold text-slate-900">Tổng cộng</span>
                 <span className="text-lg font-bold" style={{ color: brandColor }}>{formatPrice(totalAmount)}</span>
               </div>
-              <button
-                type="button"
-                className="w-full py-3 rounded-xl text-white font-semibold text-sm"
+              <Link
+                href="/checkout?fromCart=true"
+                className="w-full py-3 rounded-xl text-white font-semibold text-sm text-center"
                 style={{ backgroundColor: brandColor }}
               >
                 Thanh toán
-              </button>
+              </Link>
               <Link
                 href="/products"
                 className="block text-center text-sm text-slate-500 hover:text-slate-900"

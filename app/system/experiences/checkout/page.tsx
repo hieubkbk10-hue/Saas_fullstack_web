@@ -10,6 +10,7 @@ import {
   ExperienceModuleLink, 
   ExperienceHintCard,
   CheckoutPreview,
+  ExampleLinks,
 } from '@/components/experiences';
 import {
   BrowserFrame,
@@ -22,7 +23,7 @@ import {
   type DeviceType,
   type LayoutOption,
 } from '@/components/experiences/editor';
-import { useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
+import { useExampleProduct, useExperienceConfig, useExperienceSave, EXPERIENCE_NAMES, MESSAGES } from '@/lib/experiences';
 
 type CheckoutFlowStyle = 'single-page' | 'multi-step' | 'wizard-accordion';
 type OrderSummaryPosition = 'right' | 'bottom';
@@ -105,6 +106,7 @@ export default function CheckoutExperiencePage() {
   const cartModule = useQuery(api.admin.modules.getModuleByKey, { key: 'cart' });
   const paymentFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enablePayment', moduleKey: 'orders' });
   const shippingFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableShipping', moduleKey: 'orders' });
+  const exampleProduct = useExampleProduct();
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
 
   const serverConfig = useMemo<CheckoutExperienceConfig>(() => {
@@ -258,6 +260,15 @@ export default function CheckoutExperiencePage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="p-2">
+            {exampleProduct && (
+              <div className="mb-2">
+                <ExampleLinks
+                  links={[{ label: 'Xem checkout mẫu', url: `/checkout?productId=${exampleProduct._id}&quantity=1` }]}
+                  color="#22c55e"
+                  compact
+                />
+              </div>
+            )}
             <ExperienceHintCard hints={HINTS} />
           </Card>
         </CardContent>
