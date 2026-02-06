@@ -16,6 +16,7 @@ import type { FieldConfig } from '@/types/module-config';
    SettingInput, 
    SettingSelect,
   SettingToggle,
+  SettingTextarea,
    FeaturesCard,
    FieldsCard,
  } from '@/components/modules/shared';
@@ -273,6 +274,17 @@ function ConfigTab({ config, moduleData, localFeatures, localFields, localCatego
                       <SettingInput
                         key={setting.key}
                         type="text"
+                        label={setting.label}
+                        value={String(localSettings[setting.key] ?? '')}
+                        onChange={(v) => onSettingChange(setting.key, v)}
+                      />
+                    );
+                  }
+
+                  if (setting.type === 'json') {
+                    return (
+                      <SettingTextarea
+                        key={setting.key}
                         label={setting.label}
                         value={String(localSettings[setting.key] ?? '')}
                         onChange={(v) => onSettingChange(setting.key, v)}

@@ -267,7 +267,7 @@ export function useCartConfig(): CartConfig {
 }
 
 type CheckoutConfig = {
-  flowStyle: 'single-page' | 'multi-step';
+  flowStyle: 'single-page' | 'multi-step' | 'wizard-accordion';
   orderSummaryPosition: 'right' | 'bottom';
   showPaymentMethods: boolean;
   showShippingOptions: boolean;

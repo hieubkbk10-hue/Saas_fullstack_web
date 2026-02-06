@@ -45,6 +45,7 @@ export const orderStatus = v.union(
 export const paymentMethod = v.union(
   v.literal("COD"),
   v.literal("BankTransfer"),
+  v.literal("VietQR"),
   v.literal("CreditCard"),
   v.literal("EWallet")
 );

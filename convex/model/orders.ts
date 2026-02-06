@@ -10,7 +10,7 @@ const MAX_COUNT_LIMIT = 1000;
 
 type OrderStatus = "Pending" | "Processing" | "Shipped" | "Delivered" | "Cancelled";
 type PaymentStatus = "Pending" | "Paid" | "Failed" | "Refunded";
-type PaymentMethod = "COD" | "BankTransfer" | "CreditCard" | "EWallet";
+type PaymentMethod = "COD" | "BankTransfer" | "VietQR" | "CreditCard" | "EWallet";
 
 interface OrderItem {
   productId: Id<"products">;
@@ -149,12 +149,14 @@ export function generateOrderNumber(): string {
  */
 export function calculateTotals(
   items: OrderItem[],
-  shippingFee: number = 0
+  shippingFee: number = 0,
+  discountAmount: number = 0
 ): { subtotal: number; totalAmount: number } {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const safeDiscount = Math.min(discountAmount, subtotal);
   return {
     subtotal,
-    totalAmount: subtotal + shippingFee,
+    totalAmount: subtotal - safeDiscount + shippingFee,
   };
 }
 
@@ -170,10 +172,13 @@ export async function create(
     paymentMethod?: PaymentMethod;
     shippingAddress?: string;
     note?: string;
+    promotionId?: Id<"promotions">;
+    promotionCode?: string;
+    discountAmount?: number;
   }
 ): Promise<Id<"orders">> {
   const orderNumber = generateOrderNumber();
-  const { subtotal, totalAmount } = calculateTotals(args.items, args.shippingFee);
+  const { subtotal, totalAmount } = calculateTotals(args.items, args.shippingFee, args.discountAmount ?? 0);
 
   return  ctx.db.insert("orders", {
     customerId: args.customerId,
@@ -182,6 +187,9 @@ export async function create(
     orderNumber,
     paymentMethod: args.paymentMethod,
     paymentStatus: "Pending",
+    promotionId: args.promotionId,
+    promotionCode: args.promotionCode,
+    discountAmount: args.discountAmount ?? 0,
     shippingAddress: args.shippingAddress,
     shippingFee: args.shippingFee ?? 0,
     status: "Pending",

@@ -11,7 +11,7 @@
  export interface ModuleSetting {
    key: string;
    label: string;
-  type: 'number' | 'select' | 'toggle' | 'text';
+  type: 'number' | 'select' | 'toggle' | 'text' | 'json';
    default?: string | number | boolean;
    options?: { value: string; label: string }[];
   group?: string;

@@ -11,8 +11,8 @@ type CheckoutPreviewProps = {
 };
 
 const mockCartItems = [
-  { id: 1, name: 'iPhone 15 Pro Max', price: 34990000, quantity: 1 },
-  { id: 2, name: 'AirPods Pro 2', price: 6490000, quantity: 2 },
+  { id: 1, name: 'iPhone 15 Pro Max', price: 34990000, quantity: 1, variant: 'Màu: Titan tự nhiên' },
+  { id: 2, name: 'AirPods Pro 2', price: 6490000, quantity: 2, variant: 'Bản USB-C' },
 ];
 
 const formatVND = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -27,11 +27,18 @@ function OrderSummary({ brandColor = '#22c55e' }: { brandColor?: string }) {
         <Package size={16} />
         <span>Đơn hàng ({mockCartItems.length} sản phẩm)</span>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-3">
         {mockCartItems.map(item => (
-          <div key={item.id} className="flex justify-between text-sm">
-            <span className="text-slate-600">{item.name} x{item.quantity}</span>
-            <span className="font-medium">{formatVND(item.price * item.quantity)}</span>
+          <div key={item.id} className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center">
+              <Package size={16} className="text-slate-500" />
+            </div>
+            <div className="flex-1 text-xs">
+              <div className="text-slate-800 font-medium">{item.name}</div>
+              {item.variant && <div className="text-slate-500">{item.variant}</div>}
+              <div className="text-slate-500">x{item.quantity}</div>
+            </div>
+            <span className="font-medium text-sm">{formatVND(item.price * item.quantity)}</span>
           </div>
         ))}
       </div>

@@ -539,11 +539,15 @@ export default defineSchema({
       })
     ),
     note: v.optional(v.string()),
+    promotionId: v.optional(v.id("promotions")),
+    promotionCode: v.optional(v.string()),
+    discountAmount: v.optional(v.number()),
     orderNumber: v.string(),
     paymentMethod: v.optional(
       v.union(
         v.literal("COD"),
         v.literal("BankTransfer"),
+        v.literal("VietQR"),
         v.literal("CreditCard"),
         v.literal("EWallet")
       )

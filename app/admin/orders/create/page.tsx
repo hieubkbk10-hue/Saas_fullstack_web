@@ -19,11 +19,12 @@ interface OrderItem {
   price: number;
 }
 
-type PaymentMethod = 'COD' | 'BankTransfer' | 'CreditCard' | 'EWallet';
+type PaymentMethod = 'COD' | 'BankTransfer' | 'VietQR' | 'CreditCard' | 'EWallet';
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string }[] = [
   { label: 'Thanh toán khi nhận hàng (COD)', value: 'COD' },
   { label: 'Chuyển khoản ngân hàng', value: 'BankTransfer' },
+  { label: 'VietQR', value: 'VietQR' },
   { label: 'Thẻ tín dụng', value: 'CreditCard' },
   { label: 'Ví điện tử', value: 'EWallet' },
 ];

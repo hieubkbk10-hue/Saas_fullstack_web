@@ -16,6 +16,7 @@ const orderStatus = v.union(
 const paymentMethod = v.union(
   v.literal("COD"),
   v.literal("BankTransfer"),
+  v.literal("VietQR"),
   v.literal("CreditCard"),
   v.literal("EWallet")
 );
@@ -142,6 +143,9 @@ const orderDoc = v.object({
   customerId: v.id("customers"),
   items: v.array(orderItemValidator),
   note: v.optional(v.string()),
+  promotionId: v.optional(v.id("promotions")),
+  promotionCode: v.optional(v.string()),
+  discountAmount: v.optional(v.number()),
   orderNumber: v.string(),
   paymentMethod: v.optional(paymentMethod),
   paymentStatus: v.optional(paymentStatus),
@@ -398,6 +402,9 @@ export const create = mutation({
     paymentMethod: v.optional(paymentMethod),
     shippingAddress: v.optional(v.string()),
     shippingFee: v.optional(v.number()),
+    promotionId: v.optional(v.id("promotions")),
+    promotionCode: v.optional(v.string()),
+    discountAmount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { variantPricing, variantStock } = await getVariantSettings(ctx);

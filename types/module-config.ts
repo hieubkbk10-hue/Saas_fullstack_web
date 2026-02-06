@@ -40,7 +40,7 @@ export interface FeatureConfig {
 export interface SettingField {
   key: string;
   label: string;
-  type: 'number' | 'select' | 'toggle';
+  type: 'number' | 'select' | 'toggle' | 'text' | 'json';
   options?: { value: string; label: string }[];
 }
 

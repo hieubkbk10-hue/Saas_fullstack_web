@@ -105,6 +105,14 @@ interface SettingSelectProps {
   focusColor?: string;
 }
 
+interface SettingTextareaProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  rows?: number;
+  focusColor?: string;
+}
+
 export const SettingSelect: React.FC<SettingSelectProps> = ({
   label,
   value,
@@ -123,6 +131,24 @@ export const SettingSelect: React.FC<SettingSelectProps> = ({
         <option key={option.value} value={option.value}>{option.label}</option>
       ))}
     </select>
+  </div>
+);
+
+export const SettingTextarea: React.FC<SettingTextareaProps> = ({
+  label,
+  value,
+  onChange,
+  rows = 6,
+  focusColor = 'focus:border-cyan-500',
+}) => (
+  <div>
+    <label className="text-xs text-slate-500 mb-1 block">{label}</label>
+    <textarea
+      value={value}
+      rows={rows}
+      onChange={(event) => onChange(event.target.value)}
+      className={`w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-mono outline-none ${focusColor}`}
+    />
   </div>
 );
 

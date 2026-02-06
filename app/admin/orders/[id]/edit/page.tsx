@@ -14,7 +14,7 @@ const MODULE_KEY = 'orders';
 
 type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
 type PaymentStatus = 'Pending' | 'Paid' | 'Failed' | 'Refunded';
-type PaymentMethod = 'COD' | 'BankTransfer' | 'CreditCard' | 'EWallet';
+type PaymentMethod = 'COD' | 'BankTransfer' | 'VietQR' | 'CreditCard' | 'EWallet';
 
 const ORDER_STATUSES: { value: OrderStatus; label: string; color: string }[] = [
   { color: 'bg-slate-500', label: 'Chờ xử lý', value: 'Pending' },
@@ -34,6 +34,7 @@ const PAYMENT_STATUSES: { value: PaymentStatus; label: string }[] = [
 const PAYMENT_METHODS: Record<PaymentMethod, string> = {
   BankTransfer: 'Chuyển khoản ngân hàng',
   COD: 'Thanh toán khi nhận hàng',
+  VietQR: 'VietQR',
   CreditCard: 'Thẻ tín dụng',
   EWallet: 'Ví điện tử',
 };
