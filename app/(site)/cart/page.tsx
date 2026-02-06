@@ -392,7 +392,7 @@ export default function CartPage() {
                   />
                 </div>
               )}
-              <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+              <div className="bg-slate-50 rounded-xl p-4 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-500">Tạm tính</span>
                   <span className="font-medium">{formatPrice(totalAmount)}</span>
@@ -407,7 +407,7 @@ export default function CartPage() {
                 </div>
                 <Link
                   href="/checkout?fromCart=true"
-                  className="w-full py-3 rounded-xl text-white font-semibold text-sm text-center"
+                  className="block w-full py-3 rounded-xl text-white font-semibold text-sm text-center"
                   style={{ backgroundColor: brandColor }}
                 >
                   Thanh toán
@@ -424,54 +424,56 @@ export default function CartPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            {items.map(item => (
-              <div key={item._id} className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col sm:flex-row gap-4">
-                <div className="w-24 h-24 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
-                  {item.productImage ? (
-                    <Image src={item.productImage} alt={item.productName} width={96} height={96} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package className="w-6 h-6 text-slate-300" />
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl border border-slate-200 p-4">
+              {items.map(item => (
+                <div key={item._id} className="flex flex-col sm:flex-row gap-4 py-3 border-b border-slate-100 last:border-0">
+                  <div className="w-20 h-20 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0">
+                    {item.productImage ? (
+                      <Image src={item.productImage} alt={item.productName} width={80} height={80} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-5 h-5 text-slate-300" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-slate-900 text-sm line-clamp-2">{item.productName}</h3>
+                    {item.variantId && variantTitleById.get(item.variantId) && (
+                      <p className="text-xs text-slate-500 mt-1">{variantTitleById.get(item.variantId)}</p>
+                    )}
+                    <div className="text-sm font-semibold mt-1" style={{ color: brandColor }}>{formatPrice(item.price)}</div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                        onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                      >
+                        <Minus size={12} className="text-slate-500" />
+                      </button>
+                      <span className="w-6 text-center text-sm font-medium text-slate-700">{item.quantity}</span>
+                      <button
+                        type="button"
+                        className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50"
+                        onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                      >
+                        <Plus size={12} className="text-slate-500" />
+                      </button>
                     </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-900 text-base line-clamp-2">{item.productName}</h3>
-                  {item.variantId && variantTitleById.get(item.variantId) && (
-                    <p className="text-xs text-slate-500 mt-1">{variantTitleById.get(item.variantId)}</p>
-                  )}
-                  <div className="text-slate-900 font-bold text-sm mt-1">{formatPrice(item.price)}</div>
-                  <div className="mt-4 flex items-center gap-2">
+                  </div>
+                  <div className="flex flex-col items-end justify-between">
                     <button
                       type="button"
-                      className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
-                      onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                      className="p-1 rounded hover:bg-red-50"
+                      onClick={() => removeItem(item._id)}
                     >
-                      <Minus size={14} className="text-slate-500" />
+                      <Trash2 size={14} className="text-slate-400 hover:text-red-500" />
                     </button>
-                    <span className="w-8 text-center text-sm font-medium text-slate-700">{item.quantity}</span>
-                    <button
-                      type="button"
-                      className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50"
-                      onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                    >
-                      <Plus size={14} className="text-slate-500" />
-                    </button>
+                    <div className="text-sm font-semibold text-slate-700">{formatPrice(item.subtotal)}</div>
                   </div>
                 </div>
-                <div className="flex flex-col items-end justify-between">
-                  <button
-                    type="button"
-                    className="p-2 rounded-lg hover:bg-red-50"
-                    onClick={() => removeItem(item._id)}
-                  >
-                    <Trash2 size={16} className="text-slate-400 hover:text-red-500" />
-                  </button>
-                  <div className="text-sm font-semibold text-slate-900">{formatPrice(item.subtotal)}</div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
             <div className="flex justify-end">
               <button
                 type="button"
@@ -496,7 +498,7 @@ export default function CartPage() {
                 />
               </div>
             )}
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+            <div className="bg-slate-50 rounded-xl p-4 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-500">Tạm tính</span>
                 <span className="font-medium">{formatPrice(totalAmount)}</span>
@@ -511,7 +513,7 @@ export default function CartPage() {
               </div>
               <Link
                 href="/checkout?fromCart=true"
-                className="w-full py-3 rounded-xl text-white font-semibold text-sm text-center"
+                className="block w-full py-3 rounded-xl text-white font-semibold text-sm text-center"
                 style={{ backgroundColor: brandColor }}
               >
                 Thanh toán
