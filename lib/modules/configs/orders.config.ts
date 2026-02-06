@@ -98,7 +98,6 @@
     { key: 'bankCode', label: 'Mã ngân hàng (VietQR)', type: 'text', default: 'VCB', group: 'payment' },
     { key: 'bankAccountName', label: 'Tên chủ tài khoản', type: 'text', default: 'CÔNG TY VIETADMIN', group: 'payment' },
     { key: 'bankAccountNumber', label: 'Số tài khoản', type: 'text', default: '0123456789', group: 'payment' },
-    { key: 'bankBranch', label: 'Chi nhánh', type: 'text', default: 'Chi nhánh Hà Nội', group: 'payment' },
     {
       key: 'vietQrTemplate',
       label: 'Mẫu VietQR',

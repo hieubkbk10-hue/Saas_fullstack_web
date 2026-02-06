@@ -178,9 +178,8 @@ export default function CheckoutPage() {
     bankCode: getStringSetting(settingsMap.bankCode, 'VCB'),
     accountName: getStringSetting(settingsMap.bankAccountName, 'CÔNG TY VIETADMIN'),
     accountNumber: getStringSetting(settingsMap.bankAccountNumber, '0123456789'),
-    branch: getStringSetting(settingsMap.bankBranch, 'Chi nhánh Hà Nội'),
     vietQrTemplate: getStringSetting(settingsMap.vietQrTemplate, 'compact'),
-  }), [settingsMap.bankAccountName, settingsMap.bankAccountNumber, settingsMap.bankBranch, settingsMap.bankCode, settingsMap.bankName, settingsMap.vietQrTemplate]);
+  }), [settingsMap.bankAccountName, settingsMap.bankAccountNumber, settingsMap.bankCode, settingsMap.bankName, settingsMap.vietQrTemplate]);
 
   const isShippingEnabled = checkoutConfig.showShippingOptions && (shippingFeature?.enabled ?? true);
   const isPaymentEnabled = checkoutConfig.showPaymentMethods && (paymentFeature?.enabled ?? true);
@@ -853,7 +852,6 @@ export default function CheckoutPage() {
             <div>Ngân hàng: {bankInfo.bankName} ({bankInfo.bankCode})</div>
             <div>Số tài khoản: {bankInfo.accountNumber}</div>
             <div>Chủ tài khoản: {bankInfo.accountName}</div>
-            <div>Chi nhánh: {bankInfo.branch}</div>
             {selectedPayment.type === 'VietQR' && (
               <div className="mt-3 flex flex-col items-center gap-2">
                 <Image

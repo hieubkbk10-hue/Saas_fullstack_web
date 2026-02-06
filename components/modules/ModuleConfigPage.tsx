@@ -32,10 +32,25 @@ export interface ModuleConfigPageRenderProps {
   setIsSaving: (v: boolean) => void;
 }
 
+export interface ModuleConfigTabRenderProps {
+  config: ModuleDefinition;
+  moduleData: { isCore?: boolean; enabled?: boolean } | null | undefined;
+  localFeatures: Record<string, boolean>;
+  localFields: FieldConfig[];
+  localCategoryFields: FieldConfig[];
+  localSettings: Record<string, string | number | boolean>;
+  colorClasses: ReturnType<typeof getColorClasses>;
+  onToggleFeature: (key: string) => void;
+  onToggleField: (key: string) => void;
+  onToggleCategoryField: (key: string) => void;
+  onSettingChange: (key: string, value: string | number | boolean) => void;
+}
+
  interface ModuleConfigPageProps {
    config: ModuleDefinition;
   renderDataTab?: (props: ModuleConfigPageRenderProps) => React.ReactNode;
   renderAppearanceTab?: (props: ModuleConfigPageRenderProps) => React.ReactNode;
+  renderConfigTab?: (props: ModuleConfigTabRenderProps) => React.ReactNode;
   onAppearanceSave?: () => Promise<void>;
   appearanceHasChanges?: boolean;
  }
@@ -44,6 +59,7 @@ export function ModuleConfigPage({
   config, 
   renderDataTab, 
   renderAppearanceTab,
+  renderConfigTab,
   onAppearanceSave,
   appearanceHasChanges = false,
 }: ModuleConfigPageProps) {
@@ -74,6 +90,20 @@ export function ModuleConfigPage({
     colorClasses,
     isSaving,
     setIsSaving,
+  };
+
+  const configTabProps: ModuleConfigTabRenderProps = {
+    config,
+    moduleData,
+    localFeatures,
+    localFields,
+    localCategoryFields,
+    localSettings,
+    colorClasses,
+    onToggleFeature: handleToggleFeature,
+    onToggleField: handleToggleField,
+    onToggleCategoryField: handleToggleCategoryField,
+    onSettingChange: handleSettingChange,
   };
   
   const handleAppearanceSave = async () => {
@@ -141,19 +171,21 @@ export function ModuleConfigPage({
        )}
        
        {activeTab === 'config' && (
-         <ConfigTab
-           config={config}
-           moduleData={moduleData}
-           localFeatures={localFeatures}
-           localFields={localFields}
-           localCategoryFields={localCategoryFields}
-           localSettings={localSettings}
-           colorClasses={colorClasses}
-           onToggleFeature={handleToggleFeature}
-           onToggleField={handleToggleField}
-           onToggleCategoryField={handleToggleCategoryField}
-           onSettingChange={handleSettingChange}
-         />
+         renderConfigTab ? renderConfigTab(configTabProps) : (
+           <ConfigTab
+             config={config}
+             moduleData={moduleData}
+             localFeatures={localFeatures}
+             localFields={localFields}
+             localCategoryFields={localCategoryFields}
+             localSettings={localSettings}
+             colorClasses={colorClasses}
+             onToggleFeature={handleToggleFeature}
+             onToggleField={handleToggleField}
+             onToggleCategoryField={handleToggleCategoryField}
+             onSettingChange={handleSettingChange}
+           />
+         )
        )}
        
        {activeTab === 'data' && (
