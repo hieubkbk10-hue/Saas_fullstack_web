@@ -12,23 +12,26 @@ Mọi thay đổi code khi hoàn thành đều phải commit (nhưng không đư
 * Nếu mơ hồ: ưu tiên dùng SUB AGENT WEBSEARCH để tìm best practice; chỉ hỏi 1 câu làm rõ khi thật cần thiết.
 * Khi cần dữ liệu cụ thể: ưu tiên dùng tool/WebSearch thay vì đoán.
 
-# DFS Problem-Solving (Depth-First Root Cause Analysis)
-Khi gặp vấn đề phức tạp, áp dụng quy trình DFS:
-1. Decompose - phân tách vấn đề thành cây con.
-2. Deep-First Explore - đi sâu theo từng nhánh đến leaf node.
-3. Solve Bottom-Up - giải từ gốc rễ lên theo thứ tự DFS, nếu stuck thì backtrack.
-4. Validate - xác nhận từng bước trước khi lên tầng trên.
+# Problem-Solving Framework (DARE)
+Khi gặp vấn đề phức tạp:
+1. Decompose - vẽ problem graph, xác định ROOT CAUSE, cho phép merge/loop giữa thoughts.
+2. Analyze - với mỗi sub-problem: Thought -> Action -> Observation, dùng tool/search khi cần.
+3. Reflect - tự critique sau mỗi bước, nếu lỗi thì backtrack và thử hướng khác.
+4. Execute - giải bottom-up từ ROOT CAUSE, validate mỗi bước, uncertain thì thử 2-3 hướng và vote.
 
 Format output:
-## Problem Tree
-1. [Vấn đề gốc]
-   1.1 [Sub-problem]
-      1.1.1 [Leaf - ROOT CAUSE] <- Giải trước
-      1.1.2 [Leaf]
-   1.2 [Sub-problem]
+## Problem Graph
+1. [Main] <- depends on 1.1, 1.2
+   1.1 [Sub] <- depends on 1.1.1
+      1.1.1 [ROOT CAUSE] <- Solve first
+   1.2 [Sub]
 
-## Execution Order
-1. 1.1.1 -> 2. 1.1.2 -> 3. 1.1 -> 4. 1.2 -> 5. 1
+## Execution (with reflection)
+1. Solving 1.1.1...
+   - Thought: ...
+   - Action: ...
+   - Reflection: ✓ Valid / ✗ Retry
+2. ...
 
 # 7 Nguyên tắc DB Bandwidth Optimization:
 * Filter ở DB, không ở JS - Không .collect()/.findAll() không filter; không fetch ALL rồi filter JS; không fetch ALL để count
