@@ -820,6 +820,9 @@ export default function CheckoutPage() {
     if (!isPaymentEnabled) {
       return null;
     }
+    const vietQrInfo = encodeURIComponent(`DH ${orderId ?? 'PENDING'}`);
+    const vietQrAccountName = encodeURIComponent(bankInfo.accountName);
+    const vietQrUrl = `https://img.vietqr.io/image/${bankInfo.bankCode}-${bankInfo.accountNumber}-${bankInfo.vietQrTemplate}.jpg?amount=${finalTotal}&addInfo=${vietQrInfo}&accountName=${vietQrAccountName}`;
     return (
       <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
         <div className="flex items-center gap-2">
@@ -852,7 +855,18 @@ export default function CheckoutPage() {
             <div>Chủ tài khoản: {bankInfo.accountName}</div>
             <div>Chi nhánh: {bankInfo.branch}</div>
             {selectedPayment.type === 'VietQR' && (
-              <div className="mt-2 text-xs text-slate-500">Quét VietQR từ ứng dụng ngân hàng để thanh toán.</div>
+              <div className="mt-3 flex flex-col items-center gap-2">
+                <Image
+                  src={vietQrUrl}
+                  alt="VietQR"
+                  width={192}
+                  height={192}
+                  className="w-48 h-48 rounded-lg border border-slate-200 bg-white"
+                  loading="lazy"
+                  unoptimized
+                />
+                <div className="text-xs text-slate-500">Quét mã để thanh toán {formatPrice(finalTotal)}</div>
+              </div>
             )}
           </div>
         )}

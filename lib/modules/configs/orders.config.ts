@@ -99,7 +99,19 @@
     { key: 'bankAccountName', label: 'Tên chủ tài khoản', type: 'text', default: 'CÔNG TY VIETADMIN', group: 'payment' },
     { key: 'bankAccountNumber', label: 'Số tài khoản', type: 'text', default: '0123456789', group: 'payment' },
     { key: 'bankBranch', label: 'Chi nhánh', type: 'text', default: 'Chi nhánh Hà Nội', group: 'payment' },
-    { key: 'vietQrTemplate', label: 'Mẫu VietQR', type: 'text', default: 'compact', group: 'payment' },
+    {
+      key: 'vietQrTemplate',
+      label: 'Mẫu VietQR',
+      type: 'select',
+      default: 'compact',
+      group: 'payment',
+      options: [
+        { value: 'compact', label: 'Compact (có logo)' },
+        { value: 'compact2', label: 'Compact 2 (đơn giản)' },
+        { value: 'qr_only', label: 'Chỉ QR' },
+        { value: 'print', label: 'In ấn' },
+      ],
+    },
   ],
    
    conventionNote: 'orderNumber tự động generate. status: Pending, Processing, Shipped, Delivered, Cancelled. totalAmount tính tự động.',
