@@ -18,7 +18,8 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
 }) => (
   <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
     <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
-      <Settings size={14} className="text-slate-500" /> {title}
+      <Settings size={14} className="text-slate-500" />
+      <span>{title}</span>
     </h3>
     <div className="space-y-3">
       {children}
