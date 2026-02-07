@@ -7,9 +7,11 @@ import { Mail, Phone, User } from 'lucide-react';
 import { api } from '@/convex/_generated/api';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { useBrandColor } from '@/components/site/hooks';
+import { useAccountProfileConfig } from '@/lib/experiences';
 
 export default function AccountProfilePage() {
   const brandColor = useBrandColor();
+  const config = useAccountProfileConfig();
   const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
   const customersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'customers' });
   const loginFeature = useQuery(api.admin.modules.getModuleFeature, { moduleKey: 'customers', featureKey: 'enableLogin' });
@@ -73,54 +75,59 @@ export default function AccountProfilePage() {
             </div>
             <div>
               <div className="text-lg font-semibold text-slate-900">{displayName}</div>
-              <div className="text-sm text-slate-500">Khách hàng thân thiết</div>
+              {config.showLoyaltyBadge && (
+                <div className="text-sm text-slate-500">Khách hàng thân thiết</div>
+              )}
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Mail size={18} className="text-slate-400" />
-              <div>
-                <div className="text-sm font-medium text-slate-700">Email</div>
-                <div className="text-sm text-slate-500">{customer.email}</div>
+          {config.showContactInfo && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Mail size={18} className="text-slate-400" />
+                <div>
+                  <div className="text-sm font-medium text-slate-700">Email</div>
+                  <div className="text-sm text-slate-500">{customer.email}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Phone size={18} className="text-slate-400" />
+                <div>
+                  <div className="text-sm font-medium text-slate-700">Số điện thoại</div>
+                  <div className="text-sm text-slate-500">{customer.phone || 'Chưa cập nhật'}</div>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Phone size={18} className="text-slate-400" />
-              <div>
-                <div className="text-sm font-medium text-slate-700">Số điện thoại</div>
-                <div className="text-sm text-slate-500">{customer.phone || 'Chưa cập nhật'}</div>
-              </div>
+          )}
+        </div>
+        {config.showQuickActions && (
+          <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 space-y-4">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-700">Tác vụ nhanh</h2>
+              <p className="text-xs text-slate-500">Quản lý nhanh các mục liên quan.</p>
+            </div>
+            <div className="space-y-2">
+              <Link
+                href="/account/orders"
+                className="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:border-slate-300"
+              >
+                Đơn hàng của tôi
+              </Link>
+              <Link
+                href="/wishlist"
+                className="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:border-slate-300"
+              >
+                Danh sách yêu thích
+              </Link>
+              <Link
+                href="/products"
+                className="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:border-slate-300"
+              >
+                Tiếp tục mua sắm
+              </Link>
             </div>
           </div>
-        </div>
-
-        <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-700">Tác vụ nhanh</h2>
-            <p className="text-xs text-slate-500">Quản lý nhanh các mục liên quan.</p>
-          </div>
-          <div className="space-y-2">
-            <Link
-              href="/account/orders"
-              className="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:border-slate-300"
-            >
-              Đơn hàng của tôi
-            </Link>
-            <Link
-              href="/wishlist"
-              className="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:border-slate-300"
-            >
-              Danh sách yêu thích
-            </Link>
-            <Link
-              href="/products"
-              className="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:border-slate-300"
-            >
-              Tiếp tục mua sắm
-            </Link>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

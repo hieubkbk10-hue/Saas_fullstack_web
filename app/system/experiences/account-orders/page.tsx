@@ -1,0 +1,227 @@
+'use client';
+
+import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useQuery } from 'convex/react';
+import { FileText, LayoutTemplate, Loader2, Package, Save, ShoppingBag } from 'lucide-react';
+import { api } from '@/convex/_generated/api';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
+import {
+  AccountOrdersPreview,
+  ExperienceHintCard,
+  ExperienceModuleLink,
+} from '@/components/experiences';
+import {
+  BrowserFrame,
+  ControlCard,
+  DeviceToggle,
+  ToggleRow,
+  deviceWidths,
+  type DeviceType,
+} from '@/components/experiences/editor';
+import { EXPERIENCE_NAMES, MESSAGES, useExperienceConfig, useExperienceSave } from '@/lib/experiences';
+
+type AccountOrdersExperienceConfig = {
+  showStats: boolean;
+  showOrderItems: boolean;
+  showPaymentMethod: boolean;
+  showShippingMethod: boolean;
+  showShippingAddress: boolean;
+  showTracking: boolean;
+  showTimeline: boolean;
+  allowCancel: boolean;
+};
+
+const EXPERIENCE_KEY = 'account_orders_ui';
+
+const DEFAULT_CONFIG: AccountOrdersExperienceConfig = {
+  showStats: true,
+  showOrderItems: true,
+  showPaymentMethod: true,
+  showShippingMethod: true,
+  showShippingAddress: true,
+  showTracking: true,
+  showTimeline: true,
+  allowCancel: true,
+};
+
+const HINTS = [
+  'Accordion hiển thị chi tiết từng đơn hàng.',
+  'Hủy đơn chỉ áp dụng khi trạng thái Pending.',
+  'Tracking cần cập nhật mã vận đơn từ admin.',
+  'Timeline hiện trạng thái hiện tại của đơn hàng.',
+];
+
+export default function AccountOrdersExperiencePage() {
+  const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
+  const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
+  const customersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'customers' });
+  const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
+
+  const serverConfig = useMemo<AccountOrdersExperienceConfig>(() => {
+    const raw = experienceSetting?.value as Partial<AccountOrdersExperienceConfig> | undefined;
+    return {
+      showStats: raw?.showStats ?? true,
+      showOrderItems: raw?.showOrderItems ?? true,
+      showPaymentMethod: raw?.showPaymentMethod ?? true,
+      showShippingMethod: raw?.showShippingMethod ?? true,
+      showShippingAddress: raw?.showShippingAddress ?? true,
+      showTracking: raw?.showTracking ?? true,
+      showTimeline: raw?.showTimeline ?? true,
+      allowCancel: raw?.allowCancel ?? true,
+    };
+  }, [experienceSetting?.value]);
+
+  const isLoading = experienceSetting === undefined || ordersModule === undefined || customersModule === undefined;
+
+  const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
+  const { handleSave, isSaving } = useExperienceSave(
+    EXPERIENCE_KEY,
+    config,
+    MESSAGES.saveSuccess(EXPERIENCE_NAMES[EXPERIENCE_KEY])
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-slate-500">{MESSAGES.loading}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6 pb-20">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <LayoutTemplate className="w-5 h-5 text-indigo-600" />
+            <h1 className="text-2xl font-bold">Đơn hàng (Account)</h1>
+          </div>
+          <Link href="/system/experiences" className="text-sm text-blue-600 hover:underline">
+            Quay lại danh sách
+          </Link>
+        </div>
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={!hasChanges || isSaving}
+          className="bg-indigo-600 hover:bg-indigo-500 gap-1.5"
+        >
+          {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          <span>{hasChanges ? 'Lưu' : 'Đã lưu'}</span>
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Thiết lập hiển thị</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <ControlCard title="Khối hiển thị">
+            <ToggleRow
+              label="Thống kê đơn hàng"
+              checked={config.showStats}
+              onChange={(v) => setConfig(prev => ({ ...prev, showStats: v }))}
+              accentColor="#4f46e5"
+            />
+            <ToggleRow
+              label="Danh sách sản phẩm"
+              checked={config.showOrderItems}
+              onChange={(v) => setConfig(prev => ({ ...prev, showOrderItems: v }))}
+              accentColor="#4f46e5"
+            />
+            <ToggleRow
+              label="Phương thức thanh toán"
+              checked={config.showPaymentMethod}
+              onChange={(v) => setConfig(prev => ({ ...prev, showPaymentMethod: v }))}
+              accentColor="#4f46e5"
+            />
+            <ToggleRow
+              label="Phương thức giao hàng"
+              checked={config.showShippingMethod}
+              onChange={(v) => setConfig(prev => ({ ...prev, showShippingMethod: v }))}
+              accentColor="#4f46e5"
+            />
+            <ToggleRow
+              label="Địa chỉ giao hàng"
+              checked={config.showShippingAddress}
+              onChange={(v) => setConfig(prev => ({ ...prev, showShippingAddress: v }))}
+              accentColor="#4f46e5"
+            />
+            <ToggleRow
+              label="Tracking"
+              checked={config.showTracking}
+              onChange={(v) => setConfig(prev => ({ ...prev, showTracking: v }))}
+              accentColor="#4f46e5"
+            />
+            <ToggleRow
+              label="Timeline"
+              checked={config.showTimeline}
+              onChange={(v) => setConfig(prev => ({ ...prev, showTimeline: v }))}
+              accentColor="#4f46e5"
+            />
+            <ToggleRow
+              label="Cho phép hủy"
+              checked={config.allowCancel}
+              onChange={(v) => setConfig(prev => ({ ...prev, allowCancel: v }))}
+              accentColor="#4f46e5"
+            />
+          </ControlCard>
+
+          <ControlCard title="Module liên quan">
+            <ExperienceModuleLink
+              enabled={ordersModule?.enabled ?? false}
+              href="/system/modules/orders"
+              icon={ShoppingBag}
+              title="Đơn hàng"
+              colorScheme="blue"
+            />
+            <ExperienceModuleLink
+              enabled={customersModule?.enabled ?? false}
+              href="/system/modules/customers"
+              icon={Package}
+              title="Khách hàng"
+              colorScheme="blue"
+            />
+          </ControlCard>
+
+          <Card className="p-2">
+            <ExperienceHintCard hints={HINTS} />
+          </Card>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <FileText size={18} /> Preview
+            </CardTitle>
+            <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
+            <BrowserFrame url="yoursite.com/account/orders">
+              <AccountOrdersPreview
+                showStats={config.showStats}
+                showOrderItems={config.showOrderItems}
+                showPaymentMethod={config.showPaymentMethod}
+                showShippingMethod={config.showShippingMethod}
+                showShippingAddress={config.showShippingAddress}
+                showTracking={config.showTracking}
+                showTimeline={config.showTimeline}
+                allowCancel={config.allowCancel}
+                brandColor="#4f46e5"
+                device={previewDevice}
+              />
+            </BrowserFrame>
+          </div>
+          <div className="mt-3 text-xs text-slate-500">
+            Device: {previewDevice === 'desktop' && 'Desktop'}{previewDevice === 'tablet' && 'Tablet'}{previewDevice === 'mobile' && 'Mobile'}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

@@ -12,7 +12,9 @@ export type ExperienceKey =
   | 'header_menu_ui'
   | 'contact_ui'
   | 'search_filter_ui'
-  | 'promotions_list_ui';
+  | 'promotions_list_ui'
+  | 'account_orders_ui'
+  | 'account_profile_ui';
 
 export type ColorScheme = 'pink' | 'orange' | 'green' | 'purple' | 'cyan' | 'blue' | 'violet' | 'emerald' | 'indigo' | 'teal';
 
@@ -31,6 +33,8 @@ export const EXPERIENCE_COLORS: Record<ExperienceKey, ColorScheme> = {
   contact_ui: 'indigo',
   search_filter_ui: 'teal',
   promotions_list_ui: 'pink',
+  account_orders_ui: 'indigo',
+  account_profile_ui: 'teal',
 };
 
 export const EXPERIENCE_GROUP = 'experience';
@@ -56,4 +60,6 @@ export const EXPERIENCE_NAMES: Record<ExperienceKey, string> = {
   contact_ui: 'Contact',
   search_filter_ui: 'Search & Filter',
   promotions_list_ui: 'Promotions List',
+  account_orders_ui: 'Account Orders',
+  account_profile_ui: 'Account Profile',
 };

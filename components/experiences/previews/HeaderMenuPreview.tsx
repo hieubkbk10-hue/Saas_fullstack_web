@@ -71,7 +71,7 @@ export function HeaderMenuPreview({
     wishlist: '/wishlist',
     login: '/account/login',
     cta: '/contact',
-    trackOrder: '/orders/tracking',
+    trackOrder: '/account/orders',
     storeSystem: '/stores',
     accountProfile: '/account/profile',
     accountOrders: '/account/orders',

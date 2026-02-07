@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Briefcase, CreditCard, FileText, Heart, LayoutTemplate, Mail, Menu, MessageSquare, Package, Search, ShoppingCart, Ticket } from 'lucide-react';
+import { Briefcase, CreditCard, FileText, Heart, LayoutTemplate, Mail, Menu, MessageSquare, Package, Search, ShoppingCart, Ticket, User } from 'lucide-react';
 import { Card, CardContent } from '@/app/admin/components/ui';
 import { useI18n } from '../i18n/context';
 
@@ -54,6 +54,18 @@ const experiences = [
     href: '/system/experiences/wishlist',
     icon: Heart,
     title: 'Sản phẩm yêu thích',
+  },
+  {
+    description: 'Accordion đơn hàng, thống kê, tracking cho account.',
+    href: '/system/experiences/account-orders',
+    icon: Package,
+    title: 'Đơn hàng (Account)',
+  },
+  {
+    description: 'Profile, quick actions và thông tin liên hệ.',
+    href: '/system/experiences/account-profile',
+    icon: User,
+    title: 'Tài khoản (Account)',
   },
   {
     description: 'Layout giỏ hàng (drawer/page), guest cart, expiry và note.',

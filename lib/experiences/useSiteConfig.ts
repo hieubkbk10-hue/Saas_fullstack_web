@@ -333,3 +333,53 @@ export function useCheckoutConfig(): CheckoutConfig {
     };
   }, [experienceSetting?.value]);
 }
+
+type AccountOrdersConfig = {
+  showStats: boolean;
+  showOrderItems: boolean;
+  showPaymentMethod: boolean;
+  showShippingMethod: boolean;
+  showShippingAddress: boolean;
+  showTracking: boolean;
+  showTimeline: boolean;
+  allowCancel: boolean;
+};
+
+export function useAccountOrdersConfig(): AccountOrdersConfig {
+  const experienceSetting = useQuery(api.settings.getByKey, { key: 'account_orders_ui' });
+
+  return useMemo(() => {
+    const raw = experienceSetting?.value as Partial<AccountOrdersConfig> | undefined;
+
+    return {
+      showStats: raw?.showStats ?? true,
+      showOrderItems: raw?.showOrderItems ?? true,
+      showPaymentMethod: raw?.showPaymentMethod ?? true,
+      showShippingMethod: raw?.showShippingMethod ?? true,
+      showShippingAddress: raw?.showShippingAddress ?? true,
+      showTracking: raw?.showTracking ?? true,
+      showTimeline: raw?.showTimeline ?? true,
+      allowCancel: raw?.allowCancel ?? true,
+    };
+  }, [experienceSetting?.value]);
+}
+
+type AccountProfileConfig = {
+  showQuickActions: boolean;
+  showContactInfo: boolean;
+  showLoyaltyBadge: boolean;
+};
+
+export function useAccountProfileConfig(): AccountProfileConfig {
+  const experienceSetting = useQuery(api.settings.getByKey, { key: 'account_profile_ui' });
+
+  return useMemo(() => {
+    const raw = experienceSetting?.value as Partial<AccountProfileConfig> | undefined;
+
+    return {
+      showQuickActions: raw?.showQuickActions ?? true,
+      showContactInfo: raw?.showContactInfo ?? true,
+      showLoyaltyBadge: raw?.showLoyaltyBadge ?? true,
+    };
+  }, [experienceSetting?.value]);
+}

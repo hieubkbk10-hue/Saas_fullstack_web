@@ -150,6 +150,8 @@ const orderDoc = v.object({
   paymentMethod: v.optional(paymentMethod),
   paymentStatus: v.optional(paymentStatus),
   shippingAddress: v.optional(v.string()),
+  shippingMethodId: v.optional(v.string()),
+  shippingMethodLabel: v.optional(v.string()),
   shippingFee: v.number(),
   status: orderStatus,
   subtotal: v.number(),
@@ -400,6 +402,8 @@ export const create = mutation({
     items: v.array(orderItemValidator),
     note: v.optional(v.string()),
     paymentMethod: v.optional(paymentMethod),
+    shippingMethodId: v.optional(v.string()),
+    shippingMethodLabel: v.optional(v.string()),
     shippingAddress: v.optional(v.string()),
     shippingFee: v.optional(v.number()),
     promotionId: v.optional(v.id("promotions")),
@@ -453,6 +457,22 @@ export const updatePaymentStatus = mutation({
   args: { id: v.id("orders"), paymentStatus: paymentStatus },
   handler: async (ctx, args) => {
     await OrdersModel.updatePaymentStatus(ctx, args);
+    return null;
+  },
+  returns: v.null(),
+});
+
+export const cancel = mutation({
+  args: { id: v.id("orders") },
+  handler: async (ctx, args) => {
+    const order = await OrdersModel.getById(ctx, { id: args.id });
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (order.status !== "Pending") {
+      throw new Error("Chỉ có thể hủy đơn hàng đang chờ xử lý");
+    }
+    await OrdersModel.updateStatus(ctx, { id: args.id, status: "Cancelled" });
     return null;
   },
   returns: v.null(),

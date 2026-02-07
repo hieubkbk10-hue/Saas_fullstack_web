@@ -132,6 +132,7 @@ function CheckoutContent() {
   const shippingFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableShipping', moduleKey: 'orders' });
   const createOrder = useMutation(api.orders.create);
   const incrementPromotionUsage = useMutation(api.promotions.incrementUsage);
+  const removeCart = useMutation(api.cart.remove);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
@@ -553,11 +554,16 @@ function CheckoutContent() {
         promotionId: appliedPromotion?.promotion?._id,
         promotionCode: appliedPromotion?.promotion?.code,
         discountAmount,
+        shippingMethodId: selectedShipping?.id,
+        shippingMethodLabel: selectedShipping?.label,
         shippingAddress: `${customerName} | ${customerPhone} | ${resolvedAddress}`,
         shippingFee,
       });
       if (appliedPromotion?.promotion?._id) {
         await incrementPromotionUsage({ id: appliedPromotion.promotion._id });
+      }
+      if (fromCart && cart?._id) {
+        await removeCart({ id: cart._id });
       }
       setOrderId(createdOrderId);
       toast.success('Đặt hàng thành công.');

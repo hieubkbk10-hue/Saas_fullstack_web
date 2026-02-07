@@ -17,6 +17,8 @@ export {
 export {
   useCartConfig,
   useCheckoutConfig,
+  useAccountOrdersConfig,
+  useAccountProfileConfig,
   usePostsListConfig,
   useProductsListConfig,
   useSearchFilterConfig,

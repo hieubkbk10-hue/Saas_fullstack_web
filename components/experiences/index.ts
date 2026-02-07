@@ -17,3 +17,5 @@ export { PostDetailPreview, ServiceDetailPreview } from './previews/DetailPrevie
 export { ContactPreview } from './previews/ContactPreview';
 export { SearchFilterPreview } from './previews/SearchFilterPreview';
 export { PromotionsListPreview } from './previews/PromotionsListPreview';
+export { AccountOrdersPreview } from './previews/AccountOrdersPreview';
+export { AccountProfilePreview } from './previews/AccountProfilePreview';

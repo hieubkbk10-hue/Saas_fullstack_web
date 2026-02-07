@@ -170,6 +170,8 @@ export async function create(
     items: OrderItem[];
     shippingFee?: number;
     paymentMethod?: PaymentMethod;
+    shippingMethodId?: string;
+    shippingMethodLabel?: string;
     shippingAddress?: string;
     note?: string;
     promotionId?: Id<"promotions">;
@@ -191,6 +193,8 @@ export async function create(
     promotionCode: args.promotionCode,
     discountAmount: args.discountAmount ?? 0,
     shippingAddress: args.shippingAddress,
+    shippingMethodId: args.shippingMethodId,
+    shippingMethodLabel: args.shippingMethodLabel,
     shippingFee: args.shippingFee ?? 0,
     status: "Pending",
     subtotal,

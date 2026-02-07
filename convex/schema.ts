@@ -561,6 +561,8 @@ export default defineSchema({
       )
     ),
     shippingAddress: v.optional(v.string()),
+    shippingMethodId: v.optional(v.string()),
+    shippingMethodLabel: v.optional(v.string()),
     shippingFee: v.number(),
     status: v.union(
       v.literal("Pending"),
