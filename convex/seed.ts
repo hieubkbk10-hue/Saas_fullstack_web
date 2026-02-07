@@ -2618,12 +2618,14 @@ export const seedPromotionsModule = mutation({
           applicableTo: "all" as const,
           code: "SALE10",
           description: "Giảm 10% cho tất cả đơn hàng",
+          displayOnPage: true,
           discountType: "percent" as const,
           discountValue: 10,
           endDate: now + 30 * oneDay,
           maxDiscountAmount: 500_000,
           name: "Giảm 10% đơn hàng",
           order: 0,
+          promotionType: "coupon" as const,
           startDate: now - 30 * oneDay,
           status: "Active" as const,
           usageLimit: 100,
@@ -2633,12 +2635,14 @@ export const seedPromotionsModule = mutation({
           applicableTo: "all" as const,
           code: "GIAM50K",
           description: "Giảm 50.000đ cho đơn từ 500.000đ",
+          displayOnPage: true,
           discountType: "fixed" as const,
           discountValue: 50_000,
           endDate: now + 45 * oneDay,
           minOrderAmount: 500_000,
           name: "Giảm 50K đơn từ 500K",
           order: 1,
+          promotionType: "coupon" as const,
           startDate: now - 15 * oneDay,
           status: "Active" as const,
           usageLimit: 200,
@@ -2648,12 +2652,14 @@ export const seedPromotionsModule = mutation({
           applicableTo: "all" as const,
           code: "BLACKFRIDAY",
           description: "Giảm 20% nhân dịp Black Friday",
+          displayOnPage: true,
           discountType: "percent" as const,
           discountValue: 20,
           endDate: now + 63 * oneDay,
           maxDiscountAmount: 1_000_000,
           name: "Black Friday 20%",
           order: 2,
+          promotionType: "coupon" as const,
           startDate: now + 60 * oneDay,
           status: "Scheduled" as const,
           usageLimit: 500,
@@ -2663,11 +2669,13 @@ export const seedPromotionsModule = mutation({
           applicableTo: "all" as const,
           code: "OLDCODE",
           description: "Voucher đã hết hạn",
+          displayOnPage: false,
           discountType: "percent" as const,
           discountValue: 15,
           endDate: now - 30 * oneDay,
           name: "Voucher hết hạn",
           order: 3,
+          promotionType: "coupon" as const,
           startDate: now - 60 * oneDay,
           status: "Expired" as const,
           usageLimit: 50,
@@ -2677,11 +2685,13 @@ export const seedPromotionsModule = mutation({
           applicableTo: "all" as const,
           code: "FREESHIP",
           description: "Miễn phí vận chuyển cho đơn từ 300K",
+          displayOnPage: true,
           discountType: "fixed" as const,
           discountValue: 30_000,
           minOrderAmount: 300_000,
           name: "Freeship đơn 300K",
           order: 4,
+          promotionType: "coupon" as const,
           startDate: now - 10 * oneDay,
           status: "Active" as const,
           usedCount: 120,
@@ -2690,11 +2700,13 @@ export const seedPromotionsModule = mutation({
           applicableTo: "all" as const,
           code: "VIP25",
           description: "Dành cho khách VIP",
+          displayOnPage: true,
           discountType: "percent" as const,
           discountValue: 25,
           maxDiscountAmount: 2_000_000,
           name: "VIP 25% off",
           order: 5,
+          promotionType: "coupon" as const,
           status: "Active" as const,
           usageLimit: 20,
           usedCount: 5,
@@ -2714,6 +2726,11 @@ export const seedPromotionsModule = mutation({
         { description: "Giới hạn số tiền giảm tối đa", enabled: true, featureKey: "enableMaxDiscount", linkedFieldKey: "maxDiscountAmount", moduleKey: "promotions", name: "Giảm tối đa" },
         { description: "Đặt thời gian bắt đầu/kết thúc", enabled: true, featureKey: "enableSchedule", moduleKey: "promotions", name: "Hẹn giờ" },
         { description: "Chỉ áp dụng cho SP/danh mục cụ thể", enabled: false, featureKey: "enableApplicable", moduleKey: "promotions", name: "Áp dụng có chọn lọc" },
+        { description: "Loại giảm giá nâng cao (mua tặng, combo)", enabled: true, featureKey: "enableAdvancedDiscount", moduleKey: "promotions", name: "Giảm nâng cao" },
+        { description: "Điều kiện khách hàng nâng cao", enabled: true, featureKey: "enableCustomerConditions", moduleKey: "promotions", name: "Điều kiện khách hàng" },
+        { description: "Ngân sách tối đa cho khuyến mãi", enabled: false, featureKey: "enableBudgetLimit", moduleKey: "promotions", name: "Ngân sách" },
+        { description: "Cho phép cộng dồn và ưu tiên", enabled: true, featureKey: "enableStacking", moduleKey: "promotions", name: "Cộng dồn" },
+        { description: "Hiển thị khuyến mãi ngoài site", enabled: true, featureKey: "enableDisplay", moduleKey: "promotions", name: "Hiển thị ngoài site" },
       ];
       for (const feature of features) {
         await ctx.db.insert("moduleFeatures", feature);
@@ -2753,10 +2770,32 @@ export const seedPromotionsModule = mutation({
     const existingStats = await ctx.db.query("promotionStats").first();
     if (!existingStats) {
       const promotions = await ctx.db.query("promotions").collect();
-      const counts: Record<string, number> = { Active: 0, Disabled: 0, Expired: 0, Scheduled: 0, total: 0 };
+      const counts: Record<string, number> = {
+        Active: 0,
+        Disabled: 0,
+        Expired: 0,
+        Scheduled: 0,
+        total: 0,
+        totalUsed: 0,
+        percent: 0,
+        fixed: 0,
+        buy_x_get_y: 0,
+        buy_a_get_b: 0,
+        tiered: 0,
+        free_shipping: 0,
+        gift: 0,
+        coupon: 0,
+        campaign: 0,
+        flash_sale: 0,
+        bundle: 0,
+        loyalty: 0,
+      };
       for (const p of promotions) {
         counts.total++;
         counts[p.status] = (counts[p.status] || 0) + 1;
+        counts[p.discountType] = (counts[p.discountType] || 0) + 1;
+        counts[p.promotionType] = (counts[p.promotionType] || 0) + 1;
+        counts.totalUsed += p.usedCount ?? 0;
       }
       for (const [key, count] of Object.entries(counts)) {
         await ctx.db.insert("promotionStats", { count, key });

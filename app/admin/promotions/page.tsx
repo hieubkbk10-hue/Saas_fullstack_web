@@ -30,7 +30,8 @@ function PromotionsContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'' | 'Active' | 'Inactive' | 'Expired' | 'Scheduled'>('');
-  const [filterType, setFilterType] = useState<'' | 'percent' | 'fixed'>('');
+  const [filterType, setFilterType] = useState<'' | 'percent' | 'fixed' | 'buy_x_get_y' | 'buy_a_get_b' | 'tiered' | 'free_shipping' | 'gift'>('');
+  const [filterPromotionType, setFilterPromotionType] = useState<'' | 'coupon' | 'campaign' | 'flash_sale' | 'bundle' | 'loyalty'>('');
   const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
     if (typeof window === 'undefined') {
       return [];
@@ -79,12 +80,14 @@ function PromotionsContent() {
     limit: resolvedPromotionsPerPage,
     offset,
     search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    promotionType: filterPromotionType || undefined,
     status: filterStatus || undefined,
     discountType: filterType || undefined,
   });
 
   const totalCountData = useQuery(api.promotions.countAdmin, {
     search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+    promotionType: filterPromotionType || undefined,
     status: filterStatus || undefined,
     discountType: filterType || undefined,
   });
@@ -94,6 +97,7 @@ function PromotionsContent() {
     isSelectAllActive
       ? {
           search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
+          promotionType: filterPromotionType || undefined,
           status: filterStatus || undefined,
           discountType: filterType || undefined,
         }
@@ -124,6 +128,7 @@ function PromotionsContent() {
     const cols = [
       { key: 'select', label: 'Chọn' },
       { key: 'name', label: 'Tên / Mã', required: true },
+      { key: 'promotionType', label: 'Loại khuyến mãi' },
       { key: 'discount', label: 'Giảm giá' },
     ];
     if (enabledFeatures.enableSchedule) {cols.push({ key: 'schedule', label: 'Thời gian' });}
@@ -153,6 +158,7 @@ function PromotionsContent() {
     setDebouncedSearchTerm('');
     setFilterStatus('');
     setFilterType('');
+    setFilterPromotionType('');
     setCurrentPage(1);
     setPageSizeOverride(null);
     applyManualSelection([]);
@@ -164,9 +170,10 @@ function PromotionsContent() {
     applyManualSelection([]);
   };
 
-  const handleFilterChange = (type: 'status' | 'type', value: string) => {
+  const handleFilterChange = (type: 'status' | 'type' | 'promotionType', value: string) => {
     if (type === 'status') {setFilterStatus(value as '' | 'Active' | 'Inactive' | 'Expired' | 'Scheduled');}
-    else {setFilterType(value as '' | 'percent' | 'fixed');}
+    else if (type === 'type') {setFilterType(value as '' | 'percent' | 'fixed' | 'buy_x_get_y' | 'buy_a_get_b' | 'tiered' | 'free_shipping' | 'gift');}
+    else {setFilterPromotionType(value as '' | 'coupon' | 'campaign' | 'flash_sale' | 'bundle' | 'loyalty');}
     setCurrentPage(1);
     applyManualSelection([]);
   };
@@ -257,6 +264,30 @@ function PromotionsContent() {
     }
   };
 
+  const getPromotionTypeLabel = (type: string) => {
+    switch (type) {
+      case 'coupon': return 'Coupon';
+      case 'campaign': return 'Chương trình';
+      case 'flash_sale': return 'Flash sale';
+      case 'bundle': return 'Combo';
+      case 'loyalty': return 'Loyalty';
+      default: return type;
+    }
+  };
+
+  const getDiscountTypeLabel = (type: string) => {
+    switch (type) {
+      case 'percent': return 'Giảm %';
+      case 'fixed': return 'Giảm cố định';
+      case 'buy_x_get_y': return 'Mua X tặng Y';
+      case 'buy_a_get_b': return 'Mua A tặng B';
+      case 'tiered': return 'Giảm theo bậc';
+      case 'free_shipping': return 'Free ship';
+      case 'gift': return 'Tặng quà';
+      default: return type;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -302,10 +333,23 @@ function PromotionsContent() {
             <option value="Expired">Hết hạn</option>
             <option value="Scheduled">Chờ kích hoạt</option>
           </select>
+          <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterPromotionType} onChange={(e) =>{  handleFilterChange('promotionType', e.target.value); }}>
+            <option value="">Tất cả chương trình</option>
+            <option value="coupon">Coupon</option>
+            <option value="campaign">Chương trình</option>
+            <option value="flash_sale">Flash sale</option>
+            <option value="bundle">Combo</option>
+            <option value="loyalty">Loyalty</option>
+          </select>
           <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterType} onChange={(e) =>{  handleFilterChange('type', e.target.value); }}>
-            <option value="">Tất cả loại</option>
+            <option value="">Tất cả loại giảm</option>
             <option value="percent">Giảm theo %</option>
             <option value="fixed">Giảm cố định</option>
+            <option value="buy_x_get_y">Mua X tặng Y</option>
+            <option value="buy_a_get_b">Mua A tặng B</option>
+            <option value="tiered">Giảm theo bậc</option>
+            <option value="free_shipping">Miễn phí ship</option>
+            <option value="gift">Tặng quà</option>
           </select>
           <Button variant="outline" size="sm" onClick={handleResetFilters}>Xóa lọc</Button>
           <ColumnToggle columns={columns} visibleColumns={resolvedVisibleColumns} onToggle={(key) =>{
@@ -322,6 +366,7 @@ function PromotionsContent() {
                 <TableHead className="w-[40px]"><SelectCheckbox checked={isPageSelected} onChange={toggleSelectAll} indeterminate={isPageIndeterminate} /></TableHead>
               )}
               {resolvedVisibleColumns.includes('name') && <SortableHeader label="Tên / Mã" sortKey="name" sortConfig={sortConfig} onSort={handleSort} />}
+              {resolvedVisibleColumns.includes('promotionType') && <SortableHeader label="Loại KM" sortKey="promotionType" sortConfig={sortConfig} onSort={handleSort} />}
               {resolvedVisibleColumns.includes('discount') && <SortableHeader label="Giảm giá" sortKey="discountValue" sortConfig={sortConfig} onSort={handleSort} />}
               {resolvedVisibleColumns.includes('schedule') && enabledFeatures.enableSchedule && <TableHead>Thời gian</TableHead>}
               {resolvedVisibleColumns.includes('usage') && enabledFeatures.enableUsageLimit && <SortableHeader label="Đã dùng" sortKey="usedCount" sortConfig={sortConfig} onSort={handleSort} />}
@@ -339,31 +384,50 @@ function PromotionsContent() {
                   <TableCell>
                     <div>
                       <p className="font-medium text-slate-900 dark:text-slate-100">{promo.name}</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <code className="text-xs text-pink-600 bg-pink-50 dark:bg-pink-900/20 px-1.5 py-0.5 rounded font-mono">{promo.code}</code>
-                        <button 
-                          onClick={ async () => copyCode(promo.code)}
-                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
-                          title="Copy mã"
-                        >
-                          {copiedCode === promo.code ? <Check size={12} className="text-green-500" /> : <Copy size={12} className="text-slate-400" />}
-                        </button>
-                      </div>
+                      {promo.code ? (
+                        <div className="flex items-center gap-1 mt-1">
+                          <code className="text-xs text-pink-600 bg-pink-50 dark:bg-pink-900/20 px-1.5 py-0.5 rounded font-mono">{promo.code}</code>
+                          <button 
+                            onClick={ async () => {
+                              const promoCode = promo.code;
+                              if (!promoCode) {return;}
+                              await copyCode(promoCode);
+                            }}
+                            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
+                            title="Copy mã"
+                          >
+                            {copiedCode === promo.code ? <Check size={12} className="text-green-500" /> : <Copy size={12} className="text-slate-400" />}
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500 mt-1">Tự động áp dụng</p>
+                      )}
                     </div>
                 </TableCell>
+                )}
+                {resolvedVisibleColumns.includes('promotionType') && (
+                  <TableCell>
+                    <Badge variant="secondary" className="bg-rose-500/10 text-rose-600">
+                      {getPromotionTypeLabel(promo.promotionType)}
+                    </Badge>
+                  </TableCell>
                 )}
                 {resolvedVisibleColumns.includes('discount') && (
                   <TableCell>
                   {promo.discountType === 'percent' ? (
                     <Badge variant="secondary" className="bg-purple-500/10 text-purple-600">
-                      -{promo.discountValue}%
+                      -{promo.discountValue ?? 0}%
                       {enabledFeatures.enableMaxDiscount && promo.maxDiscountAmount && (
                         <span className="text-xs ml-1">(max {formatPrice(promo.maxDiscountAmount)})</span>
                       )}
                     </Badge>
-                  ) : (
+                  ) : promo.discountType === 'fixed' ? (
                     <Badge variant="secondary" className="bg-cyan-500/10 text-cyan-600">
-                      -{formatPrice(promo.discountValue)}
+                      -{formatPrice(promo.discountValue ?? 0)}
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="bg-slate-500/10 text-slate-600">
+                      {getDiscountTypeLabel(promo.discountType)}
                     </Badge>
                   )}
                   {enabledFeatures.enableMinOrder && promo.minOrderAmount && (

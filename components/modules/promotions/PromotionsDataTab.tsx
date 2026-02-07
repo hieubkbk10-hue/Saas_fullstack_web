@@ -33,6 +33,22 @@ export function PromotionsDataTab({ colorClasses: _colorClasses }: PromotionsDat
        default: return <Badge variant="outline">{status}</Badge>;
      }
    };
+
+  const typeSummary = [
+    { label: 'Coupon', value: statsData?.couponCount ?? 0 },
+    { label: 'Chương trình', value: statsData?.campaignCount ?? 0 },
+    { label: 'Flash sale', value: statsData?.flashSaleCount ?? 0 },
+    { label: 'Combo', value: statsData?.bundleCount ?? 0 },
+    { label: 'Loyalty', value: statsData?.loyaltyCount ?? 0 },
+  ];
+
+  const discountSummary = [
+    { label: 'Mua X tặng Y', value: statsData?.buyXGetYCount ?? 0 },
+    { label: 'Mua A tặng B', value: statsData?.buyAGetBCount ?? 0 },
+    { label: 'Giảm bậc', value: statsData?.tieredCount ?? 0 },
+    { label: 'Free ship', value: statsData?.freeShippingCount ?? 0 },
+    { label: 'Tặng quà', value: statsData?.giftCount ?? 0 },
+  ];
  
    return (
      <div className="space-y-6">
@@ -77,6 +93,35 @@ export function PromotionsDataTab({ colorClasses: _colorClasses }: PromotionsDat
            </div>
          </Card>
        </div>
+
+      <Card>
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100">Phân loại khuyến mãi</h3>
+          <p className="text-xs text-slate-500 mt-1">Tổng hợp theo loại chương trình và loại giảm giá</p>
+        </div>
+        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Loại chương trình</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {typeSummary.map(item => (
+                <span key={item.label} className="text-xs bg-rose-500/10 text-rose-600 px-2 py-1 rounded-full">
+                  {item.label}: {item.value}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Loại giảm giá nâng cao</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {discountSummary.map(item => (
+                <span key={item.label} className="text-xs bg-slate-500/10 text-slate-600 px-2 py-1 rounded-full">
+                  {item.label}: {item.value}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Card>
  
        <Card>
          <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
@@ -99,14 +144,18 @@ export function PromotionsDataTab({ colorClasses: _colorClasses }: PromotionsDat
                  <TableCell>
                    <div>
                      <p className="font-medium">{promo.name}</p>
-                     <code className="text-xs text-rose-600 bg-rose-50 dark:bg-rose-900/20 px-1.5 py-0.5 rounded">{promo.code}</code>
+                    {promo.code ? (
+                      <code className="text-xs text-rose-600 bg-rose-50 dark:bg-rose-900/20 px-1.5 py-0.5 rounded">{promo.code}</code>
+                    ) : (
+                      <span className="text-xs text-slate-500">Tự động áp dụng</span>
+                    )}
                    </div>
                  </TableCell>
                  <TableCell>
                    {promo.discountType === 'percent' ? (
-                     <Badge variant="secondary" className="bg-purple-500/10 text-purple-600">-{promo.discountValue}%</Badge>
+                    <Badge variant="secondary" className="bg-purple-500/10 text-purple-600">-{promo.discountValue ?? 0}%</Badge>
                    ) : (
-                     <Badge variant="secondary" className="bg-cyan-500/10 text-cyan-600">-{formatCurrency(promo.discountValue)}</Badge>
+                    <Badge variant="secondary" className="bg-cyan-500/10 text-cyan-600">-{formatCurrency(promo.discountValue ?? 0)}</Badge>
                    )}
                  </TableCell>
                  <TableCell className="text-sm text-slate-500">{formatDate(promo.startDate)} - {formatDate(promo.endDate)}</TableCell>

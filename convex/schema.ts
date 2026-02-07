@@ -213,7 +213,7 @@ export default defineSchema({
 
   // 7e. promotionStats - Counter table cho promotions (tránh full scan)
   promotionStats: defineTable({
-    key: v.string(), // "total", "Active", "Inactive", "Expired", "Scheduled", "totalUsed", "percent", "fixed"
+    key: v.string(), // "total", "Active", "Inactive", "Expired", "Scheduled", "totalUsed", "percent", "fixed", "buy_x_get_y", ...
     count: v.number(),
   }).index("by_key", ["key"]),
 
@@ -725,17 +725,64 @@ export default defineSchema({
   promotions: defineTable({
     applicableIds: v.optional(v.array(v.string())),
     applicableTo: v.optional(
-      v.union(v.literal("all"), v.literal("products"), v.literal("categories"))
+      v.union(
+        v.literal("all"),
+        v.literal("products"),
+        v.literal("categories"),
+        v.literal("brands"),
+        v.literal("tags")
+      )
     ),
-    code: v.string(),
+    budget: v.optional(v.number()),
+    budgetUsed: v.optional(v.number()),
+    code: v.optional(v.string()),
+    customerGroupIds: v.optional(v.array(v.string())),
+    customerTierIds: v.optional(v.array(v.string())),
+    customerType: v.optional(
+      v.union(
+        v.literal("all"),
+        v.literal("new"),
+        v.literal("returning"),
+        v.literal("vip")
+      )
+    ),
     description: v.optional(v.string()),
-    discountType: v.union(v.literal("percent"), v.literal("fixed")),
-    discountValue: v.number(),
+    discountConfig: v.optional(v.any()),
+    discountType: v.union(
+      v.literal("percent"),
+      v.literal("fixed"),
+      v.literal("buy_x_get_y"),
+      v.literal("buy_a_get_b"),
+      v.literal("tiered"),
+      v.literal("free_shipping"),
+      v.literal("gift")
+    ),
+    discountValue: v.optional(v.number()),
+    displayOnPage: v.optional(v.boolean()),
     endDate: v.optional(v.number()),
+    excludeIds: v.optional(v.array(v.string())),
+    featured: v.optional(v.boolean()),
     maxDiscountAmount: v.optional(v.number()),
     minOrderAmount: v.optional(v.number()),
+    minOrderHistory: v.optional(v.number()),
+    minQuantity: v.optional(v.number()),
+    minTotalSpent: v.optional(v.number()),
     name: v.string(),
     order: v.number(),
+    priority: v.optional(v.number()),
+    promotionType: v.union(
+      v.literal("coupon"),
+      v.literal("campaign"),
+      v.literal("flash_sale"),
+      v.literal("bundle"),
+      v.literal("loyalty")
+    ),
+    recurringDays: v.optional(v.array(v.number())),
+    recurringHours: v.optional(v.object({ from: v.number(), to: v.number() })),
+    scheduleType: v.optional(
+      v.union(v.literal("always"), v.literal("dateRange"), v.literal("recurring"))
+    ),
+    stackable: v.optional(v.boolean()),
     startDate: v.optional(v.number()),
     status: v.union(
       v.literal("Active"),
@@ -743,14 +790,33 @@ export default defineSchema({
       v.literal("Expired"),
       v.literal("Scheduled")
     ),
+    thumbnail: v.optional(v.string()),
     usageLimit: v.optional(v.number()),
+    usagePerCustomer: v.optional(v.number()),
     usedCount: v.number(),
   })
     .index("by_code", ["code"])
     .index("by_status", ["status"])
     .index("by_status_order", ["status", "order"])
     .index("by_startDate", ["startDate"])
-    .index("by_endDate", ["endDate"]),
+    .index("by_endDate", ["endDate"])
+    .index("by_promotionType", ["promotionType"])
+    .index("by_discountType", ["discountType"])
+    .index("by_displayOnPage", ["displayOnPage"])
+    .index("by_featured", ["featured"]),
+
+  // 28a. promotionUsage - Lịch sử sử dụng khuyến mãi
+  promotionUsage: defineTable({
+    customerId: v.id("customers"),
+    discountAmount: v.number(),
+    orderId: v.id("orders"),
+    promotionId: v.id("promotions"),
+    usedAt: v.number(),
+  })
+    .index("by_promotion", ["promotionId"])
+    .index("by_customer", ["customerId"])
+    .index("by_order", ["orderId"])
+    .index("by_customer_promotion", ["customerId", "promotionId"]),
 
   // ============================================================
   // SEED PROGRESS TRACKING
