@@ -9,6 +9,7 @@ import { Input, cn } from '@/app/admin/components/ui';
 import { AddressPreview } from './AddressPreview';
 import { PaymentMethodsEditor, type PaymentMethodConfig } from './PaymentMethodsEditor';
 import { ShippingMethodsEditor, type ShippingMethodConfig } from './ShippingMethodsEditor';
+import { VietQRPreview } from './VietQRPreview';
 
 type ConfigTabKey = 'general' | 'shipping' | 'payment' | 'address';
 
@@ -251,10 +252,12 @@ export function OrdersConfigTab({
 
         {activeTab === 'payment' && (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="space-y-4 lg:col-span-3">
+            <div className="lg:col-span-3">
               <SettingsCard title="Phương thức thanh toán">
                 <PaymentMethodsEditor methods={paymentMethods} onChange={handlePaymentChange} />
               </SettingsCard>
+            </div>
+            <div className="lg:col-span-2">
               <SettingsCard title="Thông tin ngân hàng">
                 <div className="space-y-3">
                   <div className="space-y-2">
@@ -352,6 +355,14 @@ export function OrdersConfigTab({
                   </div>
                 </div>
               </SettingsCard>
+            </div>
+            <div className="lg:col-span-1">
+              <VietQRPreview
+                bankCode={bankCode}
+                bankAccountNumber={bankAccountNumber}
+                bankAccountName={bankAccountName}
+                template={vietQrTemplate}
+              />
             </div>
           </div>
         )}
