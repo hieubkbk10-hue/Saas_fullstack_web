@@ -11,6 +11,7 @@ import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { useBrandColor } from '@/components/site/hooks';
+import { StatusFilterDropdown } from '@/components/orders/StatusFilterDropdown';
 import { useAccountOrdersConfig, useOrderStatuses } from '@/lib/experiences';
 import { notifyAddToCart, useCart } from '@/lib/cart';
 
@@ -338,30 +339,15 @@ export default function AccountOrdersPage() {
       </div>
 
       {config.layoutStyle === 'cards' && ordersList.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <button
-            type="button"
-            onClick={() => setSelectedStatuses(statusKeys)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${isAllActive ? 'bg-white shadow-sm' : 'text-slate-500'}`}
-            style={isAllActive ? { borderColor: brandColor, color: brandColor } : { borderColor: '#e2e8f0' }}
-          >
-            Tất cả
-          </button>
-          {orderStatuses.map((status) => {
-            const active = activeStatuses.includes(status.key);
-            const statusColor = status.color;
-            return (
-              <button
-                key={status.key}
-                type="button"
-                onClick={() => toggleStatus(status.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${active ? 'bg-white shadow-sm' : 'text-slate-500'}`}
-                style={active ? { borderColor: statusColor, color: statusColor } : { borderColor: '#e2e8f0' }}
-              >
-                {status.label}
-              </button>
-            );
-          })}
+        <div className="mb-4">
+          <StatusFilterDropdown
+            options={orderStatuses.map((status) => ({ key: status.key, label: status.label }))}
+            activeKeys={activeStatuses}
+            isAllActive={isAllActive}
+            onToggleKey={toggleStatus}
+            onToggleAll={() => setSelectedStatuses(isAllActive ? [] : statusKeys)}
+            brandColor={brandColor}
+          />
         </div>
       )}
 

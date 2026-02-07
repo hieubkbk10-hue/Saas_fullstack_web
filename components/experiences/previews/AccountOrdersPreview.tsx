@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowUpRight, CheckCircle2, Clock, DollarSign, Package, ShoppingBag } from 'lucide-react';
+import { StatusFilterDropdown } from '@/components/orders/StatusFilterDropdown';
 import { toast } from 'sonner';
 
 type AccountOrdersPreviewProps = {
@@ -370,34 +371,17 @@ export function AccountOrdersPreview({
       </div>
 
       {layoutStyle === 'cards' && (
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedStatuses(statusKeys);
-              setCurrentPage(1);
-            }}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${isAllActive ? 'bg-white shadow-sm' : 'text-slate-500'}`}
-            style={isAllActive ? { borderColor: brandColor, color: brandColor } : { borderColor: '#e2e8f0' }}
-          >
-            Tất cả
-          </button>
-          {orderStatuses.map((status) => {
-            const active = activeStatuses.includes(status.key);
-            const statusColor = status.color;
-            return (
-              <button
-                key={status.key}
-                type="button"
-                onClick={() => toggleStatus(status.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${active ? 'bg-white shadow-sm' : 'text-slate-500'}`}
-                style={active ? { borderColor: statusColor, color: statusColor } : { borderColor: '#e2e8f0' }}
-              >
-                {status.label}
-              </button>
-            );
-          })}
-        </div>
+        <StatusFilterDropdown
+          options={orderStatuses.map((status) => ({ key: status.key, label: status.label }))}
+          activeKeys={activeStatuses}
+          isAllActive={isAllActive}
+          onToggleKey={toggleStatus}
+          onToggleAll={() => {
+            setSelectedStatuses(isAllActive ? [] : statusKeys);
+            setCurrentPage(1);
+          }}
+          brandColor={brandColor}
+        />
       )}
 
       {showStats && layoutStyle === 'cards' && (
