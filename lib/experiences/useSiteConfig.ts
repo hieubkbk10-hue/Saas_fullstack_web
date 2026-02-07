@@ -347,6 +347,7 @@ type AccountOrdersConfig = {
   allowCancel: boolean;
   paginationType: PaginationType;
   ordersPerPage: number;
+  defaultStatusFilter: string[];
 };
 
 export function useAccountOrdersConfig(): AccountOrdersConfig {
@@ -366,6 +367,9 @@ export function useAccountOrdersConfig(): AccountOrdersConfig {
       allowCancel: raw?.allowCancel ?? true,
       paginationType: normalizePaginationType(raw?.paginationType),
       ordersPerPage: raw?.ordersPerPage ?? 12,
+      defaultStatusFilter: Array.isArray(raw?.defaultStatusFilter)
+        ? raw?.defaultStatusFilter.filter((value) => typeof value === 'string')
+        : [],
     };
   }, [experienceSetting?.value]);
 }

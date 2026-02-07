@@ -170,6 +170,10 @@ export default function AccountOrdersPage() {
   const ordersPerPage = config.ordersPerPage ?? 12;
   const statusKeys = useMemo(() => orderStatuses.map((status) => status.key), [orderStatuses]);
   const statusMap = useMemo(() => new Map(orderStatuses.map((status) => [status.key, status])), [orderStatuses]);
+  const normalizedDefaultStatuses = useMemo(
+    () => (config.defaultStatusFilter ?? []).filter((status) => statusKeys.includes(status)),
+    [config.defaultStatusFilter, statusKeys]
+  );
   const pendingStatusKey = useMemo(
     () => orderStatuses.find((status) => status.key === 'Pending')?.key ?? statusKeys[0],
     [orderStatuses, statusKeys]
@@ -252,10 +256,12 @@ export default function AccountOrdersPage() {
     toast.info(direction === 'prev' ? 'Đang về trang trước.' : 'Đang sang trang tiếp theo.');
   };
 
-  const activeStatuses = selectedStatuses.length > 0 ? selectedStatuses : statusKeys;
+  const activeStatuses = selectedStatuses.length > 0
+    ? selectedStatuses
+    : (normalizedDefaultStatuses.length > 0 ? normalizedDefaultStatuses : statusKeys);
 
   const filteredOrders = useMemo(() => {
-    if (activeStatuses.length === 0 || activeStatuses.length === statusKeys.length) {
+    if (activeStatuses.length === statusKeys.length) {
       return ordersList;
     }
     return ordersList.filter((order) => activeStatuses.includes(order.status));
@@ -272,12 +278,12 @@ export default function AccountOrdersPage() {
   const toggleStatus = (status: string) => {
     setCurrentPage(1);
     setSelectedStatuses((prev) => {
-      const base = prev.length > 0 ? prev : statusKeys;
+      const base = prev.length > 0 ? prev : (normalizedDefaultStatuses.length > 0 ? normalizedDefaultStatuses : statusKeys);
       return base.includes(status) ? base.filter((item) => item !== status) : [...base, status];
     });
   };
 
-  const isAllActive = activeStatuses.length === 0 || activeStatuses.length === statusKeys.length;
+  const isAllActive = activeStatuses.length === statusKeys.length;
 
   if (ordersModule && !ordersModule.enabled) {
     return (

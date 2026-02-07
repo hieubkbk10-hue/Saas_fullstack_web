@@ -17,6 +17,7 @@ import {
   ControlCard,
   DeviceToggle,
   LayoutTabs,
+  MultiSelectRow,
   SelectRow,
   ToggleRow,
   deviceWidths,
@@ -40,6 +41,7 @@ type AccountOrdersExperienceConfig = {
   allowCancel: boolean;
   paginationType: PaginationType;
   ordersPerPage: number;
+  defaultStatusFilter: string[];
 };
 
 const EXPERIENCE_KEY = 'account_orders_ui';
@@ -62,6 +64,7 @@ const DEFAULT_CONFIG: AccountOrdersExperienceConfig = {
   allowCancel: true,
   paginationType: 'pagination',
   ordersPerPage: 12,
+  defaultStatusFilter: [],
 };
 
 const HINTS = [
@@ -119,6 +122,9 @@ export default function AccountOrdersExperiencePage() {
       allowCancel: raw?.allowCancel ?? true,
       paginationType: normalizePaginationType(raw?.paginationType),
       ordersPerPage: raw?.ordersPerPage ?? 12,
+      defaultStatusFilter: Array.isArray(raw?.defaultStatusFilter)
+        ? raw?.defaultStatusFilter.filter((value) => typeof value === 'string')
+        : [],
     };
   }, [experienceSetting?.value]);
 
@@ -169,6 +175,12 @@ export default function AccountOrdersExperiencePage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ControlCard title="Khối hiển thị">
+            <MultiSelectRow
+              label="Trạng thái mặc định"
+              values={config.defaultStatusFilter}
+              options={orderStatuses.map((status) => ({ value: status.key, label: status.label }))}
+              onChange={(values) => setConfig(prev => ({ ...prev, defaultStatusFilter: values }))}
+            />
             <ToggleRow
               label="Thống kê đơn hàng"
               checked={config.showStats}
@@ -323,6 +335,7 @@ export default function AccountOrdersExperiencePage() {
                 allowCancel={config.allowCancel}
                 paginationType={config.paginationType}
                 ordersPerPage={config.ordersPerPage}
+                defaultStatusFilter={config.defaultStatusFilter}
                 orderStatuses={orderStatuses}
                 stockEnabled={stockFeature?.enabled ?? false}
                 brandColor={brandColor}

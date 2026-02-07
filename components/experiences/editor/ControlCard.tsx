@@ -1,4 +1,6 @@
- import React from 'react';
+'use client';
+
+import React, { useMemo, useState } from 'react';
 import { cn } from '@/app/admin/components/ui';
  
  type ControlCardProps = {
@@ -97,3 +99,58 @@ import { cn } from '@/app/admin/components/ui';
      </div>
    );
  }
+
+type MultiSelectRowProps = {
+  label: string;
+  values: string[];
+  options: { value: string; label: string }[];
+  onChange: (values: string[]) => void;
+  disabled?: boolean;
+};
+
+export function MultiSelectRow({ label, values, options, onChange, disabled }: MultiSelectRowProps) {
+  const [open, setOpen] = useState(false);
+  const selectedLabels = useMemo(
+    () => options.filter((option) => values.includes(option.value)).map((option) => option.label),
+    [options, values]
+  );
+
+  const toggleValue = (value: string) => {
+    onChange(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
+  };
+
+  return (
+    <div className={cn(
+      "flex items-center justify-between gap-2 py-1 relative",
+      disabled && "opacity-50 cursor-not-allowed"
+    )}>
+      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{label}</span>
+      <div className="relative">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setOpen((prev) => !prev)}
+          className="text-xs bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded px-2 py-0.5"
+        >
+          {selectedLabels.length > 0 ? `${selectedLabels.length} đã chọn` : 'Tất cả'}
+        </button>
+        {open && !disabled && (
+          <div className="absolute right-0 mt-2 w-48 rounded-md border border-slate-200 bg-white shadow-lg p-2 z-10">
+            <div className="max-h-48 overflow-auto space-y-1">
+              {options.map((option) => (
+                <label key={option.value} className="flex items-center gap-2 text-xs text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={values.includes(option.value)}
+                    onChange={() => toggleValue(option.value)}
+                  />
+                  <span className="truncate">{option.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -2,17 +2,18 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { CreditCard, MapPin, Settings, Truck } from 'lucide-react';
+import { CreditCard, ListChecks, MapPin, Settings, Truck } from 'lucide-react';
 import type { ModuleConfigTabRenderProps } from '@/components/modules/ModuleConfigPage';
 import { ModuleStatus, FeaturesCard, FieldsCard, SettingsCard } from '@/components/modules/shared';
 import { Input, cn } from '@/app/admin/components/ui';
 import { AddressPreview } from './AddressPreview';
 import { PaymentMethodsEditor, type PaymentMethodConfig } from './PaymentMethodsEditor';
 import { ShippingMethodsEditor, type ShippingMethodConfig } from './ShippingMethodsEditor';
-import { DEFAULT_ORDER_STATUS_PRESET, ORDER_STATUS_PRESETS, type OrderStatusPreset } from '@/lib/orders/statuses';
+import { DEFAULT_ORDER_STATUS_PRESET, ORDER_STATUS_PRESETS, parseOrderStatuses, type OrderStatusConfig, type OrderStatusPreset } from '@/lib/orders/statuses';
 import { VietQRPreview } from './VietQRPreview';
+import { OrderStatusesEditor } from './OrderStatusesEditor';
 
-type ConfigTabKey = 'general' | 'shipping' | 'payment' | 'address';
+type ConfigTabKey = 'general' | 'shipping' | 'payment' | 'address' | 'statuses';
 
 interface BankOption {
   code: string;
@@ -90,9 +91,15 @@ export function OrdersConfigTab({
     [localSettings.paymentMethods]
   );
   const orderStatusPreset = String(localSettings.orderStatusPreset ?? DEFAULT_ORDER_STATUS_PRESET) as OrderStatusPreset;
-  const orderStatusesValue = String(
-    localSettings.orderStatuses ?? JSON.stringify(ORDER_STATUS_PRESETS[orderStatusPreset], null, 2)
+  const orderStatuses = useMemo(
+    () => parseOrderStatuses(localSettings.orderStatuses, orderStatusPreset),
+    [localSettings.orderStatuses, orderStatusPreset]
   );
+  const presetOptions: { value: OrderStatusPreset; label: string }[] = [
+    { value: 'simple', label: 'Simple (3 trạng thái)' },
+    { value: 'standard', label: 'Standard (5 trạng thái)' },
+    { value: 'advanced', label: 'Advanced (8 trạng thái)' },
+  ];
 
   const bankCode = String(localSettings.bankCode ?? '');
   const bankName = String(localSettings.bankName ?? '');
@@ -125,6 +132,15 @@ export function OrdersConfigTab({
     onSettingChange('paymentMethods', JSON.stringify(next, null, 2));
   };
 
+  const handleStatusesChange = (next: OrderStatusConfig[]) => {
+    onSettingChange('orderStatuses', JSON.stringify(next, null, 2));
+  };
+
+  const handlePresetChange = (nextPreset: OrderStatusPreset) => {
+    onSettingChange('orderStatusPreset', nextPreset);
+    onSettingChange('orderStatuses', JSON.stringify(ORDER_STATUS_PRESETS[nextPreset], null, 2));
+  };
+
   const handleBankSelect = (bank: BankOption) => {
     setUseCustomBank(false);
     onSettingChange('bankCode', bank.code);
@@ -139,6 +155,7 @@ export function OrdersConfigTab({
 
   const tabs: { key: ConfigTabKey; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
     { key: 'general', label: 'Cài đặt chung', icon: Settings },
+    { key: 'statuses', label: 'Trạng thái', icon: ListChecks },
     { key: 'shipping', label: 'Vận chuyển', icon: Truck },
     { key: 'payment', label: 'Thanh toán', icon: CreditCard },
     { key: 'address', label: 'Địa chỉ', icon: MapPin },
@@ -177,6 +194,7 @@ export function OrdersConfigTab({
               <SettingsCard title="Cài đặt chung">
                 {config.settings
                   ?.filter((setting) => (setting.group ?? 'general') === 'general')
+                  ?.filter((setting) => !['orderStatusPreset', 'orderStatuses'].includes(setting.key))
                   .map((setting) => (
                     <div key={setting.key}>
                       <label className="text-xs text-slate-500 mb-1 block">{setting.label}</label>
@@ -184,14 +202,7 @@ export function OrdersConfigTab({
                         <select
                           className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
                           value={String(localSettings[setting.key] ?? '')}
-                          onChange={(event) => {
-                            const nextValue = event.target.value;
-                            onSettingChange(setting.key, nextValue);
-                            if (setting.key === 'orderStatusPreset') {
-                              const preset = (nextValue || DEFAULT_ORDER_STATUS_PRESET) as OrderStatusPreset;
-                              onSettingChange('orderStatuses', JSON.stringify(ORDER_STATUS_PRESETS[preset], null, 2));
-                            }
-                          }}
+                          onChange={(event) => onSettingChange(setting.key, event.target.value)}
                         >
                           {(setting.options ?? []).map((option) => (
                             <option key={option.value} value={option.value}>{option.label}</option>
@@ -200,7 +211,7 @@ export function OrdersConfigTab({
                       ) : setting.type === 'json' ? (
                         <textarea
                           className="min-h-[180px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
-                          value={setting.key === 'orderStatuses' ? orderStatusesValue : String(localSettings[setting.key] ?? '')}
+                          value={String(localSettings[setting.key] ?? '')}
                           onChange={(event) => onSettingChange(setting.key, event.target.value)}
                         />
                       ) : (
@@ -405,6 +416,32 @@ export function OrdersConfigTab({
             <div className="lg:col-span-2">
               <SettingsCard title="Preview địa chỉ">
                 <AddressPreview format={addressFormat} />
+              </SettingsCard>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'statuses' && (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="lg:col-span-1">
+              <SettingsCard title="Preset trạng thái">
+                <div className="space-y-2">
+                  <label className="text-xs text-slate-500">Chọn preset</label>
+                  <select
+                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
+                    value={orderStatusPreset}
+                    onChange={(event) => handlePresetChange(event.target.value as OrderStatusPreset)}
+                  >
+                    {presetOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </SettingsCard>
+            </div>
+            <div className="lg:col-span-2">
+              <SettingsCard title="Danh sách trạng thái">
+                <OrderStatusesEditor statuses={orderStatuses} onChange={handleStatusesChange} />
               </SettingsCard>
             </div>
           </div>

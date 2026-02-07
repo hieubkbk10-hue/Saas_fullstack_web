@@ -18,6 +18,7 @@ type AccountOrdersPreviewProps = {
   allowCancel: boolean;
   paginationType: 'pagination' | 'infiniteScroll';
   ordersPerPage: number;
+  defaultStatusFilter: string[];
   orderStatuses: Array<{ key: string; label: string; color: string; step: number; isFinal: boolean; allowCancel: boolean }>;
   stockEnabled: boolean;
   brandColor: string;
@@ -293,6 +294,7 @@ export function AccountOrdersPreview({
   allowCancel,
   paginationType,
   ordersPerPage,
+  defaultStatusFilter,
   orderStatuses,
   stockEnabled,
   brandColor,
@@ -302,6 +304,10 @@ export function AccountOrdersPreview({
   const isMobile = device === 'mobile';
   const statusKeys = useMemo(() => orderStatuses.map((status) => status.key), [orderStatuses]);
   const statusMap = useMemo(() => new Map(orderStatuses.map((status) => [status.key, status])), [orderStatuses]);
+  const normalizedDefaultStatuses = useMemo(
+    () => defaultStatusFilter.filter((status) => statusKeys.includes(status)),
+    [defaultStatusFilter, statusKeys]
+  );
   const mockOrders = useMemo(() => {
     if (statusKeys.length === 0) {
       return MOCK_ORDERS.map((order) => ({ ...order, status: 'Pending' }));
@@ -313,12 +319,14 @@ export function AccountOrdersPreview({
   }, [statusKeys]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const activeStatuses = selectedStatuses.length > 0 ? selectedStatuses : statusKeys;
+  const activeStatuses = selectedStatuses.length > 0
+    ? selectedStatuses
+    : (normalizedDefaultStatuses.length > 0 ? normalizedDefaultStatuses : statusKeys);
   const isAllActive = activeStatuses.length === statusKeys.length;
   const toggleStatus = (status: string) => {
     setCurrentPage(1);
     setSelectedStatuses((prev) => {
-      const base = prev.length > 0 ? prev : statusKeys;
+      const base = prev.length > 0 ? prev : (normalizedDefaultStatuses.length > 0 ? normalizedDefaultStatuses : statusKeys);
       return base.includes(status) ? base.filter((item) => item !== status) : [...base, status];
     });
   };
@@ -368,7 +376,7 @@ export function AccountOrdersPreview({
           <button
             type="button"
             onClick={() => {
-              setSelectedStatuses([]);
+              setSelectedStatuses(statusKeys);
               setCurrentPage(1);
             }}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${isAllActive ? 'bg-white shadow-sm' : 'text-slate-500'}`}
