@@ -1,5 +1,6 @@
 import React from 'react';
 import { Clock, Minus, Plus, Search, ShoppingCart, Trash2, X } from 'lucide-react';
+import { useCartExpiry } from '@/lib/cart';
 
 type CartPreviewProps = {
   layoutStyle: 'drawer' | 'page' | 'table';
@@ -7,12 +8,15 @@ type CartPreviewProps = {
   showNote: boolean;
   device?: 'desktop' | 'tablet' | 'mobile';
   brandColor?: string;
+  expiresAt?: number;
 };
 
 const mockCartItems = [
   { id: 1, name: 'iPhone 15 Pro Max 256GB', price: 34990000, quantity: 1 },
   { id: 2, name: 'AirPods Pro 2nd Gen', price: 6490000, quantity: 2 },
 ];
+
+const DEFAULT_EXPIRES_AT = Date.now() + 30 * 60 * 1000;
 
 const formatVND = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 const subtotal = mockCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -76,8 +80,12 @@ export function CartPreview({
   showNote,
   device = 'desktop',
   brandColor = '#f97316',
+  expiresAt: expiresAtProp,
 }: CartPreviewProps) {
   const isMobile = device === 'mobile';
+  const expiresAt = expiresAtProp ?? DEFAULT_EXPIRES_AT;
+  const { expiryText, isExpired } = useCartExpiry(expiresAt);
+  const shouldShowExpiry = showExpiry && (expiryText || isExpired);
 
 
   return (
@@ -102,10 +110,10 @@ export function CartPreview({
                 <X size={18} className="text-slate-400" />
               </button>
             </div>
-            {showExpiry && (
-              <div className="flex items-center justify-center gap-1.5 text-xs text-red-500 mb-3">
+            {shouldShowExpiry && (
+              <div className={`flex items-center justify-center gap-1.5 text-xs mb-3 ${isExpired ? 'text-slate-500' : 'text-red-500'}`}>
                 <Clock size={12} />
-                <span>Giỏ hàng hết hạn sau 29:45</span>
+                <span>{isExpired ? 'Giỏ hàng đã hết hạn' : `Giỏ hàng sẽ hết hạn sau ${expiryText}`}</span>
               </div>
             )}
             <div className="flex-1 overflow-auto">
@@ -155,10 +163,10 @@ export function CartPreview({
               </div>
             </div>
 
-            {showExpiry && (
-              <div className="flex items-center gap-2 text-sm text-red-500">
+            {shouldShowExpiry && (
+              <div className={`flex items-center gap-2 text-sm ${isExpired ? 'text-slate-500' : 'text-red-500'}`}>
                 <Clock size={14} />
-                <span>Giỏ hàng sẽ hết hạn sau 29:45</span>
+                <span>{isExpired ? 'Giỏ hàng đã hết hạn' : `Giỏ hàng sẽ hết hạn sau ${expiryText}`}</span>
               </div>
             )}
 
@@ -230,10 +238,10 @@ export function CartPreview({
                 <p className="text-sm text-slate-500">{mockCartItems.length} sản phẩm</p>
               </div>
             </div>
-            {showExpiry && (
-              <div className="flex items-center justify-center gap-2 text-sm text-red-500 mb-4">
+            {shouldShowExpiry && (
+              <div className={`flex items-center justify-center gap-2 text-sm mb-4 ${isExpired ? 'text-slate-500' : 'text-red-500'}`}>
                 <Clock size={14} />
-                <span>Giỏ hàng sẽ hết hạn sau 29:45</span>
+                <span>{isExpired ? 'Giỏ hàng đã hết hạn' : `Giỏ hàng sẽ hết hạn sau ${expiryText}`}</span>
               </div>
             )}
             <div className={`${isMobile ? 'space-y-4' : 'grid grid-cols-3 gap-6'}`}>

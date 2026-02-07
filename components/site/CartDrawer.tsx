@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Clock, Minus, Plus, ShoppingCart, Trash2, X } from 'lucide-react';
-import { useCart } from '@/lib/cart';
+import { useCart, useCartExpiry } from '@/lib/cart';
 import { useCartConfig } from '@/lib/experiences';
 import { useBrandColor } from './hooks';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
@@ -21,13 +21,8 @@ export function CartDrawer() {
   const { isAuthenticated, openLoginModal } = useCustomerAuth();
 
   const expiresAt = cart?.expiresAt ?? null;
-  const expiresInText = useMemo(() => {
-    if (!expiresAt) {
-      return null;
-    }
-    const expiry = new Date(expiresAt);
-    return `Giỏ hàng hết hạn lúc ${expiry.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
-  }, [expiresAt]);
+  const { expiryText, isExpired } = useCartExpiry(expiresAt);
+  const shouldShowExpiry = showExpiry && (expiryText || isExpired);
 
   if (layoutStyle !== 'drawer' || !isDrawerOpen) {
     return null;
@@ -70,11 +65,11 @@ export function CartDrawer() {
 
         {isAuthenticated && (
           <>
-            {showExpiry && expiresInText && (
+            {shouldShowExpiry && (
               <div className="px-4 pt-3">
-                <div className="flex items-center justify-center gap-1.5 text-xs text-red-500">
+                <div className={`flex items-center justify-center gap-1.5 text-xs ${isExpired ? 'text-slate-500' : 'text-red-500'}`}>
                   <Clock size={12} />
-                  <span>{expiresInText}</span>
+                  <span>{isExpired ? 'Giỏ hàng đã hết hạn' : `Giỏ hàng sẽ hết hạn sau ${expiryText}`}</span>
                 </div>
               </div>
             )}

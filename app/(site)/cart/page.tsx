@@ -7,7 +7,7 @@ import { Clock, Minus, Package, Plus, Search, ShoppingCart, Trash2 } from 'lucid
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useBrandColor } from '@/components/site/hooks';
-import { useCart } from '@/lib/cart';
+import { useCart, useCartExpiry } from '@/lib/cart';
 import { useCartConfig } from '@/lib/experiences';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -91,13 +91,8 @@ export default function CartPage() {
   }, [variantOptions, variantValues, variants]);
 
   const expiresAt = cart?.expiresAt ?? null;
-  const expiresInText = useMemo(() => {
-    if (!expiresAt) {
-      return null;
-    }
-    const expiry = new Date(expiresAt);
-    return `Giỏ hàng hết hạn lúc ${expiry.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
-  }, [expiresAt]);
+  const { expiryText, isExpired } = useCartExpiry(expiresAt);
+  const shouldShowExpiry = cartConfig.showExpiry && (expiryText || isExpired);
 
   const filteredItems = useMemo(() => {
     if (layoutStyle !== 'table') {
@@ -211,10 +206,10 @@ export default function CartPage() {
           <h1 className="text-3xl font-bold text-slate-900">Giỏ hàng của bạn</h1>
           <p className="text-slate-500 mt-2">{itemsCount} sản phẩm trong giỏ hàng.</p>
         </div>
-        {cartConfig.showExpiry && expiresInText && (
-          <div className="flex items-center gap-2 text-sm text-red-500">
+        {shouldShowExpiry && (
+          <div className={`flex items-center gap-2 text-sm ${isExpired ? 'text-slate-500' : 'text-red-500'}`}>
             <Clock size={14} />
-            <span>{expiresInText}</span>
+            <span>{isExpired ? 'Giỏ hàng đã hết hạn' : `Giỏ hàng sẽ hết hạn sau ${expiryText}`}</span>
           </div>
         )}
       </div>
