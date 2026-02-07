@@ -17,6 +17,7 @@ export { ServiceSeeder } from './services.seeder';
 export type { SeedConfig, SeedResult, SeedDependency } from './base';
 export { BaseSeeder, createSeeder, processBatch } from './base';
 export { createVietnameseFaker } from './fakerVi';
+export { SEEDER_REGISTRY, getSeeder, listSeedableModuleKeys } from './registry';
 export { 
   resolveDependencies, 
   checkDependencies,

@@ -49,6 +49,7 @@ import type * as seeders_base from "../seeders/base.js";
 import type * as seeders_dependencies from "../seeders/dependencies.js";
 import type * as seeders_fakerVi from "../seeders/fakerVi.js";
 import type * as seeders_index from "../seeders/index.js";
+import type * as seeders_registry from "../seeders/registry.js";
 import type * as serviceCategories from "../serviceCategories.js";
 import type * as services from "../services.js";
 import type * as settings from "../settings.js";
@@ -105,6 +106,7 @@ declare const fullApi: ApiFromModules<{
   "seeders/dependencies": typeof seeders_dependencies;
   "seeders/fakerVi": typeof seeders_fakerVi;
   "seeders/index": typeof seeders_index;
+  "seeders/registry": typeof seeders_registry;
   serviceCategories: typeof serviceCategories;
   services: typeof services;
   settings: typeof settings;

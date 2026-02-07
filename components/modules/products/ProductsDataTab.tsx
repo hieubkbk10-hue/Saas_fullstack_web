@@ -6,6 +6,7 @@
  import { toast } from 'sonner';
  import { Database, FolderTree, Loader2, MessageSquare, Package, RefreshCw, Trash2 } from 'lucide-react';
  import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
  
  interface ProductsDataTabProps {
    colorClasses: { button: string };
@@ -29,11 +30,13 @@
      { initialNumItems: 10 }
    );
  
-   const seedProductsModule = useMutation(api.seed.seedProductsModule);
+  const seedModule = useMutation(api.seedManager.seedModule);
    const clearProductsData = useMutation(api.seed.clearProductsData);
    const seedComments = useMutation(api.seed.seedComments);
    const clearComments = useMutation(api.seed.clearComments);
    const initStats = useMutation(api.products.initStats);
+
+  const defaultQuantity = getSeedModuleInfo('products')?.defaultQuantity ?? 10;
  
    const categoryMap: Record<string, string> = {};
    categoryStats?.forEach(cat => { categoryMap[cat._id] = cat.name; });
@@ -43,7 +46,11 @@
    const handleSeedAll = async () => {
      setIsSeeding(true);
      try {
-       await Promise.all([seedProductsModule(), seedComments(), initStats()]);
+      await Promise.all([
+        seedModule({ module: 'products', quantity: defaultQuantity }),
+        seedComments(),
+        initStats(),
+      ]);
        toast.success('Đã tạo dữ liệu mẫu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -71,7 +78,7 @@
      try {
        await clearComments();
        await clearProductsData();
-       await seedProductsModule();
+      await seedModule({ module: 'products', quantity: defaultQuantity });
        await seedComments();
        await initStats();
        toast.success('Đã reset dữ liệu!');

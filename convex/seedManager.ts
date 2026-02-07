@@ -20,14 +20,10 @@ import {
   getDefaultQuantity,
   type PresetType,
   BaseSeeder,
-  ProductSeeder,
-  ProductCategorySeeder,
-  PostSeeder,
-  OrderSeeder,
-  CustomerSeeder,
-  PromotionsSeeder,
-  ServiceSeeder,
+  SEEDER_REGISTRY,
+  listSeedableModuleKeys,
 } from './seeders';
+import { SEED_MODULE_METADATA } from '../lib/modules/seed-registry';
 import type { SeedResult } from './seeders/base';
 
 // ============================================================
@@ -54,18 +50,7 @@ const seedProgressValidator = v.object({
   total: v.number(),
 });
 
-// Seeder registry
-const SEEDERS: Record<string, new (ctx: GenericMutationCtx<DataModel>) => BaseSeeder> = {
-  customers: CustomerSeeder,
-  orders: OrderSeeder,
-  postCategories: ProductCategorySeeder, // Reuse for now
-  posts: PostSeeder,
-  productCategories: ProductCategorySeeder,
-  products: ProductSeeder,
-  promotions: PromotionsSeeder,
-  serviceCategories: ProductCategorySeeder, // Reuse for now
-  services: ServiceSeeder,
-};
+const SEEDERS: Record<string, new (ctx: GenericMutationCtx<DataModel>) => BaseSeeder> = SEEDER_REGISTRY;
 
 // ============================================================
 // SINGLE MODULE SEED
@@ -349,6 +334,49 @@ export const listRecentSeeds = query({
     return seeds;
   },
   returns: v.array(seedProgressValidator),
+});
+
+export const listSeedableModules = query({
+  args: {},
+  handler: async () => {
+    return listSeedableModuleKeys().map((moduleKey) => {
+      const metadata = SEED_MODULE_METADATA[moduleKey];
+      return {
+        category: metadata?.category ?? 'content',
+        defaultQuantity: metadata?.defaultQuantity ?? 10,
+        description: metadata?.description ?? moduleKey,
+        key: moduleKey,
+        name: metadata?.name ?? moduleKey,
+      };
+    });
+  },
+  returns: v.array(
+    v.object({
+      category: v.string(),
+      defaultQuantity: v.number(),
+      description: v.string(),
+      key: v.string(),
+      name: v.string(),
+    })
+  ),
+});
+
+export const listSeedPresets = query({
+  args: {},
+  handler: async () => {
+    return Object.entries(SEED_PRESETS).map(([key, preset]) => ({
+      description: preset.description,
+      key,
+      name: preset.name,
+    }));
+  },
+  returns: v.array(
+    v.object({
+      description: v.string(),
+      key: v.string(),
+      name: v.string(),
+    })
+  ),
 });
 
 // ============================================================

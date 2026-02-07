@@ -6,6 +6,7 @@
  import { toast } from 'sonner';
  import { Database, DollarSign, Loader2, MapPin, RefreshCw, ShoppingBag, Trash2, UserCheck, Users } from 'lucide-react';
  import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
  
  interface CustomersDataTabProps {
    colorClasses: { button: string };
@@ -23,13 +24,15 @@
    const statsData = useQuery(api.customers.getStats, {});
    const citiesData = useQuery(api.customers.getCities, {});
  
-   const seedCustomersModule = useMutation(api.seed.seedCustomersModule);
+  const seedModule = useMutation(api.seedManager.seedModule);
    const clearCustomersData = useMutation(api.seed.clearCustomersData);
+
+  const defaultQuantity = getSeedModuleInfo('customers')?.defaultQuantity ?? 10;
  
    const handleSeedAll = async () => {
      setIsSeeding(true);
      try {
-       await seedCustomersModule();
+      await seedModule({ module: 'customers', quantity: defaultQuantity });
        toast.success('Đã tạo dữ liệu mẫu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -56,7 +59,7 @@
      setIsClearing(true);
      try {
        await clearCustomersData();
-       await seedCustomersModule();
+      await seedModule({ module: 'customers', quantity: defaultQuantity });
        toast.success('Đã reset dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');

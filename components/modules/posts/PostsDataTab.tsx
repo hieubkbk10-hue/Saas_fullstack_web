@@ -6,6 +6,7 @@
  import { toast } from 'sonner';
  import { Database, FileText, FolderTree, Loader2, MessageSquare, RefreshCw, Trash2 } from 'lucide-react';
  import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
  
  interface PostsDataTabProps {
    colorClasses: { button: string };
@@ -27,10 +28,12 @@
      { initialNumItems: 10 }
    );
    
-   const seedPostsModule = useMutation(api.seed.seedPostsModule);
+  const seedModule = useMutation(api.seedManager.seedModule);
    const clearPostsData = useMutation(api.seed.clearPostsData);
    const seedComments = useMutation(api.seed.seedComments);
    const clearComments = useMutation(api.seed.clearComments);
+
+  const defaultQuantity = getSeedModuleInfo('posts')?.defaultQuantity ?? 10;
    
    const categoryMap = useMemo(() => {
      const map: Record<string, string> = {};
@@ -41,7 +44,7 @@
    const handleSeedAll = async () => {
      setIsSeeding(true);
      try {
-       await seedPostsModule();
+      await seedModule({ module: 'posts', quantity: defaultQuantity });
        await seedComments();
        toast.success('Đã tạo dữ liệu mẫu!');
      } catch (error) {
@@ -71,7 +74,7 @@
      try {
        await clearComments();
        await clearPostsData();
-       await seedPostsModule();
+      await seedModule({ module: 'posts', quantity: defaultQuantity });
        await seedComments();
        toast.success('Đã reset dữ liệu!');
      } catch (error) {

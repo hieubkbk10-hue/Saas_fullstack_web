@@ -6,8 +6,8 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { useMutation } from 'convex/react';
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { toast } from 'sonner';
 import { 
@@ -79,6 +79,18 @@ export function BulkSeedCard({ onSeedComplete, onOpenCustomDialog }: BulkSeedCar
   const [currentModule, setCurrentModule] = useState('');
 
   const seedPreset = useMutation(api.seedManager.seedPreset);
+  const presetMetadata = useQuery(api.seedManager.listSeedPresets);
+
+  const presets = useMemo(() => {
+    return PRESETS.map((preset) => {
+      const metadata = presetMetadata?.find((item) => item.key === preset.key);
+      return {
+        ...preset,
+        description: metadata?.description ?? preset.description,
+        name: metadata?.name ?? preset.name,
+      };
+    });
+  }, [presetMetadata]);
 
   const handleSeedPreset = async (preset: PresetType) => {
     if (!confirm(`Seed preset "${preset}"?\nSẽ tạo dữ liệu mẫu cho tất cả modules.`)) {
@@ -145,7 +157,7 @@ export function BulkSeedCard({ onSeedComplete, onOpenCustomDialog }: BulkSeedCar
 
       <div id="bulk-seed-content" className={`${isOpen || isSeeding ? 'block' : 'hidden'}`}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          {PRESETS.map(preset => {
+          {presets.map(preset => {
             const Icon = preset.icon;
             return (
               <button

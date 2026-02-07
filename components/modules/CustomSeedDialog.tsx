@@ -21,6 +21,7 @@ import {
   VARIANT_PRESET_LIST,
   getSuggestedVariantPresetKey,
 } from '@/lib/modules/variant-presets';
+import { SEED_CATEGORY_LABELS, type SeedCategory } from '@/lib/modules/seed-registry';
 import { VariantPresetPicker } from './VariantPresetPicker';
 import {
   Badge,
@@ -45,41 +46,11 @@ interface CustomSeedDialogProps {
 
 type SeedResultItem = { created: number; errors?: string[] };
 
-const MODULE_GROUPS = [
-  {
-    category: 'content',
-    label: 'Content',
-    modules: [
-      { defaultQty: 5, key: 'postCategories', name: 'Post Categories' },
-      { defaultQty: 20, key: 'posts', name: 'Posts' },
-      { defaultQty: 5, key: 'serviceCategories', name: 'Service Categories' },
-      { defaultQty: 15, key: 'services', name: 'Services' },
-    ],
-  },
-  {
-    category: 'commerce',
-    label: 'Commerce',
-    modules: [
-      { defaultQty: 5, key: 'productCategories', name: 'Product Categories' },
-      { defaultQty: 50, key: 'products', name: 'Products' },
-      { defaultQty: 30, key: 'orders', name: 'Orders' },
-    ],
-  },
-  {
-    category: 'user',
-    label: 'Users',
-    modules: [
-      { defaultQty: 20, key: 'customers', name: 'Customers' },
-    ],
-  },
-  {
-    category: 'marketing',
-    label: 'Marketing',
-    modules: [
-      { defaultQty: 10, key: 'promotions', name: 'Promotions' },
-    ],
-  },
-];
+type SeedModuleGroup = {
+  category: SeedCategory;
+  label: string;
+  modules: Array<{ defaultQty: number; key: string; name: string }>;
+};
 
 export function CustomSeedDialog({
   open,
@@ -93,6 +64,7 @@ export function CustomSeedDialog({
   const [variantPresetKey, setVariantPresetKey] = useState(DEFAULT_VARIANT_PRESET_KEY);
 
   const seedBulk = useMutation(api.seedManager.seedBulk);
+  const seedableModules = useQuery(api.seedManager.listSeedableModules);
   const variantSetting = useQuery(api.admin.modules.getModuleSetting, {
     moduleKey: 'products',
     settingKey: 'variantEnabled',
@@ -107,18 +79,47 @@ export function CustomSeedDialog({
     [productCategories]
   );
 
+  const moduleGroups = useMemo<SeedModuleGroup[]>(() => {
+    if (!seedableModules) {
+      return [];
+    }
+
+    const groups = new Map<SeedCategory, SeedModuleGroup>();
+    seedableModules.forEach((module) => {
+      const category = module.category as SeedCategory;
+      const group = groups.get(category) ?? {
+        category,
+        label: SEED_CATEGORY_LABELS[category] ?? category,
+        modules: [],
+      };
+
+      group.modules.push({
+        defaultQty: module.defaultQuantity,
+        key: module.key,
+        name: module.name,
+      });
+      groups.set(category, group);
+    });
+
+    const order: SeedCategory[] = ['content', 'commerce', 'user', 'marketing', 'system'];
+    return order
+      .filter((category) => groups.has(category))
+      .map((category) => groups.get(category))
+      .filter((group): group is SeedModuleGroup => Boolean(group));
+  }, [seedableModules]);
+
   // Initialize quantities when dialog opens
   React.useEffect(() => {
-    if (open && Object.keys(quantities).length === 0) {
+    if (open && Object.keys(quantities).length === 0 && moduleGroups.length > 0) {
       const initialQty: Record<string, number> = {};
-      MODULE_GROUPS.forEach(group => {
+      moduleGroups.forEach(group => {
         group.modules.forEach(module => {
           initialQty[module.key] = module.defaultQty;
         });
       });
       setQuantities(initialQty);
     }
-  }, [open, quantities]);
+  }, [open, quantities, moduleGroups]);
 
   React.useEffect(() => {
     if (open) {
@@ -138,7 +139,7 @@ export function CustomSeedDialog({
     });
   };
 
-  const handleSelectAll = (group: typeof MODULE_GROUPS[0]) => {
+  const handleSelectAll = (group: SeedModuleGroup) => {
     setSelectedModules(prev => {
       const newSet = new Set(prev);
       group.modules.forEach(m => newSet.add(m.key));
@@ -146,7 +147,7 @@ export function CustomSeedDialog({
     });
   };
 
-  const handleDeselectAll = (group: typeof MODULE_GROUPS[0]) => {
+  const handleDeselectAll = (group: SeedModuleGroup) => {
     setSelectedModules(prev => {
       const newSet = new Set(prev);
       group.modules.forEach(m => newSet.delete(m.key));
@@ -218,7 +219,7 @@ export function CustomSeedDialog({
 
         <ScrollArea className="flex-1 pr-4">
           <div className="space-y-6">
-            {MODULE_GROUPS.map(group => (
+            {moduleGroups.map(group => (
               <div key={group.category} className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold text-slate-900 dark:text-slate-100">

@@ -10,6 +10,7 @@
 
 import type { GenericMutationCtx } from 'convex/server';
 import type { DataModel } from '../_generated/dataModel';
+import { SEED_MODULE_METADATA } from '../../lib/modules/seed-registry';
 
 // ============================================================
 // TYPES
@@ -23,12 +24,7 @@ export interface ModuleDependency {
   type: DependencyType;     // all = need all, any = need at least 1, optional = nice to have
 }
 
-export interface ModuleMetadata {
-  category: 'content' | 'commerce' | 'user' | 'system' | 'marketing';
-  defaultQuantity?: number;
-  description: string;
-  name: string;
-}
+export type ModuleMetadata = (typeof SEED_MODULE_METADATA)[keyof typeof SEED_MODULE_METADATA];
 
 // ============================================================
 // DEPENDENCY GRAPH
@@ -148,128 +144,7 @@ export const SEED_DEPENDENCIES: Record<string, ModuleDependency> = {
 /**
  * Module metadata for UI display
  */
-export const MODULE_METADATA: Record<string, ModuleMetadata> = {
-  analytics: {
-    category: 'marketing',
-    defaultQuantity: 30,
-    description: 'Thống kê và báo cáo',
-    name: 'Analytics',
-  },
-  cart: {
-    category: 'commerce',
-    defaultQuantity: 10,
-    description: 'Giỏ hàng',
-    name: 'Cart',
-  },
-  comments: {
-    category: 'content',
-    defaultQuantity: 50,
-    description: 'Bình luận và đánh giá',
-    name: 'Comments',
-  },
-  customers: {
-    category: 'user',
-    defaultQuantity: 20,
-    description: 'Khách hàng',
-    name: 'Customers',
-  },
-  homepage: {
-    category: 'system',
-    defaultQuantity: 6,
-    description: 'Sections trang chủ',
-    name: 'Homepage',
-  },
-  media: {
-    category: 'content',
-    defaultQuantity: 20,
-    description: 'Thư viện media',
-    name: 'Media',
-  },
-  menus: {
-    category: 'system',
-    defaultQuantity: 3,
-    description: 'Menu điều hướng',
-    name: 'Menus',
-  },
-  notifications: {
-    category: 'marketing',
-    defaultQuantity: 10,
-    description: 'Thông báo',
-    name: 'Notifications',
-  },
-  orders: {
-    category: 'commerce',
-    defaultQuantity: 30,
-    description: 'Đơn hàng',
-    name: 'Orders',
-  },
-  postCategories: {
-    category: 'content',
-    defaultQuantity: 5,
-    description: 'Danh mục bài viết',
-    name: 'Post Categories',
-  },
-  posts: {
-    category: 'content',
-    defaultQuantity: 20,
-    description: 'Bài viết',
-    name: 'Posts',
-  },
-  productCategories: {
-    category: 'commerce',
-    defaultQuantity: 5,
-    description: 'Danh mục sản phẩm',
-    name: 'Product Categories',
-  },
-  products: {
-    category: 'commerce',
-    defaultQuantity: 50,
-    description: 'Sản phẩm',
-    name: 'Products',
-  },
-  promotions: {
-    category: 'marketing',
-    defaultQuantity: 5,
-    description: 'Mã giảm giá',
-    name: 'Promotions',
-  },
-  roles: {
-    category: 'user',
-    defaultQuantity: 4,
-    description: 'Vai trò và quyền',
-    name: 'Roles',
-  },
-  serviceCategories: {
-    category: 'content',
-    defaultQuantity: 5,
-    description: 'Danh mục dịch vụ',
-    name: 'Service Categories',
-  },
-  services: {
-    category: 'content',
-    defaultQuantity: 15,
-    description: 'Dịch vụ',
-    name: 'Services',
-  },
-  settings: {
-    category: 'system',
-    defaultQuantity: 15,
-    description: 'Cài đặt hệ thống',
-    name: 'Settings',
-  },
-  users: {
-    category: 'user',
-    defaultQuantity: 10,
-    description: 'Người dùng admin',
-    name: 'Users',
-  },
-  wishlist: {
-    category: 'commerce',
-    defaultQuantity: 15,
-    description: 'Sản phẩm yêu thích',
-    name: 'Wishlist',
-  },
-};
+export const MODULE_METADATA: Record<string, ModuleMetadata> = SEED_MODULE_METADATA;
 
 // ============================================================
 // DEPENDENCY RESOLUTION
