@@ -7,6 +7,7 @@
 import { BaseSeeder, type SeedConfig, type SeedDependency } from './base';
 import { createVietnameseFaker } from './fakerVi';
 import type { Doc, DataModel } from '../_generated/dataModel';
+import { DEFAULT_ORDER_STATUSES } from '../../lib/orders/statuses';
 
 import type { GenericMutationCtx } from 'convex/server';
 type OrderData = Omit<Doc<'orders'>, '_id' | '_creationTime'>;
@@ -91,17 +92,13 @@ export class OrderSeeder extends BaseSeeder<OrderData> {
       { value: 'EWallet' as const, weight: 1 },
     ]);
     
-    const status = this.faker.helpers.weightedArrayElement([
-      { value: 'Delivered' as const, weight: 5 },
-      { value: 'Shipped' as const, weight: 2 },
-      { value: 'Processing' as const, weight: 2 },
-      { value: 'Pending' as const, weight: 1 },
-      { value: 'Cancelled' as const, weight: 1 },
-    ]);
+    const statusOptions = DEFAULT_ORDER_STATUSES.map((statusItem) => statusItem.key);
+    const status = this.faker.helpers.arrayElement(statusOptions);
+    const statusKey = status.toLowerCase();
     
-    const paymentStatus = status === 'Delivered' 
+    const paymentStatus = statusKey.includes('deliver')
       ? 'Paid' as const
-      : status === 'Cancelled'
+      : statusKey.includes('cancel')
       ? this.faker.helpers.arrayElement(['Failed', 'Refunded'] as const)
       : this.faker.helpers.weightedArrayElement([
           { value: 'Paid' as const, weight: 3 },
@@ -109,7 +106,7 @@ export class OrderSeeder extends BaseSeeder<OrderData> {
         ]);
     
     const note = this.randomBoolean(0.3) ? this.viFaker.orderNote() : undefined;
-    const trackingNumber = (status === 'Shipped' || status === 'Delivered')
+    const trackingNumber = (statusKey.includes('ship') || statusKey.includes('deliver'))
       ? `VN${this.faker.string.numeric(9)}`
       : undefined;
     

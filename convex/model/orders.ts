@@ -8,7 +8,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 const MAX_ITEMS_LIMIT = 100;
 const MAX_COUNT_LIMIT = 1000;
 
-type OrderStatus = "Pending" | "Processing" | "Shipped" | "Delivered" | "Cancelled";
+type OrderStatus = string;
 type PaymentStatus = "Pending" | "Paid" | "Failed" | "Refunded";
 type PaymentMethod = "COD" | "BankTransfer" | "VietQR" | "CreditCard" | "EWallet";
 
@@ -178,6 +178,7 @@ export async function create(
     promotionId?: Id<"promotions">;
     promotionCode?: string;
     discountAmount?: number;
+    status?: OrderStatus;
   }
 ): Promise<Id<"orders">> {
   const orderNumber = generateOrderNumber();
@@ -197,7 +198,7 @@ export async function create(
     shippingMethodId: args.shippingMethodId,
     shippingMethodLabel: args.shippingMethodLabel,
     shippingFee: args.shippingFee ?? 0,
-    status: "Pending",
+    status: args.status ?? "Pending",
     subtotal,
     totalAmount,
   });
@@ -305,7 +306,13 @@ export async function removeByCustomer(
  */
 export async function getStats(
   ctx: QueryCtx,
-  { limit = 100 }: { limit?: number } = {}
+  {
+    limit = 100,
+    statuses = [],
+  }: {
+    limit?: number;
+    statuses?: { key: string; allowCancel: boolean; isFinal: boolean }[];
+  } = {}
 ): Promise<{
   total: number;
   pending: number;
@@ -314,16 +321,59 @@ export async function getStats(
   cancelled: number;
   totalRevenue: number;
 }> {
+  const resolvedStatuses = statuses.length > 0
+    ? statuses
+    : [
+        { key: "Pending", allowCancel: true, isFinal: false },
+        { key: "Processing", allowCancel: false, isFinal: false },
+        { key: "Shipped", allowCancel: false, isFinal: false },
+        { key: "Delivered", allowCancel: false, isFinal: true },
+        { key: "Cancelled", allowCancel: false, isFinal: true },
+      ];
+  const cancelledKeys = resolvedStatuses
+    .filter((status) => status.key.toLowerCase().includes("cancel"))
+    .map((status) => status.key);
+  const pendingKeys = resolvedStatuses
+    .filter((status) => status.allowCancel)
+    .map((status) => status.key);
+  const deliveredKeys = resolvedStatuses
+    .filter((status) => status.isFinal && !cancelledKeys.includes(status.key) && !status.key.toLowerCase().includes("refund"))
+    .map((status) => status.key);
+  const resolvedDeliveredKeys = deliveredKeys.length > 0
+    ? deliveredKeys
+    : resolvedStatuses.length > 0
+      ? [resolvedStatuses[resolvedStatuses.length - 1].key]
+      : [];
+  const processingKeys = resolvedStatuses
+    .filter((status) => !status.isFinal && !pendingKeys.includes(status.key))
+    .map((status) => status.key);
+
   const orders = await ctx.db.query("orders").order("desc").take(limit);
 
+  const pending = pendingKeys.length > 0
+    ? orders.filter((order) => pendingKeys.includes(order.status)).length
+    : 0;
+  const processing = processingKeys.length > 0
+    ? orders.filter((order) => processingKeys.includes(order.status)).length
+    : 0;
+  const delivered = resolvedDeliveredKeys.length > 0
+    ? orders.filter((order) => resolvedDeliveredKeys.includes(order.status)).length
+    : 0;
+  const cancelled = cancelledKeys.length > 0
+    ? orders.filter((order) => cancelledKeys.includes(order.status)).length
+    : 0;
+  const totalRevenue = resolvedDeliveredKeys.length > 0
+    ? orders
+        .filter((order) => resolvedDeliveredKeys.includes(order.status))
+        .reduce((sum, order) => sum + order.totalAmount, 0)
+    : 0;
+
   return {
-    cancelled: orders.filter((o) => o.status === "Cancelled").length,
-    delivered: orders.filter((o) => o.status === "Delivered").length,
-    pending: orders.filter((o) => o.status === "Pending").length,
-    processing: orders.filter((o) => o.status === "Processing" || o.status === "Shipped").length,
+    cancelled,
+    delivered,
+    pending,
+    processing,
     total: orders.length,
-    totalRevenue: orders
-      .filter((o) => o.status === "Delivered")
-      .reduce((sum, o) => sum + o.totalAmount, 0),
+    totalRevenue,
   };
 }

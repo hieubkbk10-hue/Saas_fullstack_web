@@ -1,5 +1,6 @@
- import { ShoppingBag, CreditCard, Truck, MapPin } from 'lucide-react';
- import { defineModule } from '../define-module';
+import { ShoppingBag, CreditCard, Truck, MapPin } from 'lucide-react';
+import { defineModule } from '../define-module';
+import { DEFAULT_ORDER_STATUS_PRESET, ORDER_STATUS_PRESETS } from '@/lib/orders/statuses';
  
  export const ordersModule = defineModule({
    key: 'orders',
@@ -23,16 +24,24 @@
    
   settings: [
     { key: 'ordersPerPage', label: 'Số đơn / trang', type: 'number', default: 20, group: 'general' },
-    { 
-      key: 'defaultStatus', 
-      label: 'Trạng thái mặc định', 
+    {
+      key: 'orderStatusPreset',
+      label: 'Preset trạng thái',
       type: 'select',
-      default: 'Pending',
+      default: DEFAULT_ORDER_STATUS_PRESET,
       group: 'general',
       options: [
-        { value: 'Pending', label: 'Chờ xử lý' },
-        { value: 'Processing', label: 'Đang xử lý' },
+        { value: 'simple', label: 'Simple (3 trạng thái)' },
+        { value: 'standard', label: 'Standard (5 trạng thái)' },
+        { value: 'advanced', label: 'Advanced (8 trạng thái)' },
       ],
+    },
+    {
+      key: 'orderStatuses',
+      label: 'Danh sách trạng thái (JSON)',
+      type: 'json',
+      group: 'general',
+      default: JSON.stringify(ORDER_STATUS_PRESETS[DEFAULT_ORDER_STATUS_PRESET], null, 2),
     },
     {
       key: 'addressFormat',
@@ -113,7 +122,7 @@
     },
   ],
    
-   conventionNote: 'orderNumber tự động generate. status: Pending, Processing, Shipped, Delivered, Cancelled. totalAmount tính tự động.',
+   conventionNote: 'orderNumber tự động generate. status theo cấu hình module. totalAmount tính tự động.',
    
    tabs: ['config', 'data'],
  });

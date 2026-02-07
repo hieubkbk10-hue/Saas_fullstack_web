@@ -2,6 +2,7 @@ import { mutation } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { seedPresetProductOptions } from "./seeders/productOptions.seeder";
+import { DEFAULT_ORDER_STATUS_PRESET, ORDER_STATUS_PRESETS } from "../lib/orders/statuses";
 
 export const seedModules = mutation({
   args: {},
@@ -1010,7 +1011,12 @@ export const seedOrdersModule = mutation({
     const existingSettings = await ctx.db.query("moduleSettings").withIndex("by_module", q => q.eq("moduleKey", "orders")).first();
     if (!existingSettings) {
       await ctx.db.insert("moduleSettings", { moduleKey: "orders", settingKey: "ordersPerPage", value: 20 });
-      await ctx.db.insert("moduleSettings", { moduleKey: "orders", settingKey: "defaultStatus", value: "Pending" });
+      await ctx.db.insert("moduleSettings", { moduleKey: "orders", settingKey: "orderStatusPreset", value: DEFAULT_ORDER_STATUS_PRESET });
+      await ctx.db.insert("moduleSettings", {
+        moduleKey: "orders",
+        settingKey: "orderStatuses",
+        value: JSON.stringify(ORDER_STATUS_PRESETS[DEFAULT_ORDER_STATUS_PRESET], null, 2),
+      });
     }
 
     return null;

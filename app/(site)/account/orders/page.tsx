@@ -11,28 +11,12 @@ import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { useBrandColor } from '@/components/site/hooks';
-import { useAccountOrdersConfig } from '@/lib/experiences';
+import { useAccountOrdersConfig, useOrderStatuses } from '@/lib/experiences';
 import { notifyAddToCart, useCart } from '@/lib/cart';
 
 const formatPrice = (value: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(value);
 
-const STATUS_CONFIG = {
-  Pending: { label: 'Chờ xử lý', step: 1, color: '#64748b' },
-  Processing: { label: 'Đang xử lý', step: 2, color: '#f59e0b' },
-  Shipped: { label: 'Đang giao', step: 3, color: '#3b82f6' },
-  Delivered: { label: 'Đã giao', step: 4, color: '#22c55e' },
-  Cancelled: { label: 'Đã hủy', step: 1, color: '#ef4444' },
-};
-
 const TIMELINE_STEPS = ['Đặt hàng', 'Xác nhận', 'Vận chuyển', 'Hoàn thành'];
-
-const STATUS_OPTIONS = [
-  { id: 'Pending', label: 'Chờ xử lý' },
-  { id: 'Processing', label: 'Đang xử lý' },
-  { id: 'Shipped', label: 'Đang giao' },
-  { id: 'Delivered', label: 'Đã giao' },
-  { id: 'Cancelled', label: 'Đã hủy' },
-] as const;
 
 const PAYMENT_LABELS: Record<string, string> = {
   COD: 'Thanh toán khi nhận hàng',
@@ -165,6 +149,7 @@ function StatCard({
 export default function AccountOrdersPage() {
   const brandColor = useBrandColor();
   const config = useAccountOrdersConfig();
+  const { statuses: orderStatuses } = useOrderStatuses();
   const router = useRouter();
   const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
   const { addItem } = useCart();
@@ -183,7 +168,16 @@ export default function AccountOrdersPage() {
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = config.ordersPerPage ?? 12;
-  const statusKeys = useMemo(() => STATUS_OPTIONS.map((status) => status.id), []);
+  const statusKeys = useMemo(() => orderStatuses.map((status) => status.key), [orderStatuses]);
+  const statusMap = useMemo(() => new Map(orderStatuses.map((status) => [status.key, status])), [orderStatuses]);
+  const pendingStatusKey = useMemo(
+    () => orderStatuses.find((status) => status.key === 'Pending')?.key ?? statusKeys[0],
+    [orderStatuses, statusKeys]
+  );
+  const deliveredStatusKey = useMemo(
+    () => orderStatuses.find((status) => status.key === 'Delivered')?.key ?? statusKeys[statusKeys.length - 1],
+    [orderStatuses, statusKeys]
+  );
   const stockEnabled = stockFeature?.enabled ?? false;
 
   const ordersList = useMemo(() => orders ?? [], [orders]);
@@ -191,13 +185,13 @@ export default function AccountOrdersPage() {
 
   const stats = {
     totalSpent: ordersList.reduce((sum, order) => sum + order.totalAmount, 0),
-    pending: ordersList.filter((order) => order.status === 'Pending').length,
-    delivered: ordersList.filter((order) => order.status === 'Delivered').length,
+    pending: pendingStatusKey ? ordersList.filter((order) => order.status === pendingStatusKey).length : 0,
+    delivered: deliveredStatusKey ? ordersList.filter((order) => order.status === deliveredStatusKey).length : 0,
     totalItems: ordersList.reduce((sum, order) => sum + order.items.reduce((acc, item) => acc + item.quantity, 0), 0),
   };
 
   const getStatusStyle = (status: string) => {
-    const statusConfig = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+    const statusConfig = statusMap.get(status);
     const color = statusConfig?.color ?? brandColor;
     return {
       backgroundColor: getBrandTint(color, 0.12),
@@ -258,7 +252,7 @@ export default function AccountOrdersPage() {
     toast.info(direction === 'prev' ? 'Đang về trang trước.' : 'Đang sang trang tiếp theo.');
   };
 
-  const activeStatuses = selectedStatuses.length > 0 ? selectedStatuses : config.defaultStatusFilter;
+  const activeStatuses = selectedStatuses.length > 0 ? selectedStatuses : statusKeys;
 
   const filteredOrders = useMemo(() => {
     if (activeStatuses.length === 0 || activeStatuses.length === statusKeys.length) {
@@ -278,7 +272,7 @@ export default function AccountOrdersPage() {
   const toggleStatus = (status: string) => {
     setCurrentPage(1);
     setSelectedStatuses((prev) => {
-      const base = prev.length > 0 ? prev : config.defaultStatusFilter;
+      const base = prev.length > 0 ? prev : statusKeys;
       return base.includes(status) ? base.filter((item) => item !== status) : [...base, status];
     });
   };
@@ -347,14 +341,14 @@ export default function AccountOrdersPage() {
           >
             Tất cả
           </button>
-          {STATUS_OPTIONS.map((status) => {
-            const active = activeStatuses.includes(status.id);
-            const statusColor = STATUS_CONFIG[status.id].color;
+          {orderStatuses.map((status) => {
+            const active = activeStatuses.includes(status.key);
+            const statusColor = status.color;
             return (
               <button
-                key={status.id}
+                key={status.key}
                 type="button"
-                onClick={() => toggleStatus(status.id)}
+                onClick={() => toggleStatus(status.key)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${active ? 'bg-white shadow-sm' : 'text-slate-500'}`}
                 style={active ? { borderColor: statusColor, color: statusColor } : { borderColor: '#e2e8f0' }}
               >
@@ -375,13 +369,13 @@ export default function AccountOrdersPage() {
             brandColor={brandColor}
           />
           <StatCard
-            label="Đơn đang xử lý"
+            label={statusMap.get(pendingStatusKey ?? '')?.label ?? 'Đang xử lý'}
             value={stats.pending}
             icon={<Clock className="w-5 h-5" />}
             brandColor={brandColor}
           />
           <StatCard
-            label="Đã giao"
+            label={statusMap.get(deliveredStatusKey ?? '')?.label ?? 'Đã giao'}
             value={stats.delivered}
             icon={<CheckCircle2 className="w-5 h-5" />}
             brandColor={brandColor}
@@ -416,14 +410,14 @@ export default function AccountOrdersPage() {
             <div className="space-y-4">
               {visibleOrders.map((order) => {
                 const createdAt = new Date(order._creationTime);
-                const statusLabel = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]?.label ?? order.status;
+                const statusLabel = statusMap.get(order.status)?.label ?? order.status;
                 const statusStyle = getStatusStyle(order.status);
                 const quantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                 const isExpanded = expandedOrderId === order._id;
                 const paymentLabel = order.paymentMethod ? PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod : 'Chưa chọn';
                 const shippingMethodLabel = order.shippingMethodLabel ?? 'Chưa xác định';
                 const trackingLabel = order.trackingNumber ?? 'Chưa có';
-                const step = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]?.step ?? 1;
+                const step = statusMap.get(order.status)?.step ?? 1;
 
                 return (
                   <div key={order._id} className="bg-white rounded-2xl border border-slate-200 shadow-sm">
@@ -517,7 +511,7 @@ export default function AccountOrdersPage() {
                             >
                               Mua lại
                             </button>
-                            {config.allowCancel && order.status === 'Pending' && (
+                            {config.allowCancel && statusMap.get(order.status)?.allowCancel && (
                               <button
                                 type="button"
                                 onClick={() => { void handleCancelOrder(order._id); }}
@@ -597,7 +591,7 @@ export default function AccountOrdersPage() {
                   <tbody>
                     {ordersList.map((order) => {
                       const createdAt = new Date(order._creationTime);
-                      const statusLabel = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]?.label ?? order.status;
+                      const statusLabel = statusMap.get(order.status)?.label ?? order.status;
                       const statusStyle = getStatusStyle(order.status);
                       const quantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                       return (
@@ -655,7 +649,7 @@ export default function AccountOrdersPage() {
               <div className="space-y-2 md:hidden">
                 {ordersList.map((order) => {
                   const createdAt = new Date(order._creationTime);
-                  const statusLabel = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]?.label ?? order.status;
+                  const statusLabel = statusMap.get(order.status)?.label ?? order.status;
                   const statusStyle = getStatusStyle(order.status);
                   return (
                     <div key={order._id} className="bg-white border border-slate-200 rounded-xl p-3">
@@ -690,10 +684,10 @@ export default function AccountOrdersPage() {
             <div className="space-y-6">
               {ordersList.map((order) => {
                 const createdAt = new Date(order._creationTime);
-                const statusLabel = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]?.label ?? order.status;
+                const statusLabel = statusMap.get(order.status)?.label ?? order.status;
                 const statusStyle = getStatusStyle(order.status);
                 const trackingLabel = order.trackingNumber ?? 'Đang cập nhật';
-                const step = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]?.step ?? 1;
+                const step = statusMap.get(order.status)?.step ?? 1;
                 return (
                   <div key={order._id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                     <div className="px-6 py-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-50/50">
@@ -768,7 +762,7 @@ export default function AccountOrdersPage() {
                             {formatPrice(order.totalAmount)}
                           </span>
                         </div>
-                        {config.allowCancel && order.status === 'Pending' ? (
+                        {config.allowCancel && statusMap.get(order.status)?.allowCancel ? (
                           <button
                             type="button"
                             onClick={() => { void handleCancelOrder(order._id); }}

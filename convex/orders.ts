@@ -1,17 +1,16 @@
-import type { MutationCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import * as OrdersModel from "./model/orders";
 import type { Doc, Id } from "./_generated/dataModel";
+import {
+  normalizeOrderStatusPreset,
+  parseOrderStatuses,
+  type OrderStatusConfig,
+} from "../lib/orders/statuses";
 
-const orderStatus = v.union(
-  v.literal("Pending"),
-  v.literal("Processing"),
-  v.literal("Shipped"),
-  v.literal("Delivered"),
-  v.literal("Cancelled")
-);
+const orderStatus = v.string();
 
 const paymentMethod = v.union(
   v.literal("COD"),
@@ -27,6 +26,33 @@ const paymentStatus = v.union(
   v.literal("Failed"),
   v.literal("Refunded")
 );
+
+const orderStatusConfig = v.object({
+  key: v.string(),
+  label: v.string(),
+  color: v.string(),
+  step: v.number(),
+  isFinal: v.boolean(),
+  allowCancel: v.boolean(),
+});
+
+async function getOrderStatusSettings(ctx: MutationCtx | QueryCtx) {
+  const [presetSetting, statusesSetting] = await Promise.all([
+    ctx.db
+      .query("moduleSettings")
+      .withIndex("by_module_setting", (q) => q.eq("moduleKey", "orders").eq("settingKey", "orderStatusPreset"))
+      .unique(),
+    ctx.db
+      .query("moduleSettings")
+      .withIndex("by_module_setting", (q) => q.eq("moduleKey", "orders").eq("settingKey", "orderStatuses"))
+      .unique(),
+  ]);
+
+  const preset = normalizeOrderStatusPreset(presetSetting?.value);
+  const statuses = parseOrderStatuses(statusesSetting?.value, preset);
+
+  return { preset, statuses };
+}
 
 const orderItemValidator = v.object({
   price: v.number(),
@@ -165,6 +191,18 @@ const orderDoc = v.object({
 // ============================================================
 // QUERIES
 // ============================================================
+
+export const getOrderStatuses = query({
+  args: {},
+  handler: async (ctx) => {
+    const { preset, statuses } = await getOrderStatusSettings(ctx);
+    return { preset, statuses: statuses as OrderStatusConfig[] };
+  },
+  returns: v.object({
+    preset: v.string(),
+    statuses: v.array(orderStatusConfig),
+  }),
+});
 
 // Paginated list (for production use)
 export const list = query({
@@ -384,7 +422,10 @@ export const countByCustomer = query({
 // Get order statistics (for dashboard/system page)
 export const getStats = query({
   args: { limit: v.optional(v.number()) },
-  handler: async (ctx, args) => OrdersModel.getStats(ctx, { limit: args.limit }),
+  handler: async (ctx, args) => {
+    const { statuses } = await getOrderStatusSettings(ctx);
+    return OrdersModel.getStats(ctx, { limit: args.limit, statuses });
+  },
   returns: v.object({
     cancelled: v.number(),
     delivered: v.number(),
@@ -416,9 +457,12 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const { variantPricing, variantStock } = await getVariantSettings(ctx);
     const normalizedItems = await normalizeOrderItems(ctx, args.items, variantPricing);
+    const { statuses } = await getOrderStatusSettings(ctx);
+    const defaultStatus = statuses[0]?.key ?? "Pending";
     const orderId = await OrdersModel.create(ctx, {
       ...args,
       items: normalizedItems,
+      status: defaultStatus,
     });
 
     if (variantStock === "variant") {
@@ -472,10 +516,16 @@ export const cancel = mutation({
     if (!order) {
       throw new Error("Order not found");
     }
-    if (order.status !== "Pending") {
+    const { statuses } = await getOrderStatusSettings(ctx);
+    const currentStatus = statuses.find((status) => status.key === order.status);
+    if (!currentStatus?.allowCancel) {
       throw new Error("Chỉ có thể hủy đơn hàng đang chờ xử lý");
     }
-    await OrdersModel.updateStatus(ctx, { id: args.id, status: "Cancelled" });
+    const cancelledStatus = statuses.find((status) => status.key.toLowerCase().includes("cancel"));
+    if (!cancelledStatus) {
+      throw new Error("Chưa cấu hình trạng thái hủy đơn");
+    }
+    await OrdersModel.updateStatus(ctx, { id: args.id, status: cancelledStatus.key });
     return null;
   },
   returns: v.null(),

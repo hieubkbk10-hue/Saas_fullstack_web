@@ -9,20 +9,12 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { ArrowLeft, CreditCard, Loader2, MapPin, Package, ShoppingBag, Truck, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '../../../components/ui';
+import { useOrderStatuses } from '@/lib/experiences';
 
 const MODULE_KEY = 'orders';
 
-type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
 type PaymentStatus = 'Pending' | 'Paid' | 'Failed' | 'Refunded';
 type PaymentMethod = 'COD' | 'BankTransfer' | 'VietQR' | 'CreditCard' | 'EWallet';
-
-const ORDER_STATUSES: { value: OrderStatus; label: string; color: string }[] = [
-  { color: 'bg-slate-500', label: 'Chờ xử lý', value: 'Pending' },
-  { color: 'bg-yellow-500', label: 'Đang xử lý', value: 'Processing' },
-  { color: 'bg-blue-500', label: 'Đang giao', value: 'Shipped' },
-  { color: 'bg-green-500', label: 'Hoàn thành', value: 'Delivered' },
-  { color: 'bg-red-500', label: 'Đã hủy', value: 'Cancelled' },
-];
 
 const PAYMENT_STATUSES: { value: PaymentStatus; label: string }[] = [
   { label: 'Chờ thanh toán', value: 'Pending' },
@@ -47,8 +39,9 @@ export default function EditOrderPage() {
   const customerData = useQuery(api.customers.getById, orderData?.customerId ? { id: orderData.customerId } : "skip");
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const updateOrder = useMutation(api.orders.update);
+  const { statuses: orderStatuses } = useOrderStatuses();
 
-  const [status, setStatus] = useState<OrderStatus>('Pending');
+  const [status, setStatus] = useState('');
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('Pending');
   const [trackingNumber, setTrackingNumber] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
@@ -62,11 +55,20 @@ export default function EditOrderPage() {
     fieldsData?.forEach(f => fields.add(f.fieldKey));
     return fields;
   }, [fieldsData]);
+  const statusMap = useMemo(() => new Map(orderStatuses.map((status) => [status.key, status])), [orderStatuses]);
+  const getStatusVariant = (statusKey: string) => {
+    const key = statusKey.toLowerCase();
+    if (key.includes('cancel')) return 'destructive';
+    if (key.includes('refund')) return 'secondary';
+    if (key.includes('deliver') || key.includes('complete')) return 'success';
+    if (key.includes('ship') || key.includes('process')) return 'warning';
+    return 'secondary';
+  };
 
   // Sync state from server
   useEffect(() => {
     if (orderData) {
-      setStatus(orderData.status as OrderStatus);
+      setStatus(orderData.status);
       setPaymentStatus((orderData.paymentStatus!) || 'Pending');
       setTrackingNumber(orderData.trackingNumber ?? '');
       setShippingAddress(orderData.shippingAddress ?? '');
@@ -123,8 +125,8 @@ export default function EditOrderPage() {
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{orderData.orderNumber}</h1>
-            <Badge variant={status === 'Delivered' ? 'success' : (status === 'Cancelled' ? 'destructive' : 'secondary')}>
-              {ORDER_STATUSES.find(s => s.value === orderData.status)?.label}
+            <Badge variant={getStatusVariant(orderData.status)}>
+              {statusMap.get(orderData.status)?.label ?? orderData.status}
             </Badge>
           </div>
           <p className="text-sm text-slate-500">Tạo lúc: {formatDate(orderData._creationTime)}</p>
@@ -234,10 +236,10 @@ export default function EditOrderPage() {
                 <select
                   className="w-full h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm"
                   value={status}
-                  onChange={(e) =>{  setStatus(e.target.value as OrderStatus); }}
+                  onChange={(e) =>{  setStatus(e.target.value); }}
                 >
-                  {ORDER_STATUSES.map(s => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
+                  {orderStatuses.map((statusOption) => (
+                    <option key={statusOption.key} value={statusOption.key}>{statusOption.label}</option>
                   ))}
                 </select>
               </CardContent>

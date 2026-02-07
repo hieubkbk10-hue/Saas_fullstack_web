@@ -9,6 +9,7 @@ import { Input, cn } from '@/app/admin/components/ui';
 import { AddressPreview } from './AddressPreview';
 import { PaymentMethodsEditor, type PaymentMethodConfig } from './PaymentMethodsEditor';
 import { ShippingMethodsEditor, type ShippingMethodConfig } from './ShippingMethodsEditor';
+import { DEFAULT_ORDER_STATUS_PRESET, ORDER_STATUS_PRESETS, type OrderStatusPreset } from '@/lib/orders/statuses';
 import { VietQRPreview } from './VietQRPreview';
 
 type ConfigTabKey = 'general' | 'shipping' | 'payment' | 'address';
@@ -87,6 +88,10 @@ export function OrdersConfigTab({
   const paymentMethods = useMemo(
     () => parseJsonSetting(localSettings.paymentMethods, DEFAULT_PAYMENT_METHODS),
     [localSettings.paymentMethods]
+  );
+  const orderStatusPreset = String(localSettings.orderStatusPreset ?? DEFAULT_ORDER_STATUS_PRESET) as OrderStatusPreset;
+  const orderStatusesValue = String(
+    localSettings.orderStatuses ?? JSON.stringify(ORDER_STATUS_PRESETS[orderStatusPreset], null, 2)
   );
 
   const bankCode = String(localSettings.bankCode ?? '');
@@ -179,12 +184,25 @@ export function OrdersConfigTab({
                         <select
                           className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
                           value={String(localSettings[setting.key] ?? '')}
-                          onChange={(event) => onSettingChange(setting.key, event.target.value)}
+                          onChange={(event) => {
+                            const nextValue = event.target.value;
+                            onSettingChange(setting.key, nextValue);
+                            if (setting.key === 'orderStatusPreset') {
+                              const preset = (nextValue || DEFAULT_ORDER_STATUS_PRESET) as OrderStatusPreset;
+                              onSettingChange('orderStatuses', JSON.stringify(ORDER_STATUS_PRESETS[preset], null, 2));
+                            }
+                          }}
                         >
                           {(setting.options ?? []).map((option) => (
                             <option key={option.value} value={option.value}>{option.label}</option>
                           ))}
                         </select>
+                      ) : setting.type === 'json' ? (
+                        <textarea
+                          className="min-h-[180px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                          value={setting.key === 'orderStatuses' ? orderStatusesValue : String(localSettings[setting.key] ?? '')}
+                          onChange={(event) => onSettingChange(setting.key, event.target.value)}
+                        />
                       ) : (
                         <Input
                           type={setting.type === 'number' ? 'number' : 'text'}

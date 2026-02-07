@@ -10,27 +10,11 @@ import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+import { useOrderStatuses } from '@/lib/experiences';
 
 const MODULE_KEY = 'orders';
 
-type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
 type PaymentStatus = 'Pending' | 'Paid' | 'Failed' | 'Refunded';
-
-const STATUS_COLORS: Record<OrderStatus, 'secondary' | 'warning' | 'success' | 'destructive'> = {
-  Cancelled: 'destructive',
-  Delivered: 'success',
-  Pending: 'secondary',
-  Processing: 'warning',
-  Shipped: 'warning',
-};
-
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  Cancelled: 'Đã hủy',
-  Delivered: 'Hoàn thành',
-  Pending: 'Chờ xử lý',
-  Processing: 'Đang xử lý',
-  Shipped: 'Đang giao',
-};
 
 const PAYMENT_STATUS_COLORS: Record<PaymentStatus, 'secondary' | 'success' | 'destructive'> = {
   Failed: 'destructive',
@@ -58,13 +42,14 @@ function OrdersContent() {
   const customersData = useQuery(api.customers.listAll, { limit: 500 });
   const fieldsData = useQuery(api.admin.modules.listEnabledModuleFields, { moduleKey: MODULE_KEY });
   const settingsData = useQuery(api.admin.modules.listModuleSettings, { moduleKey: MODULE_KEY });
+  const { statuses: orderStatuses } = useOrderStatuses();
   
   const deleteOrder = useMutation(api.orders.remove);
   const bulkDeleteOrders = useMutation(api.orders.bulkRemove);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'' | 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'>('');
+  const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterPaymentStatus, setFilterPaymentStatus] = useState<'' | 'Pending' | 'Paid' | 'Failed' | 'Refunded'>('');
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
@@ -108,6 +93,15 @@ function OrdersContent() {
     fieldsData?.forEach(f => fields.add(f.fieldKey));
     return fields;
   }, [fieldsData]);
+  const statusMap = useMemo(() => new Map(orderStatuses.map((status) => [status.key, status])), [orderStatuses]);
+  const getStatusVariant = (statusKey: string) => {
+    const key = statusKey.toLowerCase();
+    if (key.includes('cancel')) return 'destructive';
+    if (key.includes('refund')) return 'secondary';
+    if (key.includes('deliver') || key.includes('complete')) return 'success';
+    if (key.includes('ship') || key.includes('process')) return 'warning';
+    return 'secondary';
+  };
 
   const columns = useMemo(() => {
     const cols = [
@@ -230,7 +224,7 @@ function OrdersContent() {
 
   const handleFilterChange = (type: 'status' | 'paymentStatus', value: string) => {
     if (type === 'status') {
-      setFilterStatus(value as '' | 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled');
+      setFilterStatus(value);
     } else {
       setFilterPaymentStatus(value as '' | 'Pending' | 'Paid' | 'Failed' | 'Refunded');
     }
@@ -335,11 +329,11 @@ function OrdersContent() {
             </div>
             <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterStatus} onChange={(e) =>{  handleFilterChange('status', e.target.value); }}>
               <option value="">Tất cả trạng thái</option>
-              <option value="Pending">Chờ xử lý</option>
-              <option value="Processing">Đang xử lý</option>
-              <option value="Shipped">Đang giao</option>
-              <option value="Delivered">Hoàn thành</option>
-              <option value="Cancelled">Đã hủy</option>
+              {orderStatuses.map((status) => (
+                <option key={status.key} value={status.key}>
+                  {status.label}
+                </option>
+              ))}
             </select>
             {enabledFields.has('paymentStatus') && (
               <select className="h-10 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm" value={filterPaymentStatus} onChange={(e) =>{  handleFilterChange('paymentStatus', e.target.value); }}>
@@ -386,8 +380,8 @@ function OrdersContent() {
                 {visibleColumns.includes('totalAmount') && <TableCell className="font-medium">{formatPrice(order.totalAmount)}</TableCell>}
                 {visibleColumns.includes('status') && (
                   <TableCell>
-                    <Badge variant={STATUS_COLORS[order.status as OrderStatus]}>
-                      {STATUS_LABELS[order.status as OrderStatus]}
+                    <Badge variant={getStatusVariant(order.status)}>
+                      {statusMap.get(order.status)?.label ?? order.status}
                     </Badge>
                   </TableCell>
                 )}

@@ -34,13 +34,7 @@ export const commentStatus = v.union(
   v.literal("Spam")
 );
 
-export const orderStatus = v.union(
-  v.literal("Pending"),
-  v.literal("Processing"),
-  v.literal("Shipped"),
-  v.literal("Delivered"),
-  v.literal("Cancelled")
-);
+export const orderStatus = v.string();
 
 export const paymentMethod = v.union(
   v.literal("COD"),

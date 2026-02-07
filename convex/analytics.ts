@@ -1,6 +1,7 @@
-import { query } from "./_generated/server";
+import { query, type QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
+import { normalizeOrderStatusPreset, parseOrderStatuses, type OrderStatusConfig } from "../lib/orders/statuses";
 
 // Helper: Calculate period timestamps
 function getPeriodTimestamps(period: string) {
@@ -20,8 +21,30 @@ function getPeriodTimestamps(period: string) {
   };
 }
 
-// Helper: Valid order statuses for revenue calculations
-const VALID_ORDER_STATUSES = ["Delivered", "Shipped", "Processing"] as const;
+async function getOrderStatusSettings(ctx: QueryCtx) {
+  const [presetSetting, statusesSetting] = await Promise.all([
+    ctx.db
+      .query("moduleSettings")
+      .withIndex("by_module_setting", (q) => q.eq("moduleKey", "orders").eq("settingKey", "orderStatusPreset"))
+      .unique(),
+    ctx.db
+      .query("moduleSettings")
+      .withIndex("by_module_setting", (q) => q.eq("moduleKey", "orders").eq("settingKey", "orderStatuses"))
+      .unique(),
+  ]);
+
+  const preset = normalizeOrderStatusPreset(presetSetting?.value);
+  const statuses = parseOrderStatuses(statusesSetting?.value, preset);
+
+  return { preset, statuses };
+}
+
+const getRevenueStatuses = (statuses: OrderStatusConfig[]) => {
+  const revenueStatuses = statuses.filter(
+    (status) => status.isFinal && !status.key.toLowerCase().includes("cancel") && !status.key.toLowerCase().includes("refund")
+  );
+  return revenueStatuses.length > 0 ? revenueStatuses : statuses;
+};
 
 // Get revenue statistics from orders - OPTIMIZED: filter by status index + limit
 export const getRevenueStats = query({
@@ -31,13 +54,15 @@ export const getRevenueStats = query({
   handler: async (ctx, args) => {
     const period = args.period ?? "30d";
     const { startDate, prevStartDate } = getPeriodTimestamps(period);
+    const { statuses } = await getOrderStatusSettings(ctx);
+    const revenueStatuses = getRevenueStatuses(statuses);
     
     // OPTIMIZED: Query by status index instead of fetching ALL
     // Fetch orders for each valid status with limit (max 1000 per status)
     const ordersByStatus = await Promise.all(
-      VALID_ORDER_STATUSES.map( async status =>
+      revenueStatuses.map( async status =>
         ctx.db.query("orders")
-          .withIndex("by_status", q => q.eq("status", status))
+          .withIndex("by_status", q => q.eq("status", status.key))
           .take(1000)
       )
     );
@@ -206,12 +231,14 @@ export const getRevenueChartData = query({
   handler: async (ctx, args) => {
     const period = args.period ?? "30d";
     const { now, startDate } = getPeriodTimestamps(period);
+    const { statuses } = await getOrderStatusSettings(ctx);
+    const revenueStatuses = getRevenueStatuses(statuses);
     
     // OPTIMIZED: Query by status index with limit
     const ordersByStatus = await Promise.all(
-      VALID_ORDER_STATUSES.map( async status =>
+      revenueStatuses.map( async status =>
         ctx.db.query("orders")
-          .withIndex("by_status", q => q.eq("status", status))
+          .withIndex("by_status", q => q.eq("status", status.key))
           .take(2000)
       )
     );
@@ -278,15 +305,18 @@ export const getRevenueChartData = query({
 export const getOrderStatusDistribution = query({
   args: {},
   handler: async (ctx) => {
-    const ALL_STATUSES = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"] as const;
+    const { statuses } = await getOrderStatusSettings(ctx);
+    if (statuses.length === 0) {
+      return [];
+    }
     
     // OPTIMIZED: Query count by status index (instead of fetching ALL)
     const statusCounts = await Promise.all(
-      ALL_STATUSES.map(async status => {
+      statuses.map(async status => {
         const orders = await ctx.db.query("orders")
-          .withIndex("by_status", q => q.eq("status", status))
+          .withIndex("by_status", q => q.eq("status", status.key))
           .take(10_000);
-        return { count: orders.length, status };
+        return { count: orders.length, status: status.key };
       })
     );
     
@@ -316,25 +346,30 @@ export const getSummaryStats = query({
   handler: async (ctx, args) => {
     const period = args.period ?? "30d";
     const { startDate, prevStartDate } = getPeriodTimestamps(period);
+    const { statuses } = await getOrderStatusSettings(ctx);
+    const summaryStatuses = statuses.filter(
+      (status) => !status.allowCancel && !status.key.toLowerCase().includes("cancel")
+    );
+    const resolvedSummaryStatuses = summaryStatuses.length > 0 ? summaryStatuses : statuses;
     
     // OPTIMIZED: Parallel queries with indexes
     const [
-      deliveredOrders,
-      shippedOrders,
-      processingOrders,
+      ordersByStatus,
       activeCustomers,
       inactiveCustomers,
       activeProducts,
     ] = await Promise.all([
-      ctx.db.query("orders").withIndex("by_status", q => q.eq("status", "Delivered")).take(2000),
-      ctx.db.query("orders").withIndex("by_status", q => q.eq("status", "Shipped")).take(2000),
-      ctx.db.query("orders").withIndex("by_status", q => q.eq("status", "Processing")).take(2000),
+      Promise.all(
+        resolvedSummaryStatuses.map((status) =>
+          ctx.db.query("orders").withIndex("by_status", q => q.eq("status", status.key)).take(2000)
+        )
+      ),
       ctx.db.query("customers").withIndex("by_status", q => q.eq("status", "Active")).take(5000),
       ctx.db.query("customers").withIndex("by_status", q => q.eq("status", "Inactive")).take(5000),
       ctx.db.query("products").withIndex("by_status_stock", q => q.eq("status", "Active")).take(5000),
     ]);
     
-    const validOrders = [...deliveredOrders, ...shippedOrders, ...processingOrders];
+    const validOrders = ordersByStatus.flat();
     const currentOrders = validOrders.filter(o => o._creationTime >= startDate);
     const prevOrders = validOrders.filter(o => 
       o._creationTime >= prevStartDate && o._creationTime < startDate

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowUpRight, CheckCircle2, Clock, DollarSign, Package, ShoppingBag } from 'lucide-react';
@@ -18,21 +18,13 @@ type AccountOrdersPreviewProps = {
   allowCancel: boolean;
   paginationType: 'pagination' | 'infiniteScroll';
   ordersPerPage: number;
-  defaultStatusFilter: string[];
+  orderStatuses: Array<{ key: string; label: string; color: string; step: number; isFinal: boolean; allowCancel: boolean }>;
   stockEnabled: boolean;
   brandColor: string;
   device: 'desktop' | 'tablet' | 'mobile';
 };
 
 const formatPrice = (value: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(value);
-
-const STATUS_CONFIG = {
-  pending: { label: 'Chờ xử lý', step: 1, color: '#64748b' },
-  processing: { label: 'Đang xử lý', step: 2, color: '#f59e0b' },
-  shipped: { label: 'Đang giao', step: 3, color: '#3b82f6' },
-  delivered: { label: 'Đã giao', step: 4, color: '#22c55e' },
-  cancelled: { label: 'Đã hủy', step: 1, color: '#ef4444' },
-};
 
 const TIMELINE_STEPS = ['Đặt hàng', 'Xác nhận', 'Vận chuyển', 'Hoàn thành'];
 
@@ -55,26 +47,13 @@ const hexToRgba = (hex: string, opacity: number) => {
 
 const getBrandTint = (color: string, opacity: number) => hexToRgba(color, opacity);
 
-const STATUS_OPTIONS = [
-  { id: 'Pending', key: 'pending', label: 'Chờ xử lý' },
-  { id: 'Processing', key: 'processing', label: 'Đang xử lý' },
-  { id: 'Shipped', key: 'shipped', label: 'Đang giao' },
-  { id: 'Delivered', key: 'delivered', label: 'Đã giao' },
-  { id: 'Cancelled', key: 'cancelled', label: 'Đã hủy' },
-] as const;
-
-const STATUS_KEY_MAP = STATUS_OPTIONS.reduce<Record<string, string>>((acc, status) => {
-  acc[status.id] = status.key;
-  return acc;
-}, {});
-
 const MOCK_ORDERS = [
   {
     id: 'ORD-20260207-1234',
     date: '07/02/2026',
     total: 640000,
     itemsCount: 2,
-    status: 'pending' as const,
+    statusIndex: 0,
     paymentMethod: 'COD',
     shippingMethod: 'Giao hàng tiêu chuẩn',
     shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
@@ -89,7 +68,7 @@ const MOCK_ORDERS = [
     date: '06/02/2026',
     total: 980000,
     itemsCount: 3,
-    status: 'processing' as const,
+    statusIndex: 1,
     paymentMethod: 'Ví điện tử',
     shippingMethod: 'Giao hàng nhanh',
     shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
@@ -104,7 +83,7 @@ const MOCK_ORDERS = [
     date: '06/02/2026',
     total: 420000,
     itemsCount: 1,
-    status: 'shipped' as const,
+    statusIndex: 2,
     paymentMethod: 'Chuyển khoản',
     shippingMethod: 'Giao nhanh 2h',
     shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
@@ -118,7 +97,7 @@ const MOCK_ORDERS = [
     date: '05/02/2026',
     total: 320000,
     itemsCount: 1,
-    status: 'delivered' as const,
+    statusIndex: 3,
     paymentMethod: 'Chuyển khoản',
     shippingMethod: 'Giao nhanh 2h',
     shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
@@ -130,7 +109,7 @@ const MOCK_ORDERS = [
     date: '04/02/2026',
     total: 890000,
     itemsCount: 3,
-    status: 'processing' as const,
+    statusIndex: 1,
     paymentMethod: 'COD',
     shippingMethod: 'Giao tiêu chuẩn',
     shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
@@ -146,7 +125,7 @@ const MOCK_ORDERS = [
     date: '03/02/2026',
     total: 520000,
     itemsCount: 2,
-    status: 'shipped' as const,
+    statusIndex: 2,
     paymentMethod: 'Ví điện tử',
     shippingMethod: 'Giao hàng nhanh',
     shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
@@ -161,7 +140,7 @@ const MOCK_ORDERS = [
     date: '02/02/2026',
     total: 280000,
     itemsCount: 1,
-    status: 'cancelled' as const,
+    statusIndex: 4,
     paymentMethod: 'COD',
     shippingMethod: 'Giao tiêu chuẩn',
     shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
@@ -175,7 +154,7 @@ const MOCK_ORDERS = [
     date: '01/02/2026',
     total: 720000,
     itemsCount: 2,
-    status: 'delivered' as const,
+    statusIndex: 3,
     paymentMethod: 'Chuyển khoản',
     shippingMethod: 'Giao hàng nhanh',
     shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
@@ -187,12 +166,11 @@ const MOCK_ORDERS = [
   },
 ];
 
-type Order = (typeof MOCK_ORDERS)[number];
+type Order = (typeof MOCK_ORDERS)[number] & { status: string };
 
-function StatusBadge({ status }: { status: Order['status'] }) {
-  const statusConfig = STATUS_CONFIG[status];
-  const tone = status === 'cancelled' ? 0.16 : 0.12;
-  const statusColor = statusConfig.color;
+function StatusBadge({ status, statusConfig, brandColor }: { status: string; statusConfig?: { label: string; color: string }; brandColor: string }) {
+  const statusColor = statusConfig?.color ?? brandColor;
+  const tone = status.toLowerCase().includes('cancel') ? 0.16 : 0.12;
   return (
     <span
       className="text-xs font-semibold px-2.5 py-1 rounded-full border"
@@ -202,7 +180,7 @@ function StatusBadge({ status }: { status: Order['status'] }) {
         borderColor: hexToRgba(statusColor, 0.3),
       }}
     >
-      {statusConfig.label}
+      {statusConfig?.label ?? status}
     </span>
   );
 }
@@ -242,8 +220,7 @@ function OrderMeta({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Stepper({ status, brandColor }: { status: Order['status']; brandColor: string }) {
-  const step = STATUS_CONFIG[status].step;
+function Stepper({ step, brandColor }: { step: number; brandColor: string }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
@@ -265,7 +242,7 @@ function Stepper({ status, brandColor }: { status: Order['status']; brandColor: 
           );
         })}
       </div>
-      <div className="text-xs text-slate-500">Bước hiện tại: {TIMELINE_STEPS[step - 1]}</div>
+      <div className="text-xs text-slate-500">Bước hiện tại: {TIMELINE_STEPS[step - 1] ?? TIMELINE_STEPS[0]}</div>
     </div>
   );
 }
@@ -316,49 +293,45 @@ export function AccountOrdersPreview({
   allowCancel,
   paginationType,
   ordersPerPage,
-  defaultStatusFilter,
+  orderStatuses,
   stockEnabled,
   brandColor,
   device,
 }: AccountOrdersPreviewProps) {
   const router = useRouter();
   const isMobile = device === 'mobile';
-  const statusKeys = useMemo(() => STATUS_OPTIONS.map((status) => status.key), []);
-  const normalizedDefaultStatuses = useMemo(() => {
-    const mapped = defaultStatusFilter
-      .map((status) => STATUS_KEY_MAP[status])
-      .filter((status): status is string => Boolean(status));
-    return mapped.length > 0 ? mapped : ['processing', 'shipped'];
-  }, [defaultStatusFilter]);
-  const [activeStatuses, setActiveStatuses] = useState<string[]>(normalizedDefaultStatuses);
+  const statusKeys = useMemo(() => orderStatuses.map((status) => status.key), [orderStatuses]);
+  const statusMap = useMemo(() => new Map(orderStatuses.map((status) => [status.key, status])), [orderStatuses]);
+  const mockOrders = useMemo(() => {
+    if (statusKeys.length === 0) {
+      return MOCK_ORDERS.map((order) => ({ ...order, status: 'Pending' }));
+    }
+    return MOCK_ORDERS.map((order) => ({
+      ...order,
+      status: statusKeys[order.statusIndex % statusKeys.length],
+    }));
+  }, [statusKeys]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const activeStatuses = selectedStatuses.length > 0 ? selectedStatuses : statusKeys;
   const isAllActive = activeStatuses.length === statusKeys.length;
   const toggleStatus = (status: string) => {
-    setActiveStatuses((prev) => {
-      if (prev.includes(status)) {
-        const next = prev.filter(item => item !== status);
-        return next.length > 0 ? next : prev;
-      }
-      return [...prev, status];
+    setCurrentPage(1);
+    setSelectedStatuses((prev) => {
+      const base = prev.length > 0 ? prev : statusKeys;
+      return base.includes(status) ? base.filter((item) => item !== status) : [...base, status];
     });
   };
 
-  useEffect(() => {
-    setActiveStatuses(normalizedDefaultStatuses);
-  }, [normalizedDefaultStatuses]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [activeStatuses, ordersPerPage]);
-
   const filteredOrders = useMemo(() => {
     if (activeStatuses.length === statusKeys.length) {
-      return MOCK_ORDERS;
+      return mockOrders;
     }
-    return MOCK_ORDERS.filter((order) => activeStatuses.includes(order.status));
-  }, [activeStatuses, statusKeys]);
+    return mockOrders.filter((order) => activeStatuses.includes(order.status));
+  }, [activeStatuses, mockOrders, statusKeys]);
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ordersPerPage));
-  const pageStart = (currentPage - 1) * ordersPerPage;
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStart = (safeCurrentPage - 1) * ordersPerPage;
   const pageEnd = pageStart + ordersPerPage;
   const visibleOrders = paginationType === 'pagination'
     ? filteredOrders.slice(pageStart, pageEnd)
@@ -394,18 +367,21 @@ export function AccountOrdersPreview({
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => setActiveStatuses(statusKeys)}
+            onClick={() => {
+              setSelectedStatuses([]);
+              setCurrentPage(1);
+            }}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${isAllActive ? 'bg-white shadow-sm' : 'text-slate-500'}`}
             style={isAllActive ? { borderColor: brandColor, color: brandColor } : { borderColor: '#e2e8f0' }}
           >
             Tất cả
           </button>
-          {STATUS_OPTIONS.map((status) => {
+          {orderStatuses.map((status) => {
             const active = activeStatuses.includes(status.key);
-            const statusColor = STATUS_CONFIG[status.key].color;
+            const statusColor = status.color;
             return (
               <button
-                key={status.id}
+                key={status.key}
                 type="button"
                 onClick={() => toggleStatus(status.key)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${active ? 'bg-white shadow-sm' : 'text-slate-500'}`}
@@ -444,7 +420,7 @@ export function AccountOrdersPreview({
                     <div className="text-xs text-slate-500">Mã đơn hàng · {order.date}</div>
                     <div className="text-sm font-semibold text-slate-900">{order.id}</div>
                   </div>
-                  <StatusBadge status={order.status} />
+                  <StatusBadge status={order.status} statusConfig={statusMap.get(order.status)} brandColor={brandColor} />
                 </div>
                 <div className="text-xs text-slate-500">{order.itemsCount} sản phẩm · {formatPrice(order.total)}</div>
                 <div className="border-t pt-3 flex items-center justify-between text-xs">
@@ -468,7 +444,9 @@ export function AccountOrdersPreview({
                       {showTracking && <OrderMeta label="Tracking" value={order.trackingCode} />}
                     </div>
                     {showShippingAddress && <OrderMeta label="Địa chỉ" value={order.shippingAddress} />}
-                    {showTimeline && <Stepper status={order.status} brandColor={brandColor} />}
+                    {showTimeline && (
+                      <Stepper step={statusMap.get(order.status)?.step ?? 1} brandColor={brandColor} />
+                    )}
                     <div className="flex flex-wrap justify-end gap-2">
                       <button
                         type="button"
@@ -478,7 +456,7 @@ export function AccountOrdersPreview({
                       >
                         Mua lại
                       </button>
-                      {allowCancel && order.status === 'pending' && (
+                      {allowCancel && statusMap.get(order.status)?.allowCancel && (
                         <button
                           type="button"
                           onClick={() => {}}
@@ -506,19 +484,19 @@ export function AccountOrdersPreview({
                   <button
                     type="button"
                     onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
+                    disabled={safeCurrentPage === 1}
                     className="px-3 py-1.5 rounded-lg font-semibold border disabled:opacity-50"
                     style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
                   >
                     Trước
                   </button>
                   <div className="text-slate-500">
-                    Trang <span className="font-semibold text-slate-700">{currentPage}</span> / {totalPages}
+                    Trang <span className="font-semibold text-slate-700">{safeCurrentPage}</span> / {totalPages}
                   </div>
                   <button
                     type="button"
                     onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
+                    disabled={safeCurrentPage === totalPages}
                     className="px-3 py-1.5 rounded-lg font-semibold border disabled:opacity-50"
                     style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
                   >
@@ -556,14 +534,14 @@ export function AccountOrdersPreview({
                   </tr>
                 </thead>
                 <tbody>
-                  {MOCK_ORDERS.map((order) => (
+                  {mockOrders.map((order) => (
                     <tr key={order.id} className="border-t hover:bg-slate-50/50 transition-colors">
                       <td className="px-4 py-3 font-medium text-slate-900">{order.id}</td>
                       <td className="px-4 py-3 text-slate-500">{order.date}</td>
                       <td className="px-4 py-3 text-slate-700">{order.itemsCount}</td>
                       <td className="px-4 py-3 font-semibold text-slate-900">{formatPrice(order.total)}</td>
                       <td className="px-4 py-3">
-                        <StatusBadge status={order.status} />
+                        <StatusBadge status={order.status} statusConfig={statusMap.get(order.status)} brandColor={brandColor} />
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button
@@ -582,8 +560,8 @@ export function AccountOrdersPreview({
               <div className="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-3">
                 <p className="text-sm text-slate-600">
                   Hiển thị <span className="font-medium text-slate-900">1</span> đến{' '}
-                  <span className="font-medium text-slate-900">{MOCK_ORDERS.length}</span> trong số{' '}
-                  <span className="font-medium text-slate-900">{MOCK_ORDERS.length}</span> kết quả
+                  <span className="font-medium text-slate-900">{mockOrders.length}</span> trong số{' '}
+                  <span className="font-medium text-slate-900">{mockOrders.length}</span> kết quả
                 </p>
                 <div className="inline-flex items-center gap-2">
                   <button
@@ -607,14 +585,14 @@ export function AccountOrdersPreview({
             </div>
           ) : (
             <div className="space-y-2">
-              {MOCK_ORDERS.map((order) => (
+              {mockOrders.map((order) => (
                 <div key={order.id} className="bg-white border border-slate-200 rounded-xl p-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-xs text-slate-500">{order.id} · {order.date}</div>
                       <div className="text-sm font-semibold text-slate-900">{formatPrice(order.total)}</div>
                     </div>
-                    <StatusBadge status={order.status} />
+                    <StatusBadge status={order.status} statusConfig={statusMap.get(order.status)} brandColor={brandColor} />
                   </div>
                   <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
                     <span>{order.itemsCount} sản phẩm</span>
@@ -636,7 +614,7 @@ export function AccountOrdersPreview({
 
       {layoutStyle === 'timeline' && (
         <div className="space-y-6">
-          {MOCK_ORDERS.map((order) => (
+          {mockOrders.map((order) => (
             <div key={order.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
               <div className="px-6 py-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-50/50">
                 <div className="flex flex-wrap items-center gap-4">
@@ -650,11 +628,13 @@ export function AccountOrdersPreview({
                     <div className="text-sm font-semibold text-slate-900">{order.id}</div>
                   </div>
                 </div>
-                <StatusBadge status={order.status} />
+                <StatusBadge status={order.status} statusConfig={statusMap.get(order.status)} brandColor={brandColor} />
               </div>
 
               <div className="p-6 space-y-6">
-                {showTimeline && <Stepper status={order.status} brandColor={brandColor} />}
+                {showTimeline && (
+                  <Stepper step={statusMap.get(order.status)?.step ?? 1} brandColor={brandColor} />
+                )}
                 {showOrderItems && <OrderItems items={order.items} brandColor={brandColor} />}
               </div>
 
@@ -677,7 +657,7 @@ export function AccountOrdersPreview({
                       {formatPrice(order.total)}
                     </span>
                   </div>
-                  {allowCancel && order.status === 'pending' ? (
+                  {allowCancel && statusMap.get(order.status)?.allowCancel ? (
                     <button
                       type="button"
                       onClick={() => {}}

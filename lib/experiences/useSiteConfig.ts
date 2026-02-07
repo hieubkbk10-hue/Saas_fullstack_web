@@ -2,6 +2,7 @@ import { api } from '@/convex/_generated/api';
 import { useMemo } from 'react';
 import { useQuery } from 'convex/react';
 import { useCartAvailable } from './useCartAvailable';
+import { normalizeOrderStatusPreset, parseOrderStatuses } from '@/lib/orders/statuses';
 
 type PaginationType = 'pagination' | 'infiniteScroll';
 type FilterPosition = 'sidebar' | 'top' | 'none';
@@ -346,7 +347,6 @@ type AccountOrdersConfig = {
   allowCancel: boolean;
   paginationType: PaginationType;
   ordersPerPage: number;
-  defaultStatusFilter: Array<'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'>;
 };
 
 export function useAccountOrdersConfig(): AccountOrdersConfig {
@@ -354,20 +354,6 @@ export function useAccountOrdersConfig(): AccountOrdersConfig {
 
   return useMemo(() => {
     const raw = experienceSetting?.value as Partial<AccountOrdersConfig> | undefined;
-    const normalizeStatusFilter = (
-      value?: Array<'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'>
-    ): Array<'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'> => {
-      const allowed: Array<'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'> = [
-        'Pending',
-        'Processing',
-        'Shipped',
-        'Delivered',
-        'Cancelled',
-      ];
-      const filtered = value?.filter((status) => allowed.includes(status)) ?? [];
-      return filtered.length > 0 ? filtered : ['Processing', 'Shipped'];
-    };
-
     return {
       layoutStyle: raw?.layoutStyle ?? 'cards',
       showStats: raw?.showStats ?? true,
@@ -380,9 +366,22 @@ export function useAccountOrdersConfig(): AccountOrdersConfig {
       allowCancel: raw?.allowCancel ?? true,
       paginationType: normalizePaginationType(raw?.paginationType),
       ordersPerPage: raw?.ordersPerPage ?? 12,
-      defaultStatusFilter: normalizeStatusFilter(raw?.defaultStatusFilter),
     };
   }, [experienceSetting?.value]);
+}
+
+export function useOrderStatuses() {
+  const statusData = useQuery(api.orders.getOrderStatuses);
+
+  return useMemo(() => {
+    const preset = normalizeOrderStatusPreset(statusData?.preset);
+    const statuses = parseOrderStatuses(statusData?.statuses, preset);
+
+    return {
+      preset,
+      statuses,
+    };
+  }, [statusData?.preset, statusData?.statuses]);
 }
 
 type AccountProfileConfig = {

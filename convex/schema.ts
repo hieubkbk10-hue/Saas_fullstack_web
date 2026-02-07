@@ -565,13 +565,7 @@ export default defineSchema({
     shippingMethodId: v.optional(v.string()),
     shippingMethodLabel: v.optional(v.string()),
     shippingFee: v.number(),
-    status: v.union(
-      v.literal("Pending"),
-      v.literal("Processing"),
-      v.literal("Shipped"),
-      v.literal("Delivered"),
-      v.literal("Cancelled")
-    ),
+    status: v.string(),
     subtotal: v.number(),
     totalAmount: v.number(),
     trackingNumber: v.optional(v.string()),
