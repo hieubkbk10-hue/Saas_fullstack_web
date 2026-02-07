@@ -344,7 +344,6 @@ type AccountOrdersConfig = {
   showShippingAddress: boolean;
   showTracking: boolean;
   showTimeline: boolean;
-  allowCancel: boolean;
   paginationType: PaginationType;
   ordersPerPage: number;
   defaultStatusFilter: string[];
@@ -364,7 +363,6 @@ export function useAccountOrdersConfig(): AccountOrdersConfig {
       showShippingAddress: raw?.showShippingAddress ?? true,
       showTracking: raw?.showTracking ?? true,
       showTimeline: raw?.showTimeline ?? true,
-      allowCancel: raw?.allowCancel ?? true,
       paginationType: normalizePaginationType(raw?.paginationType),
       ordersPerPage: raw?.ordersPerPage ?? 12,
       defaultStatusFilter: Array.isArray(raw?.defaultStatusFilter)

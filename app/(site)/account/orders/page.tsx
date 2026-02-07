@@ -517,7 +517,7 @@ export default function AccountOrdersPage() {
                             >
                               Mua lại
                             </button>
-                            {config.allowCancel && statusMap.get(order.status)?.allowCancel && (
+                            {statusMap.get(order.status)?.allowCancel && (
                               <button
                                 type="button"
                                 onClick={() => { void handleCancelOrder(order._id); }}
@@ -768,7 +768,7 @@ export default function AccountOrdersPage() {
                             {formatPrice(order.totalAmount)}
                           </span>
                         </div>
-                        {config.allowCancel && statusMap.get(order.status)?.allowCancel ? (
+                        {statusMap.get(order.status)?.allowCancel ? (
                           <button
                             type="button"
                             onClick={() => { void handleCancelOrder(order._id); }}

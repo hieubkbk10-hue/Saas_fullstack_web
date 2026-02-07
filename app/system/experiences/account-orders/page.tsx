@@ -38,7 +38,6 @@ type AccountOrdersExperienceConfig = {
   showShippingAddress: boolean;
   showTracking: boolean;
   showTimeline: boolean;
-  allowCancel: boolean;
   paginationType: PaginationType;
   ordersPerPage: number;
   defaultStatusFilter: string[];
@@ -61,7 +60,6 @@ const DEFAULT_CONFIG: AccountOrdersExperienceConfig = {
   showShippingAddress: true,
   showTracking: true,
   showTimeline: true,
-  allowCancel: true,
   paginationType: 'pagination',
   ordersPerPage: 12,
   defaultStatusFilter: [],
@@ -98,6 +96,9 @@ export default function AccountOrdersExperiencePage() {
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const customersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'customers' });
   const stockFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableStock', moduleKey: 'products' });
+  const paymentFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enablePayment', moduleKey: 'orders' });
+  const shippingFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableShipping', moduleKey: 'orders' });
+  const trackingFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableTracking', moduleKey: 'orders' });
   const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
   const { statuses: orderStatuses } = useOrderStatuses();
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
@@ -119,7 +120,6 @@ export default function AccountOrdersExperiencePage() {
       showShippingAddress: raw?.showShippingAddress ?? true,
       showTracking: raw?.showTracking ?? true,
       showTimeline: raw?.showTimeline ?? true,
-      allowCancel: raw?.allowCancel ?? true,
       paginationType: normalizePaginationType(raw?.paginationType),
       ordersPerPage: raw?.ordersPerPage ?? 12,
       defaultStatusFilter: Array.isArray(raw?.defaultStatusFilter)
@@ -193,40 +193,42 @@ export default function AccountOrdersExperiencePage() {
               onChange={(v) => setConfig(prev => ({ ...prev, showOrderItems: v }))}
               accentColor="#4f46e5"
             />
-            <ToggleRow
-              label="Phương thức thanh toán"
-              checked={config.showPaymentMethod}
-              onChange={(v) => setConfig(prev => ({ ...prev, showPaymentMethod: v }))}
-              accentColor="#4f46e5"
-            />
-            <ToggleRow
-              label="Phương thức giao hàng"
-              checked={config.showShippingMethod}
-              onChange={(v) => setConfig(prev => ({ ...prev, showShippingMethod: v }))}
-              accentColor="#4f46e5"
-            />
-            <ToggleRow
-              label="Địa chỉ giao hàng"
-              checked={config.showShippingAddress}
-              onChange={(v) => setConfig(prev => ({ ...prev, showShippingAddress: v }))}
-              accentColor="#4f46e5"
-            />
-            <ToggleRow
-              label="Tracking"
-              checked={config.showTracking}
-              onChange={(v) => setConfig(prev => ({ ...prev, showTracking: v }))}
-              accentColor="#4f46e5"
-            />
+            {paymentFeature?.enabled && (
+              <ToggleRow
+                label="Phương thức thanh toán"
+                checked={config.showPaymentMethod}
+                onChange={(v) => setConfig(prev => ({ ...prev, showPaymentMethod: v }))}
+                accentColor="#4f46e5"
+              />
+            )}
+            {shippingFeature?.enabled && (
+              <ToggleRow
+                label="Phương thức giao hàng"
+                checked={config.showShippingMethod}
+                onChange={(v) => setConfig(prev => ({ ...prev, showShippingMethod: v }))}
+                accentColor="#4f46e5"
+              />
+            )}
+            {shippingFeature?.enabled && (
+              <ToggleRow
+                label="Địa chỉ giao hàng"
+                checked={config.showShippingAddress}
+                onChange={(v) => setConfig(prev => ({ ...prev, showShippingAddress: v }))}
+                accentColor="#4f46e5"
+              />
+            )}
+            {trackingFeature?.enabled && (
+              <ToggleRow
+                label="Tracking"
+                checked={config.showTracking}
+                onChange={(v) => setConfig(prev => ({ ...prev, showTracking: v }))}
+                accentColor="#4f46e5"
+              />
+            )}
             <ToggleRow
               label="Timeline"
               checked={config.showTimeline}
               onChange={(v) => setConfig(prev => ({ ...prev, showTimeline: v }))}
-              accentColor="#4f46e5"
-            />
-            <ToggleRow
-              label="Cho phép hủy"
-              checked={config.allowCancel}
-              onChange={(v) => setConfig(prev => ({ ...prev, allowCancel: v }))}
               accentColor="#4f46e5"
             />
           </ControlCard>
@@ -332,7 +334,6 @@ export default function AccountOrdersExperiencePage() {
                 showShippingAddress={config.showShippingAddress}
                 showTracking={config.showTracking}
                 showTimeline={config.showTimeline}
-                allowCancel={config.allowCancel}
                 paginationType={config.paginationType}
                 ordersPerPage={config.ordersPerPage}
                 defaultStatusFilter={config.defaultStatusFilter}

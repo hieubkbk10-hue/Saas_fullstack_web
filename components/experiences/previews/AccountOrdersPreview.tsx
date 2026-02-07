@@ -15,7 +15,6 @@ type AccountOrdersPreviewProps = {
   showShippingAddress: boolean;
   showTracking: boolean;
   showTimeline: boolean;
-  allowCancel: boolean;
   paginationType: 'pagination' | 'infiniteScroll';
   ordersPerPage: number;
   defaultStatusFilter: string[];
@@ -291,7 +290,6 @@ export function AccountOrdersPreview({
   showShippingAddress,
   showTracking,
   showTimeline,
-  allowCancel,
   paginationType,
   ordersPerPage,
   defaultStatusFilter,
@@ -464,7 +462,7 @@ export function AccountOrdersPreview({
                       >
                         Mua lại
                       </button>
-                      {allowCancel && statusMap.get(order.status)?.allowCancel && (
+                      {statusMap.get(order.status)?.allowCancel && (
                         <button
                           type="button"
                           onClick={() => {}}
@@ -665,7 +663,7 @@ export function AccountOrdersPreview({
                       {formatPrice(order.total)}
                     </span>
                   </div>
-                  {allowCancel && statusMap.get(order.status)?.allowCancel ? (
+                  {statusMap.get(order.status)?.allowCancel ? (
                     <button
                       type="button"
                       onClick={() => {}}
