@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
-import { ArrowUpRight, ChevronDown, Package, ShoppingBag } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, ChevronDown, Clock, DollarSign, Package, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
 import type { Id } from '@/convex/_generated/dataModel';
@@ -21,12 +22,12 @@ const STATUS_LABELS: Record<string, string> = {
   Cancelled: 'Đã huỷ',
 };
 
-const STATUS_STYLES: Record<string, string> = {
-  Pending: 'bg-amber-100 text-amber-700',
-  Processing: 'bg-blue-100 text-blue-700',
-  Shipped: 'bg-indigo-100 text-indigo-700',
-  Delivered: 'bg-emerald-100 text-emerald-700',
-  Cancelled: 'bg-rose-100 text-rose-700',
+const STATUS_TONES: Record<string, number> = {
+  Pending: 0.08,
+  Processing: 0.12,
+  Shipped: 0.16,
+  Delivered: 0.2,
+  Cancelled: 0.06,
 };
 
 const TIMELINE_STEPS = ['Đặt hàng', 'Xác nhận', 'Vận chuyển', 'Hoàn thành'];
@@ -46,6 +47,25 @@ const PAYMENT_LABELS: Record<string, string> = {
   EWallet: 'Ví điện tử',
 };
 
+const hexToRgba = (hex: string, opacity: number) => {
+  const cleaned = hex.replace('#', '');
+  if (cleaned.length !== 3 && cleaned.length !== 6) {
+    return hex;
+  }
+  const normalized = cleaned.length === 3
+    ? cleaned.split('').map((char) => char + char).join('')
+    : cleaned;
+  const r = parseInt(normalized.slice(0, 2), 16);
+  const g = parseInt(normalized.slice(2, 4), 16);
+  const b = parseInt(normalized.slice(4, 6), 16);
+  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) {
+    return hex;
+  }
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
+
+const getBrandTint = (color: string, opacity: number) => hexToRgba(color, opacity);
+
 function OrderMeta({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -55,24 +75,94 @@ function OrderMeta({ label, value }: { label: string; value: string }) {
   );
 }
 
-function TimelineProgress({ status }: { status: string }) {
-  const step = STATUS_STEPS[status] ?? 1;
+function Stepper({ step, brandColor }: { step: number; brandColor: string }) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
+    <div className="w-full">
+      <div className="flex items-center w-full px-2 sm:px-4">
         {TIMELINE_STEPS.map((label, index) => {
           const active = index < step;
           return (
-            <div key={label} className="flex items-center gap-2">
-              <div className={`h-2 w-2 rounded-full ${active ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+            <React.Fragment key={label}>
+              <div className="relative flex flex-col items-center">
+                <div
+                  className="w-4 h-4 rounded-full border-[3px] z-10 transition-all duration-300 box-content bg-white"
+                  style={{
+                    backgroundColor: active ? brandColor : undefined,
+                    borderColor: active ? brandColor : getBrandTint(brandColor, 0.3),
+                    boxShadow: active ? `0 0 0 4px ${getBrandTint(brandColor, 0.1)}` : undefined,
+                  }}
+                />
+                <div className="absolute top-8 w-max max-w-[140px] hidden sm:flex flex-col items-center text-center">
+                  <span
+                    className={`text-xs font-semibold tracking-tight transition-colors duration-300 ${active ? '' : 'text-slate-400'}`}
+                    style={{ color: active ? brandColor : undefined }}
+                  >
+                    {label}
+                  </span>
+                </div>
+              </div>
               {index < TIMELINE_STEPS.length - 1 && (
-                <div className={`h-[2px] w-8 ${active ? 'bg-emerald-400' : 'bg-slate-200'}`} />
+                <div className="flex-1 h-0.5 relative mx-2 sm:mx-4">
+                  <div className="absolute inset-0 bg-slate-100" />
+                  <div
+                    className="absolute inset-0 transition-all duration-700 ease-out origin-left"
+                    style={{
+                      backgroundColor: brandColor,
+                      transform: index + 1 < step ? 'scaleX(1)' : 'scaleX(0)',
+                      transformOrigin: 'left',
+                    }}
+                  />
+                </div>
               )}
-            </div>
+            </React.Fragment>
           );
         })}
       </div>
-      <div className="text-xs text-slate-500">Bước hiện tại: {TIMELINE_STEPS[step - 1] ?? TIMELINE_STEPS[0]}</div>
+      <div className="hidden sm:block h-10" />
+      <div className="sm:hidden mt-3 flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100">
+        <span className="text-xs font-medium text-slate-500 uppercase">Trạng thái hiện tại</span>
+        <span className="text-sm font-semibold" style={{ color: brandColor }}>
+          {TIMELINE_STEPS[step - 1] ?? TIMELINE_STEPS[0]}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  icon,
+  highlight,
+  brandColor,
+}: {
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  highlight?: boolean;
+  brandColor: string;
+}) {
+  return (
+    <div
+      className={`relative overflow-hidden rounded-xl border p-5 transition-all duration-200 hover:shadow-md ${highlight ? '' : 'bg-white border-slate-200'}`}
+      style={highlight ? { backgroundColor: brandColor, borderColor: brandColor } : undefined}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-1">
+          <p className={`text-sm font-medium ${highlight ? 'text-white/80' : 'text-slate-500'}`}>
+            {label}
+          </p>
+          <h3 className={`text-xl font-bold tracking-tight ${highlight ? 'text-white' : 'text-slate-900'}`}>
+            {value}
+          </h3>
+        </div>
+        <div
+          className={`p-2 rounded-lg ${highlight ? 'text-white' : ''}`}
+          style={{ backgroundColor: highlight ? getBrandTint(brandColor, 0.2) : getBrandTint(brandColor, 0.08), color: highlight ? undefined : brandColor }}
+        >
+          {icon}
+        </div>
+      </div>
     </div>
   );
 }
@@ -80,6 +170,7 @@ function TimelineProgress({ status }: { status: string }) {
 export default function AccountOrdersPage() {
   const brandColor = useBrandColor();
   const config = useAccountOrdersConfig();
+  const router = useRouter();
   const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const cancelOrder = useMutation(api.orders.cancel);
@@ -115,7 +206,8 @@ export default function AccountOrdersPage() {
         <p className="text-slate-500 mb-6">Bạn cần đăng nhập để quản lý lịch sử đơn hàng.</p>
         <button
           onClick={openLoginModal}
-          className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-6 py-3 text-sm font-medium text-white hover:bg-slate-800"
+          className="inline-flex items-center justify-center rounded-lg px-6 py-3 text-sm font-medium text-white"
+          style={{ backgroundColor: brandColor }}
         >
           Đăng nhập ngay
         </button>
@@ -147,6 +239,15 @@ export default function AccountOrdersPage() {
     totalItems: ordersList.reduce((sum, order) => sum + order.items.reduce((acc, item) => acc + item.quantity, 0), 0),
   };
 
+  const getStatusStyle = (status: string) => {
+    const opacity = STATUS_TONES[status] ?? 0.1;
+    return {
+      backgroundColor: getBrandTint(brandColor, opacity),
+      color: brandColor,
+      borderColor: getBrandTint(brandColor, 0.3),
+    };
+  };
+
   const handleCancelOrder = async (orderId: Id<'orders'>) => {
     if (!confirm('Bạn chắc chắn muốn hủy đơn hàng này?')) {
       return;
@@ -159,6 +260,22 @@ export default function AccountOrdersPage() {
     }
   };
 
+  const handleViewDetail = (orderNumber: string) => {
+    toast.info(`Đang mở chi tiết đơn ${orderNumber}.`);
+  };
+
+  const handleInvoice = (orderNumber: string) => {
+    toast.info(`Đang tạo hóa đơn VAT cho ${orderNumber}.`);
+  };
+
+  const handleReorder = () => {
+    router.push('/products');
+  };
+
+  const handlePagination = (direction: 'prev' | 'next') => {
+    toast.info(direction === 'prev' ? 'Đang về trang trước.' : 'Đang sang trang tiếp theo.');
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="mb-8">
@@ -168,22 +285,31 @@ export default function AccountOrdersPage() {
 
       {config.showStats && config.layoutStyle === 'cards' && ordersList.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-4">
-            <div className="text-xs text-slate-500">Tổng chi tiêu</div>
-            <div className="text-lg font-semibold text-slate-900">{formatPrice(stats.totalSpent)}</div>
-          </div>
-          <div className="bg-white rounded-2xl border border-slate-200 p-4">
-            <div className="text-xs text-slate-500">Đơn đang xử lý</div>
-            <div className="text-lg font-semibold text-slate-900">{stats.pending}</div>
-          </div>
-          <div className="bg-white rounded-2xl border border-slate-200 p-4">
-            <div className="text-xs text-slate-500">Đã giao</div>
-            <div className="text-lg font-semibold text-slate-900">{stats.delivered}</div>
-          </div>
-          <div className="bg-white rounded-2xl border border-slate-200 p-4">
-            <div className="text-xs text-slate-500">Sản phẩm đã mua</div>
-            <div className="text-lg font-semibold text-slate-900">{stats.totalItems}</div>
-          </div>
+          <StatCard
+            label="Tổng chi tiêu"
+            value={formatPrice(stats.totalSpent)}
+            icon={<DollarSign className="w-5 h-5" />}
+            highlight
+            brandColor={brandColor}
+          />
+          <StatCard
+            label="Đơn đang xử lý"
+            value={stats.pending}
+            icon={<Clock className="w-5 h-5" />}
+            brandColor={brandColor}
+          />
+          <StatCard
+            label="Đã giao"
+            value={stats.delivered}
+            icon={<CheckCircle2 className="w-5 h-5" />}
+            brandColor={brandColor}
+          />
+          <StatCard
+            label="Sản phẩm đã mua"
+            value={stats.totalItems}
+            icon={<ShoppingBag className="w-5 h-5" />}
+            brandColor={brandColor}
+          />
         </div>
       )}
 
@@ -209,12 +335,13 @@ export default function AccountOrdersPage() {
               {ordersList.map((order) => {
                 const createdAt = new Date(order._creationTime);
                 const statusLabel = STATUS_LABELS[order.status] ?? order.status;
-                const statusClass = STATUS_STYLES[order.status] ?? 'bg-slate-100 text-slate-600';
+                const statusStyle = getStatusStyle(order.status);
                 const quantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                 const isExpanded = expandedOrderId === order._id;
                 const paymentLabel = order.paymentMethod ? PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod : 'Chưa chọn';
                 const shippingMethodLabel = order.shippingMethodLabel ?? 'Chưa xác định';
                 const trackingLabel = order.trackingNumber ?? 'Chưa có';
+                const step = STATUS_STEPS[order.status] ?? 1;
 
                 return (
                   <div key={order._id} className="bg-white rounded-2xl border border-slate-200 shadow-sm">
@@ -228,7 +355,7 @@ export default function AccountOrdersPage() {
                         <div className="text-sm font-semibold text-slate-900">{order.orderNumber}</div>
                       </div>
                       <div className="flex flex-col items-start md:items-end gap-2">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClass}`}>
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold border" style={statusStyle}>
                           {statusLabel}
                         </span>
                         <div className="text-xs text-slate-500">{quantity} sản phẩm</div>
@@ -244,52 +371,87 @@ export default function AccountOrdersPage() {
                     </div>
 
                     {isExpanded && (
-                      <div className="px-5 pb-5 space-y-4">
-                        {config.showOrderItems && (
-                          <div className="border-t border-slate-100 pt-4">
-                            <div className="text-[10px] text-slate-500 mb-2">Sản phẩm</div>
-                            <div className="space-y-2">
-                              {order.items.map((item, itemIndex) => (
-                                <div key={`${item.productId}-${itemIndex}`} className="flex items-center justify-between text-xs text-slate-700">
-                                  <span className="flex items-center gap-2">
-                                    <Package size={12} className="text-slate-400" />
-                                    {item.productName} (x{item.quantity})
-                                  </span>
-                                  <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
-                                </div>
-                              ))}
+                      <div className="px-5 pb-5 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div
+                          className="rounded-xl border p-4 space-y-4"
+                          style={{ backgroundColor: getBrandTint(brandColor, 0.04), borderColor: getBrandTint(brandColor, 0.16) }}
+                        >
+                          {config.showOrderItems && (
+                            <div>
+                              <div className="text-[10px] text-slate-500 mb-3 uppercase tracking-wide">Sản phẩm</div>
+                              <div className="space-y-3">
+                                {order.items.map((item, itemIndex) => (
+                                  <div key={`${item.productId}-${itemIndex}`} className="flex items-center gap-4">
+                                    <div
+                                      className="h-12 w-12 rounded-md border flex items-center justify-center"
+                                      style={{ borderColor: getBrandTint(brandColor, 0.2), backgroundColor: getBrandTint(brandColor, 0.08) }}
+                                    >
+                                      <Package size={18} style={{ color: brandColor }} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-sm font-medium text-slate-900 truncate">{item.productName}</div>
+                                      {item.variantTitle && (
+                                        <div className="text-xs text-slate-500">{item.variantTitle}</div>
+                                      )}
+                                      <div className="text-xs text-slate-500">Số lượng: {item.quantity}</div>
+                                    </div>
+                                    <div className="text-sm font-semibold text-slate-900">
+                                      {formatPrice(item.price * item.quantity)}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
+                          )}
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {config.showPaymentMethod && <OrderMeta label="Thanh toán" value={paymentLabel} />}
+                            {config.showShippingMethod && <OrderMeta label="Giao hàng" value={shippingMethodLabel} />}
+                            {config.showTracking && <OrderMeta label="Tracking" value={trackingLabel} />}
                           </div>
-                        )}
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {config.showPaymentMethod && <OrderMeta label="Thanh toán" value={paymentLabel} />}
-                          {config.showShippingMethod && <OrderMeta label="Giao hàng" value={shippingMethodLabel} />}
-                          {config.showTracking && <OrderMeta label="Tracking" value={trackingLabel} />}
-                        </div>
+                          {config.showShippingAddress && order.shippingAddress && (
+                            <OrderMeta label="Địa chỉ" value={order.shippingAddress} />
+                          )}
 
-                        {config.showShippingAddress && order.shippingAddress && (
-                          <OrderMeta label="Địa chỉ" value={order.shippingAddress} />
-                        )}
+                          {config.showTimeline && <Stepper step={step} brandColor={brandColor} />}
 
-                        {config.showTimeline && <TimelineProgress status={order.status} />}
-
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <button
-                            type="button"
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 border border-slate-200"
-                          >
-                            Xem chi tiết
-                          </button>
-                          {config.allowCancel && order.status === 'Pending' && (
+                          <div className="flex flex-wrap justify-end gap-2">
                             <button
                               type="button"
-                              onClick={() => { void handleCancelOrder(order._id); }}
-                              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-rose-500 hover:bg-rose-600"
+                              onClick={() => handleInvoice(order.orderNumber)}
+                              className="px-3 py-2 rounded-lg text-xs font-semibold border"
+                              style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
                             >
-                              Hủy đơn
+                              Hóa đơn VAT
                             </button>
-                          )}
+                            <button
+                              type="button"
+                              onClick={handleReorder}
+                              className="px-3 py-2 rounded-lg text-xs font-semibold text-white"
+                              style={{ backgroundColor: brandColor }}
+                            >
+                              Mua lại
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleViewDetail(order.orderNumber)}
+                              className="px-3 py-2 rounded-lg text-xs font-semibold border"
+                              style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
+                            >
+                              Xem chi tiết
+                            </button>
+                            {config.allowCancel && order.status === 'Pending' && (
+                              <button
+                                type="button"
+                                onClick={() => { void handleCancelOrder(order._id); }}
+                                className="px-3 py-2 rounded-lg text-xs font-semibold text-white"
+                                style={{ backgroundColor: brandColor }}
+                              >
+                                Hủy đơn
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -301,37 +463,42 @@ export default function AccountOrdersPage() {
 
           {config.layoutStyle === 'compact' && (
             <div className="space-y-3">
-              <div className="hidden md:block overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div className="hidden md:block overflow-hidden shadow ring-1 ring-black/5 sm:rounded-lg bg-white">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-slate-500">
                     <tr>
-                      <th className="px-4 py-3 text-left font-medium">Mã đơn</th>
-                      <th className="px-4 py-3 text-left font-medium">Ngày</th>
-                      <th className="px-4 py-3 text-left font-medium">Số SP</th>
-                      <th className="px-4 py-3 text-left font-medium">Tổng</th>
-                      <th className="px-4 py-3 text-left font-medium">Trạng thái</th>
-                      <th className="px-4 py-3 text-right font-medium">Thao tác</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Mã đơn</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Ngày</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Số SP</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Tổng</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide">Trạng thái</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
                     {ordersList.map((order) => {
                       const createdAt = new Date(order._creationTime);
                       const statusLabel = STATUS_LABELS[order.status] ?? order.status;
-                      const statusClass = STATUS_STYLES[order.status] ?? 'bg-slate-100 text-slate-600';
+                      const statusStyle = getStatusStyle(order.status);
                       const quantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                       return (
-                        <tr key={order._id} className="border-t">
+                        <tr key={order._id} className="border-t hover:bg-slate-50/50 transition-colors">
                           <td className="px-4 py-3 font-medium text-slate-900">{order.orderNumber}</td>
                           <td className="px-4 py-3 text-slate-500">{createdAt.toLocaleDateString('vi-VN')}</td>
                           <td className="px-4 py-3 text-slate-700">{quantity}</td>
                           <td className="px-4 py-3 font-semibold text-slate-900">{formatPrice(order.totalAmount)}</td>
                           <td className="px-4 py-3">
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusClass}`}>
+                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold border" style={statusStyle}>
                               {statusLabel}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <button className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600">
+                            <button
+                              type="button"
+                              onClick={() => handleViewDetail(order.orderNumber)}
+                              className="inline-flex items-center gap-1 text-xs font-semibold"
+                              style={{ color: brandColor }}
+                            >
                               Chi tiết <ArrowUpRight size={12} />
                             </button>
                           </td>
@@ -340,12 +507,37 @@ export default function AccountOrdersPage() {
                     })}
                   </tbody>
                 </table>
+                <div className="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-3">
+                  <p className="text-sm text-slate-600">
+                    Hiển thị <span className="font-medium text-slate-900">1</span> đến{' '}
+                    <span className="font-medium text-slate-900">{ordersList.length}</span> trong số{' '}
+                    <span className="font-medium text-slate-900">{ordersList.length}</span> kết quả
+                  </p>
+                  <div className="inline-flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handlePagination('prev')}
+                      className="px-3 py-1.5 text-xs font-semibold border rounded-md"
+                      style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
+                    >
+                      Trước
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePagination('next')}
+                      className="px-3 py-1.5 text-xs font-semibold text-white rounded-md"
+                      style={{ backgroundColor: brandColor }}
+                    >
+                      Sau
+                    </button>
+                  </div>
+                </div>
               </div>
               <div className="space-y-2 md:hidden">
                 {ordersList.map((order) => {
                   const createdAt = new Date(order._creationTime);
                   const statusLabel = STATUS_LABELS[order.status] ?? order.status;
-                  const statusClass = STATUS_STYLES[order.status] ?? 'bg-slate-100 text-slate-600';
+                  const statusStyle = getStatusStyle(order.status);
                   return (
                     <div key={order._id} className="bg-white border border-slate-200 rounded-xl p-3">
                       <div className="flex items-center justify-between">
@@ -353,13 +545,20 @@ export default function AccountOrdersPage() {
                           <div className="text-xs text-slate-500">{order.orderNumber} · {createdAt.toLocaleDateString('vi-VN')}</div>
                           <div className="text-sm font-semibold text-slate-900">{formatPrice(order.totalAmount)}</div>
                         </div>
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusClass}`}>
+                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold border" style={statusStyle}>
                           {statusLabel}
                         </span>
                       </div>
                       <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
                         <span>{order.items.reduce((sum, item) => sum + item.quantity, 0)} sản phẩm</span>
-                        <button className="text-indigo-600 font-semibold">Chi tiết</button>
+                        <button
+                          type="button"
+                          onClick={() => handleViewDetail(order.orderNumber)}
+                          className="font-semibold"
+                          style={{ color: brandColor }}
+                        >
+                          Chi tiết
+                        </button>
                       </div>
                     </div>
                   );
@@ -370,61 +569,97 @@ export default function AccountOrdersPage() {
 
           {config.layoutStyle === 'timeline' && (
             <div className="space-y-6">
-              {ordersList.map((order, index) => {
+              {ordersList.map((order) => {
                 const createdAt = new Date(order._creationTime);
                 const statusLabel = STATUS_LABELS[order.status] ?? order.status;
-                const statusClass = STATUS_STYLES[order.status] ?? 'bg-slate-100 text-slate-600';
-                const badgeBg = statusClass.split(' ').find((item) => item.startsWith('bg-')) ?? 'bg-slate-200';
-                const trackingLabel = order.trackingNumber ?? 'Chưa có';
+                const statusStyle = getStatusStyle(order.status);
+                const trackingLabel = order.trackingNumber ?? 'Đang cập nhật';
+                const step = STATUS_STEPS[order.status] ?? 1;
                 return (
-                  <div key={order._id} className="relative pl-8">
-                    <div className="absolute left-3 top-2 h-full w-px bg-slate-200" />
-                    <div className={`absolute left-1.5 top-2 h-4 w-4 rounded-full border-2 border-white ${badgeBg}`} />
-                    <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
-                      <div className="flex items-start justify-between">
+                  <div key={order._id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                    <div className="px-6 py-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-50/50">
+                      <div className="flex flex-wrap items-center gap-4">
                         <div>
-                          <div className="text-xs text-slate-500">{createdAt.toLocaleDateString('vi-VN')}</div>
+                          <div className="text-xs text-slate-500 uppercase tracking-wide">Ngày đặt</div>
+                          <div className="text-sm font-semibold text-slate-900">{createdAt.toLocaleDateString('vi-VN')}</div>
+                        </div>
+                        <div className="hidden md:block h-8 w-px bg-slate-200" />
+                        <div>
+                          <div className="text-xs text-slate-500 uppercase tracking-wide">Mã đơn</div>
                           <div className="text-sm font-semibold text-slate-900">{order.orderNumber}</div>
                         </div>
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusClass}`}>
-                          {statusLabel}
-                        </span>
                       </div>
-                      <div className="text-xs text-slate-500">
-                        {order.items.reduce((sum, item) => sum + item.quantity, 0)} sản phẩm · {formatPrice(order.totalAmount)}
-                      </div>
-                      {config.showTimeline && <TimelineProgress status={order.status} />}
-                      {(config.showOrderItems || config.showTracking) && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                          {config.showOrderItems && (
-                            <div className="space-y-2">
-                              {order.items.map((item, itemIndex) => (
-                                <div key={`${item.productId}-${itemIndex}`} className="flex items-center justify-between text-xs text-slate-700">
-                                  <span className="flex items-center gap-2">
-                                    <Package size={12} className="text-slate-400" />
-                                    {item.productName} (x{item.quantity})
-                                  </span>
-                                  <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold border" style={statusStyle}>
+                        {statusLabel}
+                      </span>
+                    </div>
+
+                    <div className="p-6 space-y-6">
+                      {config.showTimeline && <Stepper step={step} brandColor={brandColor} />}
+                      {config.showOrderItems && (
+                        <div className="space-y-4">
+                          {order.items.map((item, itemIndex) => (
+                            <div key={`${item.productId}-${itemIndex}`} className="flex flex-col sm:flex-row gap-4 items-start">
+                              <div
+                                className="w-16 h-16 rounded-lg border flex items-center justify-center"
+                                style={{ borderColor: getBrandTint(brandColor, 0.2), backgroundColor: getBrandTint(brandColor, 0.08) }}
+                              >
+                                <Package size={20} style={{ color: brandColor }} />
+                              </div>
+                              <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div>
+                                  <div className="text-sm font-semibold text-slate-900">{item.productName}</div>
+                                  {item.variantTitle && <div className="text-xs text-slate-500">{item.variantTitle}</div>}
+                                  <div className="text-xs text-slate-500">Số lượng: {item.quantity}</div>
                                 </div>
-                              ))}
+                                <div className="text-base font-semibold text-slate-900">{formatPrice(item.price * item.quantity)}</div>
+                              </div>
                             </div>
-                          )}
-                          {config.showTracking && <OrderMeta label="Tracking" value={trackingLabel} />}
+                          ))}
                         </div>
                       )}
-                      <div className="flex flex-wrap justify-end gap-2">
-                        {config.allowCancel && order.status === 'Pending' && (
+                    </div>
+
+                    <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      {config.showTracking && (
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+                          <span className="text-slate-500 font-medium">Tracking:</span>
+                          <span
+                            className="font-mono font-semibold px-2 py-0.5 rounded border text-xs"
+                            style={{ borderColor: getBrandTint(brandColor, 0.2), color: brandColor, backgroundColor: getBrandTint(brandColor, 0.08) }}
+                          >
+                            {trackingLabel}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tổng tiền</span>
+                          <span className="text-xl font-bold" style={{ color: brandColor }}>
+                            {formatPrice(order.totalAmount)}
+                          </span>
+                        </div>
+                        {config.allowCancel && order.status === 'Pending' ? (
                           <button
                             type="button"
                             onClick={() => { void handleCancelOrder(order._id); }}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-rose-500 hover:bg-rose-600"
+                            className="px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                            style={{ backgroundColor: brandColor }}
                           >
-                            Hủy đơn
+                            Hủy đơn hàng
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleViewDetail(order.orderNumber)}
+                            className="px-4 py-2 rounded-lg text-sm font-semibold border"
+                            style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
+                          >
+                            Xem chi tiết
                           </button>
                         )}
                       </div>
                     </div>
-                    {index === ordersList.length - 1 && <div className="absolute left-3 bottom-0 h-4 w-px bg-slate-50" />}
                   </div>
                 );
               })}
