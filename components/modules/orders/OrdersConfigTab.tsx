@@ -171,8 +171,8 @@ export function OrdersConfigTab({
               {config.settings
                 ?.filter((setting) => (setting.group ?? 'general') === 'general')
                 .map((setting) => (
-                  <div key={setting.key} className="space-y-2">
-                    <label className="text-xs text-slate-500">{setting.label}</label>
+                  <div key={setting.key}>
+                    <label className="text-xs text-slate-500 mb-1 block">{setting.label}</label>
                     {setting.type === 'select' ? (
                       <select
                         className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
