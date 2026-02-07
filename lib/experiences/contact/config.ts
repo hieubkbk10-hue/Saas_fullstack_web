@@ -1,35 +1,19 @@
 export type ContactLayoutStyle = 'form-only' | 'with-map' | 'with-info';
 
-export type LayoutConfig = {
+export type ContactExperienceConfig = {
+  layoutStyle: ContactLayoutStyle;
   showMap: boolean;
   showContactInfo: boolean;
   showSocialLinks: boolean;
 };
 
-export type ContactExperienceConfig = {
-  layoutStyle: ContactLayoutStyle;
-  layouts: {
-    'form-only': LayoutConfig;
-    'with-map': LayoutConfig;
-    'with-info': LayoutConfig;
-  };
-};
-
 export const CONTACT_EXPERIENCE_KEY = 'contact_ui' as const;
-
-const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
-  showContactInfo: true,
-  showMap: true,
-  showSocialLinks: true,
-};
 
 export const DEFAULT_CONTACT_CONFIG: ContactExperienceConfig = {
   layoutStyle: 'with-info',
-  layouts: {
-    'form-only': { ...DEFAULT_LAYOUT_CONFIG, showContactInfo: false, showMap: false },
-    'with-info': { ...DEFAULT_LAYOUT_CONFIG, showMap: false },
-    'with-map': { ...DEFAULT_LAYOUT_CONFIG, showContactInfo: false },
-  },
+  showContactInfo: true,
+  showMap: true,
+  showSocialLinks: true,
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
@@ -40,7 +24,10 @@ const isLayoutStyle = (value: unknown): value is ContactLayoutStyle => {
   return value === 'form-only' || value === 'with-map' || value === 'with-info';
 };
 
-const mergeLayout = (value: unknown, fallback: LayoutConfig): LayoutConfig => {
+const mergeLegacyLayout = (
+  value: unknown,
+  fallback: Pick<ContactExperienceConfig, 'showContactInfo' | 'showMap' | 'showSocialLinks'>
+): Pick<ContactExperienceConfig, 'showContactInfo' | 'showMap' | 'showSocialLinks'> => {
   if (!isRecord(value)) {
     return fallback;
   }
@@ -54,13 +41,13 @@ const mergeLayout = (value: unknown, fallback: LayoutConfig): LayoutConfig => {
 export const parseContactExperienceConfig = (raw: unknown): ContactExperienceConfig => {
   const source = isRecord(raw) ? raw : {};
   const layoutsRaw = isRecord(source.layouts) ? source.layouts : {};
+  const layoutStyle = isLayoutStyle(source.layoutStyle) ? source.layoutStyle : DEFAULT_CONTACT_CONFIG.layoutStyle;
+  const legacyLayout = mergeLegacyLayout(layoutsRaw[layoutStyle], DEFAULT_CONTACT_CONFIG);
 
   return {
-    layoutStyle: isLayoutStyle(source.layoutStyle) ? source.layoutStyle : DEFAULT_CONTACT_CONFIG.layoutStyle,
-    layouts: {
-      'form-only': mergeLayout(layoutsRaw['form-only'], DEFAULT_CONTACT_CONFIG.layouts['form-only']),
-      'with-info': mergeLayout(layoutsRaw['with-info'], DEFAULT_CONTACT_CONFIG.layouts['with-info']),
-      'with-map': mergeLayout(layoutsRaw['with-map'], DEFAULT_CONTACT_CONFIG.layouts['with-map']),
-    },
+    layoutStyle,
+    showContactInfo: typeof source.showContactInfo === 'boolean' ? source.showContactInfo : legacyLayout.showContactInfo,
+    showMap: typeof source.showMap === 'boolean' ? source.showMap : legacyLayout.showMap,
+    showSocialLinks: typeof source.showSocialLinks === 'boolean' ? source.showSocialLinks : legacyLayout.showSocialLinks,
   };
 };

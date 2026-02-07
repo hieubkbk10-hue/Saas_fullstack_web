@@ -1,5 +1,6 @@
 import React from 'react';
-import { Facebook, Instagram, Mail, MapPin, MessageSquare, Phone, Send, Twitter } from 'lucide-react';
+import { Facebook, Instagram, Mail, MapPin, MessageSquare, Phone, Send, Youtube } from 'lucide-react';
+import { ZaloIcon } from '@/components/site/SocialIcons';
 
 type ContactLayoutStyle = 'form-only' | 'with-map' | 'with-info';
 
@@ -37,6 +38,13 @@ function ContactForm({ brandColor = '#6366f1' }: { brandColor?: string }) {
 }
 
 function ContactInfo({ showSocialLinks, brandColor = '#6366f1' }: { showSocialLinks: boolean; brandColor?: string }) {
+  const socialLinks = [
+    { label: 'Facebook', color: '#1877f2', icon: Facebook },
+    { label: 'Instagram', color: '#e1306c', icon: Instagram },
+    { label: 'YouTube', color: '#ff0000', icon: Youtube },
+    { label: 'Zalo', color: '#0084ff', icon: ZaloIcon },
+  ];
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
       <h3 className="font-semibold text-slate-900 mb-4">Thông tin liên hệ</h3>
@@ -73,15 +81,15 @@ function ContactInfo({ showSocialLinks, brandColor = '#6366f1' }: { showSocialLi
         <div className="pt-4 mt-4 border-t border-slate-200">
           <div className="text-sm font-medium text-slate-700 mb-2">Theo dõi chúng tôi</div>
           <div className="flex gap-2">
-            <button className="w-9 h-9 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: '#1877f2' }}>
-              <Facebook size={18} />
-            </button>
-            <button className="w-9 h-9 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: '#1da1f2' }}>
-              <Twitter size={18} />
-            </button>
-            <button className="w-9 h-9 rounded-lg flex items-center justify-center text-white" style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}>
-              <Instagram size={18} />
-            </button>
+            {socialLinks.map((item) => (
+              <button
+                key={item.label}
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-white"
+                style={{ backgroundColor: item.color }}
+              >
+                <item.icon size={18} />
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -119,8 +127,16 @@ export function ContactPreview({
         </div>
 
         {layoutStyle === 'form-only' && (
-          <div className="max-w-xl mx-auto">
-            <ContactForm brandColor={brandColor} />
+          <div className="space-y-4">
+            <div className="max-w-xl mx-auto">
+              <ContactForm brandColor={brandColor} />
+            </div>
+            {(showContactInfo || showMap) && (
+              <div className={isMobile ? 'space-y-4' : 'grid grid-cols-2 gap-6'}>
+                {showContactInfo && <ContactInfo showSocialLinks={showSocialLinks} brandColor={brandColor} />}
+                {showMap && <MapPreview />}
+              </div>
+            )}
           </div>
         )}
 

@@ -2,13 +2,14 @@
 
 import { useMemo } from 'react';
 import { useQuery } from 'convex/react';
-import { Facebook, Instagram, Linkedin, MessageCircle, Twitter, Youtube } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Twitter, Youtube } from 'lucide-react';
 import { api } from '@/convex/_generated/api';
 import {
   CONTACT_EXPERIENCE_KEY,
   parseContactExperienceConfig,
   type ContactExperienceConfig,
 } from '@/lib/experiences/contact/config';
+import { TikTokIcon, ZaloIcon } from './SocialIcons';
 
 type SocialLinkItem = {
   label: string;
@@ -76,7 +77,8 @@ export function useContactPageData(): {
       { label: 'Instagram', href: settingsMap.social_instagram || '', color: '#e1306c', icon: Instagram },
       { label: 'LinkedIn', href: settingsMap.social_linkedin || '', color: '#0a66c2', icon: Linkedin },
       { label: 'YouTube', href: settingsMap.social_youtube || '', color: '#ff0000', icon: Youtube },
-      { label: 'Zalo', href: settingsMap.social_zalo || '', color: '#0a68ff', icon: MessageCircle },
+      { label: 'TikTok', href: settingsMap.social_tiktok || '', color: '#000000', icon: TikTokIcon },
+      { label: 'Zalo', href: settingsMap.social_zalo || '', color: '#0084ff', icon: ZaloIcon },
     ].filter((item) => item.href);
   }, [socialSettings]);
 

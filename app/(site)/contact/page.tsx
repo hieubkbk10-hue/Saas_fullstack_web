@@ -128,8 +128,6 @@ export default function ContactPage() {
     );
   }
 
-  const layoutConfig = config.layouts[config.layoutStyle];
-
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       <div className="text-center mb-8">
@@ -138,24 +136,42 @@ export default function ContactPage() {
       </div>
 
       {config.layoutStyle === 'form-only' && (
-        <div className="max-w-xl mx-auto">
-          <ContactForm brandColor={brandColor} />
+        <div className="space-y-6">
+          <div className="max-w-xl mx-auto">
+            <ContactForm brandColor={brandColor} />
+          </div>
+          {(config.showContactInfo || config.showMap) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {config.showContactInfo && (
+                <ContactInfoCard
+                  brandColor={brandColor}
+                  address={contactData.address}
+                  email={contactData.email}
+                  phone={contactData.phone}
+                  hotline={contactData.hotline}
+                  showSocialLinks={config.showSocialLinks}
+                  socialLinks={socialLinks}
+                />
+              )}
+              {config.showMap && <MapPreview address={contactData.address} />}
+            </div>
+          )}
         </div>
       )}
 
       {config.layoutStyle === 'with-map' && (
         <div className="space-y-6">
-          {layoutConfig.showMap && <MapPreview address={contactData.address} />}
+          {config.showMap && <MapPreview address={contactData.address} />}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ContactForm brandColor={brandColor} />
-            {layoutConfig.showContactInfo && (
+            {config.showContactInfo && (
               <ContactInfoCard
                 brandColor={brandColor}
                 address={contactData.address}
                 email={contactData.email}
                 phone={contactData.phone}
                 hotline={contactData.hotline}
-                showSocialLinks={layoutConfig.showSocialLinks}
+                showSocialLinks={config.showSocialLinks}
                 socialLinks={socialLinks}
               />
             )}
@@ -169,18 +185,18 @@ export default function ContactPage() {
             <ContactForm brandColor={brandColor} />
           </div>
           <div className="lg:col-span-2 space-y-6">
-            {layoutConfig.showContactInfo && (
+            {config.showContactInfo && (
               <ContactInfoCard
                 brandColor={brandColor}
                 address={contactData.address}
                 email={contactData.email}
                 phone={contactData.phone}
                 hotline={contactData.hotline}
-                showSocialLinks={layoutConfig.showSocialLinks}
+                showSocialLinks={config.showSocialLinks}
                 socialLinks={socialLinks}
               />
             )}
-            {layoutConfig.showMap && <MapPreview address={contactData.address} />}
+            {config.showMap && <MapPreview address={contactData.address} />}
           </div>
         </div>
       )}

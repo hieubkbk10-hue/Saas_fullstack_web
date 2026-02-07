@@ -32,5 +32,4 @@ export {
   parseContactExperienceConfig,
   type ContactExperienceConfig,
   type ContactLayoutStyle,
-  type LayoutConfig,
 } from './contact/config';

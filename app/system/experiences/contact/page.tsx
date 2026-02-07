@@ -32,7 +32,6 @@ import {
   MESSAGES,
   type ContactExperienceConfig,
   type ContactLayoutStyle,
-  type LayoutConfig,
 } from '@/lib/experiences';
 
 const LAYOUT_STYLES: LayoutOption<ContactLayoutStyle>[] = [
@@ -45,7 +44,7 @@ const HINTS = [
   'Preview mock giúp xem thay đổi ngay, không cần lưu mới thấy.',
   'Thông tin liên hệ và social phụ thuộc module Settings.',
   'Nếu feature Settings bị tắt, block tương ứng sẽ không hiển thị ở preview.',
-  'Mỗi layout có config riêng - chuyển tab để chỉnh.',
+  'Các khối hiển thị dùng chung giữa các layout.',
 ];
 
 function ModuleFeatureStatus({
@@ -103,25 +102,18 @@ export default function ContactExperiencePage() {
     MESSAGES.saveSuccess(EXPERIENCE_NAMES[CONTACT_EXPERIENCE_KEY])
   );
 
-  const currentLayoutConfig = config.layouts[config.layoutStyle];
   const settingsEnabled = settingsModule?.enabled ?? false;
   const contactEnabled = settingsEnabled && (contactFeature?.enabled ?? false);
   const socialEnabled = settingsEnabled && (socialFeature?.enabled ?? false);
   const mailEnabled = settingsEnabled && (mailFeature?.enabled ?? false);
 
-  const updateLayoutConfig = <K extends keyof LayoutConfig>(
+  const updateDisplayConfig = <K extends keyof Pick<ContactExperienceConfig, 'showContactInfo' | 'showMap' | 'showSocialLinks'>>(
     key: K,
-    value: LayoutConfig[K]
+    value: ContactExperienceConfig[K]
   ) => {
     setConfig(prev => ({
       ...prev,
-      layouts: {
-        ...prev.layouts,
-        [prev.layoutStyle]: {
-          ...prev.layouts[prev.layoutStyle],
-          [key]: value,
-        },
-      },
+      [key]: value,
     }));
   };
 
@@ -164,22 +156,22 @@ export default function ContactExperiencePage() {
           <ControlCard title="Khối hiển thị">
             <ToggleRow
               label="Bản đồ (Map)"
-              checked={currentLayoutConfig.showMap}
-              onChange={(v) => updateLayoutConfig('showMap', v)}
+              checked={config.showMap}
+              onChange={(v) => updateDisplayConfig('showMap', v)}
               accentColor="#6366f1"
               disabled={!contactEnabled}
             />
             <ToggleRow
               label="Thông tin liên hệ"
-              checked={currentLayoutConfig.showContactInfo}
-              onChange={(v) => updateLayoutConfig('showContactInfo', v)}
+              checked={config.showContactInfo}
+              onChange={(v) => updateDisplayConfig('showContactInfo', v)}
               accentColor="#6366f1"
               disabled={!contactEnabled}
             />
             <ToggleRow
               label="Social media"
-              checked={currentLayoutConfig.showSocialLinks}
-              onChange={(v) => updateLayoutConfig('showSocialLinks', v)}
+              checked={config.showSocialLinks}
+              onChange={(v) => updateDisplayConfig('showSocialLinks', v)}
               accentColor="#6366f1"
               disabled={!socialEnabled}
             />
@@ -252,9 +244,9 @@ export default function ContactExperiencePage() {
             <BrowserFrame url="yoursite.com/contact">
               <ContactPreview
                 layoutStyle={config.layoutStyle}
-                showMap={currentLayoutConfig.showMap && contactEnabled}
-                showContactInfo={currentLayoutConfig.showContactInfo && contactEnabled}
-                showSocialLinks={currentLayoutConfig.showSocialLinks && socialEnabled}
+                showMap={config.showMap && contactEnabled}
+                showContactInfo={config.showContactInfo && contactEnabled}
+                showSocialLinks={config.showSocialLinks && socialEnabled}
                 device={previewDevice}
                 brandColor="#6366f1"
               />
