@@ -77,13 +77,34 @@ const HINTS = [
   'Filters giúp users tìm kết quả chính xác.',
   'Result count giúp users biết được số lượng.',
   'Mỗi layout có config riêng - chuyển tab để chỉnh.',
+  'Cấu hình này áp dụng cho các trang list (posts, products, services).',
 ];
+
+function ModuleFeatureStatus({ label, enabled, href, moduleName }: { label: string; enabled: boolean; href: string; moduleName: string }) {
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="flex items-start gap-2">
+        <span className={`mt-1 inline-flex h-2 w-2 rounded-full ${enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">{label}</p>
+          <p className="text-xs text-slate-500">
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào {moduleName}
+          </p>
+        </div>
+      </div>
+      <Link href={href} className="text-xs font-medium text-cyan-600 hover:underline">
+        Đi đến →
+      </Link>
+    </div>
+  );
+}
 
 export default function SearchFilterExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const postsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'posts' });
   const productsModule = useQuery(api.admin.modules.getModuleByKey, { key: 'products' });
   const servicesModule = useQuery(api.admin.modules.getModuleByKey, { key: 'services' });
+  const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
 
   const serverConfig = useMemo<SearchFilterExperienceConfig>(() => {
@@ -98,7 +119,9 @@ export default function SearchFilterExperiencePage() {
     };
   }, [experienceSetting?.value]);
 
-  const isLoading = experienceSetting === undefined;
+  const isLoading = experienceSetting === undefined || postsModule === undefined || productsModule === undefined || servicesModule === undefined;
+  const brandColor = (brandColorSetting?.value as string) || '#14b8a6';
+  const hasEnabledModule = (postsModule?.enabled ?? false) || (productsModule?.enabled ?? false) || (servicesModule?.enabled ?? false);
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
   const { handleSave, isSaving } = useExperienceSave(
@@ -139,7 +162,7 @@ export default function SearchFilterExperiencePage() {
         <div>
           <div className="flex items-center gap-2">
             <LayoutTemplate className="w-5 h-5 text-teal-600" />
-            <h1 className="text-2xl font-bold">Tìm kiếm & Lọc</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Tìm kiếm & Lọc</h1>
           </div>
           <Link href="/system/experiences" className="text-sm text-blue-600 hover:underline">
             Quay lại danh sách
@@ -162,9 +185,9 @@ export default function SearchFilterExperiencePage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ControlCard title="Khối hiển thị">
-            <ToggleRow label="Filters" checked={currentLayoutConfig.showFilters} onChange={(v) => updateLayoutConfig('showFilters', v)} accentColor="#14b8a6" />
-            <ToggleRow label="Sorting" checked={currentLayoutConfig.showSorting} onChange={(v) => updateLayoutConfig('showSorting', v)} accentColor="#14b8a6" />
-            <ToggleRow label="Result count" checked={currentLayoutConfig.showResultCount} onChange={(v) => updateLayoutConfig('showResultCount', v)} accentColor="#14b8a6" />
+            <ToggleRow label="Filters" checked={currentLayoutConfig.showFilters} onChange={(v) => updateLayoutConfig('showFilters', v)} accentColor="#14b8a6" disabled={!hasEnabledModule} />
+            <ToggleRow label="Sorting" checked={currentLayoutConfig.showSorting} onChange={(v) => updateLayoutConfig('showSorting', v)} accentColor="#14b8a6" disabled={!hasEnabledModule} />
+            <ToggleRow label="Result count" checked={currentLayoutConfig.showResultCount} onChange={(v) => updateLayoutConfig('showResultCount', v)} accentColor="#14b8a6" disabled={!hasEnabledModule} />
           </ControlCard>
 
           <ControlCard title={`Cấu hình ${config.layoutStyle}`}>
@@ -173,6 +196,7 @@ export default function SearchFilterExperiencePage() {
               value={currentLayoutConfig.resultsDisplayStyle}
               onChange={(v) => updateLayoutConfig('resultsDisplayStyle', v as ResultsDisplayStyle)}
               options={DISPLAY_STYLES.map(s => ({ label: s.label, value: s.id }))}
+              disabled={!hasEnabledModule}
             />
           </ControlCard>
 
@@ -184,6 +208,12 @@ export default function SearchFilterExperiencePage() {
               title="Bài viết"
               colorScheme="cyan"
             />
+            <ModuleFeatureStatus
+              label="Bài viết"
+              enabled={postsModule?.enabled ?? false}
+              href="/system/modules/posts"
+              moduleName="module Bài viết"
+            />
             <ExperienceModuleLink
               enabled={productsModule?.enabled ?? false}
               href="/system/modules/products"
@@ -191,12 +221,24 @@ export default function SearchFilterExperiencePage() {
               title="Sản phẩm"
               colorScheme="cyan"
             />
+            <ModuleFeatureStatus
+              label="Sản phẩm"
+              enabled={productsModule?.enabled ?? false}
+              href="/system/modules/products"
+              moduleName="module Sản phẩm"
+            />
             <ExperienceModuleLink
               enabled={servicesModule?.enabled ?? false}
               href="/system/modules/services"
               icon={Briefcase}
               title="Dịch vụ"
               colorScheme="cyan"
+            />
+            <ModuleFeatureStatus
+              label="Dịch vụ"
+              enabled={servicesModule?.enabled ?? false}
+              href="/system/modules/services"
+              moduleName="module Dịch vụ"
             />
           </ControlCard>
         </CardContent>
@@ -240,7 +282,7 @@ export default function SearchFilterExperiencePage() {
                 showSorting={currentLayoutConfig.showSorting}
                 showResultCount={currentLayoutConfig.showResultCount}
                 device={previewDevice}
-                brandColor="#14b8a6"
+                brandColor={brandColor}
               />
             </BrowserFrame>
           </div>

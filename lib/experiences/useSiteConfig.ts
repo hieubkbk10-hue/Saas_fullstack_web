@@ -5,6 +5,8 @@ import { useCartAvailable } from './useCartAvailable';
 
 type PaginationType = 'pagination' | 'infiniteScroll';
 type FilterPosition = 'sidebar' | 'top' | 'none';
+type SearchLayoutStyle = 'search-only' | 'with-filters' | 'advanced';
+type ResultsDisplayStyle = 'grid' | 'list';
 
 type PostsListConfig = {
   layoutStyle: 'grid' | 'list' | 'masonry';
@@ -13,6 +15,14 @@ type PostsListConfig = {
   showSearch: boolean;
   showCategories: boolean;
   postsPerPage: number;
+};
+
+type SearchFilterConfig = {
+  layoutStyle: SearchLayoutStyle;
+  resultsDisplayStyle: ResultsDisplayStyle;
+  showFilters: boolean;
+  showSorting: boolean;
+  showResultCount: boolean;
 };
 
 type PostDetailLayoutStyle = 'classic' | 'modern' | 'minimal';
@@ -80,6 +90,30 @@ export function usePostsListConfig(): PostsListConfig {
       showSearch: raw?.showSearch ?? true,
       showCategories: raw?.showCategories ?? true,
       postsPerPage: raw?.postsPerPage ?? 12,
+    };
+  }, [experienceSetting?.value]);
+}
+
+export function useSearchFilterConfig(): SearchFilterConfig {
+  const experienceSetting = useQuery(api.settings.getByKey, { key: 'search_filter_ui' });
+
+  return useMemo(() => {
+    const raw = experienceSetting?.value as {
+      layoutStyle?: SearchLayoutStyle;
+      layouts?: Partial<Record<SearchLayoutStyle, Partial<Omit<SearchFilterConfig, 'layoutStyle'>>>>;
+    } | undefined;
+    const layoutStyle: SearchLayoutStyle = raw?.layoutStyle ?? 'with-filters';
+    const defaultConfig = {
+      resultsDisplayStyle: 'grid' as ResultsDisplayStyle,
+      showFilters: layoutStyle === 'search-only' ? false : true,
+      showSorting: true,
+      showResultCount: true,
+    };
+    const layoutConfig = raw?.layouts?.[layoutStyle] ?? {};
+    return {
+      layoutStyle,
+      ...defaultConfig,
+      ...layoutConfig,
     };
   }, [experienceSetting?.value]);
 }

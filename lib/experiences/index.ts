@@ -19,6 +19,7 @@ export {
   useCheckoutConfig,
   usePostsListConfig,
   useProductsListConfig,
+  useSearchFilterConfig,
   useServicesListConfig,
   useWishlistConfig,
 } from './useSiteConfig';
