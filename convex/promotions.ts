@@ -652,7 +652,7 @@ export const listPublicPromotions = query({
       .take(200);
 
     return promotions.filter((promo) => {
-      if (!promo.displayOnPage) {return false;}
+      if (promo.displayOnPage === false) {return false;}
       if (promo.startDate && now < promo.startDate) {return false;}
       if (promo.endDate && now > promo.endDate) {return false;}
       if (promo.usageLimit && promo.usedCount >= promo.usageLimit) {return false;}
@@ -674,6 +674,25 @@ export const migrateAddPromotionType = mutation({
       if (!promo.promotionType) {
         const promotionType = promo.code ? "coupon" : "campaign";
         await ctx.db.patch(promo._id, { promotionType });
+        updated++;
+      }
+    }
+
+    return { updated };
+  },
+  returns: v.object({ updated: v.number() }),
+});
+
+// Migration: bổ sung displayOnPage cho data cũ
+export const migrateAddDisplayOnPage = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const promotions = await ctx.db.query("promotions").take(500);
+    let updated = 0;
+
+    for (const promo of promotions) {
+      if (promo.displayOnPage === undefined) {
+        await ctx.db.patch(promo._id, { displayOnPage: true });
         updated++;
       }
     }
