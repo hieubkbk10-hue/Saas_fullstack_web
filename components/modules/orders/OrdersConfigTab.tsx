@@ -168,32 +168,30 @@ export function OrdersConfigTab({
         {activeTab === 'general' && (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <SettingsCard title="Cài đặt chung">
-              <div className="space-y-3">
-                {config.settings
-                  ?.filter((setting) => (setting.group ?? 'general') === 'general')
-                  .map((setting) => (
-                    <div key={setting.key} className="space-y-2">
-                      <label className="text-xs text-slate-500">{setting.label}</label>
-                      {setting.type === 'select' ? (
-                        <select
-                          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
-                          value={String(localSettings[setting.key] ?? '')}
-                          onChange={(event) => onSettingChange(setting.key, event.target.value)}
-                        >
-                          {(setting.options ?? []).map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <Input
-                          type={setting.type === 'number' ? 'number' : 'text'}
-                          value={String(localSettings[setting.key] ?? '')}
-                          onChange={(event) => onSettingChange(setting.key, setting.type === 'number' ? Number(event.target.value || 0) : event.target.value)}
-                        />
-                      )}
-                    </div>
-                  ))}
-              </div>
+              {config.settings
+                ?.filter((setting) => (setting.group ?? 'general') === 'general')
+                .map((setting) => (
+                  <div key={setting.key} className="space-y-2">
+                    <label className="text-xs text-slate-500">{setting.label}</label>
+                    {setting.type === 'select' ? (
+                      <select
+                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
+                        value={String(localSettings[setting.key] ?? '')}
+                        onChange={(event) => onSettingChange(setting.key, event.target.value)}
+                      >
+                        {(setting.options ?? []).map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Input
+                        type={setting.type === 'number' ? 'number' : 'text'}
+                        value={String(localSettings[setting.key] ?? '')}
+                        onChange={(event) => onSettingChange(setting.key, setting.type === 'number' ? Number(event.target.value || 0) : event.target.value)}
+                      />
+                    )}
+                  </div>
+                ))}
             </SettingsCard>
 
             <div className="space-y-4">
