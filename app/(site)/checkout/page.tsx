@@ -701,7 +701,7 @@ function CheckoutContent() {
     </div>
   );
 
-  const ShippingInfoCard = () => (
+  const shippingInfoCard = (
     <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
       <div className="flex items-center gap-2">
         <MapPin className="w-5 h-5" style={{ color: brandColor }} />
@@ -790,44 +790,36 @@ function CheckoutContent() {
     </div>
   );
 
-  const ShippingOptionsCard = () => {
-    if (!isShippingEnabled) {
-      return null;
-    }
-    return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-        <div className="flex items-center gap-2">
-          <Truck className="w-5 h-5 text-slate-400" />
-          <h2 className="text-lg font-semibold text-slate-900">Vận chuyển</h2>
-        </div>
-        <div className="space-y-2 text-sm text-slate-600">
-          {shippingMethods.map((method) => (
-            <label key={method.id} className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer ${shippingMethodId === method.id ? '' : 'hover:bg-slate-50'}`} style={shippingMethodId === method.id ? { borderColor: brandColor, backgroundColor: `${brandColor}08` } : undefined}>
-              <input
-                type="radio"
-                name="shipping"
-                checked={shippingMethodId === method.id}
-                onChange={() => setShippingMethodId(method.id)}
-                className="w-4 h-4"
-                style={{ accentColor: brandColor }}
-              />
-              <div className="flex-1">
-                <div className="font-medium text-sm text-slate-900">{method.label}</div>
-                {method.description && <div className="text-xs text-slate-500">{method.description}</div>}
-                {method.estimate && <div className="text-xs text-slate-400">{method.estimate}</div>}
-              </div>
-              <span className="font-semibold text-sm text-slate-900">{formatPrice(method.fee)}</span>
-            </label>
-          ))}
-        </div>
+  const shippingOptionsCard = !isShippingEnabled ? null : (
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
+      <div className="flex items-center gap-2">
+        <Truck className="w-5 h-5 text-slate-400" />
+        <h2 className="text-lg font-semibold text-slate-900">Vận chuyển</h2>
       </div>
-    );
-  };
+      <div className="space-y-2 text-sm text-slate-600">
+        {shippingMethods.map((method) => (
+          <label key={method.id} className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer ${shippingMethodId === method.id ? '' : 'hover:bg-slate-50'}`} style={shippingMethodId === method.id ? { borderColor: brandColor, backgroundColor: `${brandColor}08` } : undefined}>
+            <input
+              type="radio"
+              name="shipping"
+              checked={shippingMethodId === method.id}
+              onChange={() => setShippingMethodId(method.id)}
+              className="w-4 h-4"
+              style={{ accentColor: brandColor }}
+            />
+            <div className="flex-1">
+              <div className="font-medium text-sm text-slate-900">{method.label}</div>
+              {method.description && <div className="text-xs text-slate-500">{method.description}</div>}
+              {method.estimate && <div className="text-xs text-slate-400">{method.estimate}</div>}
+            </div>
+            <span className="font-semibold text-sm text-slate-900">{formatPrice(method.fee)}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
 
-  const PaymentMethodsCard = () => {
-    if (!isPaymentEnabled) {
-      return null;
-    }
+  const paymentMethodsCard = !isPaymentEnabled ? null : (() => {
     const vietQrInfo = encodeURIComponent(`DH ${orderId ?? 'PENDING'}`);
     const vietQrAccountName = encodeURIComponent(bankInfo.accountName);
     const vietQrUrl = `https://img.vietqr.io/image/${bankInfo.bankCode}-${bankInfo.accountNumber}-${bankInfo.vietQrTemplate}.jpg?amount=${finalTotal}&addInfo=${vietQrInfo}&accountName=${vietQrAccountName}`;
@@ -879,7 +871,7 @@ function CheckoutContent() {
         )}
       </div>
     );
-  };
+  })();
 
   const SummaryCard = (
     <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-4">
@@ -984,9 +976,9 @@ function CheckoutContent() {
   ) : null;
 
   const wizardSteps = [
-    { key: 'info', label: 'Thông tin khách hàng', content: <ShippingInfoCard /> },
-    ...(isShippingEnabled ? [{ key: 'shipping', label: 'Vận chuyển', content: <ShippingOptionsCard /> }] : []),
-    ...(isPaymentEnabled ? [{ key: 'payment', label: 'Thanh toán', content: <PaymentMethodsCard /> }] : []),
+    { key: 'info', label: 'Thông tin khách hàng', content: shippingInfoCard },
+    ...(isShippingEnabled ? [{ key: 'shipping', label: 'Vận chuyển', content: shippingOptionsCard }] : []),
+    ...(isPaymentEnabled ? [{ key: 'payment', label: 'Thanh toán', content: paymentMethodsCard }] : []),
   ];
 
   return (
@@ -1027,9 +1019,9 @@ function CheckoutContent() {
             </div>
           ) : (
             <div className="space-y-6">
-              <ShippingInfoCard />
-              <ShippingOptionsCard />
-              <PaymentMethodsCard />
+              {shippingInfoCard}
+              {shippingOptionsCard}
+              {paymentMethodsCard}
             </div>
           )}
 
