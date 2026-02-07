@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { ArrowUpRight, CheckCircle2, Clock, DollarSign, Package, ShoppingBag } from 'lucide-react';
+import { toast } from 'sonner';
 
 type AccountOrdersPreviewProps = {
   layoutStyle: 'cards' | 'compact' | 'timeline';
@@ -14,6 +16,10 @@ type AccountOrdersPreviewProps = {
   showTracking: boolean;
   showTimeline: boolean;
   allowCancel: boolean;
+  paginationType: 'pagination' | 'infiniteScroll';
+  ordersPerPage: number;
+  defaultStatusFilter: string[];
+  stockEnabled: boolean;
   brandColor: string;
   device: 'desktop' | 'tablet' | 'mobile';
 };
@@ -21,17 +27,11 @@ type AccountOrdersPreviewProps = {
 const formatPrice = (value: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(value);
 
 const STATUS_CONFIG = {
-  pending: { label: 'Chờ xử lý', step: 1 },
-  processing: { label: 'Đang xử lý', step: 2 },
-  shipping: { label: 'Đang giao', step: 3 },
-  delivered: { label: 'Đã giao', step: 4 },
-};
-
-const STATUS_TONES: Record<string, number> = {
-  pending: 0.08,
-  processing: 0.12,
-  shipping: 0.16,
-  delivered: 0.2,
+  pending: { label: 'Chờ xử lý', step: 1, color: '#64748b' },
+  processing: { label: 'Đang xử lý', step: 2, color: '#f59e0b' },
+  shipped: { label: 'Đang giao', step: 3, color: '#3b82f6' },
+  delivered: { label: 'Đã giao', step: 4, color: '#22c55e' },
+  cancelled: { label: 'Đã hủy', step: 1, color: '#ef4444' },
 };
 
 const TIMELINE_STEPS = ['Đặt hàng', 'Xác nhận', 'Vận chuyển', 'Hoàn thành'];
@@ -55,6 +55,19 @@ const hexToRgba = (hex: string, opacity: number) => {
 
 const getBrandTint = (color: string, opacity: number) => hexToRgba(color, opacity);
 
+const STATUS_OPTIONS = [
+  { id: 'Pending', key: 'pending', label: 'Chờ xử lý' },
+  { id: 'Processing', key: 'processing', label: 'Đang xử lý' },
+  { id: 'Shipped', key: 'shipped', label: 'Đang giao' },
+  { id: 'Delivered', key: 'delivered', label: 'Đã giao' },
+  { id: 'Cancelled', key: 'cancelled', label: 'Đã hủy' },
+] as const;
+
+const STATUS_KEY_MAP = STATUS_OPTIONS.reduce<Record<string, string>>((acc, status) => {
+  acc[status.id] = status.key;
+  return acc;
+}, {});
+
 const MOCK_ORDERS = [
   {
     id: 'ORD-20260207-1234',
@@ -67,8 +80,37 @@ const MOCK_ORDERS = [
     shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
     trackingCode: 'Chưa có',
     items: [
-      { name: 'Áo thun VietAdmin', quantity: 1, price: 320000, image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200' },
-      { name: 'Nón VietAdmin', quantity: 1, price: 320000, image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=201' },
+      { name: 'Áo thun VietAdmin', quantity: 1, price: 320000, image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200', inStock: true },
+      { name: 'Nón VietAdmin', quantity: 1, price: 320000, image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=201', inStock: false },
+    ],
+  },
+  {
+    id: 'ORD-20260206-7751',
+    date: '06/02/2026',
+    total: 980000,
+    itemsCount: 3,
+    status: 'processing' as const,
+    paymentMethod: 'Ví điện tử',
+    shippingMethod: 'Giao hàng nhanh',
+    shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
+    trackingCode: 'Đang cập nhật',
+    items: [
+      { name: 'Bình giữ nhiệt VietAdmin', quantity: 1, price: 240000, image: 'https://images.unsplash.com/photo-1503602642458-232111445657?w=200', inStock: true },
+      { name: 'Sổ tay VietAdmin', quantity: 2, price: 370000, image: 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=200', inStock: true },
+    ],
+  },
+  {
+    id: 'ORD-20260206-9912',
+    date: '06/02/2026',
+    total: 420000,
+    itemsCount: 1,
+    status: 'shipped' as const,
+    paymentMethod: 'Chuyển khoản',
+    shippingMethod: 'Giao nhanh 2h',
+    shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
+    trackingCode: 'GHTK-302291',
+    items: [
+      { name: 'Áo khoác VietAdmin', quantity: 1, price: 420000, image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=200', inStock: true },
     ],
   },
   {
@@ -81,22 +123,83 @@ const MOCK_ORDERS = [
     shippingMethod: 'Giao nhanh 2h',
     shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
     trackingCode: 'GHTK-456789',
-    items: [{ name: 'Áo khoác VietAdmin', quantity: 1, price: 320000, image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=200' }],
+    items: [{ name: 'Áo khoác VietAdmin', quantity: 1, price: 320000, image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=200', inStock: false }],
+  },
+  {
+    id: 'ORD-20260204-1122',
+    date: '04/02/2026',
+    total: 890000,
+    itemsCount: 3,
+    status: 'processing' as const,
+    paymentMethod: 'COD',
+    shippingMethod: 'Giao tiêu chuẩn',
+    shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
+    trackingCode: 'Đang xử lý',
+    items: [
+      { name: 'Áo hoodie VietAdmin', quantity: 1, price: 420000, image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=200', inStock: true },
+      { name: 'Áo thun VietAdmin', quantity: 1, price: 240000, image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200', inStock: true },
+      { name: 'Mũ lưỡi trai VietAdmin', quantity: 1, price: 230000, image: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=200', inStock: false },
+    ],
+  },
+  {
+    id: 'ORD-20260203-3405',
+    date: '03/02/2026',
+    total: 520000,
+    itemsCount: 2,
+    status: 'shipped' as const,
+    paymentMethod: 'Ví điện tử',
+    shippingMethod: 'Giao hàng nhanh',
+    shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
+    trackingCode: 'GHN-884122',
+    items: [
+      { name: 'Balo VietAdmin', quantity: 1, price: 320000, image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=200', inStock: true },
+      { name: 'Sổ tay VietAdmin', quantity: 1, price: 200000, image: 'https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=200', inStock: true },
+    ],
+  },
+  {
+    id: 'ORD-20260202-5510',
+    date: '02/02/2026',
+    total: 280000,
+    itemsCount: 1,
+    status: 'cancelled' as const,
+    paymentMethod: 'COD',
+    shippingMethod: 'Giao tiêu chuẩn',
+    shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
+    trackingCode: 'Đã hủy',
+    items: [
+      { name: 'Áo thun VietAdmin', quantity: 1, price: 280000, image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200', inStock: true },
+    ],
+  },
+  {
+    id: 'ORD-20260201-7844',
+    date: '01/02/2026',
+    total: 720000,
+    itemsCount: 2,
+    status: 'delivered' as const,
+    paymentMethod: 'Chuyển khoản',
+    shippingMethod: 'Giao hàng nhanh',
+    shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
+    trackingCode: 'GHTK-554499',
+    items: [
+      { name: 'Áo sơ mi VietAdmin', quantity: 1, price: 360000, image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200', inStock: true },
+      { name: 'Áo polo VietAdmin', quantity: 1, price: 360000, image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=200', inStock: true },
+    ],
   },
 ];
 
 type Order = (typeof MOCK_ORDERS)[number];
 
-function StatusBadge({ status, brandColor }: { status: Order['status']; brandColor: string }) {
+function StatusBadge({ status }: { status: Order['status'] }) {
   const statusConfig = STATUS_CONFIG[status];
-  const tone = STATUS_TONES[status] ?? 0.1;
+  const tone = status === 'cancelled' ? 0.16 : 0.12;
+  const statusColor = statusConfig.color;
   return (
     <span
       className="text-xs font-semibold px-2.5 py-1 rounded-full border"
       style={{
-        backgroundColor: getBrandTint(brandColor, tone),
-        color: brandColor,
-        borderColor: getBrandTint(brandColor, 0.3),
+        backgroundColor: hexToRgba(statusColor, tone),
+        color: statusColor,
+        borderColor: hexToRgba(statusColor, 0.3),
       }}
     >
       {statusConfig.label}
@@ -211,10 +314,74 @@ export function AccountOrdersPreview({
   showTracking,
   showTimeline,
   allowCancel,
+  paginationType,
+  ordersPerPage,
+  defaultStatusFilter,
+  stockEnabled,
   brandColor,
   device,
 }: AccountOrdersPreviewProps) {
+  const router = useRouter();
   const isMobile = device === 'mobile';
+  const statusKeys = useMemo(() => STATUS_OPTIONS.map((status) => status.key), []);
+  const normalizedDefaultStatuses = useMemo(() => {
+    const mapped = defaultStatusFilter
+      .map((status) => STATUS_KEY_MAP[status])
+      .filter((status): status is string => Boolean(status));
+    return mapped.length > 0 ? mapped : ['processing', 'shipped'];
+  }, [defaultStatusFilter]);
+  const [activeStatuses, setActiveStatuses] = useState<string[]>(normalizedDefaultStatuses);
+  const [currentPage, setCurrentPage] = useState(1);
+  const isAllActive = activeStatuses.length === statusKeys.length;
+  const toggleStatus = (status: string) => {
+    setActiveStatuses((prev) => {
+      if (prev.includes(status)) {
+        const next = prev.filter(item => item !== status);
+        return next.length > 0 ? next : prev;
+      }
+      return [...prev, status];
+    });
+  };
+
+  useEffect(() => {
+    setActiveStatuses(normalizedDefaultStatuses);
+  }, [normalizedDefaultStatuses]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeStatuses, ordersPerPage]);
+
+  const filteredOrders = useMemo(() => {
+    if (activeStatuses.length === statusKeys.length) {
+      return MOCK_ORDERS;
+    }
+    return MOCK_ORDERS.filter((order) => activeStatuses.includes(order.status));
+  }, [activeStatuses, statusKeys]);
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ordersPerPage));
+  const pageStart = (currentPage - 1) * ordersPerPage;
+  const pageEnd = pageStart + ordersPerPage;
+  const visibleOrders = paginationType === 'pagination'
+    ? filteredOrders.slice(pageStart, pageEnd)
+    : filteredOrders.slice(0, ordersPerPage);
+
+  const handleReorder = (order: Order) => {
+    const outOfStockItems = stockEnabled ? order.items.filter(item => !item.inStock) : [];
+    const availableItems = stockEnabled ? order.items.filter(item => item.inStock) : order.items;
+
+    if (availableItems.length > 0) {
+      toast.success(`Đã thêm ${availableItems.length} sản phẩm vào giỏ hàng`);
+      router.push('/cart');
+    }
+
+    if (stockEnabled && outOfStockItems.length > 0) {
+      const outOfStockNames = outOfStockItems.map(item => item.name).join(', ');
+      toast.error(`Sản phẩm đã hết hàng: ${outOfStockNames}`);
+    }
+
+    if (availableItems.length === 0) {
+      toast.error('Tất cả sản phẩm trong đơn đã hết hàng');
+    }
+  };
 
   return (
     <div className="bg-slate-50 rounded-2xl p-4 space-y-4">
@@ -222,6 +389,34 @@ export function AccountOrdersPreview({
         <h3 className="text-lg font-semibold text-slate-900">Đơn hàng của tôi</h3>
         <p className="text-xs text-slate-500">Preview account orders</p>
       </div>
+
+      {layoutStyle === 'cards' && (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveStatuses(statusKeys)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${isAllActive ? 'bg-white shadow-sm' : 'text-slate-500'}`}
+            style={isAllActive ? { borderColor: brandColor, color: brandColor } : { borderColor: '#e2e8f0' }}
+          >
+            Tất cả
+          </button>
+          {STATUS_OPTIONS.map((status) => {
+            const active = activeStatuses.includes(status.key);
+            const statusColor = STATUS_CONFIG[status.key].color;
+            return (
+              <button
+                key={status.id}
+                type="button"
+                onClick={() => toggleStatus(status.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${active ? 'bg-white shadow-sm' : 'text-slate-500'}`}
+                style={active ? { borderColor: statusColor, color: statusColor } : { borderColor: '#e2e8f0' }}
+              >
+                {status.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {showStats && layoutStyle === 'cards' && (
         <div className={`grid gap-3 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
@@ -240,7 +435,7 @@ export function AccountOrdersPreview({
 
       {layoutStyle === 'cards' && (
         <div className="space-y-3">
-          {MOCK_ORDERS.map((order, index) => {
+          {visibleOrders.map((order, index) => {
             const expanded = index === 0;
             return (
               <div key={order.id} className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
@@ -249,7 +444,7 @@ export function AccountOrdersPreview({
                     <div className="text-xs text-slate-500">Mã đơn hàng · {order.date}</div>
                     <div className="text-sm font-semibold text-slate-900">{order.id}</div>
                   </div>
-                  <StatusBadge status={order.status} brandColor={brandColor} />
+                  <StatusBadge status={order.status} />
                 </div>
                 <div className="text-xs text-slate-500">{order.itemsCount} sản phẩm · {formatPrice(order.total)}</div>
                 <div className="border-t pt-3 flex items-center justify-between text-xs">
@@ -277,27 +472,11 @@ export function AccountOrdersPreview({
                     <div className="flex flex-wrap justify-end gap-2">
                       <button
                         type="button"
-                        onClick={() => {}}
-                        className="px-3 py-2 rounded-lg text-xs font-semibold border"
-                        style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
-                      >
-                        Hóa đơn VAT
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {}}
+                        onClick={() => handleReorder(order)}
                         className="px-3 py-2 rounded-lg text-xs font-semibold text-white"
                         style={{ backgroundColor: brandColor }}
                       >
                         Mua lại
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {}}
-                        className="px-3 py-2 rounded-lg text-xs font-semibold border"
-                        style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
-                      >
-                        Xem chi tiết
                       </button>
                       {allowCancel && order.status === 'pending' && (
                         <button
@@ -315,6 +494,49 @@ export function AccountOrdersPreview({
               </div>
             );
           })}
+          {visibleOrders.length === 0 && (
+            <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-6 text-center text-sm text-slate-500">
+              Không có đơn hàng phù hợp.
+            </div>
+          )}
+          {filteredOrders.length > 0 && (
+            <div className="pt-2">
+              {paginationType === 'pagination' ? (
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-lg font-semibold border disabled:opacity-50"
+                    style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
+                  >
+                    Trước
+                  </button>
+                  <div className="text-slate-500">
+                    Trang <span className="font-semibold text-slate-700">{currentPage}</span> / {totalPages}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-lg font-semibold border disabled:opacity-50"
+                    style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
+                  >
+                    Sau
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center mt-2 space-y-2">
+                  <div className="flex justify-center gap-1">
+                    <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                    <div className="w-2 h-2 rounded-full animate-pulse delay-100" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
+                    <div className="w-2 h-2 rounded-full animate-pulse delay-200" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
+                  </div>
+                  <p className="text-xs text-slate-400">Cuộn để xem thêm...</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -341,7 +563,7 @@ export function AccountOrdersPreview({
                       <td className="px-4 py-3 text-slate-700">{order.itemsCount}</td>
                       <td className="px-4 py-3 font-semibold text-slate-900">{formatPrice(order.total)}</td>
                       <td className="px-4 py-3">
-                        <StatusBadge status={order.status} brandColor={brandColor} />
+                        <StatusBadge status={order.status} />
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button
@@ -392,7 +614,7 @@ export function AccountOrdersPreview({
                       <div className="text-xs text-slate-500">{order.id} · {order.date}</div>
                       <div className="text-sm font-semibold text-slate-900">{formatPrice(order.total)}</div>
                     </div>
-                    <StatusBadge status={order.status} brandColor={brandColor} />
+                    <StatusBadge status={order.status} />
                   </div>
                   <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
                     <span>{order.itemsCount} sản phẩm</span>
@@ -428,7 +650,7 @@ export function AccountOrdersPreview({
                     <div className="text-sm font-semibold text-slate-900">{order.id}</div>
                   </div>
                 </div>
-                <StatusBadge status={order.status} brandColor={brandColor} />
+                <StatusBadge status={order.status} />
               </div>
 
               <div className="p-6 space-y-6">

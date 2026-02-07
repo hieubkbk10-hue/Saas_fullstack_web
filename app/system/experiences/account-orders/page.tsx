@@ -17,6 +17,7 @@ import {
   ControlCard,
   DeviceToggle,
   LayoutTabs,
+  SelectRow,
   ToggleRow,
   deviceWidths,
   type LayoutOption,
@@ -25,6 +26,8 @@ import {
 import { EXPERIENCE_NAMES, MESSAGES, useExperienceConfig, useExperienceSave } from '@/lib/experiences';
 
 type AccountOrdersLayoutStyle = 'cards' | 'compact' | 'timeline';
+type PaginationType = 'pagination' | 'infiniteScroll';
+type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
 
 type AccountOrdersExperienceConfig = {
   layoutStyle: AccountOrdersLayoutStyle;
@@ -36,6 +39,9 @@ type AccountOrdersExperienceConfig = {
   showTracking: boolean;
   showTimeline: boolean;
   allowCancel: boolean;
+  paginationType: PaginationType;
+  ordersPerPage: number;
+  defaultStatusFilter: OrderStatus[];
 };
 
 const EXPERIENCE_KEY = 'account_orders_ui';
@@ -56,6 +62,9 @@ const DEFAULT_CONFIG: AccountOrdersExperienceConfig = {
   showTracking: true,
   showTimeline: true,
   allowCancel: true,
+  paginationType: 'pagination',
+  ordersPerPage: 12,
+  defaultStatusFilter: ['Processing', 'Shipped'],
 };
 
 const HINTS = [
@@ -88,11 +97,23 @@ export default function AccountOrdersExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const customersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'customers' });
+  const stockFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableStock', moduleKey: 'products' });
   const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
 
   const serverConfig = useMemo<AccountOrdersExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<AccountOrdersExperienceConfig> | undefined;
+    const normalizePaginationType = (value?: string | boolean): PaginationType => {
+      if (value === 'infiniteScroll') return 'infiniteScroll';
+      if (value === 'pagination') return 'pagination';
+      if (value === false) return 'infiniteScroll';
+      return 'pagination';
+    };
+    const normalizeStatusFilter = (value?: OrderStatus[]): OrderStatus[] => {
+      const allowed: OrderStatus[] = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+      const filtered = value?.filter((status) => allowed.includes(status)) ?? [];
+      return filtered.length > 0 ? filtered : ['Processing', 'Shipped'];
+    };
     return {
       layoutStyle: raw?.layoutStyle ?? 'cards',
       showStats: raw?.showStats ?? true,
@@ -103,6 +124,9 @@ export default function AccountOrdersExperiencePage() {
       showTracking: raw?.showTracking ?? true,
       showTimeline: raw?.showTimeline ?? true,
       allowCancel: raw?.allowCancel ?? true,
+      paginationType: normalizePaginationType(raw?.paginationType),
+      ordersPerPage: raw?.ordersPerPage ?? 12,
+      defaultStatusFilter: normalizeStatusFilter(raw?.defaultStatusFilter),
     };
   }, [experienceSetting?.value]);
 
@@ -202,6 +226,57 @@ export default function AccountOrdersExperiencePage() {
               accentColor="#4f46e5"
             />
           </ControlCard>
+          <ControlCard title="Phân trang & Lọc">
+            <SelectRow
+              label="Kiểu phân trang"
+              value={config.paginationType}
+              options={[
+                { value: 'pagination', label: 'Phân trang' },
+                { value: 'infiniteScroll', label: 'Cuộn vô hạn' },
+              ]}
+              onChange={(value) => setConfig(prev => ({ ...prev, paginationType: value as PaginationType }))}
+            />
+            <SelectRow
+              label="Đơn mỗi trang"
+              value={String(config.ordersPerPage)}
+              options={[
+                { value: '6', label: '6' },
+                { value: '12', label: '12' },
+                { value: '20', label: '20' },
+                { value: '24', label: '24' },
+              ]}
+              onChange={(value) => setConfig(prev => ({ ...prev, ordersPerPage: Number(value) }))}
+            />
+            <div className="pt-2 space-y-2">
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Trạng thái mặc định</div>
+              {([
+                { key: 'Pending', label: 'Chờ xử lý' },
+                { key: 'Processing', label: 'Đang xử lý' },
+                { key: 'Shipped', label: 'Đang giao' },
+                { key: 'Delivered', label: 'Đã giao' },
+                { key: 'Cancelled', label: 'Đã hủy' },
+              ] as const).map((status) => (
+                <ToggleRow
+                  key={status.key}
+                  label={status.label}
+                  checked={config.defaultStatusFilter.includes(status.key)}
+                  onChange={() =>
+                    setConfig(prev => {
+                      const exists = prev.defaultStatusFilter.includes(status.key);
+                      const nextFilter = exists
+                        ? prev.defaultStatusFilter.filter(item => item !== status.key)
+                        : [...prev.defaultStatusFilter, status.key];
+                      return {
+                        ...prev,
+                        defaultStatusFilter: nextFilter.length > 0 ? nextFilter : ['Processing', 'Shipped'],
+                      };
+                    })
+                  }
+                  accentColor="#4f46e5"
+                />
+              ))}
+            </div>
+          </ControlCard>
         </CardContent>
       </Card>
 
@@ -283,6 +358,10 @@ export default function AccountOrdersExperiencePage() {
                 showTracking={config.showTracking}
                 showTimeline={config.showTimeline}
                 allowCancel={config.allowCancel}
+                paginationType={config.paginationType}
+                ordersPerPage={config.ordersPerPage}
+                defaultStatusFilter={config.defaultStatusFilter}
+                stockEnabled={stockFeature?.enabled ?? false}
                 brandColor={brandColor}
                 device={previewDevice}
               />
