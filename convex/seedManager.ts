@@ -25,6 +25,7 @@ import {
   PostSeeder,
   OrderSeeder,
   CustomerSeeder,
+  PromotionsSeeder,
   ServiceSeeder,
 } from './seeders';
 import type { SeedResult } from './seeders/base';
@@ -61,6 +62,7 @@ const SEEDERS: Record<string, new (ctx: GenericMutationCtx<DataModel>) => BaseSe
   posts: PostSeeder,
   productCategories: ProductCategorySeeder,
   products: ProductSeeder,
+  promotions: PromotionsSeeder,
   serviceCategories: ProductCategorySeeder, // Reuse for now
   services: ServiceSeeder,
 };

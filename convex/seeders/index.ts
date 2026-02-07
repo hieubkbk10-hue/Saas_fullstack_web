@@ -10,6 +10,7 @@ export { ProductCategorySeeder } from './productCategories.seeder';
 export { PostSeeder } from './posts.seeder';
 export { OrderSeeder } from './orders.seeder';
 export { CustomerSeeder } from './customers.seeder';
+export { PromotionsSeeder } from './promotions.seeder';
 export { ServiceSeeder } from './services.seeder';
 
 // Export types
