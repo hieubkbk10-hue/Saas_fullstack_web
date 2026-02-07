@@ -93,7 +93,7 @@ const promotionDoc = v.object({
   name: v.string(),
   order: v.number(),
   priority: v.optional(v.number()),
-  promotionType: v.optional(promotionType),
+  promotionType: promotionType,
   recurringDays: v.optional(v.array(v.number())),
   recurringHours: v.optional(v.object({ from: v.number(), to: v.number() })),
   scheduleType: v.optional(scheduleType),
