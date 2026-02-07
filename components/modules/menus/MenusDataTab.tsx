@@ -7,6 +7,7 @@
  import { toast } from 'sonner';
  import { Database, FolderTree, Link2, Loader2, Menu, RefreshCw, Trash2 } from 'lucide-react';
  import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
  
  interface MenusDataTabProps {
    colorClasses: { button: string };
@@ -31,8 +32,9 @@
  
    const menusData = useQuery(api.menus.listMenus);
  
-   const seedMenusModule = useMutation(api.seed.seedMenusModule);
-   const clearMenusData = useMutation(api.seed.clearMenusData);
+  const seedModule = useMutation(api.seedManager.seedModule);
+  const clearModule = useMutation(api.seedManager.clearModule);
+  const defaultQuantity = getSeedModuleInfo('menus')?.defaultQuantity ?? 3;
  
    const menusByLocation = useMemo(() => {
      const map = new Map<string, MenuRecord[]>();
@@ -47,7 +49,7 @@
    const handleSeedAll = async () => {
      setIsSeeding(true);
      try {
-       await seedMenusModule();
+      await seedModule({ module: 'menus', quantity: defaultQuantity });
        toast.success('Đã tạo dữ liệu mẫu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -60,7 +62,7 @@
      if (!confirm('Xóa toàn bộ menus?')) return;
      setIsClearing(true);
      try {
-       await clearMenusData();
+      await clearModule({ module: 'menus' });
        toast.success('Đã xóa toàn bộ menus!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -73,8 +75,8 @@
      if (!confirm('Reset dữ liệu về mặc định?')) return;
      setIsClearing(true);
      try {
-       await clearMenusData();
-       await seedMenusModule();
+      await clearModule({ module: 'menus' });
+      await seedModule({ module: 'menus', quantity: defaultQuantity, force: true });
        toast.success('Đã reset dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');

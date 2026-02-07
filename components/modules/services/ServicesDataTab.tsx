@@ -24,7 +24,7 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
    const categoriesData = useQuery(api.serviceCategories.listAll, { limit: 50 });
  
   const seedModule = useMutation(api.seedManager.seedModule);
-   const clearServicesData = useMutation(api.seed.clearServicesData);
+  const clearModule = useMutation(api.seedManager.clearModule);
 
   const defaultQuantity = getSeedModuleInfo('services')?.defaultQuantity ?? 10;
  
@@ -52,7 +52,7 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
      if (!confirm('Xóa toàn bộ dữ liệu dịch vụ và danh mục?')) return;
      setIsClearing(true);
      try {
-       await clearServicesData();
+      await clearModule({ module: 'services' });
        toast.success('Đã xóa toàn bộ dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -65,8 +65,8 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
      if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
      setIsClearing(true);
      try {
-       await clearServicesData();
-      await seedModule({ module: 'services', quantity: defaultQuantity });
+      await clearModule({ module: 'services' });
+      await seedModule({ module: 'services', quantity: defaultQuantity, force: true });
        toast.success('Đã reset dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');

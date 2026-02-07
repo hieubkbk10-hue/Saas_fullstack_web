@@ -389,10 +389,15 @@ export const clearModule = mutation({
   },
   handler: async (ctx, args) => {
     console.log(`[SeedManager] Clearing module: ${args.module}`);
-    
-    // TODO: Implement clear logic with seeder classes
-    // For now, placeholder
-    
+
+    const SeederClass = SEEDERS[args.module];
+    if (!SeederClass) {
+      throw new Error(`Seeder not found for module: ${args.module}`);
+    }
+
+    const seeder = new SeederClass(ctx);
+    await seeder.clearData();
+
     return { module: args.module, success: true };
   },
   returns: v.object({
@@ -407,9 +412,23 @@ export const clearAll = mutation({
   },
   handler: async (ctx, args) => {
     console.log(`[SeedManager] Clearing all data (excludeSystem: ${args.excludeSystem})`);
-    
-    // TODO: Implement clear all logic
-    
+
+    const moduleKeys = listSeedableModuleKeys().filter((moduleKey) => {
+      if (!args.excludeSystem) {
+        return true;
+      }
+      return SEED_MODULE_METADATA[moduleKey]?.category !== 'system';
+    });
+
+    for (const moduleKey of moduleKeys) {
+      const SeederClass = SEEDERS[moduleKey];
+      if (!SeederClass) {
+        continue;
+      }
+      const seeder = new SeederClass(ctx);
+      await seeder.clearData();
+    }
+
     return { success: true };
   },
   returns: v.object({

@@ -83,15 +83,16 @@ function TablesSkeleton() {
 
 export default function DataManagerPage() {
   const tableStats = useQuery(api.dataManager.getTableStats);
-  const seedAll = useMutation(api.dataManager.seedAll);
+  const seedBulk = useMutation(api.seedManager.seedBulk);
+  const seedModules = useQuery(api.seedManager.listSeedableModules);
   const clearTable = useMutation(api.dataManager.clearTable);
-  const clearAllData = useMutation(api.dataManager.clearAllData);
+  const clearAll = useMutation(api.seedManager.clearAll);
 
   const [isSeeding, setIsSeeding] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [clearingTable, setClearingTable] = useState<string | null>(null);
   const [seedResult, setSeedResult] = useState<{ seeded: string[]; message: string } | null>(null);
-  const [clearResult, setClearResult] = useState<{ totalDeleted: number } | null>(null);
+  const [clearResult, setClearResult] = useState<{ message: string } | null>(null);
   const [showConfirmClearAll, setShowConfirmClearAll] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['system', 'user', 'content', 'commerce']);
 
@@ -101,14 +102,28 @@ export default function DataManagerPage() {
     setIsSeeding(true);
     setSeedResult(null);
     try {
-      const result = await seedAll({ force });
-      setSeedResult(result);
-      if (result.seeded.length > 0) {
-        toast.success(result.message, {
-          description: `Đã seed: ${result.seeded.join(', ')}`,
-        });
+      if (!seedModules) {
+        toast.error('Chưa tải danh sách modules để seed');
+        return;
+      }
+
+      const configs = seedModules.map(module => ({
+        force,
+        module: module.key,
+        quantity: module.defaultQuantity,
+      }));
+      const results = await seedBulk({ configs });
+      const seeded = results.filter(result => result.created > 0).map(result => result.module);
+      const message = seeded.length > 0
+        ? `Đã seed ${seeded.length} modules`
+        : 'Không có dữ liệu mới để seed';
+
+      setSeedResult({ message, seeded });
+
+      if (seeded.length > 0) {
+        toast.success(message, { description: `Đã seed: ${seeded.join(', ')}` });
       } else {
-        toast.info(result.message);
+        toast.info(message);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Lỗi không xác định';
@@ -116,7 +131,7 @@ export default function DataManagerPage() {
     } finally {
       setIsSeeding(false);
     }
-  }, [seedAll]);
+  }, [seedBulk, seedModules]);
 
   const handleClearTable = useCallback(async (table: string) => {
     if (!confirm(`Xóa tất cả dữ liệu trong bảng "${table}"?`)) {return;}
@@ -146,22 +161,12 @@ export default function DataManagerPage() {
     setIsClearing(true);
     setClearResult(null);
     try {
-      const result = await clearAllData({ excludeSystem });
-      setClearResult(result);
-      
-      if (result.hasMore) {
-        toast.warning(`Đã xóa ${result.totalDeleted} records`, {
-          action: {
-            label: 'Xóa tiếp',
-            onClick:  async () => handleClearAll(excludeSystem),
-          },
-          description: 'Còn dữ liệu chưa xóa hết. Vui lòng xóa lại.',
-        });
-      } else {
-        toast.success(`Đã xóa ${result.totalDeleted} records`, {
-          description: result.tables.map(t => `${t.table}: ${t.deleted}`).join(', '),
-        });
-      }
+      await clearAll({ excludeSystem });
+      const message = excludeSystem
+        ? 'Đã xóa dữ liệu (giữ System)'
+        : 'Đã xóa toàn bộ dữ liệu';
+      setClearResult({ message });
+      toast.success(message);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Lỗi không xác định';
       toast.error('Lỗi khi xóa dữ liệu', { description: message });
@@ -169,7 +174,7 @@ export default function DataManagerPage() {
       setIsClearing(false);
       setShowConfirmClearAll(false);
     }
-  }, [clearAllData]);
+  }, [clearAll]);
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => 
@@ -328,7 +333,7 @@ export default function DataManagerPage() {
             {clearResult && (
               <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
                 <p className="text-sm text-slate-700 dark:text-slate-300">
-                  Đã xóa <span className="font-bold text-red-600">{clearResult.totalDeleted.toLocaleString()}</span> records
+                  {clearResult.message}
                 </p>
               </div>
             )}

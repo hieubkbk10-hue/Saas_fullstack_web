@@ -20,6 +20,12 @@ export const SEED_CATEGORY_LABELS: Record<SeedCategory, string> = {
 };
 
 export const SEED_MODULE_METADATA: Record<string, SeedModuleMetadata> = {
+  adminModules: {
+    category: 'system',
+    defaultQuantity: 0,
+    description: 'Danh sách module hệ thống',
+    name: 'Admin Modules',
+  },
   analytics: {
     category: 'marketing',
     defaultQuantity: 30,
@@ -127,6 +133,12 @@ export const SEED_MODULE_METADATA: Record<string, SeedModuleMetadata> = {
     defaultQuantity: 15,
     description: 'Cài đặt hệ thống',
     name: 'Settings',
+  },
+  systemPresets: {
+    category: 'system',
+    defaultQuantity: 0,
+    description: 'Preset hệ thống',
+    name: 'System Presets',
   },
   users: {
     category: 'user',

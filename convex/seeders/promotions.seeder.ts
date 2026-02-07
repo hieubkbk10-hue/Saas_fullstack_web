@@ -69,6 +69,7 @@ export class PromotionsSeeder extends BaseSeeder<PromotionData> {
   }
 
   async seed(config: SeedConfig) {
+    await this.seedModuleConfig();
     [this.products, this.categories] = await Promise.all([
       this.ctx.db.query('products').collect(),
       this.ctx.db.query('productCategories').collect(),
@@ -351,5 +352,60 @@ export class PromotionsSeeder extends BaseSeeder<PromotionData> {
     await Promise.all(
       Object.entries(counts).map(([key, count]) => this.ctx.db.insert('promotionStats', { count, key }))
     );
+  }
+
+  private async seedModuleConfig(): Promise<void> {
+    const existingFeatures = await this.ctx.db
+      .query('moduleFeatures')
+      .withIndex('by_module', (q) => q.eq('moduleKey', 'promotions'))
+      .first();
+    if (!existingFeatures) {
+      const features = [
+        { description: 'Giới hạn số lần sử dụng voucher', enabled: true, featureKey: 'enableUsageLimit', linkedFieldKey: 'usageLimit', moduleKey: 'promotions', name: 'Giới hạn lượt dùng' },
+        { description: 'Yêu cầu giá trị đơn hàng tối thiểu', enabled: true, featureKey: 'enableMinOrder', linkedFieldKey: 'minOrderAmount', moduleKey: 'promotions', name: 'Đơn tối thiểu' },
+        { description: 'Giới hạn số tiền giảm tối đa', enabled: true, featureKey: 'enableMaxDiscount', linkedFieldKey: 'maxDiscountAmount', moduleKey: 'promotions', name: 'Giảm tối đa' },
+        { description: 'Đặt thời gian bắt đầu/kết thúc', enabled: true, featureKey: 'enableSchedule', moduleKey: 'promotions', name: 'Hẹn giờ' },
+        { description: 'Chỉ áp dụng cho SP/danh mục cụ thể', enabled: false, featureKey: 'enableApplicable', moduleKey: 'promotions', name: 'Áp dụng có chọn lọc' },
+        { description: 'Loại giảm giá nâng cao (mua tặng, combo)', enabled: true, featureKey: 'enableAdvancedDiscount', moduleKey: 'promotions', name: 'Giảm nâng cao' },
+        { description: 'Điều kiện khách hàng nâng cao', enabled: true, featureKey: 'enableCustomerConditions', moduleKey: 'promotions', name: 'Điều kiện khách hàng' },
+        { description: 'Ngân sách tối đa cho khuyến mãi', enabled: false, featureKey: 'enableBudgetLimit', moduleKey: 'promotions', name: 'Ngân sách' },
+        { description: 'Cho phép cộng dồn và ưu tiên', enabled: true, featureKey: 'enableStacking', moduleKey: 'promotions', name: 'Cộng dồn' },
+        { description: 'Hiển thị khuyến mãi ngoài site', enabled: true, featureKey: 'enableDisplay', moduleKey: 'promotions', name: 'Hiển thị ngoài site' },
+      ];
+      await Promise.all(features.map((feature) => this.ctx.db.insert('moduleFeatures', feature)));
+    }
+
+    const existingFields = await this.ctx.db
+      .query('moduleFields')
+      .withIndex('by_module', (q) => q.eq('moduleKey', 'promotions'))
+      .first();
+    if (!existingFields) {
+      const fields = [
+        { enabled: true, fieldKey: 'name', isSystem: true, moduleKey: 'promotions', name: 'Tên khuyến mãi', order: 0, required: true, type: 'text' as const },
+        { enabled: true, fieldKey: 'code', isSystem: true, moduleKey: 'promotions', name: 'Mã voucher', order: 1, required: true, type: 'text' as const },
+        { enabled: true, fieldKey: 'discountType', isSystem: true, moduleKey: 'promotions', name: 'Loại giảm', order: 2, required: true, type: 'select' as const },
+        { enabled: true, fieldKey: 'discountValue', isSystem: true, moduleKey: 'promotions', name: 'Giá trị giảm', order: 3, required: true, type: 'number' as const },
+        { enabled: true, fieldKey: 'status', isSystem: true, moduleKey: 'promotions', name: 'Trạng thái', order: 4, required: true, type: 'select' as const },
+        { enabled: true, fieldKey: 'description', isSystem: false, moduleKey: 'promotions', name: 'Mô tả', order: 5, required: false, type: 'textarea' as const },
+        { enabled: true, fieldKey: 'usageLimit', isSystem: false, linkedFeature: 'enableUsageLimit', moduleKey: 'promotions', name: 'Giới hạn sử dụng', order: 6, required: false, type: 'number' as const },
+        { enabled: true, fieldKey: 'minOrderAmount', isSystem: false, linkedFeature: 'enableMinOrder', moduleKey: 'promotions', name: 'Đơn tối thiểu', order: 7, required: false, type: 'price' as const },
+        { enabled: true, fieldKey: 'maxDiscountAmount', isSystem: false, linkedFeature: 'enableMaxDiscount', moduleKey: 'promotions', name: 'Giảm tối đa', order: 8, required: false, type: 'price' as const },
+        { enabled: true, fieldKey: 'startDate', isSystem: false, moduleKey: 'promotions', name: 'Ngày bắt đầu', order: 9, required: false, type: 'date' as const },
+        { enabled: true, fieldKey: 'endDate', isSystem: false, moduleKey: 'promotions', name: 'Ngày kết thúc', order: 10, required: false, type: 'date' as const },
+      ];
+      await Promise.all(fields.map((field) => this.ctx.db.insert('moduleFields', field)));
+    }
+
+    const existingSettings = await this.ctx.db
+      .query('moduleSettings')
+      .withIndex('by_module', (q) => q.eq('moduleKey', 'promotions'))
+      .first();
+    if (!existingSettings) {
+      await Promise.all([
+        this.ctx.db.insert('moduleSettings', { moduleKey: 'promotions', settingKey: 'promotionsPerPage', value: 20 }),
+        this.ctx.db.insert('moduleSettings', { moduleKey: 'promotions', settingKey: 'defaultDiscountType', value: 'percent' }),
+        this.ctx.db.insert('moduleSettings', { moduleKey: 'promotions', settingKey: 'codeLength', value: 8 }),
+      ]);
+    }
   }
 }

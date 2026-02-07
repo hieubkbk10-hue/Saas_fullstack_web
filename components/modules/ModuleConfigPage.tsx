@@ -5,7 +5,8 @@
  import { api } from '@/convex/_generated/api';
  import { toast } from 'sonner';
  import { Database, Settings, Palette, Trash2, RefreshCw, Loader2, FolderTree } from 'lucide-react';
- import type { ModuleDefinition } from '@/lib/modules/define-module';
+import type { ModuleDefinition } from '@/lib/modules/define-module';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
 import type { FieldConfig } from '@/types/module-config';
  import { useModuleConfig } from '@/lib/modules/hooks/useModuleConfig';
  import { 
@@ -401,34 +402,23 @@ function ConfigTab({ config, moduleData, localFeatures, localFields, localCatego
    const [isSeeding, setIsSeeding] = useState(false);
    const [isClearing, setIsClearing] = useState(false);
    
-   const moduleKey = config.key;
-   const capitalizedKey = moduleKey.charAt(0).toUpperCase() + moduleKey.slice(1);
-   
-   const seedMutationKey = `seed${capitalizedKey}Module` as keyof typeof api.seed;
-   const clearMutationKey = `clear${capitalizedKey}Data` as keyof typeof api.seed;
-   
-   const hasSeedMutation = seedMutationKey in api.seed;
-   const hasClearMutation = clearMutationKey in api.seed;
-   
-   const seedModule = useMutation(
-     hasSeedMutation 
-       ? api.seed[seedMutationKey] as typeof api.seed.seedPostsModule
-       : api.seed.seedPostsModule
-   );
-   const clearData = useMutation(
-     hasClearMutation
-       ? api.seed[clearMutationKey] as typeof api.seed.clearPostsData
-       : api.seed.clearPostsData
-   );
+  const moduleKey = config.key;
+  const seedInfo = getSeedModuleInfo(moduleKey);
+  const isSeedable = Boolean(seedInfo);
+  const seedModule = useMutation(api.seedManager.seedModule);
+  const clearData = useMutation(api.seedManager.clearModule);
    
    const handleSeed = async () => {
-     if (!hasSeedMutation) {
-       toast.error(`Chưa có mutation seed${capitalizedKey}Module`);
+    if (!seedInfo) {
+      toast.error(`Module ${moduleKey} chưa hỗ trợ seed`);
        return;
      }
      setIsSeeding(true);
      try {
-       await seedModule({});
+      await seedModule({
+        module: moduleKey,
+        quantity: seedInfo.defaultQuantity,
+      });
        toast.success('Đã tạo dữ liệu mẫu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -438,14 +428,14 @@ function ConfigTab({ config, moduleData, localFeatures, localFields, localCatego
    };
    
    const handleClear = async () => {
-     if (!hasClearMutation) {
-       toast.error(`Chưa có mutation clear${capitalizedKey}Data`);
+    if (!seedInfo) {
+      toast.error(`Module ${moduleKey} chưa hỗ trợ clear`);
        return;
      }
      if (!confirm('Bạn có chắc muốn xóa toàn bộ dữ liệu?')) return;
      setIsClearing(true);
      try {
-       await clearData({});
+      await clearData({ module: moduleKey });
        toast.success('Đã xóa dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -455,15 +445,19 @@ function ConfigTab({ config, moduleData, localFeatures, localFields, localCatego
    };
    
    const handleReset = async () => {
-     if (!hasSeedMutation || !hasClearMutation) {
-       toast.error('Chưa có đầy đủ mutations');
+    if (!seedInfo) {
+      toast.error(`Module ${moduleKey} chưa hỗ trợ reset`);
        return;
      }
      if (!confirm('Bạn có chắc muốn reset dữ liệu về mặc định?')) return;
      setIsClearing(true);
      try {
-       await clearData({});
-       await seedModule({});
+      await clearData({ module: moduleKey });
+      await seedModule({
+        force: true,
+        module: moduleKey,
+        quantity: seedInfo.defaultQuantity,
+      });
        toast.success('Đã reset dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -488,7 +482,7 @@ function ConfigTab({ config, moduleData, localFeatures, localFields, localCatego
              <Button 
                variant="outline" 
                onClick={handleSeed}
-               disabled={isSeeding || !hasSeedMutation}
+               disabled={isSeeding || !isSeedable}
                className="gap-2"
              >
                {isSeeding ? <Loader2 size={16} className="animate-spin" /> : <Database size={16} />}
@@ -497,7 +491,7 @@ function ConfigTab({ config, moduleData, localFeatures, localFields, localCatego
              <Button 
                variant="outline" 
                onClick={handleClear}
-               disabled={isClearing || !hasClearMutation}
+               disabled={isClearing || !isSeedable}
                className="gap-2 text-red-500 hover:text-red-600"
              >
                {isClearing ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
@@ -505,7 +499,7 @@ function ConfigTab({ config, moduleData, localFeatures, localFields, localCatego
              </Button>
              <Button 
                onClick={handleReset}
-               disabled={isClearing || isSeeding || !hasSeedMutation || !hasClearMutation}
+               disabled={isClearing || isSeeding || !isSeedable}
                className={cn("gap-2", colorClasses.button, "text-white")}
              >
                <RefreshCw size={16} />

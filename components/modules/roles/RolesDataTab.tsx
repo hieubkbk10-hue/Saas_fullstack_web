@@ -6,6 +6,7 @@
  import { toast } from 'sonner';
 import { Crown, Database, Loader2, RefreshCw, Shield, Trash2, Users } from 'lucide-react';
  import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
  
  interface RolesDataTabProps {
    colorClasses: { button: string };
@@ -19,8 +20,9 @@ import { Crown, Database, Loader2, RefreshCw, Shield, Trash2, Users } from 'luci
    const statsData = useQuery(api.roles.getStats);
    const userCountByRole = useQuery(api.roles.getUserCountByRole);
  
-   const seedRolesModule = useMutation(api.seed.seedRolesModule);
-   const clearRolesData = useMutation(api.seed.clearRolesData);
+  const seedModule = useMutation(api.seedManager.seedModule);
+  const clearModule = useMutation(api.seedManager.clearModule);
+  const defaultQuantity = getSeedModuleInfo('roles')?.defaultQuantity ?? 10;
  
    const userCountMap = useMemo(() => {
      const map = new Map<string, number>();
@@ -31,7 +33,7 @@ import { Crown, Database, Loader2, RefreshCw, Shield, Trash2, Users } from 'luci
    const handleSeedAll = async () => {
      setIsSeeding(true);
      try {
-       await seedRolesModule();
+      await seedModule({ module: 'roles', quantity: defaultQuantity });
        toast.success('Đã tạo dữ liệu mẫu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -44,7 +46,7 @@ import { Crown, Database, Loader2, RefreshCw, Shield, Trash2, Users } from 'luci
      if (!confirm('Xóa toàn bộ roles?')) return;
      setIsClearing(true);
      try {
-       await clearRolesData();
+      await clearModule({ module: 'roles' });
        toast.success('Đã xóa toàn bộ roles!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -57,8 +59,8 @@ import { Crown, Database, Loader2, RefreshCw, Shield, Trash2, Users } from 'luci
      if (!confirm('Reset dữ liệu về mặc định?')) return;
      setIsClearing(true);
      try {
-       await clearRolesData();
-       await seedRolesModule();
+      await clearModule({ module: 'roles' });
+      await seedModule({ module: 'roles', quantity: defaultQuantity, force: true });
        toast.success('Đã reset dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');

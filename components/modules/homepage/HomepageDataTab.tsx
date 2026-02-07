@@ -7,6 +7,7 @@
  import { toast } from 'sonner';
  import { Database, Eye, EyeOff, FileText, GripVertical, Home, ImageIcon, LayoutGrid, Loader2, Phone, RefreshCw, Trash2, Users } from 'lucide-react';
  import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
  
  interface HomepageDataTabProps {
    colorClasses: { button: string };
@@ -37,16 +38,17 @@
    const componentsData = useQuery(api.homeComponents.listAll);
    const statsData = useQuery(api.homeComponents.getStats);
  
-   const seedHomepageModule = useMutation(api.seed.seedHomepageModule);
-   const clearHomepageData = useMutation(api.seed.clearHomepageData);
+  const seedModule = useMutation(api.seedManager.seedModule);
+  const clearModule = useMutation(api.seedManager.clearModule);
    const toggleComponent = useMutation(api.homeComponents.toggle);
+  const defaultQuantity = getSeedModuleInfo('homepage')?.defaultQuantity ?? 6;
  
    const sortedComponents = [...(componentsData ?? [])].sort((a, b) => a.order - b.order);
  
    const handleSeedAll = async () => {
      setIsSeeding(true);
      try {
-       await seedHomepageModule();
+      await seedModule({ module: 'homepage', quantity: defaultQuantity });
        toast.success('Đã tạo dữ liệu mẫu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -59,7 +61,7 @@
      if (!confirm('Xóa toàn bộ sections trang chủ?')) return;
      setIsClearing(true);
      try {
-       await clearHomepageData();
+      await clearModule({ module: 'homepage' });
        toast.success('Đã xóa toàn bộ sections!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -72,8 +74,8 @@
      if (!confirm('Reset dữ liệu về mặc định?')) return;
      setIsClearing(true);
      try {
-       await clearHomepageData();
-       await seedHomepageModule();
+      await clearModule({ module: 'homepage' });
+      await seedModule({ module: 'homepage', quantity: defaultQuantity, force: true });
        toast.success('Đã reset dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');

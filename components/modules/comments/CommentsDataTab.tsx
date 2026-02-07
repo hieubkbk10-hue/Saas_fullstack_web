@@ -6,6 +6,7 @@
  import { toast } from 'sonner';
  import { Database, FileText, Loader2, MessageSquare, Package, RefreshCw, Settings, Trash2 } from 'lucide-react';
  import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
  
  interface CommentsDataTabProps {
    colorClasses: { button: string };
@@ -19,12 +20,12 @@
    const postsData = useQuery(api.posts.listAll, {});
    const productsData = useQuery(api.products.listAll, {});
  
-   const seedCommentsModule = useMutation(api.seed.seedCommentsModule);
-   const seedComments = useMutation(api.seed.seedComments);
-   const clearComments = useMutation(api.seed.clearComments);
-   const clearCommentsConfig = useMutation(api.seed.clearCommentsConfig);
-   const seedPostsModule = useMutation(api.seed.seedPostsModule);
-   const seedProductsModule = useMutation(api.seed.seedProductsModule);
+  const seedModule = useMutation(api.seedManager.seedModule);
+  const clearModule = useMutation(api.seedManager.clearModule);
+
+  const commentQuantity = getSeedModuleInfo('comments')?.defaultQuantity ?? 10;
+  const postQuantity = getSeedModuleInfo('posts')?.defaultQuantity ?? 10;
+  const productQuantity = getSeedModuleInfo('products')?.defaultQuantity ?? 10;
  
    const postMap = useMemo(() => {
      const map: Record<string, string> = {};
@@ -51,7 +52,7 @@
    const handleSeedConfig = async () => {
      setIsSeeding(true);
      try {
-       await seedCommentsModule();
+      await seedModule({ module: 'comments', quantity: 0 });
        toast.success('Đã tạo cấu hình module!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -63,9 +64,9 @@
    const handleSeedData = async () => {
      setIsSeeding(true);
      try {
-       await seedPostsModule();
-       await seedProductsModule();
-       await seedComments();
+      await seedModule({ module: 'posts', quantity: postQuantity });
+      await seedModule({ module: 'products', quantity: productQuantity });
+      await seedModule({ module: 'comments', quantity: commentQuantity });
        toast.success('Đã tạo dữ liệu mẫu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -78,7 +79,7 @@
      if (!confirm('Xóa toàn bộ bình luận?')) return;
      setIsClearing(true);
      try {
-       await clearComments();
+      await clearModule({ module: 'comments' });
        toast.success('Đã xóa toàn bộ bình luận!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -91,12 +92,11 @@
      if (!confirm('Reset toàn bộ dữ liệu và cấu hình?')) return;
      setIsClearing(true);
      try {
-       await clearComments();
-       await clearCommentsConfig();
-       await seedCommentsModule();
-       await seedPostsModule();
-       await seedProductsModule();
-       await seedComments();
+      await clearModule({ module: 'comments' });
+      await seedModule({ module: 'comments', quantity: 0 });
+      await seedModule({ module: 'posts', quantity: postQuantity });
+      await seedModule({ module: 'products', quantity: productQuantity });
+      await seedModule({ module: 'comments', quantity: commentQuantity, force: true });
        toast.success('Đã reset thành công!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');

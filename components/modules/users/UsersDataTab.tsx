@@ -7,6 +7,7 @@
  import Image from 'next/image';
  import { Database, Loader2, RefreshCw, Shield, Trash2, UserCog } from 'lucide-react';
  import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
  
  interface UsersDataTabProps {
    colorClasses: { button: string };
@@ -19,8 +20,9 @@
    const usersData = useQuery(api.users.listAll);
    const rolesData = useQuery(api.roles.listAll);
  
-   const seedUsersModule = useMutation(api.seed.seedUsersModule);
-   const clearUsersData = useMutation(api.seed.clearUsersData);
+  const seedModule = useMutation(api.seedManager.seedModule);
+  const clearModule = useMutation(api.seedManager.clearModule);
+  const defaultQuantity = getSeedModuleInfo('users')?.defaultQuantity ?? 10;
  
    const rolesMap = useMemo(() => {
      const map = new Map<string, string>();
@@ -31,7 +33,7 @@
    const handleSeedAll = async () => {
      setIsSeeding(true);
      try {
-       await seedUsersModule();
+      await seedModule({ module: 'users', quantity: defaultQuantity });
        toast.success('Đã tạo dữ liệu mẫu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -44,7 +46,7 @@
      if (!confirm('Xóa toàn bộ users?')) return;
      setIsClearing(true);
      try {
-       await clearUsersData();
+      await clearModule({ module: 'users' });
        toast.success('Đã xóa toàn bộ users!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -57,8 +59,8 @@
      if (!confirm('Reset dữ liệu về mặc định?')) return;
      setIsClearing(true);
      try {
-       await clearUsersData();
-       await seedUsersModule();
+      await clearModule({ module: 'users' });
+      await seedModule({ module: 'users', quantity: defaultQuantity, force: true });
        toast.success('Đã reset dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');

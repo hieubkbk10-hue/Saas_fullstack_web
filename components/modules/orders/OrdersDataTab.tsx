@@ -42,7 +42,7 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
    const customersForTable = useQuery(api.customers.listAll, { limit: 50 });
  
   const seedModule = useMutation(api.seedManager.seedModule);
-   const clearOrdersData = useMutation(api.seed.clearOrdersData);
+  const clearModule = useMutation(api.seedManager.clearModule);
 
   const defaultQuantity = getSeedModuleInfo('orders')?.defaultQuantity ?? 10;
  
@@ -68,7 +68,7 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
      if (!confirm('Xóa toàn bộ đơn hàng?')) return;
      setIsClearing(true);
      try {
-       await clearOrdersData();
+      await clearModule({ module: 'orders' });
        toast.success('Đã xóa toàn bộ đơn hàng!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -81,8 +81,8 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
      if (!confirm('Reset dữ liệu về mặc định?')) return;
      setIsClearing(true);
      try {
-       await clearOrdersData();
-      await seedModule({ module: 'orders', quantity: defaultQuantity });
+      await clearModule({ module: 'orders' });
+      await seedModule({ module: 'orders', quantity: defaultQuantity, force: true });
        toast.success('Đã reset dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');

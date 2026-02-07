@@ -31,12 +31,11 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
    );
  
   const seedModule = useMutation(api.seedManager.seedModule);
-   const clearProductsData = useMutation(api.seed.clearProductsData);
-   const seedComments = useMutation(api.seed.seedComments);
-   const clearComments = useMutation(api.seed.clearComments);
+  const clearModule = useMutation(api.seedManager.clearModule);
    const initStats = useMutation(api.products.initStats);
 
   const defaultQuantity = getSeedModuleInfo('products')?.defaultQuantity ?? 10;
+  const commentQuantity = getSeedModuleInfo('comments')?.defaultQuantity ?? 10;
  
    const categoryMap: Record<string, string> = {};
    categoryStats?.forEach(cat => { categoryMap[cat._id] = cat.name; });
@@ -48,7 +47,7 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
      try {
       await Promise.all([
         seedModule({ module: 'products', quantity: defaultQuantity }),
-        seedComments(),
+        seedModule({ module: 'comments', quantity: commentQuantity }),
         initStats(),
       ]);
        toast.success('Đã tạo dữ liệu mẫu!');
@@ -63,7 +62,11 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
      if (!confirm('Xóa toàn bộ dữ liệu sản phẩm, danh mục và đánh giá?')) return;
      setIsClearing(true);
      try {
-       await Promise.all([clearComments(), clearProductsData(), initStats()]);
+      await Promise.all([
+        clearModule({ module: 'comments' }),
+        clearModule({ module: 'products' }),
+        initStats(),
+      ]);
        toast.success('Đã xóa toàn bộ dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -76,10 +79,10 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
      if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
      setIsClearing(true);
      try {
-       await clearComments();
-       await clearProductsData();
-      await seedModule({ module: 'products', quantity: defaultQuantity });
-       await seedComments();
+      await clearModule({ module: 'comments' });
+      await clearModule({ module: 'products' });
+      await seedModule({ module: 'products', quantity: defaultQuantity, force: true });
+      await seedModule({ module: 'comments', quantity: commentQuantity, force: true });
        await initStats();
        toast.success('Đã reset dữ liệu!');
      } catch (error) {

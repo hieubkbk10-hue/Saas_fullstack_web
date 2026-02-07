@@ -177,6 +177,10 @@ export abstract class BaseSeeder<T = unknown> {
       return result;
     }
   }
+
+  async clearData(): Promise<void> {
+    await this.clear();
+  }
   
   // ============================================================
   // CONFIGURATION

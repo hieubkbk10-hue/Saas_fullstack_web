@@ -29,11 +29,10 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
    );
    
   const seedModule = useMutation(api.seedManager.seedModule);
-   const clearPostsData = useMutation(api.seed.clearPostsData);
-   const seedComments = useMutation(api.seed.seedComments);
-   const clearComments = useMutation(api.seed.clearComments);
+  const clearModule = useMutation(api.seedManager.clearModule);
 
   const defaultQuantity = getSeedModuleInfo('posts')?.defaultQuantity ?? 10;
+  const commentQuantity = getSeedModuleInfo('comments')?.defaultQuantity ?? 10;
    
    const categoryMap = useMemo(() => {
      const map: Record<string, string> = {};
@@ -45,7 +44,7 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
      setIsSeeding(true);
      try {
       await seedModule({ module: 'posts', quantity: defaultQuantity });
-       await seedComments();
+      await seedModule({ module: 'comments', quantity: commentQuantity });
        toast.success('Đã tạo dữ liệu mẫu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -58,8 +57,8 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
      if (!confirm('Xóa toàn bộ dữ liệu?')) return;
      setIsClearing(true);
      try {
-       await clearComments();
-       await clearPostsData();
+      await clearModule({ module: 'comments' });
+      await clearModule({ module: 'posts' });
        toast.success('Đã xóa dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -72,10 +71,10 @@ import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
      if (!confirm('Reset toàn bộ dữ liệu?')) return;
      setIsClearing(true);
      try {
-       await clearComments();
-       await clearPostsData();
-      await seedModule({ module: 'posts', quantity: defaultQuantity });
-       await seedComments();
+      await clearModule({ module: 'comments' });
+      await clearModule({ module: 'posts' });
+      await seedModule({ module: 'posts', quantity: defaultQuantity, force: true });
+      await seedModule({ module: 'comments', quantity: commentQuantity, force: true });
        toast.success('Đã reset dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');

@@ -6,6 +6,7 @@
  import { toast } from 'sonner';
  import { Database, Heart, Loader2, Package, RefreshCw, Trash2, User } from 'lucide-react';
  import { Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
  
  interface WishlistDataTabProps {
    colorClasses: { button: string };
@@ -19,8 +20,9 @@
    const customersData = useQuery(api.customers.listAll, { limit: 100 });
    const productsData = useQuery(api.products.listAll, { limit: 100 });
  
-   const seedWishlistModule = useMutation(api.seed.seedWishlistModule);
-   const clearWishlistData = useMutation(api.seed.clearWishlistData);
+  const seedModule = useMutation(api.seedManager.seedModule);
+  const clearModule = useMutation(api.seedManager.clearModule);
+  const defaultQuantity = getSeedModuleInfo('wishlist')?.defaultQuantity ?? 10;
  
    const customerMap = useMemo(() => {
      const map: Record<string, string> = {};
@@ -51,7 +53,7 @@
    const handleSeedData = async () => {
      setIsSeeding(true);
      try {
-       await seedWishlistModule();
+      await seedModule({ module: 'wishlist', quantity: defaultQuantity });
        toast.success('Đã tạo dữ liệu mẫu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -64,7 +66,7 @@
      if (!confirm('Xóa toàn bộ dữ liệu wishlist?')) return;
      setIsClearing(true);
      try {
-       await clearWishlistData();
+      await clearModule({ module: 'wishlist' });
        toast.success('Đã xóa toàn bộ dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
@@ -77,8 +79,8 @@
      if (!confirm('Reset toàn bộ dữ liệu về mặc định?')) return;
      setIsClearing(true);
      try {
-       await clearWishlistData();
-       await seedWishlistModule();
+      await clearModule({ module: 'wishlist' });
+      await seedModule({ module: 'wishlist', quantity: defaultQuantity, force: true });
        toast.success('Đã reset dữ liệu!');
      } catch (error) {
        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');

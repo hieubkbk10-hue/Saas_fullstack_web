@@ -494,7 +494,7 @@ export default function ModuleManagementPage() {
   const toggleModule = useMutation(api.admin.modules.toggleModule);
   const toggleModuleWithCascade = useMutation(api.admin.modules.toggleModuleWithCascade);
   const applyPreset = useMutation(api.admin.presets.applyPreset);
-  const seedAll = useMutation(api.seed.seedAll);
+  const seedModule = useMutation(api.seedManager.seedModule);
   
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -516,10 +516,25 @@ export default function ModuleManagementPage() {
 
   // Seed data if empty
   React.useEffect(() => {
-    if (modulesData !== undefined && modulesData.length === 0) {
-      void seedAll();
+    if (modulesData === undefined || presetsData === undefined) {
+      return;
     }
-  }, [modulesData, seedAll]);
+    if (modulesData.length > 0 && presetsData.length > 0) {
+      return;
+    }
+    void (async () => {
+      try {
+        if (modulesData.length === 0) {
+          await seedModule({ module: 'adminModules', quantity: 0 });
+        }
+        if (presetsData.length === 0) {
+          await seedModule({ module: 'systemPresets', quantity: 0 });
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  }, [modulesData, presetsData, seedModule]);
 
   const handlePresetSelect = async (presetKey: string) => {
     setSelectedPreset(presetKey);
