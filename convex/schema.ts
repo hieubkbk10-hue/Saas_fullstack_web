@@ -532,6 +532,7 @@ export default defineSchema({
       v.object({
         price: v.number(),
         productId: v.id("products"),
+        productImage: v.optional(v.string()),
         productName: v.string(),
         quantity: v.number(),
         variantId: v.optional(v.id("productVariants")),

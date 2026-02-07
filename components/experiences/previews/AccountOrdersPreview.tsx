@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { ArrowUpRight, CheckCircle2, Clock, DollarSign, Package, ShoppingBag } from 'lucide-react';
 
 type AccountOrdersPreviewProps = {
@@ -66,8 +67,8 @@ const MOCK_ORDERS = [
     shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
     trackingCode: 'Chưa có',
     items: [
-      { name: 'Áo thun VietAdmin', quantity: 1, price: 320000 },
-      { name: 'Nón VietAdmin', quantity: 1, price: 320000 },
+      { name: 'Áo thun VietAdmin', quantity: 1, price: 320000, image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200' },
+      { name: 'Nón VietAdmin', quantity: 1, price: 320000, image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=201' },
     ],
   },
   {
@@ -80,7 +81,7 @@ const MOCK_ORDERS = [
     shippingMethod: 'Giao nhanh 2h',
     shippingAddress: 'Nguyễn Văn A | 0909 000 000 | Q1, HCM',
     trackingCode: 'GHTK-456789',
-    items: [{ name: 'Áo khoác VietAdmin', quantity: 1, price: 320000 }],
+    items: [{ name: 'Áo khoác VietAdmin', quantity: 1, price: 320000, image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=200' }],
   },
 ];
 
@@ -109,10 +110,14 @@ function OrderItems({ items, brandColor }: { items: Order['items']; brandColor: 
       {items.map((item) => (
         <div key={item.name} className="flex items-center gap-3 text-xs text-slate-700">
           <div
-            className="h-8 w-8 rounded-md border flex items-center justify-center"
+            className="h-8 w-8 rounded-md border overflow-hidden flex items-center justify-center"
             style={{ borderColor: getBrandTint(brandColor, 0.2), backgroundColor: getBrandTint(brandColor, 0.08) }}
           >
-            <Package size={12} style={{ color: brandColor }} />
+            {item.image ? (
+              <Image src={item.image} alt={item.name} width={32} height={32} className="h-full w-full object-cover" />
+            ) : (
+              <Package size={12} style={{ color: brandColor }} />
+            )}
           </div>
           <div className="flex-1">
             <div className="font-medium text-slate-900">{item.name}</div>
@@ -247,6 +252,10 @@ export function AccountOrdersPreview({
                   <StatusBadge status={order.status} brandColor={brandColor} />
                 </div>
                 <div className="text-xs text-slate-500">{order.itemsCount} sản phẩm · {formatPrice(order.total)}</div>
+                <div className="border-t pt-3 flex items-center justify-between text-xs">
+                  <span className="text-slate-500">Tổng thanh toán</span>
+                  <span className="font-semibold text-slate-900">{formatPrice(order.total)}</span>
+                </div>
                 {expanded && (
                   <div
                     className="border-t pt-3 space-y-3"

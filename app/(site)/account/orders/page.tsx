@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
@@ -383,10 +384,20 @@ export default function AccountOrdersPage() {
                                 {order.items.map((item, itemIndex) => (
                                   <div key={`${item.productId}-${itemIndex}`} className="flex items-center gap-4">
                                     <div
-                                      className="h-12 w-12 rounded-md border flex items-center justify-center"
+                                      className="h-12 w-12 rounded-md border overflow-hidden flex items-center justify-center"
                                       style={{ borderColor: getBrandTint(brandColor, 0.2), backgroundColor: getBrandTint(brandColor, 0.08) }}
                                     >
-                                      <Package size={18} style={{ color: brandColor }} />
+                                      {item.productImage ? (
+                                        <Image
+                                          src={item.productImage}
+                                          alt={item.productName}
+                                          width={48}
+                                          height={48}
+                                          className="h-full w-full object-cover"
+                                        />
+                                      ) : (
+                                        <Package size={18} style={{ color: brandColor }} />
+                                      )}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <div className="text-sm font-medium text-slate-900 truncate">{item.productName}</div>
@@ -601,10 +612,20 @@ export default function AccountOrdersPage() {
                           {order.items.map((item, itemIndex) => (
                             <div key={`${item.productId}-${itemIndex}`} className="flex flex-col sm:flex-row gap-4 items-start">
                               <div
-                                className="w-16 h-16 rounded-lg border flex items-center justify-center"
+                                className="w-16 h-16 rounded-lg border overflow-hidden flex items-center justify-center"
                                 style={{ borderColor: getBrandTint(brandColor, 0.2), backgroundColor: getBrandTint(brandColor, 0.08) }}
                               >
-                                <Package size={20} style={{ color: brandColor }} />
+                                {item.productImage ? (
+                                  <Image
+                                    src={item.productImage}
+                                    alt={item.productName}
+                                    width={64}
+                                    height={64}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <Package size={20} style={{ color: brandColor }} />
+                                )}
                               </div>
                               <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                 <div>

@@ -14,6 +14,7 @@ import type { Id } from '../_generated/dataModel';
 
 type OrderItem = {
   productId: Id<'products'>;
+  productImage?: string;
   productName: string;
   quantity: number;
   price: number;
@@ -69,6 +70,7 @@ export class OrderSeeder extends BaseSeeder<OrderData> {
       return {
         price,
         productId: product._id,
+        productImage: product.image,
         productName: product.name,
         quantity,
       };

@@ -31,6 +31,7 @@ const paymentStatus = v.union(
 const orderItemValidator = v.object({
   price: v.number(),
   productId: v.id("products"),
+  productImage: v.optional(v.string()),
   productName: v.string(),
   quantity: v.number(),
   variantId: v.optional(v.id("productVariants")),
@@ -43,6 +44,7 @@ type VariantStockSetting = "product" | "variant";
 type OrderItemInput = {
   price: number;
   productId: Id<"products">;
+  productImage?: string;
   productName: string;
   quantity: number;
   variantId?: Id<"productVariants">;
@@ -115,6 +117,7 @@ async function normalizeOrderItems(
     return {
       ...item,
       price,
+      productImage: item.productImage ?? product.image ?? undefined,
       variantTitle,
     };
   }));

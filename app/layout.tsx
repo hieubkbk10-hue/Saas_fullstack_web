@@ -2,11 +2,17 @@ import "./globals.css";
 import { PageViewTracker } from "@/components/PageViewTracker";
 import { BrandColorProvider } from "@/components/providers/BrandColorProvider";
 import { ConvexClientProvider } from "@/components/providers/convex-provider";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Be_Vietnam_Pro, Geist, Geist_Mono } from "next/font/google";
 
 const geistSans = Geist({
   subsets: ["latin"],
   variable: "--font-geist-sans",
+});
+
+const vietnameseSans = Be_Vietnam_Pro({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-vietnamese-sans",
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -22,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${vietnameseSans.variable} ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ConvexClientProvider>
           <BrandColorProvider />

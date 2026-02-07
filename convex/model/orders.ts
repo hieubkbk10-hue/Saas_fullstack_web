@@ -14,6 +14,7 @@ type PaymentMethod = "COD" | "BankTransfer" | "VietQR" | "CreditCard" | "EWallet
 
 interface OrderItem {
   productId: Id<"products">;
+  productImage?: string;
   productName: string;
   quantity: number;
   price: number;
