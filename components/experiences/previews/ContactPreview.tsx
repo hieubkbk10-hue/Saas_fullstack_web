@@ -227,13 +227,13 @@ export function ContactPreview({
             {showContactInfo && (
               <div
                 className="relative lg:w-5/12 text-white p-6 lg:p-8 flex flex-col justify-between overflow-hidden"
-                style={{ backgroundColor: darkenColor(brandColor, 0.35) }}
+                style={{ backgroundColor: darkenColor(brandColor, 0.5) }}
               >
                 <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full blur-3xl" style={{ backgroundColor: withAlpha(brandColor, 0.18) }} />
                 <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 rounded-full blur-3xl" style={{ backgroundColor: withAlpha(brandColor, 0.18) }} />
                 <div className="relative z-10">
                   <h2 className="text-2xl font-bold tracking-tight mb-2">Liên hệ với chúng tôi</h2>
-                  <p className="text-slate-400 text-sm mb-8">
+                  <p className="text-white/80 text-sm mb-8">
                     Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ giải pháp tốt nhất cho doanh nghiệp của bạn.
                   </p>
                   <div className="space-y-6">
@@ -242,9 +242,9 @@ export function ContactPreview({
                         <Phone size={20} style={{ color: brandColor }} />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-slate-300">Điện thoại</h3>
-                        <p className="text-base font-semibold mt-1">0123 456 789</p>
-                        <p className="text-xs text-slate-500 mt-1">Thứ 2 - Thứ 7, 8:00 - 17:00</p>
+                        <h3 className="text-sm font-semibold text-white">Điện thoại</h3>
+                        <p className="text-base font-semibold mt-1 text-white">0123 456 789</p>
+                        <p className="text-xs text-white/70 mt-1">Thứ 2 - Thứ 7, 8:00 - 17:00</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
@@ -252,9 +252,9 @@ export function ContactPreview({
                         <Mail size={20} style={{ color: brandColor }} />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-slate-300">Email</h3>
-                        <p className="text-base font-semibold mt-1 break-all">info@example.com</p>
-                        <p className="text-xs text-slate-500 mt-1">Phản hồi trong vòng 24 giờ</p>
+                        <h3 className="text-sm font-semibold text-white">Email</h3>
+                        <p className="text-base font-semibold mt-1 break-all text-white">info@example.com</p>
+                        <p className="text-xs text-white/70 mt-1">Phản hồi trong vòng 24 giờ</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
@@ -262,15 +262,15 @@ export function ContactPreview({
                         <MapPin size={20} style={{ color: brandColor }} />
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-slate-300">Văn phòng</h3>
-                        <p className="text-base font-semibold mt-1">Hà Nội, Việt Nam</p>
+                        <h3 className="text-sm font-semibold text-white">Văn phòng</h3>
+                        <p className="text-base font-semibold mt-1 text-white">Hà Nội, Việt Nam</p>
                       </div>
                     </div>
                   </div>
                 </div>
                 {showSocialLinks && (
                   <div className="relative z-10 mt-8">
-                    <h3 className="text-sm font-medium text-slate-300 mb-3">Theo dõi chúng tôi</h3>
+                    <h3 className="text-sm font-semibold text-white mb-3">Theo dõi chúng tôi</h3>
                     <div className="flex gap-3">
                       {[
                         { label: 'Facebook', color: '#1877f2', icon: Facebook },

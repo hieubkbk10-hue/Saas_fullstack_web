@@ -215,7 +215,7 @@ function CorporateSidebar({
   socialLinks: SocialLinkItem[];
   brandColor: string;
 }) {
-  const sidebarColor = darkenColor(brandColor, 0.35);
+  const sidebarColor = darkenColor(brandColor, 0.5);
   const glowColor = withAlpha(brandColor, 0.18);
   const infoItems = [
     { label: 'Điện thoại', value: phone, note: 'Thứ 2 - Thứ 7, 8:00 - 17:00', icon: Phone },
@@ -233,12 +233,12 @@ function CorporateSidebar({
       <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 rounded-full blur-3xl" style={{ backgroundColor: glowColor }} />
       <div className="relative z-10">
         <h2 className="text-2xl font-bold tracking-tight mb-2">Liên hệ với chúng tôi</h2>
-        <p className="text-slate-400 text-sm mb-8">
+        <p className="text-white/80 text-sm mb-8">
           Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ giải pháp tốt nhất cho doanh nghiệp của bạn.
         </p>
         <div className="space-y-6">
           {infoItems.length === 0 ? (
-            <div className="text-sm text-slate-400">Chưa có dữ liệu liên hệ.</div>
+            <div className="text-sm text-white/70">Chưa có dữ liệu liên hệ.</div>
           ) : (
             infoItems.map((item) => (
               <div key={item.label} className="flex items-start gap-4">
@@ -246,9 +246,9 @@ function CorporateSidebar({
                   <item.icon size={20} style={{ color: brandColor }} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-slate-300">{item.label}</h3>
-                  <p className="text-base font-semibold mt-1 break-words">{item.value}</p>
-                  {item.note && <p className="text-xs text-slate-500 mt-1">{item.note}</p>}
+                  <h3 className="text-sm font-semibold text-white">{item.label}</h3>
+                  <p className="text-base font-semibold mt-1 break-words text-white">{item.value}</p>
+                  {item.note && <p className="text-xs text-white/70 mt-1">{item.note}</p>}
                 </div>
               </div>
             ))
@@ -257,7 +257,7 @@ function CorporateSidebar({
       </div>
       {showSocialLinks && socialLinks.length > 0 && (
         <div className="relative z-10 mt-8">
-          <h3 className="text-sm font-medium text-slate-300 mb-3">Theo dõi chúng tôi</h3>
+          <h3 className="text-sm font-semibold text-white mb-3">Theo dõi chúng tôi</h3>
           <div className="flex gap-3">
             {socialLinks.map((item) => (
               <a
