@@ -72,6 +72,13 @@ const MODULE_GROUPS = [
       { defaultQty: 20, key: 'customers', name: 'Customers' },
     ],
   },
+  {
+    category: 'marketing',
+    label: 'Marketing',
+    modules: [
+      { defaultQty: 10, key: 'promotions', name: 'Promotions' },
+    ],
+  },
 ];
 
 export function CustomSeedDialog({
