@@ -661,6 +661,26 @@ export const listPublicPromotions = query({
   returns: v.array(promotionDoc),
 });
 
+// Migration: bổ sung promotionType cho data cũ
+export const migrateAddPromotionType = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const promotions = await ctx.db.query("promotions").take(500);
+    let updated = 0;
+
+    for (const promo of promotions) {
+      if (!promo.promotionType) {
+        const promotionType = promo.code ? "coupon" : "campaign";
+        await ctx.db.patch(promo._id, { promotionType });
+        updated++;
+      }
+    }
+
+    return { updated };
+  },
+  returns: v.object({ updated: v.number() }),
+});
+
 export const recordUsage = mutation({
   args: {
     customerId: v.id("customers"),
