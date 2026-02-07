@@ -167,34 +167,34 @@ export function OrdersConfigTab({
       <div className="mt-4 space-y-4">
         {activeTab === 'general' && (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <SettingsCard title="Cài đặt chung">
-              {config.settings
-                ?.filter((setting) => (setting.group ?? 'general') === 'general')
-                .map((setting) => (
-                  <div key={setting.key}>
-                    <label className="text-xs text-slate-500 mb-1 block">{setting.label}</label>
-                    {setting.type === 'select' ? (
-                      <select
-                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
-                        value={String(localSettings[setting.key] ?? '')}
-                        onChange={(event) => onSettingChange(setting.key, event.target.value)}
-                      >
-                        {(setting.options ?? []).map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <Input
-                        type={setting.type === 'number' ? 'number' : 'text'}
-                        value={String(localSettings[setting.key] ?? '')}
-                        onChange={(event) => onSettingChange(setting.key, setting.type === 'number' ? Number(event.target.value || 0) : event.target.value)}
-                      />
-                    )}
-                  </div>
-                ))}
-            </SettingsCard>
-
             <div className="space-y-4">
+              <SettingsCard title="Cài đặt chung">
+                {config.settings
+                  ?.filter((setting) => (setting.group ?? 'general') === 'general')
+                  .map((setting) => (
+                    <div key={setting.key}>
+                      <label className="text-xs text-slate-500 mb-1 block">{setting.label}</label>
+                      {setting.type === 'select' ? (
+                        <select
+                          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
+                          value={String(localSettings[setting.key] ?? '')}
+                          onChange={(event) => onSettingChange(setting.key, event.target.value)}
+                        >
+                          {(setting.options ?? []).map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Input
+                          type={setting.type === 'number' ? 'number' : 'text'}
+                          value={String(localSettings[setting.key] ?? '')}
+                          onChange={(event) => onSettingChange(setting.key, setting.type === 'number' ? Number(event.target.value || 0) : event.target.value)}
+                        />
+                      )}
+                    </div>
+                  ))}
+              </SettingsCard>
+
               {config.features && config.features.length > 0 && (
                 <FeaturesCard
                   features={config.features.map((f) => ({
@@ -213,7 +213,7 @@ export function OrdersConfigTab({
               )}
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 lg:col-span-2">
               <FieldsCard
                 title={`Trường ${config.name}`}
                 icon={config.icon}
