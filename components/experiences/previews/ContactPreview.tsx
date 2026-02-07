@@ -13,6 +13,100 @@ type ContactPreviewProps = {
   brandColor?: string;
 };
 
+const toHex = (value: string) => (value.startsWith('#') ? value.slice(1) : value);
+
+const hexToRgb = (hex: string) => {
+  const normalized = toHex(hex);
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+    return null;
+  }
+  const r = Number.parseInt(normalized.slice(0, 2), 16);
+  const g = Number.parseInt(normalized.slice(2, 4), 16);
+  const b = Number.parseInt(normalized.slice(4, 6), 16);
+  return { r, g, b };
+};
+
+const darkenColor = (hex: string, amount: number) => {
+  const rgb = hexToRgb(hex);
+  if (!rgb) {
+    return hex;
+  }
+  const clamp = (value: number) => Math.max(0, Math.min(255, Math.round(value)));
+  return `#${clamp(rgb.r * (1 - amount)).toString(16).padStart(2, '0')}${clamp(rgb.g * (1 - amount)).toString(16).padStart(2, '0')}${clamp(rgb.b * (1 - amount)).toString(16).padStart(2, '0')}`;
+};
+
+const withAlpha = (hex: string, alpha: number) => {
+  const rgb = hexToRgb(hex);
+  if (!rgb) {
+    return hex;
+  }
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+};
+
+function CorporateForm({ brandColor = '#6366f1' }: { brandColor?: string }) {
+  return (
+    <div>
+      <h3 className="text-xl font-semibold text-slate-800 mb-5 border-b border-slate-100 pb-3">Gửi tin nhắn</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Họ tên</label>
+          <input
+            type="text"
+            placeholder="Nguyễn Văn A"
+            className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-800"
+            disabled
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Email</label>
+          <input
+            type="email"
+            placeholder="example@company.com"
+            className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-800"
+            disabled
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Số điện thoại</label>
+          <input
+            type="text"
+            placeholder="09xx xxx xxx"
+            className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-800"
+            disabled
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Chủ đề</label>
+          <input
+            type="text"
+            placeholder="Hợp tác kinh doanh..."
+            className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-800"
+            disabled
+          />
+        </div>
+        <div className="space-y-2 md:col-span-2">
+          <label className="text-sm font-medium text-slate-700">Nội dung tin nhắn</label>
+          <textarea
+            placeholder="Nhập nội dung cần hỗ trợ..."
+            className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-800 resize-none"
+            rows={4}
+            disabled
+          />
+        </div>
+        <div className="md:col-span-2">
+          <button
+            className="w-full md:w-auto px-8 py-2.5 rounded-lg text-white font-semibold flex items-center justify-center gap-2"
+            style={{ backgroundColor: brandColor }}
+          >
+            <Send size={16} />
+            Gửi tin nhắn
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ContactForm({ brandColor = '#6366f1' }: { brandColor?: string }) {
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
@@ -121,22 +215,86 @@ export function ContactPreview({
   return (
     <div className="py-6 px-4 min-h-[300px]">
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-6">
-          <h1 className="text-xl md:text-2xl font-bold text-slate-900">Liên hệ với chúng tôi</h1>
-          <p className="text-slate-500 mt-1 text-sm">Chúng tôi luôn sẵn sàng hỗ trợ bạn</p>
-        </div>
+        {layoutStyle !== 'form-only' && (
+          <div className="text-center mb-6">
+            <h1 className="text-xl md:text-2xl font-bold text-slate-900">Liên hệ với chúng tôi</h1>
+            <p className="text-slate-500 mt-1 text-sm">Chúng tôi luôn sẵn sàng hỗ trợ bạn</p>
+          </div>
+        )}
 
         {layoutStyle === 'form-only' && (
-          <div className="space-y-4">
-            <div className="max-w-xl mx-auto">
-              <ContactForm brandColor={brandColor} />
-            </div>
-            {(showContactInfo || showMap) && (
-              <div className={isMobile ? 'space-y-4' : 'grid grid-cols-2 gap-6'}>
-                {showContactInfo && <ContactInfo showSocialLinks={showSocialLinks} brandColor={brandColor} />}
-                {showMap && <MapPreview />}
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 flex flex-col lg:flex-row">
+            {showContactInfo && (
+              <div
+                className="relative lg:w-5/12 text-white p-6 lg:p-8 flex flex-col justify-between overflow-hidden"
+                style={{ backgroundColor: darkenColor(brandColor, 0.35) }}
+              >
+                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full blur-3xl" style={{ backgroundColor: withAlpha(brandColor, 0.18) }} />
+                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 rounded-full blur-3xl" style={{ backgroundColor: withAlpha(brandColor, 0.18) }} />
+                <div className="relative z-10">
+                  <h2 className="text-2xl font-bold tracking-tight mb-2">Liên hệ với chúng tôi</h2>
+                  <p className="text-slate-400 text-sm mb-8">
+                    Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ giải pháp tốt nhất cho doanh nghiệp của bạn.
+                  </p>
+                  <div className="space-y-6">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-white/10 p-3 rounded-lg">
+                        <Phone size={20} style={{ color: brandColor }} />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium text-slate-300">Điện thoại</h3>
+                        <p className="text-base font-semibold mt-1">0123 456 789</p>
+                        <p className="text-xs text-slate-500 mt-1">Thứ 2 - Thứ 7, 8:00 - 17:00</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <div className="bg-white/10 p-3 rounded-lg">
+                        <Mail size={20} style={{ color: brandColor }} />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium text-slate-300">Email</h3>
+                        <p className="text-base font-semibold mt-1 break-all">info@example.com</p>
+                        <p className="text-xs text-slate-500 mt-1">Phản hồi trong vòng 24 giờ</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <div className="bg-white/10 p-3 rounded-lg">
+                        <MapPin size={20} style={{ color: brandColor }} />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium text-slate-300">Văn phòng</h3>
+                        <p className="text-base font-semibold mt-1">Hà Nội, Việt Nam</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {showSocialLinks && (
+                  <div className="relative z-10 mt-8">
+                    <h3 className="text-sm font-medium text-slate-300 mb-3">Theo dõi chúng tôi</h3>
+                    <div className="flex gap-3">
+                      {[
+                        { label: 'Facebook', color: '#1877f2', icon: Facebook },
+                        { label: 'Instagram', color: '#e1306c', icon: Instagram },
+                        { label: 'YouTube', color: '#ff0000', icon: Youtube },
+                        { label: 'Zalo', color: '#0084ff', icon: ZaloIcon },
+                      ].map((item) => (
+                        <button
+                          key={item.label}
+                          className="w-9 h-9 rounded-full flex items-center justify-center text-white"
+                          style={{ backgroundColor: item.color }}
+                        >
+                          <item.icon size={16} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+            <div className={`${showContactInfo ? 'lg:w-7/12' : 'w-full'} bg-white p-6 lg:p-8 space-y-6`}>
+              <CorporateForm brandColor={brandColor} />
+              {showMap && <MapPreview />}
+            </div>
           </div>
         )}
 
