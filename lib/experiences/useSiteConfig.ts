@@ -344,6 +344,9 @@ type AccountOrdersConfig = {
   showTracking: boolean;
   showTimeline: boolean;
   allowCancel: boolean;
+  paginationType: PaginationType;
+  ordersPerPage: number;
+  defaultStatusFilter: Array<'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'>;
 };
 
 export function useAccountOrdersConfig(): AccountOrdersConfig {
@@ -351,6 +354,19 @@ export function useAccountOrdersConfig(): AccountOrdersConfig {
 
   return useMemo(() => {
     const raw = experienceSetting?.value as Partial<AccountOrdersConfig> | undefined;
+    const normalizeStatusFilter = (
+      value?: Array<'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'>
+    ): Array<'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'> => {
+      const allowed: Array<'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'> = [
+        'Pending',
+        'Processing',
+        'Shipped',
+        'Delivered',
+        'Cancelled',
+      ];
+      const filtered = value?.filter((status) => allowed.includes(status)) ?? [];
+      return filtered.length > 0 ? filtered : ['Processing', 'Shipped'];
+    };
 
     return {
       layoutStyle: raw?.layoutStyle ?? 'cards',
@@ -362,6 +378,9 @@ export function useAccountOrdersConfig(): AccountOrdersConfig {
       showTracking: raw?.showTracking ?? true,
       showTimeline: raw?.showTimeline ?? true,
       allowCancel: raw?.allowCancel ?? true,
+      paginationType: normalizePaginationType(raw?.paginationType),
+      ordersPerPage: raw?.ordersPerPage ?? 12,
+      defaultStatusFilter: normalizeStatusFilter(raw?.defaultStatusFilter),
     };
   }, [experienceSetting?.value]);
 }

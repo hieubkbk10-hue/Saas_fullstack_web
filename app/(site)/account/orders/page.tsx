@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -12,33 +12,27 @@ import type { Id } from '@/convex/_generated/dataModel';
 import { useCustomerAuth } from '@/app/(site)/auth/context';
 import { useBrandColor } from '@/components/site/hooks';
 import { useAccountOrdersConfig } from '@/lib/experiences';
+import { notifyAddToCart, useCart } from '@/lib/cart';
 
 const formatPrice = (value: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(value);
 
-const STATUS_LABELS: Record<string, string> = {
-  Pending: 'Chờ xử lý',
-  Processing: 'Đang xử lý',
-  Shipped: 'Đang giao',
-  Delivered: 'Đã giao',
-  Cancelled: 'Đã huỷ',
-};
-
-const STATUS_TONES: Record<string, number> = {
-  Pending: 0.08,
-  Processing: 0.12,
-  Shipped: 0.16,
-  Delivered: 0.2,
-  Cancelled: 0.06,
+const STATUS_CONFIG = {
+  Pending: { label: 'Chờ xử lý', step: 1, color: '#64748b' },
+  Processing: { label: 'Đang xử lý', step: 2, color: '#f59e0b' },
+  Shipped: { label: 'Đang giao', step: 3, color: '#3b82f6' },
+  Delivered: { label: 'Đã giao', step: 4, color: '#22c55e' },
+  Cancelled: { label: 'Đã hủy', step: 1, color: '#ef4444' },
 };
 
 const TIMELINE_STEPS = ['Đặt hàng', 'Xác nhận', 'Vận chuyển', 'Hoàn thành'];
 
-const STATUS_STEPS: Record<string, number> = {
-  Pending: 1,
-  Processing: 2,
-  Shipped: 3,
-  Delivered: 4,
-};
+const STATUS_OPTIONS = [
+  { id: 'Pending', label: 'Chờ xử lý' },
+  { id: 'Processing', label: 'Đang xử lý' },
+  { id: 'Shipped', label: 'Đang giao' },
+  { id: 'Delivered', label: 'Đã giao' },
+  { id: 'Cancelled', label: 'Đã hủy' },
+] as const;
 
 const PAYMENT_LABELS: Record<string, string> = {
   COD: 'Thanh toán khi nhận hàng',
@@ -173,7 +167,9 @@ export default function AccountOrdersPage() {
   const config = useAccountOrdersConfig();
   const router = useRouter();
   const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
+  const { addItem } = useCart();
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
+  const stockFeature = useQuery(api.admin.modules.getModuleFeature, { featureKey: 'enableStock', moduleKey: 'products' });
   const cancelOrder = useMutation(api.orders.cancel);
 
   const orders = useQuery(
@@ -184,6 +180,110 @@ export default function AccountOrdersPage() {
   );
 
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = config.ordersPerPage ?? 12;
+  const statusKeys = useMemo(() => STATUS_OPTIONS.map((status) => status.id), []);
+  const stockEnabled = stockFeature?.enabled ?? false;
+
+  const ordersList = useMemo(() => orders ?? [], [orders]);
+  const totalOrders = ordersList.length;
+
+  const stats = {
+    totalSpent: ordersList.reduce((sum, order) => sum + order.totalAmount, 0),
+    pending: ordersList.filter((order) => order.status === 'Pending').length,
+    delivered: ordersList.filter((order) => order.status === 'Delivered').length,
+    totalItems: ordersList.reduce((sum, order) => sum + order.items.reduce((acc, item) => acc + item.quantity, 0), 0),
+  };
+
+  const getStatusStyle = (status: string) => {
+    const statusConfig = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+    const color = statusConfig?.color ?? brandColor;
+    return {
+      backgroundColor: getBrandTint(color, 0.12),
+      color,
+      borderColor: getBrandTint(color, 0.3),
+    };
+  };
+
+  const handleCancelOrder = async (orderId: Id<'orders'>) => {
+    if (!confirm('Bạn chắc chắn muốn hủy đơn hàng này?')) {
+      return;
+    }
+    try {
+      await cancelOrder({ id: orderId });
+      toast.success('Đã hủy đơn hàng thành công.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Không thể hủy đơn hàng.');
+    }
+  };
+
+  const handleViewDetail = (orderNumber: string) => {
+    toast.info(`Đang mở chi tiết đơn ${orderNumber}.`);
+  };
+
+  const handleReorder = async (order: (typeof ordersList)[number]) => {
+    const availableItems: Array<(typeof order.items)[number]> = [];
+    const outOfStockItems: Array<(typeof order.items)[number]> = [];
+
+    for (const item of order.items) {
+      try {
+        await addItem(item.productId as Id<'products'>, item.quantity, item.variantId);
+        availableItems.push(item);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Không thể thêm sản phẩm vào giỏ hàng.';
+        if (stockEnabled && /stock|tồn kho|hết hàng|insufficient/i.test(message)) {
+          outOfStockItems.push(item);
+        } else {
+          toast.error(message);
+        }
+      }
+    }
+
+    if (availableItems.length > 0) {
+      notifyAddToCart();
+      router.push('/cart');
+    }
+
+    if (stockEnabled && outOfStockItems.length > 0) {
+      toast.error(`Sản phẩm đã hết hàng: ${outOfStockItems.map((item) => item.productName).join(', ')}`);
+    }
+
+    if (availableItems.length === 0 && outOfStockItems.length > 0) {
+      toast.error('Tất cả sản phẩm trong đơn đã hết hàng');
+    }
+  };
+
+  const handlePagination = (direction: 'prev' | 'next') => {
+    toast.info(direction === 'prev' ? 'Đang về trang trước.' : 'Đang sang trang tiếp theo.');
+  };
+
+  const activeStatuses = selectedStatuses.length > 0 ? selectedStatuses : config.defaultStatusFilter;
+
+  const filteredOrders = useMemo(() => {
+    if (activeStatuses.length === 0 || activeStatuses.length === statusKeys.length) {
+      return ordersList;
+    }
+    return ordersList.filter((order) => activeStatuses.includes(order.status));
+  }, [activeStatuses, ordersList, statusKeys.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ordersPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStart = (safeCurrentPage - 1) * ordersPerPage;
+  const pageEnd = pageStart + ordersPerPage;
+  const visibleOrders = config.paginationType === 'pagination'
+    ? filteredOrders.slice(pageStart, pageEnd)
+    : filteredOrders.slice(0, ordersPerPage);
+
+  const toggleStatus = (status: string) => {
+    setCurrentPage(1);
+    setSelectedStatuses((prev) => {
+      const base = prev.length > 0 ? prev : config.defaultStatusFilter;
+      return base.includes(status) ? base.filter((item) => item !== status) : [...base, status];
+    });
+  };
+
+  const isAllActive = activeStatuses.length === 0 || activeStatuses.length === statusKeys.length;
 
   if (ordersModule && !ordersModule.enabled) {
     return (
@@ -230,59 +330,40 @@ export default function AccountOrdersPage() {
     );
   }
 
-  const ordersList = orders ?? [];
-  const totalOrders = ordersList.length;
-
-  const stats = {
-    totalSpent: ordersList.reduce((sum, order) => sum + order.totalAmount, 0),
-    pending: ordersList.filter((order) => order.status === 'Pending').length,
-    delivered: ordersList.filter((order) => order.status === 'Delivered').length,
-    totalItems: ordersList.reduce((sum, order) => sum + order.items.reduce((acc, item) => acc + item.quantity, 0), 0),
-  };
-
-  const getStatusStyle = (status: string) => {
-    const opacity = STATUS_TONES[status] ?? 0.1;
-    return {
-      backgroundColor: getBrandTint(brandColor, opacity),
-      color: brandColor,
-      borderColor: getBrandTint(brandColor, 0.3),
-    };
-  };
-
-  const handleCancelOrder = async (orderId: Id<'orders'>) => {
-    if (!confirm('Bạn chắc chắn muốn hủy đơn hàng này?')) {
-      return;
-    }
-    try {
-      await cancelOrder({ id: orderId });
-      toast.success('Đã hủy đơn hàng thành công.');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Không thể hủy đơn hàng.');
-    }
-  };
-
-  const handleViewDetail = (orderNumber: string) => {
-    toast.info(`Đang mở chi tiết đơn ${orderNumber}.`);
-  };
-
-  const handleInvoice = (orderNumber: string) => {
-    toast.info(`Đang tạo hóa đơn VAT cho ${orderNumber}.`);
-  };
-
-  const handleReorder = () => {
-    router.push('/products');
-  };
-
-  const handlePagination = (direction: 'prev' | 'next') => {
-    toast.info(direction === 'prev' ? 'Đang về trang trước.' : 'Đang sang trang tiếp theo.');
-  };
-
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900">Đơn hàng của tôi</h1>
         <p className="text-slate-500 mt-2">Bạn đang có {totalOrders} đơn hàng gần đây.</p>
       </div>
+
+      {config.layoutStyle === 'cards' && ordersList.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <button
+            type="button"
+            onClick={() => setSelectedStatuses(statusKeys)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${isAllActive ? 'bg-white shadow-sm' : 'text-slate-500'}`}
+            style={isAllActive ? { borderColor: brandColor, color: brandColor } : { borderColor: '#e2e8f0' }}
+          >
+            Tất cả
+          </button>
+          {STATUS_OPTIONS.map((status) => {
+            const active = activeStatuses.includes(status.id);
+            const statusColor = STATUS_CONFIG[status.id].color;
+            return (
+              <button
+                key={status.id}
+                type="button"
+                onClick={() => toggleStatus(status.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${active ? 'bg-white shadow-sm' : 'text-slate-500'}`}
+                style={active ? { borderColor: statusColor, color: statusColor } : { borderColor: '#e2e8f0' }}
+              >
+                {status.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {config.showStats && config.layoutStyle === 'cards' && ordersList.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -333,16 +414,16 @@ export default function AccountOrdersPage() {
         <div className="space-y-4">
           {config.layoutStyle === 'cards' && (
             <div className="space-y-4">
-              {ordersList.map((order) => {
+              {visibleOrders.map((order) => {
                 const createdAt = new Date(order._creationTime);
-                const statusLabel = STATUS_LABELS[order.status] ?? order.status;
+                const statusLabel = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]?.label ?? order.status;
                 const statusStyle = getStatusStyle(order.status);
                 const quantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                 const isExpanded = expandedOrderId === order._id;
                 const paymentLabel = order.paymentMethod ? PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod : 'Chưa chọn';
                 const shippingMethodLabel = order.shippingMethodLabel ?? 'Chưa xác định';
                 const trackingLabel = order.trackingNumber ?? 'Chưa có';
-                const step = STATUS_STEPS[order.status] ?? 1;
+                const step = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]?.step ?? 1;
 
                 return (
                   <div key={order._id} className="bg-white rounded-2xl border border-slate-200 shadow-sm">
@@ -430,27 +511,11 @@ export default function AccountOrdersPage() {
                           <div className="flex flex-wrap justify-end gap-2">
                             <button
                               type="button"
-                              onClick={() => handleInvoice(order.orderNumber)}
-                              className="px-3 py-2 rounded-lg text-xs font-semibold border"
-                              style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
-                            >
-                              Hóa đơn VAT
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleReorder}
+                              onClick={() => { void handleReorder(order); }}
                               className="px-3 py-2 rounded-lg text-xs font-semibold text-white"
                               style={{ backgroundColor: brandColor }}
                             >
                               Mua lại
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleViewDetail(order.orderNumber)}
-                              className="px-3 py-2 rounded-lg text-xs font-semibold border"
-                              style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
-                            >
-                              Xem chi tiết
                             </button>
                             {config.allowCancel && order.status === 'Pending' && (
                               <button
@@ -469,6 +534,49 @@ export default function AccountOrdersPage() {
                   </div>
                 );
               })}
+              {visibleOrders.length === 0 && (
+                <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-6 text-center text-sm text-slate-500">
+                  Không có đơn hàng phù hợp.
+                </div>
+              )}
+              {filteredOrders.length > 0 && (
+                <div className="pt-2">
+                  {config.paginationType === 'pagination' ? (
+                    <div className="flex items-center justify-between gap-3 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentPage((prev) => Math.max(1, Math.min(totalPages, prev - 1)))}
+                        disabled={safeCurrentPage === 1}
+                        className="px-3 py-1.5 rounded-lg font-semibold border disabled:opacity-50"
+                        style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
+                      >
+                        Trước
+                      </button>
+                      <div className="text-slate-500">
+                        Trang <span className="font-semibold text-slate-700">{safeCurrentPage}</span> / {totalPages}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentPage((prev) => Math.min(totalPages, Math.max(1, prev + 1)))}
+                        disabled={safeCurrentPage === totalPages}
+                        className="px-3 py-1.5 rounded-lg font-semibold border disabled:opacity-50"
+                        style={{ borderColor: getBrandTint(brandColor, 0.3), color: brandColor }}
+                      >
+                        Sau
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center mt-2 space-y-2">
+                      <div className="flex justify-center gap-1">
+                        <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: brandColor }} />
+                        <div className="w-2 h-2 rounded-full animate-pulse delay-100" style={{ backgroundColor: brandColor, opacity: 0.7 }} />
+                        <div className="w-2 h-2 rounded-full animate-pulse delay-200" style={{ backgroundColor: brandColor, opacity: 0.5 }} />
+                      </div>
+                      <p className="text-xs text-slate-400">Cuộn để xem thêm...</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -489,7 +597,7 @@ export default function AccountOrdersPage() {
                   <tbody>
                     {ordersList.map((order) => {
                       const createdAt = new Date(order._creationTime);
-                      const statusLabel = STATUS_LABELS[order.status] ?? order.status;
+                      const statusLabel = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]?.label ?? order.status;
                       const statusStyle = getStatusStyle(order.status);
                       const quantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                       return (
@@ -547,7 +655,7 @@ export default function AccountOrdersPage() {
               <div className="space-y-2 md:hidden">
                 {ordersList.map((order) => {
                   const createdAt = new Date(order._creationTime);
-                  const statusLabel = STATUS_LABELS[order.status] ?? order.status;
+                  const statusLabel = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]?.label ?? order.status;
                   const statusStyle = getStatusStyle(order.status);
                   return (
                     <div key={order._id} className="bg-white border border-slate-200 rounded-xl p-3">
@@ -582,10 +690,10 @@ export default function AccountOrdersPage() {
             <div className="space-y-6">
               {ordersList.map((order) => {
                 const createdAt = new Date(order._creationTime);
-                const statusLabel = STATUS_LABELS[order.status] ?? order.status;
+                const statusLabel = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]?.label ?? order.status;
                 const statusStyle = getStatusStyle(order.status);
                 const trackingLabel = order.trackingNumber ?? 'Đang cập nhật';
-                const step = STATUS_STEPS[order.status] ?? 1;
+                const step = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]?.step ?? 1;
                 return (
                   <div key={order._id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                     <div className="px-6 py-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-50/50">
