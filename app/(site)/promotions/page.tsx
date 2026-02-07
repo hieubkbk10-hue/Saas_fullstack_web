@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { Check, Copy, Ticket } from 'lucide-react';
 import { api } from '@/convex/_generated/api';
+import type { Doc } from '@/convex/_generated/dataModel';
 import { useBrandColor } from '@/components/site/hooks';
 
 type PromotionsLayoutStyle = 'grid' | 'list' | 'banner';
@@ -73,7 +74,7 @@ function buildConditions(promo: { minOrderAmount?: number; maxDiscountAmount?: n
 
 export default function PromotionsPage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: 'promotions_list_ui' });
-  const promotions = useQuery(api.promotions.listPublicPromotions);
+  const promotions = useQuery(api.promotions.listPublicPromotions) as Doc<'promotions'>[] | undefined;
   const brandColor = useBrandColor();
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
@@ -95,7 +96,8 @@ export default function PromotionsPage() {
     }
     const map = new Map<string, typeof promotions>();
     promotions.forEach((promo) => {
-      const label = PROMOTION_TYPE_LABELS[promo.promotionType] ?? promo.promotionType;
+      const promotionType = promo.promotionType ?? 'campaign';
+      const label = PROMOTION_TYPE_LABELS[promotionType] ?? promotionType;
       const list = map.get(label) ?? [];
       list.push(promo);
       map.set(label, list);
@@ -187,7 +189,7 @@ export default function PromotionsPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <span className="text-xs uppercase tracking-wide text-slate-500">
-                            {PROMOTION_TYPE_LABELS[promo.promotionType] ?? promo.promotionType}
+                            {PROMOTION_TYPE_LABELS[promo.promotionType ?? 'campaign'] ?? (promo.promotionType ?? 'campaign')}
                           </span>
                           <h3 className="mt-2 font-semibold text-slate-900">{promo.name}</h3>
                         </div>

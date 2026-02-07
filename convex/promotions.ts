@@ -93,7 +93,7 @@ const promotionDoc = v.object({
   name: v.string(),
   order: v.number(),
   priority: v.optional(v.number()),
-  promotionType: promotionType,
+  promotionType: v.optional(promotionType),
   recurringDays: v.optional(v.array(v.number())),
   recurringHours: v.optional(v.object({ from: v.number(), to: v.number() })),
   scheduleType: v.optional(scheduleType),
@@ -486,7 +486,8 @@ export const update = mutation({
       throw new Error("Ngân sách không hợp lệ");
     }
 
-    if ((args.promotionType ?? promotion.promotionType) === "coupon") {
+    const currentPromotionType = (args.promotionType ?? promotion.promotionType) ?? (promotion.code ? "coupon" : "campaign");
+    if (currentPromotionType === "coupon") {
       const nextCode = args.code?.trim() ?? promotion.code ?? '';
       if (!nextCode) {
         throw new Error("Voucher coupon cần mã giảm giá");
@@ -527,8 +528,9 @@ export const update = mutation({
 
     // Update counters nếu promotionType thay đổi
     if (args.promotionType && args.promotionType !== promotion.promotionType) {
+      const currentPromotionType = promotion.promotionType ?? (promotion.code ? "coupon" : "campaign");
       await Promise.all([
-        updatePromotionStats(ctx, promotion.promotionType, -1),
+        updatePromotionStats(ctx, currentPromotionType, -1),
         updatePromotionStats(ctx, args.promotionType, 1),
       ]);
     }
@@ -568,7 +570,7 @@ export const remove = mutation({
       updatePromotionStats(ctx, "total", -1),
       updatePromotionStats(ctx, promotion.status, -1),
       updatePromotionStats(ctx, promotion.discountType, -1),
-      updatePromotionStats(ctx, promotion.promotionType, -1),
+      updatePromotionStats(ctx, promotion.promotionType ?? (promotion.code ? "coupon" : "campaign"), -1),
       updatePromotionStats(ctx, "totalUsed", -promotion.usedCount),
     ]);
     
@@ -735,7 +737,8 @@ export const validateCode = query({
       return { discountAmount: 0, message: "Mã voucher không còn hiệu lực", promotion: null, valid: false };
     }
 
-    if (promotion.promotionType !== "coupon") {
+    const promotionType = promotion.promotionType ?? "campaign";
+    if (promotionType !== "coupon") {
       return { discountAmount: 0, message: "Mã voucher không hợp lệ", promotion: null, valid: false };
     }
 

@@ -770,12 +770,14 @@ export default defineSchema({
     name: v.string(),
     order: v.number(),
     priority: v.optional(v.number()),
-    promotionType: v.union(
-      v.literal("coupon"),
-      v.literal("campaign"),
-      v.literal("flash_sale"),
-      v.literal("bundle"),
-      v.literal("loyalty")
+    promotionType: v.optional(
+      v.union(
+        v.literal("coupon"),
+        v.literal("campaign"),
+        v.literal("flash_sale"),
+        v.literal("bundle"),
+        v.literal("loyalty")
+      )
     ),
     recurringDays: v.optional(v.array(v.number())),
     recurringHours: v.optional(v.object({ from: v.number(), to: v.number() })),

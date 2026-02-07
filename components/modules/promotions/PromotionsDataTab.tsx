@@ -3,6 +3,7 @@
  import React from 'react';
  import { useQuery } from 'convex/react';
  import { api } from '@/convex/_generated/api';
+import type { Doc } from '@/convex/_generated/dataModel';
  import { CheckCircle, Clock, DollarSign, Percent, Ticket, Users } from 'lucide-react';
  import { Badge, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
  
@@ -21,7 +22,7 @@
  
 export function PromotionsDataTab({ colorClasses: _colorClasses }: PromotionsDataTabProps) {
   void _colorClasses;
-   const promotionsData = useQuery(api.promotions.listAll);
+   const promotionsData = useQuery(api.promotions.listAll) as Doc<'promotions'>[] | undefined;
    const statsData = useQuery(api.promotions.getStats);
  
    const getStatusBadge = (status: string) => {

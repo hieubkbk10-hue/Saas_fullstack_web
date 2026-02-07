@@ -93,7 +93,7 @@ export default function PromotionEditPage({ params }: { params: Promise<{ id: st
       setName(promotionData.name);
       setCode(promotionData.code ?? '');
       setDescription(promotionData.description ?? '');
-      setPromotionType(promotionData.promotionType);
+      setPromotionType(promotionData.promotionType ?? (promotionData.code ? 'coupon' : 'campaign'));
       setDiscountType(promotionData.discountType);
       setDiscountValue(promotionData.discountValue ?? 0);
       setDiscountConfigText(promotionData.discountConfig ? JSON.stringify(promotionData.discountConfig, null, 2) : '');

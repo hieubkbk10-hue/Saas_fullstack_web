@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import type { Id } from '@/convex/_generated/dataModel';
+import type { Doc, Id } from '@/convex/_generated/dataModel';
 import { Check, ChevronDown, Copy, Edit, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
@@ -83,7 +83,7 @@ function PromotionsContent() {
     promotionType: filterPromotionType || undefined,
     status: filterStatus || undefined,
     discountType: filterType || undefined,
-  });
+  }) as Doc<'promotions'>[] | undefined;
 
   const totalCountData = useQuery(api.promotions.countAdmin, {
     search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
@@ -264,14 +264,14 @@ function PromotionsContent() {
     }
   };
 
-  const getPromotionTypeLabel = (type: string) => {
+  const getPromotionTypeLabel = (type?: string) => {
     switch (type) {
       case 'coupon': return 'Coupon';
       case 'campaign': return 'Chương trình';
       case 'flash_sale': return 'Flash sale';
       case 'bundle': return 'Combo';
       case 'loyalty': return 'Loyalty';
-      default: return type;
+      default: return type ?? 'Campaign';
     }
   };
 
@@ -408,7 +408,7 @@ function PromotionsContent() {
                 {resolvedVisibleColumns.includes('promotionType') && (
                   <TableCell>
                     <Badge variant="secondary" className="bg-rose-500/10 text-rose-600">
-                      {getPromotionTypeLabel(promo.promotionType)}
+                      {getPromotionTypeLabel(promo.promotionType ?? 'campaign')}
                     </Badge>
                   </TableCell>
                 )}

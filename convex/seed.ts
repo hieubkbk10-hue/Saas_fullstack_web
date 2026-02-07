@@ -2794,7 +2794,8 @@ export const seedPromotionsModule = mutation({
         counts.total++;
         counts[p.status] = (counts[p.status] || 0) + 1;
         counts[p.discountType] = (counts[p.discountType] || 0) + 1;
-        counts[p.promotionType] = (counts[p.promotionType] || 0) + 1;
+        const promotionType = p.promotionType ?? (p.code ? "coupon" : "campaign");
+        counts[promotionType] = (counts[promotionType] || 0) + 1;
         counts.totalUsed += p.usedCount ?? 0;
       }
       for (const [key, count] of Object.entries(counts)) {
