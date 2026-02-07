@@ -231,7 +231,7 @@ function ServicesContent() {
   const requiredCount = urlPage * postsPerPage;
   const isLoadingServices = listConfig.paginationType === 'pagination' && (
     useCursorPagination
-      ? infiniteStatus === 'LoadingFirstPage' || infiniteResults.length < requiredCount
+      ? infiniteStatus === 'LoadingFirstPage' || (infiniteStatus !== 'Exhausted' && infiniteResults.length < requiredCount)
       : paginatedServices === undefined
   );
 

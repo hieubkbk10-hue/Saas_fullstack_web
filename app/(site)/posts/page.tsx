@@ -238,7 +238,7 @@ function PostsContent() {
   const requiredCount = urlPage * postsPerPage;
   const isLoadingPosts = listConfig.paginationType === 'pagination' && (
     useCursorPagination
-      ? infiniteStatus === 'LoadingFirstPage' || infiniteResults.length < requiredCount
+      ? infiniteStatus === 'LoadingFirstPage' || (infiniteStatus !== 'Exhausted' && infiniteResults.length < requiredCount)
       : paginatedPosts === undefined
   );
   

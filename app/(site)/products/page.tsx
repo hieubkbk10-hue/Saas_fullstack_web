@@ -332,7 +332,7 @@ function ProductsContent() {
   }, [filterKey, listConfig.paginationType, pathname, router, searchParams, urlPage]);
   const isLoadingProducts = isSearching || (isSearchActive && paginatedProducts === undefined) || (listConfig.paginationType === 'pagination' && (
     useCursorPagination
-      ? infiniteStatus === 'LoadingFirstPage' || infiniteResults.length < requiredCount
+      ? infiniteStatus === 'LoadingFirstPage' || (infiniteStatus !== 'Exhausted' && infiniteResults.length < requiredCount)
       : paginatedProducts === undefined
   ));
 
