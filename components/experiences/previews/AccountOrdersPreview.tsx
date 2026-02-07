@@ -4,6 +4,7 @@ import React from 'react';
 import { Package } from 'lucide-react';
 
 type AccountOrdersPreviewProps = {
+  layoutStyle: 'cards' | 'compact' | 'timeline';
   showStats: boolean;
   showOrderItems: boolean;
   showPaymentMethod: boolean;
@@ -19,6 +20,7 @@ type AccountOrdersPreviewProps = {
 const formatPrice = (value: number) => new Intl.NumberFormat('vi-VN', { currency: 'VND', style: 'currency' }).format(value);
 
 export function AccountOrdersPreview({
+  layoutStyle,
   showStats,
   showOrderItems,
   showPaymentMethod,
@@ -30,8 +32,18 @@ export function AccountOrdersPreview({
   brandColor,
   device,
 }: AccountOrdersPreviewProps) {
+  const containerClasses =
+    layoutStyle === 'compact'
+      ? 'bg-slate-50 rounded-2xl p-3 space-y-3'
+      : 'bg-slate-50 rounded-2xl p-4 space-y-4';
+
+  const orderCardClasses =
+    layoutStyle === 'timeline'
+      ? 'bg-white border border-slate-200 rounded-2xl p-4 space-y-3 border-l-4 border-l-slate-300'
+      : 'bg-white border border-slate-200 rounded-2xl p-4 space-y-3';
+
   return (
-    <div className="bg-slate-50 rounded-2xl p-4 space-y-4">
+    <div className={containerClasses}>
       <div>
         <h3 className="text-lg font-semibold text-slate-900">Đơn hàng của tôi</h3>
         <p className="text-xs text-slate-500">Preview account orders</p>
@@ -48,7 +60,7 @@ export function AccountOrdersPreview({
         </div>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+      <div className={orderCardClasses}>
         <div className="flex items-center justify-between">
           <div>
             <div className="text-xs text-slate-500">Mã đơn hàng</div>

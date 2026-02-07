@@ -335,6 +335,7 @@ export function useCheckoutConfig(): CheckoutConfig {
 }
 
 type AccountOrdersConfig = {
+  layoutStyle: 'cards' | 'compact' | 'timeline';
   showStats: boolean;
   showOrderItems: boolean;
   showPaymentMethod: boolean;
@@ -352,6 +353,7 @@ export function useAccountOrdersConfig(): AccountOrdersConfig {
     const raw = experienceSetting?.value as Partial<AccountOrdersConfig> | undefined;
 
     return {
+      layoutStyle: raw?.layoutStyle ?? 'cards',
       showStats: raw?.showStats ?? true,
       showOrderItems: raw?.showOrderItems ?? true,
       showPaymentMethod: raw?.showPaymentMethod ?? true,
@@ -365,6 +367,7 @@ export function useAccountOrdersConfig(): AccountOrdersConfig {
 }
 
 type AccountProfileConfig = {
+  layoutStyle: 'card' | 'sidebar' | 'compact';
   showQuickActions: boolean;
   showContactInfo: boolean;
   showLoyaltyBadge: boolean;
@@ -377,6 +380,7 @@ export function useAccountProfileConfig(): AccountProfileConfig {
     const raw = experienceSetting?.value as Partial<AccountProfileConfig> | undefined;
 
     return {
+      layoutStyle: raw?.layoutStyle ?? 'card',
       showQuickActions: raw?.showQuickActions ?? true,
       showContactInfo: raw?.showContactInfo ?? true,
       showLoyaltyBadge: raw?.showLoyaltyBadge ?? true,

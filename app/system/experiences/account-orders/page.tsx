@@ -8,6 +8,7 @@ import { api } from '@/convex/_generated/api';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@/app/admin/components/ui';
 import {
   AccountOrdersPreview,
+  ExampleLinks,
   ExperienceHintCard,
   ExperienceModuleLink,
 } from '@/components/experiences';
@@ -15,13 +16,18 @@ import {
   BrowserFrame,
   ControlCard,
   DeviceToggle,
+  LayoutTabs,
   ToggleRow,
   deviceWidths,
+  type LayoutOption,
   type DeviceType,
 } from '@/components/experiences/editor';
 import { EXPERIENCE_NAMES, MESSAGES, useExperienceConfig, useExperienceSave } from '@/lib/experiences';
 
+type AccountOrdersLayoutStyle = 'cards' | 'compact' | 'timeline';
+
 type AccountOrdersExperienceConfig = {
+  layoutStyle: AccountOrdersLayoutStyle;
   showStats: boolean;
   showOrderItems: boolean;
   showPaymentMethod: boolean;
@@ -34,7 +40,14 @@ type AccountOrdersExperienceConfig = {
 
 const EXPERIENCE_KEY = 'account_orders_ui';
 
+const LAYOUT_STYLES: LayoutOption<AccountOrdersLayoutStyle>[] = [
+  { description: 'Cards đầy đủ thông tin', id: 'cards', label: 'Cards' },
+  { description: 'Gọn hơn cho mobile', id: 'compact', label: 'Compact' },
+  { description: 'Nhấn mạnh tiến trình', id: 'timeline', label: 'Timeline' },
+];
+
 const DEFAULT_CONFIG: AccountOrdersExperienceConfig = {
+  layoutStyle: 'cards',
   showStats: true,
   showOrderItems: true,
   showPaymentMethod: true,
@@ -52,15 +65,36 @@ const HINTS = [
   'Timeline hiện trạng thái hiện tại của đơn hàng.',
 ];
 
+function ModuleFeatureStatus({ label, enabled, href, moduleName }: { label: string; enabled: boolean; href: string; moduleName: string }) {
+  return (
+    <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <div className="flex items-start gap-2">
+        <span className={`mt-1 inline-flex h-2 w-2 rounded-full ${enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">{label}</p>
+          <p className="text-xs text-slate-500">
+            {enabled ? 'Đang bật' : 'Chưa bật'} · Nếu muốn {enabled ? 'tắt' : 'bật'} hãy vào {moduleName}
+          </p>
+        </div>
+      </div>
+      <Link href={href} className="text-xs font-medium text-cyan-600 hover:underline">
+        Đi đến →
+      </Link>
+    </div>
+  );
+}
+
 export default function AccountOrdersExperiencePage() {
   const experienceSetting = useQuery(api.settings.getByKey, { key: EXPERIENCE_KEY });
   const ordersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'orders' });
   const customersModule = useQuery(api.admin.modules.getModuleByKey, { key: 'customers' });
+  const brandColorSetting = useQuery(api.settings.getByKey, { key: 'site_brand_color' });
   const [previewDevice, setPreviewDevice] = useState<DeviceType>('desktop');
 
   const serverConfig = useMemo<AccountOrdersExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<AccountOrdersExperienceConfig> | undefined;
     return {
+      layoutStyle: raw?.layoutStyle ?? 'cards',
       showStats: raw?.showStats ?? true,
       showOrderItems: raw?.showOrderItems ?? true,
       showPaymentMethod: raw?.showPaymentMethod ?? true,
@@ -73,6 +107,7 @@ export default function AccountOrdersExperiencePage() {
   }, [experienceSetting?.value]);
 
   const isLoading = experienceSetting === undefined || ordersModule === undefined || customersModule === undefined;
+  const brandColor = (brandColorSetting?.value as string) || '#4f46e5';
 
   const { config, setConfig, hasChanges } = useExperienceConfig(serverConfig, DEFAULT_CONFIG, isLoading);
   const { handleSave, isSaving } = useExperienceSave(
@@ -167,7 +202,14 @@ export default function AccountOrdersExperiencePage() {
               accentColor="#4f46e5"
             />
           </ControlCard>
+        </CardContent>
+      </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Module & liên kết</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <ControlCard title="Module liên quan">
             <ExperienceModuleLink
               enabled={ordersModule?.enabled ?? false}
@@ -176,12 +218,32 @@ export default function AccountOrdersExperiencePage() {
               title="Đơn hàng"
               colorScheme="blue"
             />
+            <ModuleFeatureStatus
+              label="Đơn hàng"
+              enabled={ordersModule?.enabled ?? false}
+              href="/system/modules/orders"
+              moduleName="module Đơn hàng"
+            />
             <ExperienceModuleLink
               enabled={customersModule?.enabled ?? false}
               href="/system/modules/customers"
               icon={Package}
               title="Khách hàng"
               colorScheme="blue"
+            />
+            <ModuleFeatureStatus
+              label="Khách hàng"
+              enabled={customersModule?.enabled ?? false}
+              href="/system/modules/customers"
+              moduleName="module Khách hàng"
+            />
+          </ControlCard>
+
+          <ControlCard title="Link xem thử">
+            <ExampleLinks
+              links={[{ label: 'Trang đơn hàng', url: '/account/orders' }]}
+              color="#4f46e5"
+              compact
             />
           </ControlCard>
 
@@ -197,13 +259,22 @@ export default function AccountOrdersExperiencePage() {
             <CardTitle className="text-base flex items-center gap-2">
               <FileText size={18} /> Preview
             </CardTitle>
-            <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+            <div className="flex items-center gap-3">
+              <LayoutTabs
+                layouts={LAYOUT_STYLES}
+                activeLayout={config.layoutStyle}
+                onChange={(layout) => setConfig(prev => ({ ...prev, layoutStyle: layout }))}
+                accentColor="#4f46e5"
+              />
+              <DeviceToggle value={previewDevice} onChange={setPreviewDevice} size="sm" />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className={`mx-auto transition-all duration-300 ${deviceWidths[previewDevice]}`}>
             <BrowserFrame url="yoursite.com/account/orders">
               <AccountOrdersPreview
+                layoutStyle={config.layoutStyle}
                 showStats={config.showStats}
                 showOrderItems={config.showOrderItems}
                 showPaymentMethod={config.showPaymentMethod}
@@ -212,7 +283,7 @@ export default function AccountOrdersExperiencePage() {
                 showTracking={config.showTracking}
                 showTimeline={config.showTimeline}
                 allowCancel={config.allowCancel}
-                brandColor="#4f46e5"
+                brandColor={brandColor}
                 device={previewDevice}
               />
             </BrowserFrame>
