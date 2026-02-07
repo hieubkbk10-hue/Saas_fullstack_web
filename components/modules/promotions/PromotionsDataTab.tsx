@@ -1,11 +1,13 @@
  'use client';
  
- import React from 'react';
- import { useQuery } from 'convex/react';
+ import React, { useState } from 'react';
+ import { useMutation, useQuery } from 'convex/react';
  import { api } from '@/convex/_generated/api';
 import type { Doc } from '@/convex/_generated/dataModel';
- import { CheckCircle, Clock, DollarSign, Percent, Ticket, Users } from 'lucide-react';
- import { Badge, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { toast } from 'sonner';
+ import { CheckCircle, Clock, Database, DollarSign, Loader2, Percent, RefreshCw, Ticket, Trash2, Users } from 'lucide-react';
+ import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
  
  interface PromotionsDataTabProps {
    colorClasses: { button: string };
@@ -20,8 +22,10 @@ import type { Doc } from '@/convex/_generated/dataModel';
    return new Date(timestamp).toLocaleDateString('vi-VN');
  }
  
-export function PromotionsDataTab({ colorClasses: _colorClasses }: PromotionsDataTabProps) {
-  void _colorClasses;
+export function PromotionsDataTab({ colorClasses }: PromotionsDataTabProps) {
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+
    const promotionsData = useQuery(api.promotions.listAll) as Doc<'promotions'>[] | undefined;
    const statsData = useQuery(api.promotions.getStats);
  
@@ -50,9 +54,75 @@ export function PromotionsDataTab({ colorClasses: _colorClasses }: PromotionsDat
     { label: 'Free ship', value: statsData?.freeShippingCount ?? 0 },
     { label: 'Tặng quà', value: statsData?.giftCount ?? 0 },
   ];
+
+  const seedModule = useMutation(api.seedManager.seedModule);
+  const clearModule = useMutation(api.seedManager.clearModule);
+  const defaultQuantity = getSeedModuleInfo('promotions')?.defaultQuantity ?? 5;
+
+  const handleSeedAll = async () => {
+    setIsSeeding(true);
+    try {
+      await seedModule({ module: 'promotions', quantity: defaultQuantity });
+      toast.success('Đã tạo dữ liệu mẫu!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  const handleClearData = async () => {
+    if (!confirm('Xóa toàn bộ khuyến mãi?')) return;
+    setIsClearing(true);
+    try {
+      await clearModule({ module: 'promotions' });
+      toast.success('Đã xóa toàn bộ khuyến mãi!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
+  const handleResetAll = async () => {
+    if (!confirm('Reset dữ liệu về mặc định?')) return;
+    setIsClearing(true);
+    try {
+      await clearModule({ module: 'promotions' });
+      await seedModule({ module: 'promotions', quantity: defaultQuantity, force: true });
+      toast.success('Đã reset dữ liệu!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    } finally {
+      setIsClearing(false);
+    }
+  };
  
    return (
      <div className="space-y-6">
+       <Card className="p-4">
+         <div className="flex items-center justify-between">
+           <div>
+             <h3 className="font-semibold text-slate-900 dark:text-slate-100">Quản lý dữ liệu mẫu</h3>
+             <p className="text-sm text-slate-500 mt-1">Seed, clear hoặc reset dữ liệu khuyến mãi</p>
+           </div>
+           <div className="flex gap-2">
+             <Button variant="outline" onClick={handleSeedAll} disabled={isSeeding} className="gap-2">
+               {isSeeding ? <Loader2 size={16} className="animate-spin" /> : <Database size={16} />}
+               Seed Data
+             </Button>
+             <Button variant="outline" onClick={handleClearData} disabled={isClearing} className="gap-2 text-red-500 hover:text-red-600">
+               {isClearing ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+               Clear All
+             </Button>
+             <Button onClick={handleResetAll} disabled={isClearing || isSeeding} className={`gap-2 ${colorClasses.button} text-white`}>
+               <RefreshCw size={16} />
+               Reset
+             </Button>
+           </div>
+         </div>
+       </Card>
+
        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
          <Card className="p-4">
            <div className="flex items-center gap-3">

@@ -1,10 +1,12 @@
  'use client';
  
- import React, { useMemo } from 'react';
- import { useQuery } from 'convex/react';
+ import React, { useMemo, useState } from 'react';
+ import { useMutation, useQuery } from 'convex/react';
  import { api } from '@/convex/_generated/api';
-import { AlertTriangle, Bell, CheckCircle, Clock, Info, Send, XCircle } from 'lucide-react';
-import { Badge, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { toast } from 'sonner';
+import { AlertTriangle, Bell, CheckCircle, Clock, Database, Info, Loader2, RefreshCw, Send, Trash2, XCircle } from 'lucide-react';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
  
  interface NotificationsDataTabProps {
    colorClasses: { button: string };
@@ -24,9 +26,15 @@ import { Badge, Card, Table, TableBody, TableCell, TableHead, TableHeader, Table
    Sent: { label: 'Đã gửi', variant: 'success' as const },
  };
  
-export function NotificationsDataTab({ colorClasses: _colorClasses }: NotificationsDataTabProps) {
-  void _colorClasses;
+export function NotificationsDataTab({ colorClasses }: NotificationsDataTabProps) {
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+
    const notificationsData = useQuery(api.notifications.listAll);
+
+  const seedModule = useMutation(api.seedManager.seedModule);
+  const clearModule = useMutation(api.seedManager.clearModule);
+  const defaultQuantity = getSeedModuleInfo('notifications')?.defaultQuantity ?? 10;
  
    const stats = useMemo(() => {
      const data = notificationsData ?? [];
@@ -41,9 +49,71 @@ export function NotificationsDataTab({ colorClasses: _colorClasses }: Notificati
      if (!timestamp) return '-';
      return new Date(timestamp).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
    };
+
+  const handleSeedAll = async () => {
+    setIsSeeding(true);
+    try {
+      await seedModule({ module: 'notifications', quantity: defaultQuantity });
+      toast.success('Đã tạo dữ liệu mẫu!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  const handleClearData = async () => {
+    if (!confirm('Xóa toàn bộ thông báo?')) return;
+    setIsClearing(true);
+    try {
+      await clearModule({ module: 'notifications' });
+      toast.success('Đã xóa toàn bộ thông báo!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
+  const handleResetAll = async () => {
+    if (!confirm('Reset dữ liệu về mặc định?')) return;
+    setIsClearing(true);
+    try {
+      await clearModule({ module: 'notifications' });
+      await seedModule({ module: 'notifications', quantity: defaultQuantity, force: true });
+      toast.success('Đã reset dữ liệu!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    } finally {
+      setIsClearing(false);
+    }
+  };
  
    return (
      <div className="space-y-6">
+       <Card className="p-4">
+         <div className="flex items-center justify-between">
+           <div>
+             <h3 className="font-semibold text-slate-900 dark:text-slate-100">Quản lý dữ liệu mẫu</h3>
+             <p className="text-sm text-slate-500 mt-1">Seed, clear hoặc reset dữ liệu thông báo</p>
+           </div>
+           <div className="flex gap-2">
+             <Button variant="outline" onClick={handleSeedAll} disabled={isSeeding} className="gap-2">
+               {isSeeding ? <Loader2 size={16} className="animate-spin" /> : <Database size={16} />}
+               Seed Data
+             </Button>
+             <Button variant="outline" onClick={handleClearData} disabled={isClearing} className="gap-2 text-red-500 hover:text-red-600">
+               {isClearing ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+               Clear All
+             </Button>
+             <Button onClick={handleResetAll} disabled={isClearing || isSeeding} className={`gap-2 ${colorClasses.button} text-white`}>
+               <RefreshCw size={16} />
+               Reset
+             </Button>
+           </div>
+         </div>
+       </Card>
+
        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
          <Card className="p-4">
            <div className="flex items-center gap-3">

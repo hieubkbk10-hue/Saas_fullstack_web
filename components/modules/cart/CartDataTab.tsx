@@ -1,21 +1,29 @@
  'use client';
  
- import React, { useMemo } from 'react';
- import { useQuery } from 'convex/react';
+ import React, { useMemo, useState } from 'react';
+ import { useMutation, useQuery } from 'convex/react';
  import { api } from '@/convex/_generated/api';
-import { AlertTriangle, CheckCircle, ShoppingCart } from 'lucide-react';
-import { Badge, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { toast } from 'sonner';
+import { AlertTriangle, CheckCircle, Database, Loader2, RefreshCw, ShoppingCart, Trash2 } from 'lucide-react';
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/admin/components/ui';
+import { getSeedModuleInfo } from '@/lib/modules/seed-registry';
  
  interface CartDataTabProps {
    colorClasses: { button: string };
  }
  
-export function CartDataTab({ colorClasses: _colorClasses }: CartDataTabProps) {
-  void _colorClasses;
+export function CartDataTab({ colorClasses }: CartDataTabProps) {
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+
    const cartsData = useQuery(api.cart.listAll, { limit: 100 });
    const cartItemsData = useQuery(api.cart.listAllItems, { limit: 100 });
    const statsData = useQuery(api.cart.getStats);
    const customersData = useQuery(api.customers.listAll, { limit: 100 });
+
+  const seedModule = useMutation(api.seedManager.seedModule);
+  const clearModule = useMutation(api.seedManager.clearModule);
+  const defaultQuantity = getSeedModuleInfo('cart')?.defaultQuantity ?? 10;
  
    const customerMap = useMemo(() => {
      const map: Record<string, string> = {};
@@ -31,9 +39,71 @@ export function CartDataTab({ colorClasses: _colorClasses }: CartDataTabProps) {
      totalValue: statsData?.totalValue ?? cartsData?.filter(c => c.status === 'Active').reduce((sum, c) => sum + c.totalAmount, 0) ?? 0,
      totalItems: cartItemsData?.length ?? 0,
    }), [statsData, cartsData, cartItemsData]);
+
+  const handleSeedAll = async () => {
+    setIsSeeding(true);
+    try {
+      await seedModule({ module: 'cart', quantity: defaultQuantity });
+      toast.success('Đã tạo dữ liệu mẫu!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  const handleClearData = async () => {
+    if (!confirm('Xóa toàn bộ giỏ hàng?')) return;
+    setIsClearing(true);
+    try {
+      await clearModule({ module: 'cart' });
+      toast.success('Đã xóa toàn bộ giỏ hàng!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
+  const handleResetAll = async () => {
+    if (!confirm('Reset dữ liệu về mặc định?')) return;
+    setIsClearing(true);
+    try {
+      await clearModule({ module: 'cart' });
+      await seedModule({ module: 'cart', quantity: defaultQuantity, force: true });
+      toast.success('Đã reset dữ liệu!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    } finally {
+      setIsClearing(false);
+    }
+  };
  
    return (
      <div className="space-y-6">
+       <Card className="p-4">
+         <div className="flex items-center justify-between">
+           <div>
+             <h3 className="font-semibold text-slate-900 dark:text-slate-100">Quản lý dữ liệu mẫu</h3>
+             <p className="text-sm text-slate-500 mt-1">Seed, clear hoặc reset dữ liệu giỏ hàng</p>
+           </div>
+           <div className="flex gap-2">
+             <Button variant="outline" onClick={handleSeedAll} disabled={isSeeding} className="gap-2">
+               {isSeeding ? <Loader2 size={16} className="animate-spin" /> : <Database size={16} />}
+               Seed Data
+             </Button>
+             <Button variant="outline" onClick={handleClearData} disabled={isClearing} className="gap-2 text-red-500 hover:text-red-600">
+               {isClearing ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+               Clear All
+             </Button>
+             <Button onClick={handleResetAll} disabled={isClearing || isSeeding} className={`gap-2 ${colorClasses.button} text-white`}>
+               <RefreshCw size={16} />
+               Reset
+             </Button>
+           </div>
+         </div>
+       </Card>
+
        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
          <Card className="p-4"><p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{stats.total}</p><p className="text-sm text-slate-500">Tổng giỏ hàng</p></Card>
          <Card className="p-4"><div className="flex items-center gap-2"><ShoppingCart size={16} className="text-emerald-500" /><p className="text-2xl font-bold text-emerald-600">{stats.active}</p></div><p className="text-sm text-slate-500">Đang hoạt động</p></Card>
