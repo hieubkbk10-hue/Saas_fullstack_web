@@ -1,36 +1,10 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { useQuery } from 'convex/react';
-import { Facebook, Instagram, Linkedin, Mail, MapPin, MessageCircle, MessageSquare, Phone, Send, Twitter, Youtube } from 'lucide-react';
-import { api } from '@/convex/_generated/api';
-import { useBrandColor, useContactSettings, useSocialLinks } from '@/components/site/hooks';
+import React from 'react';
+import { Mail, MapPin, MessageSquare, Phone, Send } from 'lucide-react';
+import { useContactPageData } from '@/components/site/useContactPageData';
 
-type ContactLayoutStyle = 'form-only' | 'with-map' | 'with-info';
-
-type LayoutConfig = {
-  showMap: boolean;
-  showContactInfo: boolean;
-  showSocialLinks: boolean;
-};
-
-type ContactExperienceConfig = {
-  layoutStyle: ContactLayoutStyle;
-  layouts: {
-    'form-only': LayoutConfig;
-    'with-map': LayoutConfig;
-    'with-info': LayoutConfig;
-  };
-};
-
-const DEFAULT_CONFIG: ContactExperienceConfig = {
-  layoutStyle: 'with-info',
-  layouts: {
-    'form-only': { showMap: false, showContactInfo: false, showSocialLinks: true },
-    'with-map': { showMap: true, showContactInfo: false, showSocialLinks: true },
-    'with-info': { showMap: false, showContactInfo: true, showSocialLinks: true },
-  },
-};
+type SocialLinkItem = { label: string; href: string; color: string; icon: React.ElementType };
 
 function ContactForm({ brandColor }: { brandColor: string }) {
   return (
@@ -78,7 +52,7 @@ function ContactInfoCard({
   phone: string;
   hotline: string;
   showSocialLinks: boolean;
-  socialLinks: { label: string; href: string; color: string; icon: React.ElementType }[];
+  socialLinks: SocialLinkItem[];
 }) {
   const infoItems = [
     { label: 'Điện thoại', value: phone, icon: Phone },
@@ -143,24 +117,9 @@ function MapPreview({ address }: { address: string }) {
 }
 
 export default function ContactPage() {
-  const brandColor = useBrandColor();
-  const contact = useContactSettings();
-  const social = useSocialLinks();
-  const experienceSetting = useQuery(api.settings.getByKey, { key: 'contact_ui' });
+  const { isLoading, brandColor, config, contactData, socialLinks } = useContactPageData();
 
-  const config = useMemo(() => {
-    const raw = experienceSetting?.value as Partial<ContactExperienceConfig> | undefined;
-    return {
-      layoutStyle: raw?.layoutStyle ?? DEFAULT_CONFIG.layoutStyle,
-      layouts: {
-        'form-only': { ...DEFAULT_CONFIG.layouts['form-only'], ...raw?.layouts?.['form-only'] },
-        'with-map': { ...DEFAULT_CONFIG.layouts['with-map'], ...raw?.layouts?.['with-map'] },
-        'with-info': { ...DEFAULT_CONFIG.layouts['with-info'], ...raw?.layouts?.['with-info'] },
-      },
-    } as ContactExperienceConfig;
-  }, [experienceSetting?.value]);
-
-  if (experienceSetting === undefined || contact.isLoading || social.isLoading) {
+  if (isLoading) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-10">
         <div className="h-8 w-48 bg-slate-200 rounded-lg animate-pulse" />
@@ -169,50 +128,7 @@ export default function ContactPage() {
     );
   }
 
-  const contactData: { address: string; email: string; phone: string; hotline: string } = 'address' in contact
-    ? {
-      address: contact.address ?? '',
-      email: contact.email ?? '',
-      phone: contact.phone ?? '',
-      hotline: contact.hotline ?? '',
-    }
-    : { address: '', email: '', phone: '', hotline: '' };
-  const socialData: {
-    facebook: string;
-    instagram: string;
-    linkedin: string;
-    tiktok: string;
-    twitter: string;
-    youtube: string;
-    zalo: string;
-  } = 'facebook' in social
-    ? {
-      facebook: social.facebook ?? '',
-      instagram: social.instagram ?? '',
-      linkedin: social.linkedin ?? '',
-      tiktok: social.tiktok ?? '',
-      twitter: social.twitter ?? '',
-      youtube: social.youtube ?? '',
-      zalo: social.zalo ?? '',
-    }
-    : {
-      facebook: '',
-      instagram: '',
-      linkedin: '',
-      tiktok: '',
-      twitter: '',
-      youtube: '',
-      zalo: '',
-    };
   const layoutConfig = config.layouts[config.layoutStyle];
-  const socialLinks = [
-    { label: 'Facebook', href: socialData.facebook, color: '#1877f2', icon: Facebook },
-    { label: 'Twitter', href: socialData.twitter, color: '#1da1f2', icon: Twitter },
-    { label: 'Instagram', href: socialData.instagram, color: '#e1306c', icon: Instagram },
-    { label: 'LinkedIn', href: socialData.linkedin, color: '#0a66c2', icon: Linkedin },
-    { label: 'YouTube', href: socialData.youtube, color: '#ff0000', icon: Youtube },
-    { label: 'Zalo', href: socialData.zalo, color: '#0a68ff', icon: MessageCircle },
-  ].filter((item) => item.href) as { label: string; href: string; color: string; icon: React.ElementType }[];
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">

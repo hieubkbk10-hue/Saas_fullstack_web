@@ -26,3 +26,11 @@ export {
   useWishlistConfig,
 } from './useSiteConfig';
 export { useCartAvailable } from './useCartAvailable';
+export {
+  CONTACT_EXPERIENCE_KEY,
+  DEFAULT_CONTACT_CONFIG,
+  parseContactExperienceConfig,
+  type ContactExperienceConfig,
+  type ContactLayoutStyle,
+  type LayoutConfig,
+} from './contact/config';
