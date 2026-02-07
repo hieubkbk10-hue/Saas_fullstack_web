@@ -3,7 +3,7 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery } from 'convex/react';
 import { Check, CreditCard, MapPin, Package, Truck } from 'lucide-react';
 import { toast } from 'sonner';
@@ -122,6 +122,7 @@ function CheckoutSkeleton() {
 
 function CheckoutContent() {
   const brandColor = useBrandColor();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { customer, isAuthenticated, openLoginModal } = useCustomerAuth();
   const checkoutConfig = useCheckoutConfig();
@@ -566,7 +567,10 @@ function CheckoutContent() {
         await removeCart({ id: cart._id });
       }
       setOrderId(createdOrderId);
-      toast.success('Đặt hàng thành công.');
+      toast.success('Đặt hàng thành công! Đang chuyển đến trang đơn hàng...');
+      setTimeout(() => {
+        router.push('/account/orders');
+      }, 1500);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Không thể tạo đơn hàng.');
     } finally {
