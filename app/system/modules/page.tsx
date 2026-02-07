@@ -673,6 +673,9 @@ export default function ModuleManagementPage() {
             onSelect={handlePresetSelect}
             loading={applyingPreset}
           />
+          <span className="text-xs text-slate-500">
+            Preset sẽ bật/tắt modules theo mẫu; bạn có thể chỉnh lại thủ công.
+          </span>
           <ConfigActions modules={modules} preset={currentPreset} />
         </div>
       </div>

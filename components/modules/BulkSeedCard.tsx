@@ -140,6 +140,9 @@ export function BulkSeedCard({ onSeedComplete, onOpenCustomDialog }: BulkSeedCar
           <p className="text-sm text-slate-500 mt-1">
             Seed tất cả modules cùng lúc với preset hoặc tùy chỉnh
           </p>
+          <p className="text-xs text-slate-400 mt-1">
+            Preset là bộ cấu hình mẫu để seed nhanh; số lượng là ước tính.
+          </p>
         </div>
         <Button
           type="button"
