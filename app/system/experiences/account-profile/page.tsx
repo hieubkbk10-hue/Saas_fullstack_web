@@ -48,15 +48,13 @@ const DEFAULT_CONFIG: AccountProfileExperienceConfig = {
   showQuickActions: true,
   showContactInfo: true,
   showAddress: true,
-  actionItems: ['orders', 'shop', 'wishlist', 'payment', 'settings'],
+  actionItems: ['orders', 'shop', 'wishlist'],
 };
 
 const ACTION_OPTIONS = [
   { value: 'orders', label: 'Đơn hàng' },
   { value: 'shop', label: 'Mua sắm' },
   { value: 'wishlist', label: 'Yêu thích' },
-  { value: 'payment', label: 'Thanh toán' },
-  { value: 'settings', label: 'Cài đặt' },
 ];
 
 const ACTION_OPTION_VALUES = ACTION_OPTIONS.map((option) => option.value);
