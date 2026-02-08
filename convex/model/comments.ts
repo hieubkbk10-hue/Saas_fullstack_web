@@ -304,14 +304,52 @@ export async function bulkUpdateStatus(
  */
 export async function remove(
   ctx: MutationCtx,
-  { id }: { id: Id<"comments"> }
+  { cascade, id }: { cascade?: boolean; id: Id<"comments"> }
 ): Promise<void> {
-  // Delete child comments
-  const children = await listByParent(ctx, { parentId: id });
-  for (const child of children) {
-    await ctx.db.delete(child._id);
+  const preview = await ctx.db
+    .query("comments")
+    .withIndex("by_parent", (q) => q.eq("parentId", id))
+    .take(1);
+
+  if (preview.length > 0 && !cascade) {
+    throw new Error("Bình luận có phản hồi. Vui lòng xác nhận xóa tất cả.");
   }
+
+  if (cascade) {
+    const children = await ctx.db
+      .query("comments")
+      .withIndex("by_parent", (q) => q.eq("parentId", id))
+      .collect();
+    await Promise.all(children.map( async (child) => ctx.db.delete(child._id)));
+  }
+
   await ctx.db.delete(id);
+}
+
+export async function getDeleteInfo(
+  ctx: QueryCtx,
+  { id }: { id: Id<"comments"> }
+): Promise<{ canDelete: boolean; dependencies: { count: number; hasMore: boolean; label: string; preview: { id: string; name: string }[] }[] }> {
+  const preview = await ctx.db
+    .query("comments")
+    .withIndex("by_parent", (q) => q.eq("parentId", id))
+    .take(10);
+  const count = await ctx.db
+    .query("comments")
+    .withIndex("by_parent", (q) => q.eq("parentId", id))
+    .take(1001);
+
+  return {
+    canDelete: true,
+    dependencies: [
+      {
+        count: Math.min(count.length, 1000),
+        hasMore: count.length > 1000,
+        label: "Phản hồi",
+        preview: preview.map((comment) => ({ id: comment._id, name: comment.content })),
+      },
+    ],
+  };
 }
 
 export async function incrementLike(

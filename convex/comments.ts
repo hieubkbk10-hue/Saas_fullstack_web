@@ -415,12 +415,26 @@ export const bulkUpdateStatus = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("comments") },
+  args: { cascade: v.optional(v.boolean()), id: v.id("comments") },
   handler: async (ctx, args) => {
     await CommentsModel.remove(ctx, args);
     return null;
   },
   returns: v.null(),
+});
+
+export const getDeleteInfo = query({
+  args: { id: v.id("comments") },
+  handler: async (ctx, args) => CommentsModel.getDeleteInfo(ctx, args),
+  returns: v.object({
+    canDelete: v.boolean(),
+    dependencies: v.array(v.object({
+      count: v.number(),
+      hasMore: v.boolean(),
+      label: v.string(),
+      preview: v.array(v.object({ id: v.string(), name: v.string() })),
+    })),
+  }),
 });
 
 export const incrementLike = mutation({

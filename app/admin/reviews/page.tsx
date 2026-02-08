@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 
 const MODULE_KEY = 'comments';
 
@@ -29,6 +30,9 @@ function ReviewsContent() {
   const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<Id<"comments"> | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'desc', key: 'created' });
   const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
     if (typeof window === 'undefined') {
@@ -87,6 +91,11 @@ function ReviewsContent() {
     targetType: 'product',
     targetId: filterProduct || undefined,
   });
+
+  const deleteInfo = useQuery(
+    api.comments.getDeleteInfo,
+    deleteTargetId ? { id: deleteTargetId } : 'skip'
+  );
 
   const selectAllData = useQuery(
     api.comments.listAdminIds,
@@ -198,20 +207,29 @@ function ReviewsContent() {
   };
 
   const handleDelete = async (id: Id<"comments">) => {
-    if (confirm('Xóa vĩnh viễn đánh giá này?')) {
-      try {
-        await deleteComment({ id });
-        toast.success('Đã xóa đánh giá');
-      } catch {
-        toast.error('Không thể xóa đánh giá');
-      }
+    setDeleteTargetId(id);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) {return;}
+    setIsDeleteLoading(true);
+    try {
+      await deleteComment({ cascade: true, id: deleteTargetId });
+      toast.success('Đã xóa đánh giá');
+      setIsDeleteOpen(false);
+      setDeleteTargetId(null);
+    } catch {
+      toast.error('Không thể xóa đánh giá');
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
   const handleBulkDelete = async () => {
-    if (confirm(`Xóa ${selectedIds.length} đánh giá đã chọn?`)) {
+    if (confirm(`Xóa ${selectedIds.length} đánh giá đã chọn? Tất cả dữ liệu liên quan sẽ bị xóa.`)) {
       try {
-        await Promise.all(selectedIds.map( async id => deleteComment({ id })));
+        await Promise.all(selectedIds.map( async id => deleteComment({ cascade: true, id })));
         applyManualSelection([]);
         toast.success(`Đã xóa ${selectedIds.length} đánh giá`);
       } catch (error) {
@@ -499,6 +517,18 @@ function ReviewsContent() {
           </div>
         )}
       </Card>
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => {
+          setIsDeleteOpen(open);
+          if (!open) {setDeleteTargetId(null);}
+        }}
+        title="Xóa đánh giá"
+        itemName={reviews.find((review) => review._id === deleteTargetId)?.content ?? 'đánh giá'}
+        dependencies={deleteInfo?.dependencies ?? []}
+        onConfirm={async () => handleConfirmDelete()}
+        isLoading={isDeleteLoading}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
+import { updateUserStats } from "./users";
 
 const roleDoc = v.object({
   _creationTime: v.number(),
@@ -137,7 +138,7 @@ export const update = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("roles") },
+  args: { cascade: v.optional(v.boolean()), id: v.id("roles") },
   handler: async (ctx, args) => {
     const role = await ctx.db.get(args.id);
     if (!role) {throw new Error("Không tìm thấy vai trò");}
@@ -146,10 +147,32 @@ export const remove = mutation({
     const usersWithRole = await ctx.db
       .query("users")
       .withIndex("by_role_status", (q) => q.eq("roleId", args.id))
-      .take(1);
+      .collect();
     
-    if (usersWithRole.length > 0) {
-      throw new Error(`Không thể xóa vai trò "${role.name}" vì đang được gán cho người dùng`);
+    if (usersWithRole.length > 0 && !args.cascade) {
+      throw new Error(`Vai trò "${role.name}" đang được gán cho người dùng. Vui lòng xác nhận xóa tất cả.`);
+    }
+
+    if (args.cascade && usersWithRole.length > 0) {
+      const logs = await Promise.all(
+        usersWithRole.map((user) => ctx.db
+          .query("activityLogs")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .collect())
+      );
+      await Promise.all(logs.flat().map( async (log) => ctx.db.delete(log._id)));
+      await Promise.all(usersWithRole.map( async (user) => ctx.db.delete(user._id)));
+
+      const statusCounts: Record<string, number> = {};
+      usersWithRole.forEach((user) => {
+        statusCounts[user.status] = (statusCounts[user.status] || 0) + 1;
+      });
+      await Promise.all([
+        updateUserStats(ctx, "total", -usersWithRole.length),
+        ...Object.entries(statusCounts).map( async ([status, count]) =>
+          updateUserStats(ctx, status, -count)
+        ),
+      ]);
     }
     
     await ctx.db.delete(args.id);
@@ -163,6 +186,41 @@ export const remove = mutation({
     return null;
   },
   returns: v.null(),
+});
+
+export const getDeleteInfo = query({
+  args: { id: v.id("roles") },
+  handler: async (ctx, args) => {
+    const preview = await ctx.db
+      .query("users")
+      .withIndex("by_role_status", (q) => q.eq("roleId", args.id))
+      .take(10);
+    const count = await ctx.db
+      .query("users")
+      .withIndex("by_role_status", (q) => q.eq("roleId", args.id))
+      .take(1001);
+
+    return {
+      canDelete: true,
+      dependencies: [
+        {
+          count: Math.min(count.length, 1000),
+          hasMore: count.length > 1000,
+          label: "Người dùng",
+          preview: preview.map((user) => ({ id: user._id, name: user.name })),
+        },
+      ],
+    };
+  },
+  returns: v.object({
+    canDelete: v.boolean(),
+    dependencies: v.array(v.object({
+      count: v.number(),
+      hasMore: v.boolean(),
+      label: v.string(),
+      preview: v.array(v.object({ id: v.string(), name: v.string() })),
+    })),
+  }),
 });
 
 export const checkPermission = query({

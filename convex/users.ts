@@ -248,7 +248,7 @@ export const getByStatus = query({
 });
 
 // Helper function to update userStats counter
-async function updateUserStats(
+export async function updateUserStats(
   ctx: MutationCtx,
   key: string,
   delta: number
@@ -334,10 +334,26 @@ export const updateLastLogin = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("users") },
+  args: { cascade: v.optional(v.boolean()), id: v.id("users") },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.id);
     if (!user) {throw new Error("User not found");}
+
+    const preview = await ctx.db
+      .query("activityLogs")
+      .withIndex("by_user", (q) => q.eq("userId", args.id))
+      .take(1);
+    if (preview.length > 0 && !args.cascade) {
+      throw new Error("Người dùng có lịch sử hoạt động. Vui lòng xác nhận xóa tất cả.");
+    }
+
+    if (args.cascade) {
+      const logs = await ctx.db
+        .query("activityLogs")
+        .withIndex("by_user", (q) => q.eq("userId", args.id))
+        .collect();
+      await Promise.all(logs.map( async (log) => ctx.db.delete(log._id)));
+    }
     
     await ctx.db.delete(args.id);
     
@@ -352,12 +368,57 @@ export const remove = mutation({
   returns: v.null(),
 });
 
+export const getDeleteInfo = query({
+  args: { id: v.id("users") },
+  handler: async (ctx, args) => {
+    const preview = await ctx.db
+      .query("activityLogs")
+      .withIndex("by_user", (q) => q.eq("userId", args.id))
+      .take(10);
+    const count = await ctx.db
+      .query("activityLogs")
+      .withIndex("by_user", (q) => q.eq("userId", args.id))
+      .take(1001);
+
+    return {
+      canDelete: true,
+      dependencies: [
+        {
+          count: Math.min(count.length, 1000),
+          hasMore: count.length > 1000,
+          label: "Nhật ký hoạt động",
+          preview: preview.map((log) => ({ id: log._id, name: log.action })),
+        },
+      ],
+    };
+  },
+  returns: v.object({
+    canDelete: v.boolean(),
+    dependencies: v.array(v.object({
+      count: v.number(),
+      hasMore: v.boolean(),
+      label: v.string(),
+      preview: v.array(v.object({ id: v.string(), name: v.string() })),
+    })),
+  }),
+});
+
 // USR-005 FIX: Bulk delete with parallel execution
 export const bulkRemove = mutation({
-  args: { ids: v.array(v.id("users")) },
+  args: { cascade: v.optional(v.boolean()), ids: v.array(v.id("users")) },
   handler: async (ctx, args) => {
     const users = await Promise.all(args.ids.map( async (id) => ctx.db.get(id)));
     const validUsers = users.filter((u): u is NonNullable<typeof u> => u !== null);
+
+    if (args.cascade) {
+      const logs = await Promise.all(
+        args.ids.map((id) => ctx.db
+          .query("activityLogs")
+          .withIndex("by_user", (q) => q.eq("userId", id))
+          .collect())
+      );
+      await Promise.all(logs.flat().map( async (log) => ctx.db.delete(log._id)));
+    }
     
     // Delete all users in parallel
     await Promise.all(args.ids.map( async (id) => ctx.db.delete(id)));

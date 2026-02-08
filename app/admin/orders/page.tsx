@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, generatePaginationItems, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 import { useOrderStatuses } from '@/lib/experiences';
 
 const MODULE_KEY = 'orders';
@@ -72,6 +73,9 @@ function OrdersContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<Id<"orders"> | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
 
   const isSelectAllActive = selectionMode === 'all';
 
@@ -156,6 +160,11 @@ function OrdersContent() {
     status: filterStatus || undefined,
     paymentStatus: filterPaymentStatus || undefined,
   });
+
+  const deleteInfo = useQuery(
+    api.orders.getDeleteInfo,
+    deleteTargetId ? { id: deleteTargetId } : 'skip'
+  );
 
   const selectAllData = useQuery(
     api.orders.listAdminIds,
@@ -255,21 +264,30 @@ function OrdersContent() {
   };
 
   const handleDelete = async (id: Id<"orders">) => {
-    if (confirm('Xóa đơn hàng này?')) {
-      try {
-        await deleteOrder({ id });
-        toast.success('Đã xóa đơn hàng');
-      } catch {
-        toast.error('Có lỗi khi xóa đơn hàng');
-      }
+    setDeleteTargetId(id);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) {return;}
+    setIsDeleteLoading(true);
+    try {
+      await deleteOrder({ cascade: true, id: deleteTargetId });
+      toast.success('Đã xóa đơn hàng');
+      setIsDeleteOpen(false);
+      setDeleteTargetId(null);
+    } catch {
+      toast.error('Có lỗi khi xóa đơn hàng');
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
   const handleBulkDelete = async () => {
-    if (confirm(`Xóa ${selectedIds.length} đơn hàng đã chọn?`)) {
+    if (confirm(`Xóa ${selectedIds.length} đơn hàng đã chọn? Tất cả dữ liệu liên quan sẽ bị xóa.`)) {
       setIsDeleting(true);
       try {
-        const deletedCount = await bulkDeleteOrders({ ids: selectedIds });
+        const deletedCount = await bulkDeleteOrders({ cascade: true, ids: selectedIds });
         applyManualSelection([]);
         toast.success(`Đã xóa ${deletedCount} đơn hàng`);
       } catch {
@@ -499,6 +517,18 @@ function OrdersContent() {
           </div>
         )}
       </Card>
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => {
+          setIsDeleteOpen(open);
+          if (!open) {setDeleteTargetId(null);}
+        }}
+        title="Xóa đơn hàng"
+        itemName={orders.find((order) => order.id === deleteTargetId)?.orderNumber ?? 'đơn hàng'}
+        dependencies={deleteInfo?.dependencies ?? []}
+        onConfirm={async () => handleConfirmDelete()}
+        isLoading={isDeleteLoading}
+      />
     </div>
   );
 }

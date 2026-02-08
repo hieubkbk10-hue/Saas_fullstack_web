@@ -552,10 +552,24 @@ export const incrementViews = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("services") },
+  args: { cascade: v.optional(v.boolean()), id: v.id("services") },
   handler: async (ctx, args) => {
     await ServicesModel.remove(ctx, args);
     return null;
   },
   returns: v.null(),
+});
+
+export const getDeleteInfo = query({
+  args: { id: v.id("services") },
+  handler: async (ctx, args) => ServicesModel.getDeleteInfo(ctx, args),
+  returns: v.object({
+    canDelete: v.boolean(),
+    dependencies: v.array(v.object({
+      count: v.number(),
+      hasMore: v.boolean(),
+      label: v.string(),
+      preview: v.array(v.object({ id: v.string(), name: v.string() })),
+    })),
+  }),
 });

@@ -184,21 +184,60 @@ export async function update(
  */
 export async function remove(
   ctx: MutationCtx,
-  { id }: { id: Id<"services"> }
+  { cascade, id }: { cascade?: boolean; id: Id<"services"> }
 ): Promise<void> {
-  // Delete related comments (targetType = "service")
-  const comments = await ctx.db
+  const preview = await ctx.db
     .query("comments")
     .withIndex("by_target_status", (q) =>
       q.eq("targetType", "service").eq("targetId", id as string)
     )
-    .collect();
+    .take(1);
 
-  for (const comment of comments) {
-    await ctx.db.delete(comment._id);
+  if (preview.length > 0 && !cascade) {
+    throw new Error("Dịch vụ có bình luận liên quan. Vui lòng xác nhận xóa tất cả.");
+  }
+
+  if (cascade) {
+    const comments = await ctx.db
+      .query("comments")
+      .withIndex("by_target_status", (q) =>
+        q.eq("targetType", "service").eq("targetId", id as string)
+      )
+      .collect();
+    await Promise.all(comments.map( async (comment) => ctx.db.delete(comment._id)));
   }
 
   await ctx.db.delete(id);
+}
+
+export async function getDeleteInfo(
+  ctx: QueryCtx,
+  { id }: { id: Id<"services"> }
+): Promise<{ canDelete: boolean; dependencies: { count: number; hasMore: boolean; label: string; preview: { id: string; name: string }[] }[] }> {
+  const preview = await ctx.db
+    .query("comments")
+    .withIndex("by_target_status", (q) =>
+      q.eq("targetType", "service").eq("targetId", id as string)
+    )
+    .take(10);
+  const count = await ctx.db
+    .query("comments")
+    .withIndex("by_target_status", (q) =>
+      q.eq("targetType", "service").eq("targetId", id as string)
+    )
+    .take(1001);
+
+  return {
+    canDelete: true,
+    dependencies: [
+      {
+        count: Math.min(count.length, 1000),
+        hasMore: count.length > 1000,
+        label: "Bình luận",
+        preview: preview.map((comment) => ({ id: comment._id, name: comment.content })),
+      },
+    ],
+  };
 }
 
 export async function incrementViews(

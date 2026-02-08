@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 
 function generatePaginationItems(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
   if (totalPages <= 7) {
@@ -44,6 +45,9 @@ function PostsContent() {
   const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<Id<"posts"> | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
     if (typeof window === 'undefined') {
       return ['status', 'views'];
@@ -100,6 +104,11 @@ function PostsContent() {
     search: debouncedSearchTerm.trim() ? debouncedSearchTerm.trim() : undefined,
     status: filterStatus || undefined,
   });
+
+  const deleteInfo = useQuery(
+    api.posts.getDeleteInfo,
+    deleteTargetId ? { id: deleteTargetId } : 'skip'
+  );
 
   const selectAllData = useQuery(
     api.posts.listAdminIds,
@@ -201,21 +210,30 @@ function PostsContent() {
   };
 
   const handleDelete = async (id: Id<"posts">) => {
-    if (confirm('Xóa bài viết này?')) {
-      try {
-        await deletePost({ id });
-        toast.success('Đã xóa bài viết');
-      } catch {
-        toast.error('Có lỗi khi xóa bài viết');
-      }
+    setDeleteTargetId(id);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) {return;}
+    setIsDeleteLoading(true);
+    try {
+      await deletePost({ cascade: true, id: deleteTargetId });
+      toast.success('Đã xóa bài viết');
+      setIsDeleteOpen(false);
+      setDeleteTargetId(null);
+    } catch {
+      toast.error('Không thể xóa bài viết');
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
   const handleBulkDelete = async () => {
-    if (confirm(`Xóa ${selectedIds.length} bài viết đã chọn?`)) {
+    if (confirm(`Xóa ${selectedIds.length} bài viết đã chọn? Tất cả dữ liệu liên quan sẽ bị xóa.`)) {
       try {
         for (const id of selectedIds) {
-          await deletePost({ id });
+          await deletePost({ cascade: true, id });
         }
         applyManualSelection([]);
         toast.success(`Đã xóa ${selectedIds.length} bài viết`);
@@ -447,6 +465,18 @@ function PostsContent() {
           </div>
         )}
       </Card>
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => {
+          setIsDeleteOpen(open);
+          if (!open) {setDeleteTargetId(null);}
+        }}
+        title="Xóa bài viết"
+        itemName={posts.find((post) => post.id === deleteTargetId)?.title ?? 'bài viết'}
+        dependencies={deleteInfo?.dependencies ?? []}
+        onConfirm={async () => handleConfirmDelete()}
+        isLoading={isDeleteLoading}
+      />
     </div>
   );
 }

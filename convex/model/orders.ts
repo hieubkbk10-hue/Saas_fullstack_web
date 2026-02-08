@@ -258,10 +258,53 @@ export async function updatePaymentStatus(
  */
 export async function remove(
   ctx: MutationCtx,
-  { id }: { id: Id<"orders"> }
+  { cascade, id }: { cascade?: boolean; id: Id<"orders"> }
 ): Promise<void> {
   await getByIdOrThrow(ctx, { id });
+
+  const preview = await ctx.db
+    .query("promotionUsage")
+    .withIndex("by_order", (q) => q.eq("orderId", id))
+    .take(1);
+  if (preview.length > 0 && !cascade) {
+    throw new Error("Đơn hàng có lịch sử sử dụng khuyến mãi. Vui lòng xác nhận xóa tất cả.");
+  }
+
+  if (cascade) {
+    const usage = await ctx.db
+      .query("promotionUsage")
+      .withIndex("by_order", (q) => q.eq("orderId", id))
+      .collect();
+    await Promise.all(usage.map( async (record) => ctx.db.delete(record._id)));
+  }
+
   await ctx.db.delete(id);
+}
+
+export async function getDeleteInfo(
+  ctx: QueryCtx,
+  { id }: { id: Id<"orders"> }
+): Promise<{ canDelete: boolean; dependencies: { count: number; hasMore: boolean; label: string; preview: { id: string; name: string }[] }[] }> {
+  const preview = await ctx.db
+    .query("promotionUsage")
+    .withIndex("by_order", (q) => q.eq("orderId", id))
+    .take(10);
+  const count = await ctx.db
+    .query("promotionUsage")
+    .withIndex("by_order", (q) => q.eq("orderId", id))
+    .take(1001);
+
+  return {
+    canDelete: true,
+    dependencies: [
+      {
+        count: Math.min(count.length, 1000),
+        hasMore: count.length > 1000,
+        label: "Lịch sử khuyến mãi",
+        preview: preview.map((record) => ({ id: record._id, name: record.promotionId })),
+      },
+    ],
+  };
 }
 
 /**
@@ -269,15 +312,31 @@ export async function remove(
  */
 export async function bulkRemove(
   ctx: MutationCtx,
-  { ids }: { ids: Id<"orders">[] }
+  { cascade, ids }: { cascade?: boolean; ids: Id<"orders">[] }
 ): Promise<number> {
   let deletedCount = 0;
   for (const id of ids) {
     const order = await ctx.db.get(id);
-    if (order) {
-      await ctx.db.delete(id);
-      deletedCount++;
+    if (!order) {continue;}
+
+    const preview = await ctx.db
+      .query("promotionUsage")
+      .withIndex("by_order", (q) => q.eq("orderId", id))
+      .take(1);
+    if (preview.length > 0 && !cascade) {
+      throw new Error("Đơn hàng có lịch sử sử dụng khuyến mãi. Vui lòng xác nhận xóa tất cả.");
     }
+
+    if (cascade) {
+      const usage = await ctx.db
+        .query("promotionUsage")
+        .withIndex("by_order", (q) => q.eq("orderId", id))
+        .collect();
+      await Promise.all(usage.map( async (record) => ctx.db.delete(record._id)));
+    }
+
+    await ctx.db.delete(id);
+    deletedCount++;
   }
   return deletedCount;
 }

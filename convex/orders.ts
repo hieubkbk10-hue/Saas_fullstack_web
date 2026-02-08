@@ -532,7 +532,7 @@ export const cancel = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("orders") },
+  args: { cascade: v.optional(v.boolean()), id: v.id("orders") },
   handler: async (ctx, args) => {
     await OrdersModel.remove(ctx, args);
     return null;
@@ -540,10 +540,24 @@ export const remove = mutation({
   returns: v.null(),
 });
 
+export const getDeleteInfo = query({
+  args: { id: v.id("orders") },
+  handler: async (ctx, args) => OrdersModel.getDeleteInfo(ctx, args),
+  returns: v.object({
+    canDelete: v.boolean(),
+    dependencies: v.array(v.object({
+      count: v.number(),
+      hasMore: v.boolean(),
+      label: v.string(),
+      preview: v.array(v.object({ id: v.string(), name: v.string() })),
+    })),
+  }),
+});
+
 // Bulk delete orders
 export const bulkRemove = mutation({
-  args: { ids: v.array(v.id("orders")) },
-  handler: async (ctx, args) => OrdersModel.bulkRemove(ctx, { ids: args.ids }),
+  args: { cascade: v.optional(v.boolean()), ids: v.array(v.id("orders")) },
+  handler: async (ctx, args) => OrdersModel.bulkRemove(ctx, { cascade: args.cascade, ids: args.ids }),
   returns: v.number(),
 });
 

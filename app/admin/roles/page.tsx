@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 
 const MODULE_KEY = 'roles';
 
@@ -34,6 +35,9 @@ function RolesContent() {
   const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'asc' | 'desc' }>({ direction: 'asc', key: null });
   const [visibleColumns, setVisibleColumns] = useState(['select', 'name', 'description', 'usersCount', 'type', 'actions']);
   const [selectedIds, setSelectedIds] = useState<Id<"roles">[]>([]);
+  const [deleteTargetId, setDeleteTargetId] = useState<Id<"roles"> | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
   const isLoading = rolesData === undefined || settingsData === undefined;
@@ -60,6 +64,11 @@ function RolesContent() {
     userCountByRole?.forEach(r => { map[r.roleId] = r.userCount; });
     return map;
   }, [userCountByRole]);
+
+  const deleteInfo = useQuery(
+    api.roles.getDeleteInfo,
+    deleteTargetId ? { id: deleteTargetId } : 'skip'
+  );
 
   // Transform data
   const roles = useMemo(() => rolesData?.map(role => ({
@@ -145,21 +154,30 @@ function RolesContent() {
       toast.error('Không thể xóa vai trò hệ thống');
       return;
     }
-    if (confirm('Xóa vai trò này?')) {
-      try {
-        await deleteRole({ id });
-        toast.success('Đã xóa vai trò');
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa vai trò');
-      }
+    setDeleteTargetId(id);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) {return;}
+    setIsDeleteLoading(true);
+    try {
+      await deleteRole({ cascade: true, id: deleteTargetId });
+      toast.success('Đã xóa vai trò');
+      setIsDeleteOpen(false);
+      setDeleteTargetId(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi khi xóa vai trò');
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
   // HIGH-006 FIX: Dùng Promise.all thay vì sequential
   const handleBulkDelete = async () => {
-    if (confirm(`Xóa ${selectedIds.length} vai trò đã chọn?`)) {
+    if (confirm(`Xóa ${selectedIds.length} vai trò đã chọn? Tất cả dữ liệu liên quan sẽ bị xóa.`)) {
       try {
-        await Promise.all(selectedIds.map( async id => deleteRole({ id })));
+        await Promise.all(selectedIds.map( async id => deleteRole({ cascade: true, id })));
         setSelectedIds([]);
         toast.success(`Đã xóa ${selectedIds.length} vai trò`);
       } catch (error) {
@@ -353,6 +371,18 @@ function RolesContent() {
           </div>
         )}
       </Card>
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => {
+          setIsDeleteOpen(open);
+          if (!open) {setDeleteTargetId(null);}
+        }}
+        title="Xóa vai trò"
+        itemName={roles.find((role) => role._id === deleteTargetId)?.name ?? 'vai trò'}
+        dependencies={deleteInfo?.dependencies ?? []}
+        onConfirm={async () => handleConfirmDelete()}
+        isLoading={isDeleteLoading}
+      />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Badge, Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui';
 import { BulkActionBar, ColumnToggle, SelectCheckbox, SortableHeader, generatePaginationItems, useSortableData } from '../components/TableUtilities';
 import { ModuleGuard } from '../components/ModuleGuard';
+import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog';
 
 const MODULE_KEY = 'users';
 
@@ -31,6 +32,9 @@ function UsersContent() {
   const [selectionMode, setSelectionMode] = useState<'manual' | 'all'>('manual');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSizeOverride, setPageSizeOverride] = useState<number | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<Id<"users"> | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(() => {
     if (typeof window === 'undefined') {
       return ['role', 'status'];
@@ -89,6 +93,11 @@ function UsersContent() {
     search: resolvedSearch,
     status: filterStatus || undefined,
   });
+
+  const deleteInfo = useQuery(
+    api.users.getDeleteInfo,
+    deleteTargetId ? { id: deleteTargetId } : 'skip'
+  );
 
   const selectAllData = useQuery(
     api.users.listAdminIds,
@@ -206,22 +215,31 @@ function UsersContent() {
   };
 
   const handleDelete = async (id: Id<"users">) => {
-    if (confirm('Bạn có chắc muốn xóa người dùng này?')) {
-      try {
-        await deleteUser({ id });
-        toast.success('Đã xóa người dùng');
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
-      }
+    setDeleteTargetId(id);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) {return;}
+    setIsDeleteLoading(true);
+    try {
+      await deleteUser({ cascade: true, id: deleteTargetId });
+      toast.success('Đã xóa người dùng');
+      setIsDeleteOpen(false);
+      setDeleteTargetId(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
   const handleBulkDelete = async () => {
-    if (confirm(`Xóa ${selectedIds.length} người dùng đã chọn?`)) {
+    if (confirm(`Xóa ${selectedIds.length} người dùng đã chọn? Tất cả dữ liệu liên quan sẽ bị xóa.`)) {
       try {
         setIsBulkDeleting(true);
         const count = selectedIds.length;
-        await bulkDeleteUsers({ ids: selectedIds });
+        await bulkDeleteUsers({ cascade: true, ids: selectedIds });
         applyManualSelection([]);
         toast.success(`Đã xóa ${count} người dùng`);
       } catch (error) {
@@ -510,6 +528,18 @@ function UsersContent() {
           </div>
         )}
       </Card>
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => {
+          setIsDeleteOpen(open);
+          if (!open) {setDeleteTargetId(null);}
+        }}
+        title="Xóa người dùng"
+        itemName={users.find((user) => user._id === deleteTargetId)?.name ?? 'người dùng'}
+        dependencies={deleteInfo?.dependencies ?? []}
+        onConfirm={async () => handleConfirmDelete()}
+        isLoading={isDeleteLoading}
+      />
     </div>
   );
 }
