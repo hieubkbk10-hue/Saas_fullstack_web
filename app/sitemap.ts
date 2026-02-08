@@ -35,6 +35,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
       url: `${baseUrl}/services`,
     },
+    {
+      changeFrequency: 'weekly',
+      lastModified: new Date(),
+      priority: 0.7,
+      url: `${baseUrl}/contact`,
+    },
+    {
+      changeFrequency: 'daily',
+      lastModified: new Date(),
+      priority: 0.7,
+      url: `${baseUrl}/promotions`,
+    },
+    {
+      changeFrequency: 'monthly',
+      lastModified: new Date(),
+      priority: 0.6,
+      url: `${baseUrl}/stores`,
+    },
   ];
 
   // Fetch all published content in parallel
