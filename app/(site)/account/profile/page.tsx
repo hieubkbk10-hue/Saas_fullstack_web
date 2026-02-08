@@ -6,7 +6,6 @@ import { useQuery } from 'convex/react';
 import {
   ArrowRight,
   Award,
-  Calendar,
   CreditCard,
   Heart,
   Mail,
@@ -73,7 +72,6 @@ export default function AccountProfilePage() {
 
   const displayName = customer.name || 'Khách hàng';
   const joinedDate = 'Đang cập nhật';
-  const memberId = customer.id || 'CUS-0000';
   const address = 'Chưa cập nhật';
 
   const actions = [
@@ -158,7 +156,7 @@ export default function AccountProfilePage() {
               </div>
             </div>
 
-            {(config.showContactInfo || config.showAddress || config.showMemberId || config.showJoinDate) && (
+            {(config.showContactInfo || config.showAddress) && (
               <div className="mt-5 grid gap-3 text-sm text-slate-600">
                 {config.showContactInfo && (
                   <div className="flex items-center gap-3 flex-wrap">
@@ -179,20 +177,6 @@ export default function AccountProfilePage() {
                     <span>{address}</span>
                   </div>
                 )}
-                <div className="flex flex-wrap gap-4">
-                  {config.showMemberId && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-slate-400 font-mono">ID</span>
-                      <span className="font-mono text-xs text-slate-700">{memberId}</span>
-                    </div>
-                  )}
-                  {config.showJoinDate && (
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-slate-400" />
-                      <span>Tham gia {joinedDate}</span>
-                    </div>
-                  )}
-                </div>
               </div>
             )}
           </div>
