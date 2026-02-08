@@ -391,6 +391,10 @@ type AccountProfileConfig = {
   showQuickActions: boolean;
   showContactInfo: boolean;
   showLoyaltyBadge: boolean;
+  showAddress: boolean;
+  showMemberId: boolean;
+  showJoinDate: boolean;
+  actionItems: string[];
 };
 
 export function useAccountProfileConfig(): AccountProfileConfig {
@@ -398,12 +402,20 @@ export function useAccountProfileConfig(): AccountProfileConfig {
 
   return useMemo(() => {
     const raw = experienceSetting?.value as Partial<AccountProfileConfig> | undefined;
+    const rawActions = Array.isArray(raw?.actionItems)
+      ? raw?.actionItems.filter((value): value is string => typeof value === 'string')
+      : null;
+    const normalizedActions = rawActions?.length ? rawActions : ['orders', 'shop', 'wishlist', 'payment', 'settings'];
 
     return {
       layoutStyle: raw?.layoutStyle ?? 'card',
       showQuickActions: raw?.showQuickActions ?? true,
       showContactInfo: raw?.showContactInfo ?? true,
       showLoyaltyBadge: raw?.showLoyaltyBadge ?? true,
+      showAddress: raw?.showAddress ?? true,
+      showMemberId: raw?.showMemberId ?? true,
+      showJoinDate: raw?.showJoinDate ?? true,
+      actionItems: normalizedActions,
     };
   }, [experienceSetting?.value]);
 }
