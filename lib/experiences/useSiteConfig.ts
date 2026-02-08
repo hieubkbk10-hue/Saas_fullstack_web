@@ -390,7 +390,6 @@ type AccountProfileConfig = {
   layoutStyle: 'card' | 'sidebar' | 'compact';
   showQuickActions: boolean;
   showContactInfo: boolean;
-  showLoyaltyBadge: boolean;
   showAddress: boolean;
   showMemberId: boolean;
   showJoinDate: boolean;
@@ -411,7 +410,6 @@ export function useAccountProfileConfig(): AccountProfileConfig {
       layoutStyle: raw?.layoutStyle ?? 'card',
       showQuickActions: raw?.showQuickActions ?? true,
       showContactInfo: raw?.showContactInfo ?? true,
-      showLoyaltyBadge: raw?.showLoyaltyBadge ?? true,
       showAddress: raw?.showAddress ?? true,
       showMemberId: raw?.showMemberId ?? true,
       showJoinDate: raw?.showJoinDate ?? true,

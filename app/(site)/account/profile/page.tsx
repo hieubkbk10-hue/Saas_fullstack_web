@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useQuery } from 'convex/react';
 import {
   ArrowRight,
-  Award,
   CreditCard,
   Heart,
   Mail,
@@ -146,14 +145,7 @@ export default function AccountProfilePage() {
                 </div>
                 <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" />
               </div>
-              <div>
-                <div className="text-lg font-semibold text-slate-900">{displayName}</div>
-                {config.showLoyaltyBadge && (
-                  <div className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ color: brandColor, backgroundColor: `${brandColor}1A` }}>
-                    <Award size={12} /> Khách hàng thân thiết
-                  </div>
-                )}
-              </div>
+              <div className="text-lg font-semibold text-slate-900">{displayName}</div>
             </div>
 
             {(config.showContactInfo || config.showAddress) && (
@@ -218,11 +210,6 @@ export default function AccountProfilePage() {
                 <User size={28} className="text-white" />
               </div>
               <h2 className="text-lg font-semibold uppercase tracking-tight mt-4">{displayName}</h2>
-              {config.showLoyaltyBadge && (
-                <div className="mt-2 inline-flex items-center gap-1 text-xs text-white/80">
-                  <Award size={12} /> Khách hàng thân thiết
-                </div>
-              )}
             </div>
 
             {(config.showContactInfo || config.showAddress) && (
@@ -290,7 +277,6 @@ export default function AccountProfilePage() {
               </div>
               <div>
                 <h3 className="text-base font-semibold">{displayName}</h3>
-                {config.showLoyaltyBadge && <p className="text-xs text-white/80">Khách hàng thân thiết</p>}
               </div>
             </div>
             {config.showContactInfo && (

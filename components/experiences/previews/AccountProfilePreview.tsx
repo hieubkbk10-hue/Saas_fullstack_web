@@ -3,7 +3,6 @@
 import React from 'react';
 import {
   ArrowRight,
-  Award,
   CreditCard,
   Heart,
   Mail,
@@ -20,7 +19,6 @@ type AccountProfilePreviewProps = {
   device: 'desktop' | 'tablet' | 'mobile';
   showQuickActions: boolean;
   showContactInfo: boolean;
-  showLoyaltyBadge: boolean;
   showAddress: boolean;
   actionItems: string[];
   brandColor: string;
@@ -76,7 +74,6 @@ export function AccountProfilePreview({
   device,
   showQuickActions,
   showContactInfo,
-  showLoyaltyBadge,
   showAddress,
   actionItems,
   brandColor,
@@ -114,11 +111,6 @@ export function AccountProfilePreview({
               </div>
               <div>
                 <h3 className="text-lg font-semibold uppercase tracking-tight">{user.name}</h3>
-                {showLoyaltyBadge && (
-                  <div className="mt-1 inline-flex items-center gap-1 text-xs text-white/80">
-                    <Award size={12} /> {user.role}
-                  </div>
-                )}
               </div>
             </div>
 
@@ -180,7 +172,6 @@ export function AccountProfilePreview({
               </div>
               <div>
                 <h3 className="text-base font-semibold">{user.name}</h3>
-                {showLoyaltyBadge && <p className="text-xs text-white/80">{user.role}</p>}
               </div>
             </div>
             {showContactInfo && (
@@ -251,14 +242,7 @@ export function AccountProfilePreview({
               </div>
               <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" />
             </div>
-            <div>
-              <div className="text-base font-semibold text-slate-900">{user.name}</div>
-              {showLoyaltyBadge && (
-                <div className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ color: brandColor, backgroundColor: `${brandColor}1A` }}>
-                  <Award size={12} /> Khách hàng thân thiết
-                </div>
-              )}
-            </div>
+            <div className="text-base font-semibold text-slate-900">{user.name}</div>
           </div>
 
           {(showContactInfo || showAddress) && (

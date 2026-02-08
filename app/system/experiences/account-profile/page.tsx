@@ -31,7 +31,6 @@ type AccountProfileExperienceConfig = {
   layoutStyle: AccountProfileLayoutStyle;
   showQuickActions: boolean;
   showContactInfo: boolean;
-  showLoyaltyBadge: boolean;
   showAddress: boolean;
   actionItems: string[];
 };
@@ -48,7 +47,6 @@ const DEFAULT_CONFIG: AccountProfileExperienceConfig = {
   layoutStyle: 'card',
   showQuickActions: true,
   showContactInfo: true,
-  showLoyaltyBadge: true,
   showAddress: true,
   actionItems: ['orders', 'shop', 'wishlist', 'payment', 'settings'],
 };
@@ -105,7 +103,6 @@ export default function AccountProfileExperiencePage() {
       layoutStyle: raw?.layoutStyle ?? 'card',
       showQuickActions: raw?.showQuickActions ?? true,
       showContactInfo: raw?.showContactInfo ?? true,
-      showLoyaltyBadge: raw?.showLoyaltyBadge ?? true,
       showAddress: raw?.showAddress ?? true,
       actionItems: normalizedActions,
     };
@@ -162,12 +159,6 @@ export default function AccountProfileExperiencePage() {
               label="Thông tin liên hệ"
               checked={config.showContactInfo}
               onChange={(v) => setConfig(prev => ({ ...prev, showContactInfo: v }))}
-              accentColor="#14b8a6"
-            />
-            <ToggleRow
-              label="Loyalty badge"
-              checked={config.showLoyaltyBadge}
-              onChange={(v) => setConfig(prev => ({ ...prev, showLoyaltyBadge: v }))}
               accentColor="#14b8a6"
             />
             <ToggleRow
@@ -255,7 +246,6 @@ export default function AccountProfileExperiencePage() {
                 device={previewDevice}
                 showQuickActions={config.showQuickActions}
                 showContactInfo={config.showContactInfo}
-                showLoyaltyBadge={config.showLoyaltyBadge}
                 showAddress={config.showAddress}
                 actionItems={config.actionItems}
                 brandColor={brandColor}
