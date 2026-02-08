@@ -33,8 +33,6 @@ type AccountProfileExperienceConfig = {
   showContactInfo: boolean;
   showLoyaltyBadge: boolean;
   showAddress: boolean;
-  showMemberId: boolean;
-  showJoinDate: boolean;
   actionItems: string[];
 };
 
@@ -52,8 +50,6 @@ const DEFAULT_CONFIG: AccountProfileExperienceConfig = {
   showContactInfo: true,
   showLoyaltyBadge: true,
   showAddress: true,
-  showMemberId: true,
-  showJoinDate: true,
   actionItems: ['orders', 'shop', 'wishlist', 'payment', 'settings'],
 };
 
@@ -111,8 +107,6 @@ export default function AccountProfileExperiencePage() {
       showContactInfo: raw?.showContactInfo ?? true,
       showLoyaltyBadge: raw?.showLoyaltyBadge ?? true,
       showAddress: raw?.showAddress ?? true,
-      showMemberId: raw?.showMemberId ?? true,
-      showJoinDate: raw?.showJoinDate ?? true,
       actionItems: normalizedActions,
     };
   }, [experienceSetting?.value]);
@@ -180,18 +174,6 @@ export default function AccountProfileExperiencePage() {
               label="Địa chỉ mặc định"
               checked={config.showAddress}
               onChange={(v) => setConfig(prev => ({ ...prev, showAddress: v }))}
-              accentColor="#14b8a6"
-            />
-            <ToggleRow
-              label="Mã khách hàng"
-              checked={config.showMemberId}
-              onChange={(v) => setConfig(prev => ({ ...prev, showMemberId: v }))}
-              accentColor="#14b8a6"
-            />
-            <ToggleRow
-              label="Ngày tham gia"
-              checked={config.showJoinDate}
-              onChange={(v) => setConfig(prev => ({ ...prev, showJoinDate: v }))}
               accentColor="#14b8a6"
             />
           </ControlCard>
@@ -275,8 +257,6 @@ export default function AccountProfileExperiencePage() {
                 showContactInfo={config.showContactInfo}
                 showLoyaltyBadge={config.showLoyaltyBadge}
                 showAddress={config.showAddress}
-                showMemberId={config.showMemberId}
-                showJoinDate={config.showJoinDate}
                 actionItems={config.actionItems}
                 brandColor={brandColor}
               />

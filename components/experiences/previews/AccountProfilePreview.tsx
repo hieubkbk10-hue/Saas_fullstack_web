@@ -22,8 +22,6 @@ type AccountProfilePreviewProps = {
   showContactInfo: boolean;
   showLoyaltyBadge: boolean;
   showAddress: boolean;
-  showMemberId: boolean;
-  showJoinDate: boolean;
   actionItems: string[];
   brandColor: string;
 };
@@ -80,8 +78,6 @@ export function AccountProfilePreview({
   showContactInfo,
   showLoyaltyBadge,
   showAddress,
-  showMemberId: _showMemberId,
-  showJoinDate: _showJoinDate,
   actionItems,
   brandColor,
 }: AccountProfilePreviewProps) {
