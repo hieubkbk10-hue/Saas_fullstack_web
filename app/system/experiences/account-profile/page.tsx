@@ -17,6 +17,7 @@ import {
   ControlCard,
   DeviceToggle,
   LayoutTabs,
+  MultiSelectRow,
   ToggleRow,
   deviceWidths,
   type LayoutOption,
@@ -31,6 +32,10 @@ type AccountProfileExperienceConfig = {
   showQuickActions: boolean;
   showContactInfo: boolean;
   showLoyaltyBadge: boolean;
+  showAddress: boolean;
+  showMemberId: boolean;
+  showJoinDate: boolean;
+  actionItems: string[];
 };
 
 const EXPERIENCE_KEY = 'account_profile_ui';
@@ -46,7 +51,21 @@ const DEFAULT_CONFIG: AccountProfileExperienceConfig = {
   showQuickActions: true,
   showContactInfo: true,
   showLoyaltyBadge: true,
+  showAddress: true,
+  showMemberId: true,
+  showJoinDate: true,
+  actionItems: ['orders', 'shop', 'wishlist', 'payment', 'settings'],
 };
+
+const ACTION_OPTIONS = [
+  { value: 'orders', label: 'Đơn hàng' },
+  { value: 'shop', label: 'Mua sắm' },
+  { value: 'wishlist', label: 'Yêu thích' },
+  { value: 'payment', label: 'Thanh toán' },
+  { value: 'settings', label: 'Cài đặt' },
+];
+
+const ACTION_OPTION_VALUES = ACTION_OPTIONS.map((option) => option.value);
 
 const HINTS = [
   'Trang profile dành cho khách đã đăng nhập.',
@@ -81,11 +100,20 @@ export default function AccountProfileExperiencePage() {
 
   const serverConfig = useMemo<AccountProfileExperienceConfig>(() => {
     const raw = experienceSetting?.value as Partial<AccountProfileExperienceConfig> | undefined;
+    const rawActions = Array.isArray(raw?.actionItems)
+      ? raw?.actionItems.filter((value): value is string => typeof value === 'string')
+      : null;
+    const normalizedActions = rawActions?.filter((value) => ACTION_OPTION_VALUES.includes(value)) ?? DEFAULT_CONFIG.actionItems;
+
     return {
       layoutStyle: raw?.layoutStyle ?? 'card',
       showQuickActions: raw?.showQuickActions ?? true,
       showContactInfo: raw?.showContactInfo ?? true,
       showLoyaltyBadge: raw?.showLoyaltyBadge ?? true,
+      showAddress: raw?.showAddress ?? true,
+      showMemberId: raw?.showMemberId ?? true,
+      showJoinDate: raw?.showJoinDate ?? true,
+      actionItems: normalizedActions,
     };
   }, [experienceSetting?.value]);
 
@@ -135,13 +163,7 @@ export default function AccountProfileExperiencePage() {
           <CardTitle className="text-base">Thiết lập hiển thị</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <ControlCard title="Khối hiển thị">
-            <ToggleRow
-              label="Quick actions"
-              checked={config.showQuickActions}
-              onChange={(v) => setConfig(prev => ({ ...prev, showQuickActions: v }))}
-              accentColor="#14b8a6"
-            />
+          <ControlCard title="Thông tin cá nhân">
             <ToggleRow
               label="Thông tin liên hệ"
               checked={config.showContactInfo}
@@ -153,6 +175,39 @@ export default function AccountProfileExperiencePage() {
               checked={config.showLoyaltyBadge}
               onChange={(v) => setConfig(prev => ({ ...prev, showLoyaltyBadge: v }))}
               accentColor="#14b8a6"
+            />
+            <ToggleRow
+              label="Địa chỉ mặc định"
+              checked={config.showAddress}
+              onChange={(v) => setConfig(prev => ({ ...prev, showAddress: v }))}
+              accentColor="#14b8a6"
+            />
+            <ToggleRow
+              label="Mã khách hàng"
+              checked={config.showMemberId}
+              onChange={(v) => setConfig(prev => ({ ...prev, showMemberId: v }))}
+              accentColor="#14b8a6"
+            />
+            <ToggleRow
+              label="Ngày tham gia"
+              checked={config.showJoinDate}
+              onChange={(v) => setConfig(prev => ({ ...prev, showJoinDate: v }))}
+              accentColor="#14b8a6"
+            />
+          </ControlCard>
+
+          <ControlCard title="Tác vụ nhanh">
+            <ToggleRow
+              label="Quick actions"
+              checked={config.showQuickActions}
+              onChange={(v) => setConfig(prev => ({ ...prev, showQuickActions: v }))}
+              accentColor="#14b8a6"
+            />
+            <MultiSelectRow
+              label="Chọn tác vụ"
+              values={config.actionItems}
+              options={ACTION_OPTIONS}
+              onChange={(values) => setConfig(prev => ({ ...prev, actionItems: values }))}
             />
           </ControlCard>
         </CardContent>
@@ -219,6 +274,10 @@ export default function AccountProfileExperiencePage() {
                 showQuickActions={config.showQuickActions}
                 showContactInfo={config.showContactInfo}
                 showLoyaltyBadge={config.showLoyaltyBadge}
+                showAddress={config.showAddress}
+                showMemberId={config.showMemberId}
+                showJoinDate={config.showJoinDate}
+                actionItems={config.actionItems}
                 brandColor={brandColor}
               />
             </BrowserFrame>
