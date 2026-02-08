@@ -293,37 +293,28 @@ export default function AccountProfilePage() {
             )}
           </div>
 
-          <div className="p-5 lg:w-2/3 bg-white">
+          <div className="p-5 lg:w-2/3 bg-white border-t border-slate-200 lg:border-t-0 lg:border-l">
             <h4 className="text-sm font-semibold text-slate-900 mb-4 border-l-4 pl-2" style={{ borderColor: brandColor }}>
               Truy cập nhanh
             </h4>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
               {visibleActions.map((action) => {
                 const Icon = action.icon;
-                const isHighlight = action.id === 'shop';
-                if (isHighlight) {
-                  return (
-                    <Link
-                      key={action.id}
-                      href={action.href}
-                      className="col-span-2 rounded-xl text-white p-4 flex items-center justify-between shadow-sm"
-                      style={{ background: `linear-gradient(135deg, ${brandColor}, #0f172a)` }}
-                    >
-                      <div>
-                        <p className="text-sm font-semibold">{action.label}</p>
-                        <p className="text-xs text-white/80">{action.description}</p>
-                      </div>
-                      <Icon size={18} />
-                    </Link>
-                  );
-                }
                 return (
-                  <Link key={action.id} href={action.href} className="rounded-xl border border-slate-100 p-3 bg-white shadow-sm">
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${action.bg} ${action.color}`}>
-                      <Icon size={18} />
+                  <Link
+                    key={action.id}
+                    href={action.href}
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-[var(--brand-color)] hover:bg-slate-50"
+                    style={{ '--brand-color': brandColor } as React.CSSProperties}
+                  >
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${action.bg} ${action.color}`}>
+                      <Icon size={20} />
                     </div>
-                    <p className="text-xs font-semibold text-slate-800 mt-3">{action.label}</p>
-                    <p className="text-[10px] text-slate-400 mt-1">{action.description}</p>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-slate-900">{action.label}</p>
+                      <p className="text-xs text-slate-500 mt-1">{action.description}</p>
+                    </div>
+                    <ArrowRight size={18} className="text-slate-300" />
                   </Link>
                 );
               })}
