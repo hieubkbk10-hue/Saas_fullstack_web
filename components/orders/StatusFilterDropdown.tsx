@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 type StatusFilterOption = {
   key: string;
@@ -53,7 +54,10 @@ export function StatusFilterDropdown({
         className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${isAllActive ? 'bg-white shadow-sm' : 'text-slate-500'}`}
         style={isAllActive && brandColor ? { borderColor: brandColor, color: brandColor } : { borderColor: '#e2e8f0' }}
       >
-        {buttonLabel}
+        <span className="inline-flex items-center gap-1.5">
+          {buttonLabel}
+          <ChevronDown size={12} />
+        </span>
       </button>
       {open && (
         <div className="absolute left-0 mt-2 w-56 rounded-lg border border-slate-200 bg-white shadow-lg p-3 z-10">
