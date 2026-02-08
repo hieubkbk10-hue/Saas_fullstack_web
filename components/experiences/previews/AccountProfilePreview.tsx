@@ -4,7 +4,6 @@ import React from 'react';
 import {
   ArrowRight,
   Award,
-  Calendar,
   CreditCard,
   Heart,
   Mail,
@@ -81,8 +80,8 @@ export function AccountProfilePreview({
   showContactInfo,
   showLoyaltyBadge,
   showAddress,
-  showMemberId,
-  showJoinDate,
+  showMemberId: _showMemberId,
+  showJoinDate: _showJoinDate,
   actionItems,
   brandColor,
 }: AccountProfilePreviewProps) {
@@ -266,7 +265,7 @@ export function AccountProfilePreview({
             </div>
           </div>
 
-          {(showContactInfo || showAddress || showMemberId || showJoinDate) && (
+          {(showContactInfo || showAddress) && (
             <div className="mt-5 grid gap-3 text-xs text-slate-600">
               {showContactInfo && (
                 <div className="flex items-center gap-3">
@@ -287,20 +286,6 @@ export function AccountProfilePreview({
                   <span>{user.address}</span>
                 </div>
               )}
-              <div className="flex flex-wrap gap-3">
-                {showMemberId && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-slate-400 font-mono">ID</span>
-                    <span className="font-mono text-xs text-slate-700">{user.memberId}</span>
-                  </div>
-                )}
-                {showJoinDate && (
-                  <div className="flex items-center gap-2">
-                    <Calendar size={12} className="text-slate-400" />
-                    <span>Tham gia {user.joinDate}</span>
-                  </div>
-                )}
-              </div>
             </div>
           )}
         </div>
